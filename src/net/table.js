@@ -15,8 +15,11 @@ import { doMove, takeStairs, doPing, goFloor, select, animatePath, doorAction, s
 import { currentTurn, canAct } from '../game/rules.js';
 import { nextTurn } from '../game/combat.js';
 import { cheb } from '../util/core.js';
+import { sfx, onSfx } from '../audio/sound.js';
+import { putModel, allModels, deleteModel } from '../render/models.js';
 
 export const net = { peer:null, conns:new Map(), host:null, code:null };
+onSfx(name => { if (ui.role === 'dm' && net.conns.size) broadcast({ t:'sfx', name }); });
 let pendingArt = null, lastTurnSeen = '';
 
 export function hostTable(){
@@ -46,7 +49,8 @@ function onHostMsg(c, m){
     const match = state.tokens.find(t => t.kind === 'pc' && t.name.toLowerCase() === seat.name.toLowerCase() && !Object.values(state.seats).includes(t.id));
     if (match) state.seats[c.peer] = match.id;
     toast(`${seat.name} joined${match ? ` as ${match.name}` : ' — seat them in the Table tab'}`);
-    c.send({ t:'art', art:state.art }); c.send({ t:'state', s:forPlayers() });
+    c.send({ t:'art', art:state.art });
+    for (const md of allModels()) c.send({ t:'model', key:md.key, name:md.name, buf:md.buf }); c.send({ t:'state', s:forPlayers() });
     renderPanel(); pushState();
   }
   else if (m.t === 'move'){ const t = tokById(m.id); if (t && mine(t.id) && canAct(t)) doMove(t, m.x, m.y); }
@@ -86,6 +90,8 @@ function onClientMsg(m){
   else if (m.t === 'ping'){ spawnPing(m.floor, m.x, m.y, m.color); toast(`${m.who} pings the map`); }
   else if (m.t === 'whisper') showWhisper(m.text);
   else if (m.t === 'banner') banner(m.text);
+  else if (m.t === 'sfx') sfx(m.name, false);
+  else if (m.t === 'model'){ if (m.buf) putModel(m.key, m.buf, m.name, false).catch(() => {}); else deleteModel(m.key); }
   else if (m.t === 'art'){ if (state){ state.art = m.art || {}; syncTokens(); } else pendingArt = m.art; }
 }
 function applyRemoteState(s){

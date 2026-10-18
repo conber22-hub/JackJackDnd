@@ -7,6 +7,8 @@ import { CONDITIONS } from '../data/dread.js';
 import { wx, wz, makeLabel, tween } from './scene.js';
 import { floorViews } from './floors.js';
 import { refreshSelectionRing } from './effects.js';
+import { modelKeyFor, instanceModel, modelState } from './models.js';
+import { shadowsOn } from './gfx.js';
 
 export function M(geo, color, emi, opts = {}){
   const mat = new THREE.MeshStandardMaterial({ color, roughness:opts.rough ?? .7, metalness:opts.metal ?? .05,
@@ -22,11 +24,13 @@ const box = (a, b, c) => new THREE.BoxGeometry(a, b, c);
 const cone = (r, h, s = 10) => new THREE.ConeGeometry(r, h, s);
 function eyes(g, y, z, color, spread = .055, r = .025){ for (const s of [-1, 1]) g.add(at(M(sph(r, 8), '#000', color, { ei:3 }), s * spread, y, z)); }
 function hand(color){ const h = new THREE.Group(); h.add(at(M(box(.2, .05, .22), color), 0, .03, 0));
-  for (let i = 0; i < 4; i++) h.add(at(M(cyl(.022, .02, .16, 6), color), -.075 + i * .05, .05, .17, Math.PI / 2 - .4, 0, 0));
+  for (let i = 0; i < 4; i++) h.add(sway(at(M(cyl(.022, .02, .16, 6), color), -.075 + i * .05, .05, .17, Math.PI / 2 - .4, 0, 0), i, .35));
   h.add(at(M(cyl(.024, .02, .13, 6), color), .12, .05, .03, 0, 0, -1.2)); return h; }
 function tendrils(g, n, y, r, color = '#8fa64a', len = .45){
-  for (let i = 0; i < n; i++) g.add(at(M(cyl(.015, .03, len, 5), color, '#5d7a1f', { ei:.6 }), Math.cos(i * 2.4) * r, y, Math.sin(i * 2.4) * r, Math.sin(i * 1.7) * .6, 0, Math.cos(i * 1.3) * .6));
+  for (let i = 0; i < n; i++){ const m = at(M(cyl(.015, .03, len, 5), color, '#5d7a1f', { ei:.6 }), Math.cos(i * 2.4) * r, y, Math.sin(i * 2.4) * r, Math.sin(i * 1.7) * .6, 0, Math.cos(i * 1.3) * .6); sway(m, i); g.add(m); }
 }
+// Marks a part to sway in the render loop (tendrils, fingers, quills).
+function sway(m, i, amp = .25){ m.userData.sway = { rx:m.rotation.x, rz:m.rotation.z, ph:i * 1.7, amp }; return m; }
 
 export const SHAPES = {
   pc(t){ const g = new THREE.Group(), c = t.color;
@@ -108,16 +112,16 @@ export const SHAPES = {
     for (let i = 0; i < 9; i++) g.add(at(M(new THREE.TorusGeometry(.32 + (i % 3) * .08, .035, 6, 18, Math.PI), '#8a8a5e'), 0, .5 + (i % 3) * .06, -.3 + i * .07, 0, Math.PI / 2, 0));
     for (let i = 0; i < 5; i++){ const a = i * 1.25; g.add(at(M(sph(.07, 8), '#c9b9a0'), Math.cos(a) * .45, .5 + Math.sin(i) * .1, Math.sin(a) * .4)); }  // faces
     for (let i = 0; i < 7; i++) g.add(at(M(sph(.04, 6), '#200', i % 2 ? b.eye : '#c6ff5a', { ei:3 }), Math.cos(i * .9) * .5, .55, Math.sin(i * .9) * .45));
-    for (let i = 0; i < 8; i++){ const a = i / 8 * Math.PI * 2; g.add(at(M(cyl(.05, .02, 1, 6), '#5a6a3a'), Math.cos(a) * .8, .12, Math.sin(a) * .8, Math.sin(a) * 1.35, 0, -Math.cos(a) * 1.35)); }
+    for (let i = 0; i < 8; i++){ const a = i / 8 * Math.PI * 2; g.add(sway(at(M(cyl(.05, .02, 1, 6), '#5a6a3a'), Math.cos(a) * .8, .12, Math.sin(a) * .8, Math.sin(a) * 1.35, 0, -Math.cos(a) * 1.35), i, .15)); }
     g.userData.pulse = 1; return g; },
   undertow(b){ const g = new THREE.Group();
     for (let i = 0; i < 9; i++) g.add(at(M(sph(.35 + ((i * 37) % 10) * .03), b.color, '#3a5a10', { ei:.4 }), Math.cos(i * 2.1) * .5, .4 + i * .14, Math.sin(i * 2.1) * .5));
-    for (let i = 0; i < 10; i++){ const a = i / 10 * Math.PI * 2; g.add(at(M(cyl(.06, .02, 1.4, 6), '#5a6a3a'), Math.cos(a) * .9, .35, Math.sin(a) * .9, Math.sin(a) * 1.2, 0, -Math.cos(a) * 1.2)); }
+    for (let i = 0; i < 10; i++){ const a = i / 10 * Math.PI * 2; g.add(sway(at(M(cyl(.06, .02, 1.4, 6), '#5a6a3a'), Math.cos(a) * .9, .35, Math.sin(a) * .9, Math.sin(a) * 1.2, 0, -Math.cos(a) * 1.2), i, .18)); }
     for (let i = 0; i < 14; i++) g.add(at(M(sph(.06, 8), '#300', i % 3 ? '#ff4a4a' : '#c6ff5a', { ei:2.5 }), Math.cos(i * 1.3) * .55, .5 + (i % 7) * .2, Math.sin(i * 1.3) * .55));
     g.userData.pulse = 1; return g; },
   hand(b){ const g = new THREE.Group();
     for (let i = 0; i < 3; i++){ const h = hand(b.color); h.position.set(Math.cos(i * 2.1) * .16, 0, Math.sin(i * 2.1) * .16); h.rotation.y = i * 2.1 + .4; g.add(h); }
-    g.userData.skitter = 1; return g; },
+    g.userData.skitter = 1; g.userData.climber = 1; return g; },
   handmass(b){ const g = new THREE.Group();
     g.add(at(M(sph(.42), '#b8a98f'), 0, .42, 0));
     for (let i = 0; i < 22; i++){ const v = new THREE.Vector3(Math.cos(i * 2.4) * Math.sin(i * .9 + .5), Math.cos(i * .9 + .5), Math.sin(i * 2.4) * Math.sin(i * .9 + .5)).normalize(); if (v.y < -.2) v.y = -v.y * .3;
@@ -225,7 +229,7 @@ export const SHAPES = {
 export const SHAPE_NAMES = Object.keys(SHAPES).filter(k => k !== 'pc' && k !== 'npc');
 
 export function artFor(t){ return state.art[t.id] || (t.bid && state.art[t.bid]) || null; }
-function figureKey(t){ return [t.kind, t.bid, t.color, t.dead, t.flags.rising, artFor(t) ? artFor(t).length : '', t.size, BEST[t.bid]?.shape].join('|'); }
+function figureKey(t){ const mk = modelKeyFor(t); return [t.kind, t.bid, t.color, t.dead, t.flags.rising, artFor(t) ? artFor(t).length : '', t.size, BEST[t.bid]?.shape, mk ? mk + modelState.version : '', shadowsOn()].join('|'); }
 
 const texCache = new Map();
 function artTexture(url){ if (!texCache.has(url)){ const tx = new THREE.TextureLoader().load(url); tx.colorSpace = THREE.SRGBColorSpace; texCache.set(url, tx); } return texCache.get(url); }
@@ -235,9 +239,11 @@ export function buildFigure(t){
   const sideCol = t.kind === 'monster' ? '#7a1f25' : (t.kind === 'npc' ? '#6a58a0' : t.color);
   g.add(at(M(cyl(.43, .46, .07, 28), '#151116'), 0, .035, 0));
   g.add(at(M(new THREE.TorusGeometry(.44, .03, 6, 32), sideCol, sideCol, { ei:.8 }), 0, .07, 0, Math.PI / 2));
-  const art = artFor(t);
+  const art = artFor(t), mk = modelKeyFor(t);
   let fig;
-  if (art){                                    // paper-mini standee using your Grok art
+  if (mk && (fig = instanceModel(mk))){                                    // a GLB model
+    g.userData.mixer = fig.userData.mixer;
+  } else if (art){                                    // paper-mini standee using your Grok art
     fig = new THREE.Group();
     const plate = new THREE.Mesh(new THREE.PlaneGeometry(.8, 1.05), new THREE.MeshBasicMaterial({ map:artTexture(art), side:THREE.DoubleSide, transparent:true }));
     plate.position.y = .62; fig.add(plate);
@@ -248,6 +254,7 @@ export function buildFigure(t){
     fig = t.kind === 'pc' ? SHAPES.pc(t) : t.kind === 'npc' ? SHAPES.npc(t) : (SHAPES[b?.shape] || SHAPES.husk)(b || { color:t.color, eye:'#fff' });
   }
   g.add(fig); g.userData.fig = fig;
+  if (shadowsOn()) g.traverse(o => { if (o.isMesh) o.castShadow = true; });
   const s = t.size || 1; g.scale.setScalar(s === 1 ? 1 : s * .85);
   if (t.dead){
     fig.rotation.x = -Math.PI / 2 * .92; fig.position.y = .12;
@@ -260,7 +267,9 @@ export function buildFigure(t){
   if (!t.dead && b?.shape === 'lich'){ lightCol = b.id === 'andral2' ? '#b8e07a' : '#cfe0ff'; li = 2; }
   if (!t.dead && (b?.shape === 'undertow' || b?.shape === 'mind')){ lightCol = '#9cc23c'; li = 3; }
   if (!t.dead && b?.shape === 'colossus'){ lightCol = '#ff8a4a'; li = 2; }
-  if (lightCol){ const pl = new THREE.PointLight(lightCol, li, 9, 1.4); pl.position.set(0, 1.3, 0); pl.userData.base = li; pl.userData.torch = t.kind === 'pc' || t.kind === 'npc'; g.add(pl); g.userData.light = pl; }
+  if (lightCol){ const pl = new THREE.PointLight(lightCol, li, 9, 1.4); pl.position.set(0, 1.3, 0); pl.userData.base = li; pl.userData.torch = t.kind === 'pc' || t.kind === 'npc';
+    pl.shadow.mapSize.set(256, 256); pl.shadow.bias = -.004; pl.shadow.camera.near = .2; pl.shadow.camera.far = 9;
+    g.add(pl); g.userData.light = pl; }
   return g;
 }
 
@@ -303,6 +312,14 @@ export function syncTokens(){
       tv.label.position.y = h / (tv.group.scale.x || 1); tv.label.scale.multiplyScalar(1 / (tv.group.scale.x || 1));
       tv.group.add(tv.label); tv.labelKey = lk;
     }
+  }
+  // torch shadows (high quality): only the first three heroes' torches on the floor being looked at cast them
+  let casters = 0;
+  for (const t of state.tokens){
+    const l = tokenViews.get(t.id)?.group.userData.light; if (!l) continue;
+    const on = shadowsOn() && l.userData.torch && t.floor === ui.floor && !t.dead && casters < 3;
+    if (on) casters++;
+    if (l.castShadow !== on) l.castShadow = on;
   }
   refreshSelectionRing();
 }

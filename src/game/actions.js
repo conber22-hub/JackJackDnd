@@ -15,6 +15,7 @@ import { renderPanel } from '../ui/panels.js';
 import { canAct, moveAllowance, addCond } from './rules.js';
 import { applyDamage, runFx, zoneSource } from './combat.js';
 import { changed, broadcast, sendHost } from './session.js';
+import { sfx } from '../audio/sound.js';
 
 /* ---------- selection ---------- */
 export function select(id){
@@ -72,7 +73,7 @@ export function doMove(t, x, y){
   animatePath(t.id, path, step => {
     t.x = step.x; t.y = step.y;
     const dr = f.doors.find(dd => dd.i === step.y * f.W + step.x);
-    if (dr && dr.state === 'closed'){ dr.state = 'open'; buildFloor(t.floor); animateDoor(t.floor, dr.id, true); log(`${t.name} opens a door.`); }
+    if (dr && dr.state === 'closed'){ dr.state = 'open'; buildFloor(t.floor); animateDoor(t.floor, dr.id, true); sfx('door'); log(`${t.name} opens a door.`); }
     if (t.kind !== 'monster'){
       const grew = updateVision(), found = detectHidden();
       if (grew || found.length) rebuildFog(t.floor);
@@ -157,6 +158,7 @@ export function fall(t){
 export function triggerTrap(t, tr){
   const f = state.floors[t.floor], k = TRAP_KINDS[tr.kind] || TRAP_KINDS.pit, x = tr.i % f.W, y = (tr.i / f.W) | 0;
   tr.armed = false; tr.found = true;
+  sfx(tr.kind === 'bell' ? 'toll' : tr.kind === 'hands' ? 'skitter' : 'trap');
   const targets = state.tokens.filter(o => o.floor === t.floor && !o.dead && !o.flags.gone && cheb(o.x, o.y, x, y) <= (k.rad || 0));
   const base = k.dice && k.dice !== '0' ? rollDice(k.dice).total : 0, lines = [], fallers = [];
   for (const o of targets){
@@ -210,7 +212,7 @@ export function doorAction(actor, L, id, act){
     if (act === 'force') runFx(zoneSource(L, { x, y }), 'alert', true);
   }
   buildFloor(L);
-  if ((before === 'open') !== (dr.state === 'open')) animateDoor(L, dr.id, dr.state === 'open');
+  if ((before === 'open') !== (dr.state === 'open')){ animateDoor(L, dr.id, dr.state === 'open'); sfx('door'); }
   updateVision(); rebuildFog(L); renderSel(); changed();
 }
 // Actively look for traps and secret doors within 3 squares.
@@ -253,6 +255,7 @@ export function setDread(n){
     const D = dreadLevel();
     log(`Dread ${state.dread}: ${D.n}`);
     if (state.dread > old){
+      sfx('boom');
       if (state.dread >= 5) sendWhisper(pick(WHISPERS));
       showCard({ kind:state.dread >= 7 ? 'crit' : '', title:`Dread ${state.dread} · ${D.n}`, flair:D.text, lines:dreadRulesLines(D) });
     }

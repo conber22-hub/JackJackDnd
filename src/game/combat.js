@@ -9,6 +9,7 @@ import { syncTokens, tokenViews } from '../render/minis.js';
 import { burst, showReach, clearReach } from '../render/effects.js';
 import { showCard, toast, banner, sendWhisper } from '../ui/hud.js';
 import { WHISPERS } from '../data/dread.js';
+import { sfx } from '../audio/sound.js';
 import { currentTurn, addCond, tickConds, hasCond } from './rules.js';
 import { shiftFloor } from './shift.js';
 import { graspRoll, graspStep, graspReset } from './grasp.js';
@@ -28,6 +29,7 @@ export function riseFrom(t){
   const tv = tokenViews.get(t.id); if (!tv) return;
   tv.anim = true; const y0 = -1;
   tween(.7, k => tv.group.position.y = y0 * (1 - ease(k)), () => tv.anim = null);
+  sfx(hasTag(t, 'hands') ? 'skitter' : 'rise');
   burst(t.floor, t.x, t.y, BEST[t.bid]?.fam === 'seep' ? '#9cc23c' : '#e6d3b8');
 }
 export function addToInit(t){
@@ -72,7 +74,7 @@ export function startTurn(){
   if (b?.hooks?.onTurnStart && !t.dead) for (const fx of b.hooks.onTurnStart) runFx(t, fx, true);
   if (isDM()){ ui.selected = t.id; if (t.floor !== ui.floor) goFloor(t.floor, false); focusTile(t.floor, t.x, t.y); showReach(t); }
   const extra = t.conds?.length ? ` (${t.conds.map(c => c.n).join(', ')})` : '';
-  banner(`${t.name}'s turn${extra}`);
+  banner(`${t.name}'s turn${extra}`); sfx('turn');
   broadcast({ t:'banner', text:`${t.name}'s turn` });
 }
 
@@ -127,6 +129,7 @@ export function doAttack(aId, tId, i, mode = 'normal'){
     if (!ok && (atk.on.cond !== 'seeded' || isHost(tg))) addCond(tg, atk.on.cond, atk.on.rounds || 1, a.bid);
   }
   if (hit && atk.latch && !tg.dead && tg.kind !== 'monster'){ tg.flags.latchedBy = a.id; lines.push(`<span class="fam-seep">${esc(a.name)} is latched on.</span>`); }
+  sfx(crit ? 'crit' : hit ? 'hit' : 'miss');
   showCard({ kind:crit ? 'crit' : hit ? '' : 'miss', title:`${a.name} → ${tg.name}`, sub:atk.n, flair, lines, big:hit ? `${dmg} ${atk.t}` : '' });
   log(`${a.name} ${atk.n} → ${tg.name}: ${hit ? `${dmg} ${atk.t}${crit ? ' (crit)' : ''}` : 'miss'}`);
   if (hit) applyDamage(tg, dmg, atk.t, a);
@@ -174,6 +177,7 @@ export function kill(t, type, by){
   }
   t.flags.rising = false;
   log(`${t.name} is destroyed.`);
+  if (hasTag(t, 'seep')) sfx('burst');
   if (hasTag(t, 'hands') && !hasTag(t, 'boss') && !radiant) graspStep(1, `${t.name} dies`);
   // All Flesh Returns
   if (hasTag(t, 'seep')) for (const u of state.tokens.filter(u => u.bid === 'undertow' && !u.dead && u.floor === t.floor && cheb(u.x, u.y, t.x, t.y) <= 12)) u.hp = Math.min(u.maxHp, u.hp + 10);
@@ -311,6 +315,7 @@ export function runFx(src, fx, quiet){
   else if (kind) toast(`Unknown effect "${fx}"`);
 }
 export function useSpecial(t, s){
+  if (/toll|bell/i.test(s.n) || s.fx === 'dread+1') sfx('toll');
   if (s.f) showCard({ kind:'seep', title:`${t.name}: ${s.n}`, flair:s.f });
   runFx(t, s.fx); changed();
 }

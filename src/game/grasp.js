@@ -6,6 +6,7 @@ import { d, esc } from '../util/core.js';
 import { showCard, toast } from '../ui/hud.js';
 import { runFx, zoneSource } from './combat.js';
 import { changed } from './session.js';
+import { sfx } from '../audio/sound.js';
 
 export function graspStep(delta, why){
   const i = Math.max(0, GRASP_STEPS.indexOf(state.grasp.die)), j = Math.max(0, Math.min(GRASP_STEPS.length - 1, i + delta));
@@ -22,7 +23,7 @@ export function graspRoll(L = ui.floor, why){
   const die = state.grasp.die, heart = state.tokens.some(t => t.bid === 'handmass' && !t.dead);
   const r1 = d(die), r2 = heart ? d(die) : 0, r = Math.max(r1, r2);
   const row = tableRow(graspTable().rows, r) || { name:'The hands stir', text:'', fx:[] };
-  state.grasp.last = { r, die, name:row.name, t:Date.now() };
+  state.grasp.last = { r, die, name:row.name, t:Date.now() }; sfx('skitter');
   showCard({ kind:'', title:`✋ ${row.name}`, sub:`Grasp Die d${die} = ${heart ? `${r1}, ${r2} → ` : ''}${r}${why ? ` · ${why}` : ''}`, flair:row.text,
     lines:heart ? ['<span class="muted">Heart of the Grasp: the Monstrosity lives, so the higher of two rolls counts.</span>'] : [] });
   log(`✋ Grasp d${die} = ${r}: ${row.name}.`);

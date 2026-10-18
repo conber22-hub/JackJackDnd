@@ -6,6 +6,7 @@ import { scene, G, mat4, wx, wz, tween } from './scene.js';
 import { floorViews } from './floors.js';
 import { tokenViews } from './minis.js';
 import { moveAllowance } from '../game/rules.js';
+import { sfx } from '../audio/sound.js';
 
 export const selRing = new THREE.Mesh(new THREE.RingGeometry(.5, .6, 40).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color:'#e9a54a', transparent:true, opacity:.9, depthWrite:false }));
 selRing.visible = false; scene.add(selRing);
@@ -37,6 +38,7 @@ export function clearReach(){ const m = reachState.mesh; if (m){ m.parent?.remov
 
 export const pings = [];
 export function spawnPing(L, x, y, color = '#e9a54a'){
+  sfx('ping', false);
   const m = new THREE.Mesh(new THREE.RingGeometry(.3, .42, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color, transparent:true, depthWrite:false }));
   m.position.set(wx(x), .05, wz(y)); floorViews[L]?.group.add(m);
   const beam = new THREE.Mesh(new THREE.CylinderGeometry(.05, .05, 4, 8), new THREE.MeshBasicMaterial({ color, transparent:true, opacity:.5, depthWrite:false }));

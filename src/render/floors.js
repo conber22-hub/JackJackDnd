@@ -6,6 +6,24 @@ import { THEMES } from '../data/themes.js';
 import { ROOM_TYPES, TRAP_KINDS } from '../data/rooms.js';
 import { mulberry32 } from '../util/core.js';
 import { scene, G, mat4, col, wx, wz, floorY, WALL_H, makeLabel, tween, ease, fx } from './scene.js';
+import { surfaceTextures } from './textures.js';
+import { shadowsOn, gfx } from './gfx.js';
+import { kitFor } from './models.js';
+
+// Paint the floor's stone with its theme's textures (cheap: textures are cached per theme).
+function dressMaterials(fv, th){
+  const tx = surfaceTextures(th.id), fm = fv.mats.floor, wm = fv.mats.wall;
+  if (fm.map !== tx.floor){
+    fm.map = tx.floor; fm.bumpMap = tx.bumpF; fm.bumpScale = 1.2;
+    fm.roughnessMap = tx.wet; fm.roughness = tx.wet ? .35 + (1 - tx.wetAmount) * .5 : .95; fm.metalness = th.id === 'wreck' ? .35 : .02;
+    fm.needsUpdate = true;
+  }
+  if (wm.map !== tx.wall){
+    wm.map = tx.wall; wm.bumpMap = tx.bumpW; wm.bumpScale = 1.6;
+    wm.roughness = th.id === 'wreck' ? .55 : .88; wm.metalness = th.id === 'wreck' ? .45 : .05;
+    wm.needsUpdate = true;
+  }
+}
 
 export const floorViews = [];   // per floor: { group, tokens, built, mats }
 const shared = m => { m.userData.shared = true; return m; };
@@ -52,13 +70,16 @@ export function buildFloor(L, opt = {}){
   const f = state.floors[L], fv = floorViews[L], th = THEMES[f.theme] || THEMES[0];
   if (!f || !fv) return;
   disposeGroup(fv.built);
+  dressMaterials(fv, th);
+  const shadows = shadowsOn();
   const pv = viewAsPlayer(), exp = state.explored[L];
   const showTile = i => !pv || exp.has(i);
   const g = opt.grid || viewGrid(f, L);
   // floor tiles
   const tiles = [];
   for (let i = 0; i < g.length; i++) if (walk(g[i]) && g[i] !== T.DOWN && showTile(i)) tiles.push(i);
-  const fm = new THREE.InstancedMesh(G.tile, fv.mats.floor, Math.max(1, tiles.length)); fm.count = tiles.length;
+  const kitFloor = kitFor('floor');
+  const fm = new THREE.InstancedMesh(kitFloor ? kitFloor.geometry : G.tile, kitFloor ? kitFloor.material : fv.mats.floor, Math.max(1, tiles.length)); fm.count = tiles.length;
   const rng = mulberry32(L * 999 + 7);
   const base = new THREE.Color(th.floor), hall = new THREE.Color(th.hall);
   const roomOf = new Map(); for (const r of f.rooms) for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++) roomOf.set(y * f.W + x, r);
@@ -73,7 +94,7 @@ export function buildFloor(L, opt = {}){
     fm.setColorAt(n, col);
   });
   if (fm.instanceColor) fm.instanceColor.needsUpdate = true;
-  fm.userData.floorTiles = 1;
+  fm.userData.floorTiles = 1; fm.receiveShadow = shadows;
   fv.built.add(fm);
   // walls
   const all = opt.walls || wallSet(f, g);
@@ -83,7 +104,9 @@ export function buildFloor(L, opt = {}){
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++){ const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < f.W && ny < f.H && exp.has(ny * f.W + nx) && walk(g[ny * f.W + nx])) return true; }
     return false;
   });
-  const wm = new THREE.InstancedMesh(G.wall, fv.mats.wall, Math.max(1, wl.length)); wm.count = wl.length;
+  const kitWall = kitFor('wall');
+  const wm = new THREE.InstancedMesh(kitWall ? kitWall.geometry : G.wall, kitWall ? kitWall.material : fv.mats.wall, Math.max(1, wl.length)); wm.count = wl.length;
+  wm.castShadow = wm.receiveShadow = shadows;
   const wc = new THREE.Color(th.wall), trim = new THREE.Color(th.trim);
   wl.forEach((i, n) => {
     const x = i % f.W, y = (i / f.W) | 0;
@@ -93,7 +116,7 @@ export function buildFloor(L, opt = {}){
   });
   if (wm.instanceColor) wm.instanceColor.needsUpdate = true;
   fv.built.add(wm);
-  const cm = new THREE.InstancedMesh(G.cap, fv.mats.cap, Math.max(1, wl.length)); cm.count = wl.length;
+  const cm = new THREE.InstancedMesh(G.cap, fv.mats.cap, Math.max(1, kitWall ? 0 : wl.length)); cm.count = kitWall ? 0 : wl.length;
   const capc = new THREE.Color(th.wall).lerp(trim, .28).multiplyScalar(1.5);
   wl.forEach((i, n) => { mat4.makeTranslation(wx(i % f.W), WALL_H + .03, wz((i / f.W) | 0)); cm.setMatrixAt(n, mat4); cm.setColorAt(n, col.copy(capc).multiplyScalar(.85 + rng() * .25)); });
   if (cm.instanceColor) cm.instanceColor.needsUpdate = true;

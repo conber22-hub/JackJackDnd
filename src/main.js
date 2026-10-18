@@ -7,6 +7,13 @@ import { WHISPERS } from './data/dread.js';
 import { pick, $ } from './util/core.js';
 import { bus } from './util/core.js';
 import { scene, camera, controls, renderer, ambient, hemi, moon, runTweens, fx } from './render/scene.js';
+import { renderFrame } from './render/post.js';
+import { gfx, onGfx, shadowsOn } from './render/gfx.js';
+import { loadStoredModels } from './render/models.js';
+import { setDrone } from './audio/sound.js';
+import { syncTokens } from './render/minis.js';
+import { buildAllFloors } from './render/floors.js';
+import { walk } from './engine/tiles.js';
 import { floorViews, mist } from './render/floors.js';
 import { tokenViews } from './render/minis.js';
 import { selRing, updatePings } from './render/effects.js';
@@ -17,6 +24,13 @@ import './ui/input.js';
 import * as api from './debug.js';
 
 bus.on('log', () => { if (ui.tab === 'table' || ui.tab === 'log' || ui.role === 'player') renderPanel(); });
+bus.on('models', key => { if (!state) return; if (String(key).startsWith('kit:')) buildAllFloors(); syncTokens(); });
+function applyQuality(){
+  renderer.shadowMap.enabled = shadowsOn(); renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  if (state){ buildAllFloors(); syncTokens(); }
+}
+onGfx(applyQuality); applyQuality();
+loadStoredModels();
 
 const clock = new THREE.Clock();
 let whisperAt = performance.now() + 30000;
@@ -26,11 +40,12 @@ function frame(){
   const dt = Math.min(clock.getDelta(), .05), now = performance.now(), t = now / 1000;
   runTweens(now);
   if (state){
+    if (state.dread !== frame.dread){ frame.dread = state.dread; setDrone(state.dread); }
     const D = dreadLevel();
     const fogTarget = D.fog * (ui.view === 'stack' ? .3 : ui.view === 'top' ? .35 : 1) * (ui.tab === 'build' && ui.role === 'dm' && !ui.tableView ? .5 : 1);
     scene.fog.density += (fogTarget - scene.fog.density) * .05;
     scene.fog.color.lerp(state.dread >= 8 ? fogRed : fogDark, .02);
-    ambient.intensity += (D.amb * 1.5 - ambient.intensity) * .03; hemi.intensity = ambient.intensity * .9; moon.intensity = ambient.intensity * 1.4;
+    ambient.intensity += (D.amb * 1.5 * (ui.role === 'dm' && !ui.tableView ? 1.35 : 1) - ambient.intensity) * .03;   // the DM gets a little work-light hemi.intensity = ambient.intensity * .9; moon.intensity = ambient.intensity * 1.4;
     const hue = new THREE.Color(D.hue);
     for (const tv of tokenViews.values()){
       const g = tv.group, u = g.userData, fig = u.fig;
@@ -40,6 +55,11 @@ function frame(){
       if (fig.userData.hover) fig.position.y = .15 + Math.sin(t * 2 + g.id) * .08;
       if (fig.userData.pulse){ const s = 1 + Math.sin(t * 2.4 + g.id) * .04; fig.scale.set(s, 1 / s, s); }
       if (fig.userData.skitter) fig.rotation.y = Math.sin(t * 6 + g.id) * .25;
+      if (u.mixer) u.mixer.update(dt);
+      if (fig.userData.prowl) fig.position.y = Math.abs(Math.sin(t * 3 + g.id)) * .02;
+      if (!fig.userData.hover && !fig.userData.pulse && !fig.userData.billboard) fig.scale.y = 1 + Math.sin(t * 1.6 + g.id) * .012;   // breathing
+      if (fig.userData.climber) climb(g, fig, t);
+      fig.traverse(c => { const s = c.userData.sway; if (s){ c.rotation.x = s.rx + Math.sin(t * 1.8 + s.ph) * s.amp; c.rotation.z = s.rz + Math.cos(t * 1.3 + s.ph) * s.amp * .6; } });
       if (fig.userData.halo) fig.children.forEach(c => { if (c.userData.orbit !== undefined){ const a = c.userData.orbit + t * .6; c.position.x = Math.cos(a) * .22; c.position.z = Math.sin(a) * .22; } });
       fig.children.forEach(c => { if (c.userData.flame) c.scale.x = c.scale.z = .8 + Math.random() * .4; });
     }
@@ -60,7 +80,18 @@ function frame(){
   }
   controls.update();
   if (fx.shake > 0){ fx.shake = Math.max(0, fx.shake - dt * .2); camera.position.x += (Math.random() - .5) * fx.shake; camera.position.y += (Math.random() - .5) * fx.shake; }
-  renderer.render(scene, camera);
+  renderFrame(t, state ? (state.dread - 1) / 9 : 0);
+}
+
+// Hands crawl up onto the nearest wall and cling there.
+function climb(g, fig, t){
+  const id = g.userData.tokenId, tok = state.tokens.find(x => x.id === id); if (!tok) return;
+  const f = state.floors[tok.floor]; let dir = null;
+  for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]){ const nx = tok.x + dx, ny = tok.y + dy; if (nx < 0 || ny < 0 || nx >= f.W || ny >= f.H || !walk(f.grid[ny * f.W + nx])){ dir = [dx, dy]; break; } }
+  const tx = dir ? dir[0] * .32 : 0, tz = dir ? dir[1] * .32 : 0, ty = dir ? .45 : 0;
+  const rx = dir ? -dir[1] * 1.25 : 0, rz = dir ? dir[0] * 1.25 : 0;
+  fig.position.x += (tx - fig.position.x) * .08; fig.position.z += (tz - fig.position.z) * .08; fig.position.y += (ty + Math.sin(t * 5 + g.id) * .03 - fig.position.y) * .08;
+  fig.rotation.x += (rx - fig.rotation.x) * .08; fig.rotation.z += (rz - fig.rotation.z) * .08;
 }
 
 showStart();

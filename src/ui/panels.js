@@ -14,6 +14,8 @@ import { onStairs, dreadRulesLines } from '../game/actions.js';
 import { undoCount } from '../game/session.js';
 import { hpBar, condChips, BUILD_TOOLS } from './hud.js';
 import { SHAPE_NAMES } from '../render/minis.js';
+import { gfx } from '../render/gfx.js';
+import { modelInfo } from '../render/models.js';
 import { CAMPAIGN, SESSIONS, CLOCKS, PLACES, PLACE_STATES, CAST, FORTUNE } from '../data/campaign.js';
 
 const art = (key, label) => {
@@ -23,6 +25,19 @@ const art = (key, label) => {
     <label class="btn small" style="display:inline-block;margin-top:4px">Choose image<input type="file" accept="image/*" data-edit="art" data-k="${key}" hidden></label>
     ${a ? `<button class="btn small" data-act="clearArt" data-k="${key}">Clear</button>` : ''}</div></div>`;
 };
+const modelSlot = (key, label) => {
+  const m = modelInfo(key);
+  return `<div class="artslot"><div style="width:56px;height:56px;border-radius:8px;background:#1d1720;display:grid;place-items:center;font-size:22px">${m ? '🧊' : '⬚'}</div>
+    <div style="flex:1">${m ? `3D model: <b>${esc(m.name)}</b> (${Math.round(m.size / 1024)} KB)` : `No 3D model. Drop a .glb for ${esc(label)} (it beats the art and the built-in mini).`}<br>
+    <label class="btn small" style="display:inline-block;margin-top:4px">Choose .glb<input type="file" accept=".glb,model/gltf-binary" data-edit="model" data-k="${key}" hidden></label>
+    ${m ? `<button class="btn small" data-act="clearModel" data-k="${key}">Clear</button>` : ''}</div></div>`;
+};
+export const gfxPanel = () => `<h3>Graphics & sound</h3>
+  <div class="row"><label>Quality</label>${['low', 'medium', 'high'].map(q => `<button class="btn small ${gfx.quality === q ? 'on' : ''}" data-act="gfxQ" data-k="${q}">${q[0].toUpperCase() + q.slice(1)}</button>`).join('')}</div>
+  <div class="muted">Low: fastest (phones). Medium: bloom on eyes and runes, film grain that worsens with the Dread. High: torch shadows too.</div>
+  <div class="row"><label>Volume</label><input type="range" min="0" max="1" step=".05" value="${gfx.volume}" data-edit="gfxVol" style="flex:1">
+    <button class="btn small ${gfx.music ? 'on' : ''}" data-act="gfxT" data-k="music">Drone</button><button class="btn small ${gfx.sfx ? 'on' : ''}" data-act="gfxT" data-k="sfx">Effects</button></div>
+  <div class="muted">Sound starts after your first tap. The DM's sounds play on every player's device too.</div>`;
 const opt = (v, label, sel) => `<option value="${esc(v)}" ${sel ? 'selected' : ''}>${esc(label)}</option>`;
 const logList = (n = 999) => state.log.slice().reverse().slice(0, n).map(l => `<div>${esc(l.m)}</div>`).join('') || '<div class="muted">Quiet. Too quiet.</div>';
 
@@ -43,6 +58,7 @@ function tokensTab(){
         <label class="muted">Attacks — one per line: Name | +hit | damage | type | flair (optional, {A} and {T})</label>
         <textarea class="txt" data-edit="atk" data-id="${t.id}">${esc(attacksToText(t.attacks))}</textarea>
         ${art(t.id, t.name)}
+        ${modelSlot('tok:' + t.id, t.name)}
         <div class="row"><button class="btn small" data-act="placeTok" data-id="${t.id}">📍 Place on map</button><button class="btn small danger" data-act="removeTok" data-id="${t.id}">Remove</button></div>` : ''}
     </div>`;
   }
@@ -75,6 +91,7 @@ function bestiaryTab(){
         ${(b.specials || []).map(s => `<div class="trait"><b>✦ ${esc(s.n)}.</b> <span class="muted">${esc(s.fx)}</span></div>`).join('')}
         <h4>What it looks like</h4><div class="look">${esc(b.look)}</div>
         ${art(b.id, b.name)}
+        ${modelSlot('bid:' + b.id, b.name)}
         <h4>Grok prompt</h4><textarea class="txt" readonly id="pr-${b.id}">${esc(b.prompt)}</textarea>
         <div class="row"><button class="btn small" data-act="copy" data-k="pr-${b.id}">Copy prompt</button></div>` : ''}</div>`;
   }
@@ -143,6 +160,9 @@ function buildTab(){
     <textarea class="txt" id="importText" style="min-height:110px;font-family:ui-monospace,monospace;font-size:12px" placeholder="Paste here, or choose a file…"></textarea>
     <div class="row"><label class="btn small">📄 Choose file<input type="file" accept=".json,.txt,.map" data-edit="importMap" hidden></label>
       <button class="btn small primary" data-act="importFloor">Replace this floor</button><button class="btn small danger" data-act="importDelve">Import as a new delve</button></div>
+    <h3>Dungeon kit (3D models)</h3>
+    <div class="muted">Free CC0 kits (Kenney, Quaternius) work well. The piece is stretched to fill one square; walls stand 7 ft tall.</div>
+    ${modelSlot('kit:wall', 'walls')}${modelSlot('kit:floor', 'floor tiles')}
     <h3>Export this floor</h3>
     <div class="row"><button class="btn small" data-act="copyAscii">Copy as ASCII</button><button class="btn small" data-act="downloadFloor">⬇ Floor JSON</button></div>`;
   return h;
@@ -193,6 +213,7 @@ function tableTab(){
   }
   h += `<div class="row"><button class="btn ${ui.tableView ? 'on' : ''}" data-act="tableView">📺 Table view ${ui.tableView ? 'ON' : 'off'}</button></div>
     <div class="muted">Table view shows what players see — fog, no room secrets, no hidden traps or secret doors, no monster HP. Use it when the screen is cast to a TV.</div>
+    ${gfxPanel()}
     <h3>Save</h3><div class="muted">Autosaves in this browser. Export to move a delve between devices or keep backups. Your edited tables and creatures travel with the save.</div>
     <div class="row"><button class="btn" data-act="export">⬇ Export</button><label class="btn">⬆ Import<input type="file" accept=".json" data-edit="import" hidden></label><button class="btn small" data-act="startScreen">Start screen</button></div>
     <h3>Log</h3><div class="log">${logList()}</div>`;
@@ -212,7 +233,7 @@ function heroTab(){
       <div class="row"><button class="btn small" data-act="sel" data-id="${me.id}">Select & show moves</button><button class="btn small" data-act="search">🔍 Search</button>${st ? `<button class="btn small primary" data-act="stairs">${st === 'down' ? '▼ Descend' : '▲ Ascend'}</button>` : ''}${turn ? `<button class="btn small primary" data-act="endMyTurn">End my turn</button>` : ''}</div></div>`;
     h += `<div class="muted">${state.combat.active ? (turn ? '<b style="color:var(--candle)">It is your turn.</b> Tap a glowing tile to move.' : 'Combat — wait for your turn to move.') : 'Exploring — tap your hero, then a glowing tile.'}<br>Tap a door next to you to open it. Long-press or use ◎ to ping a spot for everyone.</div>`;
   }
-  h += `<h3>Log</h3><div class="log">${logList(25)}</div>`;
+  h += gfxPanel() + `<h3>Log</h3><div class="log">${logList(25)}</div>`;
   return h;
 }
 

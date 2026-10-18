@@ -24,6 +24,8 @@ import { changed, exportDelve, importDelve, loadLocal, loadState, deserialize, s
 import { hostTable, closeTable, joinTable, sendHost, broadcast, pushState } from '../net/table.js';
 import { newDelve, importMap, setAutoLink, removeRoom, populate, clearMonsters, addFloorBelow, removeBottomFloor, randomSeed } from '../game/build.js';
 import { populateFloor } from '../engine/generator.js';
+import { setGfx, gfx } from '../render/gfx.js';
+import { putModel, deleteModel } from '../render/models.js';
 import { buildSessionDelve, placeSessionEncounter, readAloud, tickClock, applyTicks, rollNight, shareNight, setSessionDread, markBeat, printSessions, sessionById, SESSIONS } from '../game/campaign.js';
 
 const actor = () => ui.role === 'player' ? tokById(ui.myToken) : (ui.selected && tokById(ui.selected));
@@ -116,6 +118,10 @@ document.addEventListener('click', e => {
     case 'refog': state.explored[ui.floor] = new Set(); updateVision(); rebuildFog(ui.floor); changed(); toast('Fog rolls back in.'); break;
     case 'paintMode': ui.paintType = $('#paintType').value; setMode(ui.mode === 'paint' ? 'select' : 'paint', { type:ui.paintType }, `Tap a room to make it a ${ROOM_TYPES[ui.paintType].label}`); break;
     case 'goRoom': { const r = roomById(state.floors[ui.floor], +id); if (r){ ui.selRoom = r.id; focusTile(ui.floor, r.cx, r.cy); buildFloor(ui.floor); renderPanel(); } } break;
+    // graphics, sound, models
+    case 'gfxQ': setGfx({ quality:k }); renderPanel(); break;
+    case 'gfxT': setGfx({ [k]:!gfx[k] }); renderPanel(); break;
+    case 'clearModel': deleteModel(k).then(() => { broadcast({ t:'model', key:k, buf:null }); renderPanel(); }); break;
     // story tab
     case 'session': state.campaign.session = +k; changed(); renderPanel(); $('#tabBody').scrollTop = 0; break;
     case 'sessDread': setSessionDread(+k); break;
@@ -184,6 +190,11 @@ document.addEventListener('change', e => {
   else if (kind === 'addCond' && sel && el.value){ addCond(sel, el.value, -1); changed(); }
   else if (kind === 'doorDc'){ const dr = selectedDoor(); if (dr){ dr.dc = +el.value || 15; changed(); } }
   else if (kind === 'trapKind'){ const tr = selectedTrap(); if (tr){ tr.kind = el.value; buildFloor(ui.selTrap.floor); changed(); } }
+  else if (kind === 'model' && el.files[0]){
+    const file = el.files[0], key = el.dataset.k;
+    file.arrayBuffer().then(buf => putModel(key, buf, file.name).then(() => { broadcast({ t:'model', key, name:file.name, buf }); toast(`${file.name} loaded.`); renderPanel(); }))
+      .catch(err => toast('Could not read that model: ' + (err?.message || err)));
+  }
   else if (kind === 'beat'){ markBeat(+el.dataset.k, el.dataset.id, el.checked); }
   else if (kind === 'sessNotes'){ state.campaign.notes[el.dataset.k] = el.value; changed(); }
   else if (kind === 'camp'){ state.campaign[el.dataset.f] = el.value; changed(); }
@@ -197,6 +208,7 @@ document.addEventListener('change', e => {
 });
 document.addEventListener('input', e => {
   if (e.target.id === 'dread') setDread(+e.target.value);
+  if (e.target.dataset?.edit === 'gfxVol') setGfx({ volume:+e.target.value });
   if (e.target.id === 'bestSearch'){ ui.bestSearch = e.target.value; const pos = e.target.selectionStart; renderPanel(); const s = $('#bestSearch'); s.focus(); s.setSelectionRange(pos, pos); }
   if (e.target.id === 'ndTemplate' || e.target.id === 'newTemplate'){ const tp = TEMPLATES.find(t => t.id === e.target.value); const b = $(e.target.id === 'ndTemplate' ? '#ndBlurb' : '#newBlurb'); if (b && tp) b.textContent = tp.blurb;
     const fl = $(e.target.id === 'ndTemplate' ? '#ndFloors' : '#newFloors'); if (fl && tp) fl.value = String(tp.floors.length); }

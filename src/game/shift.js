@@ -11,6 +11,7 @@ import { animateGridChange, buildFloor } from '../render/floors.js';
 import { syncTokens } from '../render/minis.js';
 import { burst, clearReach, showReach } from '../render/effects.js';
 import { showCard } from '../ui/hud.js';
+import { sfx } from '../audio/sound.js';
 import { runFx, zoneSource } from './combat.js';
 import { changed, broadcast } from './session.js';
 import { tokById } from '../engine/state.js';
@@ -86,6 +87,7 @@ export function shiftFloor(L, why, forced){
       }
     }
   }
+  sfx('grind');
   carve(f, here().map(t => ({ x:t.x, y:t.y })));
   if (rewired) placeDoors(f, Math.random, { doors:.3, locked:.1, secret:.05 });
   const gridChanged = f.grid.join('') !== oldGrid.join('');

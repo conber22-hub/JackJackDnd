@@ -10,11 +10,12 @@ import { currentTurn, moveAllowance } from '../game/rules.js';
 import { onStairs, selectedDoor, selectedTrap, nearestHero } from '../game/actions.js';
 import { undoCount } from '../game/session.js';
 import { renderPanel } from './panels.js';
+import { sfx } from '../audio/sound.js';
 
 export function toast(msg){ const el = document.createElement('div'); el.className = 'toast'; el.textContent = msg; $('#toasts').appendChild(el); setTimeout(() => el.remove(), 3800); while ($('#toasts').children.length > 5) $('#toasts').firstChild.remove(); }
 export function banner(text){ const b = $('#turnBanner'); b.textContent = text; b.style.opacity = 1; clearTimeout(banner._t); banner._t = setTimeout(() => b.style.opacity = 0, 1800); }
 export function showWhisper(text){ const w = $('#whisper'); w.textContent = text; w.style.opacity = .9; clearTimeout(showWhisper._t); showWhisper._t = setTimeout(() => w.style.opacity = 0, 3800); }
-export function sendWhisper(text){ showWhisper(text); broadcast({ t:'whisper', text }); }
+export function sendWhisper(text){ showWhisper(text); broadcast({ t:'whisper', text }); sfx('whisper'); }
 export function showCard(c, share = true){
   const layer = $('#cardLayer'), el = document.createElement('div');
   el.className = 'pop ' + (c.kind || '');
