@@ -78,7 +78,7 @@ export function newState(opts){
   try { s.floors = genDelve(s.meta); } finally { state = prev; }
   s.floors.forEach((f, L) => s.explored[L] = new Set());
   const f0 = s.floors[0], r0 = f0.rooms[0];
-  DEFAULT_PARTY.forEach((p, i) => {
+  if (opts.party !== false) DEFAULT_PARTY.forEach((p, i) => {
     const t = makePC(p); t.floor = 0;
     t.x = clamp(r0.x + 1 + (i % 3), r0.x, r0.x + r0.w - 1); t.y = clamp(r0.y + 1 + Math.floor(i / 3), r0.y, r0.y + r0.h - 1);
     s.tokens.push(t);

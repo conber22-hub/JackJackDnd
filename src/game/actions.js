@@ -12,7 +12,7 @@ import { syncTokens, tokenViews } from '../render/minis.js';
 import { showReach, clearReach, refreshSelectionRing, spawnPing, burst } from '../render/effects.js';
 import { showCard, toast, sendWhisper, renderTop, renderSel } from '../ui/hud.js';
 import { renderPanel } from '../ui/panels.js';
-import { canAct, moveAllowance, addCond } from './rules.js';
+import { canAct, moveAllowance, addCond, saveBonus } from './rules.js';
 import { applyDamage, runFx, zoneSource } from './combat.js';
 import { changed, broadcast, sendHost } from './session.js';
 import { sfx } from '../audio/sound.js';
@@ -163,7 +163,7 @@ export function triggerTrap(t, tr){
   const base = k.dice && k.dice !== '0' ? rollDice(k.dice).total : 0, lines = [], fallers = [];
   for (const o of targets){
     let dmg = base, ok = false;
-    if (k.save !== 'none'){ const r = d(20) + (o.saveMod || 0); ok = r >= k.dc; if (ok) dmg = Math.floor(dmg / 2);
+    if (k.save !== 'none'){ const r = d(20) + saveBonus(o, k.save); ok = r >= k.dc; if (ok) dmg = Math.floor(dmg / 2);
       lines.push(`${esc(o.name)} — ${k.save.toUpperCase()} ${r} vs ${k.dc}: <b>${ok ? 'saved' : 'failed'}</b>${dmg ? ` → ${dmg} ${k.type}` : ''}${!ok && k.cond ? ` + ${k.cond}` : ''}`); }
     else if (dmg) lines.push(`${esc(o.name)} → <b>${dmg}</b> ${k.type}`);
     if (!ok && k.cond && CONDITIONS[k.cond]) addCond(o, k.cond, 1);
@@ -204,7 +204,7 @@ export function doorAction(actor, L, id, act){
   }
   else if (act === 'pick' || act === 'force'){
     if (!actor) return;
-    const r = d(20), mod = act === 'pick' ? (actor.check || 0) : (actor.saveMod || 0) + 2, dc = act === 'pick' ? dr.dc : dr.dc + 2, tot = r + mod, ok = tot >= dc;
+    const r = d(20), mod = act === 'pick' ? (actor.check || 0) : saveBonus(actor, 'str') + 2, dc = act === 'pick' ? dr.dc : dr.dc + 2, tot = r + mod, ok = tot >= dc;
     showCard({ kind:ok ? '' : 'miss', title:`${actor.name} ${act === 'pick' ? 'picks the lock' : 'throws a shoulder into the door'}`, sub:`DC ${dc}`,
       lines:[`d20 <b>${r}</b> + ${mod} = <b>${tot}</b> — <b>${ok ? (act === 'pick' ? 'UNLOCKED' : 'IT GIVES') : 'it holds'}</b>`], flair:act === 'force' ? 'The sound carries a long way down here.' : '' });
     log(`${actor.name} ${ok ? (act === 'pick' ? 'unlocks' : 'forces open') : 'fails to open'} a door.`);

@@ -81,6 +81,41 @@ h4{margin:10px 0 6px;font-size:14px;color:var(--silver);letter-spacing:.04em}
 .clock i.on{background:var(--blood);border-color:#ff8a8a}
 .placegrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;color:var(--dim)}
 details.card summary{cursor:pointer;font-size:13px}
+/* character creator & sheets */
+.modal .box.wide{width:min(1100px,100%)}
+.cr-head{display:flex;align-items:center;justify-content:space-between}
+.cr-head h1{font-size:28px}
+.cr-cols{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:18px;align-items:start}
+.cr-side{position:sticky;top:0}
+.cr-form label{display:block;font-size:12px;color:var(--dim);margin:6px 0}
+.cr-form label .txt{margin-top:3px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.cr-ab{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:8px 0}
+.cr-ab div{display:flex;flex-direction:column;align-items:center;gap:3px;border:1px solid var(--line);border-radius:10px;padding:6px 4px;background:#141017}
+.cr-ab div.dup{border-color:var(--blood)}
+.cr-ab small{color:var(--dim);font-size:11px;letter-spacing:.08em}
+.cr-ab .txt{width:100%;text-align:center;padding:4px}
+.cr-ab b{font-size:18px}.cr-ab i{color:var(--candle);font-style:normal;font-size:13px}
+.crc{display:flex;gap:8px;align-items:flex-start;font-size:13px;margin:5px 0;color:#d8ccb9;cursor:pointer}
+.crc input{margin-top:3px;accent-color:var(--candle)}
+.crc input:disabled + span{color:var(--dim)}
+.cr-form input[type=color]{height:36px;padding:2px}
+.cr-chk{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:0 10px}
+.sheet{border:1px solid var(--line);border-radius:14px;padding:12px;background:#141017;margin-bottom:10px}
+.sheet-h{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:16px}
+.sheet-h b{font-family:"Cormorant Garamond",Georgia,serif;font-size:22px}
+.sheet-k{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.sheet-k span{display:flex;flex-direction:column;align-items:center;border:1px solid var(--line);border-radius:10px;padding:4px 10px;font-size:11px;color:var(--dim);min-width:58px}
+.sheet-k b{font-size:18px;color:var(--ink)}
+.sheet-ab{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-bottom:8px}
+.sheet-ab div{display:flex;flex-direction:column;align-items:center;font-size:12px;border:1px solid var(--line);border-radius:8px;padding:4px 2px}
+.sheet-ab small{color:var(--dim)} .sheet-ab b{font-size:16px} .sheet-ab i{color:var(--candle);font-style:normal} .sheet-ab em{font-size:10px;color:var(--dim);font-style:normal}
+.sheet-l{font-size:13px;margin:5px 0;color:#d8ccb9}
+.sheet-l b{color:var(--candle);margin-right:4px}
+.herorow{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:6px 10px;margin:6px 0;background:#141017}
+.herorow img{width:34px;height:34px;border-radius:8px;object-fit:cover}
+.herorow .nm{flex:1}
+@media (max-width:760px){ .cr-cols{grid-template-columns:1fr} .cr-side{position:static} .cr-ab{grid-template-columns:repeat(3,1fr)} .grid3{grid-template-columns:1fr 1fr} }
 .toolgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 0}
 .grasp .die{display:inline-grid;place-items:center;min-width:38px;height:34px;border:1px solid var(--line);border-radius:8px;color:var(--dim);font-weight:600}
 .grasp .die.on{border-color:#e6d3b8;color:#fff;background:#3a2a26;box-shadow:0 0 10px #e6d3b844}
@@ -263,15 +298,23 @@ textarea.txt{min-height:70px;resize:vertical;font-size:13px}
       <div><label class="muted">Floors</label><select class="txt" id="newFloors"><option>1</option><option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option><option>7</option><option>8</option></select></div>
     </div>
     <div class="row"><button class="btn primary" data-act="startNew">Descend as DM</button></div>
-    <h2>Join a table (Player)</h2>
+    <label class="beat" style="margin-top:6px"><input type="checkbox" id="newDemoParty"><span>Bring the demo party (Gribbles, Mulan, Milson, Alexander, Vlad). Leave it off for a new campaign — players bring their own characters.</span></label>
+    <h2>Your heroes (Player)</h2>
+    <div class="muted">Make your character here. It stays in this browser and goes with you to any table you join.</div>
+    <div id="heroList"></div>
+    <div class="row"><button class="btn primary" data-act="newHero">✚ Create a character</button></div>
+    <h2>Join a table</h2>
     <div class="grid2">
       <div><label class="muted">Table code from your DM</label><input class="txt" id="joinCode" placeholder="e.g. HX7Q"></div>
-      <div><label class="muted">Your character's name</label><input class="txt" id="joinName" placeholder="e.g. Gribbles"></div>
+      <div><label class="muted">Playing as</label><select class="txt" id="joinHero"></select></div>
     </div>
+    <div class="row" id="joinNameRow"><div style="flex:1"><label class="muted">…or just a name (no sheet)</label><input class="txt" id="joinName" placeholder="e.g. Gribbles"></div></div>
     <div class="row"><button class="btn" data-act="join">Join the table</button></div>
     <div class="muted" style="margin-top:12px">Players open this same file on their own device. Voice stays on Discord — this handles the map, the minis and the dread.</div>
   </div>
 </div>
+
+<div class="modal hidden" id="charModal"><div class="box wide" id="charBox"></div></div>
 
 <div class="modal hidden" id="helpModal">
   <div class="box">

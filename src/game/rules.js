@@ -7,6 +7,8 @@ export const turnKey = () => `${state.combat.round}:${state.combat.idx}`;
 export function canAct(t){ return !state.combat.active || currentTurn()?.id === t.id; }
 
 export const hasCond = (t, n) => !!t.conds?.some(c => c.n === n);
+// A creature's saving throw bonus for one ability (heroes from the creator have all six; others use one number).
+export const saveBonus = (t, ab) => t.saves?.[String(ab).slice(0, 3).toLowerCase()] ?? t.saveMod ?? 0;
 export function addCond(t, n, rounds = 1, src){
   t.conds ||= [];
   const c = t.conds.find(c => c.n === n);

@@ -10,7 +10,7 @@ import { burst, showReach, clearReach } from '../render/effects.js';
 import { showCard, toast, banner, sendWhisper } from '../ui/hud.js';
 import { WHISPERS } from '../data/dread.js';
 import { sfx } from '../audio/sound.js';
-import { currentTurn, addCond, tickConds, hasCond } from './rules.js';
+import { currentTurn, addCond, tickConds, hasCond, saveBonus } from './rules.js';
 import { shiftFloor } from './shift.js';
 import { graspRoll, graspStep, graspReset } from './grasp.js';
 import { changed, broadcast } from './session.js';
@@ -124,7 +124,7 @@ export function doAttack(aId, tId, i, mode = 'normal'){
   if (why.length) lines.push(`<span class="muted">${esc(why.join(' · '))}</span>`);
   if (hasTag(a, 'seep') && D.hit) lines.push(`<span class="muted">+${D.hit} to hit from Dread ${state.dread}</span>`);
   if (hit && atk.on && !tg.dead){
-    const s = d(20) + (tg.saveMod || 0), ok = s >= atk.on.dc;
+    const s = d(20) + saveBonus(tg, atk.on.save), ok = s >= atk.on.dc;
     lines.push(`${esc(tg.name)} — ${atk.on.save.toUpperCase()} save ${s} vs ${atk.on.dc}: <b>${ok ? 'resists' : atk.on.cond}</b>`);
     if (!ok && (atk.on.cond !== 'seeded' || isHost(tg))) addCond(tg, atk.on.cond, atk.on.rounds || 1, a.bid);
   }
@@ -254,7 +254,7 @@ export function runFx(src, fx, quiet){
     const base = rollDice(dice).total, lines = [];
     for (const t of targets){
       let dmg = base, ok = false;
-      if (save !== 'none'){ const r = d(20) + (t.saveMod || 0); ok = r >= +dc; if (ok) dmg = Math.floor(dmg / 2); lines.push(`${esc(t.name)} — ${save.toUpperCase()} save ${r} vs ${dc}: <b>${ok ? 'saved' : 'failed'}</b> → ${dmg}${!ok && cond ? ` + ${cond}` : ''}`); }
+      if (save !== 'none'){ const r = d(20) + saveBonus(t, save); ok = r >= +dc; if (ok) dmg = Math.floor(dmg / 2); lines.push(`${esc(t.name)} — ${save.toUpperCase()} save ${r} vs ${dc}: <b>${ok ? 'saved' : 'failed'}</b> → ${dmg}${!ok && cond ? ` + ${cond}` : ''}`); }
       else lines.push(`${esc(t.name)} → <b>${dmg}</b>${cond ? ` + ${cond}` : ''}`);
       if (cond && !ok && CONDITIONS[cond]) addCond(t, cond, 1);
       applyDamage(t, dmg, type, src);
@@ -269,7 +269,7 @@ export function runFx(src, fx, quiet){
     let targets = partyOn(L); if (who === 'random' && targets.length) targets = [pick(targets)];
     const base = dice && dice !== '0' ? rollDice(dice).total : 0, lines = [];
     for (const t of targets){
-      const r = d(20) + (t.saveMod || 0), ok = r >= +dc, dmg = ok ? Math.floor(base / 2) : base;
+      const r = d(20) + saveBonus(t, save), ok = r >= +dc, dmg = ok ? Math.floor(base / 2) : base;
       lines.push(`${esc(t.name)} — ${String(save).toUpperCase()} ${r} vs ${dc}: <b>${ok ? 'saved' : 'failed'}</b>${dmg ? ` → ${dmg} ${type}` : ''}${!ok && cond && cond !== '-' ? ` + ${cond === 'pit' ? 'dragged down' : cond}` : ''}`);
       if (dmg) applyDamage(t, dmg, type, src);
       if (!ok && cond === 'pit' && !t.dead) setTimeout(() => fall(t), 500);
@@ -314,6 +314,32 @@ export function runFx(src, fx, quiet){
   else if (kind === 'note'){ /* rules text only — useSpecial shows the card */ }
   else if (kind) toast(`Unknown effect "${fx}"`);
 }
+/* ---------- heroes' spells (from the character creator) ---------- */
+export function castSpell(casterId, targetId, i){
+  const c = tokById(casterId), tg = tokById(targetId), sp = c?.casts?.[i]; if (!c || !tg || !sp) return;
+  sfx('roll');
+  if (sp.k === 'heal'){
+    const n = rollDice(sp.d).total + (sp.healMod || 0);
+    heal(tg, n); showCard({ kind:'', title:`${c.name}: ${sp.n}`, sub:`on ${tg.name}`, flair:'Warmth, and the wound closes a little.', big:`+${n} HP` });
+    log(`${c.name} casts ${sp.n} on ${tg.name}: +${n} HP.`); changed(); return;
+  }
+  if (sp.k === 'auto'){
+    const n = rollDice(sp.d).total; showCard({ kind:'', title:`${c.name}: ${sp.n}`, sub:`on ${tg.name}`, big:`${n} ${sp.ty}` });
+    log(`${c.name} casts ${sp.n} on ${tg.name}: ${n} ${sp.ty}.`); applyDamage(tg, n, sp.ty, c); changed(); return;
+  }
+  const targets = sp.rad ? state.tokens.filter(t => t.floor === tg.floor && !t.dead && !t.flags.gone && t.id !== c.id && cheb(t.x, t.y, tg.x, tg.y) <= sp.rad) : [tg];
+  const base = sp.d ? rollDice(sp.d).total : 0, lines = [];
+  for (const t of targets){
+    const r = d(20) + saveBonus(t, sp.sv), ok = r >= sp.dc, dmg = base ? (ok ? (sp.half ? Math.floor(base / 2) : 0) : base) : 0;
+    lines.push(`${esc(t.name)} — ${String(sp.sv).toUpperCase()} ${r} vs ${sp.dc}: <b>${ok ? 'saved' : 'failed'}</b>${dmg ? ` → ${dmg} ${sp.ty}` : ''}${!ok && sp.cond ? ` + ${sp.cond}` : ''}`);
+    if (!ok && sp.cond && CONDITIONS[sp.cond]) addCond(t, sp.cond, 1, null);
+    if (dmg) applyDamage(t, dmg, sp.ty, c);
+  }
+  showCard({ kind:'', title:`${c.name}: ${sp.n}`, sub:`DC ${sp.dc} ${String(sp.sv).toUpperCase()}${sp.rad ? ` · ${sp.rad * 5} ft. around ${tg.name}` : ` · ${tg.name}`}${base ? ` · ${sp.d} ${sp.ty}` : ''}`, lines });
+  log(`${c.name} casts ${sp.n}: ${targets.length} caught.`);
+  changed();
+}
+
 export function useSpecial(t, s){
   if (/toll|bell/i.test(s.n) || s.fx === 'dread+1') sfx('toll');
   if (s.f) showCard({ kind:'seep', title:`${t.name}: ${s.n}`, flair:s.f });

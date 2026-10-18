@@ -15,6 +15,9 @@ import { undoCount } from '../game/session.js';
 import { hpBar, condChips, BUILD_TOOLS } from './hud.js';
 import { SHAPE_NAMES } from '../render/minis.js';
 import { gfx } from '../render/gfx.js';
+import { heroStats } from '../engine/hero.js';
+import { sheetHTML } from './creator.js';
+import { myHero } from '../game/heroes.js';
 import { modelInfo } from '../render/models.js';
 import { CAMPAIGN, SESSIONS, CLOCKS, PLACES, PLACE_STATES, CAST, FORTUNE } from '../data/campaign.js';
 
@@ -63,6 +66,15 @@ function tokensTab(){
     </div>`;
   }
   h += `<div class="row"><input class="txt" style="flex:1" id="newName" placeholder="Name (e.g. Ireena, Father Lucian)"><button class="btn small" data-act="addPc">+ Hero</button><button class="btn small" data-act="addNpc">+ Ally NPC</button></div>`;
+  const chars = Object.values(state.characters || {});
+  h += `<h3>Characters (${chars.length})</h3><div class="muted">Every sheet your players bring is kept here, in this campaign's save — even after they leave the table.</div>`;
+  for (const c of chars){
+    const tok = state.tokens.find(t => t.charId === c.id), st = heroStats(c);
+    h += `<div class="card"><div class="hd"><span class="dot" style="color:${c.color};background:${c.color}"></span><span class="nm">${esc(c.name)} <span class="muted">${esc(c.sp)} ${esc(c.cls)} ${st.L}${c.owner ? ` · 🎮 ${esc(c.owner)}` : ''}</span></span>
+      <button class="btn small" data-act="dmSheet" data-id="${c.id}">Sheet</button>${tok ? '' : `<button class="btn small" data-act="placeChar" data-id="${c.id}">Place</button>`}<button class="btn small danger" data-act="removeChar" data-id="${c.id}">✕</button></div>
+      <div class="stat">AC ${st.ac} · HP ${st.hp} · Speed ${st.spd} · PP ${st.passive}${st.dc ? ` · Spell DC ${st.dc}` : ''}${c.goBackFor ? ` · would go back for <i>${esc(c.goBackFor)}</i>` : ''}${c.homeSmell ? ` · home smells of <i>${esc(c.homeSmell)}</i>` : ''}</div></div>`;
+  }
+  h += `<div class="row"><button class="btn small primary" data-act="dmNewChar">✚ Create a character</button></div>`;
   const foes = state.tokens.filter(t => t.kind === 'monster' && t.floor === ui.floor);
   h += `<h3>Horrors on this floor (${foes.filter(t => !t.dead).length})</h3>`;
   if (!foes.length) h += `<div class="muted">Nothing — yet. Use the Bestiary tab to place creatures, or Populate in the Build tab.</div>`;
@@ -227,10 +239,12 @@ function heroTab(){
   else if (me.flags.taken) h += `<div class="card"><div class="fam-seep">☣ The Seep has taken ${esc(me.name)}. Wait for the DM.</div></div>`;
   else {
     const turn = currentTurn()?.id === me.id, st = onStairs(me);
+    const sheet = ui.myHeroId && myHero(ui.myHeroId);
     h += `<div class="card sel"><div class="hd"><span class="dot" style="color:${me.color};background:${me.color}"></span><span class="nm">${esc(me.name)}${me.dead ? ' ✝' : ''}</span></div>
       <div class="stat">AC ${me.ac} · HP ${me.hp}/${me.maxHp} · Speed ${me.speed} ft${state.combat.active ? ` · moved ${(me.moved || 0) * 5} ft` : ''}</div>${hpBar(me, true)}
       ${me.conds?.length ? `<div>${condChips(me, false)}</div>` : ''}
       <div class="row"><button class="btn small" data-act="sel" data-id="${me.id}">Select & show moves</button><button class="btn small" data-act="search">🔍 Search</button>${st ? `<button class="btn small primary" data-act="stairs">${st === 'down' ? '▼ Descend' : '▲ Ascend'}</button>` : ''}${turn ? `<button class="btn small primary" data-act="endMyTurn">End my turn</button>` : ''}</div></div>`;
+    if (sheet) h += sheetHTML(sheet) + `<div class="row"><button class="btn small" data-act="editHero" data-id="${sheet.id}">✎ Edit / level up</button></div>`;
     h += `<div class="muted">${state.combat.active ? (turn ? '<b style="color:var(--candle)">It is your turn.</b> Tap a glowing tile to move.' : 'Combat — wait for your turn to move.') : 'Exploring — tap your hero, then a glowing tile.'}<br>Tap a door next to you to open it. Long-press or use ◎ to ping a spot for everyone.</div>`;
   }
   h += gfxPanel() + `<h3>Log</h3><div class="log">${logList(25)}</div>`;

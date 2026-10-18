@@ -73,8 +73,9 @@ export function resetScene(){
 export function loadState(s){
   setState(s); ui.role = 'dm'; ui.tab = ui.tab === 'hero' ? 'tokens' : ui.tab; undoStack.length = 0;
   resetScene(); ensureFloorViews(); updateVision(); buildAllFloors(); syncTokens();
-  const first = state.tokens.find(t => t.kind === 'pc' && !t.flags.gone) || state.tokens[0];
+  const first = state.tokens.find(t => t.kind === 'pc' && !t.flags.gone);
   goFloor(first ? first.floor : 0, false);
+  if (!first){ const r = state.floors[0].rooms[0]; camTo(new THREE.Vector3(wx(r.cx), floorY(0), wz(r.cy)), viewOffset(), 1.2); }
   if (first) camTo(new THREE.Vector3(wx(first.x), floorY(first.floor), wz(first.y)), viewOffset(), 1.2);
   $('#startModal').classList.add('hidden'); renderAll(); saveSoon(); pushState();
 }

@@ -14,6 +14,7 @@ import { serialize, deserialize, resetScene } from '../game/session.js';
 import { doMove, takeStairs, doPing, goFloor, select, animatePath, doorAction, search, disarmTrap } from '../game/actions.js';
 import { currentTurn, canAct } from '../game/rules.js';
 import { nextTurn } from '../game/combat.js';
+import { applyCharacter } from '../game/heroes.js';
 import { cheb } from '../util/core.js';
 import { sfx, onSfx } from '../audio/sound.js';
 import { putModel, allModels, deleteModel } from '../render/models.js';
@@ -46,7 +47,9 @@ function onHostMsg(c, m){
   const near = (L, i) => me && me.floor === L && cheb(me.x, me.y, i % state.floors[L].W, (i / state.floors[L].W) | 0) <= 1;
   if (m.t === 'hello'){
     seat.name = String(m.name || 'Player').slice(0, 30);
-    const match = state.tokens.find(t => t.kind === 'pc' && t.name.toLowerCase() === seat.name.toLowerCase() && !Object.values(state.seats).includes(t.id));
+    let match = null;
+    if (m.char?.id && m.char.cls) match = applyCharacter(m.char, { owner:m.char.player || seat.name });
+    match ||= state.tokens.find(t => t.kind === 'pc' && t.name.toLowerCase() === seat.name.toLowerCase() && !Object.values(state.seats).includes(t.id));
     if (match) state.seats[c.peer] = match.id;
     toast(`${seat.name} joined${match ? ` as ${match.name}` : ' — seat them in the Table tab'}`);
     c.send({ t:'art', art:state.art });
@@ -61,6 +64,10 @@ function onHostMsg(c, m){
     const dr = state.floors[m.floor]?.doors.find(d => d.id === m.id);
     if (dr && dr.state !== 'secret' && near(m.floor, dr.i) && ['toggle', 'pick', 'force'].includes(m.act) && canAct(me)) doorAction(me, m.floor, m.id, m.act);
   }
+  else if (m.t === 'char' && m.char?.id && m.char.cls){
+    const t = applyCharacter(m.char, { owner:m.char.player || seat.name }); if (t) state.seats[c.peer] = t.id;
+    toast(`${seat.name} updated ${m.char.name}.`); renderPanel(); pushState();
+  }
   else if (m.t === 'search'){ if (me && canAct(me)) search(me); }
   else if (m.t === 'disarm'){
     const tr = state.floors[m.floor]?.traps.find(t => t.id === m.id);
@@ -68,13 +75,13 @@ function onHostMsg(c, m){
   }
 }
 
-export function joinTable(code, name){
+export function joinTable(code, name, hero = null){
   ui.role = 'player'; ui.myName = name; ui.tab = 'hero';
   $('#startModal').classList.add('hidden'); renderAll();
   net.peer = new Peer();
   net.peer.on('open', () => {
     const c = net.peer.connect('dreaddelve-' + code.toLowerCase(), { reliable:true }); net.host = c;
-    c.on('open', () => { c.send({ t:'hello', name }); toast('Connected — waiting for the DM…'); });
+    c.on('open', () => { c.send({ t:'hello', name, ...(hero ? { char:hero } : {}) }); toast('Connected — waiting for the DM…'); });
     c.on('data', onClientMsg);
     c.on('close', () => toast('Disconnected from the table.'));
     setTimeout(() => { if (!c.open) toast('Could not reach that table — check the code.'); }, 9000);

@@ -108,6 +108,7 @@ export function renderSel(){
       acts += t.attacks.map((a, i) => `<button class="btn small" data-act="atk" data-i="${i}">🗡 ${esc(a.n)} <span class="muted">${a.b >= 0 ? '+' : ''}${a.b} · ${esc(a.d)}</span></button>`).join('');
     }
     if (!t.dead && b?.specials) acts += b.specials.map((s, i) => `<button class="btn small seep" data-act="special" data-i="${i}">✦ ${esc(s.n)}</button>`).join('');
+    if (!t.dead && t.casts?.length) acts += t.casts.map((s, i) => `<button class="btn small" data-act="cast" data-i="${i}" title="${s.k === 'heal' ? 'Heal' : s.d ? `${esc(s.d)} ${esc(s.ty || '')}` : esc(s.cond || '')}${s.sv ? ` · DC ${s.dc} ${s.sv.toUpperCase()}` : ''}${s.rad ? ` · ${s.rad * 5} ft.` : ''}">✨ ${esc(s.n)}</button>`).join('');
     acts += `<span style="display:inline-flex;gap:4px;align-items:center"><input class="txt num" id="hpAmt" type="number" value="5" min="0"><button class="btn small danger" data-act="dmg">− HP</button><button class="btn small" data-act="heal">+ HP</button></span>`;
     acts += `<select class="txt" style="width:auto" data-edit="addCond"><option value="">+ condition…</option>${Object.keys(CONDITIONS).map(k => `<option value="${k}">${CONDITIONS[k].icon} ${k}</option>`).join('')}</select>`;
     if (t.dead && t.kind !== 'pc' && (t.kind === 'npc' || b?.tags?.includes('host'))) acts += `<button class="btn small seep" data-act="infest">☣ Infest</button>`;
@@ -120,7 +121,7 @@ export function renderSel(){
   if (dm) acts += `<button class="btn small danger" data-act="remove">✕ Remove</button>`;
   const move = state.combat.active && showStats ? ` · ${moveAllowance(t) * 5} ft left` : '';
   const flags = [t.flags.rising && '<span class="fam-seep">rising…</span>', t.flags.seeded && '<span class="fam-seep">☣ seeded</span>', t.flags.latchedBy && !t.dead && tokById(t.flags.latchedBy) && !tokById(t.flags.latchedBy).dead && '<span class="fam-seep">a Seepling is latched on</span>', t.flags.alert && dm && 'alerted'].filter(Boolean);
-  el.innerHTML = `<div class="top"><span class="dot" style="color:${color};background:${color}"></span><span class="nm">${esc(t.name)}${t.dead ? ' ✝' : ''}${mine ? ' <span class="muted">(you)</span>' : ''}</span>
+  el.innerHTML = `<div class="top"><span class="dot" style="color:${color};background:${color}"></span><span class="nm">${esc(t.name)}${t.dead ? ' ✝' : ''}${mine ? ' <span class="muted">(you)</span>' : ''}${t.cls ? ` <span class="muted" style="font-size:13px">${esc(t.cls)}</span>` : ''}</span>
     ${b ? `<span class="muted">CR ${b.cr}</span>` : ''}<button class="btn small" data-act="deselect">✕</button></div>
     ${showStats ? `<div class="stat">AC <b>${t.ac}</b> · HP <b>${t.hp}/${t.maxHp}</b> · Speed <b>${t.speed} ft</b>${move}${flags.length ? ' · ' + flags.join(' · ') : ''}</div>${hpBar(t, t.kind !== 'monster')}` : (b ? `<div class="look">${esc(b.look)}</div>` : '')}
     ${t.conds?.length ? `<div>${condChips(t, dm)}</div>` : ''}

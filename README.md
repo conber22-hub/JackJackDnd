@@ -1,6 +1,6 @@
 # Dread Delve
 
-A 3D multi-floor dungeon simulator for the Dread Zone beneath Saint Andral's — a Flood-style parasite campaign in Barovia. Built in honor of Chance.
+A 3D multi-floor dungeon simulator for the Dread Zone beneath Saint Andral's — a Flood-style parasite campaign in Barovia (Curse of Strahd: Flood Edition, sessions 0–10 included, with a player character creator). Built in honor of Chance.
 
 **Play:** double-click `dread-delve.html` (Chrome or Edge). **Develop:** `npm install`, `npm run dev`. **Bake:** `npm run build`. **Test:** `npm test`.
 

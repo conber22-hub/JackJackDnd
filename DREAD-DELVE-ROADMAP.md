@@ -67,17 +67,66 @@ v0.1's single file is now a Vite project. `npm run build` bakes it back into one
 
 ---
 
-## Phases from here
+## v0.3 — Curse of Strahd: Flood Edition, Phase 4, and the character creator
 
-### Phase 4 — Make it beautiful
-1. Real 3D models (GLB): free CC0 dungeon kits from Kenney and Quaternius for walls, doors, torches and props. Load them in `src/render/minis.js` and `src/render/floors.js`; the procedural shapes stay as the fallback.
-2. Stone and wet-floor textures per floor theme.
-3. Torch shadows, bloom on glowing eyes and runes, and a film-grain/vignette pass.
-4. Sound: a drone per Dread level, stone grinding on Shift, hand-skitter loops, the Bellmouth's toll, a creak when doors open, and a click when a trap triggers.
-5. Animated minis: the Undertow's tendrils sway and hands crawl along walls.
+### The campaign (Story tab)
+- **Sessions 0–10 of Curse of Strahd: Flood Edition**, built from your Battle Table's Dark Lord desk and Bloom bestiary. The premise: an iron vessel fell into the Svalich Woods carrying the Bloom; when it reached the font beneath Saint Andral's in Vallaki, it became the Seep. Strahd did not invite it, and that is the whole of his interest in it.
+  - **0:** Session zero.
+  - **1–2:** The Narrow House.
+  - **3:** The Village of Barovia, and the Bloomed chapel.
+  - **4:** Tser Pool and the cards.
+  - **5:** The Iron Coffin.
+  - **6:** Old Bonegrinder.
+  - **7:** Vallaki.
+  - **8:** The Bones of Saint Andral.
+  - **9:** Beneath Saint Andral's.
+  - **10:** The Hand-Warrens and the Undertow, ending on the Count's dinner invitation.
+- **Each session has:**
+  - a hook and a premise;
+  - what to run from your book, and what the Flood Edition changes;
+  - a read-aloud you can push to every player's screen;
+  - scenes with checkable beats, a **one-tap dungeon build** and **one-tap encounters**;
+  - the faces involved, loot, suggested clock ticks, an ending, levelling, notes, and a print button.
+
+  **Nothing reprints the module** — run the locations from your own book.
+- **The Dark Lord desk:**
+  - clocks: the Count's patience, the Bloom tide (each quarter raises the Dread), Vallaki riot, Abbey mercy, Heart's rest;
+  - places and their states, the gaze, day and weather;
+  - the card reading, recorded so it is never lost;
+  - Roll the night: omen, roadside, dinner, rumour, stain, plus counsel;
+  - the faces, and how the Bloom hunts.
+
+  Players never receive the desk.
+- **`docs/curse-of-strahd-flood-edition.md`** is the whole guide as a document (`npm run campaign-doc` regenerates it).
+- **52 more creatures** from the Battle Table: the Bloom (Sporeling, Bloom Vessel, Carrier Hulk, Cyst Node, Bloom Stalker, Bloomed Wolf), the Barovian originals (Barovian Wolf, Count's Wolf, Scarecrow Watcher, Night Spawn, Mist Thing, Grave Ghoul, Dinner Guest), and SRD 5.2 undead and folk, with new minis for each.
+- **Seeded:** Bloom attacks can seed humanoids, who rise as Bloom Vessels next round unless healed or burned.
+- **New floor looks:** the Narrow House, the Svalich Woods, the Iron Coffin, Old Bonegrinder, the Village of Barovia, Castle Halls. Each has its own campaign template.
+- **Battle Table import:** real Battle Table saves come across. Levels become floors, pieces become rooms with shared walls, connections become doors, secret doors and openings, stairwells become stairs, and the roster lands on its level.
+
+### Phase 4 — Make it beautiful (done)
+1. **GLB models:** creature, hero and dungeon-kit (wall and floor) slots. They are kept in the browser's IndexedDB and sent to players; animations play.
+2. **Textures:** procedural per floor look, with bump maps and wet roughness. Nothing to download.
+3. **Post-processing:** bloom, film grain, vignette and colour fringe that worsen with the Dread. Torch shadows on High. Quality is set per device in the Table tab.
+4. **Sound:** synthesised. A drone that thickens with the Dread, plus grinding on the Shift, bell tolls, hand-skitter, door creaks, trap clicks, hits and misses, Bloom bursts and whispers. The DM's sounds play on every player's device.
+5. **Animated minis:** swaying tendrils and fingers, hands that climb walls, breathing, prowling wolves.
+
+### The character creator (done)
+- **On the start screen**, players use **Create a character**: SRD 5.2, 12 classes (each with its SRD subclass), 9 species, 4 backgrounds, levels 1–10.
+  - Ability scores by standard array, point buy, manual entry, or 4d6.
+  - Ability score increases, skills and expertise, armour, shield, weapons, fighting style and invocation.
+  - Spells, with cantrip and prepared limits; subclass and species spells are added automatically.
+  - A portrait, and the Session Zero questions (who they'd go back for, what they're ashamed of, why they walk into the fog, the smell of home).
+  - A live character sheet as they build.
+- **Heroes are kept in the player's browser.** When they join a table, the sheet is sent to the DM: the token appears with the right AC, HP, speed, initiative, per-ability saves, passive Perception, attacks, and castable spells.
+- **The player can level up** from their Your hero tab, and the DM's token updates while keeping damage.
+- **The DM's Tokens tab → Characters** keeps every sheet in the campaign save. From there you can open it, edit it, place it, or create characters yourself.
+- **New campaigns start with an empty party** (tick the demo-party box for Gribbles and friends).
+- **Heroes' spells are buttons** on their card: save spells, area spells centred on a target, heals and auto-hits all resolve with the hero's own DC.
 
 ### Phase 5 — Deeper rules
-Partly started: conditions with round durations and automatic advantage/disadvantage are in.
+Partly started: conditions with round durations, automatic advantage/disadvantage, per-ability saves and heroes' spells are in.
+- (new) Players roll their own attacks and spells from their device (the creator already gives them the numbers).
+- (new) Spell slots, rage and other resources counted on the token; rests.
 1. True line-of-sight fog. Doors already block sight, but walls still only block it by walking distance.
 2. A legendary action counter, and lair actions on initiative 20. These are written into the statblocks but not yet automated.
 3. Players request attacks and the DM approves the roll.
@@ -125,6 +174,15 @@ src/render/             Three.js
   minis.js              procedural 3D minis (SHAPES) + syncing tokens
   effects.js            selection ring, reach glow, pings, bursts, Build overlays
 src/net/table.js        multiplayer (host, join, messages)
+src/audio/sound.js      synthesised drone and sound effects
+src/data/campaign.js    Curse of Strahd: Flood Edition — sessions, clocks, faces, the night tables
+src/data/bestiary-barovia.js  creatures ported from the Battle Table
+src/data/srd.js         SRD 5.2 classes, species, backgrounds, weapons, armour, spells (levels 1–10)
+src/engine/hero.js      character sheet → stats, attacks, spells, token (pure, tested)
+src/game/campaign.js    building session dungeons, placing encounters, clocks, printing the guide
+src/game/heroes.js      players' heroes (their browser) and the DM's character roster
+src/ui/creator.js       the character creator
+src/render/textures.js · post.js · models.js · gfx.js   Phase 4: textures, post-processing, GLB models, quality settings
 src/ui/                 hud.js (top bar, dock, cards) · panels.js (tabs) · input.js (taps & drags) · events.js (buttons)
 tests/engine.test.js    node --test
 ```

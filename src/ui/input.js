@@ -11,7 +11,7 @@ import { $ } from '../util/core.js';
 import { toast, renderDock, BUILD_TOOLS } from './hud.js';
 import { renderPanel } from './panels.js';
 import { select, selectDoor, selectTrap, requestMove, doPing } from '../game/actions.js';
-import { doAttack, placeMonster } from '../game/combat.js';
+import { doAttack, placeMonster, castSpell } from '../game/combat.js';
 import { editTile, paintRoom, commitRoom, traceStep, commitCorridor, eraseAt, placeDoorAt, placeTrapAt, placeStairsAt } from '../game/build.js';
 import { changed, snapshot } from '../game/session.js';
 import { updateVision } from '../engine/grid.js';
@@ -159,6 +159,7 @@ function handleTap(cx, cy){
   const ti = tile ? tile.y * f.W + tile.x : -1;
   switch (ui.mode){
     case 'attack': if (tokId && tokId !== ui.modeData.attacker){ doAttack(ui.modeData.attacker, tokId, ui.modeData.i, ui.atkMode); ui.atkMode = 'normal'; setMode('select'); } return;
+    case 'cast': if (tokId){ castSpell(ui.modeData.caster, tokId, ui.modeData.i); setMode('select'); } return;
     case 'place':  if (tile && walk(f.grid[ti]) && !tokenAt(tile.floor, tile.x, tile.y)) placeMonster(ui.modeData.bid, tile); return;
     case 'placeTok': if (tile && walk(f.grid[ti])){ const t = tokById(ui.modeData.id); if (t){ t.floor = tile.floor; t.x = tile.x; t.y = tile.y; t.flags.gone = false; updateVision(); rebuildFog(); changed(); } setMode('select'); } return;
     case 'ping':   if (tile) doPing(tile); setMode('select'); return;
