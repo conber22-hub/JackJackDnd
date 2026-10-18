@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Dread Delve</title>
+<!--
+  DREAD DELVE — a 3D multi-floor dungeon simulator for the Dread Zone beneath Saint Andral's.
+  Built in honor of Chance.
+
+  This is the SOURCE page. `npm run dev` serves it live; `npm run build` bakes everything (Three.js and
+  PeerJS included) into one file, dread-delve.html, that you can double-click. See DREAD-DELVE-ROADMAP.md.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#09080d; --panel:rgba(17,13,21,.93); --panel2:#1b1620; --line:#3a2b33; --ink:#ece1cf; --dim:#a8998a;
+  --candle:#e9a54a; --blood:#b3303a; --seep:#9cc23c; --silver:#c8cbd6; --violet:#9b77dc; --ok:#56b39d;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden;-webkit-tap-highlight-color:transparent}
+button,input,select,textarea{font:inherit;color:inherit}
+code{background:#221a24;border-radius:4px;padding:0 4px;font-size:12px}
+#stage{position:fixed;inset:0;touch-action:none}
+#stage canvas{display:block;outline:none}
+#vignette{position:fixed;inset:0;pointer-events:none;z-index:1;background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.75) 100%)}
+#bloodrim{position:fixed;inset:0;pointer-events:none;z-index:1;box-shadow:inset 0 0 0 rgba(150,20,30,0);transition:box-shadow 1.2s}
+
+/* ---------- top bar ---------- */
+#topbar{position:fixed;top:0;left:0;right:0;min-height:54px;display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:8px 12px;z-index:6;background:linear-gradient(#0c0a10f2,#0c0a1000)}
+.brand{font-family:"Cormorant Garamond",Georgia,serif;font-weight:700;letter-spacing:.22em;font-size:20px;color:var(--candle);white-space:nowrap;text-shadow:0 0 12px #e9a54a55}
+.icon{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--panel);cursor:pointer;font-size:17px;display:grid;place-items:center}
+.icon:hover{border-color:var(--candle)}
+.floorNav{display:flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:3px 6px}
+.floorNav button{width:30px;height:30px;border:0;background:transparent;cursor:pointer;color:var(--candle);font-size:14px}
+#floorLabel{min-width:150px;text-align:center;font-family:"Cormorant Garamond",Georgia,serif;font-size:17px;line-height:1.1}
+#floorLabel small{display:block;font-family:system-ui,sans-serif;font-size:11px;color:var(--dim);letter-spacing:.08em;text-transform:uppercase}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel)}
+.seg button{border:0;background:transparent;padding:8px 12px;cursor:pointer;color:var(--dim)}
+.seg button.on{background:#2a1f26;color:var(--candle)}
+.dread{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:5px 12px}
+.dread label{white-space:nowrap;font-size:14px}
+.dread b{color:var(--blood);font-size:17px}
+#dreadName{color:var(--dim);font-style:italic}
+input[type=range]{accent-color:var(--blood);width:130px}
+.badge{padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel);font-size:13px;color:var(--dim);white-space:nowrap}
+#graspBadge{cursor:pointer;color:#e6d3b8}
+.spacer{flex:1}
+
+/* ---------- side panel ---------- */
+#panel{position:fixed;top:66px;left:12px;bottom:12px;width:360px;z-index:5;background:var(--panel);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;overflow:hidden;backdrop-filter:blur(6px);transition:transform .25s}
+#panel.closed{transform:translateX(-390px)}
+.tabs{display:flex;border-bottom:1px solid var(--line)}
+.tabs button{flex:1;padding:11px 2px;border:0;background:transparent;cursor:pointer;color:var(--dim);font-size:13px;border-bottom:2px solid transparent}
+.tabs button.on{color:var(--candle);border-bottom-color:var(--candle)}
+#tabBody{flex:1;overflow:auto;padding:12px;overscroll-behavior:contain}
+h3{font-family:"Cormorant Garamond",Georgia,serif;font-size:20px;margin:14px 0 8px;color:var(--candle);font-weight:700}
+h3:first-child{margin-top:2px}
+h4{margin:10px 0 6px;font-size:14px;color:var(--silver);letter-spacing:.04em}
+.muted{color:var(--dim);font-size:13px}
+.bad{color:#ff9b9b;font-size:13px;margin:4px 0}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0}
+.row > label{font-size:13px;color:var(--dim)}
+.btn{padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);cursor:pointer;min-height:36px}
+.btn:hover{border-color:var(--candle)}
+.btn.primary{background:#3a2516;border-color:#8b5a25;color:#ffd9a3}
+.btn.danger{background:#3a1519;border-color:#7a2730;color:#ffb3b8}
+.btn.seep{background:#1f2a14;border-color:#56702a;color:#d6f29b}
+.btn.on{border-color:var(--candle);color:var(--candle)}
+.btn.small{padding:5px 9px;min-height:30px;font-size:13px}
+.toolgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 0}
+.grasp .die{display:inline-grid;place-items:center;min-width:38px;height:34px;border:1px solid var(--line);border-radius:8px;color:var(--dim);font-weight:600}
+.grasp .die.on{border-color:#e6d3b8;color:#fff;background:#3a2a26;box-shadow:0 0 10px #e6d3b844}
+input.txt,select.txt,textarea.txt{background:#120e16;border:1px solid var(--line);border-radius:8px;padding:7px 9px;width:100%}
+input.num{width:64px}
+textarea.txt{min-height:70px;resize:vertical;font-size:13px}
+.card{border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0;background:#141017}
+.card.sel{border-color:var(--candle)}
+.card .hd{display:flex;align-items:center;gap:8px}
+.card .hd .nm{font-weight:600;flex:1}
+.dot{width:12px;height:12px;border-radius:50%;flex:none;box-shadow:0 0 6px currentColor}
+.chip{display:inline-block;padding:3px 9px;border-radius:999px;border:1px solid var(--line);font-size:12px;cursor:pointer;margin:2px;color:var(--dim)}
+.chip.on{color:var(--ink);border-color:var(--candle)}
+.fam-seep{color:var(--seep)} .fam-andral{color:var(--silver)} .fam-dread{color:#d98a8a}
+.stat{font-size:13px;color:var(--dim)}
+.stat b{color:var(--ink)}
+.trait{font-size:13px;margin:5px 0;color:#d8ccb9}
+.trait b{color:var(--candle)}
+.look{font-size:13px;font-style:italic;color:#cbbfae;border-left:2px solid var(--line);padding-left:8px;margin:6px 0}
+.artslot{display:flex;gap:10px;align-items:center;border:1px dashed #5a4550;border-radius:10px;padding:8px;margin:6px 0;font-size:12px;color:var(--dim)}
+.artslot img{width:56px;height:56px;object-fit:cover;border-radius:8px}
+.hpbar{height:6px;border-radius:4px;background:#2a1c20;overflow:hidden}
+.hpbar i{display:block;height:100%;background:linear-gradient(90deg,#8d1f2a,#d24a4a)}
+.hpbar.pc i{background:linear-gradient(90deg,#2d7d68,#56b39d)}
+.log{font-size:13px;max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:6px 8px;background:#100c13}
+.log div{padding:3px 0;border-bottom:1px solid #221a20}
+.log div:last-child{border-bottom:0}
+.code{font-family:"Cormorant Garamond",Georgia,serif;font-size:34px;letter-spacing:.25em;color:var(--candle);text-align:center;padding:6px;border:1px solid var(--line);border-radius:12px;background:#120e16;user-select:all}
+
+/* ---------- initiative ---------- */
+#initBar{position:fixed;top:66px;right:12px;width:230px;max-height:calc(100vh - 200px);z-index:5;background:var(--panel);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;overflow:hidden}
+#initBar.hidden{display:none}
+#initBar .ih{display:flex;align-items:center;padding:9px 12px;border-bottom:1px solid var(--line)}
+#initBar .ih b{flex:1;font-family:"Cormorant Garamond",Georgia,serif;font-size:18px;color:var(--candle)}
+#initList{overflow:auto;padding:6px}
+.ini{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:10px;cursor:pointer;border:1px solid transparent}
+.ini:hover{background:#1c161f}
+.ini.cur{border-color:var(--candle);background:#2a1d17}
+.ini.dead{opacity:.4;text-decoration:line-through}
+.ini .n{flex:1;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ini .v{font-size:12px;color:var(--dim);width:22px;text-align:right}
+#initBar .ib{display:flex;gap:6px;padding:8px;border-top:1px solid var(--line)}
+#initBar .ib .btn{flex:1;padding:6px}
+
+/* ---------- selection card + tool dock ---------- */
+#selCard{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:5;min-width:320px;max-width:min(700px,calc(100vw - 24px));max-height:46vh;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:10px 12px;display:none}
+#selCard.show{display:block}
+#selCard .top{display:flex;align-items:center;gap:10px}
+#selCard .top .nm{font-family:"Cormorant Garamond",Georgia,serif;font-size:21px;font-weight:700;flex:1}
+#selCard .acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center}
+#dock{position:fixed;left:384px;bottom:14px;z-index:5;display:flex;flex-direction:column;flex-wrap:wrap-reverse;max-height:calc(100vh - 90px);gap:6px;transition:left .25s}
+#dock.wide{left:12px}
+#dock.twocol{display:grid;grid-template-columns:repeat(2,50px);align-content:end}
+#dock button{width:50px;height:46px;border-radius:12px;border:1px solid var(--line);background:var(--panel);cursor:pointer;font-size:11px;line-height:1.05;color:var(--dim)}
+#dock button.on{border-color:var(--candle);color:var(--candle);box-shadow:0 0 12px #e9a54a44}
+#dock button span{display:block;font-size:18px}
+#modeHint{position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:7;background:#2a1716;border:1px solid #8b3a2a;color:#ffd3b0;padding:8px 14px;border-radius:14px;display:none;gap:10px;align-items:center;max-width:calc(100vw - 24px);font-size:14px}
+#modeHint.show{display:flex}
+
+/* ---------- pop-ups ---------- */
+#cardLayer{position:fixed;inset:0;z-index:20;pointer-events:none;display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center}
+.pop{pointer-events:auto;width:min(420px,calc(100vw - 32px));background:linear-gradient(#1d1418,#120d11);border:1px solid #6b3a2c;border-radius:18px;padding:16px 18px;box-shadow:0 20px 60px #000c,0 0 40px #b3303a33;animation:popin .28s ease-out}
+.pop.crit{border-color:var(--candle);box-shadow:0 20px 60px #000c,0 0 50px #e9a54a55}
+.pop.miss{border-color:#4a4a55}
+.pop.seep{border-color:#56702a;box-shadow:0 20px 60px #000c,0 0 50px #9cc23c33}
+.pop .t{font-family:"Cormorant Garamond",Georgia,serif;font-size:24px;font-weight:700;color:var(--candle)}
+.pop .s{color:var(--dim);font-size:13px;margin-bottom:8px}
+.pop .f{font-style:italic;color:#e5d3bd;margin:8px 0;font-family:"Cormorant Garamond",Georgia,serif;font-size:19px}
+.pop .r{font-size:14px;margin:4px 0}
+.pop .big{font-size:30px;font-weight:700;color:#ff8f8f;font-family:"Cormorant Garamond",Georgia,serif}
+.pop .tap{font-size:11px;color:var(--dim);text-align:right;margin-top:8px}
+@keyframes popin{from{transform:scale(.85) translateY(20px);opacity:0}to{transform:none;opacity:1}}
+#toasts{position:fixed;bottom:90px;right:14px;z-index:21;display:flex;flex-direction:column;gap:6px;align-items:flex-end;pointer-events:none}
+.toast{background:var(--panel);border:1px solid var(--line);padding:8px 12px;border-radius:10px;font-size:14px;animation:popin .2s;max-width:min(360px,calc(100vw - 28px))}
+#whisper{position:fixed;left:0;right:0;top:38%;text-align:center;z-index:4;pointer-events:none;font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-size:30px;color:#d8c3c3;opacity:0;transition:opacity 2.2s;text-shadow:0 0 18px #b3303a}
+#turnBanner{position:fixed;top:120px;left:50%;transform:translateX(-50%);z-index:8;font-family:"Cormorant Garamond",Georgia,serif;font-size:28px;color:var(--candle);opacity:0;transition:opacity .5s;pointer-events:none;text-shadow:0 0 18px #000;white-space:nowrap}
+
+/* ---------- modals ---------- */
+.modal{position:fixed;inset:0;z-index:30;background:rgba(5,4,8,.82);display:flex;align-items:center;justify-content:center;padding:16px}
+.modal.hidden{display:none}
+.modal .box{width:min(580px,100%);max-height:92vh;overflow:auto;background:linear-gradient(#18121a,#0f0b12);border:1px solid var(--line);border-radius:20px;padding:22px}
+.modal h1{font-family:"Cormorant Garamond",Georgia,serif;letter-spacing:.2em;color:var(--candle);margin:0 0 4px;font-size:34px}
+.modal h2{font-family:"Cormorant Garamond",Georgia,serif;color:var(--silver);margin:18px 0 6px;font-size:21px}
+.modal .tribute{color:var(--dim);font-style:italic;font-family:"Cormorant Garamond",Georgia,serif;font-size:18px;margin-bottom:10px}
+.modal .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.keys{font-size:14px;line-height:1.7}
+.keys kbd{background:#221a24;border:1px solid var(--line);border-radius:6px;padding:1px 7px;font-size:12px}
+
+.hide{display:none!important}
+
+@media (max-width:1320px){ .brand{display:none} }
+@media (max-width:1120px){ #dreadName{display:none} #roleBadge{max-width:150px;overflow:hidden;text-overflow:ellipsis} #floorLabel{min-width:120px} }
+@media (max-width:960px) and (min-width:761px){ .seg button{padding:8px 8px} input[type=range]{width:90px} }
+@media (max-width:760px){
+  #topbar{gap:6px;padding:6px 8px}
+  .brand,#dreadName,#btnHelp{display:none}
+  .icon{width:34px;height:34px}
+  .floorNav{padding:2px 4px}
+  #floorLabel{min-width:96px;font-size:14px}
+  .seg button{padding:6px 8px;font-size:13px}
+  .dread{padding:4px 8px;gap:6px}
+  input[type=range]{width:84px}
+  .badge{padding:4px 8px;font-size:12px}
+  #panel{top:auto;left:0;right:0;bottom:0;width:auto;height:46vh;border-radius:16px 16px 0 0}
+  #panel.closed{transform:translateY(100%)}
+  .tabs button{font-size:12px;padding:10px 1px}
+  #initBar{top:104px;right:6px;width:150px;max-height:24vh;font-size:13px}
+  #initBar .ih b{font-size:15px} .ini{padding:4px 6px} .ini .n{font-size:13px}
+  #dock{left:8px!important;bottom:calc(46vh + 8px);flex-direction:row;flex-wrap:wrap;max-width:calc(100vw - 16px);max-height:none}
+  #dock button{width:42px;height:42px;font-size:10px}
+  #dock.twocol{display:flex}
+  #selCard{min-width:0;width:calc(100vw - 16px);bottom:calc(46vh + 60px);padding:8px 10px;max-height:30vh}
+  #selCard .top .nm{font-size:18px}
+  #panel.closed ~ #dock{bottom:10px}
+  #panel.closed ~ #selCard{bottom:60px}
+  #modeHint{top:104px;font-size:12px;width:calc(100vw - 24px);padding:6px 10px}
+  #whisper{font-size:22px}
+  .modal .grid2{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<div id="vignette"></div>
+<div id="bloodrim"></div>
+<div id="whisper"></div>
+<div id="turnBanner"></div>
+
+<header id="topbar">
+  <button class="icon" id="btnPanel" title="Panel">☰</button>
+  <div class="brand">DREAD DELVE</div>
+  <div class="floorNav">
+    <button id="floorUp" title="Floor up (PageUp)">▲</button>
+    <div id="floorLabel"></div>
+    <button id="floorDown" title="Floor down (PageDown)">▼</button>
+  </div>
+  <div class="seg" id="viewSeg">
+    <button data-view="tilt" class="on">Tilt</button><button data-view="top">Top</button><button data-view="stack">Stack</button>
+  </div>
+  <div class="dread" id="dreadBox">
+    <label>Dread <b id="dreadNum">1</b> <span id="dreadName"></span></label>
+    <input type="range" id="dread" min="1" max="10" value="1">
+  </div>
+  <div class="badge hide" id="dreadRO"></div>
+  <span class="badge" id="graspBadge" title="The Grasp Die (open the Dread tab)">✋ d4</span>
+  <div class="spacer"></div>
+  <span class="badge" id="roleBadge">DM</span>
+  <button class="icon" id="btnHelp" title="Help">?</button>
+</header>
+
+<aside id="panel">
+  <nav class="tabs" id="tabs"></nav>
+  <div id="tabBody"></div>
+</aside>
+
+<div id="dock"></div>
+
+<aside id="initBar" class="hidden">
+  <div class="ih"><b>Initiative</b><span class="muted" id="roundLbl"></span></div>
+  <div id="initList"></div>
+  <div class="ib" id="initBtns"></div>
+</aside>
+
+<div id="selCard"></div>
+<div id="modeHint"><span id="modeText"></span><button class="btn small" data-act="cancelMode">Done</button></div>
+<div id="cardLayer"></div>
+<div id="toasts"></div>
+
+<div class="modal" id="startModal">
+  <div class="box">
+    <h1>DREAD DELVE</h1>
+    <div class="tribute">For Chance — who never let a dungeon stay boring.</div>
+    <div class="muted">Beneath Saint Andral's church the font is still running, and what runs down into the silver mine is not water. Build the descent, drop the horrors in, and let the table walk it together.</div>
+    <div id="continueBox"></div>
+    <h2>Run a new delve (Dungeon Master)</h2>
+    <div><label class="muted">Template</label><select class="txt" id="newTemplate"></select></div>
+    <div class="muted" id="newBlurb" style="margin:4px 0 8px"></div>
+    <div class="grid2">
+      <div><label class="muted">Seed (same seed = same dungeon)</label><input class="txt" id="newSeed"></div>
+      <div><label class="muted">Floors</label><select class="txt" id="newFloors"><option>1</option><option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option><option>7</option><option>8</option></select></div>
+    </div>
+    <div class="row"><button class="btn primary" data-act="startNew">Descend as DM</button></div>
+    <h2>Join a table (Player)</h2>
+    <div class="grid2">
+      <div><label class="muted">Table code from your DM</label><input class="txt" id="joinCode" placeholder="e.g. HX7Q"></div>
+      <div><label class="muted">Your character's name</label><input class="txt" id="joinName" placeholder="e.g. Gribbles"></div>
+    </div>
+    <div class="row"><button class="btn" data-act="join">Join the table</button></div>
+    <div class="muted" style="margin-top:12px">Players open this same file on their own device. Voice stays on Discord — this handles the map, the minis and the dread.</div>
+  </div>
+</div>
+
+<div class="modal hidden" id="helpModal">
+  <div class="box">
+    <h1 style="font-size:26px">How to play</h1>
+    <div class="keys">
+      <b>Camera</b> — drag to orbit · right-drag or two-finger drag to pan · scroll or pinch to zoom<br>
+      <b>Move</b> — tap a token, then tap a glowing tile. In combat the glow is that creature's remaining speed. Closed doors open as you walk through; heroes stop short of traps they spot.<br>
+      <b>Doors & traps</b> — tap a door or a found trap for its card: open, pick, force, disarm. <i>Search</i> looks for hidden ones within 15 ft.<br>
+      <b>Stairs</b> — stand on a stair rune and press <i>Descend</i> / <i>Ascend</i> on the token card.<br>
+      <b>Ping</b> — the ◎ button, or long-press a tile, flashes it for the whole table.<br>
+      <b>Attack (DM)</b> — select a creature, press an attack (◆ toggles advantage/disadvantage), tap the target. The roll pops up for everyone.<br>
+      <b>Shift</b> — rolls the d100 Shift table: corridors rewire, rooms swap, stairs wander, doors lock, things spawn. At Dread 6+ it happens on its own at round's end.<br>
+      <b>Grasp Die</b> — Andral's hands. It grows when hands die; roll it for what reaches up out of the floor.<br>
+      <b>Build (DM)</b> — the Build tab: drag rooms, drag corners to resize, draw rooms on bare rock, trace corridors, place doors, traps and stairs. <kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes.<br><br>
+      <kbd>PgUp</kbd>/<kbd>PgDn</kbd> floors · <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> Tilt/Top/Stack · <kbd>F</kbd> focus selected · <kbd>N</kbd> next turn · <kbd>G</kbd> roll Grasp · <kbd>B</kbd> Build tab · <kbd>Esc</kbd> cancel · <kbd>Del</kbd> remove token
+    </div>
+    <div class="row"><button class="btn primary" data-act="closeHelp">Back to the dark</button></div>
+  </div>
+</div>
+
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
