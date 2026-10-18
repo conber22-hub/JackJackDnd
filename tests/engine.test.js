@@ -144,3 +144,36 @@ test('JSON import accepts a Battle-Table-style grid with rooms, doors and tokens
   assert.deepEqual(floor.down, { x:8, y:5 });
   assert.equal(tokens[0].name, 'Seepling');
 });
+
+test('Battle Table saves import: pieces, shared walls, doors, secret doors, stairs, roster', async () => {
+  const P = (k, x, y, o = {}) => ({ id:Math.random().toString(36).slice(2), k, x, y, name:'', tag:'', notes:'', conns:[], dir:'down', ...o });
+  const bt = { v:2, name:'Upper crypt', theme:'dungeon', active:0, levels:[
+    { id:'a', name:'Crypt level', parts:[
+      P('chamber', 0, 0, { w:6, h:5, name:'Entry hall', tag:'Guard post', conns:[{ e:'s', o:2.5, t:'door' }] }),
+      P('corridor', 2, 5, { w:2, h:4, name:'Descent', conns:[{ e:'n', o:0.5, t:'arch' }, { e:'s', o:0.5, t:'arch' }] }),
+      P('crypt', -1, 9, { w:7, h:5, name:'Ossuary', tag:'Ambush', conns:[{ e:'n', o:2, t:'arch' }, { e:'e', o:1.5, t:'door' }, { e:'w', o:1.5, t:'secret' }] }),
+      P('vault', 6, 9, { w:5, h:4, name:'Reliquary', tag:'Treasure', conns:[{ e:'w', o:1.5, t:'secret' }] }),
+      P('shrine', -7, 9, { w:6, h:6, name:'Forgotten shrine', tag:'Shrine', conns:[{ e:'e', o:2, t:'door' }] }),
+      P('stairs', 8, 3, { w:3, h:5, name:'Down', dir:'down', conns:[{ e:'w', o:1.5, t:'arch' }] }) ], notes:'' },
+    { id:'b', name:'The Bloomed chapel', parts:[
+      P('shrine', 0, 0, { w:6, h:6, name:'Nave', tag:'Ritual site', conns:[{ e:'s', o:2.5, t:'arch' }, { e:'n', o:2.5, t:'door' }] }),
+      P('hall', -2, -6, { w:10, h:6, name:'Apse', tag:'Boss lair', conns:[{ e:'s', o:4.5, t:'arch' }] }),
+      P('stairs', 7, 1, { w:3, h:5, name:'Up', dir:'up', conns:[{ e:'w', o:1.5, t:'arch' }] }) ], notes:'' } ],
+    roster:[{ id:'t1', mid:'sporeling', name:'Sporeling', x:1, y:1, lvl:1, hp:13, hpMax:13, ac:13, n:1 }, { id:'t2', mid:'ghoul', name:'Ghoul', x:1, y:11, lvl:0, n:1 }] };
+  const p = parseMapInput(JSON.stringify(bt));
+  assert.equal(p.floors.length, 2);
+  const { floor:f0, tokens:t0 } = buildImportedFloor(p.floors[0], 0, 40, 0);
+  assert.ok(f0.rooms.some(r => r.name === 'Ossuary' && r.type === 'lair'));
+  assert.ok(f0.rooms.some(r => r.name === 'Reliquary' && r.type === 'treasure'));
+  assert.equal(f0.doors.filter(d => d.state === 'secret').length, 2, 'two secret doors');
+  assert.ok(f0.doors.some(d => d.state === 'closed'), 'a closed door');
+  assert.ok(f0.down, 'stairs down from the stairwell');
+  assert.equal(t0[0].name, 'Ghoul');
+  // the shared wall between the entry hall and the corridor keeps a gap only at the door
+  const reachable = new Set([f0.rooms[0].cy * f0.W + f0.rooms[0].cx]), q = [...reachable];
+  while (q.length){ const i = q.pop(), x = i % f0.W, y = (i / f0.W) | 0; for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]){ const ni = (y + dy) * f0.W + x + dx; if (f0.grid[ni] > 0 && !reachable.has(ni)){ reachable.add(ni); q.push(ni); } } }
+  for (const r of f0.rooms) assert.ok(reachable.has(r.cy * f0.W + r.cx) || f0.grid[r.cy * f0.W + r.cx] === 0, `${r.name} reachable`);
+  const { tokens:t1, floor:f1 } = buildImportedFloor(p.floors[1], 1, 40, 0, { up:f0.down });
+  assert.equal(t1[0].bid, 'sporeling');
+  assert.deepEqual(f1.up, f0.down);
+});

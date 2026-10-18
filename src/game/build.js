@@ -53,7 +53,7 @@ export function commitRoom(op){
     if (f.down && inRoom(r, f.down.x, f.down.y)) stairs.push(['down', f.down.x + dx, f.down.y + dy]);
     if (f.up && inRoom(r, f.up.x, f.up.y)) stairs.push(['up', f.up.x + dx, f.up.y + dy]);
     for (const tr of f.traps) if (inRoom(r, tr.i % f.W, (tr.i / f.W) | 0)) tr.i += dy * f.W + dx;
-    Object.assign(r, op.rect); recalcRoom(r);
+    Object.assign(r, op.rect, { free:true }); recalcRoom(r);
     for (const [dir, x, y] of stairs){
       const err = moveStairs(state.floors, op.L, dir, x, y);
       if (!err){ touched.push(dir === 'down' ? op.L + 1 : op.L - 1); toast(`The stairs ${dir} moved with the room — floor ${dir === 'down' ? op.L + 2 : op.L} follows.`); }
@@ -61,7 +61,7 @@ export function commitRoom(op){
   } else {
     if (f.down && inRoom(r, f.down.x, f.down.y) && !inRoom(op.rect, f.down.x, f.down.y)){ toast('Keep the stairs inside the room (or move the stairs first).'); return false; }
     if (f.up && inRoom(r, f.up.x, f.up.y) && !inRoom(op.rect, f.up.x, f.up.y)){ toast('Keep the stairs inside the room (or move the stairs first).'); return false; }
-    Object.assign(r, op.rect); recalcRoom(r);
+    Object.assign(r, op.rect, { free:true }); recalcRoom(r);
   }
   carve(f, keepTokens(op.L)); updateVision(); rebuild(...new Set(touched)); syncTokens(); changed(); renderPanel();
   return true;
@@ -218,9 +218,10 @@ export function importMap(text, mode = 'floor'){
     snapshot('import floor');
     const link = { up:L > 0 ? state.floors[L - 1].down : null };
     if (state.floors[L + 1]) link.down = state.floors[L + 1].up;
-    const { floor, warnings:w, tokens } = buildImportedFloor(parsed.floors[0], L, state.meta.size, old.theme, link);
+    const pick0 = parsed.floors[parsed.active || 0];
+    const { floor, warnings:w, tokens } = buildImportedFloor(pick0, L, state.meta.size, old.theme, link);
     warnings.push(...w);
-    floor.name = parsed.floors[0].name || old.name;
+    floor.name = pick0.name || old.name;
     state.floors[L] = floor; state.explored[L] = new Set();
     state.tokens = state.tokens.filter(t => !(t.floor === L && t.kind === 'monster'));
     for (const t of state.tokens) if (t.floor === L && !walk(floor.grid[t.y * floor.W + t.x])){ const o = nearestOpen(L, floor.rooms[0].cx, floor.rooms[0].cy); if (o){ t.x = o.x; t.y = o.y; } }

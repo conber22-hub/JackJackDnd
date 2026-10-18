@@ -107,6 +107,93 @@ function parseJsonFloor(obj, name, warnings){
   return fl;
 }
 
+/* ---------- Battle Table (your DM screen) saves: { v:2, levels:[{ name, parts:[…] }], roster:[…] } ----------
+   Parts are rectangles in squares (x, y, w, h) with connections on their edges: { e:'n'|'e'|'s'|'w', o:offset, t:type }.
+   Shared edges become a wall; door / secret connections become doors, arches / gaps / stairs / windows become openings
+   (windows stay wall). Stairwell parts become stairs. The roster puts creatures on their level. */
+const BT_KIND_SIZE = { chamber:[6,5], hall:[10,6], corridor:[6,2], crypt:[7,5], cells:[8,5], shrine:[6,6], vault:[5,4], stairs:[3,5], collapse:[6,5], pit:[4,4],
+  cave:[8,7], tunnel:[7,3], chasm:[8,6], river:[9,5], fungus:[7,6], spires:[8,6], clearing:[8,7], forest:[8,8], road:[10,4], ford:[9,6], hill:[8,7], ruin:[8,7],
+  camp:[8,6], street:[10,5], room:[5,4], inn:[9,7], keep:[11,8], shop:[6,5], courtyard:[9,8], sewer:[8,6], gatehouse:[8,6], graveyard:[8,7], dock:[10,6], throne:[10,8] };
+const BT_CONN_W = { door:1, arch:1.4, gap:1.6, secret:1, stair:1.6, window:1 };
+const BT_TAG_TYPE = { Trap:'trap', Treasure:'treasure', 'Safe room':'safe', 'Boss lair':'lair', Ambush:'lair', 'Guard post':'chamber', Shrine:'shrine', 'Ritual site':'shrine', Prison:'crypt', 'Rest stop':'safe' };
+const BT_KIND_TYPE = { crypt:'crypt', shrine:'shrine', vault:'treasure', stairs:'entrance', graveyard:'crypt', fungus:'nest', cells:'crypt', throne:'lair' };
+export const isBattleTable = d => d && typeof d === 'object' && Array.isArray(d.levels) && d.levels.some(l => Array.isArray(l?.parts));
+export function parseBattleTable(data){
+  const warnings = [];
+  const norm = p => { const sz = BT_KIND_SIZE[p.k] || [6, 5]; return { ...p, x:Math.round(+p.x || 0), y:Math.round(+p.y || 0), w:Math.max(1, Math.round(+p.w || sz[0])), h:Math.max(1, Math.round(+p.h || sz[1])) }; };
+  const levels = data.levels.map(l => ({ ...l, parts:(l.parts || []).map(norm) }));
+  const all = levels.flatMap(l => l.parts);
+  if (!all.length) throw new Error('That Battle Table save has no map pieces on any level.');
+  const x0 = Math.min(...all.map(p => p.x)) - 1, y0 = Math.min(...all.map(p => p.y)) - 1;
+  const W = Math.max(...all.map(p => p.x + p.w)) - x0 + 1, H = Math.max(...all.map(p => p.y + p.h)) - y0 + 1;
+  const floors = levels.map((lv, L) => {
+    const owner = Array.from({ length:H }, () => new Array(W).fill(-1));
+    const cells = Array.from({ length:H }, () => Array.from({ length:W }, () => ({ kind:'rock' })));
+    lv.parts.forEach((p, k) => { for (let y = p.y - y0; y < p.y - y0 + p.h; y++) for (let x = p.x - x0; x < p.x - x0 + p.w; x++){ owner[y][x] = k; cells[y][x] = { kind:'floor' }; } });
+    // shared edges become wall (on the left / upper piece)
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++){
+      const a = owner[y][x]; if (a < 0) continue;
+      const r = x + 1 < W ? owner[y][x + 1] : -1, d = y + 1 < H ? owner[y + 1][x] : -1;
+      if ((r >= 0 && r !== a) || (d >= 0 && d !== a)) cells[y][x] = { kind:'rock', wall:true };
+    }
+    // connections reopen the wall
+    lv.parts.forEach((p, pi) => {
+      for (const c of p.conns || []){
+        const w = BT_CONN_W[c.t] ?? 1, px = p.x - x0, py = p.y - y0, a = +c.o || 0, b = a + w;
+        const tiles = [], single = c.t === 'door' || c.t === 'secret';
+        const t0 = single ? Math.floor((a + b) / 2) : Math.floor(a + .001), t1 = single ? t0 + 1 : Math.ceil(b - .001);
+        for (let t = t0; t < t1; t++){
+          // [inside cell, outside cell] for this step along the edge (edges run clockwise from each corner)
+          if (c.e === 'n') tiles.push([[px + t, py], [px + t, py - 1]]);
+          else if (c.e === 'e') tiles.push([[px + p.w - 1, py + t], [px + p.w, py + t]]);
+          else if (c.e === 's') tiles.push([[px + p.w - 1 - t, py + p.h - 1], [px + p.w - 1 - t, py + p.h]]);
+          else tiles.push([[px, py + p.h - 1 - t], [px - 1, py + p.h - 1 - t]]);
+        }
+        const mid = Math.floor((tiles.length - 1) / 2), [ox, oy] = { n:[0, -1], e:[1, 0], s:[0, 1], w:[-1, 0] }[c.e] || [0, 0];
+        // a connection into empty space: the Battle Table lets pieces float a square or two apart, so bridge the gap
+        if (c.t !== 'window') for (const [, [sx, sy]] of tiles){
+          if (!cells[sy]?.[sx] || cells[sy][sx].kind !== 'rock' || cells[sy][sx].wall) continue;
+          const path = []; let hit = false;
+          for (let k = 0, x = sx, y = sy; k < 4 && cells[y]?.[x]; k++, x += ox, y += oy){
+            if (cells[y][x].kind !== 'rock' || cells[y][x].wall){ hit = true; for (const [px2, py2] of path) cells[py2][px2] = { kind:'floor' }; break; }
+            path.push([x, y]);
+          }
+          if (hit) continue;
+          // not straight ahead: join the nearest other piece within 6 squares with an L-shaped passage
+          let best = null;
+          for (let y = sy - 6; y <= sy + 6; y++) for (let x = sx - 6; x <= sx + 6; x++){
+            if (!cells[y]?.[x] || cells[y][x].kind === 'rock' || owner[y][x] === pi || owner[y][x] < 0) continue;
+            const dd = Math.abs(x - sx) + Math.abs(y - sy); if (!best || dd < best.d) best = { x, y, d:dd };
+          }
+          if (best){
+            let x = sx, y = sy; const open = () => { if (cells[y][x].kind === 'rock') cells[y][x] = { kind:'floor' }; };
+            open(); while (x !== best.x){ x += Math.sign(best.x - x); open(); } while (y !== best.y){ y += Math.sign(best.y - y); open(); }
+          }
+        }
+        tiles.forEach((pair, i) => {
+          for (const [cx, cy] of pair){
+            const cell = cells[cy]?.[cx]; if (!cell || !cell.wall) continue;
+            if (c.t === 'window') continue;
+            cells[cy][cx] = { kind:'floor', ...((c.t === 'door' || c.t === 'secret') && i === mid ? { door:c.t === 'secret' ? 'secret' : 'closed' } : {}) };
+          }
+        });
+      }
+    });
+    // stairwells
+    for (const p of lv.parts.filter(p => p.k === 'stairs')){
+      const cx = p.x - x0 + Math.floor(p.w / 2), cy = p.y - y0 + Math.floor(p.h / 2);
+      cells[cy][cx] = { kind:p.dir === 'up' ? 'up' : 'down' };
+    }
+    const rooms = lv.parts.filter(p => p.k !== 'corridor' && p.k !== 'tunnel' && p.k !== 'road').map(p => ({
+      x:p.x - x0, y:p.y - y0, w:p.w, h:p.h, name:p.name || p.k, type:BT_TAG_TYPE[p.tag] || BT_KIND_TYPE[p.k] || 'chamber', notes:[p.tag, p.notes].filter(Boolean).join(' — ') }));
+    const tokens = (data.roster || []).filter(t => (t.lvl ?? 0) === L && !t.dead).map(t => ({
+      name:t.name + (t.n > 1 ? ` ${t.n}` : ''), x:Math.round(+t.x) - x0, y:Math.round(+t.y) - y0, bid:t.mid || null, hp:t.hp, ac:t.ac, kind:t.pid ? 'pc' : null }));
+    if (lv.bg?.src) warnings.push(`${lv.name || `Level ${L + 1}`}: the painting under the map was left behind (Dread Delve builds its own 3D stone).`);
+    return { name:lv.name || `Level ${L + 1}`, W, H, cells, rooms, tokens, notes:lv.notes || '' };
+  });
+  return { floors, warnings, name:data.name && data.name !== 'Untitled Map' ? data.name : null, active:Math.min(+data.active || 0, floors.length - 1) };
+}
+
 export function parseMapInput(input){
   const warnings = [];
   let data = input;
@@ -125,6 +212,7 @@ export function parseMapInput(input){
       return { floors:chunks.map(c => ({ ...c, rooms:[], tokens:[] })), warnings };
     }
   }
+  if (isBattleTable(data)) return parseBattleTable(data);
   let list;
   if (Array.isArray(data)){
     if (typeof data[0] === 'string' || Array.isArray(data[0])) list = [{ grid:data }];

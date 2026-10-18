@@ -138,7 +138,9 @@ export function lPath(f, x0, y0, x1, y1, bend){
 export function carve(f, keep = []){
   const N = f.W * f.H, g = f.base && f.base.length === N ? f.base.slice() : new Array(N).fill(T.ROCK);
   const hall = i => { if (g[i] === T.ROCK) g[i] = T.HALL; };
-  for (const r of f.rooms) for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++) g[y * f.W + x] = T.ROOM;
+  // imported floors keep their own walls inside room rectangles, unless the DM has since moved or drawn the room
+  const keepBase = r => f.base && f.base.length === N && !r.free;
+  for (const r of f.rooms) for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++){ const i = y * f.W + x; if (!keepBase(r) || walk(f.base[i])) g[i] = T.ROOM; }
   if (f.autoLink !== false) for (const e of f.edges){
     const a = roomById(f, e.a), b = roomById(f, e.b); if (a && b) lPath(f, a.cx, a.cy, b.cx, b.cy, e.bend).forEach(hall);
   }
@@ -243,7 +245,7 @@ export function rectProblem(f, rect, ignoreId){
   return null;
 }
 export function addRoom(f, rect, type = 'chamber', rng = Math.random){
-  const r = recalcRoom({ id:f.nextId++, x:rect.x, y:rect.y, w:rect.w, h:rect.h, type, name:pick(ROOM_NAMES[type] || ROOM_NAMES.chamber, rng), notes:'' });
+  const r = recalcRoom({ id:f.nextId++, x:rect.x, y:rect.y, w:rect.w, h:rect.h, type, name:pick(ROOM_NAMES[type] || ROOM_NAMES.chamber, rng), notes:'', free:true });
   f.rooms.push(r);
   if (f.autoLink && f.rooms.length > 1){ const n = nearestRoom(f, r.cx, r.cy, r.id); f.edges.push({ a:n.id, b:r.id, bend:rng() < .5 }); }
   return r;
