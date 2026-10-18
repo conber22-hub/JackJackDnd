@@ -38,7 +38,7 @@ export function genDelve(meta){
     const f = genFloor(L, meta.size, meta.size, rng, anchor, L === meta.floors - 1, specs[L]);
     floors.push(f); anchor = f.down;
   }
-  if (state) floors.forEach((f, L) => { if (specs[L].populate) populateFloor(f, L, rng, L === meta.floors - 1 || !!specs[L].boss); });
+  if (state) floors.forEach((f, L) => { if (specs[L].populate) populateFloor(f, L, rng, L === meta.floors - 1 || !!specs[L].boss, specs[L].populate === true ? .4 : specs[L].populate); });
   return floors;
 }
 
@@ -217,7 +217,7 @@ export function placeDoors(f, rng, spec = {}){
 export const THEME_TRAPS = { undercroft:['pit','wire','bell'], silver:['collapse','wire','pit'], hands:['hands','pit','grinder'],
   undertow:['spore','font'], chapel:['bell','pit','wire'], ossuary:['grinder','wire','bell'], womb:['spore','font','spore'] };
 export function placeTraps(f, rng, spec = {}){
-  const kinds = THEME_TRAPS[THEMES[f.theme].id] || ['pit', 'wire'];
+  const kinds = THEMES[f.theme].traps || THEME_TRAPS[THEMES[f.theme].id] || ['pit', 'wire'];
   const free = r => { const out = []; for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++){ const i = y * f.W + x; if (f.grid[i] === T.ROOM && !trapAt(f, i)) out.push(i); } return out; };
   for (const r of f.rooms) if (r.type === 'trap'){
     const tiles = free(r);
@@ -301,7 +301,7 @@ export function freeFootprint(f, room, size, taken, rng){
   }
   return spots.length ? spots[Math.floor(rng() * spots.length)] : null;
 }
-export function populateFloor(f, L, rng = Math.random, withBoss = false){
+export function populateFloor(f, L, rng = Math.random, withBoss = false, chance = .4){
   const th = THEMES[f.theme], placed = [];
   const taken = new Set(state.tokens.filter(t => t.floor === L).flatMap(t => { const s = t.size || 1, a = []; for (let dy = 0; dy < s; dy++) for (let dx = 0; dx < s; dx++) a.push((t.y + dy) * f.W + t.x + dx); return a; }));
   const put = (bid, room) => {
@@ -316,7 +316,7 @@ export function populateFloor(f, L, rng = Math.random, withBoss = false){
     if (lair){ put(th.boss, lair); rooms.splice(rooms.indexOf(lair), 1); }
   }
   for (const r of rooms){
-    if (rng() > .6) continue;
+    if (rng() > chance) continue;
     const groups = (th.denizens || []).filter(g => g.where.includes(r.type));
     const group = groups.length ? pick(groups, rng) : rng() < .35 ? pick(th.denizens || [], rng) : null;
     if (!group) continue;

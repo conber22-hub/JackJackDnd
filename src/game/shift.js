@@ -67,7 +67,7 @@ export function shiftFloor(L, why, forced){
       if (r){ r.type = 'nest'; r.name = pick(ROOM_NAMES.nest); dm.push(`${r.name} is now a Seep Nest.`); later.push(`spawn:seepling:2@nest`); }
     }
     else if (kind === 'trap'){
-      const n = +arg || 1, kinds = THEME_TRAPS[THEMES[f.theme]?.id] || ['pit'];
+      const n = +arg || 1, kinds = THEMES[f.theme]?.traps || THEME_TRAPS[THEMES[f.theme]?.id] || ['pit'];
       const halls = f.grid.map((v, i) => v === T.HALL && !doorAt(f, i) && !trapAt(f, i) ? i : -1).filter(i => i >= 0);
       for (let k = 0; k < n && halls.length; k++) addTrap(f, halls.splice(Math.floor(Math.random() * halls.length), 1)[0], pick(kinds));
       dm.push(`${n} hidden trap${n === 1 ? '' : 's'} armed in the corridors.`);

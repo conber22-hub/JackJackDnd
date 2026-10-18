@@ -184,6 +184,8 @@ export function clearMonsters(L){
 }
 
 /* ---------- new delves & import ---------- */
+// The campaign desk and the players' characters live above any one dungeon: they travel to the next delve.
+function carryCampaign(s){ if (!state) return; if (state.campaign) s.campaign = state.campaign; if (state.characters) s.characters = state.characters; s.dread = state.dread; s.grasp = state.grasp; }
 export function newDelve(meta, keepParty = true){
   const party = keepParty && state ? state.tokens.filter(t => t.kind !== 'monster') : null, art = state?.art || {}, content = state?.content;
   const s = newState(meta);
@@ -191,7 +193,7 @@ export function newDelve(meta, keepParty = true){
     const r0 = s.floors[0].rooms[0];
     s.tokens = s.tokens.filter(t => t.kind === 'monster').concat(party.map((t, i) => ({ ...t, floor:0, x:clamp(r0.x + 1 + i % 3, r0.x, r0.x + r0.w - 1), y:clamp(r0.y + 1 + Math.floor(i / 3), r0.y, r0.y + r0.h - 1), dead:false, moved:0, conds:[], flags:{} })));
   }
-  s.art = art; if (content) s.content = content;
+  s.art = art; if (content) s.content = content; carryCampaign(s);
   loadState(s);
 }
 // mode 'floor' replaces the current floor; mode 'delve' starts a new delve from every floor in the file.
@@ -241,7 +243,7 @@ export function importMap(text, mode = 'floor'){
     s.meta.floors = s.floors.length; s.explored = {}; s.floors.forEach((_, L) => s.explored[L] = new Set());
     const r0 = s.floors[0].rooms[0], party = state ? state.tokens.filter(t => t.kind !== 'monster') : s.tokens;
     s.tokens = party.map((t, i) => { const p = { ...t, floor:0, dead:false, conds:[], flags:{} }; p.x = clamp(r0.x + i % 3, r0.x, r0.x + r0.w - 1); p.y = clamp(r0.y + Math.floor(i / 3), r0.y, r0.y + r0.h - 1); return p; });
-    s.art = state?.art || {}; if (state?.content) s.content = state.content;
+    s.art = state?.art || {}; if (state?.content) s.content = state.content; carryCampaign(s);
     loadState(s);
     s.floors.forEach((f, L) => { placeTokens(f._tokens || [], L); delete f._tokens; });
     for (const t of state.tokens) if (!walk(state.floors[t.floor].grid[t.y * state.meta.size + t.x])){ const o = nearestOpen(t.floor, r0.cx, r0.cy); if (o){ t.x = o.x; t.y = o.y; } }

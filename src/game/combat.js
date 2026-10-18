@@ -124,7 +124,7 @@ export function doAttack(aId, tId, i, mode = 'normal'){
   if (hit && atk.on && !tg.dead){
     const s = d(20) + (tg.saveMod || 0), ok = s >= atk.on.dc;
     lines.push(`${esc(tg.name)} — ${atk.on.save.toUpperCase()} save ${s} vs ${atk.on.dc}: <b>${ok ? 'resists' : atk.on.cond}</b>`);
-    if (!ok) addCond(tg, atk.on.cond, atk.on.rounds || 1);
+    if (!ok && (atk.on.cond !== 'seeded' || isHost(tg))) addCond(tg, atk.on.cond, atk.on.rounds || 1, a.bid);
   }
   if (hit && atk.latch && !tg.dead && tg.kind !== 'monster'){ tg.flags.latchedBy = a.id; lines.push(`<span class="fam-seep">${esc(a.name)} is latched on.</span>`); }
   showCard({ kind:crit ? 'crit' : hit ? '' : 'miss', title:`${a.name} → ${tg.name}`, sub:atk.n, flair, lines, big:hit ? `${dmg} ${atk.t}` : '' });
@@ -147,7 +147,7 @@ export function applyDamage(t, n, type = '', by = null){
 export function heal(t, n){
   t.hp = Math.min(t.maxHp, t.hp + n);
   if (t.hp > 0 && t.dead){ t.dead = false; t.flags.rising = false; }
-  if (t.flags.seeded){ t.flags.seeded = false; toast(`${t.name}: the Seep's seed is burned out.`); }
+  if (t.flags.seeded || t.conds?.some(c => c.n === 'seeded')){ t.flags.seeded = false; t.conds = (t.conds || []).filter(c => c.n !== 'seeded'); toast(`${t.name}: the seed is burned out.`); }
   if (t.hp > t.maxHp / 2) t.flags.bloodied = false;
 }
 export function kill(t, type, by){
@@ -155,9 +155,14 @@ export function kill(t, type, by){
   const radiant = /radiant|fire/.test(String(type));
   if (t.kind !== 'monster' || isHost(t)){
     const latcher = t.flags.latchedBy && tokById(t.flags.latchedBy);
-    if (latcher && !latcher.dead && latcher.floor === t.floor && cheb(latcher.x, latcher.y, t.x, t.y) <= 1 && !hasTag(t, 'seep')){
-      t.flags.seeded = true;
-      showCard({ kind:'seep', title:`${t.name} has been seeded`, flair:'The Seepling stops feeding and starts burrowing.', lines:['<b>Host Seed:</b> rises as a Seep-Husk at the start of the next round unless they get magical healing first.'] });
+    const latched = latcher && !latcher.dead && latcher.floor === t.floor && cheb(latcher.x, latcher.y, t.x, t.y) <= 1;
+    const seed = t.conds?.find(c => c.n === 'seeded');
+    if ((latched || seed) && !hasTag(t, 'seep') && !radiant){
+      const bloom = (seed && BEST[seed.src]?.fam === 'bloom') || (latched && BEST[latcher.bid]?.fam === 'bloom') || hasTag(by || {}, 'bloom');
+      t.flags.seeded = true; t.flags.riser = bloom && BEST['bloom-vessel'] ? 'bloom-vessel' : 'husk';
+      const what = BEST[t.flags.riser].name;
+      showCard({ kind:'seep', title:`${t.name} has been seeded`, flair:bloom ? 'Green-black threads bloom under the skin. Something is already using the bones.' : 'The Seepling stops feeding and starts burrowing.',
+        lines:[`<b>Seeded:</b> rises as a ${what} at the start of the next round unless they get magical healing (or Lesser Restoration) first. Fire or radiant on the body stops it.`] });
     }
   }
   if (t.kind !== 'monster'){ log(`${t.name} falls!`); return; }
@@ -187,12 +192,12 @@ export function kill(t, type, by){
 function seedRises(t){
   if (t.kind === 'pc'){
     t.flags.gone = true; t.flags.taken = true; t.flags.seeded = false;
-    const h = spawnAt('husk', t.floor, t.x, t.y, true);
-    if (h){ h.name = `Husk of ${t.name}`; h.flags.from = t.id; if (state.art[t.id]) state.art[h.id] = state.art[t.id]; }
+    const h = spawnAt(t.flags.riser || 'husk', t.floor, t.x, t.y, true);
+    if (h){ h.name = `${t.flags.riser === 'bloom-vessel' ? 'Vessel' : 'Husk'} of ${t.name}`; h.flags.from = t.id; if (state.art[t.id]) state.art[h.id] = state.art[t.id]; }
     const i = state.combat.order.indexOf(t.id); if (i >= 0){ state.combat.order.splice(i, 1); if (i < state.combat.idx) state.combat.idx--; }
     showCard({ kind:'seep', title:`${t.name} stands up`, flair:`It is ${t.name}'s face. It is not ${t.name}.`, lines:['The Seep has taken the body. Restore them from the Tokens tab if the table rules otherwise.'] });
     log(`☣ ${t.name} is taken by the Seep.`);
-  } else infest(t, 'The seed has finished growing.');
+  } else infest(t, 'The seed has finished growing.', t.flags.riser);
 }
 
 /* ---------- the fx language ---------- */
@@ -228,7 +233,7 @@ export function runFx(src, fx, quiet){
     // Birth a Husk @corpse: take an unclaimed host body if there is one
     if (where === 'corpse'){
       const bodies = state.tokens.filter(t => t.floor === L && t.dead && !t.flags.gone && isHost(t) && !hasTag(t, 'seep') && t.kind !== 'pc');
-      while (n > 0 && bodies.length && bid === 'husk'){ infest(bodies.shift(), 'The Seep claims a body.'); n--; }
+      while (n > 0 && bodies.length && (bid === 'husk' || bid === 'bloom-vessel')){ infest(bodies.shift(), 'The Seep claims a body.', bid); n--; }
     }
     if (n <= 0) return;
     const at = spawnWhere(src, where, L), spots = freeTilesNear(L, at.x, at.y, n, !tokenAt(L, at.x, at.y));
@@ -302,15 +307,16 @@ export function runFx(src, fx, quiet){
     showCard({ kind:'seep', title:`${nb.name}`, flair:nb.look });
     syncTokens();
   }
+  else if (kind === 'note'){ /* rules text only — useSpecial shows the card */ }
   else if (kind) toast(`Unknown effect "${fx}"`);
 }
 export function useSpecial(t, s){
   if (s.f) showCard({ kind:'seep', title:`${t.name}: ${s.n}`, flair:s.f });
   runFx(t, s.fx); changed();
 }
-export function infest(t, why){
-  const nb = BEST.husk, base = t.name.replace(/^Husk of /, '');
-  Object.assign(t, { kind:'monster', bid:'husk', name:`Husk of ${base}`, color:nb.color, ac:nb.ac, maxHp:avgDice(nb.hp), speed:nb.speed,
+export function infest(t, why, as = 'husk'){
+  const nb = BEST[as] || BEST.husk, base = t.name.replace(/^(Husk|Vessel) of /, '');
+  Object.assign(t, { kind:'monster', bid:nb.id, name:`${nb.id === 'husk' ? 'Husk' : 'Vessel'} of ${base}`, color:nb.color, ac:nb.ac, maxHp:avgDice(nb.hp), speed:nb.speed,
     attacks:nb.attacks.map(a => ({ ...a })), dead:false, flags:{}, conds:[], size:1, init:nb.init });
   t.hp = t.maxHp;
   showCard({ kind:'seep', title:'The Seep takes the body', flair:why || `Grey-green threads stitch through what used to be ${base}. It stands.` });

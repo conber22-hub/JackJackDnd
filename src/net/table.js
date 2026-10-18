@@ -33,7 +33,9 @@ export function hostTable(){
 export function closeTable(){ net.peer?.destroy(); net.peer = null; net.conns.clear(); net.code = null; state.seats = {}; renderTop(); renderPanel(); }
 export function broadcast(m, except){ for (const [pid, s] of net.conns) if (pid !== except && s.conn.open) try { s.conn.send(m); } catch {} }
 let pushTimer = null;
-export function pushState(){ if (ui.role !== 'dm' || !net.conns.size) return; clearTimeout(pushTimer); pushTimer = setTimeout(() => broadcast({ t:'state', s:serialize(false) }), 60); }
+// What players receive: the delve without the DM's campaign desk (notes, fortune, clocks).
+function forPlayers(){ const s = serialize(false); delete s.campaign; return s; }
+export function pushState(){ if (ui.role !== 'dm' || !net.conns.size) return; clearTimeout(pushTimer); pushTimer = setTimeout(() => broadcast({ t:'state', s:forPlayers() }), 60); }
 
 function onHostMsg(c, m){
   const seat = net.conns.get(c.peer); if (!seat || !m) return;
@@ -44,7 +46,7 @@ function onHostMsg(c, m){
     const match = state.tokens.find(t => t.kind === 'pc' && t.name.toLowerCase() === seat.name.toLowerCase() && !Object.values(state.seats).includes(t.id));
     if (match) state.seats[c.peer] = match.id;
     toast(`${seat.name} joined${match ? ` as ${match.name}` : ' — seat them in the Table tab'}`);
-    c.send({ t:'art', art:state.art }); c.send({ t:'state', s:serialize(false) });
+    c.send({ t:'art', art:state.art }); c.send({ t:'state', s:forPlayers() });
     renderPanel(); pushState();
   }
   else if (m.t === 'move'){ const t = tokById(m.id); if (t && mine(t.id) && canAct(t)) doMove(t, m.x, m.y); }

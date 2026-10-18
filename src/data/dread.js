@@ -52,4 +52,7 @@ export const CONDITIONS = {
   poisoned:    { icon:'☣', color:'#9cc23c' },
   stunned:     { icon:'✷', color:'#e8b938', stop:true },
   'no healing':{ icon:'✚', color:'#b3303a' },
+  seeded:      { icon:'☣', color:'#9cc23c' },
+  charmed:     { icon:'♥', color:'#d97aa6' },
+  incapacitated:{ icon:'⊘', color:'#8a8f99', stop:true },
 };

@@ -7,11 +7,11 @@ export const turnKey = () => `${state.combat.round}:${state.combat.idx}`;
 export function canAct(t){ return !state.combat.active || currentTurn()?.id === t.id; }
 
 export const hasCond = (t, n) => !!t.conds?.some(c => c.n === n);
-export function addCond(t, n, rounds = 1){
+export function addCond(t, n, rounds = 1, src){
   t.conds ||= [];
   const c = t.conds.find(c => c.n === n);
-  if (c) c.r = Math.max(c.r, rounds);
-  else t.conds.push({ n, r:rounds, at:state.combat.active ? turnKey() : null });
+  if (c) c.r = rounds < 0 || c.r < 0 ? -1 : Math.max(c.r, rounds);
+  else t.conds.push({ n, r:rounds, at:state.combat.active ? turnKey() : null, ...(src ? { src } : {}) });
 }
 export function removeCond(t, n){ t.conds = (t.conds || []).filter(c => c.n !== n); }
 // End of a creature's own turn: tick its conditions (ones applied during this very turn wait one more).

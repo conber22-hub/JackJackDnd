@@ -14,10 +14,15 @@
    shape: which 3D mini to build (render/minis.js)   size: squares wide
    look: written appearance (feeds your art)   prompt: Grok prompt
    --------------------------------------------------------------------- */
+import { BAROVIA } from './bestiary-barovia.js';
+
 export const FAMILIES = {
   seep:   { label:'The Seep',            cls:'fam-seep',   blurb:'When Saint Andral\'s bones were stolen, the font beneath the church kept running — and what ran down into the silver mine was not water. The Seep is a parasite-tide: it takes the dead, bloats inside the living, reshapes its biomass into whatever the hunt needs, and drains every scrap of flesh and memory toward a growing mind at the bottom of the mine. Infection forms seed hosts; hosts become Husks; Husks feed Carriers; Carriers birth more seed. Kill the mind or burn everything.' },
   andral: { label:'Andral\'s Labyrinth', cls:'fam-andral', blurb:'The lich-saint\'s own defences — the hands that never stop coming, and the saint himself, still praying over a font that has turned against him. The Seep wants his mind more than anything else down here.' },
   dread:  { label:'Barovian Undead',     cls:'fam-dread',  blurb:'Fresh horrors of the Dread Zone — what Barovia grows in the dark when the sun is summoned above it.' },
+  bloom:  { label:'The Bloom',           cls:'fam-seep',   blurb:'What climbed out of the Iron Coffin when it came down burning in the Svalich Woods. Above ground they call it the Bloom; once it reached the font beneath Saint Andral\'s it became the Seep. Same hunger. Sweet rot, a cough that is not a cough, flies that will not land. Seeded humanoids rise as Vessels unless burned or blessed.' },
+  barovia:{ label:'Barovia',             cls:'fam-dread',  blurb:'The valley\'s own: the Count\'s wolves, the dead that walk because he allows it, hags, mist and scarecrows. The Count is the weather. The Bloom is the insult.' },
+  folk:   { label:'Folk & Foes',         cls:'fam-andral', blurb:'People: villagers, guards, cultists, knights, priests and the rest — the hosts the Bloom wants most.' },
 };
 
 export const BESTIARY = [
@@ -255,6 +260,7 @@ export const BEST = {};
 export function rebuildBestiary(custom = {}){
   for (const k of Object.keys(BEST)) delete BEST[k];
   for (const b of BESTIARY) BEST[b.id] = b;
+  for (const b of BAROVIA) BEST[b.id] = b;
   for (const [id, b] of Object.entries(custom || {})) if (b && b.name) BEST[id] = { ...b, id, custom:true };
 }
 rebuildBestiary();

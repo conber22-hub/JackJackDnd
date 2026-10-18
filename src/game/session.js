@@ -1,6 +1,6 @@
 /* SESSION — save / load / export, migrating old saves, undo for the Build tools, and changed(). */
 import * as THREE from 'three';
-import { state, setState, ui } from '../engine/state.js';
+import { state, setState, ui, newCampaign } from '../engine/state.js';
 import { updateVision } from '../engine/grid.js';
 import { $ } from '../util/core.js';
 import { camTo, viewOffset, wx, wz, floorY } from '../render/scene.js';
@@ -18,7 +18,7 @@ export { broadcast, sendHost, pushState };
 export function serialize(withArt){
   return { v:2, meta:state.meta, dread:state.dread, floors:state.floors.map(f => ({ ...f, grid:f.grid.join(''), base:f.base ? f.base.join('') : null })), tokens:state.tokens,
     combat:state.combat, explored:Object.fromEntries(Object.entries(state.explored).map(([k, v]) => [k, [...v]])), log:state.log.slice(-60),
-    seats:state.seats, grasp:state.grasp, content:state.content, ...(withArt ? { art:state.art } : {}) };
+    seats:state.seats, grasp:state.grasp, content:state.content, campaign:state.campaign, characters:state.characters, ...(withArt ? { art:state.art } : {}) };
 }
 export function deserialize(s){
   const st = JSON.parse(JSON.stringify(s));
@@ -38,6 +38,9 @@ export function deserialize(s){
   st.combat = s.combat || { active:false, order:[], idx:0, round:1, floor:0 };
   st.grasp = s.grasp || { die:4, auto:true, last:null };
   st.content = { dread:{}, shift:null, grasp:null, bestiary:{}, ...(s.content || {}) };
+  const nc = newCampaign();
+  st.campaign = { ...nc, ...(s.campaign || {}), clocks:{ ...nc.clocks, ...(s.campaign?.clocks || {}) }, places:{ ...nc.places, ...(s.campaign?.places || {}) } };
+  st.characters = s.characters || {};
   st.meta.template ||= 'andral';
   st.tokens.forEach(t => { t.flags = t.flags || {}; t.size = t.size || 1; t.conds = t.conds || []; t.check ??= 4; t.passive ??= 12; });
   st.v = 2;
@@ -103,6 +106,6 @@ export function changed(){
   if (!state) return;
   syncTokens(); renderInit(); renderSel();
   const typing = document.activeElement && $('#tabBody').contains(document.activeElement) && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
-  if (!typing && ['tokens', 'hero', 'table', 'dread', 'build'].includes(ui.tab)) renderPanel();
+  if (!typing && ['tokens', 'hero', 'table', 'dread', 'build', 'story'].includes(ui.tab)) renderPanel();
   saveSoon(); pushState();
 }

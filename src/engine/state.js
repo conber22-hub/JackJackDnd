@@ -6,6 +6,7 @@ import { DREAD } from '../data/dread.js';
 import { DEFAULT_SHIFT_TABLE, DEFAULT_GRASP_TABLE } from '../data/tables.js';
 import { parseTable } from './tables.js';
 import { genDelve } from './generator.js';
+import { CLOCKS, PLACES } from '../data/campaign.js';
 
 export { T, walk } from './tiles.js';
 
@@ -16,7 +17,7 @@ export const ui = {                 // local-only (never saved, never sent)
   role:'dm',                        // 'dm' | 'player'
   tableView:false,                  // DM casting what players see
   floor:0, view:'tilt',
-  tab:'tokens', panelOpen: typeof innerWidth === 'undefined' ? true : innerWidth > 760,
+  tab:'story', panelOpen: typeof innerWidth === 'undefined' ? true : innerWidth > 760,
   selected:null, mode:'select', modeData:null,
   previewFog:false, roomLabels:true, freeMove:false, whispers:true,
   bestFilter:'all', bestSearch:'', openBest:null, openPc:null, editBest:null,
@@ -59,6 +60,10 @@ export function makeNPC(name){
            attacks:parseAttacks('Dagger | +3 | 1d4+1 | piercing'), floor:ui.floor, x:0, y:0, dead:false, flags:{}, conds:[], size:1, moved:0 };
 }
 
+export function newCampaign(){
+  return { session:0, clocks:Object.fromEntries(CLOCKS.map(c => [c.id, c.start])), places:Object.fromEntries(PLACES.map(p => [p.id, 'quiet'])),
+    fortune:{}, notes:{}, done:{}, gaze:'amused', day:'The first night the mist tasted of copper', weather:'Low mist. Crows on the chapel roof. No wind.', lastNight:'', counsel:'' };
+}
 export function newState(opts){
   const s = {
     v:2,
@@ -67,6 +72,7 @@ export function newState(opts){
     combat:{ active:false, order:[], idx:0, round:1, floor:0 },
     seats:{}, grasp:{ die:4, auto:true, last:null },
     content:{ dread:{}, shift:null, grasp:null, bestiary:{} },
+    campaign:newCampaign(), characters:{},
   };
   const prev = state; state = s;                     // the generator's populate step places tokens into `state`
   try { s.floors = genDelve(s.meta); } finally { state = prev; }

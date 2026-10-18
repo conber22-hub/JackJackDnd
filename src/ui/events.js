@@ -24,6 +24,7 @@ import { changed, exportDelve, importDelve, loadLocal, loadState, deserialize, s
 import { hostTable, closeTable, joinTable, sendHost, broadcast, pushState } from '../net/table.js';
 import { newDelve, importMap, setAutoLink, removeRoom, populate, clearMonsters, addFloorBelow, removeBottomFloor, randomSeed } from '../game/build.js';
 import { populateFloor } from '../engine/generator.js';
+import { buildSessionDelve, placeSessionEncounter, readAloud, tickClock, applyTicks, rollNight, shareNight, setSessionDread, markBeat, printSessions, sessionById, SESSIONS } from '../game/campaign.js';
 
 const actor = () => ui.role === 'player' ? tokById(ui.myToken) : (ui.selected && tokById(ui.selected));
 
@@ -115,6 +116,19 @@ document.addEventListener('click', e => {
     case 'refog': state.explored[ui.floor] = new Set(); updateVision(); rebuildFog(ui.floor); changed(); toast('Fog rolls back in.'); break;
     case 'paintMode': ui.paintType = $('#paintType').value; setMode(ui.mode === 'paint' ? 'select' : 'paint', { type:ui.paintType }, `Tap a room to make it a ${ROOM_TYPES[ui.paintType].label}`); break;
     case 'goRoom': { const r = roomById(state.floors[ui.floor], +id); if (r){ ui.selRoom = r.id; focusTile(ui.floor, r.cx, r.cy); buildFloor(ui.floor); renderPanel(); } } break;
+    // story tab
+    case 'session': state.campaign.session = +k; changed(); renderPanel(); $('#tabBody').scrollTop = 0; break;
+    case 'sessDread': setSessionDread(+k); break;
+    case 'readOpen': { const se = sessionById(k); readAloud(se.title, se.open); } break;
+    case 'readEnd': { const se = sessionById(k); readAloud(`End of session ${se.n}`, se.ending); } break;
+    case 'sessDelve': if (confirm('Build this dungeon? It replaces the current one (the party, their characters and the campaign desk come along).')) buildSessionDelve(+k, +id); break;
+    case 'sessEnc': placeSessionEncounter(+k, +id); break;
+    case 'sessTicks': applyTicks(+k); break;
+    case 'clock': tickClock(k, +id); renderPanel(); break;
+    case 'night': rollNight(k); break;
+    case 'shareNight': shareNight(); break;
+    case 'printSess': printSessions([sessionById(k)]); break;
+    case 'printAll': printSessions(SESSIONS); break;
     // build tab
     case 'undo': undo(); renderDock(); break;
     case 'doorKind': ui.doorState = k; renderPanel(); break;
@@ -170,6 +184,11 @@ document.addEventListener('change', e => {
   else if (kind === 'addCond' && sel && el.value){ addCond(sel, el.value, -1); changed(); }
   else if (kind === 'doorDc'){ const dr = selectedDoor(); if (dr){ dr.dc = +el.value || 15; changed(); } }
   else if (kind === 'trapKind'){ const tr = selectedTrap(); if (tr){ tr.kind = el.value; buildFloor(ui.selTrap.floor); changed(); } }
+  else if (kind === 'beat'){ markBeat(+el.dataset.k, el.dataset.id, el.checked); }
+  else if (kind === 'sessNotes'){ state.campaign.notes[el.dataset.k] = el.value; changed(); }
+  else if (kind === 'camp'){ state.campaign[el.dataset.f] = el.value; changed(); }
+  else if (kind === 'fortune'){ state.campaign.fortune[el.dataset.k] = el.value; changed(); }
+  else if (kind === 'place'){ state.campaign.places[el.dataset.k] = el.value; changed(); }
   else if (kind === 'dreadName' || kind === 'dreadText'){
     const n = +el.dataset.k; state.content.dread ||= {}; state.content.dread[n] ||= {};
     state.content.dread[n][kind === 'dreadName' ? 'n' : 'text'] = el.value.trim();

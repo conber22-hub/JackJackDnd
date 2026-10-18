@@ -69,6 +69,18 @@ h4{margin:10px 0 6px;font-size:14px;color:var(--silver);letter-spacing:.04em}
 .btn.seep{background:#1f2a14;border-color:#56702a;color:#d6f29b}
 .btn.on{border-color:var(--candle);color:var(--candle)}
 .btn.small{padding:5px 9px;min-height:30px;font-size:13px}
+.sessbar{display:flex;flex-wrap:wrap;gap:2px;margin:8px 0}
+.sessbar .chip{min-width:30px;text-align:center}
+.beat{display:flex;gap:8px;align-items:flex-start;font-size:13px;margin:5px 0;color:#d8ccb9;cursor:pointer}
+.beat input{margin-top:3px;accent-color:var(--candle)}
+.beat input:checked + span{color:var(--dim);text-decoration:line-through}
+.clkrow{display:flex;align-items:center;gap:6px;margin:5px 0;font-size:13px}
+.clkrow .grow{flex:1}
+.clock{display:flex;gap:2px}
+.clock i{display:block;width:12px;height:16px;border:1px solid var(--line);border-radius:3px;background:#120e16}
+.clock i.on{background:var(--blood);border-color:#ff8a8a}
+.placegrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;color:var(--dim)}
+details.card summary{cursor:pointer;font-size:13px}
 .toolgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 0}
 .grasp .die{display:inline-grid;place-items:center;min-width:38px;height:34px;border:1px solid var(--line);border-radius:8px;color:var(--dim);font-weight:600}
 .grasp .die.on{border-color:#e6d3b8;color:#fff;background:#3a2a26;box-shadow:0 0 10px #e6d3b844}

@@ -8,7 +8,8 @@
     "dev": "vite",
     "build": "vite build && node scripts/copy-build.js",
     "preview": "vite preview",
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js",
+    "campaign-doc": "node scripts/campaign-doc.js"
   },
   "dependencies": {
     "peerjs": "1.5.4",

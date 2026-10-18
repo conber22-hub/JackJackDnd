@@ -163,6 +163,64 @@ export const SHAPES = {
     g.add(at(M(cyl(.02, .02, .5, 6), '#5a3d22'), .25, .4, .05, 0, 0, .3));
     g.add(at(M(box(.3, .05, .05), '#8a8f99', null, { metal:.8 }), .32, .64, .05, 0, 0, .3));
     return g; },
+  wolf(b){ const g = new THREE.Group(), bloom = b.fam === 'bloom';
+    const body = at(M(cap(.13, .42), b.color), 0, .32, 0, Math.PI / 2); g.add(body);
+    g.add(at(M(sph(.12), b.color), 0, .42, .3));
+    g.add(at(M(cone(.07, .2, 8), b.color), 0, .4, .46, Math.PI / 2));                       // snout
+    for (const s of [-1, 1]) g.add(at(M(cone(.035, .09, 6), b.color), s * .06, .55, .27));     // ears
+    eyes(g, .45, .4, b.eye, .05, .02);
+    for (const [x, z] of [[-.08, .18], [.08, .18], [-.08, -.18], [.08, -.18]]) g.add(at(M(cyl(.03, .025, .26, 6), b.color), x, .13, z));
+    g.add(at(M(cone(.04, .3, 6), b.color), 0, .38, -.38, -Math.PI / 2.6));                    // tail
+    if (bloom) for (let i = 0; i < 5; i++) g.add(at(M(sph(.04, 6), '#c6ff5a', '#9cc23c', { ei:2 }), Math.cos(i * 1.7) * .1, .25 + (i % 2) * .08, -.15 + i * .07));
+    if ((b.size || 1) > 1) g.scale.setScalar(1.15);
+    g.userData.prowl = 1; return g; },
+  scarecrow(b){ const g = new THREE.Group();
+    g.add(at(M(cyl(.025, .025, .9, 6), '#5a3d22'), 0, .45, 0));
+    g.add(at(M(cyl(.02, .02, .7, 6), '#5a3d22'), 0, .7, 0, 0, 0, Math.PI / 2));
+    g.add(at(M(cone(.2, .5, 8), '#6a5a3a'), 0, .55, 0));
+    g.add(at(M(sph(.12), '#b8a070'), 0, .9, 0)); eyes(g, .92, .1, b.eye || '#ff9a3a', .04, .02);
+    g.add(at(M(cone(.16, .18, 10), '#3a2e22'), 0, 1.05, 0));
+    for (const s of [-1, 1]) for (let i = 0; i < 3; i++) g.add(at(M(cone(.015, .12, 4), '#d8c070'), s * (.33 + i * .02), .7 - i * .03, 0, 0, 0, s * (Math.PI / 2 + .3 - i * .2)));
+    return g; },
+  swarm(b){ const g = new THREE.Group(), bats = /bat/.test(b.id || '');
+    for (let i = 0; i < 9; i++){
+      const a = i * 2.4, r = .1 + (i % 3) * .1, y = bats ? .4 + (i % 4) * .12 : .06;
+      const m = at(M(bats ? box(.16, .02, .06) : sph(.06, 8), b.color), Math.cos(a) * r, y, Math.sin(a) * r);
+      if (!bats) m.scale.set(1, .7, 1.5); g.add(m);
+      g.add(at(M(sph(.012, 6), '#000', '#ff4a4a', { ei:2 }), Math.cos(a) * r, y + .03, Math.sin(a) * r + .06));
+    }
+    g.userData[bats ? 'hover' : 'skitter'] = 1; return g; },
+  zombie(b){ const g = new THREE.Group(), body = new THREE.Group();
+    body.add(at(M(cap(.15, .32), b.color), 0, .5, 0));
+    body.add(at(M(sph(.12), '#9a9a82'), .03, .82, .04)); eyes(body, .84, .14, b.eye, .045, .02);
+    for (const s of [-1, 1]) body.add(at(M(cyl(.035, .03, .42, 6), b.color), s * .17, .62, .18, Math.PI / 2.2));   // reaching arms
+    body.add(at(M(cone(.2, .3, 8), '#3a3328'), 0, .25, 0));
+    body.rotation.x = .18; body.rotation.z = -.1; g.add(body); return g; },
+  skeleton(b){ const g = new THREE.Group(), bone = '#d8d0b8';
+    g.add(at(M(sph(.11), bone), 0, .85, 0)); eyes(g, .87, .09, b.eye, .04, .02);
+    g.add(at(M(cyl(.025, .025, .38, 6), bone), 0, .58, 0));
+    for (let i = 0; i < 4; i++) g.add(at(M(new THREE.TorusGeometry(.1 - i * .012, .012, 5, 14), bone), 0, .7 - i * .06, 0, Math.PI / 2));
+    for (const s of [-1, 1]){ g.add(at(M(cyl(.02, .02, .4, 5), bone), s * .07, .2, 0)); g.add(at(M(cyl(.018, .018, .38, 5), bone), s * .16, .55, 0, 0, 0, s * .2)); }
+    g.add(at(M(box(.035, .035, .55), '#7a7f88', null, { metal:.7 }), .2, .5, .14, -.5));
+    if (b.id === 'wight') g.add(at(M(cone(.22, .5, 10), '#3a3a30'), 0, .45, -.02));
+    return g; },
+  hag(b){ const g = new THREE.Group(), body = new THREE.Group();
+    body.add(at(M(cone(.27, .8, 12), '#2a2430'), 0, .4, 0));
+    body.add(at(M(sph(.12), b.color), 0, .86, .06)); eyes(body, .88, .16, b.eye === '#ffffff' ? '#ffd24a' : b.eye, .045, .022);
+    body.add(at(M(cone(.03, .12, 6), b.color), 0, .84, .19, Math.PI / 2));                       // nose
+    for (let i = 0; i < 6; i++) body.add(at(M(cyl(.012, .006, .5, 4), '#8a8a8a'), Math.cos(i) * .1, .7, -.05 + Math.sin(i) * .08, .3, 0, Math.cos(i) * .3));
+    for (const s of [-1, 1]) body.add(at(M(cyl(.025, .015, .35, 5), b.color), s * .2, .55, .12, Math.PI / 2.5));
+    body.rotation.x = .25; g.add(body); return g; },
+  humanoid(b){ const g = new THREE.Group(), id = b.id || '';
+    const robe = /cult|priest|mage|noble/.test(id) ? (/cult/.test(id) ? '#3a1018' : /priest/.test(id) ? '#d8d0b8' : /mage/.test(id) ? '#2a3a6a' : '#5a3a6a') : '#4a3a2a';
+    g.add(at(M(cone(.25, .6, 12), robe), 0, .32, 0));
+    g.add(at(M(cap(.13, .26), b.color), 0, .58, 0));
+    g.add(at(M(sph(.11), '#d8b89a'), 0, .86, 0));
+    if (/cult/.test(id)) g.add(at(M(cone(.14, .26, 10), robe), 0, .96, -.02));                // hood
+    if (/guard|knight|veteran|bandit|thug|berserker|scout/.test(id)) g.add(at(M(box(.035, .035, .55), '#9aa0aa', null, { metal:.8 }), .2, .55, .12, -.5));
+    if (/knight|guard/.test(id)) g.add(at(M(box(.05, .36, .26), '#6b6f78', null, { metal:.6 }), -.22, .5, .06));
+    if (/mage|priest|cult-fanatic/.test(id)) g.add(at(M(sph(.05, 8), '#fff', /priest/.test(id) ? '#ffe9a0' : '#9ab0ff', { ei:3 }), .22, .7, .12));
+    return g; },
 };
 export const SHAPE_NAMES = Object.keys(SHAPES).filter(k => k !== 'pc' && k !== 'npc');
 

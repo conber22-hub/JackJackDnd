@@ -14,6 +14,7 @@ import { onStairs, dreadRulesLines } from '../game/actions.js';
 import { undoCount } from '../game/session.js';
 import { hpBar, condChips, BUILD_TOOLS } from './hud.js';
 import { SHAPE_NAMES } from '../render/minis.js';
+import { CAMPAIGN, SESSIONS, CLOCKS, PLACES, PLACE_STATES, CAST, FORTUNE } from '../data/campaign.js';
 
 const art = (key, label) => {
   const a = state.art[key];
@@ -215,11 +216,61 @@ function heroTab(){
   return h;
 }
 
+function storyTab(){
+  const C = state.campaign, s = SESSIONS.find(x => x.n === C.session) || SESSIONS[0], done = C.done[s.n] || {};
+  const name = id => BEST[id]?.name || id;
+  let h = `<h3>${esc(CAMPAIGN.name)}</h3><div class="muted"><i>${esc(CAMPAIGN.tagline)}</i> · ${esc(CAMPAIGN.levels)}</div>
+    <div class="sessbar">${SESSIONS.map(x => `<span class="chip ${x.n === s.n ? 'on' : ''}" data-act="session" data-k="${x.n}" title="${esc(x.title)}">${x.n}</span>`).join('')}</div>
+    <div class="card sel"><div class="hd"><span class="nm">Session ${s.n} · ${esc(s.title)}</span></div>
+      <div class="stat">Level <b>${esc(s.level)}</b> · ${esc(s.length)} · start at Dread <b>${s.dread}</b> <button class="btn small" data-act="sessDread" data-k="${s.n}">Set Dread ${s.dread}</button></div>
+      <div class="trait"><b>Hook.</b> ${esc(s.hook)}</div>
+      <div class="trait">${esc(s.premise)}</div>
+      <div class="trait"><b>From your book.</b> ${esc(s.book)}</div>
+      <div class="trait fam-seep"><b>Flood Edition.</b> ${esc(s.flood)}</div>
+      <div class="look">${esc(s.open)}</div>
+      <div class="row"><button class="btn small primary" data-act="readOpen" data-k="${s.n}">📜 Read the opening to the table</button></div></div>`;
+  s.scenes.forEach((sc, k) => {
+    h += `<div class="card"><div class="hd"><span class="nm">${esc(sc.t)}</span></div>
+      ${sc.beats.map((b, i) => `<label class="beat"><input type="checkbox" data-edit="beat" data-k="${s.n}" data-id="${k}.${i}" ${done[`${k}.${i}`] ? 'checked' : ''}><span>${esc(b)}</span></label>`).join('')}
+      ${sc.delve ? `<div class="row"><button class="btn small primary" data-act="sessDelve" data-k="${s.n}" data-id="${k}">▦ Build: ${esc((TEMPLATES.find(t => t.id === sc.delve.template) || {}).name || sc.delve.template)}</button></div><div class="muted">${esc(sc.delve.note || '')} Keeps the party; replaces the current dungeon.</div>` : ''}
+      ${sc.enc ? `<div class="row"><button class="btn small seep" data-act="sessEnc" data-k="${s.n}" data-id="${k}">⚔ Place: ${esc(sc.enc.label)}</button><span class="muted">${sc.enc.group.map(([b, n]) => `${n} ${esc(name(b))}`).join(', ')} · ${sc.enc.where === 'party' ? 'near the party' : sc.enc.where === 'nest' ? 'in a nest or lair' : 'in a room'}</span></div>` : ''}
+    </div>`;
+  });
+  h += `${s.npcs?.length ? `<div class="trait"><b>Faces.</b> ${s.npcs.map(id => esc(CAST.find(c => c.id === id)?.name || id)).join(' · ')}</div>` : ''}
+    ${s.loot?.length ? `<div class="trait"><b>Loot.</b> ${s.loot.map(esc).join(' · ')}</div>` : ''}
+    <div class="trait"><b>Clocks (suggested).</b> ${Object.entries(s.tick || {}).map(([k, v]) => `${esc(CLOCKS.find(c => c.id === k)?.label || k)} ${v > 0 ? '+' : ''}${v}`).join(' · ') || '—'} ${Object.keys(s.tick || {}).length ? `<button class="btn small" data-act="sessTicks" data-k="${s.n}">Apply</button>` : ''}</div>
+    <div class="trait"><b>End on.</b> ${esc(s.ending)} <button class="btn small" data-act="readEnd" data-k="${s.n}">📜 Read</button></div>
+    <div class="trait"><b>Level.</b> ${esc(s.levelUp)}</div>
+    <textarea class="txt" placeholder="Session notes — what changed, who saw them, what the Count now knows…" data-edit="sessNotes" data-k="${s.n}">${esc(C.notes[s.n] || '')}</textarea>
+    <div class="row"><button class="btn small" data-act="printSess" data-k="${s.n}">🖨 Print this session</button><button class="btn small" data-act="printAll">🖨 All sessions</button></div>
+    <h3>The Dark Lord desk</h3>
+    <div class="row"><label>Day</label><input class="txt" style="flex:1" value="${esc(C.day)}" data-edit="camp" data-f="day"></div>
+    <div class="row"><label>Weather</label><input class="txt" style="flex:1" value="${esc(C.weather)}" data-edit="camp" data-f="weather"></div>
+    <div class="row"><label>The Count's gaze</label><select class="txt" style="width:auto" data-edit="camp" data-f="gaze">${['absent', 'amused', 'interested', 'offended', 'hunting'].map(g => opt(g, g, C.gaze === g)).join('')}</select></div>
+    <h4>Clocks</h4>
+    ${CLOCKS.map(c => `<div class="clkrow"><span class="grow" title="${esc(c.full)}">${esc(c.label)}</span><button class="btn small" data-act="clock" data-k="${c.id}" data-id="-1">−</button><span class="clock">${Array.from({ length:c.max }, (_, i) => `<i class="${i < (C.clocks[c.id] || 0) ? 'on' : ''}"></i>`).join('')}</span><button class="btn small" data-act="clock" data-k="${c.id}" data-id="1">+</button></div>`).join('')}
+    <div class="muted">Patience full: he arrives. Bloom fills a quarter: Dread +1. Riot full: the square burns. Heart's rest: say the name, tick once, put the chapel on the table.</div>
+    <h4>Roll the night</h4>
+    <div class="row">${['omen', 'road', 'dinner', 'rumor', 'stain'].map(k => `<button class="btn small" data-act="night" data-k="${k}">${k[0].toUpperCase() + k.slice(1)}</button>`).join('')}</div>
+    ${C.lastNight ? `<div class="look">${esc(C.lastNight)}</div><div class="row"><button class="btn small" data-act="shareNight">Show the table</button></div>` : ''}
+    <h4>Counsel</h4><div class="look">${esc(C.counsel || 'Draw a card.')}</div><div class="row"><button class="btn small" data-act="night" data-k="counsel">Draw another</button></div>
+    <h4>The fortune</h4><div class="muted">Write down what the cards said, so it is never lost.</div>
+    ${FORTUNE.map(f => `<div class="row"><label style="width:120px">${esc(f.label)}</label><input class="txt" style="flex:1" value="${esc(C.fortune[f.id] || '')}" data-edit="fortune" data-k="${f.id}"></div>`).join('')}
+    <h4>Places</h4><div class="placegrid">${PLACES.map(p => `<label>${esc(p.name)}<select class="txt" data-edit="place" data-k="${p.id}">${PLACE_STATES.map(st => opt(st, st, (C.places[p.id] || 'quiet') === st)).join('')}</select></label>`).join('')}</div>
+    <h4>How the Bloom hunts</h4><div class="trait">${CAMPAIGN.seeded}</div>
+    <div class="trait"><b>Tell before initiative.</b> Sweet rot. A cough that is not a cough. Flies that will not land. The Count's wolves will not enter the square.</div>
+    <h4>Faces</h4>
+    ${CAST.map(c => `<details class="card"><summary><b>${esc(c.name)}</b> <span class="muted">${esc(c.look)}</span></summary>
+      <div class="trait"><b>Want</b> ${esc(c.want)}</div><div class="trait"><b>Fear</b> ${esc(c.fear)}</div><div class="trait"><b>Lever</b> ${esc(c.lever)}</div><div class="muted">${esc(c.line)} — ${esc(c.die)}</div></details>`).join('')}
+    <h4>Pillars</h4>${CAMPAIGN.pillars.map(p => `<div class="trait">• ${esc(p)}</div>`).join('')}`;
+  return h;
+}
+
 export function renderPanel(){
   if (!state) return;
   $('#panel').classList.toggle('closed', !ui.panelOpen);
   const body = $('#tabBody'), scroll = renderPanel.last === ui.tab ? body.scrollTop : 0; renderPanel.last = ui.tab;
-  const tabs = { tokens:tokensTab, bestiary:bestiaryTab, dungeon:dungeonTab, build:buildTab, dread:dreadTab, table:tableTab, hero:heroTab,
+  const tabs = { story:storyTab, tokens:tokensTab, bestiary:bestiaryTab, dungeon:dungeonTab, build:buildTab, dread:dreadTab, table:tableTab, hero:heroTab,
     log:() => `<h3>What has happened</h3><div class="log" style="max-height:none">${logList()}</div>` };
   body.innerHTML = (tabs[ui.tab] || tokensTab)();
   body.scrollTop = scroll;

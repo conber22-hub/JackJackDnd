@@ -39,7 +39,7 @@ export function renderTop(){
 }
 export function renderTabs(){
   const tabs = ui.role === 'player' ? [['hero', 'Your hero'], ['log', 'Log']]
-    : [['tokens', 'Tokens'], ['bestiary', 'Bestiary'], ['dungeon', 'Dungeon'], ['build', 'Build'], ['dread', 'Dread'], ['table', 'Table']];
+    : [['story', 'Story'], ['tokens', 'Tokens'], ['bestiary', 'Beasts'], ['dungeon', 'Dungeon'], ['build', 'Build'], ['dread', 'Dread'], ['table', 'Table']];
   if (!tabs.some(t => t[0] === ui.tab)) ui.tab = tabs[0][0];
   $('#tabs').innerHTML = tabs.map(([k, l]) => `<button data-act="tab" data-k="${k}" class="${ui.tab === k ? 'on' : ''}">${l}</button>`).join('');
 }
