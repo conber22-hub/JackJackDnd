@@ -9,7 +9,7 @@
      aoe:<radius sq>:<save|none>:<dc>:<dice>:<type>[:<condition>]   aoeall:(same, hits allies too)
      save:<ability>:<dc>:<condition>[:all|random]   — party on this floor saves or gains the condition
      condall:<tag>:<condition>:<rounds>              — every creature with that tag on the floor
-     heal:<dice>   shift   dread+1   dread-1   morph:<id>   grasp:roll   grasp+1   grasp-1   alert
+     heal:<dice>   shift   dread+1   dread-1 (Strahd's Gaze)   morph:<id>   whim:roll   whim+1   whim-1   alert
    hooks.onDeath / onTurnStart / onBloodied (first drop to half HP): lists of fx, plus 'divide' and 'unfinished'
    shape: which 3D mini to build (render/minis.js)   size: squares wide
    look: written appearance (feeds your art)   prompt: Grok prompt
@@ -144,8 +144,7 @@ export const BESTIARY = [
   { id:'handswarm', fam:'andral', name:'Hand-Swarm', cr:'1', ac:12, hp:'4d8', speed:30, spd:'30 ft., climb 30 ft.', init:3, size:1,
     shape:'hand', color:'#d9cdb8', eye:'#ffffff', tags:['hands'],
     attacks:[{n:'Grasp', b:4, d:'2d4+2', t:'bludgeoning', on:{ save:'str', dc:12, cond:'grappled', rounds:1 }, f:'Fingers close around {T}\'s ankle. Then the wrist. Then the throat.'}],
-    traits:['<b>Endless Division.</b> When it dies, roll a d6: on 5–6, two more Hand-Swarms crawl up out of the earth nearby. <i>(Automatic.)</i>',
-            '<b>Feeds the Grasp.</b> Each Hand that dies to anything but radiant damage steps the Grasp Die up. <i>(Automatic.)</i>'],
+    traits:['<b>Endless Division.</b> When it dies, roll a d6: on 5–6, two more Hand-Swarms crawl up out of the earth nearby. <i>(Automatic.)</i>'],
     hooks:{ onDeath:['divide'] },
     look:'A scuttling mass of severed, grey-pale hands moving like crabs, nails black with grave dirt.',
     prompt:'horror swarm of severed pale human hands scuttling like crabs across a crypt floor, black grave-dirt fingernails, candlelight, Ravenloft, dark fantasy concept art' },
@@ -155,14 +154,12 @@ export const BESTIARY = [
     attacks:[{n:'Crushing Grip', b:9, d:'3d8+5', t:'bludgeoning', on:{ save:'str', dc:17, cond:'grappled', rounds:2 }, f:'A hundred hands take hold of {T} at once.'},
              {n:'Fling', b:9, d:'3d6+5', t:'bludgeoning', on:{ save:'dex', dc:17, cond:'prone', rounds:1 }, f:'{A} passes {T} hand over hand over hand — and throws.'}],
     specials:[{n:'Endless Division', fx:'spawn:handswarm:2'},
-              {n:'Rising Tide of Fingers', fx:'aoe:2:str:16:3d6:bludgeoning:restrained', f:'The floor around it becomes a field of reaching fingers.'},
-              {n:'Clench the Grasp', fx:'grasp:roll', f:'Every hand in the labyrinth tightens at once.'}],
+              {n:'Rising Tide of Fingers', fx:'aoe:2:str:16:3d6:bludgeoning:restrained', f:'The floor around it becomes a field of reaching fingers.'}],
     traits:['<b>Multiattack.</b> Three Crushing Grips; it can hold up to four creatures. One Grip can be a Fling instead.',
             '<b>Endless Division.</b> At the start of each of its turns a Hand-Swarm claws up through the earth beside it. <i>(Automatic.)</i>',
             '<b>Killing a hand does nothing.</b> Resistant to bludgeoning, piercing and slashing; vulnerable to radiant and fire.',
-            '<b>Heart of the Grasp.</b> While it lives, the Grasp Die is rolled twice and the higher result is used. <i>(Automatic.)</i>',
             '<b>Grasping Aura.</b> Squares within 10 ft. of it are difficult terrain for everyone else.'],
-    hooks:{ onTurnStart:['spawn:handswarm:1'], onDeath:['grasp-1','grasp-1'] },
+    hooks:{ onTurnStart:['spawn:handswarm:1'] },
     look:'A rolling mound of hundreds of hands gripping one another, fingers constantly reaching outward.',
     prompt:'gigantic horror mound made of hundreds of pale human hands gripping each other, fingers reaching outward, rolling through a crypt corridor, silver mine, Ravenloft, dark fantasy concept art' },
 
@@ -173,8 +170,7 @@ export const BESTIARY = [
     specials:[{n:'Nail Storm', fx:'aoe:4:dex:20:6d8:piercing', f:'The halo of silver nails flies apart and comes back through everyone.'},
               {n:'Benediction of Rot', fx:'aoe:6:con:20:8d8:necrotic:no healing', f:'He raises both hands in blessing. The blessing is the wrong one.'},
               {n:'Raise the Faithful', fx:'spawn:handswarm:2@party', f:'The hands of everyone ever buried beneath his church answer the call.'},
-              {n:'Reorganize Sector', fx:'shift', f:'The saint gestures. The labyrinth obeys.'},
-              {n:'Clench the Grasp', fx:'grasp:roll'}],
+              {n:'Reorganize Sector', fx:'shift', f:'The saint gestures. The labyrinth obeys.'}],
     traits:['<b>Multiattack.</b> Two attacks, in any combination.',
             '<b>Legendary Resistance (3/day).</b> When he fails a save, he can succeed instead.',
             '<b>Radiant-Necrotic Duality.</b> Whichever of the two he takes, he answers with the other: his next attack deals that type as the opposite.',

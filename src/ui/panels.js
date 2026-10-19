@@ -1,12 +1,12 @@
-/* SIDE PANEL — one function per tab. The DM gets Tokens · Bestiary · Dungeon · Build · Dread · Table; players get Your hero · Log. */
-import { state, ui, tokById, dreadLevel, shiftTable, graspTable } from '../engine/state.js';
-import { roomById } from '../engine/generator.js';
+/* SIDE PANEL — one function per tab. The DM gets Story · Tokens · Bestiary · Dungeon · Build · Gaze · Table; players get Your hero · Log. */
+import { state, ui, tokById, dreadLevel, shiftTable, whimTable } from '../engine/state.js';
+import { roomById, exitLabel } from '../engine/generator.js';
 import { tableGaps, tableMax } from '../engine/tables.js';
 import { FAMILIES, BEST, bestList } from '../data/bestiary.js';
 import { DREAD, CONDITIONS } from '../data/dread.js';
 import { ROOM_TYPES, TRAP_KINDS, DOOR_STATES } from '../data/rooms.js';
 import { THEMES, TEMPLATES } from '../data/themes.js';
-import { DEFAULT_SHIFT_TABLE, DEFAULT_GRASP_TABLE, GRASP_STEPS } from '../data/tables.js';
+import { DEFAULT_SHIFT_TABLE, DEFAULT_WHIM_TABLE, WHIM_STEPS } from '../data/tables.js';
 import { $, esc, avgDice, attacksToText } from '../util/core.js';
 import { net } from '../net/table.js';
 import { currentTurn } from '../game/rules.js';
@@ -18,6 +18,7 @@ import { gfx } from '../render/gfx.js';
 import { heroStats } from '../engine/hero.js';
 import { sheetHTML } from './creator.js';
 import { myHero } from '../game/heroes.js';
+import { PROPS, PROP_CATS } from '../data/props.js';
 import { modelInfo } from '../render/models.js';
 import { CAMPAIGN, SESSIONS, CLOCKS, PLACES, PLACE_STATES, CAST, FORTUNE } from '../data/campaign.js';
 
@@ -37,7 +38,7 @@ const modelSlot = (key, label) => {
 };
 export const gfxPanel = () => `<h3>Graphics & sound</h3>
   <div class="row"><label>Quality</label>${['low', 'medium', 'high'].map(q => `<button class="btn small ${gfx.quality === q ? 'on' : ''}" data-act="gfxQ" data-k="${q}">${q[0].toUpperCase() + q.slice(1)}</button>`).join('')}</div>
-  <div class="muted">Low: fastest (phones). Medium: bloom on eyes and runes, film grain that worsens with the Dread. High: torch shadows too.</div>
+  <div class="muted">Low: fastest (phones). Medium: bloom on eyes and runes, film grain that worsens as his Gaze rises. High: torch shadows too.</div>
   <div class="row"><label>Volume</label><input type="range" min="0" max="1" step=".05" value="${gfx.volume}" data-edit="gfxVol" style="flex:1">
     <button class="btn small ${gfx.music ? 'on' : ''}" data-act="gfxT" data-k="music">Drone</button><button class="btn small ${gfx.sfx ? 'on' : ''}" data-act="gfxT" data-k="sfx">Effects</button></div>
   <div class="muted">Sound starts after your first tap. The DM's sounds play on every player's device too.</div>`;
@@ -119,7 +120,7 @@ function dungeonTab(){
     <div class="row"><label>Look</label><select class="txt" style="flex:1" data-edit="floorTheme">${THEMES.map((t, i) => opt(i, t.name, f.theme === i)).join('')}</select></div>
     <div class="row"><button class="btn primary" data-act="shiftNow">⟲ Shift the halls (d100)</button><input class="txt num" id="shiftForce" type="number" min="1" max="100" placeholder="roll"><button class="btn small" data-act="shiftForced" title="Use this number instead of rolling">Use</button></div>
     <div class="row"><button class="btn small" data-act="reveal">Reveal floor</button><button class="btn small" data-act="refog">Re-fog floor</button></div>
-    <div class="muted">${D.shift ? `At Dread ${state.dread} this floor shifts on its own at the end of each combat round (${Math.round(D.shift * 100)}% chance).` : 'At Dread 6+ the halls start shifting on their own during combat.'}</div>
+    <div class="muted">${D.shift ? `At Gaze ${state.dread} this floor rearranges itself at the end of each combat round (${Math.round(D.shift * 100)}% chance).` : 'At Gaze 6+ the land starts rearranging itself during combat.'}</div>
     <h4>View</h4><div class="row">
       <button class="btn small ${ui.previewFog ? 'on' : ''}" data-act="toggle" data-k="previewFog">Preview fog</button>
       <button class="btn small ${ui.roomLabels ? 'on' : ''}" data-act="toggle" data-k="roomLabels">Room labels</button>
@@ -150,6 +151,9 @@ function buildTab(){
     <div class="toolgrid">${BUILD_TOOLS.map(([k, i, l]) => `<button class="btn small ${ui.mode === k ? 'on' : ''}" data-act="mode:${k}">${i} ${l}</button>`).join('')}<button class="btn small" data-act="undo">↶ Undo${undoCount() ? ` (${undoCount()})` : ''}</button></div>`;
   if (ui.mode === 'door') h += `<h4>Door to place</h4><div>${Object.entries(DOOR_STATES).map(([k, v]) => `<span class="chip ${ui.doorState === k ? 'on' : ''}" data-act="doorKind" data-k="${k}">${v.label}</span>`).join('')}</div>`;
   if (ui.mode === 'trap') h += `<h4>Trap to hide</h4><div>${Object.entries(TRAP_KINDS).map(([k, v]) => `<span class="chip ${ui.trapKind === k ? 'on' : ''}" data-act="trapKindSel" data-k="${k}">${v.icon} ${v.n}</span>`).join('')}</div><div class="look">${esc(TRAP_KINDS[ui.trapKind].f)}</div>`;
+  if (ui.mode === 'prop') h += `<h4>Prop to place</h4><div>${Object.entries(PROP_CATS).map(([k, l]) => `<span class="chip ${ui.propCat === k ? 'on' : ''}" data-act="propCat" data-k="${k}">${l}</span>`).join('')}</div>
+    <div class="propgrid">${Object.entries(PROPS).filter(([, v]) => v.cat === ui.propCat).map(([k, v]) => `<span class="chip ${ui.propKind === k ? 'on' : ''}" data-act="propKind" data-k="${k}">${esc(v.n)}<small> ${v.w}×${v.h}</small></span>`).join('')}</div>
+    <div class="muted">Props are scenery — they don't block movement or sight. ${(f.props || []).length} on this floor.</div>`;
   if (ui.mode === 'stairs') h += `<h4>Which stairs</h4><div><span class="chip ${ui.stairsDir === 'down' ? 'on' : ''}" data-act="stairsDir" data-k="down">▼ Down (to floor ${ui.floor + 2})</span><span class="chip ${ui.stairsDir === 'up' ? 'on' : ''}" data-act="stairsDir" data-k="up">▲ Up (to floor ${ui.floor})</span></div>`;
   h += `<div class="row"><label>Paint rooms as</label><select class="txt" style="width:auto" id="paintType">${Object.entries(ROOM_TYPES).map(([k, v]) => opt(k, v.label, ui.paintType === k)).join('')}</select><button class="btn small ${ui.mode === 'paint' ? 'on' : ''}" data-act="paintMode">Paint</button></div>`;
   h += `<div class="row"><button class="btn small ${f.autoLink ? 'on' : ''}" data-act="autoLink">${f.autoLink ? '🔗 Auto-link ON' : '✋ Hand-built (auto-link off)'}</button></div>
@@ -181,19 +185,20 @@ function buildTab(){
   return h;
 }
 
-function dreadTab(){
-  const sh = shiftTable(), gr = graspTable(), D = dreadLevel();
+function gazeTab(){
+  const sh = shiftTable(), gr = whimTable(), D = dreadLevel();
   const gapsS = tableGaps(sh.rows, 100), gapsG = tableGaps(gr.rows, 12);
-  let h = `<h3>Dread ${state.dread} · ${esc(D.n)}</h3><div class="look">${esc(D.text || '')}</div>
+  let h = `<h3>👁 Strahd's Gaze ${state.dread} · ${esc(D.n)}</h3><div class="look">${esc(D.text || '')}</div>
     <div class="trait">${dreadRulesLines(D).join(' · ') || '<span class="muted">No automatic effects at this level.</span>'}</div>
-    <h3>✋ The Grasp Die</h3>
-    <div class="row grasp"><button class="btn small" data-act="graspStep" data-k="-1">−</button>
-      ${GRASP_STEPS.map(n => `<span class="die ${state.grasp.die === n ? 'on' : ''}">d${n}</span>`).join('')}
-      <button class="btn small" data-act="graspStep" data-k="1">+</button></div>
-    <div class="row"><button class="btn primary" data-act="graspRoll">Roll the Grasp Die</button><button class="btn small ${state.grasp.auto ? 'on' : ''}" data-act="graspAuto">${state.grasp.auto ? 'Auto: each round' : 'Auto: off'}</button></div>
+    <div class="muted">How closely the Count is watching. Raise it when they catch his eye; his creatures fight harder, the dead get up, the land moves and, from 8, his voice gets inside their heads.</div>
+    <h3>🦇 The Whim Die</h3>
+    <div class="row grasp"><button class="btn small" data-act="whimStep" data-k="-1">−</button>
+      ${WHIM_STEPS.map(n => `<span class="die ${state.grasp.die === n ? 'on' : ''}">d${n}</span>`).join('')}
+      <button class="btn small" data-act="whimStep" data-k="1">+</button></div>
+    <div class="row"><button class="btn primary" data-act="whimRoll">Roll the Whim Die</button><button class="btn small ${state.grasp.auto ? 'on' : ''}" data-act="whimAuto">${state.grasp.auto ? 'Auto: each round' : 'Auto: off'}</button></div>
     ${state.grasp.last ? `<div class="muted">Last: d${state.grasp.last.die} = <b>${state.grasp.last.r}</b> — ${esc(state.grasp.last.name)}</div>` : ''}
-    <div class="muted">Grows when a Hand dies to anything but radiant (and when you press +). Shrinks when the Monstrosity dies, or the party rests in a Sanctuary. Auto-rolls at round end while hands are on the combat floor or the fight is in the Hand-Warrens.</div>
-    <h3>Dread levels</h3>
+    <div class="muted">How he toys with them. Grows when one of his creatures falls (once a round) and when you press + (they refused a gift, insulted him, were brave where he could see). Shrinks when they bow, accept his hospitality or rest somewhere holy. Roll it when the night is too quiet.</div>
+    <h3>Gaze levels</h3>
     <div class="muted">Rename the levels and rewrite what you read out. Effects run on their own in combat.</div>`;
   for (let n = 1; n <= 10; n++){
     const L = dreadLevel(n), o = state.content.dread?.[n] || {};
@@ -206,11 +211,11 @@ function dreadTab(){
     <textarea class="txt" id="shiftText" style="min-height:240px;font-family:ui-monospace,monospace;font-size:12px">${esc(state.content.shift ?? DEFAULT_SHIFT_TABLE)}</textarea>
     ${sh.errors.length ? `<div class="bad">${sh.errors.map(esc).join('<br>')}</div>` : ''}${gapsS.length ? `<div class="bad">No row for: ${gapsS.slice(0, 20).join(', ')}${gapsS.length > 20 ? '…' : ''}</div>` : ''}
     <div class="row"><button class="btn small primary" data-act="saveShift">Save table</button><button class="btn small" data-act="shiftNow">Roll on this floor</button></div>
-    <h3>The Grasp table</h3>
-    <div class="muted">Rows by Grasp Die result (1–${Math.max(12, tableMax(gr.rows))}).</div>
-    <textarea class="txt" id="graspText" style="min-height:200px;font-family:ui-monospace,monospace;font-size:12px">${esc(state.content.grasp ?? DEFAULT_GRASP_TABLE)}</textarea>
+    <h3>The Whim table</h3>
+    <div class="muted">Rows by Whim Die result (1–${Math.max(12, tableMax(gr.rows))}).</div>
+    <textarea class="txt" id="whimText" style="min-height:200px;font-family:ui-monospace,monospace;font-size:12px">${esc(state.content.grasp ?? DEFAULT_WHIM_TABLE)}</textarea>
     ${gr.errors.length ? `<div class="bad">${gr.errors.map(esc).join('<br>')}</div>` : ''}${gapsG.length ? `<div class="bad">No row for: ${gapsG.join(', ')}</div>` : ''}
-    <div class="row"><button class="btn small primary" data-act="saveGrasp">Save table</button></div>`;
+    <div class="row"><button class="btn small primary" data-act="saveWhim">Save table</button></div>`;
   return h;
 }
 
@@ -247,7 +252,7 @@ function heroTab(){
     h += `<div class="card sel"><div class="hd"><span class="dot" style="color:${me.color};background:${me.color}"></span><span class="nm">${esc(me.name)}${me.dead ? ' ✝' : ''}</span></div>
       <div class="stat">AC ${me.ac} · HP ${me.hp}/${me.maxHp} · Speed ${me.speed} ft${state.combat.active ? ` · moved ${(me.moved || 0) * 5} ft` : ''}</div>${hpBar(me, true)}
       ${me.conds?.length ? `<div>${condChips(me, false)}</div>` : ''}
-      <div class="row"><button class="btn small" data-act="sel" data-id="${me.id}">Select & show moves</button><button class="btn small" data-act="search">🔍 Search</button>${st ? `<button class="btn small primary" data-act="stairs">${st === 'down' ? '▼ Descend' : '▲ Ascend'}</button>` : ''}${turn ? `<button class="btn small primary" data-act="endMyTurn">End my turn</button>` : ''}</div></div>`;
+      <div class="row"><button class="btn small" data-act="sel" data-id="${me.id}">Select & show moves</button><button class="btn small" data-act="search">🔍 Search</button>${st ? `<button class="btn small primary" data-act="stairs">${esc(exitLabel(state.floors[me.floor], st))}</button>` : ''}${turn ? `<button class="btn small primary" data-act="endMyTurn">End my turn</button>` : ''}</div></div>`;
     if (sheet) h += sheetHTML(sheet) + `<div class="row"><button class="btn small" data-act="editHero" data-id="${sheet.id}">✎ Edit / level up</button></div>`;
     h += picker + newAtTable();
     h += `<div class="muted">${state.combat.active ? (turn ? '<b style="color:var(--candle)">It is your turn.</b> Tap a glowing tile to move.' : 'Combat — wait for your turn to move.') : 'Exploring — tap your hero, then a glowing tile.'}<br>Tap a door next to you to open it. Long-press or use ◎ to ping a spot for everyone.</div>`;
@@ -262,7 +267,7 @@ function storyTab(){
   let h = `<h3>${esc(CAMPAIGN.name)}</h3><div class="muted"><i>${esc(CAMPAIGN.tagline)}</i> · ${esc(CAMPAIGN.levels)}</div>
     <div class="sessbar">${SESSIONS.map(x => `<span class="chip ${x.n === s.n ? 'on' : ''}" data-act="session" data-k="${x.n}" title="${esc(x.title)}">${x.n}</span>`).join('')}</div>
     <div class="card sel"><div class="hd"><span class="nm">Session ${s.n} · ${esc(s.title)}</span></div>
-      <div class="stat">Level <b>${esc(s.level)}</b> · ${esc(s.length)} · start at Dread <b>${s.dread}</b> <button class="btn small" data-act="sessDread" data-k="${s.n}">Set Dread ${s.dread}</button></div>
+      <div class="stat">Level <b>${esc(s.level)}</b> · ${esc(s.length)} · start at Gaze <b>${s.gaze}</b> <button class="btn small" data-act="sessGaze" data-k="${s.n}">Set Gaze ${s.gaze}</button></div>
       <div class="trait"><b>Hook.</b> ${esc(s.hook)}</div>
       <div class="trait">${esc(s.premise)}</div>
       <div class="trait"><b>From your book.</b> ${esc(s.book)}</div>
@@ -286,10 +291,9 @@ function storyTab(){
     <h3>The Dark Lord desk</h3>
     <div class="row"><label>Day</label><input class="txt" style="flex:1" value="${esc(C.day)}" data-edit="camp" data-f="day"></div>
     <div class="row"><label>Weather</label><input class="txt" style="flex:1" value="${esc(C.weather)}" data-edit="camp" data-f="weather"></div>
-    <div class="row"><label>The Count's gaze</label><select class="txt" style="width:auto" data-edit="camp" data-f="gaze">${['absent', 'amused', 'interested', 'offended', 'hunting'].map(g => opt(g, g, C.gaze === g)).join('')}</select></div>
     <h4>Clocks</h4>
     ${CLOCKS.map(c => `<div class="clkrow"><span class="grow" title="${esc(c.full)}">${esc(c.label)}</span><button class="btn small" data-act="clock" data-k="${c.id}" data-id="-1">−</button><span class="clock">${Array.from({ length:c.max }, (_, i) => `<i class="${i < (C.clocks[c.id] || 0) ? 'on' : ''}"></i>`).join('')}</span><button class="btn small" data-act="clock" data-k="${c.id}" data-id="1">+</button></div>`).join('')}
-    <div class="muted">Patience full: he arrives. Bloom fills a quarter: Dread +1. Riot full: the square burns. Heart's rest: say the name, tick once, put the chapel on the table.</div>
+    <div class="muted">Patience full: he arrives. Bloom fills a quarter: his Gaze +1. Riot full: the square burns. Salt runs out: the unburied dead rise Seeded.</div>
     <h4>Roll the night</h4>
     <div class="row">${['omen', 'road', 'dinner', 'rumor', 'stain'].map(k => `<button class="btn small" data-act="night" data-k="${k}">${k[0].toUpperCase() + k.slice(1)}</button>`).join('')}</div>
     ${C.lastNight ? `<div class="look">${esc(C.lastNight)}</div><div class="row"><button class="btn small" data-act="shareNight">Show the table</button></div>` : ''}
@@ -297,7 +301,7 @@ function storyTab(){
     <h4>The fortune</h4><div class="muted">Write down what the cards said, so it is never lost.</div>
     ${FORTUNE.map(f => `<div class="row"><label style="width:120px">${esc(f.label)}</label><input class="txt" style="flex:1" value="${esc(C.fortune[f.id] || '')}" data-edit="fortune" data-k="${f.id}"></div>`).join('')}
     <h4>Places</h4><div class="placegrid">${PLACES.map(p => `<label>${esc(p.name)}<select class="txt" data-edit="place" data-k="${p.id}">${PLACE_STATES.map(st => opt(st, st, (C.places[p.id] || 'quiet') === st)).join('')}</select></label>`).join('')}</div>
-    <h4>How the Bloom hunts</h4><div class="trait">${CAMPAIGN.seeded}</div>
+    <h4>How the Bloom hunts</h4><div class="trait">${CAMPAIGN.seeded}</div><div class="trait">${CAMPAIGN.salt}</div>
     <div class="trait"><b>Tell before initiative.</b> Sweet rot. A cough that is not a cough. Flies that will not land. The Count's wolves will not enter the square.</div>
     <h4>Faces</h4>
     ${CAST.map(c => `<details class="card"><summary><b>${esc(c.name)}</b> <span class="muted">${esc(c.look)}</span></summary>
@@ -310,7 +314,7 @@ export function renderPanel(){
   if (!state) return;
   $('#panel').classList.toggle('closed', !ui.panelOpen);
   const body = $('#tabBody'), scroll = renderPanel.last === ui.tab ? body.scrollTop : 0; renderPanel.last = ui.tab;
-  const tabs = { story:storyTab, tokens:tokensTab, bestiary:bestiaryTab, dungeon:dungeonTab, build:buildTab, dread:dreadTab, table:tableTab, hero:heroTab,
+  const tabs = { story:storyTab, tokens:tokensTab, bestiary:bestiaryTab, dungeon:dungeonTab, build:buildTab, gaze:gazeTab, table:tableTab, hero:heroTab,
     log:() => `<h3>What has happened</h3><div class="log" style="max-height:none">${logList()}</div>` };
   body.innerHTML = (tabs[ui.tab] || tokensTab)();
   body.scrollTop = scroll;

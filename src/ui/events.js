@@ -1,5 +1,5 @@
 /* UI EVENT WIRING — every [data-act] button, [data-edit] field, and keyboard shortcut. */
-import { state, ui, tokById, isDM, makePC, makeNPC } from '../engine/state.js';
+import { state, setState, ui, tokById, isDM, makePC, makeNPC } from '../engine/state.js';
 import { updateVision, freeTilesNear } from '../engine/grid.js';
 import { roomById } from '../engine/generator.js';
 import { floorToAscii, floorToJSON } from '../engine/importer.js';
@@ -19,16 +19,17 @@ import { select, takeStairs, goFloor, setView, setDread, rebuildFog, doorAction,
 import { rollInitiative, nextTurn, endCombat, addToInit, applyDamage, heal, infest, useSpecial, removeToken, restoreTaken } from '../game/combat.js';
 import { addCond, removeCond } from '../game/rules.js';
 import { shiftFloor } from '../game/shift.js';
-import { graspRoll, graspStep } from '../game/grasp.js';
+import { whimRoll, whimStep } from '../game/whim.js';
 import { changed, exportDelve, importDelve, loadLocal, loadState, deserialize, saveSoon, undo, download, snapshot } from '../game/session.js';
 import { hostTable, closeTable, joinTable, sendHost, broadcast, pushState } from '../net/table.js';
 import { newDelve, importMap, setAutoLink, removeRoom, populate, clearMonsters, addFloorBelow, removeBottomFloor, randomSeed } from '../game/build.js';
 import { populateFloor } from '../engine/generator.js';
 import { setGfx, gfx } from '../render/gfx.js';
 import { openCreator, sheetHTML } from './creator.js';
+import { PROPS } from '../data/props.js';
 import { myHeroes, saveMyHero, deleteMyHero, myHero, applyCharacter, placeCharacter, removeCharacter, myProfile, saveProfile, playerKey, unlockCharacter, setCharacterOwner } from '../game/heroes.js';
 import { putModel, deleteModel } from '../render/models.js';
-import { buildSessionDelve, placeSessionEncounter, readAloud, tickClock, applyTicks, rollNight, shareNight, setSessionDread, markBeat, printSessions, sessionById, SESSIONS } from '../game/campaign.js';
+import { buildSessionDelve, placeSessionEncounter, readAloud, tickClock, applyTicks, rollNight, shareNight, setSessionGaze, markBeat, printSessions, sessionById, SESSIONS } from '../game/campaign.js';
 
 const actor = () => ui.role === 'player' ? tokById(ui.myToken) : (ui.selected && tokById(ui.selected));
 
@@ -63,7 +64,7 @@ document.addEventListener('click', e => {
     case 'rollInit': rollInitiative(); break;
     case 'nextTurn': nextTurn(); break;
     case 'endCombat': endCombat(); break;
-    case 'shiftNow': shiftFloor(ui.floor, 'The Dread Zone rearranges itself'); break;
+    case 'shiftNow': shiftFloor(ui.floor, 'Barovia rearranges itself'); break;
     case 'shiftForced': { const n = clamp(+$('#shiftForce').value || 0, 1, 100); if (n) shiftFloor(ui.floor, 'The DM calls the shift', n); } break;
     // doors & traps
     case 'doorSet': { const dr = selectedDoor(); if (dr){ snapshot('door'); doorAction(null, ui.selDoor.floor, dr.id, 'set:' + k); } } break;
@@ -78,13 +79,13 @@ document.addEventListener('click', e => {
       const victim = state.tokens.find(t => t.floor === ui.selTrap.floor && t.x === x && t.y === y && !t.dead) || { name:'Something', floor:ui.selTrap.floor, x, y, kind:'monster', flags:{} };
       triggerTrap(victim, tr); } break;
     case 'trapDel': { const tr = selectedTrap(); if (tr){ snapshot('remove trap'); const f = state.floors[ui.selTrap.floor]; f.traps = f.traps.filter(t => t !== tr); ui.selTrap = null; buildFloor(ui.floor); changed(); } } break;
-    // grasp
-    case 'graspRoll': graspRoll(ui.floor); break;
-    case 'graspStep': graspStep(+k, 'the DM'); renderPanel(); renderTop(); renderDock(); break;
-    case 'graspAuto': state.grasp.auto = !state.grasp.auto; changed(); break;
+    // the Whim Die (kept in state.grasp)
+    case 'whimRoll': whimRoll(ui.floor); break;
+    case 'whimStep': whimStep(+k, 'the DM'); renderPanel(); renderTop(); renderDock(); break;
+    case 'whimAuto': state.grasp.auto = !state.grasp.auto; changed(); break;
     case 'setDread': setDread(+k); break;
-    case 'saveShift': case 'saveGrasp': {
-      const box = a === 'saveShift' ? '#shiftText' : '#graspText', key = a === 'saveShift' ? 'shift' : 'grasp', txt = $(box).value.trim();
+    case 'saveShift': case 'saveWhim': {
+      const box = a === 'saveShift' ? '#shiftText' : '#whimText', key = a === 'saveShift' ? 'shift' : 'grasp', txt = $(box).value.trim();
       if (!txt){ state.content[key] = null; toast('Back to the default table.'); }
       else { const p = parseTable(txt); if (!p.rows.length){ toast('No rows found — check the format.'); break; } state.content[key] = txt; toast(`Saved ${p.rows.length} rows${p.errors.length ? ` (${p.errors.length} lines skipped)` : ''}.`); }
       changed(); renderPanel(); } break;
@@ -127,7 +128,7 @@ document.addEventListener('click', e => {
     case 'clearModel': deleteModel(k).then(() => { broadcast({ t:'model', key:k, buf:null }); renderPanel(); }); break;
     // story tab
     case 'session': state.campaign.session = +k; changed(); renderPanel(); $('#tabBody').scrollTop = 0; break;
-    case 'sessDread': setSessionDread(+k); break;
+    case 'sessGaze': setSessionGaze(+k); break;
     case 'readOpen': { const se = sessionById(k); readAloud(se.title, se.open); } break;
     case 'readEnd': { const se = sessionById(k); readAloud(`End of session ${se.n}`, se.ending); } break;
     case 'sessDelve': if (confirm('Build this dungeon? It replaces the current one (the party, their characters and the campaign desk come along).')) buildSessionDelve(+k, +id); break;
@@ -191,7 +192,19 @@ document.addEventListener('click', e => {
     case 'unlockChar': if (confirm('Clear this character\'s secret word? The next player to sign in with the owner\'s name gets it.')){ unlockCharacter(id); toast('Unlocked.'); renderPanel(); } break;
     case 'pickChar': sendHost({ t:'pick', id }); ui.myHeroId = id; renderPanel(); break;
     case 'removeChar': if (confirm('Forget this character sheet? (Its token stays on the map.)')){ removeCharacter(id); renderPanel(); } break;
+    case 'propCat': ui.propCat = k; ui.propKind = Object.keys(PROPS).find(p => PROPS[p].cat === k); renderPanel(); break;
+    case 'propKind': ui.propKind = k; renderPanel(); break;
     case 'closeHelp': $('#helpModal').classList.add('hidden'); break;
+    case 'help': $('#helpModal').classList.remove('hidden'); break;
+    // the threshold (start page)
+    case 'thRole': showRole(k); break;
+    case 'pickTpl': pickTemplate(k); break;
+    case 'beginS0': {
+      if (loadLocal() && !confirm('Begin a new campaign at Session Zero? The delve saved on this device will be replaced — Export it first if you want to keep it.')) return;
+      setState(null);   // a new campaign: nothing carries over
+      newDelve({ name:'Session Zero — Salt for the Lantern & Ladle', seed:'flood-s0-saltroad', floors:3, size:40, template:'saltroad', party:$('#newDemoParty').checked }, false);
+      state.campaign.session = 0; ui.tab = 'story'; ui.panelOpen = true; renderAll(); changed();
+      toast('Session Zero is on the table. The Story tab has the beats.'); } break;
   }
 });
 document.addEventListener('change', e => {
@@ -247,7 +260,7 @@ $('#btnPanel').onclick = () => { ui.panelOpen = !ui.panelOpen; renderPanel(); re
 $('#btnHelp').onclick = () => $('#helpModal').classList.remove('hidden');
 $('#floorUp').onclick = () => state && goFloor(ui.floor - 1);
 $('#floorDown').onclick = () => state && goFloor(ui.floor + 1);
-$('#graspBadge').onclick = () => { if (state && isDM()){ ui.tab = 'dread'; ui.panelOpen = true; renderTabs(); renderPanel(); renderDock(); } };
+$('#whimBadge').onclick = () => { if (state && isDM()){ ui.tab = 'gaze'; ui.panelOpen = true; renderTabs(); renderPanel(); renderDock(); } };
 document.querySelectorAll('#viewSeg button').forEach(b => b.onclick = () => state && setView(b.dataset.view));
 addEventListener('keydown', e => {
   if (!state || /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName)) return;
@@ -259,16 +272,18 @@ addEventListener('keydown', e => {
   else if (e.key === '1') setView('tilt'); else if (e.key === '2') setView('top'); else if (e.key === '3') setView('stack');
   else if (e.key.toLowerCase() === 'f'){ const t = ui.selected && tokById(ui.selected); if (t) focusTile(t.floor, t.x, t.y); }
   else if (e.key.toLowerCase() === 'n' && dm) nextTurn();
-  else if (e.key.toLowerCase() === 'g' && dm) graspRoll(ui.floor);
+  else if (e.key.toLowerCase() === 'w' && dm) whimRoll(ui.floor);
   else if (e.key.toLowerCase() === 'b' && dm){ ui.tab = ui.tab === 'build' ? 'tokens' : 'build'; ui.panelOpen = true; if (ui.tab !== 'build') setMode('select'); renderTabs(); renderPanel(); renderDock(); }
   else if ((e.key === 'Delete' || e.key === 'Backspace') && dm && ui.selected) removeToken(ui.selected);
 });
 
 export function renderHeroList(){
   const list = myHeroes();
-  $('#heroList').innerHTML = list.length ? list.map(h => `<div class="herorow">${h.portrait ? `<img src="${h.portrait}" alt="">` : `<span class="dot" style="color:${h.color};background:${h.color}"></span>`}
-    <span class="nm"><b>${esc(h.name)}</b> <span class="muted">${esc(h.sp)} ${esc(h.cls)} ${h.lvl}</span></span>
-    <button class="btn small" data-act="editHero" data-id="${h.id}">Edit</button><button class="btn small" data-act="exportHero" data-id="${h.id}">⬇</button><button class="btn small danger" data-act="delHero" data-id="${h.id}">✕</button></div>`).join('') : '<div class="muted">No heroes yet.</div>';
+  $('#heroList').innerHTML = list.map(h => `<div class="th-hero">
+      <div class="pt" style="background:radial-gradient(circle at 50% 40%,${h.color}66,#120b10 75%)">${h.portrait ? `<img src="${h.portrait}" alt="">` : esc((h.name || '?')[0])}</div>
+      <div class="nm">${esc(h.name || 'Unnamed')}</div><div class="meta">${esc(h.sp)} ${esc(h.cls)} ${h.lvl}</div>
+      <div class="acts"><button class="btn small" data-act="editHero" data-id="${h.id}">Edit</button><button class="btn small" data-act="exportHero" data-id="${h.id}" title="Download">⬇</button><button class="btn small danger" data-act="delHero" data-id="${h.id}" title="Delete">✕</button></div></div>`).join('')
+    + `<button class="th-hero new" data-act="newHero"><b>+</b><span>Create a character</span></button>`;
   $('#joinHero').innerHTML = list.map(h => `<option value="${h.id}">${esc(h.name)} — ${esc(h.cls)} ${h.lvl}</option>`).join('') + `<option value="">★ My characters at the DM's table${list.length ? '' : ' (or none yet)'}</option>`;
 }
 // The player's name + secret word. The word itself is never stored: only a key made from it.
@@ -288,12 +303,50 @@ function renderProfile(){
   $('#pWord').value = '';
   $('#pWordHint').textContent = p.key ? '(remembered on this device)' : '';
 }
+/* ---------- the threshold: the start page ---------- */
+const VOICE = {
+  '': ['Our champion. Our prisoner. Our favourite toy.', 'We have built you a board, Strahd, and little lights to move across it.',
+       'Set your guests upon it. Thin the mist. Count their heartbeats.', 'Let them believe they came of their own free will.', 'They always do.'],
+  dm: ['The valley is yours. It has always been yours.', 'Be generous. Hunger is a better leash than fangs.', 'Invite them to dinner before you invite them to die.'],
+  player: ['You have been invited.', 'The road behind you is a courtesy. It can be withdrawn.', 'Come in. Wipe your feet. Mind the salt.'],
+};
+const TPL_GLYPH = { saltroad:'🧂', andral:'✝', castle:'♜', outbreak:'☣', labyrinth:'✋', deathhouse:'🏚', barovia:'⛪', ironcoffin:'☄', bonegrinder:'⚙', standral:'🕯', blank:'▦' };
+let voiceTimer = null, voiceI = 0, role = '';
+function cycleVoice(){
+  const el = $('#thVoice'); if (!el || $('#startModal').classList.contains('hidden')) return;
+  const lines = VOICE[role] || VOICE[''];
+  el.classList.add('fade');
+  setTimeout(() => { voiceI = (voiceI + 1) % lines.length; el.textContent = lines[voiceI]; el.classList.remove('fade'); }, 1200);
+}
+function showRole(r){
+  role = r || ''; voiceI = -1; cycleVoice();
+  $('#thDoors').classList.toggle('hidden', !!role); $('#thDoors').style.display = role ? 'none' : '';
+  $('#thDM').classList.toggle('hidden', role !== 'dm'); $('#thPlayer').classList.toggle('hidden', role !== 'player');
+  try { localStorage.setItem('dreaddelve.role', role); } catch {}
+  $('#startModal').scrollTop = 0;
+}
+function pickTemplate(id){
+  const tp = TEMPLATES.find(t => t.id === id) || TEMPLATES[0];
+  $('#newTemplate').value = tp.id; $('#newBlurb').textContent = tp.blurb; $('#newFloors').value = String(tp.floors.length);
+  document.querySelectorAll('.th-world').forEach(b => b.classList.toggle('on', b.dataset.k === tp.id));
+}
+function worldCard(t){
+  const th = THEMES.find(x => x.id === t.floors[0]?.theme) || THEMES[0];
+  return `<button class="th-world" data-act="pickTpl" data-k="${t.id}"><span class="art" style="background:radial-gradient(circle at 75% 30%,${th.trim}44,transparent 55%),linear-gradient(135deg,${th.wall},${th.floor} 60%,${th.mist})">${TPL_GLYPH[t.id] || '✦'}</span>
+    <span class="nm">${esc(t.name)}</span><span class="meta">${t.floors.length} floor${t.floors.length === 1 ? '' : 's'}${t.campaign ? ' · campaign' : ''}</span></button>`;
+}
 export function showStart(){
   renderHeroList(); renderProfile();
   const s = loadLocal();
-  $('#continueBox').innerHTML = s ? `<h2>Continue</h2><div class="row"><button class="btn primary" data-act="continue">Return to “${esc(s.meta?.name || 'the delve')}” · seed ${esc(s.meta?.seed)}</button></div>` : '';
+  $('#continueBox').innerHTML = s ? `<div class="th-continue"><div class="th-feature-art" aria-hidden="true" style="background:radial-gradient(circle at 50% 45%,#9cc23c44,transparent 60%),linear-gradient(#18261f,#0b100d)"><span>⏳</span></div>
+    <div class="th-feature-body"><div class="th-tag" style="color:var(--seep)">Continue</div><h3>${esc(s.meta?.name || 'The delve')}</h3>
+    <p>${(s.floors || []).length} floor${(s.floors || []).length === 1 ? '' : 's'} · Gaze ${s.dread || 1}${s.campaign ? ` · Session ${s.campaign.session ?? 0}` : ''} · ${Object.keys(s.characters || {}).length} character sheet${Object.keys(s.characters || {}).length === 1 ? '' : 's'}</p>
+    <button class="btn primary" data-act="continue">Return to the table</button></div></div>` : '';
   $('#newSeed').value = randomSeed();
-  $('#newTemplate').innerHTML = TEMPLATES.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('');
-  $('#newBlurb').textContent = TEMPLATES[0].blurb;
+  $('#tplGrid').innerHTML = TEMPLATES.filter(t => t.id !== 'saltroad').map(worldCard).join('');
+  pickTemplate('andral');
   $('#startModal').classList.remove('hidden');
+  let last = ''; try { last = localStorage.getItem('dreaddelve.role') || ''; } catch {}
+  showRole(last || (s && !myProfile().key ? 'dm' : !s && myProfile().key ? 'player' : ''));
+  if (!voiceTimer) voiceTimer = setInterval(cycleVoice, 5600);
 }

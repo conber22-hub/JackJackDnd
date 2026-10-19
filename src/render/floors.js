@@ -9,6 +9,8 @@ import { scene, G, mat4, col, wx, wz, floorY, WALL_H, makeLabel, tween, ease, fx
 import { surfaceTextures } from './textures.js';
 import { shadowsOn, gfx } from './gfx.js';
 import { kitFor } from './models.js';
+import { buildProp, buildBuilding, inBuilding, treeGeometry, treeMaterial } from './props.js';
+import { propSize } from '../data/props.js';
 
 // Paint the floor's stone with its theme's textures (cheap: textures are cached per theme).
 function dressMaterials(fv, th){
@@ -96,15 +98,34 @@ export function buildFloor(L, opt = {}){
   if (fm.instanceColor) fm.instanceColor.needsUpdate = true;
   fm.userData.floorTiles = 1; fm.receiveShadow = shadows;
   fv.built.add(fm);
-  // walls
+  // walls (on outdoor floors the edges are forest, and houses stand on their own footprints)
   const all = opt.walls || wallSet(f, g);
-  const wl = [...all].filter(i => {
-    if (!pv) return true;
-    const x = i % f.W, y = (i / f.W) | 0;
+  const seen = i => { if (!pv) return true; const x = i % f.W, y = (i / f.W) | 0;
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++){ const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < f.W && ny < f.H && exp.has(ny * f.W + nx) && walk(g[ny * f.W + nx])) return true; }
-    return false;
-  });
-  const kitWall = kitFor('wall');
+    return false; };
+  const kitWall = kitFor('wall'), outdoor = !kitWall && (th.walls === 'trees' || th.walls === 'mixed');
+  // which walls are a building's (next to an indoor room square) and which are the woods
+  const indoor = i => { const r = roomOf.get(i); return r ? !r.outdoor : false; };
+  const isBuildingWall = i => { if (th.walls === 'trees') return false; const x = i % f.W, y = (i / f.W) | 0;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++){ const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < f.W && ny < f.H && walk(g[ny * f.W + nx]) && indoor(ny * f.W + nx)) return true; }
+    return false; };
+  const wl = [], trees = [];
+  const hr = (i, k) => { let h = Math.imul(i ^ Math.imul(k + 1, 0x9e3779b1), 2654435761) ^ Math.imul(L + 1, 40503); h ^= h >>> 15; h = Math.imul(h, 2246822519); h ^= h >>> 13; return (h >>> 0) / 4294967296; };
+  for (const i of all){
+    if (inBuilding(f, i % f.W, (i / f.W) | 0) || !seen(i)) continue;
+    if (outdoor && !isBuildingWall(i)) trees.push(i); else wl.push(i);
+  }
+  if (outdoor && !opt.walls){
+    // a second, thinner row of trees behind the first so the road runs through woods, not past a fence
+    const near = new Map();   // rock square -> how far it is from the first row of trees
+    for (const i of trees){ const x = i % f.W, y = (i / f.W) | 0;
+      for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++){ const nx = x + dx, ny = y + dy, j = ny * f.W + nx, dd = Math.max(Math.abs(dx), Math.abs(dy));
+        if (nx >= 0 && ny >= 0 && nx < f.W && ny < f.H && !walk(g[j]) && !all.has(j) && !inBuilding(f, nx, ny) && !(near.get(j) <= dd)) near.set(j, dd); } }
+    const seen2 = j => { const x = j % f.W, y = (j / f.W) | 0;
+      for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++){ const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < f.W && ny < f.H && exp.has(ny * f.W + nx)) return true; }
+      return false; };
+    for (const [j, dd] of near) if (hr(j, 9) < (dd <= 2 ? .5 : .32) && (!pv || seen2(j))) trees.push(j);
+  }
   const wm = new THREE.InstancedMesh(kitWall ? kitWall.geometry : G.wall, kitWall ? kitWall.material : fv.mats.wall, Math.max(1, wl.length)); wm.count = wl.length;
   wm.castShadow = wm.receiveShadow = shadows;
   const wc = new THREE.Color(th.wall), trim = new THREE.Color(th.trim);
@@ -121,16 +142,44 @@ export function buildFloor(L, opt = {}){
   wl.forEach((i, n) => { mat4.makeTranslation(wx(i % f.W), WALL_H + .03, wz((i / f.W) | 0)); cm.setMatrixAt(n, mat4); cm.setColorAt(n, col.copy(capc).multiplyScalar(.85 + rng() * .25)); });
   if (cm.instanceColor) cm.instanceColor.needsUpdate = true;
   fv.built.add(cm);
+  if (trees.length){
+    const tm = new THREE.InstancedMesh(treeGeometry(), treeMaterial, trees.length), q = new THREE.Quaternion(), sc = new THREE.Vector3(), ps = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+    const tint = new THREE.Color(th.trim);
+    trees.forEach((i, n) => {
+      const x = i % f.W, y = (i / f.W) | 0, s = .85 + hr(i, 1) * .6;
+      ps.set(wx(x) + (hr(i, 2) - .5) * .35, 0, wz(y) + (hr(i, 3) - .5) * .35); q.setFromAxisAngle(up, hr(i, 4) * 6.28); sc.set(s, s * (.9 + hr(i, 5) * .4), s);
+      mat4.compose(ps, q, sc); tm.setMatrixAt(n, mat4);
+      tm.setColorAt(n, col.setRGB(1, 1, 1).lerp(tint, .15).multiplyScalar(.7 + hr(i, 6) * .45));
+    });
+    if (tm.instanceColor) tm.instanceColor.needsUpdate = true;
+    tm.castShadow = tm.receiveShadow = shadows; tm.userData.trees = 1;
+    fv.built.add(tm);
+  }
+  // houses
+  (f.buildings || []).forEach((b, k) => {
+    if (pv){ let any = false; for (let y = b.y - 1; y <= b.y + b.h && !any; y++) for (let x = b.x - 1; x <= b.x + b.w && !any; x++) if (exp.has(y * f.W + x)) any = true; if (!any) return; }
+    const m = buildBuilding(b, k); if (shadows) m.traverse(o => { if (o.isMesh){ o.castShadow = true; o.receiveShadow = true; } });
+    fv.built.add(m);
+    if (!pv && ui.roomLabels && b.name){ const lb = makeLabel(b.name, '#d8cfb8', 20); lb.position.set(wx(b.x + b.w / 2 - .5), 3.4, wz(b.y + b.h / 2 - .5)); lb.scale.multiplyScalar(.85); fv.built.add(lb); }
+  });
+  // props
+  for (const p of f.props || []){
+    if (pv){ const s = propSize(p); let any = false; for (let y = p.y; y < p.y + s.h && !any; y++) for (let x = p.x; x < p.x + s.w && !any; x++) if (exp.has(y * f.W + x) || seen(y * f.W + x)) any = true; if (!any) continue; }
+    const m = buildProp(p); if (shadows) m.traverse(o => { if (o.isMesh){ o.castShadow = true; o.receiveShadow = true; } });
+    fv.built.add(m);
+  }
   // stairs
   const stairMat = new THREE.MeshStandardMaterial({ color:'#3a3238', roughness:.9 });
-  if (f.down && showTile(f.down.y * f.W + f.down.x)){
+  if (f.down && showTile(f.down.y * f.W + f.down.x) && f.exits?.down) fv.built.add(exitMarker(f.down, '#e9a54a'));
+  else if (f.down && showTile(f.down.y * f.W + f.down.x)){
     const s = new THREE.Group(); s.position.set(wx(f.down.x), 0, wz(f.down.y));
     const pit = new THREE.Mesh(G.plane, new THREE.MeshBasicMaterial({ color:'#000' })); pit.position.y = -.9; s.add(pit);
     for (let k = 0; k < 4; k++){ const st = new THREE.Mesh(G.step, stairMat); st.position.set(0, -.2 - k * .22, -.35 + k * .24); s.add(st); }
     const r = new THREE.Mesh(G.rune, new THREE.MeshBasicMaterial({ color:'#e9a54a', transparent:true, opacity:.85 })); r.position.y = .02; s.add(r); r.userData.spin = 1;
     fv.built.add(s);
   }
-  if (f.up && showTile(f.up.y * f.W + f.up.x)){
+  if (f.up && showTile(f.up.y * f.W + f.up.x) && f.exits?.up) fv.built.add(exitMarker(f.up, '#c8cbd6'));
+  else if (f.up && showTile(f.up.y * f.W + f.up.x)){
     const s = new THREE.Group(); s.position.set(wx(f.up.x), 0, wz(f.up.y));
     for (let k = 0; k < 4; k++){ const st = new THREE.Mesh(G.step, stairMat); st.position.set(0, .11 + k * .22, .35 - k * .24); s.add(st); }
     const r = new THREE.Mesh(G.rune, new THREE.MeshBasicMaterial({ color:'#c8cbd6', transparent:true, opacity:.8 })); r.position.y = .02; s.add(r); r.userData.spin = -1;
@@ -160,6 +209,14 @@ export function buildFloor(L, opt = {}){
 }
 export function buildAllFloors(){ ensureFloorViews(); state.floors.forEach((_, L) => buildFloor(L)); }
 
+// On overland floors the "stairs" are a way out (a gate, a road): a spinning rune and a soft column of light.
+function exitMarker(at, color){
+  const s = new THREE.Group(); s.position.set(wx(at.x), 0, wz(at.y));
+  const r = new THREE.Mesh(G.rune, new THREE.MeshBasicMaterial({ color, transparent:true, opacity:.85 })); r.position.y = .03; r.userData.spin = .6; s.add(r);
+  const beam = new THREE.Mesh(new THREE.CylinderGeometry(.32, .42, 1.6, 16, 1, true), new THREE.MeshBasicMaterial({ color, transparent:true, opacity:.12, depthWrite:false, side:THREE.DoubleSide }));
+  beam.position.y = .8; s.add(beam);
+  return s;
+}
 const OPEN_ANGLE = -Math.PI / 2 * .92;
 function buildDoor(f, dr, mats){
   const x = dr.i % f.W, y = (dr.i / f.W) | 0, o = doorOrientation(f, dr.i);

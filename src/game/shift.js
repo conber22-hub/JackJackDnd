@@ -1,4 +1,4 @@
-/* THE SHIFT — the Dread Zone rewires a floor. Rolls the d100 Shift table (Dread tab) and applies the row. */
+/* THE SHIFT — Barovia rewires a floor. Rolls the d100 Shift table (Gaze tab) and applies the row. */
 import { state, ui, log, shiftTable, isDM } from '../engine/state.js';
 import { carve, linkRooms, placeDoors, moveStairs, addTrap, THEME_TRAPS, isDoorway, doorAt, trapAt } from '../engine/generator.js';
 import { tableRow } from '../engine/tables.js';

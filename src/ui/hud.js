@@ -1,5 +1,6 @@
 /* HUD — toasts, banners, whispers, pop-up cards, top bar, dock, initiative list, selection card. */
 import { state, ui, tokById, isDM, dreadLevel, viewAsPlayer } from '../engine/state.js';
+import { exitLabel } from '../engine/generator.js';
 import { seenNow } from '../engine/grid.js';
 import { BEST } from '../data/bestiary.js';
 import { CONDITIONS } from '../data/dread.js';
@@ -33,14 +34,14 @@ export function renderTop(){
   $('#dreadNum').textContent = state.dread; $('#dreadName').textContent = D.n; $('#dread').value = state.dread;
   const pv = ui.role === 'player';
   $('#dreadBox').classList.toggle('hide', pv); $('#dreadRO').classList.toggle('hide', !pv);
-  $('#dreadRO').innerHTML = `Dread <b style="color:var(--blood)">${state.dread}</b> · <i>${esc(D.n)}</i>`;
-  $('#graspBadge').classList.toggle('hide', viewAsPlayer());
-  $('#graspBadge').innerHTML = `✋ d${state.grasp.die}`;
+  $('#dreadRO').innerHTML = `👁 Gaze <b style="color:var(--blood)">${state.dread}</b> · <i>${esc(D.n)}</i>`;
+  $('#whimBadge').classList.toggle('hide', viewAsPlayer());
+  $('#whimBadge').innerHTML = `🦇 d${state.grasp.die}`;
   $('#roleBadge').textContent = pv ? `Player · ${ui.myName}` : ui.tableView ? 'Table view' : net.code ? `DM · table ${net.code} · ${net.conns.size} joined` : 'DM';
 }
 export function renderTabs(){
   const tabs = ui.role === 'player' ? [['hero', 'Your hero'], ['log', 'Log']]
-    : [['story', 'Story'], ['tokens', 'Tokens'], ['bestiary', 'Beasts'], ['dungeon', 'Dungeon'], ['build', 'Build'], ['dread', 'Dread'], ['table', 'Table']];
+    : [['story', 'Story'], ['tokens', 'Tokens'], ['bestiary', 'Beasts'], ['dungeon', 'Dungeon'], ['build', 'Build'], ['gaze', 'Gaze'], ['table', 'Table']];
   if (!tabs.some(t => t[0] === ui.tab)) ui.tab = tabs[0][0];
   $('#tabs').innerHTML = tabs.map(([k, l]) => `<button data-act="tab" data-k="${k}" class="${ui.tab === k ? 'on' : ''}">${l}</button>`).join('');
 }
@@ -50,7 +51,8 @@ export const BUILD_TOOLS = [
   ['door', '⊓', 'Door', 'Tap a square to place a door (tap again to cycle or remove)'],
   ['trap', '✷', 'Trap', 'Tap a square to hide a trap (tap again to remove)'],
   ['stairs', '⇅', 'Stairs', 'Tap where the stairs down should be — the floor below follows'],
-  ['erase', '⌫', 'Erase', 'Tap a door, trap, hand-drawn corridor or dug square to remove it'],
+  ['prop', '🪑', 'Props', 'Tap a square to place the chosen prop · tap a prop to turn it · Erase removes it'],
+  ['erase', '⌫', 'Erase', 'Tap a prop, door, trap, hand-drawn corridor or dug square to remove it'],
   ['dig', '⛏', 'Dig', 'Tap or drag across rock to dig'],
   ['fill', '▦', 'Fill', 'Tap or drag across floor to fill it with stone'],
 ];
@@ -59,7 +61,7 @@ export function renderDock(){
   const b = (act, icon, label, on, extra = '') => `<button data-act="${act}" class="${on ? 'on' : ''}" title="${esc(label)}" ${extra}><span>${icon}</span>${label}</button>`;
   let h = b('mode:select', '✥', 'Select', ui.mode === 'select') + b('mode:ping', '◎', 'Ping', ui.mode === 'ping') + b('focus', '⌖', 'Focus');
   if (dm && ui.tab === 'build') h += BUILD_TOOLS.map(([k, i, l, hint]) => b(`mode:${k}`, i, l, ui.mode === k, `data-hint="${esc(hint)}"`)).join('') + b('undo', '↶', `Undo${undoCount() ? ` ${undoCount()}` : ''}`);
-  else if (dm) h += b('shiftNow', '⟲', 'Shift') + b('graspRoll', '✋', `d${state?.grasp.die ?? 4}`);
+  else if (dm) h += b('shiftNow', '⟲', 'Shift') + b('whimRoll', '🦇', `Whim d${state?.grasp.die ?? 4}`);
   $('#dock').innerHTML = h;
   $('#dock').classList.toggle('wide', !ui.panelOpen);
   $('#dock').classList.toggle('twocol', dm && ui.tab === 'build');
@@ -115,7 +117,7 @@ export function renderSel(){
     if (state.combat.active && !state.combat.order.includes(t.id)) acts += `<button class="btn small" data-act="joinInit">+ Initiative</button>`;
   }
   if (!t.dead && t.kind !== 'monster' && (dm || mine)) acts += `<button class="btn small" data-act="search">🔍 Search</button>`;
-  if (stairs && (dm || mine) && !t.dead) acts += `<button class="btn small primary" data-act="stairs">${stairs === 'down' ? '▼ Descend' : '▲ Ascend'}</button>`;
+  if (stairs && (dm || mine) && !t.dead) acts += `<button class="btn small primary" data-act="stairs">${esc(exitLabel(state.floors[t.floor], stairs))}</button>`;
   if (mine && currentTurn()?.id === t.id) acts += `<button class="btn small primary" data-act="endMyTurn">End my turn</button>`;
   acts += `<button class="btn small" data-act="focus">⌖ Focus</button>`;
   if (dm) acts += `<button class="btn small danger" data-act="remove">✕ Remove</button>`;

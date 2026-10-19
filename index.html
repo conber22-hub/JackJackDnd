@@ -3,16 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Dread Delve</title>
+<title>Curse of Strahd · Dread Delve</title>
 <!--
-  DREAD DELVE — a 3D multi-floor dungeon simulator for the Dread Zone beneath Saint Andral's.
-  Built in honor of Chance.
+  DREAD DELVE — a 3D virtual tabletop for Curse of Strahd: Flood Edition (multi-floor maps, minis, fog, the Count's Gaze).
 
   This is the SOURCE page. `npm run dev` serves it live; `npm run build` bakes everything (Three.js and
   PeerJS included) into one file, dread-delve.html, that you can double-click. See DREAD-DELVE-ROADMAP.md.
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Cinzel:wght@500;700&family=Cormorant+Garamond:wght@500;700&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#09080d; --panel:rgba(17,13,21,.93); --panel2:#1b1620; --line:#3a2b33; --ink:#ece1cf; --dim:#a8998a;
@@ -45,7 +44,7 @@ code{background:#221a24;border-radius:4px;padding:0 4px;font-size:12px}
 #dreadName{color:var(--dim);font-style:italic}
 input[type=range]{accent-color:var(--blood);width:130px}
 .badge{padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel);font-size:13px;color:var(--dim);white-space:nowrap}
-#graspBadge{cursor:pointer;color:#e6d3b8}
+#whimBadge{cursor:pointer;color:#e6b8c4}
 .spacer{flex:1}
 
 /* ---------- side panel ---------- */
@@ -117,6 +116,7 @@ details.card summary{cursor:pointer;font-size:13px}
 .herorow .nm{flex:1}
 @media (max-width:760px){ .cr-cols{grid-template-columns:1fr} .cr-side{position:static} .cr-ab{grid-template-columns:repeat(3,1fr)} .grid3{grid-template-columns:1fr 1fr} }
 .toolgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 0}
+.propgrid .chip small{color:var(--dim);font-size:11px}
 .grasp .die{display:inline-grid;place-items:center;min-width:38px;height:34px;border:1px solid var(--line);border-radius:8px;color:var(--dim);font-weight:600}
 .grasp .die.on{border-color:#e6d3b8;color:#fff;background:#3a2a26;box-shadow:0 0 10px #e6d3b844}
 input.txt,select.txt,textarea.txt{background:#120e16;border:1px solid var(--line);border-radius:8px;padding:7px 9px;width:100%}
@@ -235,6 +235,94 @@ textarea.txt{min-height:70px;resize:vertical;font-size:13px}
   #whisper{font-size:22px}
   .modal .grid2{grid-template-columns:1fr}
 }
+
+/* ---------- the threshold (welcome page): the Dark Powers' invitation ---------- */
+.modal.threshold{display:block;padding:0;overflow:auto;background:radial-gradient(ellipse at 50% 30%,#1a0a10 0%,#07040a 60%,#030205 100%)}
+.modal.threshold.hidden{display:none}
+.th-bg{position:fixed;inset:0;overflow:hidden;pointer-events:none}
+.th-spiral{position:absolute;left:50%;top:34%;width:170vmax;height:170vmax;margin:-85vmax 0 0 -85vmax;border-radius:50%;
+  background:repeating-conic-gradient(from 0deg,rgba(150,18,34,.13) 0deg 9deg,transparent 9deg 18deg);
+  -webkit-mask:radial-gradient(circle,#000 0,#000 18%,transparent 62%);mask:radial-gradient(circle,#000 0,#000 18%,transparent 62%);
+  animation:th-spin 120s linear infinite;filter:blur(1.5px)}
+.th-spiral.rev{background:repeating-conic-gradient(from 4deg,rgba(90,10,40,.10) 0deg 5deg,transparent 5deg 15deg);animation:th-spin 80s linear infinite reverse;opacity:.8}
+.th-rings{position:absolute;left:50%;top:34%;width:120vmax;height:120vmax;margin:-60vmax 0 0 -60vmax;border-radius:50%;
+  background:repeating-radial-gradient(circle,rgba(179,48,58,.10) 0 1px,transparent 2px 34px);animation:th-breathe 9s ease-in-out infinite;
+  -webkit-mask:radial-gradient(circle,#000 0,transparent 70%);mask:radial-gradient(circle,#000 0,transparent 70%)}
+.th-fog{position:absolute;width:90vmax;height:40vmax;border-radius:50%;background:radial-gradient(ellipse,rgba(150,140,170,.10),transparent 70%);filter:blur(30px)}
+.th-fog.f1{left:-30vmax;top:55%;animation:th-drift 46s ease-in-out infinite alternate}
+.th-fog.f2{right:-35vmax;top:20%;animation:th-drift 60s ease-in-out infinite alternate-reverse}
+.th-fog.f3{left:10%;bottom:-20vmax;animation:th-drift 52s ease-in-out infinite alternate;opacity:.8}
+.th-eyes{position:absolute;left:50%;top:9vh;transform:translateX(-50%);display:flex;gap:46px}
+.th-eyes i{display:block;width:30px;height:9px;border-radius:50%;background:radial-gradient(ellipse,#ff4a4a 0,#b3121e 45%,transparent 72%);box-shadow:0 0 24px 6px rgba(200,20,30,.35);animation:th-blink 11s ease-in-out infinite;transform:scaleY(.05)}
+.th-wrap{position:relative;max-width:1080px;margin:0 auto;padding:7vh 16px 40px}
+.th-head{text-align:center;margin-bottom:26px}
+.th-kicker{font-family:Cinzel,"Cormorant Garamond",Georgia,serif;letter-spacing:.42em;text-transform:uppercase;font-size:12px;color:#a8887a}
+.modal .th-title{font-family:"Cinzel Decorative",Cinzel,"Cormorant Garamond",Georgia,serif;font-weight:700;font-size:clamp(40px,8.4vw,96px);line-height:1.02;margin:12px 0 6px;letter-spacing:.04em;
+  background:linear-gradient(180deg,#f3d9a4 0%,#d79a52 38%,#b3303a 74%,#5e0d16 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 18px rgba(179,48,58,.35));animation:th-heart 2.6s ease-in-out infinite}
+.th-sub{font-family:Cinzel,Georgia,serif;letter-spacing:.6em;text-transform:uppercase;font-size:clamp(12px,1.6vw,16px);color:#9cc23c;text-shadow:0 0 14px rgba(156,194,60,.4)}
+.th-voice{font-family:"IM Fell English","Cormorant Garamond",Georgia,serif;font-style:italic;font-size:clamp(18px,2.3vw,24px);color:#e3cfc0;min-height:2.6em;margin:22px auto 0;max-width:640px;transition:opacity 1.2s ease,filter 1.2s ease}
+.th-voice.fade{opacity:0;filter:blur(4px)}
+.th-doors{display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:820px;margin:0 auto}
+.th-door{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;cursor:pointer;color:var(--ink);
+  border:1px solid #5a2a32;border-radius:160px 160px 18px 18px;padding:46px 22px 26px;
+  background:radial-gradient(ellipse at 50% 0%,rgba(179,48,58,.28),transparent 60%),linear-gradient(#1a0d13,#0c070b);
+  box-shadow:inset 0 0 40px rgba(0,0,0,.6),0 10px 40px rgba(0,0,0,.5);transition:transform .4s ease,box-shadow .4s ease,border-color .4s}
+.th-door:hover,.th-door:focus-visible{transform:translateY(-3px);border-color:#b3303a;box-shadow:inset 0 0 40px rgba(0,0,0,.6),0 0 46px rgba(179,48,58,.35);outline:none}
+.th-door b{font-family:Cinzel,"Cormorant Garamond",Georgia,serif;font-size:22px;letter-spacing:.06em;color:#f0d6a8}
+.th-door span:last-child{color:var(--dim);font-size:14px;max-width:300px}
+.th-sigil{font-size:38px;line-height:1;filter:drop-shadow(0 0 14px rgba(233,165,74,.55));animation:th-flicker 3.2s ease-in-out infinite}
+.th-panel{max-width:1000px;margin:0 auto;background:rgba(14,9,14,.84);border:1px solid #3e2630;border-radius:22px;padding:22px clamp(14px,3vw,30px) 26px;
+  box-shadow:0 20px 80px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,220,180,.04);backdrop-filter:blur(6px);animation:th-rise .7s ease both}
+.th-panel.hidden{display:none}
+.th-panel h2{font-family:Cinzel,"Cormorant Garamond",Georgia,serif;font-size:28px;letter-spacing:.06em;color:#f0d6a8;margin:6px 0 2px}
+.th-whisper{font-family:"IM Fell English","Cormorant Garamond",Georgia,serif;font-style:italic;color:#c9a99a;font-size:18px;margin:0 0 16px}
+.th-back{border:0;background:none;color:var(--dim);cursor:pointer;padding:0;font-size:13px;letter-spacing:.1em;text-transform:uppercase}
+.th-back:hover{color:var(--candle)}
+.th-h3{font-family:Cinzel,Georgia,serif;font-size:15px;letter-spacing:.18em;text-transform:uppercase;color:#a8887a;margin:22px 0 10px}
+.th-feature,.th-continue{display:flex;gap:16px;align-items:stretch;border:1px solid #6a3a2a;border-radius:16px;overflow:hidden;background:linear-gradient(100deg,#21140f,#120b0e);margin:10px 0}
+.th-continue{border-color:#3e5a4a;background:linear-gradient(100deg,#0f1a16,#0e0b10)}
+.th-feature-art{flex:0 0 120px;display:grid;place-items:center;font-size:46px;background:radial-gradient(circle at 50% 45%,#e9a54a55,transparent 60%),linear-gradient(#3a2418,#160d0a)}
+.th-feature-body{padding:14px 16px 16px 0;flex:1;min-width:0}
+.th-feature-body h3{font-family:"Cormorant Garamond",Georgia,serif;font-size:24px;margin:2px 0 6px;color:#f3dcb2}
+.th-feature-body p{margin:0 0 10px;color:#cdbca9}
+.th-tag{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--candle)}
+.th-worlds{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+.th-world{position:relative;text-align:left;cursor:pointer;border:1px solid #33242c;border-radius:14px;overflow:hidden;padding:0;background:#0f0b10;color:var(--ink);transition:transform .25s,border-color .25s,box-shadow .25s}
+.th-world:hover{transform:translateY(-2px);border-color:#7a4a3a}
+.th-world.on{border-color:var(--candle);box-shadow:0 0 22px rgba(233,165,74,.28)}
+.th-world .art{height:78px;display:flex;align-items:flex-end;padding:8px 10px;font-size:26px}
+.th-world .nm{display:block;padding:8px 10px 2px;font-family:"Cormorant Garamond",Georgia,serif;font-size:18px;line-height:1.1;color:#f0dcc0}
+.th-world .meta{display:block;padding:0 10px 10px;font-size:12px;color:var(--dim)}
+.th-adv{margin:12px 0 4px;border:1px solid #2e2228;border-radius:12px;padding:8px 12px;background:#0c080c}
+.th-adv summary{cursor:pointer;color:var(--dim)}
+.th-steps{display:grid;grid-template-columns:1fr 1.5fr 1fr;gap:14px}
+.th-step{position:relative;border:1px solid #33242c;border-radius:16px;padding:16px 14px 14px;background:linear-gradient(#150e14,#0d090d);display:flex;flex-direction:column;gap:6px;min-width:0}
+.th-step h3{font-family:Cinzel,Georgia,serif;font-size:17px;letter-spacing:.06em;color:#f0d6a8;margin:0}
+.th-num{position:absolute;top:-12px;left:14px;font-family:"Cinzel Decorative",Cinzel,Georgia,serif;font-size:13px;color:#120a0e;background:linear-gradient(#f3d9a4,#b3303a);border-radius:20px;padding:2px 10px}
+.th-code{font-family:Cinzel,ui-monospace,monospace;font-size:26px;letter-spacing:.4em;text-transform:uppercase;text-align:center}
+.th-heroes{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:4px}
+.th-hero{border:1px solid #3a2a30;border-radius:14px;overflow:hidden;background:#110c11;display:flex;flex-direction:column}
+.th-hero .pt{height:86px;display:grid;place-items:center;font-family:"Cinzel Decorative",Cinzel,Georgia,serif;font-size:34px;color:#fff3}
+.th-hero .pt img{width:100%;height:100%;object-fit:cover}
+.th-hero .nm{padding:6px 10px 0;font-family:"Cormorant Garamond",Georgia,serif;font-size:18px;line-height:1.1}
+.th-hero .meta{padding:0 10px;font-size:12px;color:var(--dim)}
+.th-hero .acts{display:flex;gap:4px;padding:8px 8px 10px;margin-top:auto}
+.th-hero .acts .btn{flex:1;padding:4px 0}
+.th-hero.new{align-items:center;justify-content:center;gap:6px;cursor:pointer;min-height:180px;border-style:dashed;border-color:#6a4a3a;color:var(--candle);background:radial-gradient(circle,rgba(233,165,74,.08),transparent 70%)}
+.th-hero.new b{font-size:34px;line-height:1}
+.th-foot{text-align:center;color:#7a6a62;font-size:13px;margin-top:22px}
+.th-link{border:0;background:none;color:var(--candle);cursor:pointer;text-decoration:underline;padding:0}
+@keyframes th-spin{to{transform:rotate(360deg)}}
+@keyframes th-breathe{0%,100%{transform:scale(1);opacity:.7}50%{transform:scale(1.09);opacity:1}}
+@keyframes th-drift{from{transform:translateX(0)}to{transform:translateX(26vmax)}}
+@keyframes th-blink{0%,62%,100%{transform:scaleY(.05);opacity:.2}66%,84%{transform:scaleY(1);opacity:.85}88%{transform:scaleY(.05);opacity:.4}}
+@keyframes th-heart{0%,100%{filter:drop-shadow(0 0 16px rgba(179,48,58,.3))}12%{filter:drop-shadow(0 0 30px rgba(179,48,58,.6))}22%{filter:drop-shadow(0 0 18px rgba(179,48,58,.35))}32%{filter:drop-shadow(0 0 34px rgba(179,48,58,.65))}}
+@keyframes th-flicker{0%,100%{opacity:1}45%{opacity:.82}50%{opacity:.95}70%{opacity:.88}}
+@keyframes th-rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (max-width:860px){ .th-steps{grid-template-columns:1fr} .th-doors{grid-template-columns:1fr} .th-door{border-radius:120px 120px 18px 18px;padding:34px 16px 20px} }
+@media (max-width:560px){ .th-feature,.th-continue{flex-direction:column} .th-feature-art{flex-basis:70px} .th-feature-body{padding:0 14px 14px} .th-eyes{gap:30px} }
+@media (prefers-reduced-motion:reduce){ .th-bg *,.th-title,.th-sigil,.th-panel{animation:none!important} .th-eyes i{transform:none;opacity:.5} }
 </style>
 </head>
 <body>
@@ -256,11 +344,11 @@ textarea.txt{min-height:70px;resize:vertical;font-size:13px}
     <button data-view="tilt" class="on">Tilt</button><button data-view="top">Top</button><button data-view="stack">Stack</button>
   </div>
   <div class="dread" id="dreadBox">
-    <label>Dread <b id="dreadNum">1</b> <span id="dreadName"></span></label>
+    <label title="Strahd's Gaze — how closely the Count is watching">👁 Gaze <b id="dreadNum">1</b> <span id="dreadName"></span></label>
     <input type="range" id="dread" min="1" max="10" value="1">
   </div>
   <div class="badge hide" id="dreadRO"></div>
-  <span class="badge" id="graspBadge" title="The Grasp Die (open the Dread tab)">✋ d4</span>
+  <span class="badge" id="whimBadge" title="The Whim Die — how he toys with them (open the Gaze tab)">🦇 d4</span>
   <div class="spacer"></div>
   <span class="badge" id="roleBadge">DM</span>
   <button class="icon" id="btnHelp" title="Help">?</button>
@@ -284,38 +372,76 @@ textarea.txt{min-height:70px;resize:vertical;font-size:13px}
 <div id="cardLayer"></div>
 <div id="toasts"></div>
 
-<div class="modal" id="startModal">
-  <div class="box">
-    <h1>DREAD DELVE</h1>
-    <div class="tribute">For Chance — who never let a dungeon stay boring.</div>
-    <div class="muted">Beneath Saint Andral's church the font is still running, and what runs down into the silver mine is not water. Build the descent, drop the horrors in, and let the table walk it together.</div>
-    <div id="continueBox"></div>
-    <h2>Players: who are you?</h2>
-    <div class="muted">Pick your name and a secret word. Use the same two on any phone or computer and the DM's table hands your characters back.</div>
-    <div class="grid2">
-      <div><label class="muted">Your name</label><input class="txt" id="pName" placeholder="e.g. Sam" autocomplete="username"></div>
-      <div><label class="muted">Secret word <span id="pWordHint"></span></label><input class="txt" id="pWord" type="password" placeholder="any word you'll remember" autocomplete="current-password"></div>
+<div class="modal threshold" id="startModal">
+  <div class="th-bg" aria-hidden="true">
+    <div class="th-rings"></div><div class="th-spiral"></div><div class="th-spiral rev"></div>
+    <div class="th-fog f1"></div><div class="th-fog f2"></div><div class="th-fog f3"></div>
+    <div class="th-eyes"><i></i><i></i></div>
+  </div>
+  <div class="th-wrap">
+    <header class="th-head">
+      <div class="th-kicker">The Dark Powers present, for their champion</div>
+      <h1 class="th-title">Curse of Strahd</h1>
+      <div class="th-sub">· Flood Edition ·</div>
+      <p class="th-voice" id="thVoice" aria-live="polite">Our champion. Our prisoner. Our favourite toy.</p>
+    </header>
+
+    <div class="th-doors" id="thDoors">
+      <button class="th-door" data-act="thRole" data-k="dm"><span class="th-sigil">♛</span><b>Take the Count's seat</b><span>Dungeon Master — build the board, move the mist, set the dinner table.</span></button>
+      <button class="th-door" data-act="thRole" data-k="player"><span class="th-sigil">🕯</span><b>Accept the invitation</b><span>Player — sign in, make your hero, join the table.</span></button>
     </div>
-    <h2>Your heroes</h2>
-    <div class="muted">Make your character here. It stays in this browser, and the DM keeps a copy once you join their table.</div>
-    <div id="heroList"></div>
-    <div class="row"><button class="btn primary" data-act="newHero">✚ Create a character</button></div>
-    <h2>Join a table</h2>
-    <div class="grid2">
-      <div><label class="muted">Table code from your DM</label><input class="txt" id="joinCode" placeholder="e.g. HX7Q" autocapitalize="characters"></div>
-      <div><label class="muted">Playing as</label><select class="txt" id="joinHero"></select></div>
-    </div>
-    <div class="row"><button class="btn" data-act="join">Join the table</button></div>
-    <h2>Run a new delve (Dungeon Master)</h2>
-    <div><label class="muted">Template</label><select class="txt" id="newTemplate"></select></div>
-    <div class="muted" id="newBlurb" style="margin:4px 0 8px"></div>
-    <div class="grid2">
-      <div><label class="muted">Seed (same seed = same dungeon)</label><input class="txt" id="newSeed"></div>
-      <div><label class="muted">Floors</label><select class="txt" id="newFloors"><option>1</option><option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option><option>7</option><option>8</option></select></div>
-    </div>
-    <div class="row"><button class="btn primary" data-act="startNew">Descend as DM</button></div>
-    <label class="beat" style="margin-top:6px"><input type="checkbox" id="newDemoParty"><span>Bring the demo party (Gribbles, Mulan, Milson, Alexander, Vlad). Leave it off for a new campaign — players bring their own characters.</span></label>
-    <div class="muted" style="margin-top:12px">Players open this same page on their own phone or computer. Voice stays on Discord — this handles the map, the minis and the dread.</div>
+
+    <section class="th-panel hidden" id="thDM">
+      <button class="th-back" data-act="thRole" data-k="">‹ the threshold</button>
+      <h2>The Count's seat</h2>
+      <p class="th-whisper">“Everything here is yours, Strahd. Move the pieces. Change the weather. Smile at them.”</p>
+      <div id="continueBox"></div>
+      <div class="th-feature">
+        <div class="th-feature-art" aria-hidden="true"><span>🧂</span></div>
+        <div class="th-feature-body">
+          <div class="th-tag">Begin the campaign</div>
+          <h3>Session Zero — Salt for the Lantern &amp; Ladle</h3>
+          <p>A warm tavern with a bland stew, a village full of theories, and the Old Salt Road out to where the carriage went over — and where the mists are waiting. Builds three furnished maps and opens the Story tab at Session 0.</p>
+          <button class="btn primary" data-act="beginS0">Begin Session Zero</button>
+        </div>
+      </div>
+      <h3 class="th-h3">Or open another door</h3>
+      <div class="th-worlds" id="tplGrid"></div>
+      <input type="hidden" id="newTemplate" value="saltroad">
+      <div class="muted" id="newBlurb"></div>
+      <details class="th-adv"><summary>Seed, floors and the demo party</summary>
+        <div class="grid2">
+          <div><label class="muted">Seed (same seed = same dungeon)</label><input class="txt" id="newSeed"></div>
+          <div><label class="muted">Floors</label><select class="txt" id="newFloors"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option></select></div>
+        </div>
+        <label class="beat" style="margin-top:6px"><input type="checkbox" id="newDemoParty"><span>Bring the demo party (Gribbles, Mulan, Milson, Alexander, Vlad). Leave it off for a new campaign — players bring their own characters.</span></label>
+      </details>
+      <div class="row"><button class="btn primary" data-act="startNew">Descend as DM</button></div>
+    </section>
+
+    <section class="th-panel hidden" id="thPlayer">
+      <button class="th-back" data-act="thRole" data-k="">‹ the threshold</button>
+      <h2>Accept the invitation</h2>
+      <p class="th-whisper">“You were expected. It would be rude to refuse.”</p>
+      <div class="th-steps">
+        <div class="th-step"><div class="th-num">I</div><h3>Who are you?</h3>
+          <div class="muted">A name and a secret word. Use the same two on any phone or computer and the DM's table hands your characters back.</div>
+          <label class="muted">Your name</label><input class="txt" id="pName" placeholder="e.g. Sam" autocomplete="username">
+          <label class="muted">Secret word <span id="pWordHint"></span></label><input class="txt" id="pWord" type="password" placeholder="any word you'll remember" autocomplete="current-password">
+        </div>
+        <div class="th-step wide"><div class="th-num">II</div><h3>Your heroes</h3>
+          <div class="muted">They live in this browser, and the DM keeps a copy once you join their table.</div>
+          <div id="heroList" class="th-heroes"></div>
+        </div>
+        <div class="th-step"><div class="th-num">III</div><h3>Join the table</h3>
+          <label class="muted">Table code from your DM</label><input class="txt th-code" id="joinCode" placeholder="HX7Q" maxlength="6" autocapitalize="characters" autocomplete="off">
+          <label class="muted">Playing as</label><select class="txt" id="joinHero"></select>
+          <div class="row"><button class="btn primary" data-act="join">Join the table</button></div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="th-foot">Players open this same page on their own phone or computer. Voice stays on Discord — this handles the map, the minis and the mist. <button class="th-link" data-act="help">How to play</button></footer>
   </div>
 </div>
 
@@ -331,10 +457,12 @@ textarea.txt{min-height:70px;resize:vertical;font-size:13px}
       <b>Stairs</b> — stand on a stair rune and press <i>Descend</i> / <i>Ascend</i> on the token card.<br>
       <b>Ping</b> — the ◎ button, or long-press a tile, flashes it for the whole table.<br>
       <b>Attack (DM)</b> — select a creature, press an attack (◆ toggles advantage/disadvantage), tap the target. The roll pops up for everyone.<br>
-      <b>Shift</b> — rolls the d100 Shift table: corridors rewire, rooms swap, stairs wander, doors lock, things spawn. At Dread 6+ it happens on its own at round's end.<br>
-      <b>Grasp Die</b> — Andral's hands. It grows when hands die; roll it for what reaches up out of the floor.<br>
+      <b>Strahd's Gaze</b> (top bar, 1–10) — how closely the Count is watching. Higher Gaze: thicker mist, redder light, his creatures fight harder, the dead get up, and from 8 his voice charms a hero each round.<br>
+      <b>Whim Die</b> (🦇) — how he toys with the heroes. It grows when his creatures fall and when they catch his eye; roll it for a raven, a gift, wolves, a letter, a charm… or him.<br>
+      <b>Shift</b> — rolls the d100 Shift table: corridors rewire, rooms swap, stairs wander, doors lock, things spawn. At Gaze 6+ it happens on its own at round's end.<br>
+      <b>Props</b> (Build tab) — tables, a bar, barrels, carriages, trees and more. Tap to place, tap again to turn.<br>
       <b>Build (DM)</b> — the Build tab: drag rooms, drag corners to resize, draw rooms on bare rock, trace corridors, place doors, traps and stairs. <kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes.<br><br>
-      <kbd>PgUp</kbd>/<kbd>PgDn</kbd> floors · <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> Tilt/Top/Stack · <kbd>F</kbd> focus selected · <kbd>N</kbd> next turn · <kbd>G</kbd> roll Grasp · <kbd>B</kbd> Build tab · <kbd>Esc</kbd> cancel · <kbd>Del</kbd> remove token
+      <kbd>PgUp</kbd>/<kbd>PgDn</kbd> floors · <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> Tilt/Top/Stack · <kbd>F</kbd> focus selected · <kbd>N</kbd> next turn · <kbd>W</kbd> roll the Whim Die · <kbd>B</kbd> Build tab · <kbd>Esc</kbd> cancel · <kbd>Del</kbd> remove token
     </div>
     <div class="row"><button class="btn primary" data-act="closeHelp">Back to the dark</button></div>
   </div>

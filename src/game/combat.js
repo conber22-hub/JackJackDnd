@@ -12,7 +12,7 @@ import { WHISPERS } from '../data/dread.js';
 import { sfx } from '../audio/sound.js';
 import { currentTurn, addCond, tickConds, hasCond, saveBonus } from './rules.js';
 import { shiftFloor } from './shift.js';
-import { graspRoll, graspStep, graspReset } from './grasp.js';
+import { whimRoll, whimStep, whimReset } from './whim.js';
 import { changed, broadcast } from './session.js';
 import { goFloor, setDread, fall, rebuildFog } from './actions.js';
 
@@ -70,7 +70,7 @@ export function startTurn(){
     syncTokens(); burst(t.floor, t.x, t.y, '#9cc23c');
   }
   const b = BEST[t.bid], D = dreadLevel();
-  if (!t.dead && hasTag(t, 'seep') && D.regen && t.hp < t.maxHp){ t.hp = Math.min(t.maxHp, t.hp + D.regen); }
+  if (!t.dead && isHis(t) && D.regen && t.hp < t.maxHp){ t.hp = Math.min(t.maxHp, t.hp + D.regen); }
   if (b?.hooks?.onTurnStart && !t.dead) for (const fx of b.hooks.onTurnStart) runFx(t, fx, true);
   if (isDM()){ ui.selected = t.id; if (t.floor !== ui.floor) goFloor(t.floor, false); focusTile(t.floor, t.x, t.y); showReach(t); }
   const extra = t.conds?.length ? ` (${t.conds.map(c => c.n).join(', ')})` : '';
@@ -84,23 +84,16 @@ function endOfRound(){
   const L = state.combat.floor, D = dreadLevel(), f = state.floors[L];
   // Host Seed: seeded corpses rise
   for (const t of state.tokens.filter(t => t.dead && t.flags.seeded && !t.flags.gone)) seedRises(t);
-  // Biomass Bloom: unclaimed host corpses are taken
+  // His Gaze: the fallen get back up as his dead
   if (D.raise > 0) for (const t of state.tokens.filter(t => t.floor === L && t.dead && !t.flags.gone && t.kind !== 'pc' && isHost(t) && !hasTag(t, 'seep'))){
-    if (Math.random() < D.raise) setTimeout(() => { if (t.dead) infest(t, 'The Seep finds the body before anyone else does.'); }, 900);
+    if (Math.random() < D.raise) setTimeout(() => { if (t.dead) infest(t, 'He does not let the dead rest while he is watching. It stands, and it is his.', 'zombie'); }, 900);
   }
-  // The Tide Stirs: a Seepling buds
-  if (D.bud > 0 && Math.random() < D.bud){
-    const nest = f.rooms.filter(r => r.type === 'nest');
-    const spot = nest.length ? randomRoomTile(L, Math.random, r => r.type === 'nest') : null;
-    const corpse = state.tokens.find(t => t.floor === L && t.dead && !t.flags.gone);
-    const at = spot || (corpse && freeTilesNear(L, corpse.x, corpse.y, 1)[0]);
-    if (at){ spawnAt('seepling', L, at.x, at.y); toast(`A Seepling buds ${spot ? `in ${spot.room.name}` : `from ${corpse.name}`}.`); log(`A Seepling buds on ${f.name}.`); }
-  }
-  // Andral's hands
-  if (state.grasp.auto && (state.tokens.some(t => t.floor === L && !t.dead && hasTag(t, 'hands')) || (f && f.theme === 2)))
-    setTimeout(() => graspRoll(L, 'The hands tighten as the round ends'), 600);
-  // The Shift
-  if (D.shift > 0 && Math.random() < D.shift) setTimeout(() => shiftFloor(L, 'The Dread Zone shifts as the round ends'), 400);
+  // His Gaze: the Charm
+  if (D.charm > 0 && partyOn(L).length) setTimeout(() => runFx({ ...zoneSource(L), name:'The Count\'s voice' }, `party:wis:${D.charm}:0:psychic:charmed:random`), 700);
+  // the Whim Die, if the DM wants it every round
+  if (state.grasp.auto) setTimeout(() => whimRoll(L, 'The round ends; he is watching'), 600);
+  // The land rearranges
+  if (D.shift > 0 && Math.random() < D.shift) setTimeout(() => shiftFloor(L, 'Barovia rearranges itself as the round ends'), 400);
 }
 export function endCombat(){ state.combat = { active:false, order:[], idx:0, round:1, floor:ui.floor }; log('Combat ends.'); clearReach(); const t = ui.selected && tokById(ui.selected); if (t) showReach(t); changed(); }
 
@@ -116,13 +109,13 @@ export function doAttack(aId, tId, i, mode = 'normal'){
   if (hasCond(a, 'blinded') || hasCond(a, 'frightened') || hasCond(a, 'poisoned') || hasCond(a, 'prone')){ dis = true; why.push(`${a.name} ${a.conds.find(c => ['blinded','frightened','poisoned','prone'].includes(c.n)).n}`); }
   const r1 = d(20), r2 = d(20), useBoth = adv !== dis;
   const r = useBoth ? (adv ? Math.max(r1, r2) : Math.min(r1, r2)) : r1;
-  const bonus = atk.b + (hasTag(a, 'seep') ? D.hit : 0);
+  const bonus = atk.b + (isHis(a) ? D.hit : 0);
   const tot = r + bonus, crit = r === 20 || (r !== 1 && (hasCond(tg, 'paralyzed')) && cheb(a.x, a.y, tg.x, tg.y) <= 1), hit = crit || (r !== 1 && tot >= tg.ac);
   let dmg = 0; if (hit) dmg = rollDice(atk.d, crit).total;
   const flair = (atk.f || '{A} strikes at {T}.').replace(/\{A\}/g, a.name).replace(/\{T\}/g, tg.name);
   const lines = [`d20 ${useBoth ? `(${r1}, ${r2} → ${adv ? 'adv' : 'dis'}) ` : ''}<b>${r}</b> ${signed(bonus)} = <b>${tot}</b> vs AC ${tg.ac} — <b>${crit ? 'CRITICAL' : hit ? 'HIT' : r === 1 ? 'FUMBLE' : 'MISS'}</b>`];
   if (why.length) lines.push(`<span class="muted">${esc(why.join(' · '))}</span>`);
-  if (hasTag(a, 'seep') && D.hit) lines.push(`<span class="muted">+${D.hit} to hit from Dread ${state.dread}</span>`);
+  if (isHis(a) && D.hit) lines.push(`<span class="muted">+${D.hit} to hit under his Gaze (${state.dread})</span>`);
   if (hit && atk.on && !tg.dead){
     const s = d(20) + saveBonus(tg, atk.on.save), ok = s >= atk.on.dc;
     lines.push(`${esc(tg.name)} — ${atk.on.save.toUpperCase()} save ${s} vs ${atk.on.dc}: <b>${ok ? 'resists' : atk.on.cond}</b>`);
@@ -178,7 +171,8 @@ export function kill(t, type, by){
   t.flags.rising = false;
   log(`${t.name} is destroyed.`);
   if (hasTag(t, 'seep')) sfx('burst');
-  if (hasTag(t, 'hands') && !hasTag(t, 'boss') && !radiant) graspStep(1, `${t.name} dies`);
+  // killing his creatures catches his interest (once a round)
+  if (isHis(t) && state.grasp.stepRound !== `${state.combat.active}:${state.combat.round}`){ state.grasp.stepRound = `${state.combat.active}:${state.combat.round}`; whimStep(1, `${t.name} falls — he noticed`); }
   // All Flesh Returns
   if (hasTag(t, 'seep')) for (const u of state.tokens.filter(u => u.bid === 'undertow' && !u.dead && u.floor === t.floor && cheb(u.x, u.y, t.x, t.y) <= 12)) u.hp = Math.min(u.maxHp, u.hp + 10);
   for (const fx of hooks){
@@ -222,10 +216,12 @@ export function spawnWhere(src, where, L){
   if (where === 'random'){ const s = randomRoomTile(L); if (s) return s; }
   return { x:src.x, y:src.y };
 }
-// A pseudo-source for effects that come from the floor itself (Shift / Grasp tables, traps).
+// A pseudo-source for effects that come from the floor itself (Shift / Whim tables, traps).
+// The Count's own creatures (wolves, bats, his dead, his spawn) are the ones his Gaze strengthens.
+export const isHis = t => BEST[t.bid]?.fam === 'barovia';
 export function zoneSource(L, at){
   const p = at || pick(partyOn(L)) || { x:state.floors[L].rooms[0].cx, y:state.floors[L].rooms[0].cy };
-  return { id:null, name:'The Dread Zone', kind:'monster', floor:L, x:p.x, y:p.y, flags:{} };
+  return { id:null, name:'Barovia', kind:'monster', floor:L, x:p.x, y:p.y, flags:{} };
 }
 export function runFx(src, fx, quiet){
   const [kind0, ...p] = String(fx).trim().split(':');
@@ -290,10 +286,11 @@ export function runFx(src, fx, quiet){
   else if (kind === 'shift') shiftFloor(L, `${src.name} reorganizes the sector`);
   else if (kind === 'dread+1') setDread(state.dread + 1);
   else if (kind === 'dread-1') setDread(state.dread - 1);
-  else if (kind === 'grasp+1') graspStep(1, src.name);
-  else if (kind === 'grasp-1') graspStep(-1, src.name);
-  else if (kind === 'grasp' && p[0] === 'roll') graspRoll(L, `${src.name} clenches the Grasp`);
-  else if (kind === 'grasp' && p[0] === 'reset') graspReset();
+  // whim (grasp is the old name, still read from older custom tables and creatures)
+  else if (kind === 'whim+1' || kind === 'grasp+1') whimStep(1, src.name);
+  else if (kind === 'whim-1' || kind === 'grasp-1') whimStep(-1, src.name);
+  else if ((kind === 'whim' || kind === 'grasp') && p[0] === 'roll') whimRoll(L, `${src.name} amuses him`);
+  else if ((kind === 'whim' || kind === 'grasp') && p[0] === 'reset') whimReset();
   else if (kind === 'whisper') sendWhisper(pick(WHISPERS));
   else if (kind === 'alert'){
     const foes = state.tokens.filter(t => t.floor === L && !t.dead && t.kind === 'monster');
@@ -346,11 +343,11 @@ export function useSpecial(t, s){
   runFx(t, s.fx); changed();
 }
 export function infest(t, why, as = 'husk'){
-  const nb = BEST[as] || BEST.husk, base = t.name.replace(/^(Husk|Vessel) of /, '');
-  Object.assign(t, { kind:'monster', bid:nb.id, name:`${nb.id === 'husk' ? 'Husk' : 'Vessel'} of ${base}`, color:nb.color, ac:nb.ac, maxHp:avgDice(nb.hp), speed:nb.speed,
+  const nb = BEST[as] || BEST.husk, base = t.name.replace(/^(Husk|Vessel) of |^Risen /, ''), his = nb.fam === 'barovia';
+  Object.assign(t, { kind:'monster', bid:nb.id, name:his ? `Risen ${base}` : `${nb.id === 'husk' ? 'Husk' : 'Vessel'} of ${base}`, color:nb.color, ac:nb.ac, maxHp:avgDice(nb.hp), speed:nb.speed,
     attacks:nb.attacks.map(a => ({ ...a })), dead:false, flags:{}, conds:[], size:1, init:nb.init });
   t.hp = t.maxHp;
-  showCard({ kind:'seep', title:'The Seep takes the body', flair:why || `Grey-green threads stitch through what used to be ${base}. It stands.` });
+  showCard({ kind:his ? '' : 'seep', title:his ? 'The dead are his' : 'The Seep takes the body', flair:why || `Grey-green threads stitch through what used to be ${base}. It stands.` });
   if (state.combat.active && state.combat.floor === t.floor) addToInit(t);
   syncTokens(); riseFrom(t); changed();
 }

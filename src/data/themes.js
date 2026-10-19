@@ -3,6 +3,8 @@
    themes at the END of the list to keep old saves pointing at the right look.
    denizens: encounter groups the "Populate" button and templates drop into matching rooms.
      where = room types it likes · group = [[creature id, count or dice], ...] */
+import { SALT_ROAD } from './session0.js';
+
 export const THEMES = [
   { id:'undercroft', name:'The Undercroft of St. Andral', floor:'#4b454a', hall:'#37323a', wall:'#2c2731', trim:'#c8cbd6', mist:'#6b6577',
     weights:{chamber:4,crypt:3,shrine:2,trap:2,treasure:1,safe:1,lair:1},
@@ -82,7 +84,7 @@ export const THEMES = [
       { where:['shrine','crypt'], group:[['specter',1]] },
       { where:['lair'], group:[['sporeling','1d3'],['ghoul',1]] },
     ] },
-  { id:'woods', name:'The Svalich Woods', floor:'#3a4030', hall:'#2e3326', wall:'#1d2418', trim:'#8a9a6a', mist:'#6a7a6a',
+  { id:'woods', walls:'trees', light:1.2, name:'The Svalich Woods', floor:'#3a4030', hall:'#2e3326', wall:'#1d2418', trim:'#8a9a6a', mist:'#6a7a6a',
     weights:{chamber:5,lair:2,trap:1,shrine:1,nest:1},
     traps:['hands','pit','spore'],
     prompt:'dense black pine forest in heavy fog, a narrow muddy road, roots like fingers, a toppled shrine, wolf tracks, Barovia, top-down battlemap, painterly',
@@ -114,7 +116,7 @@ export const THEMES = [
       { where:['chamber','lair'], group:[['green-hag',1]] },
       { where:['crypt'], group:[['sporeling','1d3']] },
     ] },
-  { id:'village', name:'The Village of Barovia', floor:'#4a4640', hall:'#3d3a34', wall:'#2a2723', trim:'#a89a80', mist:'#8a8a90',
+  { id:'village', walls:'mixed', light:1.35, name:'The Village of Barovia', floor:'#4a4640', hall:'#3d3a34', wall:'#2a2723', trim:'#a89a80', mist:'#8a8a90',
     weights:{chamber:5,shrine:1,safe:1,treasure:1,lair:1},
     traps:['bell','pit'],
     prompt:'muddy streets of a dreary gothic village in permanent fog, shuttered houses, a tavern with one lit window, a church on a rise, Barovia, top-down battlemap, painterly',
@@ -132,6 +134,14 @@ export const THEMES = [
       { where:['crypt'], group:[['spawn',2]] },
       { where:['lair'], group:[['dinner-guest',1]] },
       { where:['chamber'], group:[['swarm-of-bats',2]] },
+    ] },
+  // ---- Session 0: the Salt Road (before the mists) ----
+  { id:'tavern', walls:'mixed', light:1.6, name:'The Lantern & Ladle', floor:'#6a5240', hall:'#5a4434', wall:'#3e2e22', trim:'#d8a868', mist:'#7a6e66',
+    weights:{chamber:5,safe:2,treasure:1},
+    prompt:'warm cosy country tavern interior at night, low timber beams, a roaring hearth, round tables, a long bar with kegs, a stable yard outside, lantern light, fantasy, top-down battlemap, painterly',
+    denizens:[
+      { where:['chamber'], group:[['commoner',3]] },
+      { where:['chamber'], group:[['thug',1],['commoner',2]] },
     ] },
 ];
 export const themeIndex = id => { const i = THEMES.findIndex(t => t.id === id); return i < 0 ? 0 : i; };
@@ -159,6 +169,8 @@ export const TEMPLATES = [
     floors:[{ theme:'mill', rooms:.5, roomSize:[4, 7], doors:.6 }, { theme:'mill', rooms:.4, roomSize:[3, 6], doors:.5 }, { theme:'ossuary', rooms:.5, roomSize:[3, 6], doors:.3, traps:1 }] },
   { id:'standral', name:'Beneath Saint Andral\'s (Vallaki)', blurb:'Sessions 8–10: the church of Saint Andral in Vallaki, its undercroft, and the Dread Zone below — Silver Vein, Hand-Warrens, the Undertow.', campaign:true,
     floors:[{ theme:'chapel', rooms:.8, doors:.6 }, { theme:'undercroft', secret:.15 }, { theme:'silver' }, { theme:'hands', secret:.25 }, { theme:'undertow', doors:.15 }] },
+  { id:'saltroad', name:'Session 0 — The Salt Road', blurb:'Session 0: the Lantern & Ladle tavern, the village of Hollin\'s Ford, and the Old Salt Road out to where the salt carriage went over — and where the mists begin. Hand-built maps with furniture.', campaign:true,
+    floors:[{ theme:'tavern', layout:SALT_ROAD.tavern }, { theme:'village', layout:SALT_ROAD.village }, { theme:'woods', layout:SALT_ROAD.road }] },
   { id:'blank', name:'Blank stone (build by hand)', blurb:'One landing room per floor and nothing else. Draw rooms, corridors, doors and traps yourself in the Build tab.',
     floors:[{ blank:true }, { blank:true }, { blank:true }] },
 ];

@@ -18,6 +18,7 @@ export const SURFACES = {
   mill:      { floor:'plank',    wall:'panel',  wet:0 },
   village:   { floor:'cobble',   wall:'brick',  wet:.4 },
   castle:    { floor:'flag',     wall:'ashlar', wet:0 },
+  tavern:    { floor:'plank',    wall:'panel',  wet:0 },
 };
 const S = 256;
 const gray = (v, a = 1) => `rgba(${v},${v},${v},${a})`;

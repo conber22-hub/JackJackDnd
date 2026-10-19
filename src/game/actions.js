@@ -232,7 +232,7 @@ export function nearestHero(L, x, y){
   return state.tokens.filter(t => t.floor === L && t.kind !== 'monster' && !t.dead && !t.flags.gone).sort((a, b) => cheb(a.x, a.y, x, y) - cheb(b.x, b.y, x, y))[0] || null;
 }
 
-/* ---------- pings, floors, views, dread ---------- */
+/* ---------- pings, floors, views, the Gaze (state.dread) ---------- */
 export function doPing(tile, who, color, from){
   const c = color || (ui.role === 'player' ? tokById(ui.myToken)?.color : '#e9a54a') || '#e9a54a';
   spawnPing(tile.floor, tile.x, tile.y, c);
@@ -253,22 +253,22 @@ export function setDread(n){
   const old = state.dread; state.dread = clamp(n, 1, 10);
   if (old !== state.dread){
     const D = dreadLevel();
-    log(`Dread ${state.dread}: ${D.n}`);
+    log(`Strahd's Gaze ${state.dread}: ${D.n}`);
     if (state.dread > old){
       sfx('boom');
       if (state.dread >= 5) sendWhisper(pick(WHISPERS));
-      showCard({ kind:state.dread >= 7 ? 'crit' : '', title:`Dread ${state.dread} · ${D.n}`, flair:D.text, lines:dreadRulesLines(D) });
+      showCard({ kind:state.dread >= 7 ? 'crit' : '', title:`👁 Gaze ${state.dread} · ${D.n}`, flair:D.text, lines:dreadRulesLines(D) });
     }
   }
   renderTop(); changed();
 }
 export function dreadRulesLines(D){
   const out = [];
-  if (D.regen) out.push(`Seep regenerates <b>${D.regen}</b> HP each turn`);
-  if (D.hit) out.push(`Seep attacks <b>+${D.hit}</b> to hit`);
-  if (D.bud) out.push(`<b>${Math.round(D.bud * 100)}%</b> a Seepling buds each round`);
-  if (D.raise) out.push(`<b>${Math.round(D.raise * 100)}%</b> per corpse: the Seep takes it`);
-  if (D.shift) out.push(`<b>${Math.round(D.shift * 100)}%</b> the halls shift each round`);
+  if (D.regen) out.push(`His creatures regain <b>${D.regen}</b> HP each turn`);
+  if (D.hit) out.push(`His creatures <b>+${D.hit}</b> to hit`);
+  if (D.raise) out.push(`<b>${Math.round(D.raise * 100)}%</b> per fallen body: it rises as his`);
+  if (D.charm) out.push(`each round one hero: <b>DC ${D.charm}</b> Wisdom or charmed`);
+  if (D.shift) out.push(`<b>${Math.round(D.shift * 100)}%</b> the land rearranges each round`);
   return out;
 }
 export { canSeeTile, focusTile };

@@ -21,19 +21,21 @@ export const CAMPAIGN = {
     'Gothic dread first, body horror second. The Bloom is loud; Barovia is quiet. Let them take turns.',
     'Strahd is a host, not a hunter, until he is offended. The Bloom offends him. Use that — he will help, for a price he names later.',
     'Every infection is a clock. Seeded people can be saved — with fire, faith, or Lesser Restoration — if someone cares enough to try.',
-    'The dungeon moves. The Dread rises. The Grasp tightens. Make the tools on screen do the frightening.',
+    'The land moves. His Gaze rises. His Whim grows. Make the tools on screen do the frightening.',
+    'Salt is precious. The Bloom is wet and salt dries it; the valley has almost none, and he made sure of that.',
   ],
   // the "Seeded" rule, shared by Bloom and Seep (also in the bestiary and the app's combat)
+  salt:'<b>Salt.</b> The Bloom is wet, and salt dries it. Bloom and Seep creatures will not willingly cross an unbroken line of salt (a sack lays about 30 ft.). A handful thrown at one (an action, ranged 10 ft.) deals 1d6 necrotic and it must use its next move to back away. A Seeded body packed in salt does not rise. Inside the mists, salt is almost impossible to buy.',
   seeded:'<b>Seeded.</b> A humanoid hit by a seeding attack (Sporeling latch, Seed Spit, a Carrier\'s Vent, a Seepling\'s Host Seed) that drops to 0 HP is Seeded: at the start of the next round it rises as a Bloom Vessel (or Seep-Husk below Saint Andral\'s) unless it gets magical healing or Lesser Restoration first, or the body takes fire or radiant damage. The app does all of this automatically.',
 };
 
 /* ---------- the clocks (Dark Lord desk) ---------- */
 export const CLOCKS = [
   { id:'patience', label:'The Count\'s patience', max:6, start:2, full:'He arrives. Not to fight — to be seen. Dinner, a letter, a visit on the road.' },
-  { id:'bloom', label:'Bloom tide', max:8, start:1, full:'At 4: cysts in a holy place. At 8: a Carrier walks a street in daylight. Raise the Dread by one each time it fills a quarter.' },
+  { id:'bloom', label:'Bloom tide', max:8, start:1, full:'At 4: cysts in a holy place. At 8: a Carrier walks a street in daylight. Raise his Gaze by one each time it fills a quarter: he takes it as an insult.' },
   { id:'riot', label:'Vallaki riot', max:4, start:0, full:'The square burns. The Baron\'s festival becomes a mob.' },
   { id:'abbey', label:'Abbey mercy', max:4, start:0, full:'The Abbot\'s experiments reach the Bloom. Krezk gets a Bloom farm.' },
-  { id:'heart', label:'Heart\'s rest', max:4, start:0, full:'Say the brother\'s name, tick once, then put the Bloomed chapel on the table.' },
+  { id:'salt', label:'The salt runs out', max:6, start:0, full:'There is no salt left to lay on the dead. Every unburied body in the valley rises Seeded by the next dawn.' },
 ];
 export const PLACES = [
   { id:'village', name:'Village of Barovia' }, { id:'woods', name:'Svalich Woods' }, { id:'tser', name:'Tser Pool camp' },
@@ -82,10 +84,12 @@ export const CAST = [
   { id:'winemaker', name:'The vintner', look:'Purple under the nails, faith in the next harvest.',
     want:'The vines to answer to people again.', fear:'A season with no wedding and no wine.',
     lever:'Protect a wagon and you own a bottle that matters.', line:'He names wines like children.', die:'Can die. The cellar becomes a Bloom pantry.' },
-  { id:'brother', name:'The Seat at the Table', look:'Not a ghost. A promise you are keeping.',
-    want:'The Bloom faced loud, with friends, in a story that ends.', fear:'That the table gets kind instead of brave.',
-    lever:'When the Bloomed chapel hits the map, say his name once and then play.',
-    line:'You already know how he would have kicked the door.', die:'He is not a stat block. Do not roll for him.' },
+  { id:'marta', name:'Marta Holloway (the Lantern & Ladle)', look:'Flour to the elbows, a ladle she holds like a sceptre.',
+    want:'Her salt, her regulars fed, and one winter without anyone she loves going missing.', fear:'That the road is not safe any more, and never will be again.',
+    lever:'Feed her a true story and she will feed you for a month.', line:'She tastes everything twice and says "hm."', die:'Session 0 only — she is outside the mists. Let her be the warm thing they remember.' },
+  { id:'stranger', name:'The stranger in the Snug', look:'Pale, beautifully dressed, drinking nothing, tipping everyone.',
+    want:'To see which of them would follow a friend into the dark.', fear:'Disappointing his master.',
+    lever:'He answers one question honestly, then leaves while they are looking at the door.', line:'He speaks as if he has been told all their names already.', die:'He is not the Count. He works for him. He is gone before anyone can roll.' },
 ];
 
 /* ---------- roll the night (Dark Lord desk) ---------- */
@@ -110,7 +114,7 @@ export const NIGHT = {
   ],
   dinner:[
     'He seats the loudest player at his right. That player has Advantage on Insight and Disadvantage on leaving the room.',
-    'The empty chair is set with a place. If no one mentions it, Heart\'s rest ticks +1 at the end of the scene.',
+    'An empty chair is set with a place. He does not say who it is for. If anyone asks, grow the Whim Die.',
     'The wine is safe. The bread is not. DC 14 Insight to notice the swap. Poison: poisoned 1 hour, and he learns a secret they speak while ill.',
     'A Dinner Guest makes a toast. Charm save or they answer one question honestly.',
     'He asks what they would burn to keep one person in the valley alive. Write the answer down. Use it in three sessions.',
@@ -159,38 +163,55 @@ export const FORTUNE = [
    scene.delve = a dungeon the app can build: { template, floors, note }
    tick = clocks to move during or after the session (suggested) */
 export const SESSIONS = [
-  { n:0, title:'Session Zero — The Seat at the Table', level:'1', dread:1, length:'2–3 hours',
-    hook:'Make the characters, set the tone, and promise each other one thing.',
-    premise:'No dice except the ones that make characters. This is where the table agrees what kind of horror this is: gothic and patient on the surface, wet and loud underneath. Everyone builds their hero in the app\'s character creator so they arrive on your screen ready to play.',
-    book:'Read the player-facing introduction from your book if you like, and nothing else. Do not run the Mists yet.',
-    flood:'Tell them plainly: this Barovia has two monsters. The Count, who is old and polite and owns the valley; and the Bloom, which fell out of the sky and does not care who owns anything. They will be asked to choose which one to fear more, more than once.',
-    open:'Somewhere behind you is a road you remember. Ahead is fog the colour of old pewter, and a smell like a church after the candles have been put out. You have all, for your own reasons, agreed to walk into it. Before you do, tell each other why.',
+  { n:0, title:'Session Zero — Salt for the Lantern & Ladle', level:'1', gaze:1, length:'3–4 hours',
+    hook:'The salt carriage from the coast is three days late, and the best cook in Hollin\'s Ford cannot season a stew.',
+    premise:'Session Zero in two halves. First the table: tone, safety, and heroes built in the app\'s character creator. Then a gentle first evening of play in the heroes\' home country, well before Barovia: a warm tavern with a bland stew, a village with too many theories, and the Old Salt Road out to where the carriage went over — and where the mists are waiting. It is the last ordinary night they will have for a long time. Make it cosy, so the fog means something.',
+    book:'Nothing from the book yet. Hollin\'s Ford is outside Barovia; put it wherever your heroes come from. The mists take them at the end of this session, and session 1 opens at the Narrow House.',
+    flood:'Salt matters in this edition. The Bloom is wet, and salt dries it: Bloom creatures will not cross an unbroken line of salt, a handful thrown at one burns it, and a Seeded body packed in salt does not rise. The Count knows. That is why the carriage never arrived, and why the valley inside the mists has almost none.',
+    open:'Rain on the shutters, a fire that wants more wood, and eleven people in the Lantern & Ladle pretending the stew is fine. Marta Holloway stands in the kitchen doorway with her arms folded, watching you taste it. "Three days," she says, to no one in particular. "Three days late, and Aldo Brask has not been late once in twenty years." Out past the edge of the village, a dog will not stop barking at the road.',
     scenes:[
-      { t:'Tone & safety', beats:[
-        'Lines and veils: body horror, infection, harm to children, being controlled. Decide what is off the table and what happens off-screen.',
+      { t:'Before we play: tone & safety', beats:[
+        'Lines and veils: body horror, infection, harm to children, and being charmed or controlled (the Count does this, and it takes a hero\'s choices away for a moment). Decide what is off the table and what happens off-screen.',
         'Agree on an X-card or a simple "pause" word. The Bloom is meant to be uncomfortable, not cruel.',
-        'Explain the Dread slider (1–10): the room gets darker, the mist thicker, and above 6 the halls move on their own.',
-        'Explain Seeded: if a Bloom thing latched onto you when you fell, you rise as one of them next round unless someone heals you or burns the body. It is fair, and it is on screen.' ] },
+        'Show them the top bar. Strahd\'s Gaze (1–10) is how closely he is watching: the mist thickens, the light reddens, his creatures fight harder, and from 8 his voice gets inside their heads. The Whim Die (🦇) is how he plays with them.',
+        'Explain Seeded, and explain salt. Both are fair, and both are on screen.' ] },
       { t:'Build the heroes', beats:[
-        'Each player opens the app → Create a character (start screen). Level 1, standard array or point buy, SRD 5.2 classes, species and backgrounds.',
-        'They join your table with the code; their sheet arrives on your Tokens tab automatically. You keep a copy even after they leave.',
+        'Each player opens the app, signs in with a name and a secret word, and uses Create a character. Level 1, standard array or point buy, SRD 5.2 classes, species and backgrounds.',
+        'They join your table with the code; their sheet arrives on your Tokens tab and their token appears in the common room. You keep a copy even after they leave.',
         'Ask each player for: one person they would go back for, one thing they are ashamed of, and one reason they would walk into a fog that smells of churches.' ] },
       { t:'Bonds (go round the table)', beats:[
         'Each hero names one other hero they owe something to, and one they do not trust yet.',
-        'Each hero names a smell that means home. Write them down: the Count will serve one of them at dinner in session 10-ish.' ] },
-      { t:'The Seat at the Table', beats:[
-        'If your table honours someone (this app was built for Chance), put an empty chair, a mug, or a mini at the table now. Explain once, briefly, then move on.',
-        'The Heart\'s rest clock is his. When it fills, the Bloomed chapel goes on the map and the table plays it loud.' ] },
+        'Each hero names a smell that means home. Write them down: the Count will serve one of them at dinner, much later.' ] },
+      { t:'The Lantern & Ladle', delve:{ template:'saltroad', floors:3, note:'Builds the tavern (floor 1), Hollin\'s Ford (floor 2) and the Old Salt Road (floor 3), furnished. Heroes already at the table start in the common room.' }, beats:[
+        'Start with the heroes already in the common room, each with a reason to be here tonight. Read the opening.',
+        'Marta Holloway has no salt: the stew is bland, the hams will spoil, and the winter meat cannot be cured. She offers 10 gp a head, and free suppers all winter, to whoever finds the carriage.',
+        'Pim the stable boy saw the carriage leave the coast-house a week ago. "It wasn\'t late. Something took it." He wants to come along. Do not let him.',
+        'The stranger in the Snug has drunk nothing all night and paid for everyone\'s wine. He asks one hero what they would do for a friend, answers one question honestly, and is gone when they look back.' ] },
+      { t:'Hollin\'s Ford', beats:[
+        'Floor 2: out through the stable-yard gate. The square is full of theories. Roll a Rumour, or use these: bandits on the coast road; wolves this far south; "the fog came down off the hills two nights ago, and it smelled like a church."',
+        'Ilka Brask, the teamster\'s wife, in Brask Cottage: Aldo always stops at the wayshrine to light a candle for the road. If the candle is not lit, he never got that far.',
+        'Brother Tamsin at the chapel blesses a pouch of salt for each hero who asks. Give it to them. They will need it.',
+        'Halloran\'s Provisions sells everything but salt. Old Hendry at the smithy lends a crowbar and a lantern.' ] },
+      { t:'The Old Salt Road', enc:{ label:'Wolves at the carriage', group:[['wolf', 3]], where:'nest' }, beats:[
+        'Floor 3. An hour out of the village the road goes quiet: no birds. At the Wayshrine Clearing, Aldo\'s candle is lit, so he got this far. The toll hut is empty, and its door is open.',
+        'Where the Carriage Went Over: the carriage on its side, both horses dead and bled white, the salt sacks split. The spilled salt has made a ring in the mud, and every set of tracks stops at its edge.',
+        'Three wolves circle the ring and will not cross it. They are ordinary wolves, frightened and hungry. A hero who throws salt sends one yelping. Place them with the button and run a short, scrappy fight.',
+        'In the carriage: Aldo\'s ledger (two sacks of salt for the Lantern & Ladle, paid), his lantern, still lit, and a calling card on black paper, unsigned, embossed with a single bat.' ] },
+      { t:'The Mist Wall', beats:[
+        'North of the clearing the road keeps going, into fog the colour of old pewter. Aldo\'s bootprints walk into it calmly, side by side with a second set that leaves no tread.',
+        'Any hero who walks in comes out somewhere else. Any hero who turns back finds the clearing is in front of them again. The road home is gone.',
+        'Raise the Gaze to 2 as the fog closes. Roll the Whim Die once, just to show them what it does.' ] },
       { t:'House rules', beats:[
         'Milestone levelling: 2 after the Narrow House\'s first night, 3 when they leave it, 4 after the Iron Coffin, 5 in Vallaki, 6 after Saint Andral\'s.',
-        'Inspiration for playing fear well. Heroic deeds in the Bloom\'s presence tick Heart\'s rest.',
+        'Inspiration for playing fear well, and for being brave where he can see it (grow the Whim Die when they are).',
         'Death: three failed saves, as normal — unless Seeded. Raising the dead in Barovia always costs something the DM names.' ] },
     ],
-    npcs:['brother'], loot:[], tick:{},
-    ending:'End by having each player describe what their hero is carrying in their left hand as they walk into the fog. Then stop.',
+    npcs:['marta', 'stranger'], loot:['Two sacks of salt from the carriage (a sack lays about 30 ft. of line, or forty handfuls)', 'A pouch of blessed salt per hero, from Brother Tamsin', 'Aldo Brask\'s ledger', 'A black calling card embossed with a bat'],
+    tick:{ salt:1, patience:1 },
+    ending:'End when the last hero steps into the mist. Ask each player what their hero is carrying in their left hand as they go. Then stop.',
     levelUp:'Start at 1.' },
 
-  { n:1, title:'Into the Mists — The Narrow House', level:'1 → 2', dread:2, length:'3–4 hours',
+  { n:1, title:'Into the Mists — The Narrow House', level:'1 → 2', gaze:2, length:'3–4 hours',
     hook:'Two children at the edge of the fog ask for help. Their house is very tall and very quiet.',
     premise:'The Mists take the party to the edge of a village that is not on any map. Two children beg them to save their baby brother from "the monster in the basement." The house is a gothic trap, and in the Flood Edition the old cult\'s cellar has started to grow.',
     book:'Run the Death House appendix from your book for the upper floors, the children, and the house\'s secrets. Use the app\'s Narrow House template for the map.',
@@ -202,7 +223,7 @@ export const SESSIONS = [
         'Omen (roll one in the Campaign tab) as they cross the threshold.' ] },
       { t:'The upper house', delve:{ template:'deathhouse', floors:4, note:'Builds the whole house: two upper floors, the cellars, and the bloomed crypt. Start the party on floor 1.' }, beats:[
         'Portraits with scratched-out faces. A nursery that is too clean. Letters that tell the family\'s story (from your book).',
-        'Keep the Dread at 2. Every time they find a family secret, ask one player what their hero hears in the walls.' ] },
+        'Keep the Gaze at 2. Every time they find a family secret, ask one player what their hero hears in the walls.' ] },
       { t:'Something in the walls', enc:{ label:'Rats in the walls', group:[['swarm-of-rats', 2]], where:'party' }, beats:[
         'The first fight is small and fast. Let the rats pour out of a wall that should be solid.' ] },
       { t:'The armour on the landing', enc:{ label:'Animated armour', group:[['animated-armor', 1]], where:'random' }, beats:[
@@ -216,7 +237,7 @@ export const SESSIONS = [
     ending:'They find the way down. Something below them coughs, wetly, exactly once. End there.',
     levelUp:'Level 2 at the end of the session.' },
 
-  { n:2, title:'The House Below — Cellars and the Font', level:'2 → 3', dread:3, length:'3–4 hours',
+  { n:2, title:'The House Below — Cellars and the Font', level:'2 → 3', gaze:3, length:'3–4 hours',
     hook:'The cult dug down. Something dug up to meet them.',
     premise:'The cellars, the crypts of the family\'s cult, and the ritual chamber at the bottom. In the Flood Edition the chamber is a Bloom nest: the first time the party sees the infection up close, and the first time it sees them.',
     book:'Run the house\'s lower level from the Death House appendix — the crypts, the cult, the ritual — then swap the final monster for the Bloom nest below.',
@@ -232,20 +253,20 @@ export const SESSIONS = [
         'Put a Seeded cultist on the map (Bestiary → Cultist), then apply the ☣ seeded condition and drop it to 0 HP. The app does the rest.' ],
         enc:{ label:'Seeded cultists', group:[['cultist', 2]], where:'random' } },
       { t:'The ritual chamber (Bloom nest)', enc:{ label:'The nest', group:[['bloom-vessel', 1], ['sporeling', 3], ['cyst-node', 2]], where:'nest' }, beats:[
-        'Floor 4. Raise the Dread to 4 when they enter. The walls weep.',
+        'Floor 4. Raise the Gaze to 4 when they enter: he has noticed what they found. The walls weep.',
         'The Vessel speaks the cult leader\'s last words in a voice that is not hers.',
         'Fire is the answer here. If nobody brought any, the lantern oil in the crypts is.' ] },
       { t:'If they are winning', enc:{ label:'Something bigger', group:[['carrier-hulk', 1]], where:'nest' }, beats:[
         'Only if the fight was easy. Otherwise, it stays behind the wall and the party hears it leave, going down.' ] },
       { t:'Getting out', beats:[
-        'The house tries to keep them (your book has how). Let the Shift help: at Dread 4 roll on the Shift table once as they flee.' ] },
+        'The house tries to keep them (your book has how). Let the Shift help: at Gaze 4, roll on the Shift table once as they flee.' ] },
     ],
     npcs:[], loot:['A cooled cyst-stone (see Stains)', 'The cult leader\'s robe — Bloom creatures ignore its wearer for one round', 'A map of "the font beneath" with Vallaki\'s church marked'],
-    tick:{ bloom:1, heart:1 },
+    tick:{ bloom:1, salt:1 },
     ending:'Outside, the mist has parted onto a muddy road and a village under a castle on a cliff. A wolf sits in the road, watching. It does not attack. It leaves, toward the castle, to report.',
     levelUp:'Level 3 when they leave the house.' },
 
-  { n:3, title:'The Village of Barovia — The Bloomed Chapel', level:'3', dread:3, length:'3–4 hours',
+  { n:3, title:'The Village of Barovia — The Bloomed Chapel', level:'3', gaze:3, length:'3–4 hours',
     hook:'A dead burgomaster, a frightened daughter, and a church where the priest prays loudly to drown out the coughing below.',
     premise:'The village, the tavern, the Kolyana manor and the grieving siblings, and the church on the rise. In the Flood Edition the priest\'s secret in the undercroft is already Seeded: half vampire, half something worse, and the undercroft has bloomed.',
     book:'Run the Village of Barovia chapter: the tavern, the burgomaster\'s mansion, Ismark and Ireena, the shops, the church. Keep the story beats as written.',
@@ -259,19 +280,19 @@ export const SESSIONS = [
         'Zombies at the doors at night are your book\'s; the Flood twist is that one of them coughs.' ],
         enc:{ label:'Night street', group:[['zombie', 3], ['barovian-wolf', 2]], where:'party' } },
       { t:'The church and the undercroft', enc:{ label:'The priest\'s son', group:[['night-spawn', 1], ['sporeling', 3]], where:'random' }, beats:[
-        'The undercroft is the Bloomed chapel. When it goes on the map, tick Heart\'s rest, say the name, and play it loud.',
+        'The undercroft is the Bloomed chapel. When it goes on the map, play it loud.',
         'The priest begs them not to kill his son. Let them choose. Every choice here is a bad one; let it be theirs.',
-        'Raise the Dread to 5 when the membrane on the walls starts to breathe.' ] },
+        'Raise the Gaze to 5 when the membrane on the walls starts to breathe. He is offended, and he is watching.' ] },
       { t:'The burial', beats:[
         'The burgomaster must be buried in consecrated ground — and the village\'s ground no longer is. Somebody has to bless it, or carry the coffin to a church that is still clean.',
         'The Count may appear at the edge of the churchyard (Patience full, or just because). He does not stay. He looks at the church, then at the party, and says one sentence about the Bloom.' ] },
     ],
-    npcs:['ismark', 'ireena', 'donavich', 'count', 'brother'], loot:['Holy water ×2 from the church — burns Bloom like fire', 'The burgomaster\'s letter (your book)'],
-    tick:{ heart:1, bloom:1, patience:1 },
+    npcs:['ismark', 'ireena', 'donavich', 'count'], loot:['Holy water ×2 from the church — burns Bloom like fire', 'The burgomaster\'s letter (your book)'],
+    tick:{ salt:1, bloom:1, patience:1 },
     ending:'Ismark asks them to take his sister to Vallaki, where the walls are high and the church is "still holy." As they agree, the church bell stops. Nobody was ringing it.',
     levelUp:'Stay at 3.' },
 
-  { n:4, title:'The Road West — Tser Pool and the Cards', level:'3 → 4', dread:3, length:'3 hours',
+  { n:4, title:'The Road West — Tser Pool and the Cards', level:'3 → 4', gaze:3, length:'3 hours',
     hook:'An old woman by a river has been expecting them for a very long time.',
     premise:'The road out of the village, the crossroads, the gallows, and the camp by the river where Madam Eva reads the cards. This is the session that gives the campaign its compass — and the session where the party first sees the green light in the trees.',
     book:'Run the roads and Tser Pool from the Lands of Barovia chapter, including the card reading. Record what the cards say in the Campaign tab\'s Fortune box.',
@@ -294,7 +315,7 @@ export const SESSIONS = [
     ending:'Ireena, who has said almost nothing all day, asks the party what they think fell in the woods. Then she asks if they are going to look. She is.',
     levelUp:'Level 4 at the end of this session or the next.' },
 
-  { n:5, title:'The Iron Coffin', level:'4', dread:5, length:'3–4 hours',
+  { n:5, title:'The Iron Coffin', level:'4', gaze:5, length:'3–4 hours',
     hook:'Something fell out of the sky. Everyone in the valley knows where. No one goes there.',
     premise:'The heart of the Flood Edition. A burned cut through the Svalich Woods leads to a vast iron vessel lying on its side, half buried, still humming. Inside: the Bloom\'s first nest, the last log of whoever crewed it, and a Carrier Hulk that has been waiting for company.',
     book:'Nothing in your book — this is the Flood Edition\'s own location. Build it with the Iron Coffin template.',
@@ -306,7 +327,7 @@ export const SESSIONS = [
         enc:{ label:'Bloomed pack', group:[['bloomed-wolf', 3], ['sporeling', 2]], where:'party' } },
       { t:'The decks', beats:[
         'The vessel is on its side: floors are walls, doors are trapdoors. The Shift here is the wreck settling (roll it once per floor).',
-        'Raise the Dread one step per deck.' ],
+        'Raise the Gaze one step per deck. He wants to know what they find.' ],
         enc:{ label:'Deck crew', group:[['bloom-vessel', 2], ['bloom-stalker', 1]], where:'random' } },
       { t:'The log', beats:[
         'A cracked panel still lit. Read the last log aloud. Let the players argue about what it means.',
@@ -321,7 +342,7 @@ export const SESSIONS = [
     ending:'Walking out, they find the wolves gone and a carriage on the road, black, empty, door open. A card on the seat in a fine hand: "Well done. You may use my road to Vallaki." Riding in it is the safest thing they could do. That is the problem.',
     levelUp:'Level 4 (if not already).' },
 
-  { n:6, title:'Old Bonegrinder', level:'4 → 5', dread:4, length:'3 hours',
+  { n:6, title:'Old Bonegrinder', level:'4 → 5', gaze:4, length:'3 hours',
     hook:'A windmill on the road to Vallaki sells pastries that make the village forget its sorrows.',
     premise:'The crooked windmill and the old woman who bakes there. In the Flood Edition the hags have been buying Bloom spores from the wreck and baking them into their dream-pastries: a village of happy, Seeded sleepers.',
     book:'Run the Old Bonegrinder chapter for the mill, the hags and their trade.',
@@ -339,7 +360,7 @@ export const SESSIONS = [
     ending:'Vallaki\'s walls are in sight. Its gate is closing early, and the guards are checking everyone\'s throats for coughs.',
     levelUp:'Level 5 on arrival in Vallaki.' },
 
-  { n:7, title:'Vallaki — All Will Be Well', level:'5', dread:3, length:'3–4 hours',
+  { n:7, title:'Vallaki — All Will Be Well', level:'5', gaze:3, length:'3–4 hours',
     hook:'A walled town where happiness is the law and the festival is mandatory.',
     premise:'Vallaki: the Baron, his festivals, the Wachter house, the inn, and the church of Saint Andral. The party arrives as heroes of the Iron Coffin — or as suspects, if anyone saw the carriage.',
     book:'Run the Vallaki chapter: the Baron and his festivals, the Blue Water Inn, Lady Wachter, the church of Saint Andral and its stolen bones. Introduce whichever Vallaki threads you like.',
@@ -351,7 +372,7 @@ export const SESSIONS = [
         'The festival: let it be loud and wrong. Tick Riot if the party makes a scene.' ] },
       { t:'The church of Saint Andral', beats:[
         'Father Lucian. The bones are missing (your book). The font is skinned over with grey-green.',
-        'Raise the Dread to 4 inside the church. Something knocks, slowly, from under the floor.' ] },
+        'Raise the Gaze to 4 inside the church. Something knocks, slowly, from under the floor.' ] },
       { t:'The town\'s secrets', beats:[
         'Lady Wachter will trade a secret about the Baron for one about the Bloom.',
         'The hags\' ledger names the Baron\'s steward. Who they tell decides how fast Riot ticks.' ] },
@@ -360,7 +381,7 @@ export const SESSIONS = [
     ending:'That night, the church bell of Saint Andral\'s rings once, from below the floor.',
     levelUp:'Level 5.' },
 
-  { n:8, title:'The Bones of Saint Andral', level:'5', dread:4, length:'3–4 hours',
+  { n:8, title:'The Bones of Saint Andral', level:'5', gaze:4, length:'3–4 hours',
     hook:'The bones were sold. The church is open to the dark. Find them before the font does.',
     premise:'The hunt for the stolen bones: the gravedigger who took them, the coffin maker who bought them, and the night attack on the church. In the Flood Edition, the night attack comes from both directions at once — the Count\'s spawn from the street, the Seep from the font.',
     book:'Run the Saint Andral\'s bones thread from the Vallaki chapter: the gravedigger, the coffin maker\'s shop and what waits in it, the attack on the church.',
@@ -372,8 +393,8 @@ export const SESSIONS = [
         'Seep-Husks of missing townsfolk. Their families are at the festival.',
         'The bones are here, in a sack, sweating silver.' ] },
       { t:'The church at night', delve:{ template:'standral', floors:5, note:'Builds Saint Andral\'s and the whole Dread Zone below. The fight is on floor 1 (the chapel).' }, beats:[
-        'Spawn from the doors, Seep from the font. Three sides in one fight. Raise the Dread to 6 — the Shift is now automatic.',
-        'Returning the bones to the reliquary mid-fight: Dread −2, and every Seep creature on floor 1 is stunned for a round.' ],
+        'Spawn from the doors, Seep from the font. Three sides in one fight. Raise the Gaze to 6 — the Shift is now automatic.',
+        'Returning the bones to the reliquary mid-fight: Gaze −2, and every Seep creature on floor 1 is stunned for a round.' ],
         enc:{ label:'From the font', group:[['husk', 2], ['seepling', 4], ['bloat', 1]], where:'random' } },
     ],
     npcs:['lucian', 'count', 'ireena'], loot:['The bones (return them!)', 'The coffin maker\'s ledger — he sold one finger-bone to someone else'],
@@ -381,9 +402,9 @@ export const SESSIONS = [
     ending:'The bones are back. The church is holy again — mostly. Father Lucian shows them the crack in the font, which goes down, and down, and has steps cut into it.',
     levelUp:'Stay at 5.' },
 
-  { n:9, title:'Beneath Saint Andral\'s — The Dread Zone', level:'5', dread:5, length:'3–4 hours',
+  { n:9, title:'Beneath Saint Andral\'s — The Dread Zone', level:'5', gaze:5, length:'3–4 hours',
     hook:'The font goes down. So do they.',
-    premise:'The Dread Zone: the undercroft, then the old silver workings the Khundrim dug and abandoned. This is Dread Delve\'s own dungeon — the halls shift, the Dread climbs, and Saint Andral\'s hands are in the walls.',
+    premise:'The Dread Zone: the undercroft, then the old silver workings the Khundrim dug and abandoned. This is Dread Delve\'s own dungeon — the halls shift, his Gaze climbs, and Saint Andral\'s hands are in the walls.',
     book:'Nothing in your book. Use the Saint Andral\'s delve (built last session) — floors 2 and 3.',
     flood:'Below the church the Bloom has become the Seep: it is in the water now, and it is learning to think. The Silver-Lung Miners are the Khundrim dead the Yield still clings to. Saint Andral himself is down here somewhere, half-saint, half-lich, praying over the font he can no longer keep clean.',
     open:'The steps cut into the crack are old — older than the church. Silver glitters in the walls. Far below, water is running uphill.',
@@ -397,14 +418,14 @@ export const SESSIONS = [
         'A Khundrim hero can talk the miners down (Persuasion DC 15).' ],
         enc:{ label:'Miners', group:[['silverlung', 3], ['bloat', 1]], where:'random' } },
       { t:'The hands begin', beats:[
-        'At the bottom of the vein, the walls are covered in handprints. Start the Grasp Die at d4. Roll it at the end of every combat round from here on.' ] },
+        'At the bottom of the vein, the walls are covered in handprints. From here on Hand-Swarms claw up out of the floor (Grasping Floor traps and Populate do it for you).' ] },
     ],
     npcs:[], loot:['Silver ore (silvered weapons for the party, given a smith in Vallaki)', 'A Khundrim miner\'s tag: Advantage on checks with the Khundrim dead'],
     tick:{ bloom:1 },
     ending:'A door of fused hands. Behind it, singing — in the voices of everyone the Seep has taken in Vallaki.',
     levelUp:'Level 6 at the end of this session or the next.' },
 
-  { n:10, title:'The Hand-Warrens and the Undertow', level:'5 → 6', dread:6, length:'4 hours',
+  { n:10, title:'The Hand-Warrens and the Undertow', level:'5 → 6', gaze:6, length:'4 hours',
     hook:'Something at the bottom of the valley is waking up. It wants to meet them.',
     premise:'The Hand-Warrens, Saint Andral, and the first sight of the Undertow. This is the end of the first arc, not of the campaign: the party cannot kill the Undertow at level 6, and should not try. The goal is to see it, survive it, and seal the font from below with what Saint Andral can give them.',
     book:'Nothing in your book. Saint Andral\'s statblock is in the Bestiary (scale him down hard, or play him as an ally who is losing).',
@@ -412,23 +433,23 @@ export const SESSIONS = [
     open:'The tunnels are made of hands. Not carved: grown. Thousands of grey palms pressed into the clay, fingers curled toward the light of your torches, and every so often one of them closes.',
     scenes:[
       { t:'The Hand-Warrens', beats:[
-        'Floor 4. The Grasp Die auto-rolls each round. Every Hand-Swarm that dies grows it.',
+        'Floor 4. Hand-Swarms split when they die. The Count is watching this fight with interest: turn the Whim Die to Auto.',
         'The Monstrosity of Hands is optional — at level 5 it is a run-away fight.' ],
         enc:{ label:'The hands', group:[['handswarm', 3]], where:'party' } },
       { t:'Saint Andral', enc:{ label:'The saint (half-taken)', group:[['andral', 1]], where:'random' }, beats:[
         'Talk first. He is lucid between sentences. Ask the party what they will do.',
         'If they fight him, he becomes Half-Taken at half HP (automatic). Do not let this be a fair fight — let them flee.' ] },
       { t:'The Undertow', beats:[
-        'Floor 5. Do not roll initiative unless they insist. It is cathedral-sized and it speaks: in the voice of the Seat at the Table\'s smell-of-home, in the voices of Vallaki\'s missing.',
+        'Floor 5. Do not roll initiative unless they insist. It is cathedral-sized and it speaks: in the voice of a hero\'s smell-of-home, in the voices of Vallaki\'s missing.',
         'It asks them to "carry it up." It offers a cure for one Seeded person they care about. The price is a cyst in their own chest.',
-        'Raise the Dread to 9, then 10 as they run. The Shift is constant. Let them get out — barely.' ],
+        'Raise the Gaze to 9, then 10 as they run. The Shift is constant. Let them get out — barely.' ],
         enc:{ label:'What it sends after them', group:[['stalker', 2], ['seepling', 4]], where:'party' } },
       { t:'Dinner', beats:[
         'Back in Vallaki, a black carriage is waiting. An invitation, in a fine hand: dinner at the castle, to discuss "our mutual guest."',
         'Roll a dinner beat. This is the start of Arc II: the Count and the party, uneasy allies against the Undertow — or not.' ] },
     ],
-    npcs:['count', 'lucian', 'ireena', 'brother'], loot:['A finger-bone of Saint Andral (if he gave it): once per dawn, end the Seeded condition on a touch', 'The Undertow\'s bargain — if anyone took it'],
-    tick:{ bloom:2, patience:2, heart:1 },
+    npcs:['count', 'lucian', 'ireena'], loot:['A finger-bone of Saint Andral (if he gave it): once per dawn, end the Seeded condition on a touch', 'The Undertow\'s bargain — if anyone took it'],
+    tick:{ bloom:2, patience:2, salt:1 },
     ending:'The carriage door opens by itself. Inside, a single place card, with a player\'s name already written on it, and under it: "Bring the girl."',
     levelUp:'Level 6.' },
 ];

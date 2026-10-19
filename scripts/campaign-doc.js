@@ -8,10 +8,11 @@ const strip = s => String(s).replace(/<\/?b>/g, '**').replace(/<[^>]+>/g, '');
 const name = id => BEST[id]?.name || id, cr = id => BEST[id]?.cr ?? '?';
 const out = [`# ${CAMPAIGN.name}`, '', `*${CAMPAIGN.tagline}*`, '', `${CAMPAIGN.levels}. Built for Dread Delve: every dungeon below is one tap in the Story tab, and every encounter drops onto the map.`, '',
   '> This guide reprints nothing from the module. Run each location from your own book; use this for what the Flood Edition changes.', '',
-  '## Pillars', ...CAMPAIGN.pillars.map(p => `- ${p}`), '', '## The Seeded rule', strip(CAMPAIGN.seeded), '',
+  '## Pillars', ...CAMPAIGN.pillars.map(p => `- ${p}`), '', '## The Seeded rule', strip(CAMPAIGN.seeded), '', '## Salt', strip(CAMPAIGN.salt), '',
+  '## Strahd\'s Gaze and the Whim Die', 'The top bar\'s **Gaze** (1–10) is how closely the Count is watching: thicker mist, redder light, his creatures fight harder, the dead rise, and from 8 his voice charms a hero each round. The **Whim Die** (d4 → d12) is how he toys with the heroes; it grows when his creatures fall and when they catch his eye.', '',
   '## Clocks', ...CLOCKS.map(c => `- **${c.label}** (${c.max}, starts at ${c.start}) — ${c.full}`), ''];
 for (const s of SESSIONS){
-  out.push(`## Session ${s.n} · ${s.title}`, '', `*Level ${s.level} · start at Dread ${s.dread} · ${s.length}*`, '',
+  out.push(`## Session ${s.n} · ${s.title}`, '', `*Level ${s.level} · start at Gaze ${s.gaze} · ${s.length}*`, '',
     `**Hook.** ${s.hook}`, '', s.premise, '', `**From your book.** ${s.book}`, '', `**Flood Edition.** ${s.flood}`, '', `> ${s.open}`, '');
   for (const sc of s.scenes){
     out.push(`### ${sc.t}`, ...sc.beats.map(b => `- ${b}`));

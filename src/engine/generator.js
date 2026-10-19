@@ -43,6 +43,7 @@ export function genDelve(meta){
 }
 
 export function genFloor(L, W, H, rng, anchor, isLast, spec = {}){
+  if (spec.layout) return layoutFloor(L, W, H, spec, anchor, isLast);
   const theme = spec.theme !== undefined ? themeIndex(spec.theme) : L % 4, th = THEMES[theme];
   const rooms = [];
   const [smin, smax] = spec.roomSize || [4, 9];
@@ -84,6 +85,44 @@ export function genFloor(L, W, H, rng, anchor, isLast, spec = {}){
   if (!spec.blank){ placeDoors(f, rng, spec); placeTraps(f, rng, spec); }
   return f;
 }
+
+/* A hand-built floor from a template's layout (the Session 0 tavern, village and road):
+   rooms [x, y, w, h, type, name, notes, { outdoor }] · paths { w, pts:[x0, y0, x1, y1, …] } (straight runs,
+   w squares wide) · doors [x, y, state] · buildings { x, y, w, h, name, door } · props [kind, x, y, rot]
+   · up / down [x, y] · exits { up, down } (what the stairs are called here). */
+export function layoutFloor(L, W, H, spec, anchor, isLast = true){
+  const lay = spec.layout, theme = themeIndex(spec.theme), th = THEMES[theme];
+  const f = { level:L, W, H, theme, name:lay.name || th.name, rooms:[], nextId:0, edges:[], corridors:[], autoLink:false,
+              up:null, down:null, grid:null, dug:[], filled:[], doors:[], traps:[], base:null, nextObj:1, props:[], buildings:[], exits:lay.exits || null };
+  for (const [x, y, w, h, type = 'chamber', name, notes = '', o = {}] of lay.rooms)
+    f.rooms.push(recalcRoom({ id:f.nextId++, x, y, w, h, type, name:name || pick(ROOM_NAMES[type] || ROOM_NAMES.chamber), notes, free:true, ...(o.outdoor ? { outdoor:true } : {}) }));
+  for (const path of lay.paths || []){
+    const w = path.w || 1, off = Math.floor((w - 1) / 2), tiles = new Set(), pts = path.pts;
+    const brush = (x, y) => { for (let dy = 0; dy < w; dy++) for (let dx = 0; dx < w; dx++){ const nx = x - off + dx, ny = y - off + dy; if (nx > 0 && ny > 0 && nx < W - 1 && ny < H - 1) tiles.add(ny * W + nx); } };
+    for (let k = 0; k + 3 < pts.length; k += 2){
+      let x = pts[k], y = pts[k + 1]; const x1 = pts[k + 2], y1 = pts[k + 3]; brush(x, y);
+      while (x !== x1 || y !== y1){ if (x !== x1) x += Math.sign(x1 - x); else y += Math.sign(y1 - y); brush(x, y); }
+    }
+    f.corridors.push({ id:f.nextObj++, tiles:[...tiles] });
+  }
+  const xy = a => a ? { x:a[0], y:a[1] } : null;
+  f.up = anchor ? { ...anchor } : xy(lay.up); f.down = xy(lay.down);
+  if (!f.down && !isLast){
+    // more floors were asked for than the layout has: the way on is in the room farthest from the way in
+    const from = f.up || { x:f.rooms[0].cx, y:f.rooms[0].cy };
+    const far = f.rooms.reduce((a, r) => Math.abs(r.cx - from.x) + Math.abs(r.cy - from.y) > Math.abs(a.cx - from.x) + Math.abs(a.cy - from.y) ? r : a, f.rooms[0]);
+    f.down = { x:far.cx, y:far.cy };
+  }
+  carve(f);
+  for (const [x, y, state = 'closed'] of lay.doors || []){ const i = y * W + x; if (walk(f.grid[i])) f.doors.push({ id:f.nextObj++, i, state, dc:state === 'locked' ? 15 : 14 }); }
+  for (const [x, y, kind = 'pit'] of lay.traps || []){ const i = y * W + x; if (walk(f.grid[i])) addTrap(f, i, kind); }
+  f.buildings = (lay.buildings || []).map(b => ({ ...b }));
+  f.props = (lay.props || []).map(([k, x, y, rot = 0]) => ({ id:f.nextObj++, k, x, y, rot }));
+  return f;
+}
+
+// What the stairs are called on this floor ("▼ Out to the village square" on the Session 0 floors).
+export const exitLabel = (f, dir) => (dir === 'down' ? '▼ ' : '▲ ') + (f?.exits?.[dir] || (dir === 'down' ? 'Descend' : 'Ascend'));
 
 export function recalcRoom(r){ r.cx = r.x + Math.floor(r.w / 2); r.cy = r.y + Math.floor(r.h / 2); return r; }
 export const roomById = (f, id) => f.rooms.find(r => r.id === id);

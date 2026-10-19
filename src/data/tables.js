@@ -1,14 +1,14 @@
-/* ROLL TABLES — the d100 Shift table and the Grasp Die table.
+/* ROLL TABLES — the d100 Shift table and the Whim Die table.
    One row per line:   range | name | what the DM reads out | effects (comma separated)
    range: "07", "01-10", or "00" (00 = 100 on a d100).  Lines starting with # are ignored.
-   Both are editable in the app (Dread tab) and saved with the delve.
+   Both are editable in the app (Gaze tab) and saved with the delve.
 
    Effects that work anywhere (same fx language as the bestiary):
      spawn:<id>:<n or dice>[@near|party|nest|corpse|random]
      party:<save>:<dc>:<dice or 0>:<damage type>:<condition, pit or ->:<all|random>
          — the party on this floor saves; on a fail they take the damage and the condition
            ('pit' = dragged down to the floor below)
-     dread+1  dread-1  grasp+1  grasp-1  grasp:roll  grasp:reset  whisper  alert  heal:seep:<dice>
+     dread+1  dread-1 (the Gaze)   whim+1  whim-1  whim:roll  whim:reset   whisper  alert  heal:seep:<dice>
    Shift-only effects (they act on the floor that shifted):
      rewire   corridors re-link              swap      two empty rooms trade places
      forget   players' map of the halls fades scatter   everyone on the floor is moved to a random room
@@ -27,30 +27,30 @@ export const DEFAULT_SHIFT_TABLE = `# d100 — what the Dread Zone does when the
 49-54 | Budding Wall | An empty room swells, splits, and becomes wet. Something is gestating in it. | nest
 55-60 | The Long Stair Wanders | The stairs down are no longer where you left them. | rewire, stairs
 61-66 | Hidden Teeth | New traps have grown in the corridors. | rewire, trap:2
-67-72 | The Hands Reach | Andral's hands push up through the new seams. | rewire, grasp+1, spawn:handswarm:1@party
-73-78 | Pressure Wave | The air thickens. Ears pop. The Dread deepens. | rewire, dread+1
+67-72 | The Mist Comes In | Fog pours through the new seams and something in it is pleased with you. | rewire, whim+1, whisper
+73-78 | Pressure Wave | The air thickens. Ears pop. Somewhere above, he turns to look. | rewire, dread+1
 79-84 | The Halls Fold | The floor folds like paper. When it opens again, you are not where you were — and not together. | rewire, scatter
 85-90 | Tide Surge | Black water pours from the seams, and the Seep rides it in. | spawn:seepling:1d4+1@nest, spawn:husk:1@corpse, heal:seep:2d10
 91-95 | Secret Ways | The labyrinth hides a door from you — and shows you another that was never there. | rewire, doors:secret
 96-99 | The Choir Speaks | Every Taken voice on this floor says your names, in order. | dread+1, party:wis:14:0:psychic:frightened:all
 00 | Reality Tears | The Dread Zone stops pretending to be a place. | rewire, swap, scatter, dread+1, spawn:husk:2@party`;
 
-/* GRASP DIE — Andral's hands escalate.
-   The die starts at d4. It steps UP (d4 → d6 → d8 → d10 → d12) when a Hand dies to anything but radiant,
-   when Andral or the Monstrosity clench, or when the DM says the party has lingered. It steps DOWN when the
-   Monstrosity dies or the party rests in a Sanctuary. Roll it at the end of each combat round while hands
-   are on the floor (or on the Hand-Warrens), or whenever the DM likes. Bigger die = worse rows in reach. */
-export const GRASP_STEPS = [4, 6, 8, 10, 12];
-export const DEFAULT_GRASP_TABLE = `# Grasp Die — read the result
-01 | Stillness | The hands withdraw into the stone. For a moment, nothing grips. |
-02 | Fingertips | A cold touch on the back of someone's neck. | party:dex:12:0:bludgeoning:prone:random
-03 | Scratching Below | Fingernails drag under the flagstones, following the party. No short rest on this floor until the Grasp Die steps down. | whisper
-04 | A Hand Rises | A single grey hand pulls itself out of the floor — then the rest of the swarm. | spawn:handswarm:1@party
-05 | Ankle-Grip | Something grips an ankle and does not let go. | party:str:13:1d6:bludgeoning:restrained:random
-06 | The Floor Grabs | Every flagstone sprouts fingers. | party:str:13:1d6:bludgeoning:restrained:all
-07 | Many Hands | The walls are crawling. | spawn:handswarm:2@party
-08 | Dragged | One of you is hauled toward the wall by a hundred hands. | party:str:14:2d6:bludgeoning:grappled:random, spawn:handswarm:1@party
-09 | Grave-Choke | Hands close around a throat from behind. There is no one behind. | party:con:14:3d8:bludgeoning:-:random
-10 | The Wall of Hands | The walls are hands. All of them. | spawn:handswarm:3@party, party:str:15:2d6:bludgeoning:restrained:all
-11 | Pull Under | The floor opens like a mouth and one of you goes down into it. | party:str:15:2d6:bludgeoning:pit:random
-12 | The Monstrosity Wakes | Every hand in the labyrinth comes together into one shape. | spawn:handmass:1@party, grasp:reset`;
+/* WHIM DIE — how the Count amuses himself with the heroes (d4 → d12).
+   It steps UP when the heroes catch his interest: one of his creatures falls (once a round), they refuse a gift,
+   insult him, or do something brave in his sight (press + in the Gaze tab). It steps DOWN when they bow, accept
+   his hospitality, or rest somewhere holy. Roll it whenever the night is too quiet, or each round if Auto is on.
+   Bigger die = crueller games in reach. */
+export const WHIM_STEPS = [4, 6, 8, 10, 12];
+export const DEFAULT_WHIM_TABLE = `# Whim Die — read the result
+01 | Indifference | He looks away. For now, you are not interesting. |
+02 | A Raven | A raven lands within reach and watches one hero far too long. That hero has disadvantage on their next Stealth check. | whisper
+03 | A Gift | Something left where you will find it: a bottle of very good wine, a silk ribbon, a pressed rose, a card in a fine hand that says only "Welcome." | note
+04 | The Mists Close | The way you came is gone, and the way ahead is new. | shift
+05 | Wolves on the Wind | They come out of the mist in a loose ring and sit down. Not yet. Not yet. | spawn:barovian-wolf:2@party
+06 | An Invitation | A letter sealed in red wax, addressed to one hero by name: dinner, at the castle, at their convenience. | whisper
+07 | Remember Me | His voice, warm as wine, in one hero's head. | party:wis:13:0:psychic:charmed:random
+08 | Bats | The air is suddenly full of wings. | spawn:swarm-of-bats:2@party
+09 | A Borrowed Friend | Someone the heroes trust turns toward them with his eyes. | party:wis:14:0:psychic:charmed:random, whisper
+10 | His Hounds | The wolves stop pretending. | spawn:barovian-wolf:2@party, spawn:count-s-wolf:1@party
+11 | He Is Here | For one heartbeat he stands among you, smiling; then he is not. | party:wis:15:0:psychic:frightened:all, dread+1
+12 | The Game Ends | His patience is gone, and the night itself comes for you. | dread+1, spawn:night-spawn:1@party, spawn:barovian-wolf:2@party, whim:reset`;

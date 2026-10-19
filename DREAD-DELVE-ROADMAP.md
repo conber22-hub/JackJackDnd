@@ -1,6 +1,6 @@
 # Dread Delve — Roadmap
 
-A 3D, multi-floor dungeon simulator for the Dread Zone beneath Saint Andral's. Built in honor of Chance.
+A 3D virtual tabletop for **Curse of Strahd: Flood Edition**: multi-floor maps with furniture, minis, fog of war, the Count's Gaze, players' own characters, and sessions 0–10 ready to run.
 
 When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then help me with…"* and it will know how the app is put together.
 
@@ -8,13 +8,25 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ## How to run it
 
-- **Play online:** https://conber22-hub.github.io/JackJackDnd/. `.github/workflows/pages.yml` builds and publishes it on every push to the default branch (one-time setup: repo Settings → Pages → Source: **GitHub Actions**). Saves live in each browser, per address: a delve saved from the offline file doesn't show up online, so use Export / Import to move it.
+- **Play online:** the site is hosted on **Vercel**, which rebuilds and republishes it on every push to the default branch (`claude/dread-delve-v0.2`). Saves live in each browser, per address: a delve saved from the offline file doesn't show up online, so use Export / Import to move it.
 - **Just play offline:** double-click `dread-delve.html` (Chrome or Edge). Everything, including Three.js and PeerJS, is baked into that one file, so the 3D works offline. Multiplayer still needs internet, because players find each other through the free PeerJS server.
 - **Edit it:** `npm install` once, then `npm run dev`, then open http://localhost:5173. Changes show up live.
 - **Bake a new single file:** `npm run build` writes `dread-delve.html` (copied from `dist/index.html`). Commit it so players always get the latest version.
 - **Tests:** `npm test` runs the engine tests (generator, stairs alignment, doors, tables, import).
 
 ---
+
+## v0.4 — a new campaign: Session 0, Strahd's Gaze, props
+
+- **The threshold.** The start page is now the Dark Powers' invitation: a slow crimson spiral, drifting fog, a pair of eyes that open now and then, and lines in their voice. Two arched doors: *Take the Count's seat* (DM: continue, **Begin Session Zero**, or pick any dungeon from Foundry-style world cards) and *Accept the invitation* (players: sign in, hero cards, join with the code). It remembers which door you used last.
+- **Strahd's Gaze replaces the Dread** (top bar, 1–10; still `state.dread` in code and saves). How closely the Count is watching: thicker mist and redder light as it rises, and in combat his creatures (the Barovia family) regenerate and hit harder, the fallen get up as his zombies, the land rearranges itself, and from 8 his voice charms one hero each round (Wisdom save). Rename or rewrite levels in the **Gaze tab**.
+- **The Whim Die replaces Andral's Grasp Die** (🦇, d4 → d12; kept in `state.grasp`). How he toys with the heroes: a raven, a gift, the mists closing, wolves, an invitation, a charm, bats, a borrowed friend, his hounds, him, and finally the end of the game. It grows once a round when one of his creatures falls, and when the DM presses +. `W` rolls it. Old saves drop the hands' table automatically.
+- **Props** (Build tab → 🪑 Props): 48 pieces — tavern furniture, a bar, hearths, barrels, a well, market stalls, carts, a carriage and an overturned one, fallen horses, split salt sacks, pines, dead trees, altars, coffins and more. Tap to place, tap again to turn, Erase removes. Scenery only: they don't block movement or sight. Saved with the delve and in floor JSON.
+- **Outdoor floors.** Themes can set `walls:'trees'` (the edges are forest, several rows deep) or `walls:'mixed'` (walls next to indoor rooms are buildings, the rest is forest). Floors can carry solid **houses** with gabled roofs, chimneys and lit windows. Overland exits get a soft beacon instead of a stairwell, and named buttons ("▼ Take the Old Salt Road").
+- **Hand-built maps in templates.** A template floor can carry a `layout` (rooms, paths, doors, houses, props, exits) instead of being generated — see `layoutFloor` in `src/engine/generator.js` and `src/data/session0.js`.
+- **Session 0 — Salt for the Lantern & Ladle.** The salt carriage never arrived. Three furnished maps: the Lantern & Ladle tavern (common room, kitchen, larder with empty salt crocks, the Snug, stable yard, stables), the village of Hollin's Ford (market square, chapel, provisioner, smithy, cottages), and the Old Salt Road (wayshrine clearing, the overturned carriage in a ring of spilled salt, the Mist Wall). New faces (Marta Holloway, the stranger in the Snug), a wolves encounter, and a **salt** rule: the Bloom is wet and salt dries it. A new clock, *The salt runs out*.
+- The tribute from the earlier campaign was removed for this new one (it's in git history). The GitHub Pages workflow was removed now that the site is on Vercel.
+- Fixed: the moon and sky light never dimmed with the Gaze (a comment had swallowed the code), and lighting now eases at the same speed at any frame rate.
 
 ## What v0.2 does
 
@@ -155,11 +167,13 @@ src/main.js             boot + the render loop (fog, flicker, mist, whispers)
 src/debug.js            window.DreadDelve console handle (also used by the smoke tests)
 src/util/core.js        dice, seeded random, tiny event bus
 src/data/               ← the content. Edit freely.
-  dread.js              Dread levels 1–10 (look + rules + read-aloud), whispers, conditions
+  dread.js              Strahd's Gaze 1–10 (look + rules + read-aloud), whispers, conditions
+  props.js              PROPS (furniture & scenery for the Build tab), footprints
+  session0.js           Session 0's hand-built maps: tavern, village, the Old Salt Road
   bestiary.js           FAMILIES, BESTIARY, default party
   themes.js             floor themes (+ denizens, Grok prompts) and TEMPLATES
   rooms.js              room types & names, TRAP_KINDS, DOOR_STATES
-  tables.js             the d100 Shift table and the Grasp table (+ the effect list)
+  tables.js             the d100 Shift table and the Whim Die table (+ the effect list)
 src/engine/             pure logic: no DOM, no Three.js, unit-tested
   state.js              state + ui, token factories, newState
   generator.js          floors, rooms, corridors, carve(), doors, traps, stairs, populate
@@ -167,16 +181,17 @@ src/engine/             pure logic: no DOM, no Three.js, unit-tested
   importer.js           Battle Table / grid JSON / ASCII import, ASCII & JSON export
   tables.js             roll-table parser
 src/game/               rules that touch the scene and UI
-  combat.js             initiative, attacks, damage, death hooks, the fx language, round-end Dread effects
+  combat.js             initiative, attacks, damage, death hooks, the fx language, round-end Gaze effects
   shift.js              the Shift (rolls the d100 table)
-  grasp.js              the Grasp Die
+  whim.js               the Whim Die
   actions.js            select, move (doors / traps), stairs, falling, doors, search, disarm, floors, dread
   build.js              Build tools, templates, populate, add/remove floors, import
   rules.js              movement allowance, conditions
   session.js            save / load / export, v1 save migration, undo, changed()
 src/render/             Three.js
   scene.js              renderer, camera, lights, tweens, labels
-  floors.js             stone, walls, stairs, doors, traps, mist, the Shift animation
+  floors.js             stone, walls (or forest), stairs / exits, doors, traps, houses, props, mist, the Shift animation
+  props.js              the 3D props, houses with roofs, the instanced pine
   minis.js              procedural 3D minis (SHAPES) + syncing tokens
   effects.js            selection ring, reach glow, pings, bursts, Build overlays
 src/net/table.js        multiplayer (host, join, messages)
@@ -203,7 +218,7 @@ Copy any entry in `src/data/bestiary.js`, or use **✎ Edit → Save as new crea
   - `spawn:husk:2@corpse` (the `@` part is optional: `near`, `party`, `nest`, `corpse` or `random`)
   - `aoe:2:con:12:2d6:poison:poisoned` (radius in squares, save, DC, damage, type, condition); `aoeall` hits allies too
   - `party:str:13:1d6:bludgeoning:restrained:random` (the party on this floor saves; the condition can be `pit`)
-  - `condall:seep:stunned:1` · `heal:2d10` · `heal:seep:2d10` · `shift` · `dread+1` · `grasp:roll` · `grasp+1` · `morph:quill` · `alert` · `whisper`
+  - `condall:seep:stunned:1` · `heal:2d10` · `heal:seep:2d10` · `shift` · `dread+1` (Gaze) · `whim:roll` · `whim+1` · `morph:quill` · `alert` · `whisper`
 - `hooks.onDeath`, `hooks.onTurnStart` and `hooks.onBloodied` use the same fx language, plus `divide` and `unfinished`.
 
 ## Prompts that work well with Claude Code

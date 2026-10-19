@@ -15,6 +15,7 @@ import { toast, showCard } from '../ui/hud.js';
 import { renderPanel } from '../ui/panels.js';
 import { changed, snapshot, dropSnapshot, loadState } from './session.js';
 import { goFloor, nearestOpen } from './actions.js';
+import { PROPS, propAt } from '../data/props.js';
 
 const rebuild = (...Ls) => { for (const L of Ls) if (state.floors[L]) buildFloor(L); };
 const keepTokens = L => state.tokens.filter(t => t.floor === L && !t.dead && !t.flags.gone).map(t => ({ x:t.x, y:t.y }));
@@ -105,6 +106,8 @@ export function commitCorridor(L, tiles){
 export function eraseAt(tile){
   const f = state.floors[tile.floor], i = tile.y * f.W + tile.x;
   snapshot('erase');
+  const pr = propAt(f, tile.x, tile.y);
+  if (pr){ f.props = f.props.filter(p => p !== pr); toast(`${PROPS[pr.k]?.n || 'Prop'} removed.`); rebuild(tile.floor); changed(); return; }
   if (doorAt(f, i)){ f.doors = f.doors.filter(d => d.i !== i); toast('Door removed.'); }
   else if (trapAt(f, i)){ f.traps = f.traps.filter(t => t.i !== i); toast('Trap removed.'); }
   else {
@@ -115,6 +118,17 @@ export function eraseAt(tile){
     else { toast('Nothing to erase there.'); return; }
   }
   carve(f, keepTokens(tile.floor)); updateVision(); rebuild(tile.floor); changed(); renderPanel();
+}
+
+/* ---------- props: tap to place, tap again to turn ---------- */
+export function placePropAt(tile, k = ui.propKind){
+  const f = state.floors[tile.floor]; f.props ||= [];
+  if (!PROPS[k]) return;
+  snapshot('prop');
+  const p = propAt(f, tile.x, tile.y);
+  if (p) p.rot = ((p.rot || 0) + 1) % 4;
+  else f.props.push({ id:f.nextObj++, k, x:tile.x, y:tile.y, rot:0 });
+  rebuild(tile.floor); changed();
 }
 
 /* ---------- doors, traps, stairs ---------- */

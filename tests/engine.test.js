@@ -4,8 +4,9 @@ import { newState, setState, state, T, walk } from '../src/engine/state.js';
 import { reach, updateVision, passMove } from '../src/engine/grid.js';
 import { carve, addRoom, deleteRoom, rectProblem, moveStairs, appendFloor, roomById } from '../src/engine/generator.js';
 import { parseTable, tableGaps, tableRow } from '../src/engine/tables.js';
-import { DEFAULT_SHIFT_TABLE, DEFAULT_GRASP_TABLE } from '../src/data/tables.js';
-import { parseMapInput, buildImportedFloor, floorToAscii } from '../src/engine/importer.js';
+import { DEFAULT_SHIFT_TABLE, DEFAULT_WHIM_TABLE } from '../src/data/tables.js';
+import { PROPS, propSize, propAt } from '../src/data/props.js';
+import { parseMapInput, buildImportedFloor, floorToAscii, floorToJSON } from '../src/engine/importer.js';
 import { TEMPLATES } from '../src/data/themes.js';
 import { BEST } from '../src/data/bestiary.js';
 
@@ -96,8 +97,8 @@ test('appending a floor gives the old bottom floor stairs down', () => {
   assert.ok(connected(s.floors[2]));
 });
 
-test('default Shift table covers d100 and Grasp table covers d12', () => {
-  const sh = parseTable(DEFAULT_SHIFT_TABLE), gr = parseTable(DEFAULT_GRASP_TABLE);
+test('default Shift table covers d100 and Whim table covers d12', () => {
+  const sh = parseTable(DEFAULT_SHIFT_TABLE), gr = parseTable(DEFAULT_WHIM_TABLE);
   assert.deepEqual(sh.errors, []); assert.deepEqual(gr.errors, []);
   assert.deepEqual(tableGaps(sh.rows, 100), []); assert.deepEqual(tableGaps(gr.rows, 12), []);
   assert.equal(tableRow(sh.rows, 100).name, 'Reality Tears');
@@ -176,4 +177,34 @@ test('Battle Table saves import: pieces, shared walls, doors, secret doors, stai
   const { tokens:t1, floor:f1 } = buildImportedFloor(p.floors[1], 1, 40, 0, { up:f0.down });
   assert.equal(t1[0].bid, 'sporeling');
   assert.deepEqual(f1.up, f0.down);
+});
+
+test('Session 0 (the Salt Road): hand-built floors with doors, houses, props and named exits', () => {
+  const s = newState({ seed:'s0', floors:3, template:'saltroad', party:false }); setState(s);
+  const [tavern, village, road] = s.floors;
+  assert.deepEqual([tavern.name, village.name, road.name], ['The Lantern & Ladle', 'Hollin\'s Ford', 'The Old Salt Road']);
+  assert.deepEqual(tavern.down, village.up); assert.deepEqual(village.down, road.up);
+  assert.equal(tavern.doors.length, 5); assert.equal(village.doors.length, 4);
+  assert.ok(village.buildings.length >= 6 && road.buildings.length === 1);
+  for (const f of s.floors){
+    assert.ok(f.exits && f.props.length > 10, `${f.name} has props and exits`);
+    for (const p of f.props){
+      assert.ok(PROPS[p.k], `${f.name}: unknown prop ${p.k}`);
+      const sz = propSize(p); let onFloor = false;
+      for (let y = p.y; y < p.y + sz.h; y++) for (let x = p.x; x < p.x + sz.w; x++) if (walk(f.grid[y * f.W + x])) onFloor = true;
+      assert.ok(onFloor, `${f.name}: ${p.k} at ${p.x},${p.y} sits on solid rock`);
+    }
+    // houses stand on rock, never on a walkable square
+    for (const b of f.buildings) for (let y = b.y; y < b.y + b.h; y++) for (let x = b.x; x < b.x + b.w; x++) assert.ok(!walk(f.grid[y * f.W + x]), `${f.name}: ${b.name} covers floor at ${x},${y}`);
+  }
+  assert.equal(propAt(road, 6, 23)?.k, 'wreck');
+  assert.ok(road.rooms.some(r => r.type === 'lair' && /Carriage/.test(r.name)));
+});
+
+test('floor JSON keeps props and houses', () => {
+  const s = newState({ seed:'s0', floors:3, template:'saltroad', party:false }); setState(s);
+  const json = JSON.stringify(floorToJSON(s.floors[1]));
+  const parsed = parseMapInput(json), { floor } = buildImportedFloor(parsed.floors[0], 0, 40, 0);
+  assert.equal(floor.props.length, s.floors[1].props.length);
+  assert.equal(floor.buildings.length, s.floors[1].buildings.length);
 });

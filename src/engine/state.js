@@ -3,9 +3,10 @@
 import { uid, clamp, avgDice, parseAttacks, bus } from '../util/core.js';
 import { BEST, DEFAULT_PARTY, DEFAULT_PC_ATTACKS, rebuildBestiary } from '../data/bestiary.js';
 import { DREAD } from '../data/dread.js';
-import { DEFAULT_SHIFT_TABLE, DEFAULT_GRASP_TABLE } from '../data/tables.js';
+import { DEFAULT_SHIFT_TABLE, DEFAULT_WHIM_TABLE } from '../data/tables.js';
 import { parseTable } from './tables.js';
 import { genDelve } from './generator.js';
+import { TEMPLATES } from '../data/themes.js';
 import { CLOCKS, PLACES } from '../data/campaign.js';
 
 export { T, walk } from './tiles.js';
@@ -21,7 +22,7 @@ export const ui = {                 // local-only (never saved, never sent)
   selected:null, mode:'select', modeData:null,
   previewFog:false, roomLabels:true, freeMove:false, whispers:true,
   bestFilter:'all', bestSearch:'', openBest:null, openPc:null, editBest:null,
-  trapKind:'pit', doorState:'closed', paintType:'nest', selRoom:null, selDoor:null, selTrap:null, atkMode:'normal', stairsDir:'down',
+  trapKind:'pit', doorState:'closed', propKind:'table', propCat:'tavern', paintType:'nest', selRoom:null, selDoor:null, selTrap:null, atkMode:'normal', stairsDir:'down',
   myToken:null, myName:'',
 };
 export const viewAsPlayer = () => ui.role === 'player' || ui.tableView;
@@ -41,7 +42,7 @@ export function dreadLevel(n = state.dread){ const o = state?.content?.dread?.[n
 const tableCache = new Map();
 function cachedTable(text){ if (!tableCache.has(text)) tableCache.set(text, parseTable(text)); return tableCache.get(text); }
 export const shiftTable = () => cachedTable(state.content.shift ?? DEFAULT_SHIFT_TABLE);
-export const graspTable = () => cachedTable(state.content.grasp ?? DEFAULT_GRASP_TABLE);
+export const whimTable = () => cachedTable(state.content.grasp ?? DEFAULT_WHIM_TABLE);   // content.grasp: the Whim table (old field name)
 
 /* ---------- token factories ---------- */
 export function makePC(p){
@@ -67,10 +68,11 @@ export function newCampaign(){
 export function newState(opts){
   const s = {
     v:2,
-    meta:{ name:opts.name || 'Beneath Saint Andral\'s', seed:opts.seed, floors:opts.floors, size:opts.size || 40, template:opts.template || 'andral' },
+    // hand-built maps (Session 0) are drawn on a 40-square grid, so their delves are never smaller than that
+    meta:{ name:opts.name || 'Beneath Saint Andral\'s', seed:opts.seed, floors:opts.floors, size:Math.max(opts.size || 40, TEMPLATES.find(t => t.id === opts.template)?.floors.some(f => f.layout) ? 40 : 0), template:opts.template || 'andral' },
     dread:1, floors:[], tokens:[], explored:{}, art:{}, log:[],
     combat:{ active:false, order:[], idx:0, round:1, floor:0 },
-    seats:{}, grasp:{ die:4, auto:true, last:null },
+    seats:{}, grasp:{ die:4, auto:false, last:null },   // grasp = the Whim Die (old field name)
     content:{ dread:{}, shift:null, grasp:null, bestiary:{} },
     campaign:newCampaign(), characters:{},
   };

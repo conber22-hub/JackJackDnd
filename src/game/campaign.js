@@ -61,7 +61,7 @@ export function tickClock(id, d){
   const C = camp(), before = C.clocks[id] || 0;
   C.clocks[id] = clamp(before + d, 0, c.max);
   if (C.clocks[id] === c.max && before < c.max){ showCard({ kind:'crit', title:`${c.label} — full`, flair:c.full }, false); log(`⏱ ${c.label} is full.`); }
-  // the Bloom tide drives the Dread: each quarter filled raises it
+  // the Bloom tide offends him: each quarter filled raises his Gaze
   if (id === 'bloom' && d > 0 && Math.floor(C.clocks[id] / 2) > Math.floor(before / 2)) setDread(state.dread + 1);
   changed();
 }
@@ -77,7 +77,7 @@ export function rollNight(kind){
   changed(); renderPanel();
 }
 export function shareNight(){ const C = camp(); if (!C.lastNight) return; if (/^Omen/.test(C.lastNight)) sendWhisper(C.lastNight.replace(/^Omen:\s*/, '')); else showCard({ kind:'', title:'The valley', flair:C.lastNight.replace(/^\w+:\s*/, '') }); }
-export function setSessionDread(n){ const s = sessionById(n); if (s) setDread(s.dread); }
+export function setSessionGaze(n){ const s = sessionById(n); if (s) setDread(s.gaze); }
 export function markBeat(n, key, on){ const C = camp(); (C.done[n] ||= {})[key] = on; changed(); }
 
 /* ---------- a printable session guide ---------- */
@@ -86,7 +86,7 @@ export function sessionHTML(s){
   const enc = e => e ? `<p class="enc">⚔ <b>${esc(e.label)}:</b> ${e.group.map(([b, n]) => `${n} × ${esc(BEST[b]?.name || b)} (CR ${esc(BEST[b]?.cr || '?')})`).join(', ')}</p>` : '';
   const del = d => d ? `<p class="enc">▦ <b>Dungeon:</b> ${esc((TEMPLATES.find(t => t.id === d.template) || {}).name || d.template)} — ${esc(d.note || '')}</p>` : '';
   return `<section><h2>Session ${s.n} · ${esc(s.title)}</h2>
-    <p class="meta">Level ${esc(s.level)} · start at Dread ${s.dread} · ${esc(s.length)}</p>
+    <p class="meta">Level ${esc(s.level)} · start at Gaze ${s.gaze} · ${esc(s.length)}</p>
     <p><b>Hook.</b> ${esc(s.hook)}</p><p>${esc(s.premise)}</p>
     <p><b>From your book.</b> ${esc(s.book)}</p><p><b>Flood Edition.</b> ${esc(s.flood)}</p>
     <blockquote>${esc(s.open)}</blockquote>

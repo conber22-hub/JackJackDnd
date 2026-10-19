@@ -25,7 +25,7 @@ export function deserialize(s){
   st.floors = s.floors.map((f, L) => {
     const nf = { ...JSON.parse(JSON.stringify(f)), grid:[...String(f.grid)].map(Number), base:f.base ? [...String(f.base)].map(Number) : null };
     // v1 saves: rooms were identified by index, no doors/traps/corridors
-    nf.dug ||= []; nf.filled ||= []; nf.doors ||= []; nf.traps ||= []; nf.corridors ||= [];
+    nf.dug ||= []; nf.filled ||= []; nf.doors ||= []; nf.traps ||= []; nf.corridors ||= []; nf.props ||= []; nf.buildings ||= [];
     if (nf.autoLink === undefined) nf.autoLink = true;
     nf.rooms.forEach((r, i) => { if (r.id === undefined) r.id = i; });
     nf.nextId ??= Math.max(-1, ...nf.rooms.map(r => r.id)) + 1;
@@ -36,8 +36,11 @@ export function deserialize(s){
   st.explored = {}; st.floors.forEach((f, L) => st.explored[L] = new Set(s.explored?.[L] || []));
   st.art = s.art || {}; st.seats = s.seats || {}; st.log = s.log || [];
   st.combat = s.combat || { active:false, order:[], idx:0, round:1, floor:0 };
-  st.grasp = s.grasp || { die:4, auto:true, last:null };
+  st.grasp = s.grasp || { die:4, auto:false, last:null };   // the Whim Die (old field name)
   st.content = { dread:{}, shift:null, grasp:null, bestiary:{}, ...(s.content || {}) };
+  // the hands' Grasp table and the Seep's Dread names were replaced by the Whim table and Strahd's Gaze
+  if (/Grasp Die/.test(st.content.grasp || '')){ st.content.grasp = null; st.grasp.auto = false; }
+  if (/Hands Reach/.test(st.content.shift || '')) st.content.shift = null;
   const nc = newCampaign();
   st.campaign = { ...nc, ...(s.campaign || {}), clocks:{ ...nc.clocks, ...(s.campaign?.clocks || {}) }, places:{ ...nc.places, ...(s.campaign?.places || {}) } };
   st.characters = s.characters || {};

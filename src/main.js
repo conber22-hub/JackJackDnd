@@ -1,5 +1,4 @@
-/* DREAD DELVE — boot + the render loop.
-   Built in honor of Chance. See DREAD-DELVE-ROADMAP.md for the code map. */
+/* DREAD DELVE — boot + the render loop. See DREAD-DELVE-ROADMAP.md for the code map. */
 import * as THREE from 'three';
 import { state, ui, dreadLevel } from './engine/state.js';
 import { THEMES } from './data/themes.js';
@@ -37,15 +36,19 @@ let whisperAt = performance.now() + 30000;
 const fogDark = new THREE.Color('#0d0b10'), fogRed = new THREE.Color('#140808'), redMist = new THREE.Color('#7a2a2a');
 function frame(){
   requestAnimationFrame(frame);
-  const dt = Math.min(clock.getDelta(), .05), now = performance.now(), t = now / 1000;
+  const raw = clock.getDelta(), dt = Math.min(raw, .05), now = performance.now(), t = now / 1000;
+  const ease = 1 - Math.pow(.97, Math.min(raw, 1) * 60);   // the same 3%-a-frame easing at any frame rate
   runTweens(now);
   if (state){
     if (state.dread !== frame.dread){ frame.dread = state.dread; setDrone(state.dread); }
     const D = dreadLevel();
     const fogTarget = D.fog * (ui.view === 'stack' ? .3 : ui.view === 'top' ? .35 : 1) * (ui.tab === 'build' && ui.role === 'dm' && !ui.tableView ? .5 : 1);
-    scene.fog.density += (fogTarget - scene.fog.density) * .05;
+    scene.fog.density += (fogTarget - scene.fog.density) * Math.min(1, ease * 1.7);
     scene.fog.color.lerp(state.dread >= 8 ? fogRed : fogDark, .02);
-    ambient.intensity += (D.amb * 1.5 * (ui.role === 'dm' && !ui.tableView ? 1.35 : 1) - ambient.intensity) * .03;   // the DM gets a little work-light hemi.intensity = ambient.intensity * .9; moon.intensity = ambient.intensity * 1.4;
+    // the DM gets a little work-light; taverns and villages are lit, dungeons are not
+    const lit = (THEMES[state.floors[ui.floor]?.theme] || THEMES[0]).light || 1;
+    ambient.intensity += (D.amb * 1.5 * lit * (ui.role === 'dm' && !ui.tableView ? 1.35 : 1) - ambient.intensity) * ease;
+    const k = ambient.intensity / .93; hemi.intensity = .45 * k; moon.intensity = 1.1 * k;
     const hue = new THREE.Color(D.hue);
     for (const tv of tokenViews.values()){
       const g = tv.group, u = g.userData, fig = u.fig;
@@ -64,7 +67,7 @@ function frame(){
       fig.children.forEach(c => { if (c.userData.flame) c.scale.x = c.scale.z = .8 + Math.random() * .4; });
     }
     floorViews.forEach(fv => fv?.group.visible && fv.built.traverse(o => { if (o.userData.spin) o.rotation.y += dt * o.userData.spin; if (o.userData.trapId && o.userData.pulse) o.children[0].scale.setScalar(1.05 + Math.sin(t * 3) * .08); }));
-    // walls breathe at high dread
+    // walls breathe red when his Gaze is high
     floorViews.forEach(fv => { if (!fv) return; const m = fv.mats.wall; m.emissive.set('#5a0a10'); m.emissiveIntensity = state.dread >= 7 ? (state.dread - 6) * .06 * (1 + Math.sin(t * 1.3)) : 0; });
     // selection ring
     const st = ui.selected && tokenViews.get(ui.selected);

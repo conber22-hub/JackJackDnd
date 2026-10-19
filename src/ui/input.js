@@ -12,7 +12,7 @@ import { toast, renderDock, BUILD_TOOLS } from './hud.js';
 import { renderPanel } from './panels.js';
 import { select, selectDoor, selectTrap, requestMove, doPing } from '../game/actions.js';
 import { doAttack, placeMonster, castSpell } from '../game/combat.js';
-import { editTile, paintRoom, commitRoom, traceStep, commitCorridor, eraseAt, placeDoorAt, placeTrapAt, placeStairsAt } from '../game/build.js';
+import { editTile, paintRoom, commitRoom, traceStep, commitCorridor, eraseAt, placeDoorAt, placeTrapAt, placeStairsAt, placePropAt } from '../game/build.js';
 import { changed, snapshot } from '../game/session.js';
 import { updateVision } from '../engine/grid.js';
 import { rebuildFog } from '../game/actions.js';
@@ -52,7 +52,7 @@ export function setMode(mode, data = null, text = ''){
 export function refreshBuildOverlay(){
   if (!state) return;
   if (isDM() && ui.mode === 'room') showRoomHandles(ui.floor); else clearOverlay();
-  if (!['room', 'corridor', 'door', 'trap', 'stairs', 'erase', 'dig', 'fill', 'paint'].includes(ui.mode)) showHover(null, null);
+  if (!['room', 'corridor', 'door', 'trap', 'stairs', 'erase', 'dig', 'fill', 'paint', 'prop'].includes(ui.mode)) showHover(null, null);
 }
 
 /* ---------- pointer handling ---------- */
@@ -168,6 +168,7 @@ function handleTap(cx, cy){
     case 'trap':   if (tile) placeTrapAt(tile); return;
     case 'stairs': if (tile) placeStairsAt(tile, ui.stairsDir); return;
     case 'erase':  if (tile) eraseAt(tile); return;
+    case 'prop':   if (tile) placePropAt(tile); return;
   }
   if (tokId){ select(tokId); return; }
   const sel = ui.selected && tokById(ui.selected);

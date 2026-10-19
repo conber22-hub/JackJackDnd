@@ -39,7 +39,7 @@ export const TRAP_KINDS = {
              f:'The walls are teeth. They close.' },
   bell:    { n:'Tolling Bell',      icon:'🔔', save:'none',dc:0,  find:12, dice:'0',    type:'thunder',     rad:0, fx:['dread+1','alert'],
              f:'A tripwire, a pulley, and somewhere far off a bell begins to ring. Everything down here heard it.' },
-  hands:   { n:'Grasping Floor',    icon:'✋', save:'str', dc:13, find:13, dice:'1d6',  type:'bludgeoning', rad:1, cond:'grappled', fx:['grasp:roll'],
+  hands:   { n:'Grasping Floor',    icon:'✋', save:'str', dc:13, find:13, dice:'1d6',  type:'bludgeoning', rad:1, cond:'grappled', fx:[],
              f:'Pale fingers push up between the flagstones and close.' },
   collapse:{ n:'Collapsing Shaft',  icon:'▼', save:'dex', dc:15, find:15, dice:'4d10', type:'bludgeoning', rad:1,
              f:'Timber screams. The ceiling comes down in a single piece.' },
