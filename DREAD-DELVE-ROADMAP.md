@@ -16,6 +16,17 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v0.7 — multiplayer you can rely on (Phase 6, done)
+
+- **Phones that sleep come back on their own.** A player whose connection drops (phone locked, Wi-Fi blip, the DM reloading) reconnects by itself: it backs off (1, 2, 4… 30 s, a little random), tries again the moment the phone wakes or comes back online, and keeps a 5-second heartbeat so a dead connection is noticed. Their name, secret word and seat come back with them. The badge says *reconnecting…*; after a few minutes of nothing, the Hero tab offers **↻ Try again**. When the DM closes the table, players are told.
+- **Joining before the DM is ready works**: the start page stays up with a status line ("Waiting for the DM to open table HX7Q…") and keeps knocking.
+- **The table keeps its code.** The DM's code is remembered in the browser for 12 hours: reloading and choosing *Return to the table* reopens the same table, and everyone's phone finds it again with no one typing anything. (The server can remember the old page for up to a minute; the app keeps retrying the same code before giving up and picking a new one.) If the DM's own link to the signalling server drops, it re-registers by itself; players already at the table never notice.
+- **Seats are remembered by who you are** (name + secret word), DM-side, so a player always gets their hero back — even one the DM seated by hand. Someone typing a hero's name can no longer take a hero that's locked to another player's secret word.
+- **The DM's copy of a sheet wins** when it's newer (levelled up or edited at the table), and edits reach the player's browser straight away.
+- **Players' browsers no longer receive secrets** (`engine/redact.js`): only the explored map plus one square of edge (everything else is solid rock to them), no secret doors or unfound traps, no room types or notes, no names of floors they haven't seen, monsters only while the party can see them — and then without HP, AC, attacks or hidden flags — and a blank *something unseen* for hidden monsters in the fight. The Shift and Whim tables stay home, and DM-only log lines (🔒 in the DM's log: what a noise woke, rolled encounters, what waits on the road) aren't sent.
+- **Invite link**: Table tab → 📋 Copy invite. It opens the player's door with the code filled in (and carries the relay server setting).
+- **Your own relay server** (Table tab → Relay server): host, port, path, key, https, plus an optional TURN server for phones on mobile data. **Test** checks it answers. Run one with `npx peer --port 9000 --key dreaddelve` (any PeerJS server works).
+
 ## v0.6 — deeper rules (Phase 5, done)
 
 - **Players roll from their own device.** A player selects their hero and taps an attack, a spell or a feature, then a target. The DM gets a request at the top of the screen: **✓ Roll it**, **▲ Adv**, **▼ Dis** or **✕ No** (the player hears "the DM says no"). The DM's app does the rolling, so every screen gets the same card. **Table tab → Players roll freely** skips the approval. In a fight a player can only act on their own turn.
@@ -169,10 +180,8 @@ v0.1's single file is now a Vite project. `npm run build` bakes it back into one
 ### Phase 5 — Deeper rules (done — see v0.6 above)
 Still open, for later: concentration, upcasting damage, reactions (Shield, Hellish Rebuke) as prompts, auras as terrain (the Monstrosity of Hands, the Bloat-Mourner's slick trail), and a "Dread Zone switch" that brings back the old Dread levels and the Grasp hand when the campaign goes deep.
 
-### Phase 6 — Harden multiplayer
-1. Auto-reconnect when a phone sleeps.
-2. Strip hidden data from what players receive. They don't **see** hidden traps, secret doors, room types or monster HP, but the data still reaches their browser.
-3. An optional relay server of your own, so you don't depend on the free public one.
+### Phase 6 — Harden multiplayer (done — see v0.7 above)
+Later, maybe: a self-hosted relay in this repo (a tiny PeerJS server on Vercel/Fly), spectators (a read-only TV view that joins like a player), and end-to-end checks that players can't send moves for tokens they don't own (the DM's app already refuses them).
 
 ---
 
@@ -221,7 +230,8 @@ src/render/             Three.js
   props.js              the 3D props, houses with roofs, the instanced pine
   minis.js              procedural 3D minis (SHAPES) + syncing tokens
   effects.js            selection ring, reach glow, pings, bursts, Build overlays
-src/net/table.js        multiplayer (host, join, messages)
+src/net/table.js        multiplayer: host, join, reconnect, heartbeats, seats by identity, relay settings, invite links
+src/engine/redact.js    what players are sent (the delve with the DM's secrets taken out)
 src/audio/sound.js      synthesised drone and sound effects
 src/data/campaign.js    Curse of Strahd: Flood Edition — sessions, clocks, faces, the night tables
 src/data/bestiary-barovia.js  creatures ported from the Battle Table
@@ -233,7 +243,7 @@ src/ui/creator.js       the character creator
 src/ui/valley.js        the Valley tab and its map (SVG)
 src/render/textures.js · post.js · models.js · gfx.js   Phase 4: textures, post-processing, GLB models, quality settings
 src/ui/                 hud.js (top bar, dock, cards) · panels.js (tabs) · input.js (taps & drags) · events.js (buttons)
-tests/engine.test.js · hero.test.js · overland.test.js · encounter.test.js    node --test
+tests/engine.test.js · hero.test.js · overland.test.js · encounter.test.js · redact.test.js    node --test
 ```
 
 ## Adding a monster
