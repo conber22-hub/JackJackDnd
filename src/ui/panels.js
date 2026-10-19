@@ -8,7 +8,7 @@ import { ROOM_TYPES, TRAP_KINDS, DOOR_STATES } from '../data/rooms.js';
 import { THEMES, TEMPLATES } from '../data/themes.js';
 import { DEFAULT_SHIFT_TABLE, DEFAULT_WHIM_TABLE, WHIM_STEPS } from '../data/tables.js';
 import { $, esc, avgDice, attacksToText } from '../util/core.js';
-import { net } from '../net/table.js';
+import { net, savedTable, peerServer, inviteLink } from '../net/table.js';
 import { currentTurn } from '../game/rules.js';
 import { onStairs, dreadRulesLines } from '../game/actions.js';
 import { undoCount } from '../game/session.js';
@@ -232,14 +232,26 @@ function gazeTab(){
 
 function tableTab(){
   let h = `<h3>Play together</h3>`;
-  if (!net.code) h += `<div class="muted">Open a table and give your players the 4-letter code. They open this same file, choose <i>Join a table</i>, and type their character's name — matching names are seated automatically.</div>
-    <div class="row"><button class="btn primary" data-act="host">Open table</button></div>`;
+  const saved = savedTable();
+  if (!net.code && net.opening) h += `<div class="code" style="opacity:.5">${esc(net.opening)}</div><div class="muted">Opening the table on ${esc(peerServer()?.host || 'the PeerJS server')}…</div>`;
+  else if (!net.code) h += `<div class="muted">Open a table and give your players the code (or send them the invite link). They open this same page, choose <i>Accept the invitation</i>, sign in with their name and secret word, and join — their own heroes are seated automatically, and they come back on their own if their phone sleeps.</div>
+    <div class="row"><button class="btn primary" data-act="host">${saved ? `Reopen table ${esc(saved.code)}` : 'Open table'}</button>${saved ? '<button class="btn small" data-act="hostNew" title="A new code (players will need it)">New code</button>' : ''}</div>`;
   else {
-    h += `<div class="code">${net.code}</div><h4>Players (${net.conns.size})</h4>`;
+    const link = inviteLink();
+    h += `<div class="code">${net.code}</div>${net.online ? '' : `<div class="muted" style="color:var(--blood)">⚠ Lost touch with the server — reconnecting. Players already here keep playing; new ones can't join until it's back.</div>`}
+      ${link ? `<div class="row"><input class="txt" style="flex:1;font-size:12px" readonly value="${esc(link)}" id="inviteLink"><button class="btn small" data-act="copyInvite">📋 Copy invite</button></div>` : ''}
+      <h4>Players (${net.conns.size})</h4>`;
     if (!net.conns.size) h += `<div class="muted">Waiting for players to join…</div>`;
     for (const [pid, s] of net.conns) h += `<div class="row"><span style="flex:1">🎮 ${esc(s.name)}</span><select class="txt" style="width:auto" data-edit="seat" data-k="${pid}"><option value="">— no token —</option>${state.tokens.filter(t => t.kind !== 'monster').map(t => opt(t.id, t.name, state.seats[pid] === t.id)).join('')}</select></div>`;
     h += `<div class="row"><button class="btn small danger" data-act="unhost">Close table</button></div>`;
   }
+  const ps = peerServer() || {};
+  h += `<details class="card"${ps.host ? ' open' : ''}><summary class="muted">Relay server (advanced)${ps.host ? ` — <b>${esc(ps.host)}</b>` : ' — the free PeerJS server'}</summary>
+    <div class="muted">Players find your table through a signalling server. The free public one is the default; run your own (<code>npx peer --port 9000 --key dreaddelve</code>, or any PeerJS server) if it is ever down. The invite link carries this setting to your players. A TURN server helps phones on mobile data that can't reach you directly.</div>
+    <div class="row"><input class="txt" style="flex:2" id="psHost" placeholder="host (e.g. peer.example.com)" value="${esc(ps.host || '')}"><input class="txt num" id="psPort" placeholder="443" value="${esc(ps.port || '')}"></div>
+    <div class="row"><input class="txt" style="flex:1" id="psPath" placeholder="path (/)" value="${esc(ps.path || '')}"><input class="txt" style="flex:1" id="psKey" placeholder="key (peerjs)" value="${esc(ps.key || '')}"><label class="muted"><input type="checkbox" id="psSecure" ${ps.secure === false ? '' : 'checked'}> https</label></div>
+    <div class="row"><input class="txt" style="flex:2" id="psTurn" placeholder="TURN url (turn:host:3478)" value="${esc(ps.turn?.urls || '')}"><input class="txt" style="flex:1" id="psTurnUser" placeholder="user" value="${esc(ps.turn?.username || '')}"><input class="txt" style="flex:1" id="psTurnPass" placeholder="password" value="${esc(ps.turn?.credential || '')}"></div>
+    <div class="row"><button class="btn small" data-act="psSave">Save</button><button class="btn small" data-act="psTest">Test</button>${ps.host ? '<button class="btn small" data-act="psClear">Use the free server</button>' : ''}</div></details>`;
   h += `<h4>Players' rolls</h4><div class="row"><button class="btn small ${state.campaign.freeRolls ? 'on' : ''}" data-act="freeRolls">🎲 Players roll freely: ${state.campaign.freeRolls ? 'ON' : 'off'}</button></div>
     <div class="muted">Players tap an attack, spell or feature on their own hero, then a target. ${state.campaign.freeRolls ? 'It rolls at once.' : 'You get a request at the top of the screen: roll it as asked, with advantage or disadvantage, or say no.'} Your app does the rolling, so everyone sees the same card.</div>`;
   h += `<div class="row"><button class="btn ${ui.tableView ? 'on' : ''}" data-act="tableView">📺 Table view ${ui.tableView ? 'ON' : 'off'}</button></div>
@@ -251,10 +263,13 @@ function tableTab(){
   return h;
 }
 
-const newAtTable = () => net.host?.open ? `<div class="row"><button class="btn small" data-act="newHeroAtTable">✚ Make a new character</button></div>` : '';
+const newAtTable = () => net.host?.open && net.status === 'open' ? `<div class="row"><button class="btn small" data-act="newHeroAtTable">✚ Make a new character</button></div>` : '';
 function heroTab(){
   const me = tokById(ui.myToken);
   let h = `<h3>Your hero</h3>`;
+  if (net.join && net.status !== 'open') h += `<div class="card" style="border-color:var(--blood)"><div class="hd"><span class="nm">${net.status === 'closed' ? 'The DM closed the table' : net.status === 'lost' ? 'Lost the table' : 'Reconnecting to the table…'}</span></div>
+    <div class="muted">${net.status === 'closed' ? 'Your heroes are saved in this browser.' : `Table ${esc(net.join.code)}. ${net.status === 'lost' ? 'It stopped answering.' : 'Your phone may have slept — this happens on its own.'}`}</div>
+    <div class="row"><button class="btn small primary" data-act="rejoin">↻ Try again</button><button class="btn small" data-act="startScreen">Start screen</button></div></div>`;
   const others = (ui.tableChars || []).filter(c => c.id !== me?.charId);
   const picker = others.length ? `<div class="muted">${me ? 'Your other characters at this table:' : 'Your characters at this table — who are you playing tonight?'}</div><div class="row">${others.map(c => `<button class="btn small${me ? '' : ' primary'}" data-act="pickChar" data-id="${c.id}">${esc(c.name)} · ${esc(c.cls)} ${c.lvl}</button>`).join('')}</div>` : '';
   if (!me) h += `<div class="muted">${net.host?.open ? (others.length ? '' : 'Connected. Waiting for the DM to seat you — or make your character now.') : 'Connecting to the table…'}</div>` + picker + newAtTable();

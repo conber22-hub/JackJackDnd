@@ -15,8 +15,7 @@ let send = null;                 // set by net/table.js (avoids an import cycle)
 export function setSender(fn){ send = fn; }
 export function requestAct(m){
   if (!send) return;
-  send({ t:'act', ...m });
-  toast(state.freeRolls ? 'Rolling…' : 'Sent to the DM…');
+  if (send({ t:'act', ...m })) toast(state.freeRolls ? 'Rolling…' : 'Sent to the DM…');
 }
 
 /* ---------- the DM's side ---------- */

@@ -175,6 +175,8 @@ textarea.txt{min-height:70px;resize:vertical;font-size:13px}
 #dock button span{display:block;font-size:18px}
 #modeHint{position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:7;background:#2a1716;border:1px solid #8b3a2a;color:#ffd3b0;padding:8px 14px;border-radius:14px;display:none;gap:10px;align-items:center;max-width:calc(100vw - 24px);font-size:14px}
 #modeHint.show{display:flex}
+#roleBadge.warn{border-color:var(--blood);color:#ffb3a8}
+#joinStatus{margin-top:6px;color:var(--candle);font-style:italic}
 #reqPanel{position:fixed;top:112px;left:50%;transform:translateX(-50%);z-index:9;width:min(440px,calc(100vw - 24px));display:flex;flex-direction:column;gap:6px}
 #reqPanel .req{background:linear-gradient(#22171a,#160f13);border:1px solid #8b3a2a;border-radius:14px;padding:8px 10px;box-shadow:0 10px 30px #000a;animation:popin .2s}
 #reqPanel .req .w{font-size:14px}
@@ -479,6 +481,7 @@ textarea.txt{min-height:70px;resize:vertical;font-size:13px}
           <label class="muted">Table code from your DM</label><input class="txt th-code" id="joinCode" placeholder="HX7Q" maxlength="6" autocapitalize="characters" autocomplete="off">
           <label class="muted">Playing as</label><select class="txt" id="joinHero"></select>
           <div class="row"><button class="btn primary" data-act="join">Join the table</button></div>
+          <div class="muted hidden" id="joinStatus" role="status"></div>
         </div>
       </div>
     </section>

@@ -21,7 +21,8 @@ import { addCond, removeCond } from '../game/rules.js';
 import { shiftFloor } from '../game/shift.js';
 import { whimRoll, whimStep } from '../game/whim.js';
 import { changed, exportDelve, importDelve, loadLocal, loadState, deserialize, saveSoon, undo, download, snapshot } from '../game/session.js';
-import { hostTable, closeTable, joinTable, sendHost, broadcast, pushState } from '../net/table.js';
+import { hostTable, closeTable, joinTable, sendHost, broadcast, pushState, net, rejoin, leaveTable, seatPlayer, sendSheetToOwner, savedTable, savedJoin, readInvite, inviteLink, setPeerServer, peerOpts } from '../net/table.js';
+import { Peer } from 'peerjs';
 import { newDelve, importMap, setAutoLink, removeRoom, populate, clearMonsters, addFloorBelow, removeBottomFloor, randomSeed } from '../game/build.js';
 import { populateFloor } from '../engine/generator.js';
 import { setGfx, gfx } from '../render/gfx.js';
@@ -207,17 +208,31 @@ document.addEventListener('click', e => {
     case 'regen': if (confirm('Generate a new delve? This replaces the current one (export first if you want to keep it).')){
       newDelve({ name:$('#ndName').value || 'Dread Delve', seed:$('#ndSeed').value || randomSeed(), floors:+$('#ndFloors').value, size:+$('#ndSize').value, template:$('#ndTemplate').value }); } break;
     // table
-    case 'host': hostTable(); break;
+    case 'host': hostTable(); renderPanel(); break;
+    case 'hostNew': hostTable({ code:Array.from({ length:4 }, () => 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 31)]).join('') }); renderPanel(); break;
+    case 'rejoin': rejoin(); break;
+    case 'copyInvite': { const link = inviteLink(); navigator.clipboard?.writeText(link).then(() => toast('Invite link copied — paste it to your players.'), () => { $('#inviteLink')?.select(); toast('Select the link and copy it.'); }); } break;
+    case 'psSave': case 'psTest': {
+      const v = id => $(id)?.value.trim() || '';
+      const host = v('#psHost').replace(/^\w+:\/\//, '').replace(/\/.*$/, '');
+      setPeerServer(host ? { host, port:v('#psPort') || '', path:v('#psPath') || '', key:v('#psKey') || '', secure:$('#psSecure')?.checked !== false,
+        ...(v('#psTurn') ? { turn:{ urls:v('#psTurn'), username:v('#psTurnUser'), credential:v('#psTurnPass') } } : {}) } : null);
+      if (a === 'psSave'){ toast(host ? `Relay server saved: ${host}. Reopen the table to use it.` : 'Using the free PeerJS server.'); renderPanel(); break; }
+      toast('Testing…'); const p = new Peer(peerOpts()); const done = msg => { toast(msg); clearTimeout(tt); setTimeout(() => p.destroy(), 100); };
+      const tt = setTimeout(() => done('No answer from the server in 8 s.'), 8000);
+      p.on('open', () => done(`✓ ${host || 'The free server'} answers.`)); p.on('error', e => done(`✗ ${host || 'The free server'}: ${e.type}`));
+    } break;
+    case 'psClear': setPeerServer(null); toast('Using the free PeerJS server.'); renderPanel(); break;
     case 'unhost': closeTable(); break;
     case 'tableView': { ui.tableView = !ui.tableView; clearReach(); if (ui.mode !== 'select') setMode('select'); buildAllFloors(); updateVision(); syncTokens(); renderAll();
       const pc = state.tokens.find(t => t.kind === 'pc' && t.floor === ui.floor) || state.tokens.find(t => t.kind === 'pc'); if (pc){ goFloor(pc.floor, false); focusTile(pc.floor, pc.x, pc.y); } } break;
     case 'export': exportDelve(); break;
-    case 'startScreen': showStart(); break;
+    case 'startScreen': if (ui.role === 'player') leaveTable(); showStart(); break;
     case 'startNew': {
       const seed = $('#newSeed').value.trim() || randomSeed();
       newDelve({ seed, floors:+$('#newFloors').value, size:40, template:$('#newTemplate').value, party:$('#newDemoParty').checked, name:(TEMPLATES.find(t => t.id === $('#newTemplate').value) || {}).id === 'andral' ? 'Beneath Saint Andral\'s' : (TEMPLATES.find(t => t.id === $('#newTemplate').value)?.name || 'Dread Delve') }, !!state);
       toast(`Seed "${seed}" — same seed, same dungeon.`); } break;
-    case 'continue': { const s = loadLocal(); if (s) loadState(deserialize(s)); } break;
+    case 'continue': { const s = loadLocal(); if (s){ loadState(deserialize(s)); if (savedTable() && !net.code) hostTable(); } } break;   // the table from before a reload reopens with the same code
     case 'join': {
       const code = $('#joinCode').value.trim(), hero = myHero($('#joinHero').value), who = signIn();
       if (!who) return;
@@ -225,15 +240,15 @@ document.addEventListener('click', e => {
       ui.myHeroId = hero?.id || null; joinTable(code, who.name, who.key, hero); } break;
     // heroes
     case 'newHero': openCreator(null, { onSave:h => { if (!h.player) h.player = myProfile().name || $('#pName').value.trim(); saveMyHero(h); renderHeroList(); toast(`${h.name} is ready.`); } }); break;
-    case 'newHeroAtTable': openCreator(null, { saveLabel:'Bring to the table', onSave:h => { if (!h.player) h.player = ui.myName; saveMyHero(h); ui.myHeroId = h.id; sendHost({ t:'char', char:h }); toast(`${h.name} sent to the DM.`); renderPanel(); } }); break;
-    case 'editHero': { const h = myHero(id); if (h) openCreator(h, { title:`${h.name}`, onSave:h2 => { saveMyHero(h2); renderHeroList(); if (ui.role === 'player'){ sendHost({ t:'char', char:h2 }); toast('Sent to the DM.'); renderPanel(); } } }); } break;
+    case 'newHeroAtTable': openCreator(null, { saveLabel:'Bring to the table', onSave:h => { if (!h.player) h.player = ui.myName; saveMyHero(h); ui.myHeroId = h.id; if (sendHost({ t:'char', char:h })) toast(`${h.name} sent to the DM.`); else if (net.join) net.join.dirty = h.id; renderPanel(); } }); break;
+    case 'editHero': { const h = myHero(id); if (h) openCreator(h, { title:`${h.name}`, onSave:h2 => { saveMyHero(h2); renderHeroList(); if (ui.role === 'player'){ if (sendHost({ t:'char', char:h2 })) toast('Sent to the DM.'); else if (net.join) net.join.dirty = h2.id; renderPanel(); } } }); } break;
     case 'delHero': if (confirm('Delete this hero from this browser?')){ deleteMyHero(id); renderHeroList(); } break;
     case 'exportHero': { const h = myHero(id); if (h) download(`${h.name.replace(/[^\w]+/g, '-').toLowerCase()}.json`, JSON.stringify(h, null, 1)); } break;
     case 'dmNewChar': openCreator(null, { title:'New character (DM)', saveLabel:'Add to the party', onSave:h => { applyCharacter(h, { owner:'DM' }); renderPanel(); } }); break;
-    case 'dmSheet': { const h = state.characters[id]; if (h) openCreator(h, { title:`${h.name}'s sheet`, saveLabel:'Save sheet', onSave:h2 => { applyCharacter(h2, { owner:h.owner }); renderPanel(); } }); } break;
+    case 'dmSheet': { const h = state.characters[id]; if (h) openCreator(h, { title:`${h.name}'s sheet`, saveLabel:'Save sheet', onSave:h2 => { applyCharacter(h2, { owner:h.owner }); sendSheetToOwner(h2.id); renderPanel(); } }); } break;
     case 'placeChar': placeCharacter(id); break;
     case 'unlockChar': if (confirm('Clear this character\'s secret word? The next player to sign in with the owner\'s name gets it.')){ unlockCharacter(id); toast('Unlocked.'); renderPanel(); } break;
-    case 'pickChar': sendHost({ t:'pick', id }); ui.myHeroId = id; renderPanel(); break;
+    case 'pickChar': if (sendHost({ t:'pick', id })) ui.myHeroId = id; renderPanel(); break;
     case 'removeChar': if (confirm('Forget this character sheet? (Its token stays on the map.)')){ removeCharacter(id); renderPanel(); } break;
     case 'propCat': ui.propCat = k; ui.propKind = Object.keys(PROPS).find(p => PROPS[p].cat === k); renderPanel(); break;
     case 'propKind': ui.propKind = k; renderPanel(); break;
@@ -262,7 +277,7 @@ document.addEventListener('change', e => {
   else if (kind === 'room'){ const r = roomById(state.floors[ui.floor], +el.dataset.id); if (!r) return; r[el.dataset.f] = el.value; if (el.dataset.f !== 'notes') buildFloor(ui.floor); renderPanel(); changed(); }
   else if (kind === 'floorName'){ state.floors[ui.floor].name = el.value; renderTop(); changed(); }
   else if (kind === 'floorTheme'){ state.floors[ui.floor].theme = +el.value; buildFloor(ui.floor); renderPanel(); changed(); }
-  else if (kind === 'seat'){ if (el.value) state.seats[el.dataset.k] = el.value; else delete state.seats[el.dataset.k]; renderPanel(); pushState(); }
+  else if (kind === 'seat'){ seatPlayer(el.dataset.k, el.value || null); renderPanel(); pushState(); }
   else if (kind === 'import' && el.files[0]) importDelve(el.files[0]);
   else if (kind === 'importMap' && el.files[0]){ const r = new FileReader(); r.onload = () => { $('#importText').value = r.result; toast('File loaded — choose how to import it.'); }; r.readAsText(el.files[0]); }
   else if (kind === 'art' && el.files[0]) loadArt(el.dataset.k, el.files[0]);
@@ -345,6 +360,7 @@ function signIn(){
 }
 function renderProfile(){
   const p = myProfile();
+  if (!$('#joinCode').value) $('#joinCode').value = savedJoin()?.code || '';
   $('#pName').value = p.name || '';
   $('#pWord').value = '';
   $('#pWordHint').textContent = p.key ? '(remembered on this device)' : '';
@@ -393,6 +409,8 @@ export function showStart(){
   pickTemplate('andral');
   $('#startModal').classList.remove('hidden');
   let last = ''; try { last = localStorage.getItem('dreaddelve.role') || ''; } catch {}
-  showRole(last || (s && !myProfile().key ? 'dm' : !s && myProfile().key ? 'player' : ''));
+  const invited = readInvite();
+  if (invited){ $('#joinCode').value = invited; history.replaceState?.(null, '', location.pathname); }
+  showRole(invited ? 'player' : last || (s && !myProfile().key ? 'dm' : !s && myProfile().key ? 'player' : ''));
   if (!voiceTimer) voiceTimer = setInterval(cycleVoice, 5600);
 }

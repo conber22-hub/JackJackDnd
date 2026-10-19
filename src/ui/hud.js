@@ -39,7 +39,9 @@ export function renderTop(){
   $('#dreadRO').innerHTML = `👁 Gaze <b style="color:var(--blood)">${state.dread}</b> · <i>${esc(D.n)}</i>`;
   $('#whimBadge').classList.toggle('hide', viewAsPlayer());
   $('#whimBadge').innerHTML = `🦇 d${state.grasp.die}`;
-  $('#roleBadge').textContent = pv ? `Player · ${ui.myName}` : ui.tableView ? 'Table view' : net.code ? `DM · table ${net.code} · ${net.conns.size} joined` : 'DM';
+  const ns = net.status === 'open' ? '' : net.status === 'lost' ? ' · ⚠ disconnected' : net.status === 'closed' ? ' · table closed' : ' · reconnecting…';
+  $('#roleBadge').textContent = pv ? `Player · ${ui.myName}${net.join ? ns : ''}` : ui.tableView ? 'Table view' : net.code ? `DM · table ${net.code}${net.online ? '' : ' (offline)'} · ${net.conns.size} joined` : net.opening ? `DM · opening ${net.opening}…` : 'DM';
+  $('#roleBadge').classList.toggle('warn', pv ? !!net.join && net.status !== 'open' : !!net.code && !net.online);
 }
 export function renderTabs(){
   const tabs = ui.role === 'player' ? [['hero', 'Your hero'], ...(state?.valley ? [['map', 'Map']] : []), ['log', 'Log']]
