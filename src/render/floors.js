@@ -9,7 +9,7 @@ import { scene, G, mat4, col, wx, wz, floorY, WALL_H, makeLabel, tween, ease, fx
 import { surfaceTextures } from './textures.js';
 import { shadowsOn, gfx } from './gfx.js';
 import { kitFor } from './models.js';
-import { buildProp, buildBuilding, inBuilding, treeGeometry, treeMaterial } from './props.js';
+import { buildProp, buildBuilding, inBuilding, treeGeometry, treeMaterial, deadTreeGeometry, tuftGeometry, pebbleGeometry } from './props.js';
 import { propSize } from '../data/props.js';
 
 // Paint the floor's stone with its theme's textures (cheap: textures are cached per theme).
@@ -143,6 +143,15 @@ export function buildFloor(L, opt = {}){
   wl.forEach((i, n) => { mat4.makeTranslation(wx(i % f.W), WALL_H + .03, wz((i / f.W) | 0)); cm.setMatrixAt(n, mat4); cm.setColorAt(n, col.copy(capc).multiplyScalar(.85 + rng() * .25)); });
   if (cm.instanceColor) cm.instanceColor.needsUpdate = true;
   fv.built.add(cm);
+  // the Svalich woods are not all alive: some of the trees are dead and grey
+  const deadShare = th.id === 'woods' ? .12 : th.walls === 'mixed' ? .06 : 0;
+  const dead = deadShare ? trees.filter(i => hr(i, 11) < deadShare) : [];
+  if (dead.length){
+    const dm = new THREE.InstancedMesh(deadTreeGeometry(), treeMaterial, dead.length), q = new THREE.Quaternion(), sc = new THREE.Vector3(), ps = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+    dead.forEach((i, n) => { const s = .9 + hr(i, 12) * .6; ps.set(wx(i % f.W) + (hr(i, 2) - .5) * .4, 0, wz((i / f.W) | 0) + (hr(i, 3) - .5) * .4); q.setFromAxisAngle(up, hr(i, 4) * 6.28); sc.set(s, s, s); mat4.compose(ps, q, sc); dm.setMatrixAt(n, mat4); dm.setColorAt(n, col.setRGB(1, 1, 1).multiplyScalar(.75 + hr(i, 6) * .4)); });
+    if (dm.instanceColor) dm.instanceColor.needsUpdate = true; dm.castShadow = shadows; fv.built.add(dm);
+  }
+  if (dead.length){ const ds = new Set(dead); for (let k = trees.length - 1; k >= 0; k--) if (ds.has(trees[k])) trees.splice(k, 1); }
   if (trees.length){
     const tm = new THREE.InstancedMesh(treeGeometry(), treeMaterial, trees.length), q = new THREE.Quaternion(), sc = new THREE.Vector3(), ps = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
     const tint = new THREE.Color(th.trim);
@@ -155,6 +164,21 @@ export function buildFloor(L, opt = {}){
     if (tm.instanceColor) tm.instanceColor.needsUpdate = true;
     tm.castShadow = tm.receiveShadow = shadows; tm.userData.trees = 1;
     fv.built.add(tm);
+  }
+  // ground clutter on outdoor floors: grass tufts in the clearings, stones on the roads
+  if (outdoor){
+    const tufts = [], pebbles = [];
+    for (const i of tiles){
+      const r = roomOf.get(i); if (r && !r.outdoor) continue;
+      const road = g[i] === T.HALL, n = Math.floor(hr(i, 21) * (road ? 1.6 : 3.2));
+      for (let k = 0; k < n; k++) (road || hr(i, 30 + k) < .25 ? pebbles : tufts).push([i, k]);
+    }
+    for (const [list, geo] of [[tufts, tuftGeometry()], [pebbles, pebbleGeometry()]]){
+      if (!list.length) continue;
+      const cm2 = new THREE.InstancedMesh(geo, treeMaterial, list.length), q = new THREE.Quaternion(), sc = new THREE.Vector3(), ps = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+      list.forEach(([i, k], n) => { const s = .7 + hr(i, 40 + k) * .8; ps.set(wx(i % f.W) + (hr(i, 50 + k) - .5) * .85, -.02, wz((i / f.W) | 0) + (hr(i, 60 + k) - .5) * .85); q.setFromAxisAngle(up, hr(i, 70 + k) * 6.28); sc.set(s, s, s); mat4.compose(ps, q, sc); cm2.setMatrixAt(n, mat4); cm2.setColorAt(n, col.setRGB(1, 1, 1).multiplyScalar(.7 + hr(i, 80 + k) * .5)); });
+      if (cm2.instanceColor) cm2.instanceColor.needsUpdate = true; cm2.receiveShadow = shadows; fv.built.add(cm2);
+    }
   }
   // water: rivers, ponds and lakes (impassable, and no trees grow in it)
   const wt = [...water].filter(i => !pv || seen(i) || exp.has(i));

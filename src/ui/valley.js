@@ -1,11 +1,11 @@
 /* THE VALLEY TAB — the map of Barovia (SVG), the chosen place, the way there, and the journey in progress. */
 import { state, ui } from '../engine/state.js';
 import { esc, mulberry32 } from '../util/core.js';
-import { VALLEY_PLACES, VALLEY_ROADS } from '../data/barovia-map.js';
+import { VALLEY_PLACES, VALLEY_ROADS, WAY_HOURS, timeOfDay } from '../data/barovia-map.js';
 import { PLACE_STATES } from '../data/campaign.js';
 import { TEMPLATES } from '../data/themes.js';
 import { route, planJourney, placeById, roadBetween } from '../engine/overland.js';
-import { valley, onJourney, placeMaps } from '../game/overworld.js';
+import { valley, onJourney, placeMaps, clockText } from '../game/overworld.js';
 import { BEST } from '../data/bestiary.js';
 
 const GLYPH = { mists:'🌫', gates:'🚪', village:'🏠', crossroads:'⚖', castle:'🏰', coffin:'☄', camp:'🔥', mill:'⚙', town:'🏘', lake:'🌊', ruin:'🏚', swamp:'🛖', vineyard:'🍇', hill:'🗿', tower:'🗼' };
@@ -71,12 +71,13 @@ export function valleyTab(){
   const maps = placeMaps(p);
   let h = `<h3>The Valley of Barovia <button class="btn small" style="float:right" data-act="valleyMap">⤢ Enlarge</button></h3>
     <div class="muted">${V.journey ? `On the road to <b>${esc(placeById(V.journey.to).name)}</b>.` : `The party is at <b>${esc(here.name)}</b>.`} ${V.visited.length} of ${VALLEY_PLACES.length} places seen · ${V.journeys} journey${V.journeys === 1 ? '' : 's'}.</div>
+    <div class="trait">🕯 <b>${esc(clockText())}</b>${V.weather ? ` · ${esc(V.weather)}` : ''}</div>
     ${mapSVG(V, sel, onRoute)}
     <div class="card sel"><div class="hd"><span class="nm">${GLYPH[p.kind] || ''} ${esc(p.name)}</span>${V.visited.includes(p.id) ? '' : '<span class="muted">not yet seen</span>'}</div>
       <div class="look">${esc(p.blurb)}</div>
       ${p.sessions.length ? `<div class="trait"><b>Sessions here.</b> ${p.sessions.map(n => `<span class="chip" data-act="session" data-k="${n}">${n}</span>`).join('')}</div>` : ''}
       ${p.state ? `<div class="row"><label>Mood</label><select class="txt" style="width:auto" data-edit="place" data-k="${p.state}">${PLACE_STATES.map(st => opt(st, st, (state.campaign.places[p.state] || 'quiet') === st)).join('')}</select></div>` : ''}`;
-  if (plan && !V.journey) h += `<div class="trait"><b>The way.</b> ${plan.path.map(id => esc(placeById(id).name)).join(' → ')} · ${plan.stretches.length} stretch${plan.stretches.length === 1 ? '' : 'es'} of road</div>
+  if (plan && !V.journey) h += `<div class="trait"><b>The way.</b> ${plan.path.map(id => esc(placeById(id).name)).join(' → ')} · ${plan.stretches.length} stretch${plan.stretches.length === 1 ? '' : 'es'} of road · about ${plan.stretches.reduce((h, st) => h + (WAY_HOURS[VALLEY_ROADS.find(r => r.id === st.road).way] || 2), 0)} hours on foot</div>
       <div class="row"><button class="btn primary" data-act="valleyTravel" data-k="${p.id}">🧭 Set out for ${esc(p.name)}</button></div>
       <div class="muted">Builds the road as maps — one per stretch — and puts the party at the start. The road's shape stays the same each time; what is on it does not.</div>`;
   else if (path === null && sel !== V.at) h += `<div class="bad">No road reaches ${esc(p.name)} from here.</div>`;
@@ -95,7 +96,8 @@ export function valleyTab(){
     if (!ev.length) h += `<div class="muted">Nothing waiting on this stretch. Quiet roads are the worst kind.</div>`;
     h += `<div class="row"><button class="btn small" data-act="roadNew">✦ Something on the road</button><button class="btn small" data-act="night" data-k="road">Roll a road encounter (desk)</button></div>
       ${/^Road:/.test(state.campaign.lastNight || '') ? `<div class="look">${esc(state.campaign.lastNight)}</div>` : ''}
-      <div class="row"><button class="btn ${last ? 'primary' : ''}" data-act="valleyArrive">Arrive at ${esc(placeById(V.journey.to).name)}</button></div>`;
+      <div class="row"><button class="btn small" data-act="valleyCamp">⛺ Make camp (8 hours)</button></div>
+      <div class="row"><button class="btn ${last ? 'primary' : ''}" data-act="valleyArrive">Arrive at ${esc(placeById(V.journey.to).name)} (+${V.journey.hours || 0}h)</button></div>`;
   }
   h += `<div class="row" style="margin-top:8px"><button class="btn small ${V.shared ? 'on' : ''}" data-act="valleyShare">${V.shared ? '📜 Shared with the table' : '📜 Share the map with the table'}</button></div>
     <div class="muted">${V.shared ? 'Players have a Map tab: the places they have reached, rumours of the places next door, and where they are now.' : 'Players see nothing of this map until you share it — and then only what they have reached.'}</div>`;
@@ -107,6 +109,7 @@ export function playerMapTab(){
   const V = state.valley; if (!V) return '<div class="muted">The DM has not shared the map.</div>';
   const here = placeById(V.at), to = V.journey && placeById(V.journey.to);
   return `<h3>The valley</h3><div class="muted">${to ? `On the road to <b>${esc(to.name)}</b>.` : `You are at <b>${esc(here.name)}</b>.`} The mist hides the rest.</div>
+    ${V.day ? `<div class="trait">🕯 <b>Day ${V.day} · ${timeOfDay(V.hour)}</b>${V.weather ? ` · ${esc(V.weather)}` : ''}</div>` : ''}
     ${mapSVG(V, null, new Set((V.journey?.path || []).slice(1).map((id, i) => roadBetween(V.journey.path[i], id)?.id)), true)}
     ${V.visited.map(id => placeById(id)).map(p => `<div class="trait"><b>${esc(p.name)}.</b> ${esc(p.blurb)}</div>`).join('')}`;
 }

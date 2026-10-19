@@ -5,6 +5,8 @@ import { state, ui, makeMonster, log } from '../engine/state.js';
 import { freeTilesNear } from '../engine/grid.js';
 import { walk } from '../engine/tiles.js';
 import { planJourney, placeById, rollEvents } from '../engine/overland.js';
+import { VALLEY_ROADS, WAY_HOURS, WEATHER, timeOfDay } from '../data/barovia-map.js';
+import { NIGHT } from '../data/campaign.js';
 import { TEMPLATES } from '../data/themes.js';
 import { BEST } from '../data/bestiary.js';
 import { rollDice, pick, uid } from '../util/core.js';
@@ -20,7 +22,9 @@ import { changed } from './session.js';
 
 export function valley(){
   const C = state.campaign;
-  return C.valley ||= { at:'mists', visited:['mists'], journey:null, journeys:0, seed:uid() };
+  const V = C.valley ||= { at:'mists', visited:['mists'], journey:null, journeys:0, seed:uid() };
+  V.day ??= 1; V.hour ??= 19;   // Session 0 ends at dusk, at the Mist Wall
+  return V;
 }
 const bloomLoose = () => (state.campaign.session || 0) >= 3 || (state.campaign.clocks?.bloom || 0) > 1;
 
@@ -29,7 +33,9 @@ export function travel(to){
   const V = valley(), dest = placeById(to), plan = planJourney(V.at, to);
   if (!dest || !plan){ toast('No road goes there from here.'); return; }
   V.journeys++;
-  V.journey = { from:V.at, to, path:plan.path };
+  const hours = plan.stretches.reduce((h, st) => h + (WAY_HOURS[VALLEY_ROADS.find(r => r.id === st.road).way] || 2), 0);
+  V.weather = pick(WEATHER); state.campaign.weather = V.weather;
+  V.journey = { from:V.at, to, path:plan.path, hours, left:{ day:V.day, hour:V.hour } };
   const journey = { from:V.at, to, seed:V.seed, n:V.journeys, gaze:state.dread, bloom:bloomLoose() };
   newDelve({ name:`The road to ${dest.name}`, seed:`${V.seed}|road|${V.journeys}`, floors:plan.stretches.length, size:40, template:'journey', journey }, true);
   ui.tab = 'valley';
@@ -42,10 +48,11 @@ export function travel(to){
 export function arrive(){
   const V = valley(); if (!V.journey) return;
   const p = placeById(V.journey.to);
+  passTime(V.journey.hours || 0);
   V.at = p.id; if (!V.visited.includes(p.id)) V.visited.push(p.id); V.journey = null;
   ui.valleySel = p.id;
-  showCard({ kind:'', title:p.name, flair:p.blurb });
-  log(`🧭 The party reaches ${p.name}.`);
+  showCard({ kind:'', title:p.name, sub:clockText(), flair:p.blurb, lines:V.hour >= 21 || V.hour < 5 ? ['<span class="muted">They arrive after dark. Doors stay shut; something is always awake.</span>'] : [] });
+  log(`🧭 The party reaches ${p.name} (${clockText()}).`);
   changed(); renderPanel();
 }
 
@@ -59,6 +66,19 @@ export function enterPlace(id, mapId){
 }
 // The maps a place offers: [{ id, name }]
 export const placeMaps = p => (p.maps || (p.map ? [p.map] : [])).map(id => ({ id, name:id === 'landmark' ? p.name : TEMPLATES.find(t => t.id === id)?.name || id }));
+
+/* ---------- the clock ---------- */
+export function passTime(h){ const V = valley(); V.hour += h; while (V.hour >= 24){ V.hour -= 24; V.day++; } state.campaign.day = `Day ${V.day}, ${timeOfDay(V.hour)}`; }
+export const clockText = () => { const V = valley(); return `Day ${V.day} · ${timeOfDay(V.hour)}`; };
+// Make camp on the road: the night passes, an omen, and maybe something comes to the fire.
+export function makeCamp(L = ui.floor){
+  passTime(8);
+  const omen = pick(NIGHT.omen);
+  showCard({ kind:'', title:'The night on the road', sub:clockText(), flair:omen, lines:['Roll for watches as you like. If the Gaze is 3 or more, something comes to the fire (added to this stretch).'] });
+  log(`🧭 They make camp. ${clockText()}.`);
+  if (state.dread >= 3) newRoadEvent(L);
+  changed(); renderPanel();
+}
 
 /* ---------- what happens on the road ---------- */
 const eventOn = (L, id) => state.floors[L]?.events?.find(e => e.id === id);

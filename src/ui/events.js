@@ -28,6 +28,7 @@ import { setGfx, gfx } from '../render/gfx.js';
 import { openCreator, sheetHTML } from './creator.js';
 import { PROPS } from '../data/props.js';
 import { valleyMapHTML } from './valley.js';
+import { makeCamp } from '../game/overworld.js';
 import { valley, travel, arrive, enterPlace, readEvent, springEvent, doneEvent, newRoadEvent, goToEvent } from '../game/overworld.js';
 import { myHeroes, saveMyHero, deleteMyHero, myHero, applyCharacter, placeCharacter, removeCharacter, myProfile, saveProfile, playerKey, unlockCharacter, setCharacterOwner } from '../game/heroes.js';
 import { putModel, deleteModel } from '../render/models.js';
@@ -137,6 +138,7 @@ document.addEventListener('click', e => {
     case 'valleyGo': ui.valleySel = k; ui.tab = 'valley'; renderTabs(); renderPanel(); $('#tabBody').scrollTop = 0; break;
     case 'valleyTravel': $('#valleyModal').classList.add('hidden'); if (!valley().journey || confirm('The party is already on a road. Set out somewhere else from where they started?')) travel(k); break;
     case 'valleyArrive': arrive(); break;
+    case 'valleyCamp': makeCamp(ui.floor); break;
     case 'valleyShare': valley().shared = !valley().shared; changed(); renderPanel(); toast(valley().shared ? 'The table can see the map (what they have reached).' : 'The map is hidden from the table.'); break;
     case 'goFloor': goFloor(+k); renderPanel(); break;
     case 'valleyEnter': if (confirm('Build this place\'s map? It replaces the current one (the party, their characters and the campaign come along).')) enterPlace(k, id); break;

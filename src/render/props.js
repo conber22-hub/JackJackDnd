@@ -236,4 +236,35 @@ export function treeGeometry(){
   }
   treeGeo = out; return out;
 }
+// A dead tree for the woods (grey trunk, bare branches), and small ground clutter: grass tufts and stones.
+function merged(parts){
+  const out = new THREE.BufferGeometry();
+  for (const k of ['position', 'normal', 'color']){
+    const size = parts[0].attributes[k].itemSize, arr = new Float32Array(parts.reduce((s, p) => s + p.attributes[k].array.length, 0)); let o = 0;
+    for (const p of parts){ arr.set(p.attributes[k].array, o); o += p.attributes[k].array.length; }
+    out.setAttribute(k, new THREE.BufferAttribute(arr, size));
+  }
+  return out;
+}
+function painted(gm, c, m){ gm.applyMatrix4(m); gm = gm.index ? gm.toNonIndexed() : gm; const col = new THREE.Color(c), a = new Float32Array(gm.attributes.position.count * 3); for (let i = 0; i < a.length; i += 3) col.toArray(a, i); gm.setAttribute('color', new THREE.BufferAttribute(a, 3)); return gm; }
+let deadGeo = null, tuftGeo = null, pebbleGeo = null;
+export function deadTreeGeometry(){
+  if (deadGeo) return deadGeo;
+  const m = (x, y, z, rx = 0, rz = 0) => new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(rx, 0, rz)), new THREE.Vector3(1, 1, 1));
+  deadGeo = merged([
+    painted(new THREE.CylinderGeometry(.06, .13, 1.9, 6), '#5a5248', m(0, .95, 0)),
+    painted(new THREE.CylinderGeometry(.025, .05, .8, 5), '#5a5248', m(.22, 1.35, 0, 0, -.9)),
+    painted(new THREE.CylinderGeometry(.02, .045, .7, 5), '#5a5248', m(-.2, 1.55, .05, 0, .8)),
+    painted(new THREE.CylinderGeometry(.02, .04, .6, 5), '#5a5248', m(0, 1.2, .2, .9, 0)),
+    painted(new THREE.CylinderGeometry(.015, .03, .5, 4), '#5a5248', m(.05, 1.75, -.15, -.7, .2)),
+  ]);
+  return deadGeo;
+}
+export function tuftGeometry(){
+  if (tuftGeo) return tuftGeo;
+  const m = (x, z, r) => new THREE.Matrix4().compose(new THREE.Vector3(x, .09, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(r, 0, -r)), new THREE.Vector3(1, 1, 1));
+  tuftGeo = merged([painted(new THREE.ConeGeometry(.035, .2, 3), '#3e5434', m(0, 0, .1)), painted(new THREE.ConeGeometry(.03, .16, 3), '#4a5e3a', m(.05, .03, -.3)), painted(new THREE.ConeGeometry(.03, .18, 3), '#36482e', m(-.04, -.03, .35))]);
+  return tuftGeo;
+}
+export function pebbleGeometry(){ if (!pebbleGeo) pebbleGeo = painted(new THREE.DodecahedronGeometry(.07, 0), '#6a665e', new THREE.Matrix4().makeScale(1, .55, 1.2)); return pebbleGeo; }
 export const treeMaterial = (() => { const m = new THREE.MeshStandardMaterial({ vertexColors:true, roughness:.9 }); m.userData.shared = true; return m; })();

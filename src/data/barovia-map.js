@@ -88,3 +88,13 @@ export const ROAD_EVENTS = [
   { w:2, label:'The road forks', text:'The road forks where it did not before. Both ways look the same. The mist decides.', module:'fork' },
   { w:1, label:'A Vistana on the road', text:'A Vistana walking alone, who will read a single card for anyone who shares their bread. The card is always true.', module:'camp' },
 ];
+
+/* Time and weather on the road. Hours per stretch by kind of way; the weather is rolled per journey. */
+export const WAY_HOURS = { road:2, path:3, trail:4 };
+export const WEATHER = [
+  'Low fog in the hollows; the air does not move.', 'Cold drizzle that never quite becomes rain.', 'Thick mist: ten paces and the world ends.',
+  'A grey sky the colour of a dead fish. No wind at all.', 'Sleet off the mountains, sideways.', 'A break in the clouds — and the sun does not feel warm.',
+  'Heavy rain; the trails turn to mud (half speed off the Svalich Road).', 'Thunder far off over the castle, and no rain at all.',
+  'Snow in the high passes; frost on the road by dusk.', 'A warm wind that smells of wet earth and something sweet underneath it.',
+];
+export const timeOfDay = h => h < 5 ? 'the dead of night' : h < 8 ? 'dawn' : h < 12 ? 'morning' : h < 15 ? 'midday' : h < 18 ? 'afternoon' : h < 21 ? 'dusk' : 'night';

@@ -23,6 +23,11 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 - **The road's events** are violet runes on the map (DM only) and cards in the Valley tab: 📜 read it out, ⚔ spring it (drops the creatures there), ◎ show it, ✓ done. **✦ Something on the road** rolls a new one somewhere ahead of the party.
 - **Arriving.** The last stretch ends at the destination's landmark: the Gates with their headless guardians, the village street in the mist, the gallows at the crossroads, the Vistani camp and its pool, the windmill, a palisade town with its gate, the burned furrow and iron plates of the crash, a castle gatehouse, a lake jetty, a burned hall, a drowned hut, vineyard rows, a ring of stones, a tower in a tarn. **Arrive** marks it on the map and reads the place out; **Enter** builds the place's own map where there is one (the Village → the Village of Barovia, Old Bonegrinder, the Iron Coffin, Vallaki → Saint Andral's, Castle Ravenloft).
 - **Sessions know where they happen**: the Story tab shows a 🧭 link to each session's place.
+- **A map for every place** (`src/engine/settlement.js`): procedural villages (main street, square and well, the church on a rise with its graveyard and the stairs to its undercroft, walk-in tavern and shop, the burgomaster's house, streets of houses and back houses, the Narrow House at the edge of the Village of Barovia), a palisade town with gates (Vallaki — or Saint Andral's, sessions 8–10), a stone-walled village with the abbey road (Krezk), a drowned village of huts on islands and causeways (Berez), the Vistani camp with the reader's tent and the pool (Tser Pool), the vineyard, press house and storehouse over the wine cellars (the Wizard of Wines), a lakeshore with a walkable jetty (Lake Zarovich), the stone ring on Yester Hill, a three-floor tower on an island in a tarn, Argynvostholt (a burned hall), and Castle Ravenloft. The Gates, the crossroads and the Mist Wall use the road's landmark as a map of their own. Layouts can mark stone-wall squares (`masonry`) and bare squares (`clear`, for a palisade prop).
+- **Share the map with the table**: players get a Map tab with only the places they have reached, rumours ("?") of the places next door, the roads between, the lantern, the day and the weather.
+- **Time and weather**: each stretch takes 2–4 hours (road, path, trail); arriving moves the clock on (Day N · dusk); each journey rolls Barovian weather onto the Dark Lord desk; **⛺ Make camp** passes eight hours, reads an omen, and (at Gaze 3+) brings something to the fire.
+- **Build tab → 🏠 Houses**: cottage, house, longhouse, hall, barn, hut, tower and windmill, on bare rock; tap to turn the door, Erase takes it down.
+- **Woods**: some of the trees are dead and grey; grass tufts in the clearings and stones on the roads.
 - New props: the Gates of Barovia, gallows, scarecrow, mist bank, campfire, Vistani wagon, bridge planks, ravens, palisade, rubble, iron hull plate, rowing boat, standing stone, Bloom growth, vine rows. Floors can carry **water** (rivers, ponds, lakes — impassable, drawn as water rather than trees), solid squares, and windmills and towers among the houses.
 
 ## v0.4 — a new campaign: Session 0, Strahd's Gaze, props
@@ -191,6 +196,7 @@ src/engine/             pure logic: no DOM, no Three.js, unit-tested
   importer.js           Battle Table / grid JSON / ASCII import, ASCII & JSON export
   tables.js             roll-table parser
   overland.js           the Valley: routes, journeys, and procedural stretches of road from modules
+  settlement.js         the Valley's places: villages, towns, Krezk, Berez, the camp, the vineyard, the lake, the hill, the tower
 src/game/               rules that touch the scene and UI
   combat.js             initiative, attacks, damage, death hooks, the fx language, round-end Gaze effects
   shift.js              the Shift (rolls the d100 table)
