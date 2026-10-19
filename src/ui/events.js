@@ -26,7 +26,7 @@ import { newDelve, importMap, setAutoLink, removeRoom, populate, clearMonsters, 
 import { populateFloor } from '../engine/generator.js';
 import { setGfx, gfx } from '../render/gfx.js';
 import { openCreator, sheetHTML } from './creator.js';
-import { myHeroes, saveMyHero, deleteMyHero, myHero, applyCharacter, placeCharacter, removeCharacter } from '../game/heroes.js';
+import { myHeroes, saveMyHero, deleteMyHero, myHero, applyCharacter, placeCharacter, removeCharacter, myProfile, saveProfile, playerKey, unlockCharacter, setCharacterOwner } from '../game/heroes.js';
 import { putModel, deleteModel } from '../render/models.js';
 import { buildSessionDelve, placeSessionEncounter, readAloud, tickClock, applyTicks, rollNight, shareNight, setSessionDread, markBeat, printSessions, sessionById, SESSIONS } from '../game/campaign.js';
 
@@ -175,17 +175,21 @@ document.addEventListener('click', e => {
       toast(`Seed "${seed}" — same seed, same dungeon.`); } break;
     case 'continue': { const s = loadLocal(); if (s) loadState(deserialize(s)); } break;
     case 'join': {
-      const code = $('#joinCode').value.trim(), hero = myHero($('#joinHero').value), name = hero ? hero.name : $('#joinName').value.trim();
-      if (!code || !name){ toast('Enter the code, and choose a hero or type a name.'); return; }
-      ui.myHeroId = hero?.id || null; joinTable(code, name, hero); } break;
+      const code = $('#joinCode').value.trim(), hero = myHero($('#joinHero').value), who = signIn();
+      if (!who) return;
+      if (!code){ toast('Enter the table code from your DM.'); return; }
+      ui.myHeroId = hero?.id || null; joinTable(code, who.name, who.key, hero); } break;
     // heroes
-    case 'newHero': openCreator(null, { onSave:h => { saveMyHero(h); renderHeroList(); toast(`${h.name} is ready.`); } }); break;
+    case 'newHero': openCreator(null, { onSave:h => { if (!h.player) h.player = myProfile().name || $('#pName').value.trim(); saveMyHero(h); renderHeroList(); toast(`${h.name} is ready.`); } }); break;
+    case 'newHeroAtTable': openCreator(null, { saveLabel:'Bring to the table', onSave:h => { if (!h.player) h.player = ui.myName; saveMyHero(h); ui.myHeroId = h.id; sendHost({ t:'char', char:h }); toast(`${h.name} sent to the DM.`); renderPanel(); } }); break;
     case 'editHero': { const h = myHero(id); if (h) openCreator(h, { title:`${h.name}`, onSave:h2 => { saveMyHero(h2); renderHeroList(); if (ui.role === 'player'){ sendHost({ t:'char', char:h2 }); toast('Sent to the DM.'); renderPanel(); } } }); } break;
     case 'delHero': if (confirm('Delete this hero from this browser?')){ deleteMyHero(id); renderHeroList(); } break;
     case 'exportHero': { const h = myHero(id); if (h) download(`${h.name.replace(/[^\w]+/g, '-').toLowerCase()}.json`, JSON.stringify(h, null, 1)); } break;
     case 'dmNewChar': openCreator(null, { title:'New character (DM)', saveLabel:'Add to the party', onSave:h => { applyCharacter(h, { owner:'DM' }); renderPanel(); } }); break;
     case 'dmSheet': { const h = state.characters[id]; if (h) openCreator(h, { title:`${h.name}'s sheet`, saveLabel:'Save sheet', onSave:h2 => { applyCharacter(h2, { owner:h.owner }); renderPanel(); } }); } break;
     case 'placeChar': placeCharacter(id); break;
+    case 'unlockChar': if (confirm('Clear this character\'s secret word? The next player to sign in with the owner\'s name gets it.')){ unlockCharacter(id); toast('Unlocked.'); renderPanel(); } break;
+    case 'pickChar': sendHost({ t:'pick', id }); ui.myHeroId = id; renderPanel(); break;
     case 'removeChar': if (confirm('Forget this character sheet? (Its token stays on the map.)')){ removeCharacter(id); renderPanel(); } break;
     case 'closeHelp': $('#helpModal').classList.add('hidden'); break;
   }
@@ -194,6 +198,7 @@ document.addEventListener('change', e => {
   const el = e.target.closest('[data-edit]'); if (!el) return;
   const kind = el.dataset.edit, t = el.dataset.id && tokById(el.dataset.id), sel = ui.selected && tokById(ui.selected);
   if (kind === 'tok' && t){ const fld = el.dataset.f; t[fld] = el.type === 'number' ? (+el.value || 0) : el.value; if (fld === 'maxHp') t.hp = Math.min(t.hp, t.maxHp); if (t.hp > 0 && t.dead && t.kind !== 'monster') t.dead = false; changed(); }
+  else if (kind === 'charOwner'){ setCharacterOwner(el.dataset.id, el.value); renderPanel(); }
   else if (kind === 'atk' && t){ t.attacks = parseAttacks(el.value); changed(); }
   else if (kind === 'room'){ const r = roomById(state.floors[ui.floor], +el.dataset.id); if (!r) return; r[el.dataset.f] = el.value; if (el.dataset.f !== 'notes') buildFloor(ui.floor); renderPanel(); changed(); }
   else if (kind === 'floorName'){ state.floors[ui.floor].name = el.value; renderTop(); changed(); }
@@ -264,12 +269,27 @@ export function renderHeroList(){
   $('#heroList').innerHTML = list.length ? list.map(h => `<div class="herorow">${h.portrait ? `<img src="${h.portrait}" alt="">` : `<span class="dot" style="color:${h.color};background:${h.color}"></span>`}
     <span class="nm"><b>${esc(h.name)}</b> <span class="muted">${esc(h.sp)} ${esc(h.cls)} ${h.lvl}</span></span>
     <button class="btn small" data-act="editHero" data-id="${h.id}">Edit</button><button class="btn small" data-act="exportHero" data-id="${h.id}">⬇</button><button class="btn small danger" data-act="delHero" data-id="${h.id}">✕</button></div>`).join('') : '<div class="muted">No heroes yet.</div>';
-  $('#joinHero').innerHTML = list.map(h => `<option value="${h.id}">${esc(h.name)} — ${esc(h.cls)} ${h.lvl}</option>`).join('') + '<option value="">(no sheet — use a name)</option>';
-  $('#joinNameRow').style.display = list.length ? 'none' : '';
-  $('#joinHero').onchange = () => { $('#joinNameRow').style.display = $('#joinHero').value ? 'none' : ''; };
+  $('#joinHero').innerHTML = list.map(h => `<option value="${h.id}">${esc(h.name)} — ${esc(h.cls)} ${h.lvl}</option>`).join('') + `<option value="">★ My characters at the DM's table${list.length ? '' : ' (or none yet)'}</option>`;
+}
+// The player's name + secret word. The word itself is never stored: only a key made from it.
+function signIn(){
+  const name = $('#pName').value.trim(), word = $('#pWord').value, prof = myProfile();
+  if (!name){ toast('Type your name first (top of the player section).'); $('#pName').focus(); return null; }
+  let key;
+  if (word) key = playerKey(name, word);
+  else if (prof.key && prof.name.toLowerCase() === name.toLowerCase()) key = prof.key;
+  else { toast('Pick a secret word — you\'ll use it to get your characters back on another device.'); $('#pWord').focus(); return null; }
+  saveProfile({ name, key });
+  return { name, key };
+}
+function renderProfile(){
+  const p = myProfile();
+  $('#pName').value = p.name || '';
+  $('#pWord').value = '';
+  $('#pWordHint').textContent = p.key ? '(remembered on this device)' : '';
 }
 export function showStart(){
-  renderHeroList();
+  renderHeroList(); renderProfile();
   const s = loadLocal();
   $('#continueBox').innerHTML = s ? `<h2>Continue</h2><div class="row"><button class="btn primary" data-act="continue">Return to “${esc(s.meta?.name || 'the delve')}” · seed ${esc(s.meta?.seed)}</button></div>` : '';
   $('#newSeed').value = randomSeed();

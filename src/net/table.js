@@ -14,7 +14,7 @@ import { serialize, deserialize, resetScene } from '../game/session.js';
 import { doMove, takeStairs, doPing, goFloor, select, animatePath, doorAction, search, disarmTrap } from '../game/actions.js';
 import { currentTurn, canAct } from '../game/rules.js';
 import { nextTurn } from '../game/combat.js';
-import { applyCharacter } from '../game/heroes.js';
+import { applyCharacter, charactersOf, ownsCharacter, sheetForPlayer, saveMyHero, myHero } from '../game/heroes.js';
 import { cheb } from '../util/core.js';
 import { sfx, onSfx } from '../audio/sound.js';
 import { putModel, allModels, deleteModel } from '../render/models.js';
@@ -37,8 +37,8 @@ export function hostTable(){
 export function closeTable(){ net.peer?.destroy(); net.peer = null; net.conns.clear(); net.code = null; state.seats = {}; renderTop(); renderPanel(); }
 export function broadcast(m, except){ for (const [pid, s] of net.conns) if (pid !== except && s.conn.open) try { s.conn.send(m); } catch {} }
 let pushTimer = null;
-// What players receive: the delve without the DM's campaign desk (notes, fortune, clocks).
-function forPlayers(){ const s = serialize(false); delete s.campaign; return s; }
+// What players receive: the delve without the DM's campaign desk (notes, fortune, clocks) or anyone's character sheets.
+function forPlayers(){ const s = serialize(false); delete s.campaign; delete s.characters; return s; }
 export function pushState(){ if (ui.role !== 'dm' || !net.conns.size) return; clearTimeout(pushTimer); pushTimer = setTimeout(() => broadcast({ t:'state', s:forPlayers() }), 60); }
 
 function onHostMsg(c, m){
@@ -46,14 +46,24 @@ function onHostMsg(c, m){
   const me = tokById(state.seats[c.peer]), mine = id => state.seats[c.peer] === id;
   const near = (L, i) => me && me.floor === L && cheb(me.x, me.y, i % state.floors[L].W, (i / state.floors[L].W) | 0) <= 1;
   if (m.t === 'hello'){
-    seat.name = String(m.name || 'Player').slice(0, 30);
+    seat.name = String(m.name || 'Player').trim().slice(0, 30); seat.key = String(m.key || '').slice(0, 20);
     let match = null;
-    if (m.char?.id && m.char.cls) match = applyCharacter(m.char, { owner:m.char.player || seat.name });
-    match ||= state.tokens.find(t => t.kind === 'pc' && t.name.toLowerCase() === seat.name.toLowerCase() && !Object.values(state.seats).includes(t.id));
-    if (match) state.seats[c.peer] = match.id;
-    toast(`${seat.name} joined${match ? ` as ${match.name}` : ' — seat them in the Table tab'}`);
+    if (m.char?.id && m.char.cls) match = claimSheet(c, seat, m.char);
+    const mineAll = charactersOf(seat.name, seat.key);
+    if (!match && mineAll.length === 1){ const tok = state.tokens.find(t => t.charId === mineAll[0].id); if (!tok || !seatTaken(c.peer, tok.id)) match = applyCharacter(mineAll[0], { owner:seat.name, key:seat.key }); }
+    match ||= state.tokens.find(t => t.kind === 'pc' && t.name.toLowerCase() === seat.name.toLowerCase() && !seatTaken(c.peer, t.id));
+    if (match) seatAt(c.peer, match.id);
+    toast(`${seat.name} joined${match ? ` as ${match.name}` : mineAll.length ? ' — choosing a character' : ' — seat them in the Table tab'}`);
+    c.send({ t:'yours', chars:charactersOf(seat.name, seat.key).map(sheetForPlayer) });
     c.send({ t:'art', art:state.art });
     for (const md of allModels()) c.send({ t:'model', key:md.key, name:md.name, buf:md.buf }); c.send({ t:'state', s:forPlayers() });
+    renderPanel(); pushState();
+  }
+  else if (m.t === 'pick'){
+    const sheet = state.characters[m.id];
+    if (!ownsCharacter(sheet, seat.name, seat.key)){ c.send({ t:'denied', text:'That character belongs to someone else.' }); return; }
+    const t = applyCharacter(sheet, { owner:seat.name, key:seat.key });
+    if (t){ seatAt(c.peer, t.id); toast(`${seat.name} plays ${t.name}.`); }
     renderPanel(); pushState();
   }
   else if (m.t === 'move'){ const t = tokById(m.id); if (t && mine(t.id) && canAct(t)) doMove(t, m.x, m.y); }
@@ -65,7 +75,8 @@ function onHostMsg(c, m){
     if (dr && dr.state !== 'secret' && near(m.floor, dr.i) && ['toggle', 'pick', 'force'].includes(m.act) && canAct(me)) doorAction(me, m.floor, m.id, m.act);
   }
   else if (m.t === 'char' && m.char?.id && m.char.cls){
-    const t = applyCharacter(m.char, { owner:m.char.player || seat.name }); if (t) state.seats[c.peer] = t.id;
+    const t = claimSheet(c, seat, m.char); if (!t) return;
+    seatAt(c.peer, t.id);
     toast(`${seat.name} updated ${m.char.name}.`); renderPanel(); pushState();
   }
   else if (m.t === 'search'){ if (me && canAct(me)) search(me); }
@@ -75,13 +86,34 @@ function onHostMsg(c, m){
   }
 }
 
-export function joinTable(code, name, hero = null){
-  ui.role = 'player'; ui.myName = name; ui.tab = 'hero';
+// A token is taken only by another player who is still connected (seats saved with the delve, or left behind
+// by a dropped phone, don't count) — and a player signing in again on a new device takes their own seat back.
+function seatTaken(peer, tokId){
+  const me = net.conns.get(peer);
+  return Object.entries(state.seats).some(([pid, tid]) => {
+    if (tid !== tokId || pid === peer) return false;
+    const o = net.conns.get(pid); if (!o) return false;
+    return !(o.key && o.key === me?.key && o.name.toLowerCase() === me?.name.toLowerCase());
+  });
+}
+function seatAt(peer, tokId){ for (const [pid, tid] of Object.entries(state.seats)) if (tid === tokId && pid !== peer) delete state.seats[pid]; state.seats[peer] = tokId; }
+// A player brings or updates a sheet. A sheet already locked to someone else's secret word is refused;
+// an unlocked one is claimed by whoever brings it (having the sheet is proof enough).
+function claimSheet(c, seat, sheet){
+  const prev = state.characters[sheet.id];
+  if (prev?.key && !ownsCharacter(prev, seat.name, seat.key)){
+    c.send({ t:'denied', text:`${prev.name} belongs to ${prev.owner || 'another player'} at this table.` }); toast(`${seat.name} tried to bring ${prev.name}, who belongs to ${prev.owner || 'someone else'}.`); return null;
+  }
+  return applyCharacter(sheet, { owner:seat.name, key:seat.key });
+}
+
+export function joinTable(code, name, key, hero = null){
+  ui.role = 'player'; ui.myName = name; ui.tab = 'hero'; ui.tableChars = [];
   $('#startModal').classList.add('hidden'); renderAll();
   net.peer = new Peer();
   net.peer.on('open', () => {
     const c = net.peer.connect('dreaddelve-' + code.toLowerCase(), { reliable:true }); net.host = c;
-    c.on('open', () => { c.send({ t:'hello', name, ...(hero ? { char:hero } : {}) }); toast('Connected — waiting for the DM…'); });
+    c.on('open', () => { c.send({ t:'hello', name, key, ...(hero ? { char:hero } : {}) }); toast('Connected — waiting for the DM…'); });
     c.on('data', onClientMsg);
     c.on('close', () => toast('Disconnected from the table.'));
     setTimeout(() => { if (!c.open) toast('Could not reach that table — check the code.'); }, 9000);
@@ -93,6 +125,13 @@ function onClientMsg(m){
   if (!m) return;
   if (m.t === 'state') applyRemoteState(m.s);
   else if (m.t === 'anim' && state){ animatePath(m.id, m.path, s => { const t = tokById(m.id); if (t){ t.x = s.x; t.y = s.y; } updateVision(); syncTokens(); }, null, m.id === ui.myToken); }
+  else if (m.t === 'yours'){
+    // The DM's copies are the real sheets (they may have been levelled or edited at the table): keep them in this browser.
+    ui.tableChars = (m.chars || []).map(c => { const local = myHero(c.id); const h = { ...c, portrait:c.portrait || local?.portrait }; if (!h.portrait) delete h.portrait; saveMyHero(h); return h; });
+    if (ui.tableChars.length) toast(`Welcome back — ${ui.tableChars.map(c => c.name).join(', ')} ${ui.tableChars.length > 1 ? 'are' : 'is'} at this table.`);
+    renderPanel();
+  }
+  else if (m.t === 'denied'){ toast(m.text); if (ui.myHeroId && !tokById(ui.myToken)) ui.myHeroId = null; renderPanel(); }
   else if (m.t === 'card') showCard(m.c, false);
   else if (m.t === 'ping'){ spawnPing(m.floor, m.x, m.y, m.color); toast(`${m.who} pings the map`); }
   else if (m.t === 'whisper') showWhisper(m.text);
@@ -109,6 +148,7 @@ function applyRemoteState(s){
   if (sameDelve) ns.floors.forEach((f, L) => { if (prev.floors[L].grid.join('') !== f.grid.join('')) moved.push([L, prev.floors[L].grid]); });
   setState(ns);
   const myPrev = ui.myToken; ui.myToken = ns.seats[net.peer?.id] || null;
+  const seatedAs = ns.tokens.find(t => t.id === ui.myToken)?.charId; if (seatedAs && myHero(seatedAs)) ui.myHeroId = seatedAs;
   if (!sameDelve){ resetScene(); ensureFloorViews(); updateVision(); buildAllFloors(); }
   else { ensureFloorViews(); updateVision(); state.floors.forEach((_, L) => { const mv = moved.find(x => x[0] === L); if (mv) animateGridChange(L, mv[1], state.floors[L].grid); else buildFloor(L); }); }
   syncTokens();

@@ -67,11 +67,12 @@ function tokensTab(){
   }
   h += `<div class="row"><input class="txt" style="flex:1" id="newName" placeholder="Name (e.g. Ireena, Father Lucian)"><button class="btn small" data-act="addPc">+ Hero</button><button class="btn small" data-act="addNpc">+ Ally NPC</button></div>`;
   const chars = Object.values(state.characters || {});
-  h += `<h3>Characters (${chars.length})</h3><div class="muted">Every sheet your players bring is kept here, in this campaign's save — even after they leave the table.</div>`;
+  h += `<h3>Characters (${chars.length})</h3><div class="muted">Every sheet your players bring is kept here, in this campaign's save — even after they leave the table. A player who signs in with the same name and secret word gets theirs back on any device. 🔒 = locked to that player's secret word.</div>`;
   for (const c of chars){
     const tok = state.tokens.find(t => t.charId === c.id), st = heroStats(c);
-    h += `<div class="card"><div class="hd"><span class="dot" style="color:${c.color};background:${c.color}"></span><span class="nm">${esc(c.name)} <span class="muted">${esc(c.sp)} ${esc(c.cls)} ${st.L}${c.owner ? ` · 🎮 ${esc(c.owner)}` : ''}</span></span>
+    h += `<div class="card"><div class="hd"><span class="dot" style="color:${c.color};background:${c.color}"></span><span class="nm">${esc(c.name)} <span class="muted">${esc(c.sp)} ${esc(c.cls)} ${st.L}</span></span>
       <button class="btn small" data-act="dmSheet" data-id="${c.id}">Sheet</button>${tok ? '' : `<button class="btn small" data-act="placeChar" data-id="${c.id}">Place</button>`}<button class="btn small danger" data-act="removeChar" data-id="${c.id}">✕</button></div>
+      <div class="row"><label class="muted" style="flex:1">🎮 Player <input class="txt" style="width:auto" data-edit="charOwner" data-id="${c.id}" value="${esc(c.owner || '')}" placeholder="their sign-in name"></label>${c.key ? `<span title="Locked to the player's secret word">🔒</span><button class="btn small" data-act="unlockChar" data-id="${c.id}" title="They forgot their word? Clear it.">Unlock</button>` : ''}</div>
       <div class="stat">AC ${st.ac} · HP ${st.hp} · Speed ${st.spd} · PP ${st.passive}${st.dc ? ` · Spell DC ${st.dc}` : ''}${c.goBackFor ? ` · would go back for <i>${esc(c.goBackFor)}</i>` : ''}${c.homeSmell ? ` · home smells of <i>${esc(c.homeSmell)}</i>` : ''}</div></div>`;
   }
   h += `<div class="row"><button class="btn small primary" data-act="dmNewChar">✚ Create a character</button></div>`;
@@ -232,10 +233,13 @@ function tableTab(){
   return h;
 }
 
+const newAtTable = () => net.host?.open ? `<div class="row"><button class="btn small" data-act="newHeroAtTable">✚ Make a new character</button></div>` : '';
 function heroTab(){
   const me = tokById(ui.myToken);
   let h = `<h3>Your hero</h3>`;
-  if (!me) h += `<div class="muted">${net.host?.open ? 'Connected. Waiting for the DM to seat you at the table…' : 'Connecting to the table…'}</div>`;
+  const others = (ui.tableChars || []).filter(c => c.id !== me?.charId);
+  const picker = others.length ? `<div class="muted">${me ? 'Your other characters at this table:' : 'Your characters at this table — who are you playing tonight?'}</div><div class="row">${others.map(c => `<button class="btn small${me ? '' : ' primary'}" data-act="pickChar" data-id="${c.id}">${esc(c.name)} · ${esc(c.cls)} ${c.lvl}</button>`).join('')}</div>` : '';
+  if (!me) h += `<div class="muted">${net.host?.open ? (others.length ? '' : 'Connected. Waiting for the DM to seat you — or make your character now.') : 'Connecting to the table…'}</div>` + picker + newAtTable();
   else if (me.flags.taken) h += `<div class="card"><div class="fam-seep">☣ The Seep has taken ${esc(me.name)}. Wait for the DM.</div></div>`;
   else {
     const turn = currentTurn()?.id === me.id, st = onStairs(me);
@@ -245,6 +249,7 @@ function heroTab(){
       ${me.conds?.length ? `<div>${condChips(me, false)}</div>` : ''}
       <div class="row"><button class="btn small" data-act="sel" data-id="${me.id}">Select & show moves</button><button class="btn small" data-act="search">🔍 Search</button>${st ? `<button class="btn small primary" data-act="stairs">${st === 'down' ? '▼ Descend' : '▲ Ascend'}</button>` : ''}${turn ? `<button class="btn small primary" data-act="endMyTurn">End my turn</button>` : ''}</div></div>`;
     if (sheet) h += sheetHTML(sheet) + `<div class="row"><button class="btn small" data-act="editHero" data-id="${sheet.id}">✎ Edit / level up</button></div>`;
+    h += picker + newAtTable();
     h += `<div class="muted">${state.combat.active ? (turn ? '<b style="color:var(--candle)">It is your turn.</b> Tap a glowing tile to move.' : 'Combat — wait for your turn to move.') : 'Exploring — tap your hero, then a glowing tile.'}<br>Tap a door next to you to open it. Long-press or use ◎ to ping a spot for everyone.</div>`;
   }
   h += gfxPanel() + `<h3>Log</h3><div class="log">${logList(25)}</div>`;

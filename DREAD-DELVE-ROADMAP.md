@@ -8,7 +8,8 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ## How to run it
 
-- **Just play:** double-click `dread-delve.html` (Chrome or Edge). Everything, including Three.js and PeerJS, is baked into that one file, so the 3D works offline. Multiplayer still needs internet, because players find each other through the free PeerJS server.
+- **Play online:** https://conber22-hub.github.io/JackJackDnd/. `.github/workflows/pages.yml` builds and publishes it on every push to the default branch (one-time setup: repo Settings → Pages → Source: **GitHub Actions**). Saves live in each browser, per address: a delve saved from the offline file doesn't show up online, so use Export / Import to move it.
+- **Just play offline:** double-click `dread-delve.html` (Chrome or Edge). Everything, including Three.js and PeerJS, is baked into that one file, so the 3D works offline. Multiplayer still needs internet, because players find each other through the free PeerJS server.
 - **Edit it:** `npm install` once, then `npm run dev`, then open http://localhost:5173. Changes show up live.
 - **Bake a new single file:** `npm run build` writes `dread-delve.html` (copied from `dist/index.html`). Commit it so players always get the latest version.
 - **Tests:** `npm test` runs the engine tests (generator, stairs alignment, doors, tables, import).
@@ -118,6 +119,11 @@ v0.1's single file is now a Vite project. `npm run build` bakes it back into one
   - A portrait, and the Session Zero questions (who they'd go back for, what they're ashamed of, why they walk into the fog, the smell of home).
   - A live character sheet as they build.
 - **Heroes are kept in the player's browser.** When they join a table, the sheet is sent to the DM: the token appears with the right AC, HP, speed, initiative, per-ability saves, passive Perception, attacks, and castable spells.
+- **Signing in.** Players type a name and a secret word on the start screen. The DM's campaign save remembers which sheets belong to whom (only a key made from the word is stored, never the word).
+  - Next session, on any phone or computer, they join with the same name and word and choose **★ My characters at the DM's table**. With one character they're seated straight away; with several, they pick from their Your hero tab, which can also make a new character mid-session.
+  - Their sheets are copied back into that browser, including any changes the DM made.
+  - Locked sheets (🔒) can't be taken by someone else typing the same name. In Characters the DM can change a sheet's player, or **Unlock** it if someone forgets their word.
+  - This is table-level privacy, not real accounts: there is no server, so the DM's browser (or an exported save) is where the characters live. Export the campaign now and then as a backup.
 - **The player can level up** from their Your hero tab, and the DM's token updates while keeping damage.
 - **The DM's Tokens tab → Characters** keeps every sheet in the campaign save. From there you can open it, edit it, place it, or create characters yourself.
 - **New campaigns start with an empty party** (tick the demo-party box for Gribbles and friends).

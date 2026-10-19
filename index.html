@@ -290,6 +290,22 @@ textarea.txt{min-height:70px;resize:vertical;font-size:13px}
     <div class="tribute">For Chance — who never let a dungeon stay boring.</div>
     <div class="muted">Beneath Saint Andral's church the font is still running, and what runs down into the silver mine is not water. Build the descent, drop the horrors in, and let the table walk it together.</div>
     <div id="continueBox"></div>
+    <h2>Players: who are you?</h2>
+    <div class="muted">Pick your name and a secret word. Use the same two on any phone or computer and the DM's table hands your characters back.</div>
+    <div class="grid2">
+      <div><label class="muted">Your name</label><input class="txt" id="pName" placeholder="e.g. Sam" autocomplete="username"></div>
+      <div><label class="muted">Secret word <span id="pWordHint"></span></label><input class="txt" id="pWord" type="password" placeholder="any word you'll remember" autocomplete="current-password"></div>
+    </div>
+    <h2>Your heroes</h2>
+    <div class="muted">Make your character here. It stays in this browser, and the DM keeps a copy once you join their table.</div>
+    <div id="heroList"></div>
+    <div class="row"><button class="btn primary" data-act="newHero">✚ Create a character</button></div>
+    <h2>Join a table</h2>
+    <div class="grid2">
+      <div><label class="muted">Table code from your DM</label><input class="txt" id="joinCode" placeholder="e.g. HX7Q" autocapitalize="characters"></div>
+      <div><label class="muted">Playing as</label><select class="txt" id="joinHero"></select></div>
+    </div>
+    <div class="row"><button class="btn" data-act="join">Join the table</button></div>
     <h2>Run a new delve (Dungeon Master)</h2>
     <div><label class="muted">Template</label><select class="txt" id="newTemplate"></select></div>
     <div class="muted" id="newBlurb" style="margin:4px 0 8px"></div>
@@ -299,18 +315,7 @@ textarea.txt{min-height:70px;resize:vertical;font-size:13px}
     </div>
     <div class="row"><button class="btn primary" data-act="startNew">Descend as DM</button></div>
     <label class="beat" style="margin-top:6px"><input type="checkbox" id="newDemoParty"><span>Bring the demo party (Gribbles, Mulan, Milson, Alexander, Vlad). Leave it off for a new campaign — players bring their own characters.</span></label>
-    <h2>Your heroes (Player)</h2>
-    <div class="muted">Make your character here. It stays in this browser and goes with you to any table you join.</div>
-    <div id="heroList"></div>
-    <div class="row"><button class="btn primary" data-act="newHero">✚ Create a character</button></div>
-    <h2>Join a table</h2>
-    <div class="grid2">
-      <div><label class="muted">Table code from your DM</label><input class="txt" id="joinCode" placeholder="e.g. HX7Q"></div>
-      <div><label class="muted">Playing as</label><select class="txt" id="joinHero"></select></div>
-    </div>
-    <div class="row" id="joinNameRow"><div style="flex:1"><label class="muted">…or just a name (no sheet)</label><input class="txt" id="joinName" placeholder="e.g. Gribbles"></div></div>
-    <div class="row"><button class="btn" data-act="join">Join the table</button></div>
-    <div class="muted" style="margin-top:12px">Players open this same file on their own device. Voice stays on Discord — this handles the map, the minis and the dread.</div>
+    <div class="muted" style="margin-top:12px">Players open this same page on their own phone or computer. Voice stays on Discord — this handles the map, the minis and the dread.</div>
   </div>
 </div>
 
