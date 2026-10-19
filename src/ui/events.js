@@ -27,6 +27,8 @@ import { populateFloor } from '../engine/generator.js';
 import { setGfx, gfx } from '../render/gfx.js';
 import { openCreator, sheetHTML } from './creator.js';
 import { PROPS } from '../data/props.js';
+import { valleyMapHTML } from './valley.js';
+import { valley, travel, arrive, enterPlace, readEvent, springEvent, doneEvent, newRoadEvent, goToEvent } from '../game/overworld.js';
 import { myHeroes, saveMyHero, deleteMyHero, myHero, applyCharacter, placeCharacter, removeCharacter, myProfile, saveProfile, playerKey, unlockCharacter, setCharacterOwner } from '../game/heroes.js';
 import { putModel, deleteModel } from '../render/models.js';
 import { buildSessionDelve, placeSessionEncounter, readAloud, tickClock, applyTicks, rollNight, shareNight, setSessionGaze, markBeat, printSessions, sessionById, SESSIONS } from '../game/campaign.js';
@@ -127,7 +129,21 @@ document.addEventListener('click', e => {
     case 'gfxT': setGfx({ [k]:!gfx[k] }); renderPanel(); break;
     case 'clearModel': deleteModel(k).then(() => { broadcast({ t:'model', key:k, buf:null }); renderPanel(); }); break;
     // story tab
-    case 'session': state.campaign.session = +k; changed(); renderPanel(); $('#tabBody').scrollTop = 0; break;
+    case 'session': state.campaign.session = +k; if (ui.tab === 'valley') ui.tab = 'story'; renderTabs(); changed(); renderPanel(); $('#tabBody').scrollTop = 0; break;
+    // the valley (overworld)
+    case 'valleySel': ui.valleySel = k; renderPanel(); if (!$('#valleyModal').classList.contains('hidden')) $('#valleyBox').innerHTML = valleyMapHTML(); break;
+    case 'valleyMap': $('#valleyBox').innerHTML = valleyMapHTML(); $('#valleyModal').classList.remove('hidden'); break;
+    case 'valleyMapClose': $('#valleyModal').classList.add('hidden'); break;
+    case 'valleyGo': ui.valleySel = k; ui.tab = 'valley'; renderTabs(); renderPanel(); $('#tabBody').scrollTop = 0; break;
+    case 'valleyTravel': $('#valleyModal').classList.add('hidden'); if (!valley().journey || confirm('The party is already on a road. Set out somewhere else from where they started?')) travel(k); break;
+    case 'valleyArrive': arrive(); break;
+    case 'goFloor': goFloor(+k); renderPanel(); break;
+    case 'valleyEnter': if (confirm('Build this place\'s map? It replaces the current one (the party, their characters and the campaign come along).')) enterPlace(k); break;
+    case 'evRead': readEvent(+k, +id); break;
+    case 'evSpring': springEvent(+k, +id); renderPanel(); break;
+    case 'evGo': goToEvent(+k, +id); break;
+    case 'evDone': doneEvent(+k, +id); renderPanel(); break;
+    case 'roadNew': newRoadEvent(ui.floor); break;
     case 'sessGaze': setSessionGaze(+k); break;
     case 'readOpen': { const se = sessionById(k); readAloud(se.title, se.open); } break;
     case 'readEnd': { const se = sessionById(k); readAloud(`End of session ${se.n}`, se.ending); } break;

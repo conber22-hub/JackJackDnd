@@ -3,6 +3,7 @@ import { writeFileSync } from 'node:fs';
 import { CAMPAIGN, SESSIONS, CLOCKS, CAST, NIGHT } from '../src/data/campaign.js';
 import { BEST } from '../src/data/bestiary.js';
 import { TEMPLATES } from '../src/data/themes.js';
+import { VALLEY_PLACES, VALLEY_ROADS } from '../src/data/barovia-map.js';
 
 const strip = s => String(s).replace(/<\/?b>/g, '**').replace(/<[^>]+>/g, '');
 const name = id => BEST[id]?.name || id, cr = id => BEST[id]?.cr ?? '?';
@@ -10,7 +11,10 @@ const out = [`# ${CAMPAIGN.name}`, '', `*${CAMPAIGN.tagline}*`, '', `${CAMPAIGN.
   '> This guide reprints nothing from the module. Run each location from your own book; use this for what the Flood Edition changes.', '',
   '## Pillars', ...CAMPAIGN.pillars.map(p => `- ${p}`), '', '## The Seeded rule', strip(CAMPAIGN.seeded), '', '## Salt', strip(CAMPAIGN.salt), '',
   '## Strahd\'s Gaze and the Whim Die', 'The top bar\'s **Gaze** (1–10) is how closely the Count is watching: thicker mist, redder light, his creatures fight harder, the dead rise, and from 8 his voice charms a hero each round. The **Whim Die** (d4 → d12) is how he toys with the heroes; it grows when his creatures fall and when they catch his eye.', '',
-  '## Clocks', ...CLOCKS.map(c => `- **${c.label}** (${c.max}, starts at ${c.start}) — ${c.full}`), ''];
+  '## Clocks', ...CLOCKS.map(c => `- **${c.label}** (${c.max}, starts at ${c.start}) — ${c.full}`), '',
+  '## The valley (the Valley tab)', 'Pick a place on the map and the app builds the road there as a chain of maps, with something different on it each journey. Arriving at a place with its own map offers to build it.', '',
+  ...VALLEY_PLACES.map(p => `- **${p.name}**${p.sessions.length ? ` (session${p.sessions.length > 1 ? 's' : ''} ${p.sessions.join(', ')})` : ''} — ${p.blurb}`), '',
+  '**Roads.** ' + VALLEY_ROADS.map(r => `${r.name} (${VALLEY_PLACES.find(p => p.id === r.a).name} – ${VALLEY_PLACES.find(p => p.id === r.b).name}, ${r.len} stretch${r.len > 1 ? 'es' : ''})`).join(' · '), ''];
 for (const s of SESSIONS){
   out.push(`## Session ${s.n} · ${s.title}`, '', `*Level ${s.level} · start at Gaze ${s.gaze} · ${s.length}*`, '',
     `**Hook.** ${s.hook}`, '', s.premise, '', `**From your book.** ${s.book}`, '', `**Flood Edition.** ${s.flood}`, '', `> ${s.open}`, '');

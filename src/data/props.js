@@ -3,7 +3,7 @@
    work on Roll20 and Foundry. A prop sits at x, y (its top-left square), covers w × h squares, and turns
    in quarter turns (rot 0–3). The 3D pieces are built in render/props.js.
    cat groups the palette in the Build tab. */
-export const PROP_CATS = { tavern:'Tavern & house', village:'Village', road:'Road & wild', dungeon:'Dungeon' };
+export const PROP_CATS = { tavern:'Tavern & house', village:'Village', road:'Road & wild', barovia:'Barovia', dungeon:'Dungeon' };
 
 export const PROPS = {
   // tavern & house
@@ -50,6 +50,22 @@ export const PROPS = {
   bush:       { n:'Bush',            cat:'road',    w:1, h:1 },
   milestone:  { n:'Milestone',       cat:'road',    w:1, h:1 },
   lantern:    { n:'Lantern',         cat:'road',    w:1, h:1 },
+  // Barovia (the overworld)
+  gates:      { n:'The Gates of Barovia', cat:'barovia', w:2, h:5 },
+  gallows:    { n:'Gallows',         cat:'barovia', w:2, h:2 },
+  scarecrow:  { n:'Scarecrow',       cat:'barovia', w:1, h:1 },
+  mist:       { n:'Mist bank',       cat:'barovia', w:2, h:2 },
+  campfire:   { n:'Campfire',        cat:'barovia', w:1, h:1 },
+  vardo:      { n:'Vistani wagon',   cat:'barovia', w:1, h:2 },
+  bridge:     { n:'Bridge planks',   cat:'barovia', w:1, h:1 },
+  ravens:     { n:'Ravens',          cat:'barovia', w:1, h:1 },
+  palisade:   { n:'Palisade',        cat:'barovia', w:1, h:1 },
+  rubble:     { n:'Rubble',          cat:'barovia', w:1, h:1 },
+  hull:       { n:'Iron hull plate', cat:'barovia', w:2, h:2 },
+  boat:       { n:'Rowing boat',     cat:'barovia', w:1, h:2 },
+  stone:      { n:'Standing stone',  cat:'barovia', w:1, h:1 },
+  bloomgrowth:{ n:'Bloom growth',    cat:'barovia', w:1, h:1 },
+  vines:      { n:'Vine row',        cat:'barovia', w:1, h:3 },
   // dungeon
   chest:      { n:'Chest',           cat:'dungeon', w:1, h:1 },
   altar:      { n:'Altar',           cat:'dungeon', w:1, h:2 },

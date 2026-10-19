@@ -16,6 +16,15 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v0.5 — the Valley: a Barovian overworld
+
+- **The Valley tab** (DM) shows a map of Barovia: 16 places (the Mist Wall, the Gates, the Village, the Gallows Crossroads, Castle Ravenloft, the Iron Coffin, Tser Pool, Old Bonegrinder, Vallaki, Lake Zarovich, Argynvostholt, Berez, the Wizard of Wines, Krezk, Yester Hill, the Lonely Tower) joined by 15 named roads, paths and trails, with forests, the river, the lakes and mist around the edge. A lantern marks the party; places they haven't reached are dim. **⤢ Enlarge** opens it big.
+- **Travel.** Tap a place, then **Set out**: the app finds the way along the roads and builds it as a chain of maps (one per stretch of road, at most six), with the party at the start. Each stretch is generated from modules (`src/engine/overland.js`): a winding road with bends, sometimes a river and a bridge, and roadside set pieces (a wolf den, a scarecrow field, a hanging tree, roadside graves, an abandoned Vistani wagon, a wayside shrine, a raven's tree, a black pond, a lonely farmstead, standing stones, a bank of mist, a fork that wasn't there). The road's **shape** is seeded by the road, so it's the same road every time; **what's on it** is rolled per journey from `ROAD_EVENTS` (wolves, the Count's hounds, ghouls dragging a coffin, the Mist Thing, a rider in fine clothes, the Bloom once it's loose…), and the Gaze unlocks the nastier ones.
+- **The road's events** are violet runes on the map (DM only) and cards in the Valley tab: 📜 read it out, ⚔ spring it (drops the creatures there), ◎ show it, ✓ done. **✦ Something on the road** rolls a new one somewhere ahead of the party.
+- **Arriving.** The last stretch ends at the destination's landmark: the Gates with their headless guardians, the village street in the mist, the gallows at the crossroads, the Vistani camp and its pool, the windmill, a palisade town with its gate, the burned furrow and iron plates of the crash, a castle gatehouse, a lake jetty, a burned hall, a drowned hut, vineyard rows, a ring of stones, a tower in a tarn. **Arrive** marks it on the map and reads the place out; **Enter** builds the place's own map where there is one (the Village → the Village of Barovia, Old Bonegrinder, the Iron Coffin, Vallaki → Saint Andral's, Castle Ravenloft).
+- **Sessions know where they happen**: the Story tab shows a 🧭 link to each session's place.
+- New props: the Gates of Barovia, gallows, scarecrow, mist bank, campfire, Vistani wagon, bridge planks, ravens, palisade, rubble, iron hull plate, rowing boat, standing stone, Bloom growth, vine rows. Floors can carry **water** (rivers, ponds, lakes — impassable, drawn as water rather than trees), solid squares, and windmills and towers among the houses.
+
 ## v0.4 — a new campaign: Session 0, Strahd's Gaze, props
 
 - **The threshold.** The start page is now the Dark Powers' invitation: a slow crimson spiral, drifting fog, a pair of eyes that open now and then, and lines in their voice. Two arched doors: *Take the Count's seat* (DM: continue, **Begin Session Zero**, or pick any dungeon from Foundry-style world cards) and *Accept the invitation* (players: sign in, hero cards, join with the code). It remembers which door you used last.
@@ -170,6 +179,7 @@ src/data/               ← the content. Edit freely.
   dread.js              Strahd's Gaze 1–10 (look + rules + read-aloud), whispers, conditions
   props.js              PROPS (furniture & scenery for the Build tab), footprints
   session0.js           Session 0's hand-built maps: tavern, village, the Old Salt Road
+  barovia-map.js        the Valley: places, roads, and what the road throws at travellers
   bestiary.js           FAMILIES, BESTIARY, default party
   themes.js             floor themes (+ denizens, Grok prompts) and TEMPLATES
   rooms.js              room types & names, TRAP_KINDS, DOOR_STATES
@@ -180,10 +190,12 @@ src/engine/             pure logic: no DOM, no Three.js, unit-tested
   grid.js               movement, sight, passive Perception
   importer.js           Battle Table / grid JSON / ASCII import, ASCII & JSON export
   tables.js             roll-table parser
+  overland.js           the Valley: routes, journeys, and procedural stretches of road from modules
 src/game/               rules that touch the scene and UI
   combat.js             initiative, attacks, damage, death hooks, the fx language, round-end Gaze effects
   shift.js              the Shift (rolls the d100 table)
   whim.js               the Whim Die
+  overworld.js          travelling: set out, the road's events, arrive, enter a place
   actions.js            select, move (doors / traps), stairs, falling, doors, search, disarm, floors, dread
   build.js              Build tools, templates, populate, add/remove floors, import
   rules.js              movement allowance, conditions
@@ -203,9 +215,10 @@ src/engine/hero.js      character sheet → stats, attacks, spells, token (pure,
 src/game/campaign.js    building session dungeons, placing encounters, clocks, printing the guide
 src/game/heroes.js      players' heroes (their browser) and the DM's character roster
 src/ui/creator.js       the character creator
+src/ui/valley.js        the Valley tab and its map (SVG)
 src/render/textures.js · post.js · models.js · gfx.js   Phase 4: textures, post-processing, GLB models, quality settings
 src/ui/                 hud.js (top bar, dock, cards) · panels.js (tabs) · input.js (taps & drags) · events.js (buttons)
-tests/engine.test.js    node --test
+tests/engine.test.js · hero.test.js · overland.test.js    node --test
 ```
 
 ## Adding a monster

@@ -8,10 +8,12 @@ import { THEMES, TEMPLATES, themeIndex } from '../data/themes.js';
 import { ROOM_NAMES } from '../data/rooms.js';
 import { BEST } from '../data/bestiary.js';
 import { T, walk } from './tiles.js';
+import { journeySpecs } from './overland.js';
 import { state, makeMonster } from './state.js';
 
 const DEEP = ['hands', 'undertow', 'womb', 'ossuary'];
 export function templateSpecs(meta){
+  if (meta.template === 'journey' && meta.journey) return journeySpecs(meta.journey);
   const tpl = TEMPLATES.find(t => t.id === meta.template) || TEMPLATES[0], out = [];
   for (let L = 0; L < meta.floors; L++){
     if (tpl.floors[L]) out.push(tpl.floors[L]);
@@ -89,7 +91,8 @@ export function genFloor(L, W, H, rng, anchor, isLast, spec = {}){
 /* A hand-built floor from a template's layout (the Session 0 tavern, village and road):
    rooms [x, y, w, h, type, name, notes, { outdoor }] · paths { w, pts:[x0, y0, x1, y1, …] } (straight runs,
    w squares wide) · doors [x, y, state] · buildings { x, y, w, h, name, door } · props [kind, x, y, rot]
-   · up / down [x, y] · exits { up, down } (what the stairs are called here). */
+   · up / down [x, y] · exits { up, down } (what the stairs are called here) · water [[x, y]…] · fill [[x, y]…]
+   (squares forced solid) · events [{ label, text, enc, x, y }] (the road's random happenings, see overland.js). */
 export function layoutFloor(L, W, H, spec, anchor, isLast = true){
   const lay = spec.layout, theme = themeIndex(spec.theme), th = THEMES[theme];
   const f = { level:L, W, H, theme, name:lay.name || th.name, rooms:[], nextId:0, edges:[], corridors:[], autoLink:false,
@@ -113,7 +116,11 @@ export function layoutFloor(L, W, H, spec, anchor, isLast = true){
     const far = f.rooms.reduce((a, r) => Math.abs(r.cx - from.x) + Math.abs(r.cy - from.y) > Math.abs(a.cx - from.x) + Math.abs(a.cy - from.y) ? r : a, f.rooms[0]);
     f.down = { x:far.cx, y:far.cy };
   }
+  f.filled = (lay.fill || []).map(([x, y]) => y * W + x).filter(i => !(f.up && i === f.up.y * W + f.up.x));
   carve(f);
+  // water (rivers, ponds, lakes) is impassable; it is drawn as water instead of trees
+  f.water = [...new Set((lay.water || []).map(([x, y]) => y * W + x))].filter(i => !walk(f.grid[i]));
+  f.events = (lay.events || []).map(e => ({ id:f.nextObj++, ...e, done:false }));
   for (const [x, y, state = 'closed'] of lay.doors || []){ const i = y * W + x; if (walk(f.grid[i])) f.doors.push({ id:f.nextObj++, i, state, dc:state === 'locked' ? 15 : 14 }); }
   for (const [x, y, kind = 'pit'] of lay.traps || []){ const i = y * W + x; if (walk(f.grid[i])) addTrap(f, i, kind); }
   f.buildings = (lay.buildings || []).map(b => ({ ...b }));

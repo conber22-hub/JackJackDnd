@@ -29,6 +29,28 @@ The top bar's **Gaze** (1–10) is how closely the Count is watching: thicker mi
 - **Abbey mercy** (4, starts at 0) — The Abbot's experiments reach the Bloom. Krezk gets a Bloom farm.
 - **The salt runs out** (6, starts at 0) — There is no salt left to lay on the dead. Every unburied body in the valley rises Seeded by the next dawn.
 
+## The valley (the Valley tab)
+Pick a place on the map and the app builds the road there as a chain of maps, with something different on it each journey. Arriving at a place with its own map offers to build it.
+
+- **The Mist Wall** (session 0) — Where the Salt Road ended. Behind them, fog the colour of old pewter. There is no way back through it.
+- **The Gates of Barovia** (session 1) — Two stone guardians, headless, either side of a gate that opens for you and does not open again.
+- **Village of Barovia** (sessions 1, 2, 3) — Shuttered houses in permanent fog, a tavern with one lit window, a church on a rise — and the tall narrow house at the edge of town.
+- **The Gallows Crossroads** (session 4) — Where the Svalich Road meets the river and the castle road. A gallows that is never empty for long.
+- **Castle Ravenloft** — On its pillar of rock above the valley. The bridge, the gate, the dinner table. Not yet.
+- **The Iron Coffin** (session 5) — A burned furrow through the Svalich Woods, and at the end of it the iron thing that fell. Wolves will not go near.
+- **Tser Pool** (session 4) — Painted wagons, a fire that is always lit, a pool that reflects the wrong sky. The cards are read here.
+- **Old Bonegrinder** (session 6) — A crooked windmill on a hill above the road, and the smell of baking that never quite covers the other smell.
+- **Vallaki** (sessions 7, 8, 9, 10) — A palisade town on the lake that insists, loudly, that all will be well. Saint Andral's church is here.
+- **Lake Zarovich** — Black water, a fisherman's jetty, and a mist that sits on the lake like a lid.
+- **Argynvostholt** — A burned mansion on the cliffs where an old order of knights failed. Its beacon has been dark a long time.
+- **Berez** — A drowned village in the river marsh. Huts on stilts, and one that walks.
+- **The Wizard of Wines** — Vineyards on a slope, a winery that keeps the valley drinking — and a last wagon that never arrived.
+- **Krezk** — A walled village under the abbey on the mountain. The gate opens for those who bring wine.
+- **Yester Hill** — A bare hill with a ring of stones and a tree that is not a tree. The druids sing to it.
+- **The Lonely Tower** — A stone tower on an island in a tarn. Someone has been living in it who does not want visitors.
+
+**Roads.** Out of the mist (The Mist Wall – The Gates of Barovia, 1 stretch) · Old Svalich Road (the gates) (The Gates of Barovia – Village of Barovia, 2 stretches) · Old Svalich Road (Village of Barovia – The Gallows Crossroads, 2 stretches) · The castle road (The Gallows Crossroads – Castle Ravenloft, 2 stretches) · The burned cut (The Gallows Crossroads – The Iron Coffin, 2 stretches) · The Tser Pool path (The Gallows Crossroads – Tser Pool, 1 stretch) · Old Svalich Road (west) (Tser Pool – Old Bonegrinder, 2 stretches) · Old Svalich Road (to Vallaki) (Old Bonegrinder – Vallaki, 2 stretches) · The lake path (Vallaki – Lake Zarovich, 1 stretch) · The cliff path (Vallaki – Argynvostholt, 2 stretches) · The river path (Vallaki – Berez, 2 stretches) · Old Svalich Road (to Krezk) (Vallaki – The Wizard of Wines, 2 stretches) · The Krezk road (The Wizard of Wines – Krezk, 2 stretches) · The hill path (Krezk – Yester Hill, 1 stretch) · The tarn path (Berez – The Lonely Tower, 2 stretches)
+
 ## Session 0 · Session Zero — Salt for the Lantern & Ladle
 
 *Level 1 · start at Gaze 1 · 3–4 hours*

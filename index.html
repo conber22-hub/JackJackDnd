@@ -323,6 +323,38 @@ textarea.txt{min-height:70px;resize:vertical;font-size:13px}
 @media (max-width:860px){ .th-steps{grid-template-columns:1fr} .th-doors{grid-template-columns:1fr} .th-door{border-radius:120px 120px 18px 18px;padding:34px 16px 20px} }
 @media (max-width:560px){ .th-feature,.th-continue{flex-direction:column} .th-feature-art{flex-basis:70px} .th-feature-body{padding:0 14px 14px} .th-eyes{gap:30px} }
 @media (prefers-reduced-motion:reduce){ .th-bg *,.th-title,.th-sigil,.th-panel{animation:none!important} .th-eyes i{transform:none;opacity:.5} }
+
+/* ---------- the Valley tab: the map of Barovia ---------- */
+.valley-map{display:block;width:100%;height:auto;border-radius:14px;border:1px solid #3a3326;margin:8px 0;background:#0b0d0a;box-shadow:inset 0 0 40px rgba(0,0,0,.7)}
+.valley-map .vtrees path{fill:#1f3324;opacity:.8}
+.valley-map .vpeaks path{fill:none;stroke:#4a4640;stroke-width:.35;stroke-linejoin:round}
+.valley-map .vriver{fill:none;stroke:#2e4a5a;stroke-width:.9;stroke-linecap:round;opacity:.85}
+.valley-map .vlake{fill:#1a2e3a;stroke:#2e4a5a;stroke-width:.3}
+.valley-map .vroad{fill:none;stroke:#8a7a5a;stroke-width:.55;stroke-linecap:round;opacity:.75}
+.valley-map .vroad.path{stroke-dasharray:1.4 .9;stroke-width:.45}
+.valley-map .vroad.trail{stroke-dasharray:.4 .8;stroke-width:.45}
+.valley-map .vroad.on{stroke:#e9a54a;opacity:1;stroke-width:.8;filter:drop-shadow(0 0 1px #e9a54a)}
+.valley-map .vplace{cursor:pointer}
+.valley-map .vplace .halo{fill:transparent}
+.valley-map .vplace .dot{fill:#2a2420;stroke:#8a7a5a;stroke-width:.3}
+.valley-map .vplace.seen .dot{fill:#4a3a24;stroke:#e9c48a}
+.valley-map .vplace.unseen{opacity:.6}
+.valley-map .vplace .halo,.valley-map .vlantern circle{transform-box:fill-box;transform-origin:center}
+.valley-map .vplace.sel .halo{fill:none;stroke:#e9a54a;stroke-width:.35;stroke-dasharray:1 .6;animation:vspin 12s linear infinite}
+.valley-map .vplace.here .dot{fill:#7a2a1c;stroke:#ffcf7a}
+.valley-map .vplace .glyph{font-size:2.1px;text-anchor:middle}
+.valley-map .vplace .nm{font-family:"Cormorant Garamond",Georgia,serif;font-size:2.3px;fill:#e8dcc4;text-anchor:middle;paint-order:stroke;stroke:#0b0d0a;stroke-width:.6px}
+.valley-map .vlantern circle{fill:#ffb050;opacity:.25;animation:vpulse 2.4s ease-in-out infinite}
+.valley-map .vlantern text{font-size:2.4px;text-anchor:middle}
+.valley-map .vfog ellipse{fill:#c8ccd8;opacity:.07;animation:vdrift 30s ease-in-out infinite alternate}
+.valley-map .vfog ellipse:nth-child(2n){animation-duration:42s;animation-direction:alternate-reverse}
+.key{display:inline-block;width:18px;height:0;border-top:2px solid #8a7a5a;vertical-align:middle;margin:0 2px}
+.key.path{border-top-style:dashed} .key.trail{border-top-style:dotted}
+#valleyBox{width:min(1200px,100%)} .valley-big .valley-map{margin:0 0 10px} .valley-big .vplace .nm{font-size:1.9px}
+@keyframes vspin{to{transform:rotate(360deg)}}
+@keyframes vpulse{0%,100%{transform:scale(1);opacity:.25}50%{transform:scale(1.6);opacity:.45}}
+@keyframes vdrift{from{transform:translateX(-3px)}to{transform:translateX(4px)}}
+@media (prefers-reduced-motion:reduce){ .valley-map *{animation:none!important} }
 </style>
 </head>
 <body>
@@ -444,6 +476,8 @@ textarea.txt{min-height:70px;resize:vertical;font-size:13px}
     <footer class="th-foot">Players open this same page on their own phone or computer. Voice stays on Discord — this handles the map, the minis and the mist. <button class="th-link" data-act="help">How to play</button></footer>
   </div>
 </div>
+
+<div class="modal hidden" id="valleyModal"><div class="box wide" id="valleyBox"></div></div>
 
 <div class="modal hidden" id="charModal"><div class="box wide" id="charBox"></div></div>
 

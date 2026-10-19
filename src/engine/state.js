@@ -69,7 +69,7 @@ export function newState(opts){
   const s = {
     v:2,
     // hand-built maps (Session 0) are drawn on a 40-square grid, so their delves are never smaller than that
-    meta:{ name:opts.name || 'Beneath Saint Andral\'s', seed:opts.seed, floors:opts.floors, size:Math.max(opts.size || 40, TEMPLATES.find(t => t.id === opts.template)?.floors.some(f => f.layout) ? 40 : 0), template:opts.template || 'andral' },
+    meta:{ name:opts.name || 'Beneath Saint Andral\'s', seed:opts.seed, floors:opts.floors, size:Math.max(opts.size || 40, TEMPLATES.find(t => t.id === opts.template)?.floors.some(f => f.layout) ? 40 : 0), template:opts.template || 'andral', ...(opts.journey ? { journey:opts.journey } : {}) },
     dread:1, floors:[], tokens:[], explored:{}, art:{}, log:[],
     combat:{ active:false, order:[], idx:0, round:1, floor:0 },
     seats:{}, grasp:{ die:4, auto:false, last:null },   // grasp = the Whim Die (old field name)

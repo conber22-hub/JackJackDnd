@@ -19,6 +19,7 @@ import { heroStats } from '../engine/hero.js';
 import { sheetHTML } from './creator.js';
 import { myHero } from '../game/heroes.js';
 import { PROPS, PROP_CATS } from '../data/props.js';
+import { valleyTab, placesForSession } from './valley.js';
 import { modelInfo } from '../render/models.js';
 import { CAMPAIGN, SESSIONS, CLOCKS, PLACES, PLACE_STATES, CAST, FORTUNE } from '../data/campaign.js';
 
@@ -268,6 +269,7 @@ function storyTab(){
     <div class="sessbar">${SESSIONS.map(x => `<span class="chip ${x.n === s.n ? 'on' : ''}" data-act="session" data-k="${x.n}" title="${esc(x.title)}">${x.n}</span>`).join('')}</div>
     <div class="card sel"><div class="hd"><span class="nm">Session ${s.n} · ${esc(s.title)}</span></div>
       <div class="stat">Level <b>${esc(s.level)}</b> · ${esc(s.length)} · start at Gaze <b>${s.gaze}</b> <button class="btn small" data-act="sessGaze" data-k="${s.n}">Set Gaze ${s.gaze}</button></div>
+      ${placesForSession(s.n).length ? `<div class="trait"><b>Where.</b> ${placesForSession(s.n).map(p => `<span class="chip" data-act="valleyGo" data-k="${p.id}">🧭 ${esc(p.name)}</span>`).join('')} <span class="muted">— plan the road in the Valley tab</span></div>` : ''}
       <div class="trait"><b>Hook.</b> ${esc(s.hook)}</div>
       <div class="trait">${esc(s.premise)}</div>
       <div class="trait"><b>From your book.</b> ${esc(s.book)}</div>
@@ -314,7 +316,7 @@ export function renderPanel(){
   if (!state) return;
   $('#panel').classList.toggle('closed', !ui.panelOpen);
   const body = $('#tabBody'), scroll = renderPanel.last === ui.tab ? body.scrollTop : 0; renderPanel.last = ui.tab;
-  const tabs = { story:storyTab, tokens:tokensTab, bestiary:bestiaryTab, dungeon:dungeonTab, build:buildTab, gaze:gazeTab, table:tableTab, hero:heroTab,
+  const tabs = { story:storyTab, valley:valleyTab, tokens:tokensTab, bestiary:bestiaryTab, dungeon:dungeonTab, build:buildTab, gaze:gazeTab, table:tableTab, hero:heroTab,
     log:() => `<h3>What has happened</h3><div class="log" style="max-height:none">${logList()}</div>` };
   body.innerHTML = (tabs[ui.tab] || tokensTab)();
   body.scrollTop = scroll;

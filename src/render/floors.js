@@ -109,10 +109,10 @@ export function buildFloor(L, opt = {}){
   const isBuildingWall = i => { if (th.walls === 'trees') return false; const x = i % f.W, y = (i / f.W) | 0;
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++){ const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < f.W && ny < f.H && walk(g[ny * f.W + nx]) && indoor(ny * f.W + nx)) return true; }
     return false; };
-  const wl = [], trees = [];
+  const wl = [], trees = [], water = new Set(f.water || []);
   const hr = (i, k) => { let h = Math.imul(i ^ Math.imul(k + 1, 0x9e3779b1), 2654435761) ^ Math.imul(L + 1, 40503); h ^= h >>> 15; h = Math.imul(h, 2246822519); h ^= h >>> 13; return (h >>> 0) / 4294967296; };
   for (const i of all){
-    if (inBuilding(f, i % f.W, (i / f.W) | 0) || !seen(i)) continue;
+    if (water.has(i) || inBuilding(f, i % f.W, (i / f.W) | 0) || !seen(i)) continue;
     if (outdoor && !isBuildingWall(i)) trees.push(i); else wl.push(i);
   }
   if (outdoor && !opt.walls){
@@ -120,7 +120,7 @@ export function buildFloor(L, opt = {}){
     const near = new Map();   // rock square -> how far it is from the first row of trees
     for (const i of trees){ const x = i % f.W, y = (i / f.W) | 0;
       for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++){ const nx = x + dx, ny = y + dy, j = ny * f.W + nx, dd = Math.max(Math.abs(dx), Math.abs(dy));
-        if (nx >= 0 && ny >= 0 && nx < f.W && ny < f.H && !walk(g[j]) && !all.has(j) && !inBuilding(f, nx, ny) && !(near.get(j) <= dd)) near.set(j, dd); } }
+        if (nx >= 0 && ny >= 0 && nx < f.W && ny < f.H && !walk(g[j]) && !all.has(j) && !water.has(j) && !inBuilding(f, nx, ny) && !(near.get(j) <= dd)) near.set(j, dd); } }
     const seen2 = j => { const x = j % f.W, y = (j / f.W) | 0;
       for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++){ const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < f.W && ny < f.H && exp.has(ny * f.W + nx)) return true; }
       return false; };
@@ -154,6 +154,20 @@ export function buildFloor(L, opt = {}){
     if (tm.instanceColor) tm.instanceColor.needsUpdate = true;
     tm.castShadow = tm.receiveShadow = shadows; tm.userData.trees = 1;
     fv.built.add(tm);
+  }
+  // water: rivers, ponds and lakes (impassable, and no trees grow in it)
+  const wt = [...water].filter(i => !pv || seen(i) || exp.has(i));
+  if (wt.length){
+    const wm2 = new THREE.InstancedMesh(G.tile, fv.mats.water ||= shared(new THREE.MeshStandardMaterial({ color:'#16242c', roughness:.12, metalness:.35, emissive:new THREE.Color('#0a1418'), transparent:true, opacity:.92 })), wt.length);
+    wt.forEach((i, n) => { mat4.makeTranslation(wx(i % f.W), -.16, wz((i / f.W) | 0)); wm2.setMatrixAt(n, mat4); wm2.setColorAt(n, col.setRGB(1, 1, 1).multiplyScalar(.85 + hr(i, 7) * .3)); });
+    if (wm2.instanceColor) wm2.instanceColor.needsUpdate = true;
+    wm2.receiveShadow = shadows; fv.built.add(wm2);
+  }
+  // the road's happenings (DM only): a violet rune where each one waits
+  if (!pv) for (const e of f.events || []){
+    if (e.done) continue;
+    const m = new THREE.Mesh(G.rune, new THREE.MeshBasicMaterial({ color:'#c39bff', transparent:true, opacity:.75, depthWrite:false })); m.position.set(wx(e.x), .04, wz(e.y)); m.scale.setScalar(.8); m.userData.spin = -.8; fv.built.add(m);
+    if (ui.roomLabels){ const lb = makeLabel('✦ ' + e.label, '#c39bff', 20); lb.position.set(wx(e.x), 1.4, wz(e.y)); lb.scale.multiplyScalar(.8); fv.built.add(lb); }
   }
   // houses
   (f.buildings || []).forEach((b, k) => {

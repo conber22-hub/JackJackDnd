@@ -115,6 +115,50 @@ const BUILD = {
   bush(g){ for (const [x, z, r] of [[-.15, 0, .26], [.15, .1, .22], [0, -.18, .2]]) ball(g, r, '#2a4428', x, r * .8, z); },
   milestone(g){ box(g, .35, .7, .2, '#8a8478', 0, .35, 0); cyl(g, .175, .175, .2, '#8a8478', 0, .7, 0).rotation.x = Math.PI / 2; },
   lantern(g){ box(g, .16, .22, .16, '#ffcf7a', 0, .13, 0, GLOW); box(g, .2, .03, .2, IRON, 0, .26, 0, METAL); box(g, .2, .03, .2, IRON, 0, .01, 0, METAL); const h = mesh(g, geo('lh', () => new THREE.TorusGeometry(.07, .012, 4, 10, Math.PI)), IRON, 0, .29, 0, METAL); h.rotation.y = .4; },
+  gates(g){
+    for (const z of [-2.05, 2.05]){
+      box(g, .9, 2.6, .9, '#5e5a56', 0, 1.3, z); box(g, 1.05, .18, 1.05, '#4e4a46', 0, 2.68, z);
+      // the headless guardians
+      box(g, .5, .9, .42, '#6e6a64', 0, 3.22, z); box(g, .7, .14, .5, '#6e6a64', 0, 3.6, z); box(g, .16, .7, .16, '#6e6a64', .32, 3.15, z + (z < 0 ? .12 : -.12));
+    }
+    for (const s of [-1, 1]){   // the iron leaves, standing open
+      const leaf = new THREE.Group(); leaf.position.set(0, 0, s * 1.6); leaf.rotation.y = s * 1.15; g.add(leaf);
+      for (let k = 0; k < 7; k++) box(leaf, .05, 2.1, .05, IRON, 0, 1.05, -s * (.1 + k * .22), METAL);
+      for (const y of [.25, 1.1, 1.95]) box(leaf, .06, .06, 1.5, IRON, 0, y, -s * .75, METAL);
+      for (let k = 0; k < 7; k++) cone(leaf, .04, .16, IRON, 0, 2.2, -s * (.1 + k * .22), METAL, 4);
+    }
+  },
+  gallows(g){ box(g, 1.8, .25, 1.8, '#4a3626', 0, .12, 0); for (const x of [-.7, .7]) box(g, .14, 2.4, .14, '#3a2a1c', x, 1.3, -.5);
+    box(g, 1.7, .14, .14, '#3a2a1c', 0, 2.45, -.5); box(g, .02, .7, .02, '#b8a882', 0, 2.05, -.5); mesh(g, geo('noose', () => new THREE.TorusGeometry(.1, .018, 5, 12)), '#b8a882', 0, 1.62, -.5).rotation.y = 1.2;
+    const b = box(g, .1, .9, .1, '#3a2a1c', -.7, .7, .3); b.rotation.x = .5; },
+  scarecrow(g){ cyl(g, .035, .04, 1.7, '#4a3626', 0, .85, 0); box(g, 1.0, .05, .05, '#4a3626', 0, 1.3, 0);
+    const coat = cone(g, .32, .9, '#4e4436', 0, 1.0, 0, {}, 6); coat.rotation.x = Math.PI; ball(g, .17, '#b0a070', 0, 1.62, 0); cone(g, .26, .3, '#3a3024', 0, 1.82, 0, {}, 8);
+    for (const x of [-.06, .06]) ball(g, .025, '#2a0a0a', x, 1.65, .15, { e:'#7a1010', ei:.6 }); for (const x of [-.45, .45]) cone(g, .08, .25, STRAW, x, 1.22, 0, {}, 5); },
+  mist(g){ const fog = { op:.1, r:1, e:'#9ea4b4', ei:.2 }; for (const [x, y, z, r] of [[-.4, .4, -.3, .7], [.5, .5, .2, .8], [0, .7, .5, .6], [.3, .35, -.6, .55], [-.6, .3, .6, .5]]){ const m = ball(g, r * 1.25, '#cdd1dc', x, y * .8, z, fog); m.material.depthWrite = false; m.scale.y = .4; } g.userData.spin = .04; },
+  campfire(g){ for (let k = 0; k < 8; k++){ const a = k / 8 * Math.PI * 2; ball(g, .07, '#5e5a56', Math.cos(a) * .32, .05, Math.sin(a) * .32); }
+    for (const a of [.3, 1.9]){ const l = cyl(g, .05, .05, .6, '#3a2618', 0, .08, 0); l.rotation.z = Math.PI / 2; l.rotation.y = a; }
+    flame(g, 0, .2, 0, 2.2); flame(g, .08, .16, .05, 1.5); flame(g, -.07, .15, -.04, 1.3); },
+  vardo(g){
+    box(g, .95, .85, 1.75, '#7a2a24', 0, .95, 0, { r:.6 }); const roof = cyl(g, .52, .52, 1.85, '#2f5a3a', 0, 1.36, 0, { r:.6 }, 14); roof.rotation.x = Math.PI / 2; roof.scale.set(1, 1, .55);
+    for (const x of [-.48, .48]) box(g, .02, .5, 1.6, '#c9a246', x, .98, 0, { r:.4, m:.5 });
+    for (const sz of [-1, 1]) for (const sx of [-1, 1]) wheel(g, .38, sx * .55, .38, sz * .55);
+    box(g, .5, .7, .04, '#4a2a18', 0, .95, .88); box(g, .14, .2, .14, '#ffcf7a', .4, 1.4, .92, GLOW); for (const x of [-.12, .12]) box(g, .05, .05, .7, DARK, x, .45, -1.15);
+  },
+  bridge(g){ box(g, 1.02, .1, .96, '#5a4028', 0, .04, 0); for (let k = -2; k <= 2; k++) box(g, 1.02, .02, .02, '#3a2818', 0, .1, k * .18);
+    for (const z of [-.46, .46]){ box(g, 1.02, .06, .06, '#4a3420', 0, .55, z); box(g, .07, .55, .07, '#4a3420', -.45, .3, z); box(g, .07, .55, .07, '#4a3420', .45, .3, z); } },
+  ravens(g){ cyl(g, .03, .05, .9, '#4a4038', 0, .45, 0); box(g, .7, .03, .03, '#4a4038', 0, .85, 0);
+    for (const [x, y, ry] of [[-.25, .92, .4], [.2, .92, -.6], [0, .08, 1.2]]){ const b = ball(g, .07, '#0e0c10', x, y, 0); b.scale.set(.8, .9, 1.5); b.rotation.y = ry; cone(g, .025, .08, '#2a2620', x + Math.sin(ry) * .1, y + .02, Math.cos(ry) * .1, {}, 4).rotation.x = Math.PI / 2; } },
+  palisade(g){ for (const [x, h] of [[-.33, 1.6], [0, 1.8], [.33, 1.5]]){ cyl(g, .14, .15, h, '#5a4430', x, h / 2, 0, {}, 7); cone(g, .14, .3, '#4a3626', x, h + .15, 0, {}, 7); } box(g, 1, .08, .1, '#3a2a1c', 0, 1.1, .14); },
+  rubble(g){ for (const [x, z, s, r] of [[-.2, -.1, .3, .4], [.2, .15, .24, 1.2], [0, .3, .2, 2.1], [.25, -.25, .18, .7]]){ const b = box(g, s, s * .7, s * 1.2, '#7a746c', x, s * .35, z); b.rotation.set(r * .3, r, r * .2); } },
+  hull(g){ const p = box(g, 1.8, .1, 1.6, '#3a3e42', 0, .5, 0, { r:.45, m:.7 }); p.rotation.set(.5, .3, .35);
+    const seam = box(g, 1.7, .02, .05, '#9cc23c', 0, .56, 0, { e:'#9cc23c', ei:1.4, r:1 }); seam.rotation.copy(p.rotation);
+    for (let k = 0; k < 5; k++) ball(g, .03, '#6a6e72', -.7 + k * .35, .62 + k * .03, -.35, METAL); },
+  boat(g){ const h = box(g, .7, .3, 1.6, '#4a3424', 0, .1, 0); cone(g, .35, .5, '#4a3424', 0, .1, -1.0, {}, 4).rotation.x = -Math.PI / 2; box(g, .6, .04, 1.4, '#2a1c12', 0, .26, .05);
+    const o = box(g, .05, .05, 1.4, '#6b4a2b', .3, .3, .1); o.rotation.y = .4; },
+  stone(g){ const s = box(g, .45, 1.5, .32, '#7c786e', 0, .7, 0, { r:.95 }); s.rotation.set(.06, .3, -.05); box(g, .47, .3, .34, '#4a5a3a', 0, .2, 0); },
+  bloomgrowth(g){ for (const [x, z, r] of [[0, 0, .22], [.2, .15, .14], [-.18, .12, .12], [.05, -.22, .1]]){ const m = ball(g, r, '#5e7a3a', x, r * .6, z, { e:'#9cc23c', ei:.55, r:.4 }); m.scale.y = .7; } },
+  vines(g){ for (const z of [-1.4, 1.4]) box(g, .08, .9, .08, '#4a3626', 0, .45, z); box(g, .02, .02, 2.8, '#6a6a60', 0, .8, 0);
+    for (let k = 0; k < 7; k++) ball(g, .2, k % 2 ? '#2f4a26' : '#3a5a2c', 0, .62, -1.2 + k * .4); for (let k = 0; k < 4; k++) ball(g, .06, '#3a1a3a', .12, .5, -1 + k * .65); },
   chest(g){ box(g, .7, .4, .45, WOOD, 0, .2, 0); const lid = cyl(g, .225, .225, .7, LIGHT, 0, .4, 0, {}, 10); lid.rotation.z = Math.PI / 2; lid.scale.set(1, 1, .6); for (const x of [-.25, .25]) box(g, .05, .46, .47, IRON, x, .23, 0, METAL); },
   altar(g){ box(g, .8, .8, 1.7, '#8e8a82', 0, .4, 0); box(g, .9, .08, 1.8, '#a6a29a', 0, .82, 0); flame(g, 0, .95, -.5); flame(g, 0, .95, .5); },
   coffin(g){ box(g, .6, .4, 1.7, '#2a1c14', 0, .2, 0); box(g, .64, .06, 1.74, '#3a281c', 0, .43, 0); box(g, .06, .02, .5, '#a8873a', 0, .47, -.2, { m:.6 }); },
@@ -135,7 +179,7 @@ export function buildProp(p){
 /* Buildings: solid houses on outdoor floors (the squares under them stay rock). Lit windows at night. */
 const ROOFS = ['#6a3a32', '#585a62', '#7a6440', '#4e5258'], WALLS = ['#b0a088', '#9a8c74', '#c0b094', '#8e8070'];
 export function buildBuilding(b, k = 0){
-  const g = new THREE.Group(), H = b.tall ? 2.6 : 1.8, long = b.w >= b.h;
+  const g = new THREE.Group(), H = b.tower ? 4.2 : b.mill ? 3.2 : b.tall ? 2.6 : 1.8, long = b.w >= b.h;
   const wallC = b.wall || WALLS[k % WALLS.length], roofC = b.roof || ROOFS[k % ROOFS.length];
   box(g, b.w - .1, H, b.h - .1, wallC, 0, H / 2, 0, { r:.95 });
   // timber frame
@@ -150,7 +194,7 @@ export function buildBuilding(b, k = 0){
   const tri = geo(`gable${span}`, () => { const sh = new THREE.Shape(); sh.moveTo(-span / 2, 0); sh.lineTo(span / 2, 0); sh.lineTo(0, rise); sh.closePath(); return new THREE.ShapeGeometry(sh); });
   for (const s of [-1, 1]){ const m = new THREE.Mesh(tri, mat(wallC, { ds:true, r:.95 })); m.position.y = H; if (long){ m.rotation.y = Math.PI / 2; m.position.x = s * (b.w / 2 - .05); } else m.position.z = s * (b.h / 2 - .05); g.add(m); }
   // chimney
-  if (!b.noChimney) box(g, .35, rise + .6, .35, '#5f5a55', (long ? b.w * .28 : 0), H + (rise + .6) / 2, (long ? 0 : b.h * .28));
+  if (!b.noChimney && !b.tower && !b.mill) box(g, .35, rise + .6, .35, '#5f5a55', (long ? b.w * .28 : 0), H + (rise + .6) / 2, (long ? 0 : b.h * .28));
   // door and windows on the street side
   const side = b.door || 's', out = { n:[0, -1], s:[0, 1], e:[1, 0], w:[-1, 0] }[side], along = out[0] ? b.h : b.w;
   const facePos = (t, y) => out[0] ? [out[0] * (b.w / 2 + .01), y, t] : [t, y, out[1] * (b.h / 2 + .01)];
@@ -159,6 +203,12 @@ export function buildBuilding(b, k = 0){
   for (const t of [-along / 3, along / 3]) if (Math.abs(t) > .5){
     const lit = b.dark ? '#141210' : '#ffc46a';
     box(g, out[0] ? .04 : .32, .3, out[0] ? .32 : .04, lit, ...facePos(t, H * .55), b.dark ? {} : { e:'#ffaa50', ei:1.2, r:1 });
+  }
+  // a windmill's sails, on the street side
+  if (b.mill){
+    const hub = new THREE.Group(), [fx, , fz] = facePos(0, 0); hub.position.set(fx * 1.06, H * .82, fz * 1.06);
+    if (out[0]) hub.rotation.y = Math.PI / 2; g.add(hub); hub.userData.spinZ = .25;
+    for (let k = 0; k < 4; k++){ const arm = new THREE.Group(); arm.rotation.z = k * Math.PI / 2 + .3; hub.add(arm); box(arm, .08, 2.2, .06, DARK, 0, 1.1, 0); box(arm, .45, 1.8, .02, '#c9bca0', .26, 1.25, 0, { r:.95 }); }
   }
   g.position.set(wx(b.x) + (b.w - 1) / 2, 0, wz(b.y) + (b.h - 1) / 2);
   return g;
