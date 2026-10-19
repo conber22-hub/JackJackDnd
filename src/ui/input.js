@@ -1,5 +1,8 @@
 /* INPUT — tap / click / long-press / drag on the 3D view, and the tool modes. */
 import * as THREE from 'three';
+import { requestAct } from '../game/requests.js';
+import { useFeature } from '../game/resources.js';
+import { payLegend } from '../game/combat.js';
 import { state, ui, isDM, tokById, tokenAt, viewAsPlayer, walk } from '../engine/state.js';
 import { roomAt } from '../engine/generator.js';
 import { renderer, camera, controls, floorY } from '../render/scene.js';
@@ -158,8 +161,19 @@ function handleTap(cx, cy){
   const tokId = pickToken(cx, cy), tile = pickTile(cx, cy), f = state.floors[ui.floor];
   const ti = tile ? tile.y * f.W + tile.x : -1;
   switch (ui.mode){
-    case 'attack': if (tokId && tokId !== ui.modeData.attacker){ doAttack(ui.modeData.attacker, tokId, ui.modeData.i, ui.atkMode); ui.atkMode = 'normal'; setMode('select'); } return;
-    case 'cast': if (tokId){ castSpell(ui.modeData.caster, tokId, ui.modeData.i); setMode('select'); } return;
+    case 'attack': if (tokId && tokId !== ui.modeData.attacker){
+      if (ui.role === 'player') requestAct({ kind:'attack', id:ui.modeData.attacker, i:ui.modeData.i, target:tokId, mode:ui.atkMode });
+      else if (ui.modeData.legend != null){ const a = tokById(ui.modeData.attacker); if (a && payLegend(a, ui.modeData.legend)) doAttack(a.id, tokId, ui.modeData.i, ui.atkMode); }
+      else doAttack(ui.modeData.attacker, tokId, ui.modeData.i, ui.atkMode);
+      ui.atkMode = 'normal'; setMode('select'); } return;
+    case 'cast': if (tokId){
+      if (ui.role === 'player') requestAct({ kind:'cast', id:ui.modeData.caster, i:ui.modeData.i, target:tokId });
+      else castSpell(ui.modeData.caster, tokId, ui.modeData.i);
+      setMode('select'); } return;
+    case 'feat': if (tokId){
+      if (ui.role === 'player') requestAct({ kind:'feat', id:ui.modeData.user, res:ui.modeData.res, target:tokId });
+      else { const u = tokById(ui.modeData.user); if (u) useFeature(u, ui.modeData.res, tokById(tokId)); }
+      setMode('select'); } return;
     case 'place':  if (tile && walk(f.grid[ti]) && !tokenAt(tile.floor, tile.x, tile.y)) placeMonster(ui.modeData.bid, tile); return;
     case 'placeTok': if (tile && walk(f.grid[ti])){ const t = tokById(ui.modeData.id); if (t){ t.floor = tile.floor; t.x = tile.x; t.y = tile.y; t.flags.gone = false; updateVision(); rebuildFog(); changed(); } setMode('select'); } return;
     case 'ping':   if (tile) doPing(tile); setMode('select'); return;

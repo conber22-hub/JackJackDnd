@@ -12,7 +12,7 @@ import { net } from '../net/table.js';
 import { currentTurn } from '../game/rules.js';
 import { onStairs, dreadRulesLines } from '../game/actions.js';
 import { undoCount } from '../game/session.js';
-import { hpBar, condChips, BUILD_TOOLS } from './hud.js';
+import { hpBar, condChips, resChips, BUILD_TOOLS } from './hud.js';
 import { SHAPE_NAMES } from '../render/minis.js';
 import { gfx } from '../render/gfx.js';
 import { heroStats } from '../engine/hero.js';
@@ -47,7 +47,7 @@ const opt = (v, label, sel) => `<option value="${esc(v)}" ${sel ? 'selected' : '
 const logList = (n = 999) => state.log.slice().reverse().slice(0, n).map(l => `<div>${esc(l.m)}</div>`).join('') || '<div class="muted">Quiet. Too quiet.</div>';
 
 function tokensTab(){
-  let h = `<h3>The party</h3>`;
+  let h = `<h3>The party</h3><div class="row"><button class="btn small" data-act="shortRest" title="An hour: short-rest features come back; spend Hit Dice from each hero's card">☕ Short rest</button><button class="btn small" data-act="longRest" title="Eight hours: full HP, every slot and feature">🌙 Long rest</button></div>`;
   for (const t of state.tokens.filter(t => t.kind !== 'monster')){
     const open = ui.openPc === t.id;
     const seat = Object.entries(state.seats).find(([, id]) => id === t.id);
@@ -56,7 +56,7 @@ function tokensTab(){
       ${t.flags.taken ? `<button class="btn small seep" data-act="restore" data-id="${t.id}">Restore</button>` : `<button class="btn small" data-act="sel" data-id="${t.id}">Select</button>`}<button class="btn small" data-act="openPc" data-id="${t.id}">${open ? '▲' : '✎'}</button></div>
       ${t.flags.taken ? `<div class="fam-seep" style="font-size:13px">☣ Taken by the Seep — a Husk walks in their skin.</div>` : ''}
       <div class="stat" style="margin-top:4px">AC ${t.ac} · HP ${t.hp}/${t.maxHp} · ${t.speed} ft · Init ${t.init >= 0 ? '+' : ''}${t.init} · PP ${t.passive}</div>${hpBar(t, true)}
-      ${t.conds?.length ? `<div>${condChips(t, false)}</div>` : ''}
+      ${t.conds?.length ? `<div>${condChips(t, false)}</div>` : ''}${resChips(t, false)}
       ${open ? `<div class="row"><input class="txt" style="flex:1" value="${esc(t.name)}" data-edit="tok" data-id="${t.id}" data-f="name"><input type="color" value="${t.color}" data-edit="tok" data-id="${t.id}" data-f="color"></div>
         <div class="row">${[['ac', 'AC'], ['hp', 'HP'], ['maxHp', 'Max'], ['speed', 'Speed'], ['init', 'Init'], ['saveMod', 'Save'], ['check', 'Tools'], ['passive', 'Passive']].map(([k, l]) => `<label>${l}<br><input class="txt num" type="number" value="${t[k]}" data-edit="tok" data-id="${t.id}" data-f="${k}"></label>`).join('')}</div>
         <div class="muted">Tools = lockpicking / disarm bonus · Passive = passive Perception (spots traps and secret doors on its own)</div>
@@ -233,6 +233,8 @@ function tableTab(){
     for (const [pid, s] of net.conns) h += `<div class="row"><span style="flex:1">🎮 ${esc(s.name)}</span><select class="txt" style="width:auto" data-edit="seat" data-k="${pid}"><option value="">— no token —</option>${state.tokens.filter(t => t.kind !== 'monster').map(t => opt(t.id, t.name, state.seats[pid] === t.id)).join('')}</select></div>`;
     h += `<div class="row"><button class="btn small danger" data-act="unhost">Close table</button></div>`;
   }
+  h += `<h4>Players' rolls</h4><div class="row"><button class="btn small ${state.campaign.freeRolls ? 'on' : ''}" data-act="freeRolls">🎲 Players roll freely: ${state.campaign.freeRolls ? 'ON' : 'off'}</button></div>
+    <div class="muted">Players tap an attack, spell or feature on their own hero, then a target. ${state.campaign.freeRolls ? 'It rolls at once.' : 'You get a request at the top of the screen: roll it as asked, with advantage or disadvantage, or say no.'} Your app does the rolling, so everyone sees the same card.</div>`;
   h += `<div class="row"><button class="btn ${ui.tableView ? 'on' : ''}" data-act="tableView">📺 Table view ${ui.tableView ? 'ON' : 'off'}</button></div>
     <div class="muted">Table view shows what players see — fog, no room secrets, no hidden traps or secret doors, no monster HP. Use it when the screen is cast to a TV.</div>
     ${gfxPanel()}
@@ -255,7 +257,7 @@ function heroTab(){
     const sheet = ui.myHeroId && myHero(ui.myHeroId);
     h += `<div class="card sel"><div class="hd"><span class="dot" style="color:${me.color};background:${me.color}"></span><span class="nm">${esc(me.name)}${me.dead ? ' ✝' : ''}</span></div>
       <div class="stat">AC ${me.ac} · HP ${me.hp}/${me.maxHp} · Speed ${me.speed} ft${state.combat.active ? ` · moved ${(me.moved || 0) * 5} ft` : ''}</div>${hpBar(me, true)}
-      ${me.conds?.length ? `<div>${condChips(me, false)}</div>` : ''}
+      ${me.conds?.length ? `<div>${condChips(me, false)}</div>` : ''}${resChips(me, false)}
       <div class="row"><button class="btn small" data-act="sel" data-id="${me.id}">Select & show moves</button><button class="btn small" data-act="search">🔍 Search</button>${st ? `<button class="btn small primary" data-act="stairs">${esc(exitLabel(state.floors[me.floor], st))}</button>` : ''}${turn ? `<button class="btn small primary" data-act="endMyTurn">End my turn</button>` : ''}</div></div>`;
     if (sheet) h += sheetHTML(sheet) + `<div class="row"><button class="btn small" data-act="editHero" data-id="${sheet.id}">✎ Edit / level up</button></div>`;
     h += picker + newAtTable();

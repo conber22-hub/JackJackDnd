@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { newHero, heroStats, heroAttacks, heroToken, castables, heroWarnings, spellLimits, maxSpellLevel } from '../src/engine/hero.js';
+import { newHero, heroStats, heroAttacks, heroToken, castables, heroWarnings, spellLimits, maxSpellLevel, heroResources } from '../src/engine/hero.js';
 
 test('level 1 fighter: chain mail + shield + Defense, Soldier background', () => {
   const h = newHero('Fighter'); h.name = 'Ilse';
@@ -48,4 +48,29 @@ test('a hero becomes a token with per-ability saves', () => {
   assert.ok(t.casts.some(c => c.n === 'Sacred Flame' && c.sv === 'dex'));
   assert.ok(t.casts.some(c => c.n === 'Cure Wounds' && c.k === 'heal'), 'Life Domain spells are added at 3');
   assert.match(t.cls, /Cleric 3 · Life Domain/);
+});
+
+test('resources: slots, pact slots and class features by level', () => {
+  const w = newHero('Wizard'); w.lvl = 5;
+  const rw = heroResources(w);
+  assert.deepEqual(rw.filter(r => r.slot).map(r => [r.id, r.max]), [['slot1', 4], ['slot2', 3], ['slot3', 2]]);
+  assert.equal(rw.find(r => r.id === 'arcane').lv, 3);
+  assert.equal(rw.find(r => r.id === 'hd').max, 5);
+  const k = newHero('Warlock'); k.lvl = 3;
+  const pact = heroResources(k).find(r => r.id === 'pact');
+  assert.equal(pact.max, 2); assert.equal(pact.slot, 2); assert.equal(pact.rest, 'short');
+  const b = newHero('Barbarian'); b.lvl = 3;
+  assert.equal(heroResources(b).find(r => r.id === 'rage').max, 3);
+  assert.equal(heroToken(b).rageDmg, 2);
+  assert.equal(heroAttacks(b)[0].m, 1);
+  const f = newHero('Fighter'); f.lvl = 2;
+  assert.deepEqual(heroResources(f).filter(r => !r.slot && r.id !== 'hd' && r.id !== 'heroic').map(r => r.id), ['wind', 'surge']);
+});
+
+test('castables: buffs and utility spells are castable; Divine Smite is damage', () => {
+  const p = newHero('Paladin'); p.lvl = 2; p.spells = ['Bless'];
+  const c = castables(p);
+  assert.equal(c.find(s => s.n === 'Bless').k, 'buff');
+  const smite = c.find(s => s.n === 'Divine Smite');
+  assert.equal(smite.k, 'auto'); assert.equal(smite.smite, 1); assert.equal(smite.l, 1);
 });

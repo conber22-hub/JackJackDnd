@@ -19,6 +19,7 @@ import { addToInit, riseFrom } from './combat.js';
 import { newDelve } from './build.js';
 import { goFloor } from './actions.js';
 import { changed } from './session.js';
+import { longRest } from './resources.js';
 
 export function valley(){
   const C = state.campaign;
@@ -72,9 +73,9 @@ export function passTime(h){ const V = valley(); V.hour += h; while (V.hour >= 2
 export const clockText = () => { const V = valley(); return `Day ${V.day} · ${timeOfDay(V.hour)}`; };
 // Make camp on the road: the night passes, an omen, and maybe something comes to the fire.
 export function makeCamp(L = ui.floor){
-  passTime(8);
+  passTime(8); longRest(undefined, true);
   const omen = pick(NIGHT.omen);
-  showCard({ kind:'', title:'The night on the road', sub:clockText(), flair:omen, lines:['Roll for watches as you like. If the Gaze is 3 or more, something comes to the fire (added to this stretch).'] });
+  showCard({ kind:'', title:'The night on the road', sub:clockText(), flair:omen, lines:['A long rest: full HP, every slot and feature back.', 'Roll for watches as you like. If the Gaze is 3 or more, something comes to the fire (added to this stretch).'] });
   log(`🧭 They make camp. ${clockText()}.`);
   if (state.dread >= 3) newRoadEvent(L);
   changed(); renderPanel();

@@ -34,6 +34,10 @@ import { myHeroes, saveMyHero, deleteMyHero, myHero, applyCharacter, placeCharac
 import { putModel, deleteModel } from '../render/models.js';
 import { buildSessionDelve, placeSessionEncounter, readAloud, tickClock, applyTicks, rollNight, shareNight, setSessionGaze, markBeat, printSessions, sessionById, SESSIONS } from '../game/campaign.js';
 
+import { requestAct, answerRequest } from '../game/requests.js';
+import { useFeature, adjustRes, shortRest, longRest } from '../game/resources.js';
+import { legendOf, legendLeft, useLegendary, useResistance, lairAction } from '../game/combat.js';
+
 const actor = () => ui.role === 'player' ? tokById(ui.myToken) : (ui.selected && tokById(ui.selected));
 
 document.addEventListener('click', e => {
@@ -53,6 +57,22 @@ document.addEventListener('click', e => {
     case 'atkMode': ui.atkMode = { normal:'adv', adv:'dis', dis:'normal' }[ui.atkMode]; renderSel(); break;
     case 'atk': if (sel) setMode('attack', { attacker:sel.id, i:+el.dataset.i }, `${sel.name}: ${sel.attacks[+el.dataset.i].n}${ui.atkMode !== 'normal' ? ` (${ui.atkMode})` : ''} — tap the target`); break;
     case 'special': if (sel) useSpecial(sel, BEST[sel.bid].specials[+el.dataset.i]); break;
+    case 'feat': if (sel){
+      const r = sel.resources?.find(r => r.id === k); if (!r) break;
+      if (r.use === 'lay') setMode('feat', { user:sel.id, res:k }, `${sel.name}: ${r.n} — tap who to heal`);
+      else if (ui.role === 'player') requestAct({ kind:'feat', id:sel.id, res:k, target:sel.id });
+      else useFeature(sel, k);
+    } break;
+    case 'legend': if (sel){ const act = legendOf(sel)?.legendary?.acts[+el.dataset.i]; if (!act) break;
+      if (act.atk != null){ if (legendLeft(sel) < (act.cost || 1)) toast(`${sel.name} has no legendary actions left this round.`); else setMode('attack', { attacker:sel.id, i:act.atk, legend:+el.dataset.i }, `${sel.name}: ${act.n} (legendary) — tap the target`); }
+      else useLegendary(sel, +el.dataset.i); } break;
+    case 'lres': if (sel) useResistance(sel); break;
+    case 'lair': lairAction(); break;
+    case 'resAdj': if (sel) adjustRes(sel, k, +el.dataset.n); break;
+    case 'reqAns': answerRequest(id, k); break;
+    case 'shortRest': shortRest(); break;
+    case 'longRest': longRest(); break;
+    case 'freeRolls': state.campaign.freeRolls = !state.campaign.freeRolls; changed(); renderPanel(); break;
     case 'cast': if (sel){ const sp = sel.casts[+el.dataset.i]; setMode('cast', { caster:sel.id, i:+el.dataset.i }, `${sel.name}: ${sp.n} — tap ${sp.k === 'heal' ? 'who to heal' : sp.rad ? 'the creature at the centre' : 'the target'}`); } break;
     case 'dmg': if (sel){ const n = +$('#hpAmt').value || 0; applyDamage(sel, n, 'manual'); changed(); } break;
     case 'heal': if (sel){ heal(sel, +$('#hpAmt').value || 0); changed(); } break;

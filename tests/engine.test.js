@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { newState, setState, state, T, walk } from '../src/engine/state.js';
-import { reach, updateVision, passMove } from '../src/engine/grid.js';
+import { reach, updateVision, passMove, lineClear, canSee } from '../src/engine/grid.js';
 import { carve, addRoom, deleteRoom, rectProblem, moveStairs, appendFloor, roomById } from '../src/engine/generator.js';
 import { parseTable, tableGaps, tableRow } from '../src/engine/tables.js';
 import { DEFAULT_SHIFT_TABLE, DEFAULT_WHIM_TABLE } from '../src/data/tables.js';
@@ -207,4 +207,18 @@ test('floor JSON keeps props and houses', () => {
   const parsed = parseMapInput(json), { floor } = buildImportedFloor(parsed.floors[0], 0, 40, 0);
   assert.equal(floor.props.length, s.floors[1].props.length);
   assert.equal(floor.buildings.length, s.floors[1].buildings.length);
+});
+
+test('line of sight: walls block, corner squeezes block, the wall itself is seen', () => {
+  // 7×5 room with a pillar at (3,2) and two blocks touching at a corner around (5,0)-(6,1)
+  const W = 7, H = 5, grid = Array(W * H).fill(T.ROOM);
+  const rock = (x, y) => grid[y * W + x] = T.ROCK;
+  rock(3, 2); rock(6, 0); rock(5, 1);
+  const f = { W, H, grid, doors:[] };
+  assert.equal(canSee(f, 0, 2, 6, 2), false);              // straight behind the pillar
+  assert.equal(canSee(f, 0, 2, 3, 2), true);               // the pillar itself
+  assert.equal(canSee(f, 0, 2, 6, 4), true);               // around it
+  assert.equal(lineClear(f, 4.5, 2.5, 6.5, 0.5), false);   // through the corner between (5,1) and (6,0)… blocked at (5,1)
+  assert.equal(canSee(f, 0, 0, 6, 4), false);             // in the pillar's shadow
+  assert.equal(canSee(f, 0, 4, 6, 4), true);
 });

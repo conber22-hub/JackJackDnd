@@ -1,0 +1,64 @@
+/* PLAYERS ROLL — a player taps an attack, a spell or a feature on their own hero card and then a target;
+   the request goes to the DM, who approves it (as asked, or with advantage / disadvantage) or refuses it.
+   With "players roll freely" on (Table tab), requests resolve at once. The DM's app always does the rolling,
+   so every result is the same card on every screen. */
+import { state, ui, tokById } from '../engine/state.js';
+import { $, esc, uid } from '../util/core.js';
+import { toast } from '../ui/hud.js';
+import { canAct } from './rules.js';
+import { doAttack, castSpell } from './combat.js';
+import { useFeature } from './resources.js';
+import { sfx } from '../audio/sound.js';
+
+/* ---------- the player's side ---------- */
+let send = null;                 // set by net/table.js (avoids an import cycle)
+export function setSender(fn){ send = fn; }
+export function requestAct(m){
+  if (!send) return;
+  send({ t:'act', ...m });
+  toast(state.freeRolls ? 'Rolling…' : 'Sent to the DM…');
+}
+
+/* ---------- the DM's side ---------- */
+export const queue = [];
+const label = m => {
+  const a = tokById(m.id), tg = tokById(m.target);
+  const what = m.kind === 'attack' ? a?.attacks?.[m.i]?.n : m.kind === 'cast' ? a?.casts?.[m.i]?.n : a?.resources?.find(r => r.id === m.res)?.n;
+  const mode = m.mode === 'adv' ? ' with advantage' : m.mode === 'dis' ? ' with disadvantage' : '';
+  return `<b>${esc(a?.name || '?')}</b> ${m.kind === 'attack' ? 'attacks' : m.kind === 'cast' ? 'casts' : 'uses'} <b>${esc(what || '?')}</b>${tg && tg.id !== a?.id ? ` → ${esc(tg.name)}` : ''}${mode}`;
+};
+// Is this a request the seat may make? (its own token, alive, and its turn if there's a fight)
+export function validAct(m, ownsId){
+  const a = tokById(m.id); if (!a || !ownsId(a.id) || a.dead || !canAct(a)) return null;
+  const tg = tokById(m.target) || (m.kind === 'feat' ? a : null); if (!tg || tg.floor !== a.floor) return null;
+  if (m.kind === 'attack' && (!a.attacks?.[m.i] || tg.dead)) return null;
+  if (m.kind === 'cast' && !a.casts?.[m.i]) return null;
+  if (m.kind === 'feat' && !a.resources?.some(r => r.id === m.res)) return null;
+  return { kind:m.kind, id:a.id, target:tg.id, i:+m.i || 0, res:m.res, mode:['adv', 'dis'].includes(m.mode) ? m.mode : 'normal' };
+}
+export function receiveAct(m, peer, who, deny){
+  if (state.campaign?.freeRolls){ if (!runAct(m)) deny('That could not be done (no slot or charge left?).'); return; }
+  queue.push({ ...m, rid:uid(), peer, who, deny });
+  sfx('turn'); renderRequests();
+}
+export function runAct(m, mode = m.mode){
+  const a = tokById(m.id); if (!a) return false;
+  if (m.kind === 'attack') return doAttack(m.id, m.target, m.i, mode);
+  if (m.kind === 'cast') return castSpell(m.id, m.target, m.i);
+  if (m.kind === 'feat') return useFeature(a, m.res, tokById(m.target) || a);
+  return false;
+}
+export function answerRequest(rid, verdict){
+  const i = queue.findIndex(q => q.rid === rid); if (i < 0) return;
+  const [q] = queue.splice(i, 1);
+  if (verdict === 'no') q.deny?.('The DM says no to that one.');
+  else if (!runAct(q, verdict === 'ok' ? q.mode : verdict)) q.deny?.('That could not be done (no slot or charge left?).');
+  renderRequests();
+}
+export function dropRequestsFrom(peer){ for (let i = queue.length - 1; i >= 0; i--) if (queue[i].peer === peer) queue.splice(i, 1); renderRequests(); }
+export function renderRequests(){
+  const el = $('#reqPanel'); if (!el) return;
+  if (ui.role !== 'dm'){ el.innerHTML = ''; return; }
+  el.innerHTML = queue.map(q => `<div class="req"><div class="w">🎲 ${label(q)} <span class="muted">(${esc(q.who)})</span></div>
+    <div class="b"><button class="btn small primary" data-act="reqAns" data-id="${q.rid}" data-k="ok">✓ Roll it</button><button class="btn small" data-act="reqAns" data-id="${q.rid}" data-k="adv" title="Approve with advantage">▲ Adv</button><button class="btn small" data-act="reqAns" data-id="${q.rid}" data-k="dis" title="Approve with disadvantage">▼ Dis</button><button class="btn small danger" data-act="reqAns" data-id="${q.rid}" data-k="no">✕ No</button></div></div>`).join('');
+}

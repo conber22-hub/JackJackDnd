@@ -99,20 +99,20 @@ export function heroAttacks(h, st = heroStats(h)){
     const die = two ? w.p.match(/V:(\d*d\d+)/)[1] : w.d;
     const hit = st.pb + m + (ranged && st.style === 'Archery' ? 2 : 0);
     const dmgBonus = m + (!ranged && st.style === 'Dueling' && !/2/.test(w.p) && !two ? 2 : 0);
-    out.push({ n:name, b:hit, d:`${die}${dmgBonus ? sgn(dmgBonus) : ''}`, t:w.ty, f:`{A} attacks {T} with a ${name.toLowerCase()}.` });
+    out.push({ n:name, b:hit, d:`${die}${dmgBonus ? sgn(dmgBonus) : ''}`, t:w.ty, f:`{A} attacks {T} with a ${name.toLowerCase()}.`, ...(ranged ? {} : { m:1 }) });
   }
   if (h.cls === 'Monk'){
     const m = Math.max(st.M('Dex'), st.M('Str')), die = L >= 5 ? '1d8' : '1d6';
-    out.push({ n:'Unarmed Strike', b:st.pb + m, d:`${die}${sgn(m)}`, t:'bludgeoning', f:'{A} strikes {T} with open hand and heel.' });
+    out.push({ n:'Unarmed Strike', b:st.pb + m, d:`${die}${sgn(m)}`, t:'bludgeoning', f:'{A} strikes {T} with open hand and heel.', m:1 });
   }
-  if (!out.length) out.push({ n:'Unarmed Strike', b:st.pb + st.M('Str'), d:`${Math.max(1, 1 + st.M('Str'))}`, t:'bludgeoning', f:'{A} punches {T}.' });
+  if (!out.length) out.push({ n:'Unarmed Strike', b:st.pb + st.M('Str'), d:`${Math.max(1, 1 + st.M('Str'))}`, t:'bludgeoning', f:'{A} punches {T}.', m:1 });
   if (h.cls === 'Rogue') out[0].f += ` (Sneak Attack +${Math.ceil(L / 2)}d6 once a turn — add it with "+ HP" or the DM's call.)`;
   // spell attacks become attack buttons too
   for (const sp of heroSpells(h, st)) if (sp.k === 'atk' && sp.d){
     const d = sp.l === 0 && sp.cs ? cantripDice(sp.d, L) : sp.n === 'Eldritch Blast' ? sp.d : sp.d;
     const beams = sp.n === 'Eldritch Blast' ? (L >= 11 ? 3 : L >= 5 ? 2 : 1) : 1;
     const agon = sp.n === 'Eldritch Blast' && h.invoc === 'Agonizing Blast' ? st.M('Cha') : 0;
-    out.push({ n:sp.n + (beams > 1 ? ` (×${beams} beams)` : ''), b:st.spAtk, d:`${d}${agon ? sgn(agon) : ''}${sp.addmod ? sgn(st.M(st.castAb)) : ''}`, t:sp.ty, f:`{A} casts ${sp.n} at {T}.` });
+    out.push({ n:sp.n + (beams > 1 ? ` (×${beams} beams)` : ''), b:st.spAtk, d:`${d}${agon ? sgn(agon) : ''}${sp.addmod ? sgn(st.M(st.castAb)) : ''}`, t:sp.ty, f:`{A} casts ${sp.n} at {T}.`, ...(sp.l ? { l:sp.l } : {}) });
   }
   return out;
 }
@@ -125,12 +125,41 @@ export function heroSpells(h, st = heroStats(h)){
   if (h.sp === 'Tiefling'){ const lg = h.spOpt || 'Infernal'; out.add(lg === 'Infernal' ? 'Fire Bolt' : lg === 'Abyssal' ? 'Poison Spray' : 'Chill Touch'); }
   return [...out].map(SP).filter(Boolean);
 }
-// Spells that need the DM's app to resolve something (saves, heals) — the token's "cast" buttons.
+// Every spell that isn't a spell attack — the token's "cast" buttons. Saves, heals and sure hits are resolved by
+// the DM's app; buffs and utility spells show a card (and spend the slot). Divine Smite lands as radiant damage.
 export function castables(h, st = heroStats(h)){
-  return heroSpells(h, st).filter(sp => sp.k === 'save' || sp.k === 'heal' || sp.k === 'auto').map(sp => ({
+  return heroSpells(h, st).filter(sp => sp.k !== 'atk').map(sp => ({
     n:sp.n, k:sp.k, l:sp.l, sv:sp.sv, dc:st.dc, d:sp.d ? (sp.l === 0 && sp.cs ? cantripDice(sp.d, st.L) : sp.d) : null, ty:sp.ty, half:!!sp.half,
     rad:sp.area ? Math.max(1, Math.round(sp.area[1] / (sp.area[0] === 'cone' || sp.area[0] === 'line' ? 10 : 5))) : 0, cond:sp.cond || null,
-    healMod:sp.k === 'heal' ? st.M(st.castAb || 'Wis') : 0 }));
+    healMod:sp.k === 'heal' ? st.M(st.castAb || 'Wis') : 0, ...(sp.k === 'util' && sp.d ? { k:'auto', smite:1 } : {}), ...(sp.note ? { note:sp.note } : {}) }));
+}
+
+/* RESOURCES — what a hero spends and gets back on a rest: spell slots, pact slots, class features, Hit Dice.
+   rest: 'long' (back on a long rest) · 'short' (all back on a short rest) · 'short1' (one back on a short rest)
+   use: what tapping it does — 'rage' · 'secondwind' · 'lay' (5 HP to a target) · 'hitdie' · 'recover' (slots back) · 'note' (a card) */
+const byLvl = (L, rows) => rows[Math.min(L, rows.length) - 1];
+export function heroResources(h, st = heroStats(h)){
+  const L = st.L, out = [], C = st.C, cls = h.cls;
+  (st.slots || []).forEach((n, i) => out.push({ id:`slot${i + 1}`, n:`Level ${i + 1} slots`, max:n, rest:'long', slot:i + 1 }));
+  if (st.pact) out.push({ id:'pact', n:`Pact slots (level ${st.pact.l})`, max:st.pact.n, rest:'short', slot:st.pact.l });
+  const f = (id, n, max, rest, use = 'note', text = '', more = {}) => { if (max > 0) out.push({ id, n, max, rest, use, text, ...more }); };
+  if (cls === 'Barbarian') f('rage', 'Rage', byLvl(L, [2, 2, 3, 3, 3, 4, 4, 4, 4, 4]), 'short1', 'rage', 'Resistance to bludgeoning, piercing and slashing; extra damage on Strength melee hits. No spells, no concentration.');
+  if (cls === 'Bard') f('inspire', 'Bardic Inspiration', Math.max(1, st.M('Cha')), L >= 5 ? 'short' : 'long', 'note', `A creature you can see gets a d${L >= 10 ? 10 : L >= 5 ? 8 : 6} to add to one d20 test in the next hour.`);
+  if (cls === 'Cleric' && L >= 2) f('channel', 'Channel Divinity', L >= 6 ? 3 : 2, 'short1', 'note', `Divine Spark (heal or harm 1d8+${st.M('Wis')}) or Turn Undead (DC ${st.dc} Wis, undead within 30 ft. flee)${L >= 3 ? ' — or Preserve Life' : ''}.`);
+  if (cls === 'Paladin' && L >= 3) f('channel', 'Channel Divinity', 2, 'short1', 'note', `Sacred Weapon (+${Math.max(1, st.M('Cha'))} to hit, the weapon sheds light) or Divine Sense.`);
+  if (cls === 'Paladin') f('lay', 'Lay on Hands', 5 * L, 'long', 'lay', 'Touch a creature: 5 HP from the pool per tap (or 5 points to cure Poisoned).');
+  if (cls === 'Druid' && L >= 2) f('wild', 'Wild Shape', L >= 6 ? 3 : 2, 'short1', 'note', 'Take a beast shape for up to an hour (a bonus action).');
+  if (cls === 'Fighter') f('wind', 'Second Wind', byLvl(L, [2, 2, 2, 3, 3, 3, 3, 3, 3, 4]), 'short1', 'secondwind', `Regain 1d10+${L} HP (a bonus action).`, { dice:`1d10+${L}` });
+  if (cls === 'Fighter' && L >= 2) f('surge', 'Action Surge', 1, 'short', 'note', 'One more action this turn.');
+  if (cls === 'Fighter' && L >= 9) f('indomitable', 'Indomitable', 1, 'long', 'note', `Reroll a failed saving throw with +${L}.`);
+  if (cls === 'Monk' && L >= 2) f('focus', 'Focus Points', L, 'short', 'note', `Flurry of Blows, Patient Defense or Step of the Wind${L >= 5 ? ` — or Stunning Strike (DC ${8 + st.pb + st.M('Wis')} Con)` : ''}.`);
+  if (cls === 'Sorcerer' && L >= 2) f('sorcery', 'Sorcery Points', L, 'long', 'note', 'Metamagic, or turn points into spell slots.');
+  if (cls === 'Ranger') f('favored', 'Favored Enemy', byLvl(L, [2, 2, 2, 2, 3, 3, 3, 3, 4, 4]), 'long', 'note', 'Cast Hunter\'s Mark without spending a slot (used first when you cast it).');
+  if (cls === 'Wizard') f('arcane', 'Arcane Recovery', 1, 'long', 'recover', `After a short rest: spent slots worth up to ${Math.ceil(L / 2)} levels come back.`, { lv:Math.ceil(L / 2) });
+  if (cls === 'Warlock' && L >= 2) f('cunning', 'Magical Cunning', 1, 'long', 'recover', 'Half your pact slots come back (one minute\'s rite).', { pact:1 });
+  if (h.sp === 'Human') f('heroic', 'Heroic Inspiration', 1, 'long', 'note', 'Reroll any die, once. Yours again after every long rest.');
+  out.push({ id:'hd', n:`Hit Dice (d${C.hd})`, max:L, rest:'long', use:'hitdie', die:C.hd, mod:st.M('Con'), text:`Spend on a short rest: d${C.hd}${sgn(st.M('Con'))} HP each.` });
+  return out;
 }
 export function heroWarnings(h){
   const st = heroStats(h), lim = spellLimits(h), sp = heroSpells(h, st), w = [];
@@ -151,5 +180,5 @@ export function heroToken(h){
   return { kind:'pc', name:h.name || 'Hero', color:h.color || st.C.color, ac:st.ac, maxHp:st.hp, speed:st.spd, init:st.init,
     saveMod:Math.max(...Object.values(st.saves)), saves:Object.fromEntries(Object.entries(st.saves).map(([a, v]) => [lower(a), v])),
     check:st.check, passive:st.passive, attacks:heroAttacks(h, st), casts:castables(h, st), charId:h.id,
-    cls:`${h.cls} ${st.L}${st.sub ? ` · ${st.sub}` : ''}`, spellDc:st.dc };
+    cls:`${h.cls} ${st.L}${st.sub ? ` · ${st.sub}` : ''}`, spellDc:st.dc, resources:heroResources(h, st), ...(h.cls === 'Barbarian' ? { rageDmg:st.L >= 9 ? 3 : 2 } : {}) };
 }

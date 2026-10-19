@@ -67,6 +67,7 @@ h4{margin:10px 0 6px;font-size:14px;color:var(--silver);letter-spacing:.04em}
 .btn.danger{background:#3a1519;border-color:#7a2730;color:#ffb3b8}
 .btn.seep{background:#1f2a14;border-color:#56702a;color:#d6f29b}
 .btn.on{border-color:var(--candle);color:var(--candle)}
+.btn.off{opacity:.45}
 .btn.small{padding:5px 9px;min-height:30px;font-size:13px}
 .sessbar{display:flex;flex-wrap:wrap;gap:2px;margin:8px 0}
 .sessbar .chip{min-width:30px;text-align:center}
@@ -174,6 +175,14 @@ textarea.txt{min-height:70px;resize:vertical;font-size:13px}
 #dock button span{display:block;font-size:18px}
 #modeHint{position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:7;background:#2a1716;border:1px solid #8b3a2a;color:#ffd3b0;padding:8px 14px;border-radius:14px;display:none;gap:10px;align-items:center;max-width:calc(100vw - 24px);font-size:14px}
 #modeHint.show{display:flex}
+#reqPanel{position:fixed;top:112px;left:50%;transform:translateX(-50%);z-index:9;width:min(440px,calc(100vw - 24px));display:flex;flex-direction:column;gap:6px}
+#reqPanel .req{background:linear-gradient(#22171a,#160f13);border:1px solid #8b3a2a;border-radius:14px;padding:8px 10px;box-shadow:0 10px 30px #000a;animation:popin .2s}
+#reqPanel .req .w{font-size:14px}
+#reqPanel .req .b{display:flex;gap:6px;margin-top:6px}
+#reqPanel .req .b .btn{flex:1;padding:5px}
+.res{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.res .chip{font-size:12px}
+.res .pip{letter-spacing:1px;color:var(--candle)}
 
 /* ---------- pop-ups ---------- */
 #cardLayer{position:fixed;inset:0;z-index:20;pointer-events:none;display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center}
@@ -401,6 +410,7 @@ textarea.txt{min-height:70px;resize:vertical;font-size:13px}
 
 <div id="selCard"></div>
 <div id="modeHint"><span id="modeText"></span><button class="btn small" data-act="cancelMode">Done</button></div>
+<div id="reqPanel"></div>
 <div id="cardLayer"></div>
 <div id="toasts"></div>
 

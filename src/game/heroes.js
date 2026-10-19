@@ -10,6 +10,7 @@ import { toast } from '../ui/hud.js';
 import { hashSeed } from '../util/core.js';
 import { changed } from './session.js';
 import { nearestOpen } from './actions.js';
+import { fillResources } from './resources.js';
 
 /* ---------- the player's own heroes (this browser) ---------- */
 const KEY = 'dreaddelve.heroes.v1';
@@ -39,9 +40,10 @@ export function applyCharacter(sheet, { owner, key, place = true } = {}){
   if (t){
     const lost = Math.max(0, (t.maxHp || 0) - (t.hp || 0));
     Object.assign(t, fields); t.hp = Math.max(t.dead ? 0 : 1, fields.maxHp - lost);
+    fillResources(t);
     log(`${t.name}'s sheet was updated (${fields.cls}).`);
   } else if (place){
-    t = makePC({ name:fields.name }); Object.assign(t, fields); t.hp = fields.maxHp;
+    t = makePC({ name:fields.name }); Object.assign(t, fields); t.hp = fields.maxHp; fillResources(t);
     const L = partyFloor(), f = state.floors[L], r = f.rooms[0], spot = nearestOpen(L, r.cx, r.cy) || { x:r.cx, y:r.cy };
     Object.assign(t, { floor:L, x:spot.x, y:spot.y });
     state.tokens.push(t);

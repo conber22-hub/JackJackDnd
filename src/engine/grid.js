@@ -68,12 +68,41 @@ export function reachSight(f, sx, sy, limit, pass = passSight){
   return { dist };
 }
 
-// What a creature can see: up to 7 squares through open ground, plus the whole room it stands in.
+/* LINE OF SIGHT — a square is seen if a straight line reaches it from the middle of the viewer's square
+   (to its middle or near one of its corners) without crossing anything that blocks sight: rock, buildings,
+   trees, closed doors. A line squeezing between two blocking squares that touch at a corner is blocked.
+   Props don't block (they are scenery). The blocking square itself is seen, so walls and doors show. */
+export function lineClear(f, x0, y0, x1, y1, pass = passSight){
+  let x = Math.floor(x0), y = Math.floor(y0);
+  const tx = Math.floor(x1), ty = Math.floor(y1), dx = x1 - x0, dy = y1 - y0, sx = Math.sign(dx), sy = Math.sign(dy);
+  const open = (a, b) => a >= 0 && b >= 0 && a < f.W && b < f.H && pass(f, b * f.W + a);
+  let tMaxX = dx ? ((sx > 0 ? x + 1 : x) - x0) / dx : Infinity, tMaxY = dy ? ((sy > 0 ? y + 1 : y) - y0) / dy : Infinity;
+  const tdx = dx ? Math.abs(1 / dx) : Infinity, tdy = dy ? Math.abs(1 / dy) : Infinity;
+  for (let guard = 0; guard < 400 && (x !== tx || y !== ty); guard++){
+    if (Math.abs(tMaxX - tMaxY) < 1e-9){
+      if (!open(x + sx, y) && !open(x, y + sy)) return false;
+      x += sx; y += sy; tMaxX += tdx; tMaxY += tdy;
+    } else if (tMaxX < tMaxY){ x += sx; tMaxX += tdx; }
+    else { y += sy; tMaxY += tdy; }
+    if (x === tx && y === ty) return true;
+    if (!open(x, y)) return false;
+  }
+  return true;
+}
+const AIM = [[.5, .5], [.15, .15], [.85, .15], [.15, .85], [.85, .85]];
+export function canSee(f, x0, y0, x1, y1, pass = passSight){
+  if (x0 === x1 && y0 === y1) return true;
+  return AIM.some(([ax, ay]) => lineClear(f, x0 + .5, y0 + .5, x1 + ax, y1 + ay, pass));
+}
+// How far a creature sees (squares): 12 (60 ft.), a creature's own `sight` if it has one, 1 when blinded.
+export const sightRange = t => t.conds?.some(c => c.n === 'blinded') ? 1 : t.sight || 12;
 export function vision(t){
-  const f = state.floors[t.floor], seen = new Set(), { dist } = reachSight(f, t.x, t.y, t.conds?.some(c => c.n === 'blinded') ? 1 : 7);
-  for (const i of dist.keys()) seen.add(i);
-  const r = f.rooms.find(r => t.x >= r.x && t.x < r.x + r.w && t.y >= r.y && t.y < r.y + r.h);
-  if (r && !t.conds?.some(c => c.n === 'blinded')) for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++) seen.add(y * f.W + x);
+  const f = state.floors[t.floor], seen = new Set(), R = sightRange(t), R2 = (R + .5) * (R + .5);
+  for (let y = Math.max(0, t.y - R); y <= Math.min(f.H - 1, t.y + R); y++) for (let x = Math.max(0, t.x - R); x <= Math.min(f.W - 1, t.x + R); x++){
+    const i = y * f.W + x;
+    if (!walk(f.grid[i]) || (x - t.x) ** 2 + (y - t.y) ** 2 > R2) continue;
+    if (canSee(f, t.x, t.y, x, y)) seen.add(i);
+  }
   return seen;
 }
 export const seenNow = {};   // floor -> Set of tiles the party can see this moment

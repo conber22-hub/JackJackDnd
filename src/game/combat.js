@@ -15,6 +15,8 @@ import { shiftFloor } from './shift.js';
 import { whimRoll, whimStep, whimReset } from './whim.js';
 import { changed, broadcast } from './session.js';
 import { goFloor, setDread, fall, rebuildFog } from './actions.js';
+import { spendSpell } from './resources.js';
+import { LEGENDARY } from '../data/legendary.js';
 
 export { currentTurn };
 
@@ -64,6 +66,7 @@ export function nextTurn(){
 export function startTurn(){
   const t = currentTurn(); if (!t) return;
   t.moved = 0;
+  const lg = legendOf(t); if (lg?.legendary) t.legend = lg.legendary.n;   // legendary actions come back
   if (t.flags.rising){
     t.dead = false; t.hp = 1; t.flags.rising = false; t.flags.rose = true;
     showCard({ kind:'seep', title:`${t.name} gets back up`, flair:'The tendrils pull the body upright by the collarbones. It was never finished dying.', lines:['Unfinished Death — it returns at 1 HP. Radiant or fire damage keeps it down.'] });
@@ -81,6 +84,8 @@ export function startTurn(){
 // The Dread Zone acts between rounds.
 function endOfRound(){
   log(`— Round ${state.combat.round} —`);
+  const lairBy = lairCreature();
+  if (lairBy) toast(`Initiative 20: ${lairBy.name}'s lair can act (🏰 in the initiative list).`);
   const L = state.combat.floor, D = dreadLevel(), f = state.floors[L];
   // Host Seed: seeded corpses rise
   for (const t of state.tokens.filter(t => t.dead && t.flags.seeded && !t.flags.gone)) seedRises(t);
@@ -100,7 +105,9 @@ export function endCombat(){ state.combat = { active:false, order:[], idx:0, rou
 /* ---------- attacks & saves ---------- */
 const nearSeep = (tg, a) => state.tokens.some(o => o.id !== a.id && o.id !== tg.id && !o.dead && o.floor === tg.floor && hasTag(o, 'seep') && cheb(o.x, o.y, tg.x, tg.y) <= 1);
 export function doAttack(aId, tId, i, mode = 'normal'){
-  const a = tokById(aId), tg = tokById(tId), atk = a?.attacks?.[i]; if (!a || !tg || !atk) return;
+  const a = tokById(aId), tg = tokById(tId), atk = a?.attacks?.[i]; if (!a || !tg || !atk) return false;
+  const slot = spendSpell(a, atk.l, atk.n);
+  if (slot === null){ toast(`${a.name} has no spell slot left for ${atk.n}.`); return false; }
   const b = BEST[a.bid], D = dreadLevel();
   let adv = mode === 'adv', dis = mode === 'dis';
   const why = [];
@@ -111,10 +118,13 @@ export function doAttack(aId, tId, i, mode = 'normal'){
   const r = useBoth ? (adv ? Math.max(r1, r2) : Math.min(r1, r2)) : r1;
   const bonus = atk.b + (isHis(a) ? D.hit : 0);
   const tot = r + bonus, crit = r === 20 || (r !== 1 && (hasCond(tg, 'paralyzed')) && cheb(a.x, a.y, tg.x, tg.y) <= 1), hit = crit || (r !== 1 && tot >= tg.ac);
-  let dmg = 0; if (hit) dmg = rollDice(atk.d, crit).total;
+  const rage = atk.m && hasCond(a, 'raging') ? a.rageDmg || 2 : 0;
+  let dmg = 0; if (hit) dmg = rollDice(atk.d, crit).total + rage;
   const flair = (atk.f || '{A} strikes at {T}.').replace(/\{A\}/g, a.name).replace(/\{T\}/g, tg.name);
   const lines = [`d20 ${useBoth ? `(${r1}, ${r2} → ${adv ? 'adv' : 'dis'}) ` : ''}<b>${r}</b> ${signed(bonus)} = <b>${tot}</b> vs AC ${tg.ac} — <b>${crit ? 'CRITICAL' : hit ? 'HIT' : r === 1 ? 'FUMBLE' : 'MISS'}</b>`];
   if (why.length) lines.push(`<span class="muted">${esc(why.join(' · '))}</span>`);
+  if (slot) lines.push(`<span class="muted">${esc(slot)}</span>`);
+  if (hit && rage) lines.push(`<span class="muted">+${rage} rage</span>`);
   if (isHis(a) && D.hit) lines.push(`<span class="muted">+${D.hit} to hit under his Gaze (${state.dread})</span>`);
   if (hit && atk.on && !tg.dead){
     const s = d(20) + saveBonus(tg, atk.on.save), ok = s >= atk.on.dc;
@@ -126,10 +136,12 @@ export function doAttack(aId, tId, i, mode = 'normal'){
   showCard({ kind:crit ? 'crit' : hit ? '' : 'miss', title:`${a.name} → ${tg.name}`, sub:atk.n, flair, lines, big:hit ? `${dmg} ${atk.t}` : '' });
   log(`${a.name} ${atk.n} → ${tg.name}: ${hit ? `${dmg} ${atk.t}${crit ? ' (crit)' : ''}` : 'miss'}`);
   if (hit) applyDamage(tg, dmg, atk.t, a);
-  changed();
+  changed(); return true;
 }
+const PHYS = /bludgeoning|piercing|slashing/;
 export function applyDamage(t, n, type = '', by = null){
   if (t.dead || n <= 0) return;
+  if (hasCond(t, 'raging') && PHYS.test(String(type))) n = Math.floor(n / 2);   // Rage: resistance
   t.hp = Math.max(0, t.hp - n);
   burst(t.floor, t.x, t.y, '#c0303a');
   if (t.bid === 'seepling' && n >= 5) t.hp = 0;     // Burst Sac
@@ -313,16 +325,25 @@ export function runFx(src, fx, quiet){
 }
 /* ---------- heroes' spells (from the character creator) ---------- */
 export function castSpell(casterId, targetId, i){
-  const c = tokById(casterId), tg = tokById(targetId), sp = c?.casts?.[i]; if (!c || !tg || !sp) return;
+  const c = tokById(casterId), tg = tokById(targetId), sp = c?.casts?.[i]; if (!c || !tg || !sp) return false;
+  const slot = spendSpell(c, sp.l, sp.n);
+  if (slot === null){ toast(`${c.name} has no spell slot left for ${sp.n}.`); return false; }
+  const paid = slot ? [`<span class="muted">${esc(slot)}</span>`] : [];
   sfx('roll');
   if (sp.k === 'heal'){
     const n = rollDice(sp.d).total + (sp.healMod || 0);
-    heal(tg, n); showCard({ kind:'', title:`${c.name}: ${sp.n}`, sub:`on ${tg.name}`, flair:'Warmth, and the wound closes a little.', big:`+${n} HP` });
-    log(`${c.name} casts ${sp.n} on ${tg.name}: +${n} HP.`); changed(); return;
+    heal(tg, n); showCard({ kind:'', title:`${c.name}: ${sp.n}`, sub:`on ${tg.name}`, flair:'Warmth, and the wound closes a little.', lines:paid, big:`+${n} HP` });
+    log(`${c.name} casts ${sp.n} on ${tg.name}: +${n} HP.`); changed(); return true;
   }
   if (sp.k === 'auto'){
-    const n = rollDice(sp.d).total; showCard({ kind:'', title:`${c.name}: ${sp.n}`, sub:`on ${tg.name}`, big:`${n} ${sp.ty}` });
-    log(`${c.name} casts ${sp.n} on ${tg.name}: ${n} ${sp.ty}.`); applyDamage(tg, n, sp.ty, c); changed(); return;
+    const evil = sp.smite && (hasTag(tg, 'undead') || /fiend|undead/i.test(BEST[tg.bid]?.type || ''));
+    const n = rollDice(sp.d).total + (evil ? d(8) : 0); showCard({ kind:'', title:`${c.name}: ${sp.n}`, sub:`on ${tg.name}${evil ? ' · +1d8 against the undead' : ''}`, lines:paid, big:`${n} ${sp.ty}` });
+    log(`${c.name} casts ${sp.n} on ${tg.name}: ${n} ${sp.ty}.`); applyDamage(tg, n, sp.ty, c); changed(); return true;
+  }
+  if (sp.k === 'buff' || sp.k === 'util'){
+    showCard({ kind:'', title:`${c.name}: ${sp.n}`, sub:tg.id === c.id ? 'on themself' : `on ${tg.name}`, lines:[...(sp.note ? [esc(sp.note)] : []), ...paid, '<span class="muted">The DM rules how it plays out.</span>'] });
+    if (sp.n === 'Lesser Restoration' || sp.n === 'Greater Restoration'){ tg.conds = (tg.conds || []).filter(x => !['blinded', 'paralyzed', 'poisoned', 'seeded'].includes(x.n)); if (tg.flags.seeded) heal(tg, 0); }
+    log(`${c.name} casts ${sp.n}${tg.id === c.id ? '' : ` on ${tg.name}`}.`); changed(); return true;
   }
   const targets = sp.rad ? state.tokens.filter(t => t.floor === tg.floor && !t.dead && !t.flags.gone && t.id !== c.id && cheb(t.x, t.y, tg.x, tg.y) <= sp.rad) : [tg];
   const base = sp.d ? rollDice(sp.d).total : 0, lines = [];
@@ -332,9 +353,45 @@ export function castSpell(casterId, targetId, i){
     if (!ok && sp.cond && CONDITIONS[sp.cond]) addCond(t, sp.cond, 1, null);
     if (dmg) applyDamage(t, dmg, sp.ty, c);
   }
-  showCard({ kind:'', title:`${c.name}: ${sp.n}`, sub:`DC ${sp.dc} ${String(sp.sv).toUpperCase()}${sp.rad ? ` · ${sp.rad * 5} ft. around ${tg.name}` : ` · ${tg.name}`}${base ? ` · ${sp.d} ${sp.ty}` : ''}`, lines });
+  showCard({ kind:'', title:`${c.name}: ${sp.n}`, sub:`DC ${sp.dc} ${String(sp.sv).toUpperCase()}${sp.rad ? ` · ${sp.rad * 5} ft. around ${tg.name}` : ` · ${tg.name}`}${base ? ` · ${sp.d} ${sp.ty}` : ''}`, lines:[...lines, ...paid] });
   log(`${c.name} casts ${sp.n}: ${targets.length} caught.`);
-  changed();
+  changed(); return true;
+}
+
+/* ---------- legendary & lair actions ---------- */
+export const legendOf = t => { const b = BEST[t?.bid]; if (!b) return null; const d = LEGENDARY[b.id] || {}; const o = { legendary:b.legendary || d.legendary, lair:b.lair || d.lair, resist:b.resist ?? d.resist }; return o.legendary || o.lair || o.resist ? o : null; };
+export const legendLeft = t => t.legend ?? legendOf(t)?.legendary?.n ?? 0;
+export const resistLeft = t => t.lres ?? legendOf(t)?.resist ?? 0;
+// Pay for a legendary action (attacks are paid for once they land on a target — see ui/input.js).
+export function payLegend(t, i){
+  const act = legendOf(t)?.legendary?.acts[i]; if (!act) return false;
+  if (legendLeft(t) < (act.cost || 1)){ toast(`${t.name} has ${legendLeft(t)} legendary action${legendLeft(t) === 1 ? '' : 's'} left this round.`); return false; }
+  t.legend = legendLeft(t) - (act.cost || 1); return true;
+}
+export function useLegendary(t, i){
+  const act = legendOf(t)?.legendary?.acts[i]; if (!act || act.atk != null || !payLegend(t, i)) return;
+  showCard({ kind:'', title:`${t.name}: ${act.n}`, sub:`Legendary action${act.cost > 1 ? ` (costs ${act.cost})` : ''} · ${t.legend} left`, flair:act.f || '' });
+  if (act.fx && act.fx !== 'note') runFx(t, act.fx);
+  log(`${t.name} — legendary: ${act.n}.`); changed();
+}
+export function useResistance(t){
+  if (resistLeft(t) <= 0){ toast(`${t.name} has no Legendary Resistance left today.`); return; }
+  t.lres = resistLeft(t) - 1;
+  showCard({ kind:'', title:`${t.name} refuses to fail`, sub:`Legendary Resistance · ${t.lres} left today`, flair:'The spell takes hold — and then simply doesn\'t.' });
+  log(`${t.name} uses Legendary Resistance.`); changed();
+}
+// The creature whose lair this is, if it is in the current fight and its lair hasn't acted this round.
+export function lairCreature(){
+  const c = state.combat; if (!c.active || c.lairRound === c.round) return null;
+  return c.order.map(tokById).find(t => t && !t.dead && !t.flags.gone && t.floor === c.floor && legendOf(t)?.lair?.length) || null;
+}
+export function lairAction(){
+  const t = lairCreature(); if (!t) return;
+  const list = legendOf(t).lair, opts = list.filter(a => a.n !== state.combat.lairLast), act = pick(opts.length ? opts : list);
+  state.combat.lairRound = state.combat.round; state.combat.lairLast = act.n;
+  showCard({ kind:'seep', title:`Initiative 20 — ${act.n}`, sub:`${t.name}'s lair`, flair:act.f || '' });
+  if (act.fx && act.fx !== 'note') runFx({ ...t, name:`${t.name}'s lair` }, act.fx);
+  log(`🏰 Lair action: ${act.n}.`); changed();
 }
 
 export function useSpecial(t, s){

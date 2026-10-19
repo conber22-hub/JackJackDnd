@@ -18,6 +18,7 @@ import { applyCharacter, charactersOf, ownsCharacter, sheetForPlayer, saveMyHero
 import { cheb } from '../util/core.js';
 import { sfx, onSfx } from '../audio/sound.js';
 import { putModel, allModels, deleteModel } from '../render/models.js';
+import { setSender, validAct, receiveAct, dropRequestsFrom } from '../game/requests.js';
 
 export const net = { peer:null, conns:new Map(), host:null, code:null };
 onSfx(name => { if (ui.role === 'dm' && net.conns.size) broadcast({ t:'sfx', name }); });
@@ -30,7 +31,7 @@ export function hostTable(){
   net.peer.on('connection', c => {
     c.on('open', () => { net.conns.set(c.peer, { conn:c, name:'(joining)' }); renderPanel(); });
     c.on('data', m => onHostMsg(c, m));
-    c.on('close', () => { const s = net.conns.get(c.peer); net.conns.delete(c.peer); delete state.seats[c.peer]; toast(`${s?.name || 'A player'} left`); renderPanel(); pushState(); });
+    c.on('close', () => { const s = net.conns.get(c.peer); net.conns.delete(c.peer); dropRequestsFrom(c.peer); delete state.seats[c.peer]; toast(`${s?.name || 'A player'} left`); renderPanel(); pushState(); });
   });
   net.peer.on('error', e => { if (e.type === 'unavailable-id'){ net.peer.destroy(); hostTable(); } else toast('Table: ' + e.type); });
 }
@@ -40,6 +41,7 @@ let pushTimer = null;
 // What players receive: the delve without the DM's campaign desk (notes, fortune, clocks), anyone's character sheets,
 function forPlayers(){
   const s = serialize(false), V = state.campaign?.valley;
+  s.freeRolls = !!state.campaign?.freeRolls;
   delete s.campaign; delete s.characters; s.floors = s.floors.map(f => ({ ...f, events:[] }));
   if (V?.shared) s.valley = { at:V.at, visited:[...V.visited], journey:V.journey ? { to:V.journey.to, path:[...V.journey.path] } : null, day:V.day, hour:V.hour, weather:V.weather || '' };   // the map, if the DM shares it
   return s;
@@ -84,6 +86,12 @@ function onHostMsg(c, m){
     seatAt(c.peer, t.id);
     toast(`${seat.name} updated ${m.char.name}.`); renderPanel(); pushState();
   }
+  else if (m.t === 'act'){
+    const deny = text => { if (c.open) c.send({ t:'denied', text }); };
+    const ok = validAct(m, mine);
+    if (!ok){ deny(state.combat.active && me && !canAct(me) ? 'Wait for your turn.' : 'That can\'t be done from here.'); return; }
+    receiveAct(ok, c.peer, seat.name, deny);
+  }
   else if (m.t === 'search'){ if (me && canAct(me)) search(me); }
   else if (m.t === 'disarm'){
     const tr = state.floors[m.floor]?.traps.find(t => t.id === m.id);
@@ -126,6 +134,7 @@ export function joinTable(code, name, key, hero = null){
   net.peer.on('error', e => toast('Connection: ' + e.type));
 }
 export function sendHost(m){ if (net.host?.open) net.host.send(m); }
+setSender(sendHost);
 function onClientMsg(m){
   if (!m) return;
   if (m.t === 'state') applyRemoteState(m.s);

@@ -11,6 +11,8 @@ import { currentTurn, moveAllowance } from '../game/rules.js';
 import { onStairs, selectedDoor, selectedTrap, nearestHero } from '../game/actions.js';
 import { undoCount } from '../game/session.js';
 import { renderPanel } from './panels.js';
+import { canCast, left } from '../game/resources.js';
+import { legendOf, legendLeft, resistLeft, lairCreature } from '../game/combat.js';
 import { sfx } from '../audio/sound.js';
 
 export function toast(msg){ const el = document.createElement('div'); el.className = 'toast'; el.textContent = msg; $('#toasts').appendChild(el); setTimeout(() => el.remove(), 3800); while ($('#toasts').children.length > 5) $('#toasts').firstChild.remove(); }
@@ -88,8 +90,9 @@ export function renderInit(){
     return `<div class="ini ${i === c.idx ? 'cur' : ''} ${t.dead ? 'dead' : ''}" data-act="sel" data-id="${t.id}"><span class="dot" style="color:${color};background:${color}"></span><span class="n">${esc(t.name)} <span class="muted">${cs}</span></span><span class="v">${t.initRoll ?? ''}</span></div>`;
   }).join('');
   const cur = currentTurn();
+  const lair = ui.role === 'dm' && lairCreature();
   $('#initBtns').innerHTML = ui.role === 'dm'
-    ? `<button class="btn primary" data-act="nextTurn">Next ▶</button><button class="btn small" data-act="rollInit" title="Re-roll">↻</button><button class="btn small danger" data-act="endCombat">End</button>`
+    ? `${lair ? `<button class="btn small seep" data-act="lair" title="${esc(lair.name)}'s lair acts on initiative 20">🏰 Lair</button>` : ''}<button class="btn primary" data-act="nextTurn">Next ▶</button><button class="btn small" data-act="rollInit" title="Re-roll">↻</button><button class="btn small danger" data-act="endCombat">End</button>`
     : (cur && cur.id === ui.myToken ? `<button class="btn primary" data-act="endMyTurn">End my turn</button>` : '');
 }
 
@@ -105,13 +108,18 @@ export function renderSel(){
   const color = t.kind === 'monster' ? '#c0303a' : t.color;
   const stairs = onStairs(t);
   let acts = '';
+  // attacks, spells and features: the DM rolls them directly; a player's taps on their own hero become requests
+  if ((dm || mine) && !t.dead){
+    acts += `<button class="btn small ${ui.atkMode !== 'normal' ? 'on' : ''}" data-act="atkMode" title="Advantage / disadvantage for the next roll">${ui.atkMode === 'adv' ? '▲ Adv' : ui.atkMode === 'dis' ? '▼ Dis' : '◆ Normal'}</button>`;
+    acts += t.attacks.map((a, i) => `<button class="btn small ${a.l && !canCast(t, a.l, a.n) ? 'off' : ''}" data-act="atk" data-i="${i}">🗡 ${esc(a.n)} <span class="muted">${a.b >= 0 ? '+' : ''}${a.b} · ${esc(a.d)}${a.l ? ` · L${a.l}` : ''}</span></button>`).join('');
+    if (dm && b?.specials) acts += b.specials.map((s, i) => `<button class="btn small seep" data-act="special" data-i="${i}">✦ ${esc(s.n)}</button>`).join('');
+    const lg = dm && legendOf(t);
+    if (lg?.legendary) acts += `<span class="chip on" title="Back at the start of its turn">⚜ ${legendLeft(t)}/${lg.legendary.n}</span>` + lg.legendary.acts.map((a, i) => `<button class="btn small ${legendLeft(t) < (a.cost || 1) ? 'off' : ''}" data-act="legend" data-i="${i}" title="${esc(a.f || '')}">⚜ ${esc(a.n)}${a.cost > 1 ? ` <span class="muted">(${a.cost})</span>` : ''}</button>`).join('');
+    if (lg?.resist) acts += `<button class="btn small ${resistLeft(t) ? '' : 'off'}" data-act="lres">🛡 Legendary Resistance ${resistLeft(t)}/${lg.resist}</button>`;
+    if (t.casts?.length) acts += t.casts.map((s, i) => `<button class="btn small ${!canCast(t, s.l, s.n) ? 'off' : ''}" data-act="cast" data-i="${i}" title="${s.k === 'heal' ? 'Heal' : s.d ? `${esc(s.d)} ${esc(s.ty || '')}` : esc(s.cond || s.note || s.k)}${s.sv ? ` · DC ${s.dc} ${s.sv.toUpperCase()}` : ''}${s.rad ? ` · ${s.rad * 5} ft.` : ''}">✨ ${esc(s.n)}${s.l ? ` <span class="muted">L${s.l}</span>` : ''}</button>`).join('');
+    acts += (t.resources || []).filter(r => !r.slot).map(r => `<button class="btn small ${left(t, r.id) ? '' : 'off'}" data-act="feat" data-k="${r.id}" title="${esc(r.text || '')}">${r.use === 'hitdie' ? '🎲' : '✦'} ${esc(r.id === 'hd' ? 'Hit Die' : r.n)} <span class="muted">${left(t, r.id)}/${r.max}</span></button>`).join('');
+  }
   if (dm){
-    if (!t.dead){
-      acts += `<button class="btn small ${ui.atkMode !== 'normal' ? 'on' : ''}" data-act="atkMode" title="Advantage / disadvantage for the next roll">${ui.atkMode === 'adv' ? '▲ Adv' : ui.atkMode === 'dis' ? '▼ Dis' : '◆ Normal'}</button>`;
-      acts += t.attacks.map((a, i) => `<button class="btn small" data-act="atk" data-i="${i}">🗡 ${esc(a.n)} <span class="muted">${a.b >= 0 ? '+' : ''}${a.b} · ${esc(a.d)}</span></button>`).join('');
-    }
-    if (!t.dead && b?.specials) acts += b.specials.map((s, i) => `<button class="btn small seep" data-act="special" data-i="${i}">✦ ${esc(s.n)}</button>`).join('');
-    if (!t.dead && t.casts?.length) acts += t.casts.map((s, i) => `<button class="btn small" data-act="cast" data-i="${i}" title="${s.k === 'heal' ? 'Heal' : s.d ? `${esc(s.d)} ${esc(s.ty || '')}` : esc(s.cond || '')}${s.sv ? ` · DC ${s.dc} ${s.sv.toUpperCase()}` : ''}${s.rad ? ` · ${s.rad * 5} ft.` : ''}">✨ ${esc(s.n)}</button>`).join('');
     acts += `<span style="display:inline-flex;gap:4px;align-items:center"><input class="txt num" id="hpAmt" type="number" value="5" min="0"><button class="btn small danger" data-act="dmg">− HP</button><button class="btn small" data-act="heal">+ HP</button></span>`;
     acts += `<select class="txt" style="width:auto" data-edit="addCond"><option value="">+ condition…</option>${Object.keys(CONDITIONS).map(k => `<option value="${k}">${CONDITIONS[k].icon} ${k}</option>`).join('')}</select>`;
     if (t.dead && t.kind !== 'pc' && (t.kind === 'npc' || b?.tags?.includes('host'))) acts += `<button class="btn small seep" data-act="infest">☣ Infest</button>`;
@@ -128,8 +136,14 @@ export function renderSel(){
     ${b ? `<span class="muted">CR ${b.cr}</span>` : ''}<button class="btn small" data-act="deselect">✕</button></div>
     ${showStats ? `<div class="stat">AC <b>${t.ac}</b> · HP <b>${t.hp}/${t.maxHp}</b> · Speed <b>${t.speed} ft</b>${move}${flags.length ? ' · ' + flags.join(' · ') : ''}</div>${hpBar(t, t.kind !== 'monster')}` : (b ? `<div class="look">${esc(b.look)}</div>` : '')}
     ${t.conds?.length ? `<div>${condChips(t, dm)}</div>` : ''}
+    ${showStats ? resChips(t, dm) : ''}
     <div class="acts">${acts}</div>`;
   el.classList.add('show');
+}
+// Spell slots as pips (the DM can nudge any resource up or down).
+export function resChips(t, dm){
+  const rs = (t.resources || []).filter(r => r.slot || dm); if (!rs.length) return '';
+  return `<div class="res">${rs.map(r => `<span class="chip" title="${esc(r.n)}">${esc(r.slot ? (r.id === 'pact' ? `Pact L${r.slot}` : `L${r.slot}`) : r.id === 'hd' ? 'HD' : r.n)} ${r.slot || r.max <= 6 ? `<span class="pip">${'●'.repeat(left(t, r.id))}${'○'.repeat(Math.max(0, r.max - left(t, r.id)))}</span>` : `${left(t, r.id)}/${r.max}`}${dm ? ` <b data-act="resAdj" data-k="${r.id}" data-n="-1">−</b> <b data-act="resAdj" data-k="${r.id}" data-n="1">+</b>` : ''}</span>`).join('')}</div>`;
 }
 function renderDoorCard(el){
   const dr = selectedDoor(); if (!dr){ ui.selDoor = null; el.classList.remove('show'); return; }

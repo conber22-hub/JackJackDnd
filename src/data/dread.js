@@ -57,4 +57,5 @@ export const CONDITIONS = {
   seeded:      { icon:'☣', color:'#9cc23c' },
   charmed:     { icon:'♥', color:'#d97aa6' },
   incapacitated:{ icon:'⊘', color:'#8a8f99', stop:true },
+  raging:      { icon:'🔥', color:'#d0603a' },
 };
