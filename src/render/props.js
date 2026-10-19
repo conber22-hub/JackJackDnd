@@ -159,6 +159,8 @@ const BUILD = {
   bloomgrowth(g){ for (const [x, z, r] of [[0, 0, .22], [.2, .15, .14], [-.18, .12, .12], [.05, -.22, .1]]){ const m = ball(g, r, '#5e7a3a', x, r * .6, z, { e:'#9cc23c', ei:.55, r:.4 }); m.scale.y = .7; } },
   vines(g){ for (const z of [-1.4, 1.4]) box(g, .08, .9, .08, '#4a3626', 0, .45, z); box(g, .02, .02, 2.8, '#6a6a60', 0, .8, 0);
     for (let k = 0; k < 7; k++) ball(g, .2, k % 2 ? '#2f4a26' : '#3a5a2c', 0, .62, -1.2 + k * .4); for (let k = 0; k < 4; k++) ball(g, .06, '#3a1a3a', .12, .5, -1 + k * .65); },
+  tent(g){ const t = cone(g, 1.0, 1.3, '#7a3a2a', 0, .65, 0, { r:.9 }, 4); t.rotation.y = Math.PI / 4; t.scale.set(1, 1, .8);
+    box(g, .3, .7, .02, '#2a1410', 0, .35, .78); cyl(g, .03, .03, .3, '#4a3626', 0, 1.4, 0); box(g, .5, .25, .02, '#c9a246', 0, 1.5, 0, { r:.5 }); },
   chest(g){ box(g, .7, .4, .45, WOOD, 0, .2, 0); const lid = cyl(g, .225, .225, .7, LIGHT, 0, .4, 0, {}, 10); lid.rotation.z = Math.PI / 2; lid.scale.set(1, 1, .6); for (const x of [-.25, .25]) box(g, .05, .46, .47, IRON, x, .23, 0, METAL); },
   altar(g){ box(g, .8, .8, 1.7, '#8e8a82', 0, .4, 0); box(g, .9, .08, 1.8, '#a6a29a', 0, .82, 0); flame(g, 0, .95, -.5); flame(g, 0, .95, .5); },
   coffin(g){ box(g, .6, .4, 1.7, '#2a1c14', 0, .2, 0); box(g, .64, .06, 1.74, '#3a281c', 0, .43, 0); box(g, .06, .02, .5, '#a8873a', 0, .47, -.2, { m:.6 }); },

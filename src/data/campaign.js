@@ -367,7 +367,7 @@ export const SESSIONS = [
     flood:'Vallaki is the Bloom\'s target. The font beneath Saint Andral\'s connects, through old silver workings, to everything below the valley; the Bloom found it the night the bones were stolen. Father Lucian has noticed the holy water grows a skin overnight. The Riot clock starts here.',
     open:'The walls of Vallaki are high and freshly whitewashed, and someone has painted "ALL WILL BE WELL" across the gate in letters taller than a man. The paint has run in the damp. From inside comes music — a festival — played very loudly, by people who are not smiling.',
     scenes:[
-      { t:'The gate and the town', delve:{ template:'barovia', floors:1, note:'Reuse the village look for Vallaki\'s streets, or import your own Vallaki map in the Build tab.' }, beats:[
+      { t:'The gate and the town', delve:{ template:'vallaki', floors:1, note:'Builds Vallaki: the palisade and its gates, the square, the inn, the burgomaster\'s mansion and Saint Andral\'s.' }, beats:[
         'Throat checks at the gate. Ireena is noticed.',
         'The festival: let it be loud and wrong. Tick Riot if the party makes a scene.' ] },
       { t:'The church of Saint Andral', beats:[

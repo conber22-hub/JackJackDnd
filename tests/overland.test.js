@@ -23,7 +23,7 @@ const journey = (from, to, seed = 'road', n = 1, gaze = 3, bloom = true) => {
 test('the valley: every place is on the road network and roads name real places', () => {
   for (const r of VALLEY_ROADS) assert.ok(VALLEY_PLACES.some(p => p.id === r.a) && VALLEY_PLACES.some(p => p.id === r.b), r.id);
   for (const p of VALLEY_PLACES) assert.ok(route('mists', p.id), `${p.id} cannot be reached from the mists`);
-  for (const p of VALLEY_PLACES) if (p.map) assert.ok(TEMPLATES.some(t => t.id === p.map), `${p.id}: no template ${p.map}`);
+  for (const p of VALLEY_PLACES) for (const m of p.maps || [p.map]) assert.ok(m === 'landmark' || TEMPLATES.some(t => t.id === m), `${p.id}: no template ${m}`);
   assert.deepEqual(route('gates', 'tser'), ['gates', 'village', 'crossroads', 'tser']);
 });
 
@@ -61,4 +61,27 @@ test('the same road has the same shape; the events change with the journey', () 
   const labels = s => s.floors.flatMap(f => f.events.map(e => e.label)).join('|');
   let differs = labels(a) !== labels(c); for (let n = 3; n < 8 && !differs; n++) differs = labels(a) !== labels(journey('village', 'crossroads', 'x', n));
   assert.ok(differs, 'events never change between journeys');
+});
+
+const PLACE_TEMPLATES = ['barovia', 'vallaki', 'krezk', 'tserpool', 'berez', 'winery', 'lakeshore', 'yester', 'tower', 'argyn', 'ravenloft'];
+for (const id of PLACE_TEMPLATES) test(`place map "${id}": houses, water, doors and props sit right`, () => {
+  const tpl = TEMPLATES.find(t => t.id === id);
+  for (const seed of ['p1', 'p2', 'p3']){
+    const s = newState({ seed, floors:tpl.floors.length, size:40, template:id, party:false }); setState(s);
+    s.floors.forEach((f, L) => {
+      for (const b of f.buildings || []) for (let y = b.y; y < b.y + b.h; y++) for (let x = b.x; x < b.x + b.w; x++) assert.ok(!walk(f.grid[y * f.W + x]), `${id}/${seed} floor ${L}: ${b.name} covers floor at ${x},${y}`);
+      for (const i of f.water || []) assert.ok(!walk(f.grid[i]));
+      for (const d of f.doors) assert.ok(walk(f.grid[d.i]), `${id}: a door on rock`);
+      for (const pr of f.props || []) assert.ok(PROPS[pr.k], `unknown prop ${pr.k}`);
+      const seen = reachable(f, f.up || { x:f.rooms[0].cx, y:f.rooms[0].cy });
+      for (const r of f.rooms) assert.ok([...seen].some(i => { const x = i % f.W, y = (i / f.W) | 0; return x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h; }), `${id}/${seed} floor ${L}: ${r.name} unreachable`);
+    });
+  }
+});
+test('every place in the valley has a map to enter', () => {
+  for (const p of VALLEY_PLACES) assert.ok(p.map, `${p.name} has no map`);
+  for (const id of ['gates', 'crossroads', 'mists']){
+    const s = newState({ seed:'lm', floors:1, size:40, template:'landmark', place:id, party:false });
+    assert.ok(s.floors[0].rooms.some(r => r.name === VALLEY_PLACES.find(p => p.id === id).name));
+  }
 });

@@ -8,12 +8,14 @@ import { THEMES, TEMPLATES, themeIndex } from '../data/themes.js';
 import { ROOM_NAMES } from '../data/rooms.js';
 import { BEST } from '../data/bestiary.js';
 import { T, walk } from './tiles.js';
-import { journeySpecs } from './overland.js';
+import { journeySpecs, landmarkSpecs } from './overland.js';
+import { genPlace } from './settlement.js';
 import { state, makeMonster } from './state.js';
 
 const DEEP = ['hands', 'undertow', 'womb', 'ossuary'];
 export function templateSpecs(meta){
   if (meta.template === 'journey' && meta.journey) return journeySpecs(meta.journey);
+  if (meta.template === 'landmark' && meta.place) return landmarkSpecs(meta.place, meta.seed);
   const tpl = TEMPLATES.find(t => t.id === meta.template) || TEMPLATES[0], out = [];
   for (let L = 0; L < meta.floors; L++){
     if (tpl.floors[L]) out.push(tpl.floors[L]);
@@ -46,6 +48,8 @@ export function genDelve(meta){
 
 export function genFloor(L, W, H, rng, anchor, isLast, spec = {}){
   if (spec.layout) return layoutFloor(L, W, H, spec, anchor, isLast);
+  // a place from the Valley (village, town, camp, tower…): built fresh from the delve's seed
+  if (spec.place){ const lay = genPlace(spec.place.kind, { ...spec.place, seed:Math.floor(rng() * 1e9), last:isLast }); if (lay) return layoutFloor(L, W, H, { ...spec, layout:lay }, anchor, isLast); }
   const theme = spec.theme !== undefined ? themeIndex(spec.theme) : L % 4, th = THEMES[theme];
   const rooms = [];
   const [smin, smax] = spec.roomSize || [4, 9];
@@ -92,7 +96,7 @@ export function genFloor(L, W, H, rng, anchor, isLast, spec = {}){
    rooms [x, y, w, h, type, name, notes, { outdoor }] · paths { w, pts:[x0, y0, x1, y1, …] } (straight runs,
    w squares wide) · doors [x, y, state] · buildings { x, y, w, h, name, door } · props [kind, x, y, rot]
    · up / down [x, y] · exits { up, down } (what the stairs are called here) · water [[x, y]…] · fill [[x, y]…]
-   (squares forced solid) · events [{ label, text, enc, x, y }] (the road's random happenings, see overland.js). */
+   (squares forced solid) · masonry / clear [[x, y]…] (solid squares drawn as stone wall / left bare for a prop) · events [{ label, text, enc, x, y }] (the road's random happenings, see overland.js). */
 export function layoutFloor(L, W, H, spec, anchor, isLast = true){
   const lay = spec.layout, theme = themeIndex(spec.theme), th = THEMES[theme];
   const f = { level:L, W, H, theme, name:lay.name || th.name, rooms:[], nextId:0, edges:[], corridors:[], autoLink:false,
@@ -121,6 +125,9 @@ export function layoutFloor(L, W, H, spec, anchor, isLast = true){
   // water (rivers, ponds, lakes) is impassable; it is drawn as water instead of trees
   f.water = [...new Set((lay.water || []).map(([x, y]) => y * W + x))].filter(i => !walk(f.grid[i]));
   f.events = (lay.events || []).map(e => ({ id:f.nextObj++, ...e, done:false }));
+  // squares drawn as stone wall (a village wall) or left bare for a prop to stand on (a palisade) on outdoor floors
+  if (lay.masonry?.length) f.masonry = [...new Set(lay.masonry.map(([x, y]) => y * W + x))].filter(i => !walk(f.grid[i]));
+  if (lay.clear?.length) f.clear = lay.clear.map(([x, y]) => y * W + x);
   for (const [x, y, state = 'closed'] of lay.doors || []){ const i = y * W + x; if (walk(f.grid[i])) f.doors.push({ id:f.nextObj++, i, state, dc:state === 'locked' ? 15 : 14 }); }
   for (const [x, y, kind = 'pit'] of lay.traps || []){ const i = y * W + x; if (walk(f.grid[i])) addTrap(f, i, kind); }
   f.buildings = (lay.buildings || []).map(b => ({ ...b }));

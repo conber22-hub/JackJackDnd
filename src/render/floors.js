@@ -109,18 +109,19 @@ export function buildFloor(L, opt = {}){
   const isBuildingWall = i => { if (th.walls === 'trees') return false; const x = i % f.W, y = (i / f.W) | 0;
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++){ const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < f.W && ny < f.H && walk(g[ny * f.W + nx]) && indoor(ny * f.W + nx)) return true; }
     return false; };
-  const wl = [], trees = [], water = new Set(f.water || []);
+  const wl = [], trees = [], water = new Set(f.water || []), masonry = new Set(f.masonry || []), bare = new Set(f.clear || []);
   const hr = (i, k) => { let h = Math.imul(i ^ Math.imul(k + 1, 0x9e3779b1), 2654435761) ^ Math.imul(L + 1, 40503); h ^= h >>> 15; h = Math.imul(h, 2246822519); h ^= h >>> 13; return (h >>> 0) / 4294967296; };
   for (const i of all){
-    if (water.has(i) || inBuilding(f, i % f.W, (i / f.W) | 0) || !seen(i)) continue;
-    if (outdoor && !isBuildingWall(i)) trees.push(i); else wl.push(i);
+    if (water.has(i) || bare.has(i) || inBuilding(f, i % f.W, (i / f.W) | 0) || !seen(i)) continue;
+    if (outdoor && !isBuildingWall(i) && !masonry.has(i)) trees.push(i); else wl.push(i);
   }
+  for (const i of masonry) if (!all.has(i) && (!pv || seen(i))) wl.push(i);   // a village wall runs all the way round, streets or not
   if (outdoor && !opt.walls){
     // a second, thinner row of trees behind the first so the road runs through woods, not past a fence
     const near = new Map();   // rock square -> how far it is from the first row of trees
     for (const i of trees){ const x = i % f.W, y = (i / f.W) | 0;
       for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++){ const nx = x + dx, ny = y + dy, j = ny * f.W + nx, dd = Math.max(Math.abs(dx), Math.abs(dy));
-        if (nx >= 0 && ny >= 0 && nx < f.W && ny < f.H && !walk(g[j]) && !all.has(j) && !water.has(j) && !inBuilding(f, nx, ny) && !(near.get(j) <= dd)) near.set(j, dd); } }
+        if (nx >= 0 && ny >= 0 && nx < f.W && ny < f.H && !walk(g[j]) && !all.has(j) && !water.has(j) && !bare.has(j) && !masonry.has(j) && !inBuilding(f, nx, ny) && !(near.get(j) <= dd)) near.set(j, dd); } }
     const seen2 = j => { const x = j % f.W, y = (j / f.W) | 0;
       for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++){ const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < f.W && ny < f.H && exp.has(ny * f.W + nx)) return true; }
       return false; };
@@ -158,7 +159,7 @@ export function buildFloor(L, opt = {}){
   // water: rivers, ponds and lakes (impassable, and no trees grow in it)
   const wt = [...water].filter(i => !pv || seen(i) || exp.has(i));
   if (wt.length){
-    const wm2 = new THREE.InstancedMesh(G.tile, fv.mats.water ||= shared(new THREE.MeshStandardMaterial({ color:'#16242c', roughness:.12, metalness:.35, emissive:new THREE.Color('#0a1418'), transparent:true, opacity:.92 })), wt.length);
+    const wm2 = new THREE.InstancedMesh(G.tile, fv.mats.water ||= shared(new THREE.MeshStandardMaterial({ color:'#16242c', roughness:.42, metalness:.1, emissive:new THREE.Color('#081014'), transparent:true, opacity:.94 })), wt.length);
     wt.forEach((i, n) => { mat4.makeTranslation(wx(i % f.W), -.16, wz((i / f.W) | 0)); wm2.setMatrixAt(n, mat4); wm2.setColorAt(n, col.setRGB(1, 1, 1).multiplyScalar(.85 + hr(i, 7) * .3)); });
     if (wm2.instanceColor) wm2.instanceColor.needsUpdate = true;
     wm2.receiveShadow = shadows; fv.built.add(wm2);

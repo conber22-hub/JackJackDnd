@@ -388,7 +388,7 @@ Vallaki: the Baron, his festivals, the Wachter house, the inn, and the church of
 ### The gate and the town
 - Throat checks at the gate. Ireena is noticed.
 - The festival: let it be loud and wrong. Tick Riot if the party makes a scene.
-- ▦ **Dungeon:** The Village of Barovia — Reuse the village look for Vallaki's streets, or import your own Vallaki map in the Build tab.
+- ▦ **Dungeon:** Vallaki — Builds Vallaki: the palisade and its gates, the square, the inn, the burgomaster's mansion and Saint Andral's.
 
 ### The church of Saint Andral
 - Father Lucian. The bones are missing (your book). The font is skinned over with grey-green.

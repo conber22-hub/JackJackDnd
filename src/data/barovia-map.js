@@ -2,42 +2,43 @@
    the roads between them, and the things the road throws at travellers. Nothing here reprints the module:
    the descriptions are table notes, and the book has the real places.
    kind   picks the arrival landmark the road generator builds (engine/overland.js)
-   map    the template the "Enter" button builds when the party arrives (or null)
+   map    the template the "Enter" button builds when the party arrives ('landmark' = the road's own arrival
+          clearing, as a map of its own) · maps: more than one to choose from
    state  the id in the Story tab's Places list, so a place's mood (quiet, watched, blooming…) is shared
    lab    where the name sits on the map: below (default), n = above, w = to the left
    len    how many stretches of road (maps) a road takes · way: road | path | trail · river: it crosses water */
 export const VALLEY_PLACES = [
-  { id:'mists', name:'The Mist Wall', x:95, y:22, lab:'w', kind:'mists', map:null, state:null, sessions:[0],
+  { id:'mists', name:'The Mist Wall', x:95, y:22, lab:'w', kind:'mists', map:'landmark', state:null, sessions:[0],
     blurb:'Where the Salt Road ended. Behind them, fog the colour of old pewter. There is no way back through it.' },
-  { id:'gates', name:'The Gates of Barovia', x:89, y:30, kind:'gates', map:null, state:null, sessions:[1],
+  { id:'gates', name:'The Gates of Barovia', x:89, y:30, kind:'gates', map:'landmark', state:null, sessions:[1],
     blurb:'Two stone guardians, headless, either side of a gate that opens for you and does not open again.' },
   { id:'village', name:'Village of Barovia', x:80, y:37, kind:'village', map:'barovia', state:'village', sessions:[1, 2, 3],
     blurb:'Shuttered houses in permanent fog, a tavern with one lit window, a church on a rise — and the tall narrow house at the edge of town.' },
-  { id:'crossroads', name:'The Gallows Crossroads', x:68, y:32, lab:'n', kind:'crossroads', map:null, state:null, sessions:[4],
+  { id:'crossroads', name:'The Gallows Crossroads', x:68, y:32, lab:'n', kind:'crossroads', map:'landmark', state:null, sessions:[4],
     blurb:'Where the Svalich Road meets the river and the castle road. A gallows that is never empty for long.' },
-  { id:'castle', name:'Castle Ravenloft', x:71, y:46, kind:'castle', map:'castle', state:'castle', sessions:[],
+  { id:'castle', name:'Castle Ravenloft', x:71, y:46, kind:'castle', map:'ravenloft', state:'castle', sessions:[],
     blurb:'On its pillar of rock above the valley. The bridge, the gate, the dinner table. Not yet.' },
   { id:'coffin', name:'The Iron Coffin', x:62, y:17, kind:'coffin', map:'ironcoffin', state:'crash', sessions:[5],
     blurb:'A burned furrow through the Svalich Woods, and at the end of it the iron thing that fell. Wolves will not go near.' },
-  { id:'tser', name:'Tser Pool', x:57, y:30, kind:'camp', map:null, state:'tser', sessions:[4],
+  { id:'tser', name:'Tser Pool', x:57, y:30, kind:'camp', map:'tserpool', state:'tser', sessions:[4],
     blurb:'Painted wagons, a fire that is always lit, a pool that reflects the wrong sky. The cards are read here.' },
   { id:'bonegrinder', name:'Old Bonegrinder', x:47, y:25, kind:'mill', map:'bonegrinder', state:'bonegrinder', sessions:[6],
     blurb:'A crooked windmill on a hill above the road, and the smell of baking that never quite covers the other smell.' },
-  { id:'vallaki', name:'Vallaki', x:36, y:31, kind:'town', map:'standral', state:'vallaki', sessions:[7, 8, 9, 10],
+  { id:'vallaki', name:'Vallaki', x:36, y:31, kind:'town', map:'vallaki', maps:['vallaki', 'standral'], state:'vallaki', sessions:[7, 8, 9, 10],
     blurb:'A palisade town on the lake that insists, loudly, that all will be well. Saint Andral\'s church is here.' },
-  { id:'lake', name:'Lake Zarovich', x:30, y:21, kind:'lake', map:null, state:null, sessions:[],
+  { id:'lake', name:'Lake Zarovich', x:30, y:21, kind:'lake', map:'lakeshore', state:null, sessions:[],
     blurb:'Black water, a fisherman\'s jetty, and a mist that sits on the lake like a lid.' },
-  { id:'argyn', name:'Argynvostholt', x:42, y:12, kind:'ruin', map:null, state:'argyn', sessions:[],
+  { id:'argyn', name:'Argynvostholt', x:42, y:12, kind:'ruin', map:'argyn', state:'argyn', sessions:[],
     blurb:'A burned mansion on the cliffs where an old order of knights failed. Its beacon has been dark a long time.' },
-  { id:'berez', name:'Berez', x:37, y:47, kind:'swamp', map:null, state:'berez', sessions:[],
+  { id:'berez', name:'Berez', x:37, y:47, kind:'swamp', map:'berez', state:'berez', sessions:[],
     blurb:'A drowned village in the river marsh. Huts on stilts, and one that walks.' },
-  { id:'winery', name:'The Wizard of Wines', x:21, y:38, kind:'vineyard', map:null, state:'winery', sessions:[],
+  { id:'winery', name:'The Wizard of Wines', x:21, y:38, kind:'vineyard', map:'winery', state:'winery', sessions:[],
     blurb:'Vineyards on a slope, a winery that keeps the valley drinking — and a last wagon that never arrived.' },
-  { id:'krezk', name:'Krezk', x:12, y:28, kind:'town', map:null, state:'krezk', sessions:[],
+  { id:'krezk', name:'Krezk', x:12, y:28, kind:'town', map:'krezk', state:'krezk', sessions:[],
     blurb:'A walled village under the abbey on the mountain. The gate opens for those who bring wine.' },
-  { id:'yester', name:'Yester Hill', x:6, y:16, kind:'hill', map:null, state:null, sessions:[],
+  { id:'yester', name:'Yester Hill', x:6, y:16, kind:'hill', map:'yester', state:null, sessions:[],
     blurb:'A bare hill with a ring of stones and a tree that is not a tree. The druids sing to it.' },
-  { id:'tower', name:'The Lonely Tower', x:27, y:55, kind:'tower', map:null, state:null, sessions:[],
+  { id:'tower', name:'The Lonely Tower', x:27, y:55, kind:'tower', map:'tower', state:null, sessions:[],
     blurb:'A stone tower on an island in a tarn. Someone has been living in it who does not want visitors.' },
 ];
 

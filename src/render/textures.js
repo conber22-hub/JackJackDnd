@@ -19,6 +19,8 @@ export const SURFACES = {
   village:   { floor:'cobble',   wall:'brick',  wet:.4 },
   castle:    { floor:'flag',     wall:'ashlar', wet:0 },
   tavern:    { floor:'plank',    wall:'panel',  wet:0 },
+  burned:    { floor:'plank',    wall:'ashlar', wet:0 },
+  cellar:    { floor:'flag',     wall:'ashlar', wet:.35 },
 };
 const S = 256;
 const gray = (v, a = 1) => `rgba(${v},${v},${v},${a})`;

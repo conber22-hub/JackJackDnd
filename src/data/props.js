@@ -66,6 +66,7 @@ export const PROPS = {
   stone:      { n:'Standing stone',  cat:'barovia', w:1, h:1 },
   bloomgrowth:{ n:'Bloom growth',    cat:'barovia', w:1, h:1 },
   vines:      { n:'Vine row',        cat:'barovia', w:1, h:3 },
+  tent:       { n:'Tent',            cat:'barovia', w:2, h:2 },
   // dungeon
   chest:      { n:'Chest',           cat:'dungeon', w:1, h:1 },
   altar:      { n:'Altar',           cat:'dungeon', w:1, h:2 },

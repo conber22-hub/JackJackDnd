@@ -138,7 +138,7 @@ document.addEventListener('click', e => {
     case 'valleyTravel': $('#valleyModal').classList.add('hidden'); if (!valley().journey || confirm('The party is already on a road. Set out somewhere else from where they started?')) travel(k); break;
     case 'valleyArrive': arrive(); break;
     case 'goFloor': goFloor(+k); renderPanel(); break;
-    case 'valleyEnter': if (confirm('Build this place\'s map? It replaces the current one (the party, their characters and the campaign come along).')) enterPlace(k); break;
+    case 'valleyEnter': if (confirm('Build this place\'s map? It replaces the current one (the party, their characters and the campaign come along).')) enterPlace(k, id); break;
     case 'evRead': readEvent(+k, +id); break;
     case 'evSpring': springEvent(+k, +id); renderPanel(); break;
     case 'evGo': goToEvent(+k, +id); break;

@@ -247,6 +247,14 @@ export function genStretch(spec){
   return { layout:lay, exit };
 }
 
+// A place with no map of its own (the Gates, the crossroads, the Mist Wall): the road's arrival clearing, as one map.
+export function landmarkSpecs(placeId, seed){
+  const p = placeById(placeId); if (!p) return [];
+  const { layout } = genStretch({ seed:`${seed}|landmark|${p.id}`, road:{ id:'landmark', name:p.name, way:'road' }, entry:null, side:'e', arrive:p, events:[], name:p.name, exits:null,
+    startName:'The road', startNotes:`The road into ${p.name}.` });
+  return [{ theme:'woods', layout }];
+}
+
 /* ---------- a whole journey, as template floor specs ---------- */
 // journey: { from, to, seed, n (journeys so far), gaze, bloom }
 export function journeySpecs(j){

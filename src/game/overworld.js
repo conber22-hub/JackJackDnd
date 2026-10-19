@@ -50,11 +50,15 @@ export function arrive(){
 }
 
 // Build the place's own map (the Narrow House and the village, Old Bonegrinder, the Iron Coffin, Vallaki…).
-export function enterPlace(id){
-  const p = placeById(id), tpl = p && TEMPLATES.find(t => t.id === p.map); if (!tpl) return;
-  newDelve({ name:p.name, seed:`${valley().seed}|${p.id}`, floors:tpl.floors.length, size:40, template:tpl.id }, true);
-  ui.tab = 'valley'; log(`🧭 ${p.name}: ${tpl.name} is on the table.`); changed();
+export function enterPlace(id, mapId){
+  const p = placeById(id); if (!p) return;
+  const which = mapId || p.map, seed = `${valley().seed}|${p.id}|${which}`;
+  if (which === 'landmark'){ newDelve({ name:p.name, seed, floors:1, size:40, template:'landmark', place:p.id }, true); }
+  else { const tpl = TEMPLATES.find(t => t.id === which); if (!tpl) return; newDelve({ name:p.name, seed, floors:tpl.floors.length, size:40, template:tpl.id }, true); }
+  ui.tab = 'valley'; log(`🧭 ${p.name} is on the table.`); changed();
 }
+// The maps a place offers: [{ id, name }]
+export const placeMaps = p => (p.maps || (p.map ? [p.map] : [])).map(id => ({ id, name:id === 'landmark' ? p.name : TEMPLATES.find(t => t.id === id)?.name || id }));
 
 /* ---------- what happens on the road ---------- */
 const eventOn = (L, id) => state.floors[L]?.events?.find(e => e.id === id);

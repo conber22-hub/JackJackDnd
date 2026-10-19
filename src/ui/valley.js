@@ -5,7 +5,7 @@ import { VALLEY_PLACES, VALLEY_ROADS } from '../data/barovia-map.js';
 import { PLACE_STATES } from '../data/campaign.js';
 import { TEMPLATES } from '../data/themes.js';
 import { route, planJourney, placeById, roadBetween } from '../engine/overland.js';
-import { valley, onJourney } from '../game/overworld.js';
+import { valley, onJourney, placeMaps } from '../game/overworld.js';
 import { BEST } from '../data/bestiary.js';
 
 const GLYPH = { mists:'🌫', gates:'🚪', village:'🏠', crossroads:'⚖', castle:'🏰', coffin:'☄', camp:'🔥', mill:'⚙', town:'🏘', lake:'🌊', ruin:'🏚', swamp:'🛖', vineyard:'🍇', hill:'🗿', tower:'🗼' };
@@ -64,7 +64,7 @@ export function valleyTab(){
   const path = sel !== V.at ? route(V.at, sel) : null, plan = path && planJourney(V.at, sel);
   const onRoute = new Set(); if (path) for (let i = 1; i < path.length; i++) onRoute.add(roadBetween(path[i - 1], path[i]).id);
   if (V.journey) for (let i = 1; i < V.journey.path.length; i++) onRoute.add(roadBetween(V.journey.path[i - 1], V.journey.path[i]).id);
-  const tpl = p.map && TEMPLATES.find(t => t.id === p.map);
+  const maps = placeMaps(p);
   let h = `<h3>The Valley of Barovia <button class="btn small" style="float:right" data-act="valleyMap">⤢ Enlarge</button></h3>
     <div class="muted">${V.journey ? `On the road to <b>${esc(placeById(V.journey.to).name)}</b>.` : `The party is at <b>${esc(here.name)}</b>.`} ${V.visited.length} of ${VALLEY_PLACES.length} places seen · ${V.journeys} journey${V.journeys === 1 ? '' : 's'}.</div>
     ${mapSVG(V, sel, onRoute)}
@@ -76,8 +76,8 @@ export function valleyTab(){
       <div class="row"><button class="btn primary" data-act="valleyTravel" data-k="${p.id}">🧭 Set out for ${esc(p.name)}</button></div>
       <div class="muted">Builds the road as maps — one per stretch — and puts the party at the start. The road's shape stays the same each time; what is on it does not.</div>`;
   else if (path === null && sel !== V.at) h += `<div class="bad">No road reaches ${esc(p.name)} from here.</div>`;
-  if (sel === V.at && !V.journey && tpl) h += `<div class="row"><button class="btn primary" data-act="valleyEnter" data-k="${p.id}">▦ Enter ${esc(p.name)} (${esc(tpl.name)})</button></div><div class="muted">Builds the place's own map. Keeps the party.</div>`;
-  if (sel === V.at && !V.journey && !tpl) h += `<div class="muted">No map of ${esc(p.name)} yet — draw one in the Build tab, or import one.</div>`;
+  if (sel === V.at && !V.journey && maps.length) h += `<div class="row">${maps.map((m, i) => `<button class="btn ${i ? '' : 'primary'}" data-act="valleyEnter" data-k="${p.id}" data-id="${m.id}">▦ ${maps.length > 1 ? esc(m.name) : `Enter ${esc(p.name)}`}</button>`).join('')}</div><div class="muted">Builds the place's own map${maps.length > 1 ? 's' : ''}. Keeps the party.</div>`;
+  else if (sel !== V.at && !V.journey && maps.length) h += `<div class="muted">Maps here: ${maps.map(m => esc(m.name)).join(' · ')} (once they arrive).</div>`;
   h += `</div>`;
   if (V.journey){
     const L = ui.floor, f = state.floors[L], last = L === state.floors.length - 1, ev = (f?.events || []);
