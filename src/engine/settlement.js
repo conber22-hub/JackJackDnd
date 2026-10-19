@@ -175,6 +175,7 @@ function swamp(o, g){
   // everything that is not ground is water
   const solid = new Set(); for (const b of lay.buildings) for (let y = b.y; y < b.y + b.h; y++) for (let x = b.x; x < b.x + b.w; x++) solid.add(y * N + x);
   for (let y = 2; y < N - 2; y++) for (let x = 2; x < N - 2; x++) if (!solid.has(y * N + x)) lay.water.push([x, y]);
+  lay.mud = true;   // the ground beside the water is sucking mud
   for (let x = 5; x < N - 6; x += 3) lay.props.push(P('bridge', x, y0, 0));
   lay.props.push(P('boat', 10, y0 + 3, 1), P('deadtree', 30, y0 - 3), P('mist', 14, y0 - 1), P('mist', 24, y0 + 1), P('ravens', 33, y0 - 2));
   return lay;

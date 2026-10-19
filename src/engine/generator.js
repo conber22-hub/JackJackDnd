@@ -132,6 +132,10 @@ export function layoutFloor(L, W, H, spec, anchor, isLast = true){
   for (const [x, y, kind = 'pit'] of lay.traps || []){ const i = y * W + x; if (walk(f.grid[i])) addTrap(f, i, kind); }
   f.buildings = (lay.buildings || []).map(b => ({ ...b }));
   f.props = (lay.props || []).map(([k, x, y, rot = 0]) => ({ id:f.nextObj++, k, x, y, rot }));
+  // difficult terrain: listed squares, and with `mud` every open square beside the water (a marsh)
+  const rough = new Set((lay.rough || []).map(([x, y]) => y * W + x));
+  if (lay.mud){ const wet = new Set(f.water); for (let i = 0; i < f.grid.length; i++) if (f.grid[i] === T.ROOM && [1, -1, W, -W].some(o => wet.has(i + o))) rough.add(i); }
+  f.rough = [...rough].filter(i => walk(f.grid[i]) && f.grid[i] !== T.DOWN && f.grid[i] !== T.UP);
   return f;
 }
 

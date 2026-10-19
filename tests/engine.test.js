@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { newState, setState, state, T, walk } from '../src/engine/state.js';
-import { reach, updateVision, passMove, lineClear, canSee } from '../src/engine/grid.js';
+import { reach, updateVision, passMove, lineClear, canSee, pathTo, pathCost } from '../src/engine/grid.js';
 import { carve, addRoom, deleteRoom, rectProblem, moveStairs, appendFloor, roomById } from '../src/engine/generator.js';
 import { parseTable, tableGaps, tableRow } from '../src/engine/tables.js';
 import { DEFAULT_SHIFT_TABLE, DEFAULT_WHIM_TABLE } from '../src/data/tables.js';
@@ -221,4 +221,21 @@ test('line of sight: walls block, corner squeezes block, the wall itself is seen
   assert.equal(lineClear(f, 4.5, 2.5, 6.5, 0.5), false);   // through the corner between (5,1) and (6,0)… blocked at (5,1)
   assert.equal(canSee(f, 0, 0, 6, 4), false);             // in the pillar's shadow
   assert.equal(canSee(f, 0, 4, 6, 4), true);
+});
+
+test('difficult terrain costs two squares and the path goes around it when that is cheaper', () => {
+  const s = newState({ seed:'rough', floors:1, party:false }); setState(s);
+  const W = 9, H = 5, f = { W, H, grid:Array(W * H).fill(T.ROOM), doors:[], rooms:[], rough:[] };
+  s.floors[0] = f; s.tokens = [];
+  // a band of mud across the middle row from x=2 to x=6
+  for (let x = 2; x <= 6; x++) f.rough.push(2 * W + x);
+  const R = reach(0, 0, 2, 20, null);
+  assert.equal(R.dist.get(2 * W + 2), 3);                         // one step, then the mud costs 2
+  assert.equal(R.dist.get(2 * W + 8), 8);                         // around the mud (diagonals) beats wading through it (11)
+  const path = pathTo(R.par, W, 2 * W + 8);
+  assert.equal(pathCost(f, path), 8);
+  assert.ok(!reach(0, 0, 2, 1, null).dist.has(2 * W + 1 + 1));   // 1 square of movement doesn't reach into mud two away
+  // the swamp marks its banks as mud
+  const sw = newState({ seed:'swamp', floors:1, template:'berez', party:false });
+  assert.ok(sw.floors[0].rough.length > 10, 'Berez has mud');
 });

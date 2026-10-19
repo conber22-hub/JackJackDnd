@@ -16,6 +16,17 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v0.6 — deeper rules (Phase 5, done)
+
+- **Players roll from their own device.** A player selects their hero and taps an attack, a spell or a feature, then a target. The DM gets a request at the top of the screen: **✓ Roll it**, **▲ Adv**, **▼ Dis** or **✕ No** (the player hears "the DM says no"). The DM's app does the rolling, so every screen gets the same card. **Table tab → Players roll freely** skips the approval. In a fight a player can only act on their own turn.
+- **Spell slots and class resources** on every hero from the creator: slots by level, pact slots, Rage, Bardic Inspiration, Channel Divinity, Lay on Hands (5 HP a tap from the pool), Wild Shape, Second Wind, Action Surge, Indomitable, Focus Points, Sorcery Points, Favored Enemy (a free Hunter's Mark), Arcane Recovery and Magical Cunning (slots back), Heroic Inspiration, and Hit Dice. Casting spends the lowest slot that fits (and refuses when none is left). Slots show as pips on the hero's card; the DM can nudge any of them ± on the Tokens tab. **Rage** halves bludgeoning, piercing and slashing damage and adds rage damage to melee hits. Buff and utility spells now have buttons too (they show a card and spend the slot); Divine Smite lands as radiant damage (+1d8 against the undead); Lesser and Greater Restoration clear Seeded, Blinded, Paralyzed and Poisoned.
+- **Rests**: Tokens tab → ☕ Short rest (short-rest features back; one charge of the one-a-rest ones) and 🌙 Long rest (full HP, everything back, conditions gone except Seeded). Making camp on the road is a long rest.
+- **True line of sight** (`lineClear` / `canSee` in `engine/grid.js`): a square is seen if a straight line reaches it from the viewer's square (to its middle or near a corner) without crossing rock, a building, a tree or a closed door, out to 60 ft. (a token's own `sight` in squares overrides it; Blinded is 1). Buildings and trees cast real shadows in the villages and woods.
+- **Legendary and lair actions** (`src/data/legendary.js`): the Count, Saint Andral (both forms), the Budding Mind and the Undertow. Their card shows the legendary actions left this round (back at the start of their turn) with a button for each — attacks then ask for a target — and **🛡 Legendary Resistance** (3 a day). When a lair creature is in the fight, each new round puts a **🏰 Lair** button in the initiative list: one lair action on initiative 20, never the same one twice running.
+- **Encounter generator** (Beasts tab → Encounter; `engine/encounter.js`): low / moderate / high, any creatures or one family. The budget is the 2024 XP budget for the party's levels (from their sheets, or the session's level), raised by his Gaze (×1.06 per step above 1); at Gaze 4+ his own creatures turn up more often. A leader plus its kind, no bosses, at most two per hero. **Place on this floor** drops it in a room away from the party.
+- **Noise carries** (`game/noise.js`): starting a fight, forcing a door, a trap going off, and thunder or fire spells with an area wake creatures nearby and on the floors above and below (very loud ones two floors away). The DM sees a red ping where the sound arrives on the other floors and a toast of who heard it. **📢 Noise** in the dock makes a noise wherever you tap.
+- **Difficult terrain** (`f.rough`): costs 2 squares to cross; movement and the reach glow follow it (it takes the cheaper way round). **Build tab → ≋ Rough** paints it (start a stroke on rough ground to clear it). Berez's banks are mud. Drawn as dark wet ground with stones.
+
 ## v0.5 — the Valley: a Barovian overworld
 
 - **The Valley tab** (DM) shows a map of Barovia: 16 places (the Mist Wall, the Gates, the Village, the Gallows Crossroads, Castle Ravenloft, the Iron Coffin, Tser Pool, Old Bonegrinder, Vallaki, Lake Zarovich, Argynvostholt, Berez, the Wizard of Wines, Krezk, Yester Hill, the Lonely Tower) joined by 15 named roads, paths and trails, with forests, the river, the lakes and mist around the edge. A lantern marks the party; places they haven't reached are dim. **⤢ Enlarge** opens it big.
@@ -155,16 +166,8 @@ v0.1's single file is now a Vite project. `npm run build` bakes it back into one
 - **New campaigns start with an empty party** (tick the demo-party box for Gribbles and friends).
 - **Heroes' spells are buttons** on their card: save spells, area spells centred on a target, heals and auto-hits all resolve with the hero's own DC.
 
-### Phase 5 — Deeper rules
-Partly started: conditions with round durations, automatic advantage/disadvantage, per-ability saves and heroes' spells are in.
-- (new) Players roll their own attacks and spells from their device (the creator already gives them the numbers).
-- (new) Spell slots, rage and other resources counted on the token; rests.
-1. True line-of-sight fog. Doors already block sight, but walls still only block it by walking distance.
-2. A legendary action counter, and lair actions on initiative 20. These are written into the statblocks but not yet automated.
-3. Players request attacks and the DM approves the roll.
-4. An encounter generator per Dread level from your d10 tables. *Populate* is the seed of this.
-5. Multi-floor events: something on Floor 3 hears the fight on Floor 2. The *alert* flag already exists.
-6. Difficult terrain: the Bloat-Mourner's slick trail, the Monstrosity's aura, and floodwater.
+### Phase 5 — Deeper rules (done — see v0.6 above)
+Still open, for later: concentration, upcasting damage, reactions (Shield, Hellish Rebuke) as prompts, auras as terrain (the Monstrosity of Hands, the Bloat-Mourner's slick trail), and a "Dread Zone switch" that brings back the old Dread levels and the Grasp hand when the campaign goes deep.
 
 ### Phase 6 — Harden multiplayer
 1. Auto-reconnect when a phone sleeps.
@@ -182,6 +185,7 @@ src/debug.js            window.DreadDelve console handle (also used by the smoke
 src/util/core.js        dice, seeded random, tiny event bus
 src/data/               ← the content. Edit freely.
   dread.js              Strahd's Gaze 1–10 (look + rules + read-aloud), whispers, conditions
+  legendary.js          legendary actions, Legendary Resistance and lair actions
   props.js              PROPS (furniture & scenery for the Build tab), footprints
   session0.js           Session 0's hand-built maps: tavern, village, the Old Salt Road
   barovia-map.js        the Valley: places, roads, and what the road throws at travellers
@@ -192,15 +196,20 @@ src/data/               ← the content. Edit freely.
 src/engine/             pure logic: no DOM, no Three.js, unit-tested
   state.js              state + ui, token factories, newState
   generator.js          floors, rooms, corridors, carve(), doors, traps, stairs, populate
-  grid.js               movement, sight, passive Perception
+  grid.js               movement (difficult terrain), line of sight, passive Perception
   importer.js           Battle Table / grid JSON / ASCII import, ASCII & JSON export
   tables.js             roll-table parser
   overland.js           the Valley: routes, journeys, and procedural stretches of road from modules
+  encounter.js          XP budgets and the encounter generator
   settlement.js         the Valley's places: villages, towns, Krezk, Berez, the camp, the vineyard, the lake, the hill, the tower
 src/game/               rules that touch the scene and UI
   combat.js             initiative, attacks, damage, death hooks, the fx language, round-end Gaze effects
   shift.js              the Shift (rolls the d100 table)
   whim.js               the Whim Die
+  resources.js          spell slots, class features, Hit Dice, short and long rests
+  requests.js           players' attack / spell / feature requests and the DM's approval queue
+  fights.js             rolling and placing an encounter
+  noise.js              noise that carries to nearby creatures and the floors above and below
   overworld.js          travelling: set out, the road's events, arrive, enter a place
   actions.js            select, move (doors / traps), stairs, falling, doors, search, disarm, floors, dread
   build.js              Build tools, templates, populate, add/remove floors, import
@@ -224,7 +233,7 @@ src/ui/creator.js       the character creator
 src/ui/valley.js        the Valley tab and its map (SVG)
 src/render/textures.js · post.js · models.js · gfx.js   Phase 4: textures, post-processing, GLB models, quality settings
 src/ui/                 hud.js (top bar, dock, cards) · panels.js (tabs) · input.js (taps & drags) · events.js (buttons)
-tests/engine.test.js · hero.test.js · overland.test.js    node --test
+tests/engine.test.js · hero.test.js · overland.test.js · encounter.test.js    node --test
 ```
 
 ## Adding a monster

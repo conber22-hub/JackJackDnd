@@ -24,28 +24,28 @@ export function canStep(f, x, y, dx, dy, pass = passMove){
   return true;
 }
 
-// Breadth-first search: Map(index -> parentIndex) of every tile reachable in `limit` squares.
+/* Difficult terrain (f.rough: square indexes — mud, rubble, black water to the knee) costs 2 squares to enter.
+   reach: every square reachable within `limit` squares of movement → { par: index -> parent, dist: index -> cost } */
+export const roughSet = f => new Set(f.rough || []);
 export function reach(L, sx, sy, limit, moverId){
   const f = state.floors[L], start = sy * f.W + sx, par = new Map([[start, -1]]), dist = new Map([[start, 0]]);
-  const mover = tokById(moverId) || {};
-  let q = [start];
-  while (q.length){
-    const nq = [];
-    for (const i of q){
-      const x = i % f.W, y = (i / f.W) | 0, dd = dist.get(i);
-      if (dd >= limit) continue;
-      for (const [dx, dy] of DIRS){
-        if (!canStep(f, x, y, dx, dy)) continue;
-        const ni = (y + dy) * f.W + x + dx; if (par.has(ni)) continue;
-        const blocker = tokenAt(L, x + dx, y + dy);
-        if (blocker && blocker.id !== moverId && side(blocker) !== side(mover)) continue; // can't walk through enemies
-        par.set(ni, i); dist.set(ni, dd + 1); nq.push(ni);
-      }
+  const mover = tokById(moverId) || {}, rough = roughSet(f), buckets = [[start]];
+  for (let d = 0; d < buckets.length; d++) for (const i of buckets[d] || []){
+    if (dist.get(i) !== d || d >= limit) continue;
+    const x = i % f.W, y = (i / f.W) | 0;
+    for (const [dx, dy] of DIRS){
+      if (!canStep(f, x, y, dx, dy)) continue;
+      const ni = (y + dy) * f.W + x + dx, nd = d + (rough.has(ni) ? 2 : 1);
+      if (nd > limit || (dist.has(ni) && dist.get(ni) <= nd)) continue;
+      const blocker = tokenAt(L, x + dx, y + dy);
+      if (blocker && blocker.id !== moverId && side(blocker) !== side(mover)) continue; // can't walk through enemies
+      par.set(ni, i); dist.set(ni, nd); (buckets[nd] ||= []).push(ni);
     }
-    q = nq;
   }
   return { par, dist };
 }
+// What walking a path costs, in squares (difficult terrain counts double).
+export function pathCost(f, path){ const rough = roughSet(f); return path.reduce((s, p) => s + (rough.has(p.y * f.W + p.x) ? 2 : 1), 0); }
 export function pathTo(par, W, target){ const out = []; let i = target; while (i !== -1 && i !== undefined){ out.push(i); i = par.get(i); } out.reverse(); return out.slice(1).map(i => ({ x:i % W, y:(i / W) | 0 })); }
 
 // Flood through tiles you can see across; a closed door is itself visible but nothing past it.

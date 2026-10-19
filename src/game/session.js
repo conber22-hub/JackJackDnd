@@ -27,7 +27,7 @@ export function deserialize(s){
   st.floors = s.floors.map((f, L) => {
     const nf = { ...JSON.parse(JSON.stringify(f)), grid:[...String(f.grid)].map(Number), base:f.base ? [...String(f.base)].map(Number) : null };
     // v1 saves: rooms were identified by index, no doors/traps/corridors
-    nf.dug ||= []; nf.filled ||= []; nf.doors ||= []; nf.traps ||= []; nf.corridors ||= []; nf.props ||= []; nf.buildings ||= [];
+    nf.dug ||= []; nf.filled ||= []; nf.doors ||= []; nf.traps ||= []; nf.corridors ||= []; nf.props ||= []; nf.buildings ||= []; nf.rough ||= [];
     if (nf.autoLink === undefined) nf.autoLink = true;
     nf.rooms.forEach((r, i) => { if (r.id === undefined) r.id = i; });
     nf.nextId ??= Math.max(-1, ...nf.rooms.map(r => r.id)) + 1;

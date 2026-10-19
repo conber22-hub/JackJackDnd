@@ -1,7 +1,8 @@
 /* ACTIONS — selecting, moving (doors open, traps fire), stairs, falling, doors, searching, pings, floors, views. */
 import * as THREE from 'three';
 import { state, ui, tokById, tokenAt, log, isDM, viewAsPlayer, dreadLevel } from '../engine/state.js';
-import { reach, pathTo, updateVision, detectHidden, vision, passMove, canSeeTile } from '../engine/grid.js';
+import { makeNoise } from './noise.js';
+import { reach, pathTo, pathCost, updateVision, detectHidden, vision, passMove, canSeeTile } from '../engine/grid.js';
 import { trapAt } from '../engine/generator.js';
 import { TRAP_KINDS } from '../data/rooms.js';
 import { CONDITIONS, WHISPERS } from '../data/dread.js';
@@ -67,7 +68,7 @@ export function doMove(t, x, y){
     const k = path.findIndex(p => trapAt(f, p.y * f.W + p.x)?.armed);
     if (k >= 0){ trapHit = trapAt(f, path[k].y * f.W + path[k].x); path = path.slice(0, k + 1); }
   }
-  if (state.combat.active) t.moved = (t.moved || 0) + path.length;
+  if (state.combat.active) t.moved = (t.moved || 0) + pathCost(f, path);
   clearReach();
   broadcast({ t:'anim', id:t.id, path });
   animatePath(t.id, path, step => {
@@ -171,6 +172,7 @@ export function triggerTrap(t, tr){
     if (!ok && k.fx?.includes('pit') && !o.dead) fallers.push(o);
   }
   showCard({ kind:'crit', title:`${k.icon} ${k.n}!`, sub:`${t.name} sets it off`, flair:k.f, lines });
+  makeNoise(t.floor, x, y, tr.kind === 'bell' ? 2 : 1, `${k.n} goes off`);
   log(`${t.name} triggers a ${k.n} on ${f.name}.`);
   buildFloor(t.floor);
   const zs = zoneSource(t.floor, { x, y });
@@ -209,7 +211,7 @@ export function doorAction(actor, L, id, act){
       lines:[`d20 <b>${r}</b> + ${mod} = <b>${tot}</b> — <b>${ok ? (act === 'pick' ? 'UNLOCKED' : 'IT GIVES') : 'it holds'}</b>`], flair:act === 'force' ? 'The sound carries a long way down here.' : '' });
     log(`${actor.name} ${ok ? (act === 'pick' ? 'unlocks' : 'forces open') : 'fails to open'} a door.`);
     if (ok) dr.state = act === 'pick' ? 'closed' : 'open';
-    if (act === 'force') runFx(zoneSource(L, { x, y }), 'alert', true);
+    if (act === 'force'){ runFx(zoneSource(L, { x, y }), 'alert', true); makeNoise(L, x, y, 1, 'A door is forced'); }
   }
   buildFloor(L);
   if ((before === 'open') !== (dr.state === 'open')){ animateDoor(L, dr.id, dr.state === 'open'); sfx('door'); }

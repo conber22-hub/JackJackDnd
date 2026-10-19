@@ -9,15 +9,17 @@ import { rollInitiative, nextTurn, placeMonster, doAttack, runFx, useSpecial, ki
 import { select, doMove, requestMove, setView, goFloor, takeStairs, setDread, doorAction, search, triggerTrap, fall } from './game/actions.js';
 import { commitRoom, commitCorridor, placeDoorAt, placeTrapAt, placeStairsAt, placePropAt, placeHouseAt, eraseAt, importMap, newDelve, addFloorBelow, populate, setAutoLink } from './game/build.js';
 import { undo, serialize } from './game/session.js';
+import { makeNoise } from './game/noise.js';
+import { rollEncounter, placeEncounter } from './game/fights.js';
 import { castSpell, useLegendary, useResistance, lairAction, lairCreature } from './game/combat.js';
 import { useFeature, shortRest, longRest, adjustRes } from './game/resources.js';
-import { requestAct, answerRequest, queue as requests } from './game/requests.js';
+import { requestAct, answerRequest, receiveAct, queue as requests } from './game/requests.js';
 import { setMode } from './ui/input.js';
 import { focusTile } from './render/scene.js';
 void _s;
 
 export const get = () => stateMod.state;
-export { castSpell, useLegendary, useResistance, lairAction, lairCreature, useFeature, shortRest, longRest, adjustRes, requestAct, answerRequest, requests };
+export { receiveAct, makeNoise, rollEncounter, placeEncounter, castSpell, useLegendary, useResistance, lairAction, lairCreature, useFeature, shortRest, longRest, adjustRes, requestAct, answerRequest, requests };
 export { ui, tokById, BEST, reach, shiftFloor, whimRoll, whimStep, rollInitiative, nextTurn, placeMonster, doAttack, runFx, useSpecial, kill, applyDamage, infest,
   select, doMove, requestMove, setView, goFloor, takeStairs, setDread, doorAction, search, triggerTrap, fall,
   commitRoom, commitCorridor, placeDoorAt, placeTrapAt, placeStairsAt, placePropAt, placeHouseAt, eraseAt, importMap, newDelve, addFloorBelow, populate, setAutoLink, undo, serialize, setMode, focusTile };

@@ -37,6 +37,7 @@ import { buildSessionDelve, placeSessionEncounter, readAloud, tickClock, applyTi
 import { requestAct, answerRequest } from '../game/requests.js';
 import { useFeature, adjustRes, shortRest, longRest } from '../game/resources.js';
 import { legendOf, legendLeft, useLegendary, useResistance, lairAction } from '../game/combat.js';
+import { rollEncounter, placeEncounter } from '../game/fights.js';
 
 const actor = () => ui.role === 'player' ? tokById(ui.myToken) : (ui.selected && tokById(ui.selected));
 
@@ -45,11 +46,11 @@ document.addEventListener('click', e => {
   const a = el.dataset.act, k = el.dataset.k, id = el.dataset.id, sel = ui.selected && tokById(ui.selected);
   if (a.startsWith('mode:')){
     const m = a.slice(5);
-    const hint = { ping:'Tap a spot to ping it for everyone' }[m] || '';
+    const hint = { ping:'Tap a spot to ping it for everyone', noise:'Tap where the noise is: creatures nearby, and on the floors above and below, hear it' }[m] || '';
     setMode(ui.mode === m ? 'select' : m, null, hint); return;
   }
   switch (a){
-    case 'tab': ui.tab = k; if (k !== 'build' && ['room', 'corridor', 'door', 'trap', 'stairs', 'erase'].includes(ui.mode)) setMode('select'); renderTabs(); renderPanel(); renderDock(); break;
+    case 'tab': ui.tab = k; if (k !== 'build' && ['room', 'corridor', 'door', 'trap', 'stairs', 'erase', 'dig', 'fill', 'rough', 'prop', 'house'].includes(ui.mode)) setMode('select'); renderTabs(); renderPanel(); renderDock(); break;
     case 'cancelMode': setMode('select'); break;
     case 'sel': select(id); { const t = tokById(id); if (t) focusTile(t.floor, t.x, t.y); } break;
     case 'deselect': ui.selDoor = null; ui.selTrap = null; select(null); break;
@@ -68,6 +69,9 @@ document.addEventListener('click', e => {
       else useLegendary(sel, +el.dataset.i); } break;
     case 'lres': if (sel) useResistance(sel); break;
     case 'lair': lairAction(); break;
+    case 'encDiff': ui.encDiff = k; rollEncounter(); renderPanel(); break;
+    case 'encRoll': rollEncounter(); renderPanel(); break;
+    case 'encPlace': placeEncounter(); break;
     case 'resAdj': if (sel) adjustRes(sel, k, +el.dataset.n); break;
     case 'reqAns': answerRequest(id, k); break;
     case 'shortRest': shortRest(); break;
@@ -252,6 +256,7 @@ document.addEventListener('change', e => {
   const el = e.target.closest('[data-edit]'); if (!el) return;
   const kind = el.dataset.edit, t = el.dataset.id && tokById(el.dataset.id), sel = ui.selected && tokById(ui.selected);
   if (kind === 'tok' && t){ const fld = el.dataset.f; t[fld] = el.type === 'number' ? (+el.value || 0) : el.value; if (fld === 'maxHp') t.hp = Math.min(t.hp, t.maxHp); if (t.hp > 0 && t.dead && t.kind !== 'monster') t.dead = false; changed(); }
+  else if (kind === 'encFam'){ ui.encFam = el.value; rollEncounter(); renderPanel(); }
   else if (kind === 'charOwner'){ setCharacterOwner(el.dataset.id, el.value); renderPanel(); }
   else if (kind === 'atk' && t){ t.attacks = parseAttacks(el.value); changed(); }
   else if (kind === 'room'){ const r = roomById(state.floors[ui.floor], +el.dataset.id); if (!r) return; r[el.dataset.f] = el.value; if (el.dataset.f !== 'notes') buildFloor(ui.floor); renderPanel(); changed(); }

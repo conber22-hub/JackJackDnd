@@ -17,6 +17,7 @@ import { changed, broadcast } from './session.js';
 import { goFloor, setDread, fall, rebuildFog } from './actions.js';
 import { spendSpell } from './resources.js';
 import { LEGENDARY } from '../data/legendary.js';
+import { makeNoise } from './noise.js';
 
 export { currentTurn };
 
@@ -49,6 +50,8 @@ export function rollInitiative(){
   list.sort((a, b) => b.initRoll - a.initRoll || (a.kind === 'monster') - (b.kind === 'monster'));
   state.combat = { active:true, order:list.map(t => t.id), idx:0, round:1, floor:L };
   log(`⚔ Initiative on ${state.floors[L].name}: ${list.map(t => `${t.name} ${t.initRoll}`).join(', ')}`);
+  const mid = list.reduce((m, t) => ({ x:m.x + t.x / list.length, y:m.y + t.y / list.length }), { x:0, y:0 });
+  makeNoise(L, Math.round(mid.x), Math.round(mid.y), 1, 'Steel and shouting');
   startTurn(); changed();
 }
 export function nextTurn(){
@@ -353,6 +356,7 @@ export function castSpell(casterId, targetId, i){
     if (!ok && sp.cond && CONDITIONS[sp.cond]) addCond(t, sp.cond, 1, null);
     if (dmg) applyDamage(t, dmg, sp.ty, c);
   }
+  if (/thunder|fire/.test(sp.ty || '') && sp.rad) makeNoise(tg.floor, tg.x, tg.y, 2, sp.n);
   showCard({ kind:'', title:`${c.name}: ${sp.n}`, sub:`DC ${sp.dc} ${String(sp.sv).toUpperCase()}${sp.rad ? ` · ${sp.rad * 5} ft. around ${tg.name}` : ` · ${tg.name}`}${base ? ` · ${sp.d} ${sp.ty}` : ''}`, lines:[...lines, ...paid] });
   log(`${c.name} casts ${sp.n}: ${targets.length} caught.`);
   changed(); return true;

@@ -58,13 +58,14 @@ export const BUILD_TOOLS = [
   ['erase', '⌫', 'Erase', 'Tap a prop, door, trap, hand-drawn corridor or dug square to remove it'],
   ['dig', '⛏', 'Dig', 'Tap or drag across rock to dig'],
   ['fill', '▦', 'Fill', 'Tap or drag across floor to fill it with stone'],
+  ['rough', '≋', 'Rough', 'Tap or drag to make difficult terrain (mud, rubble, deep water: 2 squares to cross) · start on rough ground to clear it'],
 ];
 export function renderDock(){
   const dm = isDM();
   const b = (act, icon, label, on, extra = '') => `<button data-act="${act}" class="${on ? 'on' : ''}" title="${esc(label)}" ${extra}><span>${icon}</span>${label}</button>`;
   let h = b('mode:select', '✥', 'Select', ui.mode === 'select') + b('mode:ping', '◎', 'Ping', ui.mode === 'ping') + b('focus', '⌖', 'Focus');
   if (dm && ui.tab === 'build') h += BUILD_TOOLS.map(([k, i, l, hint]) => b(`mode:${k}`, i, l, ui.mode === k, `data-hint="${esc(hint)}"`)).join('') + b('undo', '↶', `Undo${undoCount() ? ` ${undoCount()}` : ''}`);
-  else if (dm) h += b('shiftNow', '⟲', 'Shift') + b('whimRoll', '🦇', `Whim d${state?.grasp.die ?? 4}`);
+  else if (dm) h += b('mode:noise', '📢', 'Noise', ui.mode === 'noise') + b('shiftNow', '⟲', 'Shift') + b('whimRoll', '🦇', `Whim d${state?.grasp.die ?? 4}`);
   $('#dock').innerHTML = h;
   $('#dock').classList.toggle('wide', !ui.panelOpen);
   $('#dock').classList.toggle('twocol', dm && ui.tab === 'build');

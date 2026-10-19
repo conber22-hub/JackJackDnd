@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { requestAct } from '../game/requests.js';
 import { useFeature } from '../game/resources.js';
 import { payLegend } from '../game/combat.js';
+import { makeNoise } from '../game/noise.js';
 import { state, ui, isDM, tokById, tokenAt, viewAsPlayer, walk } from '../engine/state.js';
 import { roomAt } from '../engine/generator.js';
 import { renderer, camera, controls, floorY } from '../render/scene.js';
@@ -55,14 +56,14 @@ export function setMode(mode, data = null, text = ''){
 export function refreshBuildOverlay(){
   if (!state) return;
   if (isDM() && ui.mode === 'room') showRoomHandles(ui.floor); else clearOverlay();
-  if (!['room', 'corridor', 'door', 'trap', 'stairs', 'erase', 'dig', 'fill', 'paint', 'prop', 'house'].includes(ui.mode)) showHover(null, null);
+  if (!['room', 'corridor', 'door', 'trap', 'stairs', 'erase', 'dig', 'fill', 'rough', 'paint', 'prop', 'house', 'noise'].includes(ui.mode)) showHover(null, null);
 }
 
 /* ---------- pointer handling ---------- */
 const cv = renderer.domElement;
 let press = null, pressTimer = null, drag = null;
 const pointers = new Set();
-const DRAG_MODES = ['room', 'corridor', 'dig', 'fill'];
+const DRAG_MODES = ['room', 'corridor', 'dig', 'fill', 'rough'];
 cv.addEventListener('pointerdown', e => {
   pointers.add(e.pointerId);
   if (!state) return;
@@ -112,7 +113,8 @@ function startDrag(tile){
     showPathPreview(tile.floor, drag.tiles);
   } else {
     snapshot(ui.mode);
-    drag = { mode:ui.mode, L:tile.floor, last:i, start:tile, moved:false, changed:editTile(tile, ui.mode) };
+    const mode = ui.mode === 'rough' && (f.rough || []).includes(i) ? 'smooth' : ui.mode;   // a stroke that starts on rough ground clears it
+    drag = { mode, L:tile.floor, last:i, start:tile, moved:false, changed:editTile(tile, mode) };
     if (drag.changed) buildFloor(tile.floor);
   }
 }
@@ -177,6 +179,7 @@ function handleTap(cx, cy){
     case 'place':  if (tile && walk(f.grid[ti]) && !tokenAt(tile.floor, tile.x, tile.y)) placeMonster(ui.modeData.bid, tile); return;
     case 'placeTok': if (tile && walk(f.grid[ti])){ const t = tokById(ui.modeData.id); if (t){ t.floor = tile.floor; t.x = tile.x; t.y = tile.y; t.flags.gone = false; updateVision(); rebuildFog(); changed(); } setMode('select'); } return;
     case 'ping':   if (tile) doPing(tile); setMode('select'); return;
+    case 'noise':  if (tile){ if (!makeNoise(tile.floor, tile.x, tile.y, 2, 'A loud noise').length) toast('Nothing near enough heard it.'); } setMode('select'); return;
     case 'paint':  if (tile) paintRoom(tile, ui.modeData.type); return;
     case 'door':   if (tile) placeDoorAt(tile); return;
     case 'trap':   if (tile) placeTrapAt(tile); return;

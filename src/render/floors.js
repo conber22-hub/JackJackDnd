@@ -180,6 +180,17 @@ export function buildFloor(L, opt = {}){
       if (cm2.instanceColor) cm2.instanceColor.needsUpdate = true; cm2.receiveShadow = shadows; fv.built.add(cm2);
     }
   }
+  // difficult terrain: a dark wet patch with stones and debris on it
+  const rt = (f.rough || []).filter(i => !pv || seen(i) || exp.has(i));
+  if (rt.length){
+    const mud = new THREE.InstancedMesh(G.tile, fv.mats.mud ||= shared(new THREE.MeshStandardMaterial({ color:'#3d3122', roughness:.3, metalness:.08, transparent:true, opacity:.85, depthWrite:false })), rt.length);
+    rt.forEach((i, n) => { mat4.compose(new THREE.Vector3(wx(i % f.W), .012, wz((i / f.W) | 0)), new THREE.Quaternion(), new THREE.Vector3(.94, .05, .94)); mud.setMatrixAt(n, mat4); mud.setColorAt(n, col.setRGB(1, 1, 1).multiplyScalar(.8 + hr(i, 90) * .4)); });
+    if (mud.instanceColor) mud.instanceColor.needsUpdate = true; mud.receiveShadow = shadows; fv.built.add(mud);
+    const bits = []; for (const i of rt) for (let k = 0; k < 3; k++) bits.push([i, k]);
+    const st = new THREE.InstancedMesh(pebbleGeometry(), treeMaterial, bits.length), q = new THREE.Quaternion(), sc = new THREE.Vector3(), ps = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+    bits.forEach(([i, k], n) => { const s2 = .9 + hr(i, 91 + k) * 1.1; ps.set(wx(i % f.W) + (hr(i, 94 + k) - .5) * .75, .0, wz((i / f.W) | 0) + (hr(i, 97 + k) - .5) * .75); q.setFromAxisAngle(up, hr(i, 100 + k) * 6.28); sc.set(s2, s2 * .8, s2); mat4.compose(ps, q, sc); st.setMatrixAt(n, mat4); st.setColorAt(n, col.setRGB(.55, .5, .42).multiplyScalar(.7 + hr(i, 103 + k) * .5)); });
+    if (st.instanceColor) st.instanceColor.needsUpdate = true; st.receiveShadow = shadows; fv.built.add(st);
+  }
   // water: rivers, ponds and lakes (impassable, and no trees grow in it)
   const wt = [...water].filter(i => !pv || seen(i) || exp.has(i));
   if (wt.length){
