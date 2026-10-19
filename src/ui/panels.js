@@ -45,7 +45,7 @@ export const gfxPanel = () => `<h3>Graphics & sound</h3>
     <button class="btn small ${gfx.music ? 'on' : ''}" data-act="gfxT" data-k="music">Drone</button><button class="btn small ${gfx.sfx ? 'on' : ''}" data-act="gfxT" data-k="sfx">Effects</button></div>
   <div class="muted">Sound starts after your first tap. The DM's sounds play on every player's device too.</div>`;
 const opt = (v, label, sel) => `<option value="${esc(v)}" ${sel ? 'selected' : ''}>${esc(label)}</option>`;
-const logList = (n = 999) => state.log.slice().reverse().slice(0, n).map(l => `<div>${esc(l.m)}</div>`).join('') || '<div class="muted">Quiet. Too quiet.</div>';
+const logList = (n = 999) => state.log.slice().reverse().slice(0, n).map(l => `<div${l.dm ? ' class="muted" title="Only you see this line"' : ''}>${l.dm ? '🔒 ' : ''}${esc(l.m)}</div>`).join('') || '<div class="muted">Quiet. Too quiet.</div>';
 
 function tokensTab(){
   let h = `<h3>The party</h3><div class="row"><button class="btn small" data-act="shortRest" title="An hour: short-rest features come back; spend Hit Dice from each hero's card">☕ Short rest</button><button class="btn small" data-act="longRest" title="Eight hours: full HP, every slot and feature">🌙 Long rest</button></div>`;

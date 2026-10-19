@@ -35,7 +35,8 @@ export function tokenAt(L, x, y, alive = true){
     x >= t.x && x < t.x + (t.size || 1) && y >= t.y && y < t.y + (t.size || 1));
 }
 
-export function log(msg){ state.log.push({ t:Date.now(), m:msg }); if (state.log.length > 120) state.log.shift(); bus.emit('log'); }
+// dm: a line only the DM's log shows (what the noise woke, a rolled encounter, what waits on the road)
+export function log(msg, dm = false){ state.log.push({ t:Date.now(), m:msg, ...(dm ? { dm:true } : {}) }); if (state.log.length > 120) state.log.shift(); bus.emit('log'); }
 
 /* ---------- content the DM can edit in the app ---------- */
 export function dreadLevel(n = state.dread){ const o = state?.content?.dread?.[n] || {}; return { ...DREAD[n], ...Object.fromEntries(Object.entries(o).filter(([, v]) => v !== '' && v != null)) }; }

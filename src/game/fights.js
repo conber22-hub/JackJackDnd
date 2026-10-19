@@ -28,7 +28,7 @@ export function placeEncounter(enc = ui.enc, L = ui.floor){
     if (state.combat.active && state.combat.floor === L) addToInit(m);
   }
   syncTokens(); placed.forEach(riseFrom);
-  log(`⚔ Encounter placed: ${enc.group.map(g => `${g.n} ${BEST[g.bid]?.name}`).join(', ')} (${enc.xp} XP).`);
+  log(`⚔ Encounter placed: ${enc.group.map(g => `${g.n} ${BEST[g.bid]?.name}`).join(', ')} (${enc.xp} XP).`, true);
   toast(`${placed.length} on the map${room.name ? ` — ${room.name}` : ''}`);
   changed();
 }

@@ -94,7 +94,7 @@ export function springEvent(L, id){
   }
   syncTokens(); placed.forEach(riseFrom);
   e.sprung = true; buildFloor(L);
-  log(`${e.label}: ${placed.length} on the road.`); toast(`${e.label} — ${placed.length} on the map`);
+  log(`${e.label}: ${placed.length} on the road.`, true); toast(`${e.label} — ${placed.length} on the map`);
   changed();
 }
 export function doneEvent(L, id){ const e = eventOn(L, id); if (!e) return; e.done = !e.done; buildFloor(L); changed(); }
@@ -107,7 +107,7 @@ export function newRoadEvent(L = ui.floor){
   const at = pick(spots.length ? spots : [{ x:f.rooms[0].cx, y:f.rooms[0].cy }]);
   (f.events ||= []).push({ id:f.nextObj++, label:ev.label, text:ev.text, enc:ev.enc || null, x:at.x, y:at.y, done:false });
   buildFloor(L);
-  log(`🧭 Something on the road: ${ev.label}.`); toast(`On the road: ${ev.label}`);
+  log(`🧭 Something on the road: ${ev.label}.`, true); toast(`On the road: ${ev.label}`);
   changed(); renderPanel();
 }
 export const onJourney = () => !!state?.campaign?.valley?.journey && state.meta.template === 'journey';

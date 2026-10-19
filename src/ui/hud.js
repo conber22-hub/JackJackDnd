@@ -86,7 +86,8 @@ export function renderInit(){
     return;
   }
   $('#initList').innerHTML = c.order.map((id, i) => {
-    const t = tokById(id); if (!t || t.flags.gone) return '';
+    const t = tokById(id); if (t?.unseen) return `<div class="ini ${i === c.idx ? 'cur' : ''}"><span class="dot" style="color:#555;background:#555"></span><span class="n muted">something unseen</span></div>`;
+    if (!t || t.flags.gone) return '';
     if (pv && t.kind === 'monster' && !seenNow[t.floor]?.has(t.y * state.floors[t.floor].W + t.x) && i !== c.idx) return `<div class="ini"><span class="dot" style="color:#555;background:#555"></span><span class="n muted">something unseen</span></div>`;
     const color = t.kind === 'monster' ? '#c0303a' : t.color;
     const cs = (t.conds || []).map(c => CONDITIONS[c.n]?.icon || '•').join('');

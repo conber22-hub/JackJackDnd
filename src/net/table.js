@@ -2,7 +2,8 @@
    Players only send requests (move, stairs, door, search, disarm, ping, end turn); the DM's app decides. */
 import { Peer } from 'peerjs';
 import { state, setState, ui, tokById } from '../engine/state.js';
-import { updateVision } from '../engine/grid.js';
+import { updateVision, seenNow } from '../engine/grid.js';
+import { redactForPlayers } from '../engine/redact.js';
 import { $ } from '../util/core.js';
 import { focusTile } from '../render/scene.js';
 import { ensureFloorViews, buildAllFloors, buildFloor, animateGridChange } from '../render/floors.js';
@@ -147,9 +148,9 @@ export function broadcast(m, except){ for (const [pid, s] of net.conns) if (pid 
 let pushTimer = null;
 // What players receive: the delve without the DM's campaign desk (notes, fortune, clocks), anyone's character sheets,
 function forPlayers(){
-  const s = serialize(false), V = state.campaign?.valley;
-  s.freeRolls = !!state.campaign?.freeRolls;
-  delete s.campaign; delete s.characters; s.floors = s.floors.map(f => ({ ...f, events:[] }));
+  const V = state.campaign?.valley, free = !!state.campaign?.freeRolls;
+  const s = redactForPlayers(serialize(false), { seen:seenNow, explored:state.explored });   // secrets stay with the DM (engine/redact.js)
+  s.freeRolls = free;
   if (V?.shared) s.valley = { at:V.at, visited:[...V.visited], journey:V.journey ? { to:V.journey.to, path:[...V.journey.path] } : null, day:V.day, hour:V.hour, weather:V.weather || '' };   // the map, if the DM shares it
   return s;
 }   // (and not what waits on the road)

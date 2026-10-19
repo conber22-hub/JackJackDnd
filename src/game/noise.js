@@ -19,7 +19,7 @@ export function makeNoise(L, x, y, loud = 1, why = 'A noise'){
   const floors = Object.keys(heard).map(Number);
   if (!floors.length) return [];
   const say = floors.map(F => `${heard[F].length} on ${F === L ? 'this floor' : state.floors[F].name}`).join(', ');
-  log(`📢 ${why} — heard by ${say}.`);
+  log(`📢 ${why} — heard by ${say}.`, true);
   if (ui.role === 'dm') toast(`📢 ${why}: ${say} heard it.`);
   return floors.flatMap(F => heard[F]);
 }

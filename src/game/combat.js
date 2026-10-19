@@ -255,7 +255,7 @@ export function runFx(src, fx, quiet){
     for (const s of spots){ const m = makeMonster(bid, L, s.x, s.y); state.tokens.push(m); if (state.combat.active && state.combat.floor === L) addToInit(m); }
     syncTokens();
     for (const s of spots){ const m = tokenAt(L, s.x, s.y); if (m) riseFrom(m); }
-    log(`${spots.length} ${BEST[bid].name}${spots.length === 1 ? '' : 's'} emerge${spots.length === 1 ? 's' : ''} near ${src.name}.`);
+    log(`${spots.length} ${BEST[bid].name}${spots.length === 1 ? '' : 's'} emerge${spots.length === 1 ? 's' : ''} near ${src.name}.`, true);
     if (!quiet) toast(`${spots.length} × ${BEST[bid].name}`);
   }
   else if (kind === 'aoe' || kind === 'aoeall'){
@@ -310,7 +310,7 @@ export function runFx(src, fx, quiet){
   else if (kind === 'alert'){
     const foes = state.tokens.filter(t => t.floor === L && !t.dead && t.kind === 'monster');
     foes.forEach(t => t.flags.alert = true);
-    log(`Every creature on ${state.floors[L].name} knows where you are.`);
+    log(`Every creature on ${state.floors[L].name} knows where you are.`, true);
     if (!quiet) toast(`${foes.length} creatures on this floor are alerted.`);
   }
   else if (kind === 'pit' && src.id) fall(src);
