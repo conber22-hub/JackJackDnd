@@ -15,7 +15,7 @@ import { toast, showCard } from '../ui/hud.js';
 import { renderPanel } from '../ui/panels.js';
 import { changed, snapshot, dropSnapshot, loadState } from './session.js';
 import { goFloor, nearestOpen } from './actions.js';
-import { PROPS, propAt } from '../data/props.js';
+import { PROPS, propAt, HOUSES } from '../data/props.js';
 
 const rebuild = (...Ls) => { for (const L of Ls) if (state.floors[L]) buildFloor(L); };
 const keepTokens = L => state.tokens.filter(t => t.floor === L && !t.dead && !t.flags.gone).map(t => ({ x:t.x, y:t.y }));
@@ -106,6 +106,8 @@ export function commitCorridor(L, tiles){
 export function eraseAt(tile){
   const f = state.floors[tile.floor], i = tile.y * f.W + tile.x;
   snapshot('erase');
+  const hs = houseAt(f, tile.x, tile.y);
+  if (hs){ f.buildings = f.buildings.filter(b => b !== hs); toast(`${hs.name} taken down.`); rebuild(tile.floor); changed(); return; }
   const pr = propAt(f, tile.x, tile.y);
   if (pr){ f.props = f.props.filter(p => p !== pr); toast(`${PROPS[pr.k]?.n || 'Prop'} removed.`); rebuild(tile.floor); changed(); return; }
   if (doorAt(f, i)){ f.doors = f.doors.filter(d => d.i !== i); toast('Door removed.'); }
@@ -128,6 +130,23 @@ export function placePropAt(tile, k = ui.propKind){
   const p = propAt(f, tile.x, tile.y);
   if (p) p.rot = ((p.rot || 0) + 1) % 4;
   else f.props.push({ id:f.nextObj++, k, x:tile.x, y:tile.y, rot:0 });
+  rebuild(tile.floor); changed();
+}
+
+/* ---------- houses: solid buildings on rock; tap one again to turn its door ---------- */
+export const houseAt = (f, x, y) => (f.buildings || []).find(b => x >= b.x && x < b.x + b.w && y >= b.y && y < b.y + b.h);
+export function placeHouseAt(tile, kind = ui.houseKind){
+  const f = state.floors[tile.floor], hk = HOUSES[kind]; if (!hk) return;
+  f.buildings ||= [];
+  const b0 = houseAt(f, tile.x, tile.y);
+  if (b0){ snapshot('house'); b0.door = { n:'e', e:'s', s:'w', w:'n' }[b0.door || 's']; rebuild(tile.floor); changed(); return; }
+  const r = { x:tile.x, y:tile.y, w:hk.w, h:hk.h };
+  if (r.x + r.w > f.W - 1 || r.y + r.h > f.H - 1){ toast('Not enough room at the edge of the map.'); return; }
+  for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++)
+    if (walk(f.grid[y * f.W + x]) || houseAt(f, x, y)){ toast('Houses stand on solid ground — tap bare rock (the house fills squares to the right and down).'); return; }
+  snapshot('house');
+  const { n, w, h, ...flags } = hk;
+  f.buildings.push({ ...r, name:n, door:'s', ...flags, ...(ui.houseDark ? { dark:true } : {}) });
   rebuild(tile.floor); changed();
 }
 

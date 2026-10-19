@@ -76,6 +76,18 @@ export const PROPS = {
   brazier:    { n:'Brazier',         cat:'dungeon', w:1, h:1 },
 };
 
+// Houses for the Build tab's House tool (solid buildings with roofs, on rock). w × h squares.
+export const HOUSES = {
+  cottage:  { n:'Cottage',  w:3, h:3 },
+  house:    { n:'House',    w:4, h:4 },
+  long:     { n:'Longhouse',w:6, h:4 },
+  hall:     { n:'Hall',     w:6, h:5, tall:true },
+  barn:     { n:'Barn',     w:5, h:4, noChimney:true },
+  hut:      { n:'Hut',      w:3, h:3, noChimney:true, dark:true },
+  tower:    { n:'Tower',    w:3, h:3, tower:true },
+  windmill: { n:'Windmill', w:4, h:4, mill:true },
+};
+
 // The squares a prop covers, after turning.
 export function propSize(p){ const d = PROPS[p.k] || { w:1, h:1 }; return (p.rot || 0) % 2 ? { w:d.h, h:d.w } : { w:d.w, h:d.h }; }
 export function propAt(f, x, y){

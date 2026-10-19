@@ -137,6 +137,7 @@ document.addEventListener('click', e => {
     case 'valleyGo': ui.valleySel = k; ui.tab = 'valley'; renderTabs(); renderPanel(); $('#tabBody').scrollTop = 0; break;
     case 'valleyTravel': $('#valleyModal').classList.add('hidden'); if (!valley().journey || confirm('The party is already on a road. Set out somewhere else from where they started?')) travel(k); break;
     case 'valleyArrive': arrive(); break;
+    case 'valleyShare': valley().shared = !valley().shared; changed(); renderPanel(); toast(valley().shared ? 'The table can see the map (what they have reached).' : 'The map is hidden from the table.'); break;
     case 'goFloor': goFloor(+k); renderPanel(); break;
     case 'valleyEnter': if (confirm('Build this place\'s map? It replaces the current one (the party, their characters and the campaign come along).')) enterPlace(k, id); break;
     case 'evRead': readEvent(+k, +id); break;
@@ -210,6 +211,8 @@ document.addEventListener('click', e => {
     case 'removeChar': if (confirm('Forget this character sheet? (Its token stays on the map.)')){ removeCharacter(id); renderPanel(); } break;
     case 'propCat': ui.propCat = k; ui.propKind = Object.keys(PROPS).find(p => PROPS[p].cat === k); renderPanel(); break;
     case 'propKind': ui.propKind = k; renderPanel(); break;
+    case 'houseKind': ui.houseKind = k; renderPanel(); break;
+    case 'houseDark': ui.houseDark = !ui.houseDark; renderPanel(); break;
     case 'closeHelp': $('#helpModal').classList.add('hidden'); break;
     case 'help': $('#helpModal').classList.remove('hidden'); break;
     // the threshold (start page)

@@ -40,7 +40,7 @@ export function renderTop(){
   $('#roleBadge').textContent = pv ? `Player · ${ui.myName}` : ui.tableView ? 'Table view' : net.code ? `DM · table ${net.code} · ${net.conns.size} joined` : 'DM';
 }
 export function renderTabs(){
-  const tabs = ui.role === 'player' ? [['hero', 'Your hero'], ['log', 'Log']]
+  const tabs = ui.role === 'player' ? [['hero', 'Your hero'], ...(state?.valley ? [['map', 'Map']] : []), ['log', 'Log']]
     : [['story', 'Story'], ['valley', 'Valley'], ['tokens', 'Tokens'], ['bestiary', 'Beasts'], ['dungeon', 'Dungeon'], ['build', 'Build'], ['gaze', 'Gaze'], ['table', 'Table']];
   if (!tabs.some(t => t[0] === ui.tab)) ui.tab = tabs[0][0];
   $('#tabs').innerHTML = tabs.map(([k, l]) => `<button data-act="tab" data-k="${k}" class="${ui.tab === k ? 'on' : ''}">${l}</button>`).join('');
@@ -52,6 +52,7 @@ export const BUILD_TOOLS = [
   ['trap', '✷', 'Trap', 'Tap a square to hide a trap (tap again to remove)'],
   ['stairs', '⇅', 'Stairs', 'Tap where the stairs down should be — the floor below follows'],
   ['prop', '🪑', 'Props', 'Tap a square to place the chosen prop · tap a prop to turn it · Erase removes it'],
+  ['house', '🏠', 'Houses', 'Tap bare rock to put up a house (it fills squares to the right and down) · tap a house to turn its door · Erase takes it down'],
   ['erase', '⌫', 'Erase', 'Tap a prop, door, trap, hand-drawn corridor or dug square to remove it'],
   ['dig', '⛏', 'Dig', 'Tap or drag across rock to dig'],
   ['fill', '▦', 'Fill', 'Tap or drag across floor to fill it with stone'],

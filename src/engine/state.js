@@ -22,7 +22,7 @@ export const ui = {                 // local-only (never saved, never sent)
   selected:null, mode:'select', modeData:null,
   previewFog:false, roomLabels:true, freeMove:false, whispers:true,
   bestFilter:'all', bestSearch:'', openBest:null, openPc:null, editBest:null,
-  trapKind:'pit', doorState:'closed', propKind:'table', propCat:'tavern', paintType:'nest', selRoom:null, selDoor:null, selTrap:null, atkMode:'normal', stairsDir:'down',
+  trapKind:'pit', doorState:'closed', propKind:'table', propCat:'tavern', houseKind:'house', houseDark:false, paintType:'nest', selRoom:null, selDoor:null, selTrap:null, atkMode:'normal', stairsDir:'down',
   myToken:null, myName:'',
 };
 export const viewAsPlayer = () => ui.role === 'player' || ui.tableView;

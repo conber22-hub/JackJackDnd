@@ -18,8 +18,8 @@ import { gfx } from '../render/gfx.js';
 import { heroStats } from '../engine/hero.js';
 import { sheetHTML } from './creator.js';
 import { myHero } from '../game/heroes.js';
-import { PROPS, PROP_CATS } from '../data/props.js';
-import { valleyTab, placesForSession } from './valley.js';
+import { PROPS, PROP_CATS, HOUSES } from '../data/props.js';
+import { valleyTab, placesForSession, playerMapTab } from './valley.js';
 import { modelInfo } from '../render/models.js';
 import { CAMPAIGN, SESSIONS, CLOCKS, PLACES, PLACE_STATES, CAST, FORTUNE } from '../data/campaign.js';
 
@@ -155,6 +155,9 @@ function buildTab(){
   if (ui.mode === 'prop') h += `<h4>Prop to place</h4><div>${Object.entries(PROP_CATS).map(([k, l]) => `<span class="chip ${ui.propCat === k ? 'on' : ''}" data-act="propCat" data-k="${k}">${l}</span>`).join('')}</div>
     <div class="propgrid">${Object.entries(PROPS).filter(([, v]) => v.cat === ui.propCat).map(([k, v]) => `<span class="chip ${ui.propKind === k ? 'on' : ''}" data-act="propKind" data-k="${k}">${esc(v.n)}<small> ${v.w}×${v.h}</small></span>`).join('')}</div>
     <div class="muted">Props are scenery — they don't block movement or sight. ${(f.props || []).length} on this floor.</div>`;
+  if (ui.mode === 'house') h += `<h4>House to put up</h4><div class="propgrid">${Object.entries(HOUSES).map(([k, v]) => `<span class="chip ${ui.houseKind === k ? 'on' : ''}" data-act="houseKind" data-k="${k}">${esc(v.n)}<small> ${v.w}×${v.h}</small></span>`).join('')}</div>
+    <div class="row"><button class="btn small ${ui.houseDark ? '' : 'on'}" data-act="houseDark">${ui.houseDark ? '🌑 Windows dark' : '🕯 Windows lit'}</button></div>
+    <div class="muted">Houses stand on solid ground (rock) and block the way, like walls. ${(f.buildings || []).length} on this floor.</div>`;
   if (ui.mode === 'stairs') h += `<h4>Which stairs</h4><div><span class="chip ${ui.stairsDir === 'down' ? 'on' : ''}" data-act="stairsDir" data-k="down">▼ Down (to floor ${ui.floor + 2})</span><span class="chip ${ui.stairsDir === 'up' ? 'on' : ''}" data-act="stairsDir" data-k="up">▲ Up (to floor ${ui.floor})</span></div>`;
   h += `<div class="row"><label>Paint rooms as</label><select class="txt" style="width:auto" id="paintType">${Object.entries(ROOM_TYPES).map(([k, v]) => opt(k, v.label, ui.paintType === k)).join('')}</select><button class="btn small ${ui.mode === 'paint' ? 'on' : ''}" data-act="paintMode">Paint</button></div>`;
   h += `<div class="row"><button class="btn small ${f.autoLink ? 'on' : ''}" data-act="autoLink">${f.autoLink ? '🔗 Auto-link ON' : '✋ Hand-built (auto-link off)'}</button></div>
@@ -317,6 +320,7 @@ export function renderPanel(){
   $('#panel').classList.toggle('closed', !ui.panelOpen);
   const body = $('#tabBody'), scroll = renderPanel.last === ui.tab ? body.scrollTop : 0; renderPanel.last = ui.tab;
   const tabs = { story:storyTab, valley:valleyTab, tokens:tokensTab, bestiary:bestiaryTab, dungeon:dungeonTab, build:buildTab, gaze:gazeTab, table:tableTab, hero:heroTab,
+    map:playerMapTab,
     log:() => `<h3>What has happened</h3><div class="log" style="max-height:none">${logList()}</div>` };
   body.innerHTML = (tabs[ui.tab] || tokensTab)();
   body.scrollTop = scroll;

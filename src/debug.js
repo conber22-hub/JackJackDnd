@@ -7,7 +7,7 @@ import { shiftFloor } from './game/shift.js';
 import { whimRoll, whimStep } from './game/whim.js';
 import { rollInitiative, nextTurn, placeMonster, doAttack, runFx, useSpecial, kill, applyDamage, infest } from './game/combat.js';
 import { select, doMove, requestMove, setView, goFloor, takeStairs, setDread, doorAction, search, triggerTrap, fall } from './game/actions.js';
-import { commitRoom, commitCorridor, placeDoorAt, placeTrapAt, placeStairsAt, placePropAt, eraseAt, importMap, newDelve, addFloorBelow, populate, setAutoLink } from './game/build.js';
+import { commitRoom, commitCorridor, placeDoorAt, placeTrapAt, placeStairsAt, placePropAt, placeHouseAt, eraseAt, importMap, newDelve, addFloorBelow, populate, setAutoLink } from './game/build.js';
 import { undo, serialize } from './game/session.js';
 import { setMode } from './ui/input.js';
 import { focusTile } from './render/scene.js';
@@ -16,4 +16,4 @@ void _s;
 export const get = () => stateMod.state;
 export { ui, tokById, BEST, reach, shiftFloor, whimRoll, whimStep, rollInitiative, nextTurn, placeMonster, doAttack, runFx, useSpecial, kill, applyDamage, infest,
   select, doMove, requestMove, setView, goFloor, takeStairs, setDread, doorAction, search, triggerTrap, fall,
-  commitRoom, commitCorridor, placeDoorAt, placeTrapAt, placeStairsAt, placePropAt, eraseAt, importMap, newDelve, addFloorBelow, populate, setAutoLink, undo, serialize, setMode, focusTile };
+  commitRoom, commitCorridor, placeDoorAt, placeTrapAt, placeStairsAt, placePropAt, placeHouseAt, eraseAt, importMap, newDelve, addFloorBelow, populate, setAutoLink, undo, serialize, setMode, focusTile };

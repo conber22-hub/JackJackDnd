@@ -38,7 +38,12 @@ export function closeTable(){ net.peer?.destroy(); net.peer = null; net.conns.cl
 export function broadcast(m, except){ for (const [pid, s] of net.conns) if (pid !== except && s.conn.open) try { s.conn.send(m); } catch {} }
 let pushTimer = null;
 // What players receive: the delve without the DM's campaign desk (notes, fortune, clocks), anyone's character sheets,
-function forPlayers(){ const s = serialize(false); delete s.campaign; delete s.characters; s.floors = s.floors.map(f => ({ ...f, events:[] })); return s; }   // (and not what waits on the road)
+function forPlayers(){
+  const s = serialize(false), V = state.campaign?.valley;
+  delete s.campaign; delete s.characters; s.floors = s.floors.map(f => ({ ...f, events:[] }));
+  if (V?.shared) s.valley = { at:V.at, visited:[...V.visited], journey:V.journey ? { to:V.journey.to, path:[...V.journey.path] } : null };   // the map, if the DM shares it
+  return s;
+}   // (and not what waits on the road)
 export function pushState(){ if (ui.role !== 'dm' || !net.conns.size) return; clearTimeout(pushTimer); pushTimer = setTimeout(() => broadcast({ t:'state', s:forPlayers() }), 60); }
 
 function onHostMsg(c, m){

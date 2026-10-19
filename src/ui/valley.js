@@ -17,17 +17,21 @@ function roadPath(a, b, id){
   const mx = (a.x + b.x) / 2 + (g() - .5) * 5, my = (a.y + b.y) / 2 + (g() - .5) * 5;
   return `M${a.x} ${a.y} Q${mx.toFixed(1)} ${my.toFixed(1)} ${b.x} ${b.y}`;
 }
-function mapSVG(V, sel, onRoute){
+function mapSVG(V, sel, onRoute, player = false){
+  // the players' copy shows where they have been, and only rumours of what is next door
+  const known = player ? new Set([...V.visited, ...V.visited.flatMap(id => VALLEY_ROADS.filter(r => r.a === id || r.b === id).map(r => r.a === id ? r.b : r.a))]) : null;
+  const shown = p => !known || known.has(p.id);
   const g = mulberry32(1771);
   const trees = Array.from({ length:150 }, () => { const x = 4 + g() * 92, y = 4 + g() * 56; return VALLEY_PLACES.some(p => Math.hypot(p.x - x, p.y - y) < 4) ? '' : `<path d="M${x.toFixed(1)} ${(y - 1.1).toFixed(1)}l.8 1.6h-1.6z" />`; }).join('');
   const peaks = [[8, 6], [16, 4], [24, 7], [50, 5], [58, 8], [76, 6], [84, 9], [92, 13], [12, 58], [44, 60], [62, 57], [86, 56], [96, 48], [3, 40]].map(([x, y]) => `<path d="M${x - 3} ${y + 2.5}L${x} ${y - 2.5}L${x + 3} ${y + 2.5}" />`).join('');
-  const roads = VALLEY_ROADS.map(r => { const a = placeById(r.a), b = placeById(r.b), on = onRoute.has(r.id);
+  const roads = VALLEY_ROADS.filter(r => !known || (known.has(r.a) && known.has(r.b) && (V.visited.includes(r.a) || V.visited.includes(r.b)))).map(r => { const a = placeById(r.a), b = placeById(r.b), on = onRoute.has(r.id);
     return `<path class="vroad ${r.way} ${on ? 'on' : ''}" d="${roadPath(a, b, r.id)}"><title>${esc(r.name)}</title></path>`; }).join('');
   const here = placeById(V.at), j = V.journey && placeById(V.journey.to);
   const lantern = j ? { x:(here.x + j.x) / 2, y:(here.y + j.y) / 2 } : here;
-  const places = VALLEY_PLACES.map(p => {
+  const places = VALLEY_PLACES.filter(shown).map(p => {
     const cls = [p.id === V.at ? 'here' : '', V.visited.includes(p.id) ? 'seen' : 'unseen', p.id === sel ? 'sel' : ''].join(' ');
-    return `<g class="vplace ${cls}" data-act="valleySel" data-k="${p.id}" transform="translate(${p.x} ${p.y})"><title>${esc(p.name)}</title>
+    if (player && !V.visited.includes(p.id)) return `<g class="vplace unseen" transform="translate(${p.x} ${p.y})"><circle r="1.7" class="dot"/><text class="glyph" y=".7">?</text></g>`;
+    return `<g class="vplace ${cls}" ${player ? '' : `data-act="valleySel" data-k="${p.id}"`} transform="translate(${p.x} ${p.y})"><title>${esc(p.name)}</title>
       <circle r="2.6" class="halo"/><circle r="1.7" class="dot"/><text class="glyph" y=".7">${GLYPH[p.kind] || '•'}</text>
       <text class="nm" ${p.lab === 'n' ? 'y="-3.1"' : p.lab === 'w' ? 'x="-2.6" y=".8" text-anchor="end"' : 'y="4.4"'}>${esc(p.name.replace(/^The /, ''))}</text></g>`;
   }).join('');
@@ -93,8 +97,18 @@ export function valleyTab(){
       ${/^Road:/.test(state.campaign.lastNight || '') ? `<div class="look">${esc(state.campaign.lastNight)}</div>` : ''}
       <div class="row"><button class="btn ${last ? 'primary' : ''}" data-act="valleyArrive">Arrive at ${esc(placeById(V.journey.to).name)}</button></div>`;
   }
+  h += `<div class="row" style="margin-top:8px"><button class="btn small ${V.shared ? 'on' : ''}" data-act="valleyShare">${V.shared ? '📜 Shared with the table' : '📜 Share the map with the table'}</button></div>
+    <div class="muted">${V.shared ? 'Players have a Map tab: the places they have reached, rumours of the places next door, and where they are now.' : 'Players see nothing of this map until you share it — and then only what they have reached.'}</div>`;
   h += `<div class="muted" style="margin-top:8px">Roads: <span class="key road"></span> the Svalich Road · <span class="key path"></span> paths · <span class="key trail"></span> trails. Tap a place to plan the way.</div>`;
   return h;
+}
+// The players' Map tab: what the DM has shared (state.valley, sent with the delve when sharing is on).
+export function playerMapTab(){
+  const V = state.valley; if (!V) return '<div class="muted">The DM has not shared the map.</div>';
+  const here = placeById(V.at), to = V.journey && placeById(V.journey.to);
+  return `<h3>The valley</h3><div class="muted">${to ? `On the road to <b>${esc(to.name)}</b>.` : `You are at <b>${esc(here.name)}</b>.`} The mist hides the rest.</div>
+    ${mapSVG(V, null, new Set((V.journey?.path || []).slice(1).map((id, i) => roadBetween(V.journey.path[i], id)?.id)), true)}
+    ${V.visited.map(id => placeById(id)).map(p => `<div class="trait"><b>${esc(p.name)}.</b> ${esc(p.blurb)}</div>`).join('')}`;
 }
 // Which session happens where (for the Story tab).
 export const placesForSession = n => VALLEY_PLACES.filter(p => p.sessions.includes(n));
