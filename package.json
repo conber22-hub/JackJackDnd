@@ -9,6 +9,7 @@
     "build": "vite build && node scripts/copy-build.js",
     "preview": "vite preview",
     "test": "node --test tests/*.test.js",
+    "e2e": "playwright test",
     "campaign-doc": "node scripts/campaign-doc.js"
   },
   "dependencies": {
@@ -16,6 +17,8 @@
     "three": "0.169.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "peer": "^1.0.2",
     "vite": "^5.4.0",
     "vite-plugin-singlefile": "^2.0.0"
   }
