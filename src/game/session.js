@@ -1,5 +1,5 @@
 /* SESSION — save / load / export, migrating old saves, undo for the Build tools, and changed(). */
-import { heroToken } from '../engine/hero.js';
+import { heroToken, addRanges } from '../engine/hero.js';
 import { fillResources } from './resources.js';
 import { clearRequests } from './requests.js';
 import { clearPrompts } from './rooms.js';
@@ -53,6 +53,8 @@ export function deserialize(s){
   st.tokens.forEach(t => { t.flags = t.flags || {}; t.size = t.size || 1; t.conds = t.conds || []; t.check ??= 4; t.passive ??= 12; });
   // heroes saved before slots and features: give them their resources (full) from the sheet
   for (const t of st.tokens) if (t.charId && !t.resources && st.characters[t.charId]){ const f = heroToken(st.characters[t.charId]); Object.assign(t, { resources:f.resources, casts:f.casts, attacks:f.attacks, ...(f.rageDmg ? { rageDmg:f.rageDmg } : {}) }); fillResources(t); }
+  // saves from before ranges and areas (targeting): weapons get their range and reach, spells their range and shape
+  for (const t of st.tokens) if (t.kind !== 'monster') addRanges(t);
   st.v = 2;
   return st;
 }

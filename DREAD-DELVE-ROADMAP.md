@@ -16,6 +16,15 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.1 — targeting and areas
+
+- **Reach and range** (`engine/targeting.js`): melee needs reach (5 ft., 10 ft. with a glaive, halberd, pike, lance or whip); weapons use their SRD normal/long range (beyond normal: disadvantage); spells their SRD range (`SPELL_RANGE` in `src/data/srd.js`). A ranged attack with a hostile creature beside the attacker has disadvantage; a prone target is easy up close and hard far off. Picking an attack or spell shades its reach on the map.
+- **Cover** by the grid rule: from the attacker's best corner, lines to the target square's four corners; walls and closed doors block (a seam through solid wall counts, an edge doesn't). 1–2 lines: half cover (+2 AC), 3: three-quarters (+5), 4: total (can't be targeted); a creature in the way gives half. Hovering a target draws the lines (green / gold / red) with a tip: distance, cover, disadvantage.
+- **Area spells you aim**: spheres and cylinders centred on a square in range and sight; cubes (from the caster, or centred); cones and lines from the caster in the direction you point; auras around the caster that spare friends; walls (Wall of Fire) across your line of sight. The template follows the pointer, rings everyone it would catch (friends in gold) and stops at walls. On a phone, tap to place and tap again to cast. A creature with cover from the blast adds +2/+5 to its Dexterity save. The squares flash in the spell's colour for everyone (players only see the flash where they've been).
+- **Players can't take shots they can't make** (out of reach, behind total cover, out of sight); the DM's table checks every request again. The DM can, with a second tap — the card notes it was the DM's call.
+- Saves from before keep working: heroes' weapons and spells get their range, reach and area by name (`addRanges` in `engine/hero.js`).
+- Tests: `tests/targeting.test.js` (engine), `tests/e2e/targeting.spec.js` (browser: cover tip, second tap, Fireball, touch).
+
 ## v1.0 — moving
 
 - **Drag your mini** along the way you want it to walk (back over the route shortens it; a jump is bridged the shortest way). A dotted path and a tip show the cost in feet, what's left of the move, rough ground, and a warning if the route leaves an enemy's reach. With a mouse, hovering any square you can reach shows the same. Arrow keys and the number pad step one square, up the screen. Players' traced routes are checked by the DM's table (`engine/movement.js` `checkPath`) before they walk.
@@ -245,6 +254,7 @@ src/engine/             pure logic: no DOM, no Three.js, unit-tested
   tables.js             roll-table parser
   overland.js           the Valley: routes, journeys, and procedural stretches of road from modules
   encounter.js          XP budgets and the encounter generator
+  targeting.js          reach and range, cover (grid corner rule), area templates and who they catch
   movement.js           dragged routes, threat & opportunity attacks, following in marching order, formations, Close in
   castle.js             Castle Ravenloft's five hand-shaped floors (approach, halls, upper keep, dungeons, catacombs)
   dressing.js           furnishing generated rooms (kits in src/data/dressing.js, read-aloud in src/data/descriptions.js)
@@ -285,7 +295,7 @@ src/ui/creator.js       the character creator
 src/ui/valley.js        the Valley tab and its map (SVG)
 src/render/textures.js · post.js · models.js · gfx.js   Phase 4: textures, post-processing, GLB models, quality settings
 src/ui/                 hud.js (top bar, dock, cards) · panels.js (tabs) · input.js (taps & drags) · events.js (buttons)
-tests/engine.test.js · hero.test.js · overland.test.js · encounter.test.js · redact.test.js · movement.test.js    node --test
+tests/engine.test.js · hero.test.js · overland.test.js · encounter.test.js · redact.test.js · movement.test.js · targeting.test.js · e2e/ (Playwright: npm run e2e)    node --test
 ```
 
 ## Adding a monster

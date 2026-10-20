@@ -149,3 +149,56 @@ export function showHover(L, x, y){
   const fv = floorViews[L]; if (x === null || !fv){ hover.visible = false; return; }
   hover.visible = true; hover.position.set(wx(x), fv.group.position.y + .03, wz(y));
 }
+
+/* ---------- targeting: ranges, cover, areas ---------- */
+const TYPE_COL = { fire:'#ff6a2a', cold:'#8fd8ff', lightning:'#cfe0ff', radiant:'#ffe9a0', necrotic:'#8a4aa0', thunder:'#9fa8ff', psychic:'#e070c0', poison:'#9cc23c', acid:'#b6d63c', force:'#b49aff' };
+export const typeColor = ty => TYPE_COL[Object.keys(TYPE_COL).find(k => String(ty || '').includes(k))] || '#e9a54a';
+const tgMeshes = [];
+function tgAdd(L, m){ floorViews[L]?.group.add(m); tgMeshes.push(m); }
+export function clearTargeting(){ for (const m of tgMeshes.splice(0)){ m.parent?.remove(m); if (m.geometry !== G.plane) m.geometry.dispose(); if (m.isInstancedMesh) m.dispose(); if (m.userData.ownMat) m.material.dispose(); } }
+function squaresMesh(L, list, color, opacity, scale = .94, y = .03){
+  const f = state.floors[L], mat = new THREE.MeshBasicMaterial({ color, transparent:true, opacity, depthWrite:false });
+  const m = new THREE.InstancedMesh(G.plane, mat, Math.max(1, list.length)); m.count = list.length; m.userData.ownMat = true;
+  list.forEach((i, n) => { mat4.makeTranslation(wx(i % f.W), y, wz((i / f.W) | 0)); mat4.scale(new THREE.Vector3(scale, 1, scale)); m.setMatrixAt(n, mat4); });
+  return m;
+}
+/* How far the chosen attack or spell reaches from its user: normal range bright, long range dim. */
+export function showRange(t, near, far){
+  const f = state.floors[t.floor], s = t.size || 1, a = [], b = [];
+  if (!floorViews[t.floor] || far <= 0) return;
+  for (let y = Math.max(0, t.y - far); y <= Math.min(f.H - 1, t.y + s - 1 + far); y++) for (let x = Math.max(0, t.x - far); x <= Math.min(f.W - 1, t.x + s - 1 + far); x++){
+    const i = y * f.W + x; if (!f.grid[i]) continue;
+    const d = Math.max(Math.max(0, t.x - x, x - (t.x + s - 1)), Math.max(0, t.y - y, y - (t.y + s - 1)));
+    if (d === 0) continue; (d <= near ? a : b).push(i);
+  }
+  if (a.length) tgAdd(t.floor, squaresMesh(t.floor, a, '#e9a54a', .16));
+  if (b.length) tgAdd(t.floor, squaresMesh(t.floor, b, '#e9a54a', .07));
+}
+/* The cover lines from the attacker's best corner to the target's corners: clear, past a creature, or blocked. */
+const LINE_COL = ['#7fe0a0', '#e8c060', '#ff5040'];
+export function showCoverLines(L, lines){
+  if (!floorViews[L]) return;
+  const n = state.meta.size, pts = [], cols = [];
+  for (const [x0, y0, x1, y1, k] of lines){
+    pts.push(x0 - n / 2, .12, y0 - n / 2, x1 - n / 2, .12, y1 - n / 2);
+    const c = new THREE.Color(LINE_COL[k]); cols.push(c.r, c.g, c.b, c.r, c.g, c.b);
+  }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
+  const m = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ vertexColors:true, transparent:true, opacity:.9, depthWrite:false })); m.userData.ownMat = true;
+  tgAdd(L, m);
+}
+/* An area spell's template, following the pointer: its squares, rings under whoever it would catch. */
+export function showAreaPreview(L, squares, ty, ok, caught = []){
+  if (!floorViews[L]) return;
+  tgAdd(L, squaresMesh(L, squares, ok ? typeColor(ty) : '#a04848', ok ? .5 : .3, .96, .035));
+  for (const t of caught){
+    const r = .5 * (t.size || 1), ring = new THREE.Mesh(new THREE.RingGeometry(r - .08, r, 28).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color:t.kind === 'monster' ? '#ff5040' : '#ffd060', transparent:true, opacity:.95, depthWrite:false }));
+    ring.userData.ownMat = true; const s = ((t.size || 1) - 1) / 2; ring.position.set(wx(t.x + s), .07, wz(t.y + s)); tgAdd(L, ring);
+  }
+}
+/* A spell going off: its squares flare in its colour and fade. */
+export function flashArea(L, squares, ty){
+  if (!floorViews[L] || !squares.length) return;
+  const m = squaresMesh(L, squares, typeColor(ty), .75, 1, .05); floorViews[L].group.add(m);
+  tween(1.1, k => { m.material.opacity = .75 * (1 - k); m.position.y = k * .15; }, () => { m.parent?.remove(m); m.dispose(); m.material.dispose(); });
+}

@@ -10,7 +10,9 @@ import { renderer, camera, controls, floorY } from '../render/scene.js';
 import { tokenViews } from '../render/minis.js';
 import { floorViews, buildFloor } from '../render/floors.js';
 import { reachState, showGhostRect, showRoomHandles, showPathPreview, clearOverlay, showHover, showMovePath, clearMovePath } from '../render/effects.js';
-import { extendPath, provokers } from '../engine/movement.js';
+import { extendPath, provokers, tokGap } from '../engine/movement.js';
+import { rangeCheck, coverOf, coverLabel, attackProfile, areaOf, areaSquares, caughtIn, spellReach } from '../engine/targeting.js';
+import { showRange, showCoverLines, showAreaPreview, clearTargeting } from '../render/effects.js';
 import { pathTo, pathCost } from '../engine/grid.js';
 import { moveAllowance } from '../game/rules.js';
 import { mayMove, toggleGroup, pausedMover } from '../game/moves.js';
@@ -54,7 +56,7 @@ export function setMode(mode, data = null, text = ''){
   const tool = BUILD_TOOLS.find(t => t[0] === mode);
   $('#modeHint').classList.toggle('show', mode !== 'select');
   $('#modeText').textContent = text || tool?.[3] || '';
-  renderDock(); refreshBuildOverlay();
+  renderDock(); refreshBuildOverlay(); refreshAim();
   if (ui.tab === 'build' || ui.tab === 'dungeon') renderPanel();
 }
 export function refreshBuildOverlay(){
@@ -92,6 +94,7 @@ cv.addEventListener('pointermove', e => {
   if (press?.tok && press.moved){ if (!tdrag) startTokenDrag(press.tok); if (tdrag){ dragToken(e.clientX, e.clientY); return; } }
   if (e.pointerType === 'mouse' && isDM() && ui.mode !== 'select' && !press){ const t = pickTile(e.clientX, e.clientY); showHover(ui.floor, t ? t.x : null, t?.y); }
   if (e.pointerType === 'mouse' && ui.mode === 'select' && !press) hoverMove(e.clientX, e.clientY);
+  if (e.pointerType === 'mouse' && (ui.mode === 'attack' || ui.mode === 'cast') && !press) hoverAim(e.clientX, e.clientY);
 });
 const up = e => {
   pointers.delete(e.pointerId);
@@ -100,7 +103,7 @@ const up = e => {
   controls.enabled = true;
   if (tdrag){ const td = tdrag; tdrag = null; press = null; endTokenDrag(td, e.type === 'pointercancel'); return; }
   if (e.type === 'pointercancel' || !press || press.moved || press.pinged || press.btn !== 0){ press = null; return; }
-  const shift = press.shift; press = null; handleTap(e.clientX, e.clientY, shift);
+  const shift = press.shift; pressType = e.pointerType; press = null; handleTap(e.clientX, e.clientY, shift);
 };
 cv.addEventListener('pointerup', up);
 cv.addEventListener('pointercancel', up);
@@ -176,14 +179,31 @@ function handleTap(cx, cy, shift = false){
   const ti = tile ? tile.y * f.W + tile.x : -1;
   switch (ui.mode){
     case 'attack': if (tokId && tokId !== ui.modeData.attacker){
+      if (!passAim(tokId, attackCheck(tokById(ui.modeData.attacker), tokById(tokId), ui.modeData.i))) return;
       if (ui.role === 'player') requestAct({ kind:'attack', id:ui.modeData.attacker, i:ui.modeData.i, target:tokId, mode:ui.atkMode });
       else if (ui.modeData.legend != null){ const a = tokById(ui.modeData.attacker); if (a && payLegend(a, ui.modeData.legend)) doAttack(a.id, tokId, ui.modeData.i, ui.atkMode); }
       else doAttack(ui.modeData.attacker, tokId, ui.modeData.i, ui.atkMode);
       ui.atkMode = 'normal'; setMode('select'); renderSel(); } return;
-    case 'cast': if (tokId){
-      if (ui.role === 'player') requestAct({ kind:'cast', id:ui.modeData.caster, i:ui.modeData.i, target:tokId });
-      else castSpell(ui.modeData.caster, tokId, ui.modeData.i);
-      setMode('select'); } return;
+    case 'cast': {
+      const c = tokById(ui.modeData.caster), sp = c?.casts?.[ui.modeData.i], area = areaOf(sp);
+      if (area){                                              // an area: aim it at a square (touch: tap twice)
+        const at = tokId ? tokById(tokId) : null, aim = at ? { x:at.x, y:at.y } : tile && { x:tile.x, y:tile.y };
+        if (!aim) return;
+        if (pressType !== 'mouse' && area.shape !== 'aura' && (ui.modeData.aim?.x !== aim.x || ui.modeData.aim?.y !== aim.y)){
+          ui.modeData.aim = aim; previewArea(c, sp, area, aim, null); $('#modeText').textContent = `${c.name}: ${sp.n} — tap again to cast it there`; return;
+        }
+        const res = areaSquares(c, area, aim);
+        if (!res.ok && !passAim(`${aim.x},${aim.y}`, { ok:false, why:res.why })) return;
+        if (ui.role === 'player') requestAct({ kind:'cast', id:c.id, i:ui.modeData.i, target:c.id, aim });
+        else castSpell(c.id, null, ui.modeData.i, aim);
+        setMode('select'); return;
+      }
+      if (tokId){
+        if (!passAim(tokId, spellCheck(c, tokById(tokId), sp))) return;
+        if (ui.role === 'player') requestAct({ kind:'cast', id:ui.modeData.caster, i:ui.modeData.i, target:tokId });
+        else castSpell(ui.modeData.caster, tokId, ui.modeData.i);
+        setMode('select'); }
+    } return;
     case 'feat': if (tokId){
       if (ui.role === 'player') requestAct({ kind:'feat', id:ui.modeData.user, res:ui.modeData.res, target:tokId });
       else { const u = tokById(ui.modeData.user); if (u) useFeature(u, ui.modeData.res, tokById(tokId)); }
@@ -259,3 +279,75 @@ function hoverMove(cx, cy){
   if (key !== hoverKey){ hoverKey = key; tip().dataset.html = describeRoute(t, pathTo(R.par, f.W, i)); }
   showTip(cx, cy, tip().dataset.html);
 }
+
+/* ---------- aiming: what an attack or spell can reach, cover, and areas ---------- */
+let pressType = 'mouse', aimKey = '';
+// Is this attack possible from here? → { ok, why, tip } (tip: the line for the hover tip)
+function attackCheck(a, tg, i){
+  const atk = a?.attacks?.[i]; if (!a || !tg || !atk) return { ok:false, why:'' };
+  const rc = rangeCheck(a, tg, atk), cv = coverOf(a, tg), notes = [];
+  if (rc.ok && rc.long) notes.push('long range: disadvantage');
+  if (rc.ok && rc.kind === 'ranged' && rc.close) notes.push('a foe beside you: disadvantage');
+  if (cv.ac) notes.push(coverLabel(cv.cover));
+  const ok = rc.ok && cv.cover !== 'total', why = !rc.ok ? rc.why : cv.cover === 'total' ? 'behind total cover' : '';
+  return { ok, why, cover:cv, tip:`<b>${esc(atk.n)}</b> → ${esc(tg.name)} · ${rc.d * 5} ft.${notes.length ? ` · ${notes.join(' · ')}` : ''}${why ? `<div class="warn">${esc(why)}</div>` : ''}` };
+}
+function spellCheck(c, tg, sp){
+  if (!c || !tg || !sp) return { ok:false, why:'' };
+  const R = Math.max(1, spellReach(sp)), d = c.id === tg.id ? 0 : tokGap(c, tg), cv = c.id === tg.id ? { cover:'none', ac:0 } : coverOf(c, tg);
+  const why = d > R ? `out of range (${R * 5} ft.)` : cv.cover === 'total' ? 'out of sight' : '';
+  return { ok:!why, why, cover:cv, tip:`<b>${esc(sp.n)}</b> → ${esc(tg.name)} · ${d * 5} ft.${why ? `<div class="warn">${esc(why)}</div>` : ''}` };
+}
+// Players can't take a shot they can't make; the DM can, after a second tap (their table, their call).
+function passAim(key, chk){
+  if (chk.ok) return true;
+  if (ui.role === 'player'){ toast(chk.why ? `Can't: ${chk.why}.` : 'Can\'t do that.'); return false; }
+  if (ui.modeData.force === key) return true;
+  ui.modeData.force = key; toast(`${chk.why || 'Out of reach'} — tap again to roll it anyway.`); return false;
+}
+// Entering an aiming mode: shade how far the attack or spell reaches; an aura shows straight away.
+export function refreshAim(){
+  clearTargeting(); aimKey = ''; if (tip()) tip().classList.remove('show');
+  if (!state || (ui.mode !== 'attack' && ui.mode !== 'cast')) return;
+  if (ui.mode === 'attack'){
+    const a = tokById(ui.modeData.attacker), p = a && attackProfile(a.attacks?.[ui.modeData.i]);
+    if (p) showRange(a, Math.max(p.melee, p.near), Math.max(p.melee, p.far));
+    return;
+  }
+  const c = tokById(ui.modeData.caster), sp = c?.casts?.[ui.modeData.i], area = areaOf(sp);
+  if (!c || !sp) return;
+  if (area?.shape === 'aura' || (area && area.range === 0)) return previewArea(c, sp, area, area.shape === 'aura' ? { x:c.x, y:c.y } : { x:c.x + 1, y:c.y }, null);
+  const R = Math.max(1, spellReach(sp)); showRange(c, R, R);
+}
+function previewArea(c, sp, area, aim, at){
+  clearTargeting();
+  if (area.range > 0){ const R = area.range; showRange(c, R, R); }
+  const res = areaSquares(c, area, aim), caught = caughtIn(c, area, res.squares);
+  showAreaPreview(c.floor, [...res.squares], sp.ty, res.ok, caught);
+  if (at){
+    const mine = caught.filter(t => t.kind !== 'monster');
+    showTip(at.x, at.y, `<b>${esc(sp.n)}</b> · ${area.size * 5}-ft. ${area.shape}${caught.length ? ` · ${caught.length} caught: ${caught.map(t => t.kind !== 'monster' ? `<span class="dash">${esc(t.name)}</span>` : esc(t.name)).join(', ')}` : ' · no one caught'}${mine.length && area.shape !== 'aura' ? '<div class="warn">⚠ friends in the blast</div>' : ''}${res.ok ? '' : `<div class="warn">${esc(res.why)}</div>`}`);
+  }
+}
+// With a mouse: hovering shows the cover lines and what the attack or spell would face, or the area where it lands.
+function hoverAim(cx, cy){
+  const tokId = pickToken(cx, cy), tile = pickTile(cx, cy);
+  if (ui.mode === 'attack'){
+    const a = tokById(ui.modeData.attacker), tg = tokId && tokId !== a?.id ? tokById(tokId) : null;
+    const key = tg ? `a:${tg.id}:${tg.x},${tg.y}` : '';
+    if (key !== aimKey){ aimKey = key; refreshAimBase(); if (tg){ const chk = attackCheck(a, tg, ui.modeData.i); showCoverLines(a.floor, chk.cover.lines); tip().dataset.html = chk.tip; } }
+    if (tg) showTip(cx, cy, tip().dataset.html); else tip().classList.remove('show');
+    return;
+  }
+  const c = tokById(ui.modeData.caster), sp = c?.casts?.[ui.modeData.i], area = areaOf(sp); if (!c || !sp) return;
+  if (area){
+    const at = tokId ? tokById(tokId) : null, aim = at ? { x:at.x, y:at.y } : tile;
+    if (!aim) return;
+    const key = `s:${aim.x},${aim.y}`; if (key !== aimKey){ aimKey = key; previewArea(c, sp, area, aim, { x:cx, y:cy }); } else showTip(cx, cy, tip().innerHTML);
+    return;
+  }
+  const tg = tokId ? tokById(tokId) : null, key = tg ? `c:${tg.id}` : '';
+  if (key !== aimKey){ aimKey = key; refreshAimBase(); if (tg){ const chk = spellCheck(c, tg, sp); if (c.id !== tg.id) showCoverLines(c.floor, chk.cover.lines); tip().dataset.html = chk.tip; } }
+  if (tg) showTip(cx, cy, tip().dataset.html); else tip().classList.remove('show');
+}
+function refreshAimBase(){ const k = aimKey; refreshAim(); aimKey = k; }

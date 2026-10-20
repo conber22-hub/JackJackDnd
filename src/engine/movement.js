@@ -12,11 +12,15 @@ const NO_REACTION = ['paralyzed', 'stunned', 'incapacitated', 'restrained', 'unc
 
 // Melee attacks: a hero's weapons are marked (m), spells carry a level or a spell name; a monster's are
 // melee unless they read like something thrown or shot.
-export const meleeAttacks = t => (t.attacks || []).map((a, i) => ({ a, i })).filter(({ a }) => a.m || (!a.l && !a.sn && !a.rays && !RANGED.test(a.n || '')));
+// A melee attack: marked (m), a touch spell (range 5 ft.), or — for monsters and hand-written attacks — anything
+// with no range that doesn't read like something thrown or shot.
+export const isMelee = a => !!a && (!!a.m || (a.rng ? a.rng[0] <= 5 && !a.rng[1] : !a.l && !a.sn && !a.rays && !RANGED.test(a.n || '') && !/\(\d+(\s*\/\s*\d+)?\s*ft\.?\)/i.test(a.n || '')));
+export const reachOf = a => (a.reach || 0) >= 2 || LONG.test(a.n || '') ? 2 : 1;
+export const meleeAttacks = t => (t.attacks || []).map((a, i) => ({ a, i })).filter(({ a }) => isMelee(a));
 // Reach in squares: 2 for a reach weapon (or an attack marked reach:2), else 1. No melee attack: no reach.
 export function threatReach(t){
   const ms = meleeAttacks(t); if (!ms.length) return 0;
-  return ms.some(({ a }) => (a.reach || 0) >= 2 || LONG.test(a.n || '')) ? 2 : 1;
+  return ms.some(({ a }) => reachOf(a) >= 2) ? 2 : 1;
 }
 // The melee attack to swing with on an opportunity: the best to-hit.
 export const bestMelee = t => meleeAttacks(t).sort((p, q) => (q.a.b || 0) - (p.a.b || 0))[0]?.i ?? null;

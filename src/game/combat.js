@@ -6,12 +6,14 @@ import { CONDITIONS } from '../data/dread.js';
 import { d, rollDice, avgDice, esc, cheb, pick, signed } from '../util/core.js';
 import { tween, ease, focusTile } from '../render/scene.js';
 import { syncTokens, tokenViews } from '../render/minis.js';
-import { burst, showReach, clearReach } from '../render/effects.js';
+import { burst, showReach, clearReach, flashArea } from '../render/effects.js';
 import { showCard, toast, banner, sendWhisper } from '../ui/hud.js';
 import { WHISPERS } from '../data/dread.js';
 import { sfx } from '../audio/sound.js';
 import { currentTurn, addCond, tickConds, hasCond, saveBonus, stopped } from './rules.js';
 import { freshTurn, clearOpportunities } from './moves.js';
+import { rangeCheck, coverOf, areaOf, areaSquares, caughtIn, coverFromOrigin, spellReach } from '../engine/targeting.js';
+import { tokGap as gapTo } from '../engine/movement.js';
 import { shiftFloor } from './shift.js';
 import { whimRoll, whimStep, whimReset } from './whim.js';
 import { changed, broadcast } from './session.js';
@@ -119,22 +121,31 @@ export function doAttack(aId, tId, i, mode = 'normal'){
   let adv = mode === 'adv', dis = mode === 'dis';
   const why = [];
   if (b?.pack && nearSeep(tg, a)){ adv = true; why.push('Pack Tide'); }
-  if (hasCond(tg, 'prone') || hasCond(tg, 'restrained') || hasCond(tg, 'paralyzed') || hasCond(tg, 'stunned') || hasCond(tg, 'blinded')){ adv = true; why.push(tg.conds.find(c => ['prone','restrained','paralyzed','stunned','blinded'].includes(c.n)).n); }
+  // range and cover (engine/targeting.js): long range and an enemy at the archer's elbow mean disadvantage;
+  // cover adds to the target's AC. Beyond reach or behind total cover the DM can still roll it (their call).
+  const rc = a.id === tg.id ? { ok:true, d:0, kind:'melee' } : rangeCheck(a, tg, atk), cov = a.id === tg.id ? { cover:'none', ac:0 } : coverOf(a, tg);
+  if (!rc.ok) why.push(`${rc.why} — the DM's call`);
+  if (cov.cover === 'total') why.push('behind total cover — the DM\'s call');
+  if (rc.long){ dis = true; why.push('long range'); }
+  if (rc.kind === 'ranged' && rc.close){ dis = true; why.push(`a foe beside ${a.name}`); }
+  // prone: easy to hit up close, hard from afar
+  if (hasCond(tg, 'prone')){ if (rc.d <= 1){ adv = true; why.push(`${tg.name} prone`); } else { dis = true; why.push(`${tg.name} prone, far off`); } }
+  if (hasCond(tg, 'restrained') || hasCond(tg, 'paralyzed') || hasCond(tg, 'stunned') || hasCond(tg, 'blinded')){ adv = true; why.push(tg.conds.find(c => ['restrained','paralyzed','stunned','blinded'].includes(c.n)).n); }
   if (tg.dodge && !stopped(tg) && a.id !== tg.id){ dis = true; why.push(`${tg.name} is dodging`); }
   a.lastMove = null;   // after an attack there's no taking the move back
   if (hasCond(a, 'blinded') || hasCond(a, 'frightened') || hasCond(a, 'poisoned') || hasCond(a, 'prone')){ dis = true; why.push(`${a.name} ${a.conds.find(c => ['blinded','frightened','poisoned','prone'].includes(c.n)).n}`); }
-  const bonus = atk.b + (isHis(a) ? D.hit : 0), useBoth = adv !== dis;
+  const bonus = atk.b + (isHis(a) ? D.hit : 0), useBoth = adv !== dis, ac = tg.ac + cov.ac;
   const rage = atk.m && hasCond(a, 'raging') ? a.rageDmg || 2 : 0;
   const halved = hasCond(tg, 'raging') && PHYS.test(String(atk.t));
   // one roll per ray / beam (Scorching Ray, Eldritch Blast); everything else is one roll
   const rolls = [], lines = [];
   for (let k = 0; k < (atk.rays || 1); k++){
     const r1 = d(20), r2 = d(20), r = useBoth ? (adv ? Math.max(r1, r2) : Math.min(r1, r2)) : r1;
-    const tot = r + bonus, crit = r === 20 || (r !== 1 && hasCond(tg, 'paralyzed') && cheb(a.x, a.y, tg.x, tg.y) <= 1), hit = crit || (r !== 1 && tot >= tg.ac);
+    const tot = r + bonus, crit = r === 20 || (r !== 1 && hasCond(tg, 'paralyzed') && cheb(a.x, a.y, tg.x, tg.y) <= 1), hit = crit || (r !== 1 && tot >= ac);
     let dmg = hit ? rollDice(atk.d, crit).total + rage : 0;
     if (halved) dmg = Math.floor(dmg / 2);
     rolls.push({ hit, crit, dmg });
-    lines.push(`${atk.rays > 1 ? `#${k + 1} · ` : ''}d20 ${useBoth ? `(${r1}, ${r2} → ${adv ? 'adv' : 'dis'}) ` : ''}<b>${r}</b> ${signed(bonus)} = <b>${tot}</b> vs AC ${tg.ac} — <b>${crit ? 'CRITICAL' : hit ? 'HIT' : r === 1 ? 'FUMBLE' : 'MISS'}</b>${atk.rays > 1 && hit ? ` → ${dmg}` : ''}`);
+    lines.push(`${atk.rays > 1 ? `#${k + 1} · ` : ''}d20 ${useBoth ? `(${r1}, ${r2} → ${adv ? 'adv' : 'dis'}) ` : ''}<b>${r}</b> ${signed(bonus)} = <b>${tot}</b> vs AC ${ac}${cov.ac ? ` <span class="muted">(${cov.cover === 'half' ? 'half' : '¾'} cover)</span>` : ''} — <b>${crit ? 'CRITICAL' : hit ? 'HIT' : r === 1 ? 'FUMBLE' : 'MISS'}</b>${atk.rays > 1 && hit ? ` → ${dmg}` : ''}`);
   }
   const hits = rolls.filter(x => x.hit), crit = rolls.some(x => x.crit), total = hits.reduce((n, x) => n + x.dmg, 0);
   const flair = (atk.f || '{A} strikes at {T}.').replace(/\{A\}/g, a.name).replace(/\{T\}/g, tg.name);
@@ -350,8 +361,11 @@ export function runFx(src, fx, quiet){
   else if (kind) toast(`Unknown effect "${fx}"`);
 }
 /* ---------- heroes' spells (from the character creator) ---------- */
-export function castSpell(casterId, targetId, i){
-  const c = tokById(casterId), tg = tokById(targetId), sp = c?.casts?.[i]; if (!c || !tg || !sp) return false;
+// targetId: the creature tapped (single-target spells, heals, buffs). aim: { x, y } — the square an area spell is
+// centred on or pointed at (when it isn't given, the creature tapped is the aim).
+export function castSpell(casterId, targetId, i, aim = null){
+  const c = tokById(casterId), sp = c?.casts?.[i], area = sp && areaOf(sp);
+  const tg = tokById(targetId) || (area && aim ? c : null); if (!c || !tg || !sp) return false;
   if (sp.k === 'heal' && tg.dead && tg.kind === 'monster'){ toast(`${tg.name} is beyond healing.`); return false; }
   const slot = spendSpell(c, sp.l, sp.n, !!sp.again);
   if (slot !== null) c.lastMove = null;
@@ -378,16 +392,27 @@ export function castSpell(casterId, targetId, i){
     if (cures){ tg.conds = (tg.conds || []).filter(x => !cures.includes(x.n)); if (tg.flags.seeded) heal(tg, 0); }
     log(`${c.name} casts ${sp.n}${tg.id === c.id ? '' : ` on ${tg.name}`}.`); changed(); return true;
   }
-  const targets = sp.rad ? state.tokens.filter(t => t.floor === tg.floor && !t.dead && !t.flags.gone && t.id !== c.id && cheb(t.x, t.y, tg.x, tg.y) <= sp.rad) : [tg];
+  // an area (engine/targeting.js): the squares it covers from where it was aimed, everyone in them, a flash on the map;
+  // a creature with cover from the blast's origin adds +2 / +5 to a Dexterity save
+  let targets = [tg], where = ` · ${tg.name}`, origin = null;
+  if (area){
+    const res = areaSquares(c, area, aim || { x:tg.x, y:tg.y });
+    targets = caughtIn(c, area, res.squares); origin = res.origin;
+    where = ` · ${area.shape === 'aura' ? `${area.size * 5} ft. around ${c.name}` : `${area.size * 5}-ft. ${area.shape}`}${res.ok ? '' : ` (${res.why} — the DM's call)`}`;
+    flashArea(c.floor, [...res.squares], sp.ty); broadcast({ t:'area', floor:c.floor, sq:[...res.squares], ty:sp.ty || '' });
+  } else if (sp.rad) targets = state.tokens.filter(t => t.floor === tg.floor && !t.dead && !t.flags.gone && t.id !== c.id && cheb(t.x, t.y, tg.x, tg.y) <= sp.rad);   // hand-made spells with a radius
+  else if (gapTo(c, tg) > Math.max(1, spellReach(sp))) where += ` (out of range — the DM's call)`;
   const base = sp.d ? rollDice(sp.d).total : 0, lines = [];
   for (const t of targets){
-    const r = d(20) + saveBonus(t, sp.sv), ok = r >= sp.dc, dmg = base ? (ok ? (sp.half ? Math.floor(base / 2) : 0) : base) : 0;
-    lines.push(`${esc(t.name)} — ${String(sp.sv).toUpperCase()} ${r} vs ${sp.dc}: <b>${ok ? 'saved' : 'failed'}</b>${dmg ? ` → ${dmg} ${sp.ty}` : ''}${!ok && sp.cond ? ` + ${sp.cond}` : ''}`);
+    const cv = area && sp.sv === 'dex' ? coverFromOrigin(c.floor, origin, t) : null, cb = cv && cv.cover !== 'total' ? cv.ac : 0;
+    const r = d(20) + saveBonus(t, sp.sv) + cb, ok = r >= sp.dc, dmg = base ? (ok ? (sp.half ? Math.floor(base / 2) : 0) : base) : 0;
+    lines.push(`${esc(t.name)} — ${String(sp.sv).toUpperCase()} ${r}${cb ? ` <span class="muted">(+${cb} cover)</span>` : ''} vs ${sp.dc}: <b>${ok ? 'saved' : 'failed'}</b>${dmg ? ` → ${dmg} ${sp.ty}` : ''}${!ok && sp.cond ? ` + ${sp.cond}` : ''}`);
     if (!ok && sp.cond && CONDITIONS[sp.cond]) addCond(t, sp.cond, 1, null);
     if (dmg) applyDamage(t, dmg, sp.ty, c);
   }
-  if (/thunder|fire/.test(sp.ty || '') && sp.rad) makeNoise(tg.floor, tg.x, tg.y, 2, sp.n);
-  showCard({ kind:'', title:`${c.name}: ${sp.n}`, sub:`DC ${sp.dc} ${String(sp.sv).toUpperCase()}${sp.rad ? ` · ${sp.rad * 5} ft. around ${tg.name}` : ` · ${tg.name}`}${base ? ` · ${sp.d} ${sp.ty}` : ''}`, lines:[...lines, ...paid] });
+  if (!targets.length) lines.push('<span class="muted">No one is caught in it.</span>');
+  if (/thunder|fire/.test(sp.ty || '') && (area || sp.rad)) makeNoise(c.floor, origin ? Math.floor(origin.x) : tg.x, origin ? Math.floor(origin.y) : tg.y, 2, sp.n);
+  showCard({ kind:'', title:`${c.name}: ${sp.n}`, sub:`DC ${sp.dc} ${String(sp.sv).toUpperCase()}${where}${base ? ` · ${sp.d} ${sp.ty}` : ''}`, lines:[...lines, ...paid] });
   log(`${c.name} casts ${sp.n}: ${targets.length} caught.`);
   changed(); return true;
 }

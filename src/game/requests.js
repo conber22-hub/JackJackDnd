@@ -8,6 +8,8 @@ import { toast } from '../ui/hud.js';
 import { canAct } from './rules.js';
 import { doAttack, castSpell, partySees } from './combat.js';
 import { useFeature } from './resources.js';
+import { rangeCheck, coverOf, areaOf, areaSquares, spellReach } from '../engine/targeting.js';
+import { tokGap } from '../engine/movement.js';
 import { sfx } from '../audio/sound.js';
 
 /* ---------- the player's side ---------- */
@@ -24,7 +26,7 @@ const label = m => {
   const a = tokById(m.id), tg = tokById(m.target);
   const what = m.kind === 'attack' ? a?.attacks?.[m.i]?.n : m.kind === 'cast' ? a?.casts?.[m.i]?.n : a?.resources?.find(r => r.id === m.res)?.n;
   const mode = m.mode === 'adv' ? ' with advantage' : m.mode === 'dis' ? ' with disadvantage' : '';
-  return `<b>${esc(a?.name || '?')}</b> ${m.kind === 'attack' ? 'attacks' : m.kind === 'cast' ? 'casts' : 'uses'} <b>${esc(what || '?')}</b>${tg && tg.id !== a?.id ? ` → ${esc(tg.name)}` : ''}${mode}`;
+  return `<b>${esc(a?.name || '?')}</b> ${m.kind === 'attack' ? 'attacks' : m.kind === 'cast' ? 'casts' : 'uses'} <b>${esc(what || '?')}</b>${m.aim ? ' <span class="muted">(aimed on the map)</span>' : tg && tg.id !== a?.id ? ` → ${esc(tg.name)}` : ''}${mode}`;
 };
 // Is this a request the seat may make? (its own token, alive, and its turn if there's a fight)
 export function validAct(m, ownsId){
@@ -34,7 +36,18 @@ export function validAct(m, ownsId){
   if (m.kind === 'attack' && (!a.attacks?.[m.i] || tg.dead)) return null;
   if (m.kind === 'cast' && !a.casts?.[m.i]) return null;
   if (m.kind === 'feat' && !a.resources?.some(r => r.id === m.res)) return null;
-  return { kind:m.kind, id:a.id, target:tg.id, i:+m.i || 0, res:m.res, mode:['adv', 'dis'].includes(m.mode) ? m.mode : 'normal' };
+  // in reach and in sight (engine/targeting.js): a player's device checks too, but the DM's table decides
+  let aim = null;
+  if (m.kind === 'attack' && tg.id !== a.id && (!rangeCheck(a, tg, a.attacks[m.i]).ok || coverOf(a, tg).cover === 'total')) return null;
+  if (m.kind === 'cast'){
+    const sp = a.casts[m.i], area = areaOf(sp);
+    if (area){
+      if (!m.aim || !Number.isInteger(m.aim.x) || !Number.isInteger(m.aim.y)) return null;
+      aim = { x:m.aim.x, y:m.aim.y };
+      if (!areaSquares(a, area, aim).ok) return null;
+    } else if (tg.id !== a.id && (tokGap(a, tg) > Math.max(1, spellReach(sp)) || coverOf(a, tg).cover === 'total')) return null;
+  }
+  return { kind:m.kind, id:a.id, target:tg.id, i:+m.i || 0, res:m.res, mode:['adv', 'dis'].includes(m.mode) ? m.mode : 'normal', ...(aim ? { aim } : {}) };
 }
 export function receiveAct(m, peer, who, deny){
   if (state.campaign?.freeRolls){ if (!runAct(m)) deny('That could not be done (no slot or charge left?).'); return; }
@@ -44,7 +57,7 @@ export function receiveAct(m, peer, who, deny){
 export function runAct(m, mode = m.mode){
   const a = tokById(m.id); if (!a) return false;
   if (m.kind === 'attack') return doAttack(m.id, m.target, m.i, mode);
-  if (m.kind === 'cast') return castSpell(m.id, m.target, m.i);
+  if (m.kind === 'cast') return castSpell(m.id, m.target, m.i, m.aim || null);
   if (m.kind === 'feat') return useFeature(a, m.res, tokById(m.target) || a);
   return false;
 }

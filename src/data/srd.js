@@ -121,7 +121,8 @@ export const INVOCATIONS = ['Agonizing Blast', 'Repelling Blast', 'Armor of Shad
 /* spells (SRD 5.2 subset, levels 0–5)
    c: class letters B bard C cleric D druid P paladin R ranger S sorcerer K warlock W wizard
    k: atk (spell attack) · save · auto · heal · buff · util   d: damage / healing dice   ty: damage type
-   sv: save ability · half: half on a save · area: [shape, feet] · cond: condition on a failed save · cs: cantrip scaling */
+   sv: save ability · half: half on a save · area: [shape, feet] · cond: condition on a failed save · cs: cantrip scaling
+   r: range in feet (filled in from SPELL_RANGE below) */
 export const SPELLS = [
   // cantrips
   { n:'Fire Bolt', l:0, c:'SW', k:'atk', d:'1d10', ty:'fire', cs:1 },
@@ -193,6 +194,23 @@ export const SPELLS = [
   { n:'Mass Cure Wounds', l:5, c:'BCD', k:'heal', d:'5d8' }, { n:'Hold Monster', l:5, c:'BSKW', k:'save', sv:'wis', cond:'paralyzed' },
   { n:'Greater Restoration', l:5, c:'BCD', k:'util' }, { n:'Raise Dead', l:5, c:'BCP', k:'util' },
 ];
+// Range in feet (SRD 5.2): 0 = self (cones, lines and cubes start at the caster; auras surround them), 5 = touch.
+const SPELL_RANGE = {
+  'Fire Bolt':120, 'Ray of Frost':60, 'Shocking Grasp':5, 'Chill Touch':5, 'Poison Spray':30, 'Acid Splash':60, 'Eldritch Blast':120, 'Sacred Flame':60,
+  'Toll the Dead':60, 'Word of Radiance':0, 'Vicious Mockery':60, 'Starry Wisp':60, 'Produce Flame':60, 'Thorn Whip':30, 'Shillelagh':0, 'Guidance':5,
+  'Light':5, 'Mage Hand':30, 'Prestidigitation':10, 'Thaumaturgy':30, 'Spare the Dying':15,
+  'Magic Missile':120, 'Burning Hands':0, 'Thunderwave':0, 'Chromatic Orb':90, 'Ice Knife':60, 'Guiding Bolt':120, 'Inflict Wounds':5, 'Cure Wounds':5,
+  'Healing Word':60, 'Bless':30, 'Bane':30, 'Command':60, 'Dissonant Whispers':60, 'Sleep':60, 'Entangle':90, 'Faerie Fire':60, 'Shield':0, 'Mage Armor':5,
+  'Shield of Faith':60, 'Hunter\'s Mark':90, 'Hex':90, 'Armor of Agathys':0, 'Hellish Rebuke':60, 'Divine Smite':5, 'Detect Magic':0,
+  'Protection from Evil and Good':5, 'Charm Person':30,
+  'Scorching Ray':120, 'Shatter':60, 'Misty Step':0, 'Spiritual Weapon':60, 'Hold Person':60, 'Moonbeam':120, 'Aid':30, 'Lesser Restoration':5, 'Silence':120,
+  'Invisibility':5, 'Web':60, 'Darkvision':5, 'Find Steed':30, 'Zone of Truth':60,
+  'Fireball':150, 'Lightning Bolt':0, 'Spirit Guardians':0, 'Mass Healing Word':60, 'Hypnotic Pattern':120, 'Fear':0, 'Vampiric Touch':5, 'Revivify':5,
+  'Daylight':60, 'Remove Curse':5, 'Dispel Magic':120, 'Counterspell':60, 'Speak with Dead':10,
+  'Ice Storm':300, 'Wall of Fire':120, 'Banishment':30, 'Guardian of Faith':30, 'Death Ward':5, 'Greater Invisibility':5, 'Dimension Door':500,
+  'Cone of Cold':0, 'Flame Strike':60, 'Mass Cure Wounds':60, 'Hold Monster':90, 'Greater Restoration':5, 'Raise Dead':5,
+};
+for (const sp of SPELLS) sp.r ??= SPELL_RANGE[sp.n] ?? 60;
 export const SUBSPELLS = {
   'Life Domain':{ 3:['Bless', 'Cure Wounds', 'Aid', 'Lesser Restoration'], 5:['Mass Healing Word', 'Revivify'], 7:['Death Ward', 'Guardian of Faith'], 9:['Mass Cure Wounds', 'Raise Dead'] },
   'Fiend Patron':{ 3:['Burning Hands', 'Command', 'Scorching Ray'], 5:['Fireball'], 7:['Wall of Fire'], 9:['Flame Strike'] },

@@ -59,7 +59,7 @@ document.addEventListener('click', e => {
     case 'deselect': ui.selDoor = null; ui.selTrap = null; select(null); break;
     case 'focus': { const t = sel || tokById(ui.myToken); if (t) focusTile(t.floor, t.x, t.y); else focusFloor(); } break;
     case 'atkMode': ui.atkMode = { normal:'adv', adv:'dis', dis:'normal' }[ui.atkMode]; renderSel(); break;
-    case 'atk': if (sel) setMode('attack', { attacker:sel.id, i:+el.dataset.i }, `${sel.name}: ${sel.attacks[+el.dataset.i].n}${ui.atkMode !== 'normal' ? ` (${ui.atkMode})` : ''} — tap the target`); break;
+    case 'atk': if (sel) setMode('attack', { attacker:sel.id, i:+el.dataset.i }, `${sel.name}: ${sel.attacks[+el.dataset.i].n}${ui.atkMode !== 'normal' ? ` (${ui.atkMode})` : ''} — tap the target (the shading is its reach)`); break;
     case 'special': if (sel) useSpecial(sel, BEST[sel.bid].specials[+el.dataset.i]); break;
     case 'feat': if (sel){
       const r = sel.resources?.find(r => r.id === k); if (!r) break;
@@ -87,7 +87,9 @@ document.addEventListener('click', e => {
     case 'shortRest': shortRest(); break;
     case 'longRest': longRest(); break;
     case 'freeRolls': state.campaign.freeRolls = !state.campaign.freeRolls; changed(); renderPanel(); break;
-    case 'cast': if (sel){ const sp = sel.casts[+el.dataset.i]; setMode('cast', { caster:sel.id, i:+el.dataset.i }, `${sel.name}: ${sp.n} — tap ${sp.k === 'heal' ? 'who to heal' : sp.rad ? 'the creature at the centre' : 'the target'}`); } break;
+    case 'cast': if (sel){ const sp = sel.casts[+el.dataset.i], ar = sp.area?.[0];
+      const how = sp.k === 'heal' ? 'tap who to heal' : ar === 'aura' ? 'tap anywhere to cast it around them' : ar && !sp.r ? 'point it, then tap (tap twice on a phone)' : ar ? 'tap where it lands (twice on a phone)' : 'tap the target';
+      setMode('cast', { caster:sel.id, i:+el.dataset.i }, `${sel.name}: ${sp.n} — ${how}`); } break;
     case 'dmg': if (sel){ const n = +$('#hpAmt').value || 0; applyDamage(sel, n, 'manual'); changed(); } break;
     case 'heal': if (sel){ heal(sel, +$('#hpAmt').value || 0); changed(); } break;
     case 'rmCond': if (sel){ removeCond(sel, k); changed(); } break;

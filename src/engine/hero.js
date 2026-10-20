@@ -99,7 +99,9 @@ export function heroAttacks(h, st = heroStats(h)){
     const die = two ? w.p.match(/V:(\d*d\d+)/)[1] : w.d;
     const hit = st.pb + m + (ranged && st.style === 'Archery' ? 2 : 0);
     const dmgBonus = m + (!ranged && st.style === 'Dueling' && !/2/.test(w.p) && !two ? 2 : 0);
-    out.push({ n:name, b:hit, d:`${die}${dmgBonus ? sgn(dmgBonus) : ''}`, t:w.ty, f:`{A} attacks {T} with a ${name.toLowerCase()}.`, ...(ranged ? {} : { m:1 }) });
+    // range [normal, long] in feet for bows and thrown weapons (a thrown dagger is melee too); reach weapons hit 10 ft. away
+    out.push({ n:name, b:hit, d:`${die}${dmgBonus ? sgn(dmgBonus) : ''}`, t:w.ty, f:`{A} attacks {T} with a ${name.toLowerCase()}.`, ...(ranged ? {} : { m:1 }),
+      ...(Array.isArray(w.rng) ? { rng:[...w.rng] } : {}), ...(/R/.test(w.p) ? { reach:2 } : {}) });
   }
   if (h.cls === 'Monk'){
     const m = Math.max(st.M('Dex'), st.M('Str')), die = L >= 5 ? '1d8' : '1d6';
@@ -115,9 +117,21 @@ export function heroAttacks(h, st = heroStats(h)){
     const agon = sp.n === 'Eldritch Blast' && h.invoc === 'Agonizing Blast' ? st.M('Cha') : 0;
     const die = sp.n === 'Scorching Ray' ? '2d6' : d;
     out.push({ n:sp.n + (rays > 1 ? ` (×${rays} ${sp.n === 'Scorching Ray' ? 'rays' : 'beams'})` : ''), b:st.spAtk, d:`${die}${agon ? sgn(agon) : ''}${sp.addmod ? sgn(st.M(st.castAb)) : ''}`, t:sp.ty, f:`{A} casts ${sp.n} at {T}.`,
-      ...(sp.l ? { l:sp.l, sn:sp.n } : {}), ...(rays > 1 ? { rays } : {}), ...(SUSTAINED.has(sp.n) ? { again:1 } : {}) });
+      ...(sp.l ? { l:sp.l, sn:sp.n } : {}), ...(rays > 1 ? { rays } : {}), ...(SUSTAINED.has(sp.n) ? { again:1 } : {}), rng:[Math.max(5, sp.r ?? 60)] });
   }
   return out;
+}
+// Saves from before ranges: give a hero's weapons and spells their range, reach and area, matched by name
+// (attacks the DM has renamed or written by hand keep whatever they have).
+export function addRanges(t){
+  for (const a of t.attacks || []){
+    if (a.rng || a.reach) continue;
+    const base = String(a.n || '').replace(/ \(×.*\)$/, ''), w = W(base), sp = SP(a.sn || base);
+    if (w){ if (Array.isArray(w.rng)) a.rng = [...w.rng]; if (/R/.test(w.p)) a.reach = 2; }
+    else if (sp && sp.k === 'atk') a.rng = [Math.max(5, sp.r ?? 60)];
+  }
+  for (const c of t.casts || []){ const sp = SP(c.n); if (!sp) continue; c.r ??= sp.r ?? 60; if (sp.area && !c.area) c.area = [...sp.area]; }
+  return t;
 }
 export function heroSpells(h, st = heroStats(h)){
   const out = new Set(h.spells || []);
@@ -134,6 +148,7 @@ export function castables(h, st = heroStats(h)){
   return heroSpells(h, st).filter(sp => sp.k !== 'atk').map(sp => ({
     n:sp.n, k:sp.k, l:sp.l, sv:sp.sv, dc:st.dc, d:sp.d ? (sp.l === 0 && sp.cs ? cantripDice(sp.d, st.L) : sp.d) : null, ty:sp.ty, half:!!sp.half,
     rad:sp.area ? Math.max(1, Math.round(sp.area[1] / (sp.area[0] === 'cone' || sp.area[0] === 'line' ? 10 : 5))) : 0, cond:sp.cond || null,
+    ...(sp.area ? { area:[...sp.area] } : {}), r:sp.r ?? 60,
     healMod:sp.k === 'heal' ? st.M(st.castAb || 'Wis') : 0, ...(sp.k === 'util' && sp.d ? { k:'auto', smite:1 } : {}), ...(sp.note ? { note:sp.note } : {}),
     ...(SUSTAINED.has(sp.n) ? { again:1 } : {}), ...(/^Mass /.test(sp.n) && sp.k === 'heal' ? { multi:6, rad:6 } : {}) }));
 }
