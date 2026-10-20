@@ -190,9 +190,15 @@ textarea.txt{min-height:70px;resize:vertical;font-size:13px}
 #skyline.flash .sky-bolt{opacity:1}#skyline.flash .sky-glow{opacity:1}#skyline.flash .sky-sil{fill:#2a2630}
 #skyline .sky-bat{animation:skybat 9s linear infinite}#skyline .sky-bat.b{animation-duration:12s;animation-delay:-4s}#skyline .sky-bat.c{animation-duration:15s;animation-delay:-8s}
 @keyframes skybat{from{transform:rotate(0deg) translateX(26px) rotate(0deg)}to{transform:rotate(360deg) translateX(26px) rotate(-360deg)}}
-#reqPanel,#roomPrompts{display:flex;flex-direction:column;gap:6px}
+#reqPanel,#roomPrompts,#oaPanel{display:flex;flex-direction:column;gap:6px}
+#topPanels #oaPanel .req{border-color:#c0303a;box-shadow:0 0 0 1px #c0303a55,0 10px 30px #000a}
+#moveTip{position:fixed;z-index:30;pointer-events:none;background:#140d10ee;border:1px solid #6a4a2a;border-radius:10px;padding:4px 9px;font-size:13px;color:#f4e6cc;white-space:nowrap;opacity:0;transition:opacity .12s;box-shadow:0 6px 18px #000a}
+#moveTip.show{opacity:1}
+#moveTip .dash{color:#f08a4a}
+#moveTip .warn{color:#ff6a5a;font-size:12px;margin-top:2px}
+.acts .grp{display:inline-flex;gap:4px;align-items:center;padding:2px 6px;border:1px dashed #5a4a3a;border-radius:10px}
 .req{pointer-events:auto}
-#reqPanel .req,#roomPrompts .req{background:linear-gradient(#22171a,#160f13);border:1px solid #8b3a2a;border-radius:14px;padding:8px 10px;box-shadow:0 10px 30px #000a;animation:popin .2s}
+#reqPanel .req,#roomPrompts .req,#oaPanel .req{background:linear-gradient(#22171a,#160f13);border:1px solid #8b3a2a;border-radius:14px;padding:8px 10px;box-shadow:0 10px 30px #000a;animation:popin .2s}
 #topPanels .req .w{font-size:14px}
 #topPanels .req .b{display:flex;gap:6px;margin-top:6px}
 #topPanels .req .b .btn{flex:1;padding:5px}
@@ -446,7 +452,8 @@ textarea.txt{min-height:70px;resize:vertical;font-size:13px}
     <path class="sky-bat c" d="M104 30 l-2 -1 l1 1 l-1 .3 z M104 30 l2 -1 l-1 1 l1 .3 z" style="transform-origin:104px 30px"/></g>
   <g fill="#c8ccd8" opacity=".18"><ellipse cx="70" cy="118" rx="40" ry="7"/><ellipse cx="135" cy="122" rx="46" ry="8"/><ellipse cx="100" cy="128" rx="70" ry="6"/></g>
 </svg></div>
-<div id="topPanels"><div id="reqPanel"></div><div id="roomPrompts"></div></div>
+<div id="topPanels"><div id="oaPanel"></div><div id="reqPanel"></div><div id="roomPrompts"></div></div>
+<div id="moveTip"></div>
 <div id="cardLayer"></div>
 <div id="toasts"></div>
 
@@ -533,7 +540,9 @@ textarea.txt{min-height:70px;resize:vertical;font-size:13px}
     <h1 style="font-size:26px">How to play</h1>
     <div class="keys">
       <b>Camera</b> — drag to orbit · right-drag or two-finger drag to pan · scroll or pinch to zoom<br>
-      <b>Move</b> — tap a token, then tap a glowing tile. In combat the glow is that creature's remaining speed. Closed doors open as you walk through; heroes stop short of traps they spot.<br>
+      <b>Move</b> — tap a token, then tap a glowing tile; or <b>drag the mini</b> along the way you want it to go (back over your route to shorten it). With a mouse, hovering a tile shows the way and its cost. <kbd>←</kbd><kbd>↑</kbd><kbd>→</kbd><kbd>↓</kbd> or the number pad step one square. Closed doors open as you walk through; heroes stop short of traps they spot. <b>↶ Undo move</b> takes a move back (players: only if it revealed nothing).<br>
+      <b>In a fight</b> — the bright glow is the move you have left, the dim red-orange glow needs the <b>Dash</b> (walking there takes it). The card has 🏃 Dash, 🛡 Disengage, 🌀 Dodge and ⤒ Stand up (half your speed). Leaving an enemy's reach stops you at its edge: the enemy's player (or the DM) chooses <b>Strike</b> or <b>Let them go</b>, then the walk carries on. A red dot on the path warns you first.<br>
+      <b>Moving the party (DM)</b> — outside a fight, the heroes nearby follow the one you move, single file in marching order (Tokens tab: ⇡ reorders, 🚩 Stays keeps one put, 🚶 Party follows turns it off). <kbd>Shift</kbd>-click creatures (or 👥 Select party / Select its kind) to move several at once in formation. 🐾 Close in walks a monster up to the nearest hero.<br>
       <b>Doors & traps</b> — tap a door or a found trap for its card: open, pick, force, disarm. <i>Search</i> looks for hidden ones within 15 ft.<br>
       <b>Stairs</b> — stand on a stair rune and press <i>Descend</i> / <i>Ascend</i> on the token card.<br>
       <b>Ping</b> — the ◎ button, or long-press a tile, flashes it for the whole table.<br>

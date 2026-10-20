@@ -10,7 +10,8 @@ import { burst, showReach, clearReach } from '../render/effects.js';
 import { showCard, toast, banner, sendWhisper } from '../ui/hud.js';
 import { WHISPERS } from '../data/dread.js';
 import { sfx } from '../audio/sound.js';
-import { currentTurn, addCond, tickConds, hasCond, saveBonus } from './rules.js';
+import { currentTurn, addCond, tickConds, hasCond, saveBonus, stopped } from './rules.js';
+import { freshTurn, clearOpportunities } from './moves.js';
 import { shiftFloor } from './shift.js';
 import { whimRoll, whimStep, whimReset } from './whim.js';
 import { changed, broadcast } from './session.js';
@@ -46,7 +47,7 @@ export function addToInit(t){
 export function rollInitiative(){
   const L = ui.floor, list = state.tokens.filter(t => t.floor === L && !t.dead && !t.flags.gone);
   if (!list.length){ toast('No one on this floor.'); return; }
-  list.forEach(t => { t.initRoll = d(20) + (t.init || 0); t.moved = 0; delete t.legend; });   // a new fight: legendary actions full
+  list.forEach(t => { t.initRoll = d(20) + (t.init || 0); freshTurn(t); delete t.legend; });   // a new fight: legendary actions full
   list.sort((a, b) => b.initRoll - a.initRoll || (a.kind === 'monster') - (b.kind === 'monster'));
   state.combat = { active:true, order:list.map(t => t.id), idx:0, round:1, floor:L };
   log(`⚔ Initiative on ${state.floors[L].name}: ${list.map(t => `${t.name} ${t.initRoll}`).join(', ')}`, true);
@@ -58,6 +59,7 @@ export function rollInitiative(){
 }
 export function nextTurn(){
   if (!state.combat.active) return;
+  clearOpportunities();
   tickConds(currentTurn());
   if (!state.combat.order.some(id => { const t = tokById(id); return t && !t.flags.gone && (!t.dead || t.flags.rising); })){ toast('Everyone in this fight is down.'); return; }
   for (let guard = 0; guard < 300; guard++){
@@ -70,7 +72,7 @@ export function nextTurn(){
 }
 export function startTurn(){
   const t = currentTurn(); if (!t) return;
-  t.moved = 0;
+  freshTurn(t);
   const lg = legendOf(t); if (lg?.legendary) t.legend = lg.legendary.n;   // legendary actions come back
   if (t.flags.rising){
     t.dead = false; t.hp = 1; t.flags.rising = false; t.flags.rose = true;
@@ -105,7 +107,7 @@ function endOfRound(){
   // The land rearranges
   if (D.shift > 0 && Math.random() < D.shift) setTimeout(() => shiftFloor(L, 'Barovia rearranges itself as the round ends'), 400);
 }
-export function endCombat(){ state.combat = { active:false, order:[], idx:0, round:1, floor:ui.floor }; log('Combat ends.'); clearReach(); const t = ui.selected && tokById(ui.selected); if (t) showReach(t); changed(); }
+export function endCombat(){ clearOpportunities(); state.tokens.forEach(freshTurn); state.combat = { active:false, order:[], idx:0, round:1, floor:ui.floor }; log('Combat ends.'); clearReach(); const t = ui.selected && tokById(ui.selected); if (t) showReach(t); changed(); }
 
 /* ---------- attacks & saves ---------- */
 const nearSeep = (tg, a) => state.tokens.some(o => o.id !== a.id && o.id !== tg.id && !o.dead && o.floor === tg.floor && hasTag(o, 'seep') && cheb(o.x, o.y, tg.x, tg.y) <= 1);
@@ -118,6 +120,8 @@ export function doAttack(aId, tId, i, mode = 'normal'){
   const why = [];
   if (b?.pack && nearSeep(tg, a)){ adv = true; why.push('Pack Tide'); }
   if (hasCond(tg, 'prone') || hasCond(tg, 'restrained') || hasCond(tg, 'paralyzed') || hasCond(tg, 'stunned') || hasCond(tg, 'blinded')){ adv = true; why.push(tg.conds.find(c => ['prone','restrained','paralyzed','stunned','blinded'].includes(c.n)).n); }
+  if (tg.dodge && !stopped(tg) && a.id !== tg.id){ dis = true; why.push(`${tg.name} is dodging`); }
+  a.lastMove = null;   // after an attack there's no taking the move back
   if (hasCond(a, 'blinded') || hasCond(a, 'frightened') || hasCond(a, 'poisoned') || hasCond(a, 'prone')){ dis = true; why.push(`${a.name} ${a.conds.find(c => ['blinded','frightened','poisoned','prone'].includes(c.n)).n}`); }
   const bonus = atk.b + (isHis(a) ? D.hit : 0), useBoth = adv !== dis;
   const rage = atk.m && hasCond(a, 'raging') ? a.rageDmg || 2 : 0;
@@ -350,6 +354,7 @@ export function castSpell(casterId, targetId, i){
   const c = tokById(casterId), tg = tokById(targetId), sp = c?.casts?.[i]; if (!c || !tg || !sp) return false;
   if (sp.k === 'heal' && tg.dead && tg.kind === 'monster'){ toast(`${tg.name} is beyond healing.`); return false; }
   const slot = spendSpell(c, sp.l, sp.n, !!sp.again);
+  if (slot !== null) c.lastMove = null;
   if (slot === null){ toast(`${c.name} has no spell slot left for ${sp.n}.`); return false; }
   const paid = slot ? [`<span class="muted">${esc(slot)}</span>`] : [];
   sfx('roll');

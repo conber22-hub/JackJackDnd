@@ -16,6 +16,15 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.0 — moving
+
+- **Drag your mini** along the way you want it to walk (back over the route shortens it; a jump is bridged the shortest way). A dotted path and a tip show the cost in feet, what's left of the move, rough ground, and a warning if the route leaves an enemy's reach. With a mouse, hovering any square you can reach shows the same. Arrow keys and the number pad step one square, up the screen. Players' traced routes are checked by the DM's table (`engine/movement.js` `checkPath`) before they walk.
+- **The party follows its leader**: outside a fight, when the DM moves a hero, the others within 8 squares fall in behind single file in marching order (Tokens tab: ⇡ to reorder, 🚩 Stays, 🚶 Party follows on/off). **Groups**: Shift-click creatures, or 👥 Select party / Select its kind, and they move with the selected one in formation, each finding its own way.
+- **Battle movement**: the reach glow is two-tone (the move left, then the Dash zone — walking into it takes the Dash). The card has 🏃 Dash, 🛡 Disengage, 🌀 Dodge (attacks against it at disadvantage until its next turn), ⤒ Stand up (half its speed), and ↶ Undo move (the DM any time this turn; a player while the move revealed nothing).
+- **Opportunity attacks**: leaving an enemy's reach (1 square, 2 with a glaive, halberd, pike, lance or whip) stops the walk at the edge of it. The DM gets *"⚔ X leaves Y's reach — Strike / Let them go"*; when Y is a hero, its player gets the prompt for their own reaction. A strike uses the best melee attack and spends the reaction (back at the start of its turn); then the walk carries on unless the mover dropped. Disengaging, being stunned, paralysed or restrained, or having no melee attack means no strike.
+- **🐾 Close in** (DM, on a monster): walks it to the nearest hero, as close as its move allows, ending within reach when it can.
+- Code: `engine/movement.js` (pure, tested in `tests/movement.test.js`), `game/moves.js` (groups, turn actions, undo, opportunity attacks, key steps).
+
 ## v0.9 — Castle Ravenloft
 
 - **The castle is a place you can walk into** (`engine/castle.js`, the **Castle Ravenloft** template, 56×56 squares): five hand-shaped floors instead of generated ones, every room named, furnished and given a read-aloud, every room reachable.
@@ -236,6 +245,7 @@ src/engine/             pure logic: no DOM, no Three.js, unit-tested
   tables.js             roll-table parser
   overland.js           the Valley: routes, journeys, and procedural stretches of road from modules
   encounter.js          XP budgets and the encounter generator
+  movement.js           dragged routes, threat & opportunity attacks, following in marching order, formations, Close in
   castle.js             Castle Ravenloft's five hand-shaped floors (approach, halls, upper keep, dungeons, catacombs)
   dressing.js           furnishing generated rooms (kits in src/data/dressing.js, read-aloud in src/data/descriptions.js)
   settlement.js         the Valley's places: villages, towns, Krezk, Berez, the camp, the vineyard, the lake, the hill, the tower
@@ -247,6 +257,7 @@ src/game/               rules that touch the scene and UI
   requests.js           players' attack / spell / feature requests and the DM's approval queue
   fights.js             rolling and placing an encounter
   noise.js              noise that carries to nearby creatures and the floors above and below
+  moves.js              the party following, groups, Dash / Disengage / Dodge / Stand up, undo, opportunity-attack prompts, arrow keys
   rooms.js              read a room aloud, furnish by hand, the DM's prompt when the party enters a room
   overworld.js          travelling: set out, the road's events, arrive, enter a place
   actions.js            select, move (doors / traps), stairs, falling, doors, search, disarm, floors, dread
@@ -274,7 +285,7 @@ src/ui/creator.js       the character creator
 src/ui/valley.js        the Valley tab and its map (SVG)
 src/render/textures.js · post.js · models.js · gfx.js   Phase 4: textures, post-processing, GLB models, quality settings
 src/ui/                 hud.js (top bar, dock, cards) · panels.js (tabs) · input.js (taps & drags) · events.js (buttons)
-tests/engine.test.js · hero.test.js · overland.test.js · encounter.test.js · redact.test.js    node --test
+tests/engine.test.js · hero.test.js · overland.test.js · encounter.test.js · redact.test.js · movement.test.js    node --test
 ```
 
 ## Adding a monster

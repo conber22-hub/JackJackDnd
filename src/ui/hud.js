@@ -7,7 +7,8 @@ import { CONDITIONS } from '../data/dread.js';
 import { TRAP_KINDS, DOOR_STATES } from '../data/rooms.js';
 import { $, esc, clamp, cheb } from '../util/core.js';
 import { broadcast, net } from '../net/table.js';
-import { currentTurn, moveAllowance } from '../game/rules.js';
+import { currentTurn, moveAllowance, hasCond, speedSquares } from '../game/rules.js';
+import { canUndoMove, renderOA } from '../game/moves.js';
 import { onStairs, selectedDoor, selectedTrap, nearestHero } from '../game/actions.js';
 import { undoCount } from '../game/session.js';
 import { renderPanel } from './panels.js';
@@ -133,12 +134,29 @@ export function renderSel(){
     if (t.dead && t.kind !== 'pc' && (t.kind === 'npc' || b?.tags?.includes('host'))) acts += `<button class="btn small seep" data-act="infest">☣ Infest</button>`;
     if (state.combat.active && !state.combat.order.includes(t.id)) acts += `<button class="btn small" data-act="joinInit">+ Initiative</button>`;
   }
+  // moving: a fight's movement actions, taking a move back, the DM's helpers for moving several at once
+  if ((dm || mine) && !t.dead){
+    const fight = state.combat.active, turn = !fight || currentTurn()?.id === t.id;
+    if (fight && (dm || turn)){
+      acts += `<button class="btn small ${t.dashed ? 'on' : ''}" data-act="turnAct" data-k="dash" title="Your action: twice your speed this turn">🏃 Dash</button>`;
+      acts += `<button class="btn small ${t.disengaged ? 'on' : ''}" data-act="turnAct" data-k="disengage" title="Your action: moving away provokes no opportunity attacks this turn">🛡 Disengage</button>`;
+      acts += `<button class="btn small ${t.dodge ? 'on' : ''}" data-act="turnAct" data-k="dodge" title="Your action: attacks against you have disadvantage until your next turn">🌀 Dodge</button>`;
+    }
+    if (hasCond(t, 'prone') && turn) acts += `<button class="btn small" data-act="turnAct" data-k="stand" title="${fight ? `Costs half your speed (${Math.ceil(speedSquares(t) / 2) * 5} ft)` : 'Get up'}">⤒ Stand up</button>`;
+    if (canUndoMove(t, dm)) acts += `<button class="btn small" data-act="undoMove" title="Take back the last move this turn">↶ Undo move</button>`;
+    if (dm && t.kind === 'monster') acts += `<button class="btn small" data-act="closeIn" title="Walk to the nearest foe, as close as its move allows">🐾 Close in</button>`;
+    if (dm){
+      const g = [...(ui.group || [])].filter(id => tokById(id));
+      acts += g.length ? `<span class="grp">👥 +${g.length} moving with it <button class="btn small" data-act="groupClear">✕</button></span>`
+        : `<button class="btn small" data-act="${t.kind === 'monster' ? 'groupKin' : 'groupParty'}" title="Move them together, keeping their places (or Shift-click creatures to add them)">👥 ${t.kind === 'monster' ? 'Select its kind' : 'Select party'}</button>`;
+    }
+  }
   if (!t.dead && t.kind !== 'monster' && (dm || mine)) acts += `<button class="btn small" data-act="search">🔍 Search</button>`;
   if (stairs && (dm || mine) && !t.dead) acts += `<button class="btn small primary" data-act="stairs">${esc(exitLabel(state.floors[t.floor], stairs))}</button>`;
   if (mine && currentTurn()?.id === t.id) acts += `<button class="btn small primary" data-act="endMyTurn">End my turn</button>`;
   acts += `<button class="btn small" data-act="focus">⌖ Focus</button>`;
   if (dm) acts += `<button class="btn small danger" data-act="remove">✕ Remove</button>`;
-  const move = state.combat.active && showStats ? ` · ${moveAllowance(t) * 5} ft left` : '';
+  const move = state.combat.active && showStats ? ` · ${moveAllowance(t) * 5} ft left${t.dashed ? ' (dashing)' : ''}${t.disengaged ? ' · disengaged' : ''}${t.dodge ? ' · dodging' : ''}${t.reacted ? ' · reaction used' : ''}` : '';
   const flags = [t.flags.rising && '<span class="fam-seep">rising…</span>', t.flags.seeded && '<span class="fam-seep">☣ seeded</span>', t.flags.latchedBy && !t.dead && tokById(t.flags.latchedBy) && !tokById(t.flags.latchedBy).dead && '<span class="fam-seep">a Seepling is latched on</span>', t.flags.alert && dm && 'alerted'].filter(Boolean);
   el.innerHTML = `<div class="top"><span class="dot" style="color:${color};background:${color}"></span><span class="nm">${esc(t.name)}${t.dead ? ' ✝' : ''}${mine ? ' <span class="muted">(you)</span>' : ''}${t.cls ? ` <span class="muted" style="font-size:13px">${esc(t.cls)}</span>` : ''}</span>
     ${b ? `<span class="muted">CR ${b.cr}</span>` : ''}<button class="btn small" data-act="deselect">✕</button></div>
@@ -195,4 +213,4 @@ function renderTrapCard(el){
     <div class="acts">${acts}</div>`;
   el.classList.add('show');
 }
-export function renderAll(){ renderTop(); renderTabs(); renderPanel(); renderInit(); renderSel(); renderDock(); renderRequests(); renderPrompts(); }
+export function renderAll(){ renderTop(); renderTabs(); renderPanel(); renderInit(); renderSel(); renderDock(); renderRequests(); renderPrompts(); renderOA(); }

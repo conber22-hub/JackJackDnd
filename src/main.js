@@ -15,7 +15,7 @@ import { buildAllFloors } from './render/floors.js';
 import { walk } from './engine/tiles.js';
 import { floorViews, mist } from './render/floors.js';
 import { tokenViews } from './render/minis.js';
-import { selRing, updatePings } from './render/effects.js';
+import { selRing, updatePings, updateGroupRings } from './render/effects.js';
 import { updateAmbience, weatherKind } from './render/ambience.js';
 import { updateSkyline } from './render/skyline.js';
 import { sendWhisper } from './ui/hud.js';
@@ -81,6 +81,7 @@ function frame(){
     floorViews.forEach(fv => { if (!fv) return; const m = fv.mats.wall; m.emissive.set('#5a0a10'); m.emissiveIntensity = state.dread >= 7 ? (state.dread - 6) * .06 * (1 + Math.sin(t * 1.3)) : 0; });
     // selection ring
     const st = ui.selected && tokenViews.get(ui.selected);
+    updateGroupRings();
     if (st && selRing.visible){ st.group.getWorldPosition(selRing.position); selRing.position.y += .08; selRing.rotation.y += dt; selRing.material.opacity = .6 + Math.sin(t * 4) * .3; }
     // mist drift
     const mp = mist.geometry.attributes.position; for (let i = 0; i < mp.count; i++){ mp.array[i*3] += Math.sin(t * .2 + i) * .004; mp.array[i*3+2] += .006; if (mp.array[i*3+2] > 30) mp.array[i*3+2] = -30; } mp.needsUpdate = true;

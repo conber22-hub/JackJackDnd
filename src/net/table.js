@@ -7,7 +7,8 @@ import { redactForPlayers } from '../engine/redact.js';
 import { $ } from '../util/core.js';
 import { focusTile } from '../render/scene.js';
 import { ensureFloorViews, buildAllFloors, buildFloor, animateGridChange } from '../render/floors.js';
-import { syncTokens } from '../render/minis.js';
+import { syncTokens, tokenViews } from '../render/minis.js';
+import { turnAction, undoMove, answerOpportunity, askOpportunity, dropAsk } from '../game/moves.js';
 import { showReach, spawnPing } from '../render/effects.js';
 import { toast, banner, showCard, showWhisper, renderAll, renderTop } from '../ui/hud.js';
 import { renderPanel } from '../ui/panels.js';
@@ -144,6 +145,8 @@ export function sendSheetToOwner(id){
   const c = state.characters[id]; if (!c) return;
   for (const [, s] of net.conns) if (s.conn.open && ownsCharacter(c, s.name, s.key)) try { s.conn.send({ t:'yours', chars:charactersOf(s.name, s.key).map(sheetForPlayer), quiet:true }); } catch {}
 }
+// Send to whoever sits at this token (a hero's player), if they are at the table.
+export function sendToSeat(tokId, m){ for (const [pid, tid] of Object.entries(state.seats || {})) if (tid === tokId){ const s = net.conns.get(pid); if (s?.conn.open) try { s.conn.send(m); } catch {} } }
 export function broadcast(m, except){ for (const [pid, s] of net.conns) if (pid !== except && s.conn.open) try { s.conn.send(m); } catch {} }
 let pushTimer = null;
 // What players receive: the delve without the DM's campaign desk (notes, fortune, clocks), anyone's character sheets,
@@ -188,7 +191,10 @@ function onHostMsg(c, m){
     if (t){ seatAt(c.peer, t.id); toast(`${seat.name} plays ${t.name}.`); }
     renderPanel(); pushState();
   }
-  else if (m.t === 'move'){ const t = tokById(m.id); if (t && mine(t.id) && canAct(t)) doMove(t, m.x, m.y); }
+  else if (m.t === 'move'){ const t = tokById(m.id); if (t && mine(t.id) && canAct(t) && Number.isInteger(m.x) && Number.isInteger(m.y)) { if (!doMove(t, m.x, m.y, { path:Array.isArray(m.path) ? m.path : null }) && c.open) c.send({ t:'denied', text:'You can\'t move there.' }); } }
+  else if (m.t === 'turnAct'){ const t = tokById(m.id); if (t && mine(t.id) && canAct(t) && ['dash', 'disengage', 'dodge', 'stand'].includes(m.k)) turnAction(t, m.k); }
+  else if (m.t === 'undoMove'){ const t = tokById(m.id); if (t && mine(t.id)) undoMove(t, false); }
+  else if (m.t === 'oaAns') answerOpportunity(String(m.id), !!m.take, c.peer);
   else if (m.t === 'stairs'){ const t = tokById(m.id); if (t && mine(t.id)) takeStairs(t); }
   else if (m.t === 'ping') doPing(m, seat.name, m.color, c.peer);
   else if (m.t === 'endturn'){ const cur = currentTurn(); if (cur && mine(cur.id)) nextTurn(); }
@@ -358,8 +364,10 @@ function onClientMsg(m){
     if (ui.tableChars.length && !m.quiet) toast(`Welcome back — ${ui.tableChars.map(c => c.name).join(', ')} ${ui.tableChars.length > 1 ? 'are' : 'is'} at this table.`);
     renderPanel();
   }
+  else if (m.t === 'oa' && m.q?.id) askOpportunity(m.q);
+  else if (m.t === 'oaDone') dropAsk(m.id);
   else if (m.t === 'bye'){ net.status = 'closed'; clearTimeout(net.retryTimer); toast('The DM closed the table.'); renderNetStatus(); }
-  else if (m.t === 'denied'){ toast(m.text); if (ui.myHeroId && !tokById(ui.myToken)) ui.myHeroId = null; renderPanel(); }
+  else if (m.t === 'denied'){ toast(m.text); if (ui.myHeroId && !tokById(ui.myToken)) ui.myHeroId = null; const me = tokById(ui.myToken); if (me && ui.selected === me.id) showReach(me); renderPanel(); }
   else if (m.t === 'card') showCard(m.c, false);
   else if (m.t === 'ping'){ spawnPing(m.floor, m.x, m.y, m.color); toast(`${m.who} pings the map`); }
   else if (m.t === 'whisper') showWhisper(m.text);
@@ -384,7 +392,8 @@ function applyRemoteState(s){
   if (me && (me.floor !== ui.floor || myPrev !== ui.myToken || !sameDelve)){ goFloor(me.floor, false); focusTile(me.floor, me.x, me.y); if (!ui.selected) select(me.id); }
   if (ui.selected && !tokById(ui.selected)) ui.selected = null;
   const cur = currentTurn(), key = `${state.combat.round}:${state.combat.idx}`;
-  if (cur && cur.id === ui.myToken && key !== lastTurnSeen){ banner('Your turn'); if (ui.selected === me?.id) showReach(me); }
+  if (cur && cur.id === ui.myToken && key !== lastTurnSeen){ banner('Your turn'); select(me.id); }
+  else if (me && ui.selected === me.id && !tokenViews.get(me.id)?.anim) showReach(me);   // what's left of their move
   lastTurnSeen = key;
   renderAll();
 }

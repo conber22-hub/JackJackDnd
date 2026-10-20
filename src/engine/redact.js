@@ -10,7 +10,7 @@
    · content: the DM's Shift and Whim tables, and custom creatures nobody can see, stay home; the log keeps
      only the lines meant for everyone (entries marked dm:true are the DM's). */
 const KEEP_FLAGS = ['gone', 'taken', 'bloodied'];
-const MON_FIELDS = ['id', 'kind', 'bid', 'name', 'color', 'size', 'floor', 'x', 'y', 'dead', 'conds', 'moved', 'initRoll', 'speed'];
+const MON_FIELDS = ['id', 'kind', 'bid', 'name', 'color', 'size', 'floor', 'x', 'y', 'dead', 'conds', 'moved', 'initRoll', 'speed', 'dodge'];
 
 export function redactForPlayers(s, { seen = {}, explored = {} } = {}){
   const out = { ...s, meta:{ ...s.meta } };

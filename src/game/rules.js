@@ -25,11 +25,14 @@ export function tickConds(t){
 }
 export const stopped = t => (t.conds || []).some(c => CONDITIONS[c.n]?.stop);
 
-export function moveAllowance(t){
+// Squares a creature can still move. In a fight: its speed (twice that with the Dash) less what it has moved;
+// crawling while prone costs double. dash:true asks what it would have if it took the Dash now.
+export const speedSquares = t => Math.floor((t.speed || 30) / 5);
+export function moveAllowance(t, { dash = false } = {}){
   if (ui.freeMove && ui.role === 'dm') return 999;
   if (stopped(t)) return 0;
-  let sq = Math.floor((t.speed || 30) / 5);
+  let sq = speedSquares(t);
+  if (state.combat.active){ sq *= t.dashed || dash ? 2 : 1; if (hasCond(t, 'prone')) sq = Math.floor(sq / 2); return Math.max(0, sq - (t.moved || 0)); }
   if (hasCond(t, 'prone')) sq = Math.floor(sq / 2);
-  if (state.combat.active) return Math.max(0, sq - (t.moved || 0));
   return Math.max(sq, 6) * 4;   // exploration pace outside combat
 }

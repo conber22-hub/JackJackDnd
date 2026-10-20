@@ -23,6 +23,7 @@ import { PROPS, PROP_CATS, HOUSES } from '../data/props.js';
 import { valleyTab, placesForSession, playerMapTab } from './valley.js';
 import { modelInfo } from '../render/models.js';
 import { CAMPAIGN, SESSIONS, CLOCKS, PLACES, PLACE_STATES, CAST, FORTUNE } from '../data/campaign.js';
+import { marchOrder } from '../game/moves.js';
 
 const art = (key, label) => {
   const a = state.art[key];
@@ -49,11 +50,14 @@ const logList = (n = 999) => state.log.slice().reverse().slice(0, n).map(l => `<
 
 function tokensTab(){
   let h = `<h3>The party</h3><div class="row"><button class="btn small" data-act="shortRest" title="An hour: short-rest features come back; spend Hit Dice from each hero's card">☕ Short rest</button><button class="btn small" data-act="longRest" title="Eight hours: full HP, every slot and feature">🌙 Long rest</button></div>`;
-  for (const t of state.tokens.filter(t => t.kind !== 'monster')){
+  h += `<div class="row"><button class="btn small ${ui.follow !== false ? 'on' : ''}" data-act="toggle" data-k="follow" title="Outside a fight, when you move a hero the others nearby fall in behind, single file">🚶 Party follows the leader</button></div>
+    <div class="muted">Listed in marching order — ⇡ moves a hero up the line; 🚩 Stays keeps them where they are.</div>`;
+  for (const [n, t] of marchOrder().entries()){
     const open = ui.openPc === t.id;
     const seat = Object.entries(state.seats).find(([, id]) => id === t.id);
     h += `<div class="card ${ui.selected === t.id ? 'sel' : ''}"><div class="hd"><span class="dot" style="color:${t.color};background:${t.color}"></span>
       <span class="nm">${esc(t.name)}${t.dead ? ' ✝' : ''} <span class="muted">${t.kind === 'npc' ? 'ally' : ''} · F${t.floor + 1}${seat ? ' · 🎮 ' + esc(net.conns.get(seat[0])?.name || '') : ''}</span></span>
+      ${n ? `<button class="btn small" data-act="marchUp" data-id="${t.id}" title="Earlier in the marching order">⇡</button>` : ''}<button class="btn small ${t.flags.stay ? 'on' : ''}" data-act="stay" data-id="${t.id}" title="${t.flags.stay ? 'Stays put when the party moves' : 'Follows the party'}">${t.flags.stay ? '🚩 Stays' : '🚶'}</button>
       ${t.flags.taken ? `<button class="btn small seep" data-act="restore" data-id="${t.id}">Restore</button>` : `<button class="btn small" data-act="sel" data-id="${t.id}">Select</button>`}<button class="btn small" data-act="openPc" data-id="${t.id}">${open ? '▲' : '✎'}</button></div>
       ${t.flags.taken ? `<div class="fam-seep" style="font-size:13px">☣ Taken by the Seep — a Husk walks in their skin.</div>` : ''}
       <div class="stat" style="margin-top:4px">AC ${t.ac} · HP ${t.hp}/${t.maxHp} · ${t.speed} ft · Init ${t.init >= 0 ? '+' : ''}${t.init} · PP ${t.passive}</div>${hpBar(t, true)}

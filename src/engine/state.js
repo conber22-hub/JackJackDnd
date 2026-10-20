@@ -24,6 +24,7 @@ export const ui = {                 // local-only (never saved, never sent)
   bestFilter:'all', bestSearch:'', openBest:null, openPc:null, editBest:null,
   trapKind:'pit', doorState:'closed', propKind:'table', propCat:'tavern', houseKind:'house', houseDark:false, paintType:'nest', selRoom:null, selDoor:null, selTrap:null, atkMode:'normal', stairsDir:'down',
   myToken:null, myName:'',
+  follow:true, group:new Set(), oaAsk:[],   // the party trails the hero the DM moves · creatures moving with the selected one · a player's opportunity-attack prompts
 };
 export const viewAsPlayer = () => ui.role === 'player' || ui.tableView;
 export const isDM = () => ui.role === 'dm' && !ui.tableView;
@@ -73,7 +74,7 @@ export function newState(opts){
     meta:{ name:opts.name || 'Beneath Saint Andral\'s', seed:opts.seed, floors:opts.floors, size:Math.max(opts.size || 40, TEMPLATES.find(t => t.id === opts.template)?.size || (TEMPLATES.find(t => t.id === opts.template)?.floors.some(f => f.layout || f.place) ? 40 : 0)), template:opts.template || 'andral', ...(opts.journey ? { journey:opts.journey } : {}), ...(opts.place ? { place:opts.place } : {}) },
     dread:1, floors:[], tokens:[], explored:{}, art:{}, log:[],
     combat:{ active:false, order:[], idx:0, round:1, floor:0 },
-    seats:{}, grasp:{ die:4, auto:false, last:null },   // grasp = the Whim Die (old field name)
+    seats:{}, march:[], grasp:{ die:4, auto:false, last:null },   // grasp = the Whim Die (old field name)
     content:{ dread:{}, shift:null, grasp:null, bestiary:{} },
     campaign:newCampaign(), characters:{},
   };

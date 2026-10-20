@@ -36,6 +36,7 @@ import { putModel, deleteModel } from '../render/models.js';
 import { buildSessionDelve, placeSessionEncounter, readAloud, tickClock, applyTicks, rollNight, shareNight, setSessionGaze, markBeat, printSessions, sessionById, SESSIONS } from '../game/campaign.js';
 
 import { requestAct, answerRequest } from '../game/requests.js';
+import { turnAction, undoMove, closeInMove, selectParty, selectKin, clearGroup, answerOpportunity, playerAnswer, marchUp, toggleStay, stepSelected } from '../game/moves.js';
 import { useFeature, adjustRes, shortRest, longRest } from '../game/resources.js';
 import { legendOf, legendLeft, useLegendary, useResistance, lairAction } from '../game/combat.js';
 import { rollEncounter, placeEncounter } from '../game/fights.js';
@@ -96,6 +97,15 @@ document.addEventListener('click', e => {
     case 'stairs': { const t = sel && (ui.role === 'dm' || sel.id === ui.myToken) ? sel : tokById(ui.myToken); if (t) takeStairs(t); } break;
     case 'search': { const t = ui.role === 'player' ? tokById(ui.myToken) : sel; if (t) search(t); } break;
     case 'remove': if (sel) removeToken(sel.id); break;
+    case 'turnAct': { const t = actor(); if (!t) break; if (ui.role === 'player') sendHost({ t:'turnAct', id:t.id, k }); else turnAction(t, k); } break;
+    case 'undoMove': { const t = actor(); if (!t) break; if (ui.role === 'player') sendHost({ t:'undoMove', id:t.id }); else undoMove(t, true); } break;
+    case 'closeIn': if (sel) closeInMove(sel); break;
+    case 'groupParty': if (sel) selectParty(sel); break;
+    case 'groupKin': if (sel) selectKin(sel); break;
+    case 'groupClear': clearGroup(); break;
+    case 'oaTake': case 'oaPass': if (ui.role === 'player') playerAnswer(id, a === 'oaTake'); else answerOpportunity(id, a === 'oaTake'); break;
+    case 'marchUp': marchUp(id); renderPanel(); break;
+    case 'stay': toggleStay(id); renderPanel(); break;
     case 'endMyTurn': if (ui.role === 'player') sendHost({ t:'endturn' }); else nextTurn(); break;
     case 'rollInit': rollInitiative(); break;
     case 'nextTurn': nextTurn(); break;
@@ -335,6 +345,10 @@ addEventListener('keydown', e => {
   if (!state || /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName)) return;
   const dm = ui.role === 'dm';
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && dm){ e.preventDefault(); undo(); renderDock(); return; }
+  // arrow keys and the number pad step the selected creature one square (up = up the screen)
+  const STEP = { ArrowUp:[0, -1], ArrowDown:[0, 1], ArrowLeft:[-1, 0], ArrowRight:[1, 0], Numpad8:[0, -1], Numpad2:[0, 1], Numpad4:[-1, 0], Numpad6:[1, 0], Numpad7:[-1, -1], Numpad9:[1, -1], Numpad1:[-1, 1], Numpad3:[1, 1] };
+  const st = STEP[e.code] || STEP[e.key];
+  if (st && ui.selected && ui.mode === 'select'){ e.preventDefault(); stepSelected(st[0], st[1]); return; }
   if (e.key === 'Escape'){ setMode('select'); ui.selDoor = null; ui.selTrap = null; select(null); }
   else if (e.key === 'PageUp') goFloor(ui.floor - 1);
   else if (e.key === 'PageDown') goFloor(ui.floor + 1);

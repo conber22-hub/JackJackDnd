@@ -22,7 +22,7 @@ export { broadcast, sendHost, pushState };
 export function serialize(withArt){
   return { v:2, meta:state.meta, dread:state.dread, floors:state.floors.map(f => ({ ...f, grid:f.grid.join(''), base:f.base ? f.base.join('') : null })), tokens:state.tokens,
     combat:state.combat, explored:Object.fromEntries(Object.entries(state.explored).map(([k, v]) => [k, [...v]])), log:state.log.slice(-60),
-    seats:state.seats, grasp:state.grasp, content:state.content, campaign:state.campaign, characters:state.characters, ...(withArt ? { art:state.art } : {}) };
+    seats:state.seats, march:state.march || [], grasp:state.grasp, content:state.content, campaign:state.campaign, characters:state.characters, ...(withArt ? { art:state.art } : {}) };
 }
 export function deserialize(s){
   const st = JSON.parse(JSON.stringify(s));
@@ -48,6 +48,7 @@ export function deserialize(s){
   const nc = newCampaign();
   st.campaign = { ...nc, ...(s.campaign || {}), clocks:{ ...nc.clocks, ...(s.campaign?.clocks || {}) }, places:{ ...nc.places, ...(s.campaign?.places || {}) } };
   st.characters = s.characters || {};
+  st.march = Array.isArray(s.march) ? s.march : [];   // marching order (older saves: as the party was added)
   st.meta.template ||= 'andral';
   st.tokens.forEach(t => { t.flags = t.flags || {}; t.size = t.size || 1; t.conds = t.conds || []; t.check ??= 4; t.passive ??= 12; });
   // heroes saved before slots and features: give them their resources (full) from the sheet

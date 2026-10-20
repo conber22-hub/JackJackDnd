@@ -18,9 +18,16 @@ import { useFeature, shortRest, longRest, adjustRes } from './game/resources.js'
 import { requestAct, answerRequest, receiveAct, queue as requests } from './game/requests.js';
 import { setMode } from './ui/input.js';
 import { focusTile } from './render/scene.js';
+import * as moves from './game/moves.js';
+import { resolvePath } from './game/actions.js';
 void _s;
 
 export const get = () => stateMod.state;
+export { moves, resolvePath };
+import { tokenViews } from './render/minis.js';
+import { reachState } from './render/effects.js';
+export const busy = () => [...tokenViews.values()].some(tv => tv.anim);
+export { reachState };
 export { camera, controls, net, receiveAct, makeNoise, rollEncounter, placeEncounter, castSpell, useLegendary, useResistance, lairAction, lairCreature, useFeature, shortRest, longRest, adjustRes, requestAct, answerRequest, requests };
 export { ui, tokById, BEST, reach, shiftFloor, whimRoll, whimStep, rollInitiative, nextTurn, placeMonster, doAttack, runFx, useSpecial, kill, applyDamage, infest,
   select, doMove, requestMove, setView, goFloor, takeStairs, setDread, doorAction, search, triggerTrap, fall,

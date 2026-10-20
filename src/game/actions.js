@@ -13,17 +13,22 @@ import { d, clamp, cheb, esc, pick, rollDice } from '../util/core.js';
 import { controls, camera, tween, focusTile, focusFloor, wx, wz } from '../render/scene.js';
 import { buildFloor, applyFloorLook, animateDoor } from '../render/floors.js';
 import { syncTokens, tokenViews } from '../render/minis.js';
-import { showReach, clearReach, refreshSelectionRing, spawnPing, burst } from '../render/effects.js';
+import { showReach, clearReach, refreshSelectionRing, spawnPing, burst, clearMovePath } from '../render/effects.js';
 import { showCard, toast, sendWhisper, renderTop, renderSel } from '../ui/hud.js';
 import { renderPanel } from '../ui/panels.js';
-import { canAct, moveAllowance, addCond, saveBonus } from './rules.js';
+import { canAct, moveAllowance, addCond, saveBonus, turnKey } from './rules.js';
+import { checkPath, fits, provokers } from '../engine/movement.js';
+import { moveGroup, takeDash, offerOpportunity, pausedMover } from './moves.js';
 import { applyDamage, runFx, zoneSource } from './combat.js';
 import { changed, broadcast, sendHost } from './session.js';
 import { sfx } from '../audio/sound.js';
 
 /* ---------- selection ---------- */
 export function select(id){
+  // picking someone in the group makes them the one who leads it; picking anyone else lets the group go
+  if (ui.group?.size){ if (id && ui.group.has(id)){ ui.group.delete(id); if (ui.selected) ui.group.add(ui.selected); } else ui.group.clear(); }
   ui.selected = id; if (id){ ui.selDoor = null; ui.selTrap = null; }
+  clearMovePath();
   const t = id && tokById(id);
   if (t && t.floor !== ui.floor && ui.view !== 'stack') goFloor(t.floor, false);
   showReach(t); refreshSelectionRing(); renderSel();
@@ -35,12 +40,13 @@ export const selectedDoor = () => ui.selDoor && state.floors[ui.selDoor.floor]?.
 export const selectedTrap = () => ui.selTrap && state.floors[ui.selTrap.floor]?.traps.find(t => t.id === ui.selTrap.id);
 
 /* ---------- moving ---------- */
-export function requestMove(t, x, y){
+// x, y: where to; path: a traced route (dragged on the map) instead of the shortest way there.
+export function requestMove(t, x, y, path = null){
   if (ui.role === 'player'){
     if (!canAct(t)){ toast('Wait for your turn.'); return; }
-    sendHost({ t:'move', id:t.id, x, y }); clearReach(); return;
+    sendHost({ t:'move', id:t.id, x, y, ...(path ? { path } : {}) }); clearReach(); return;
   }
-  doMove(t, x, y);
+  if (!moveGroup(t, x, y, path) && path) toast(`${t.name} can't end there.`);
 }
 // Would this creature, walking `path`, notice a trap that lies further along it? Stop before it if so.
 function stopForSpotted(t, path){
@@ -59,40 +65,83 @@ function stopForSpotted(t, path){
   } finally { t.x = ox; t.y = oy; }
   return path;
 }
-export function doMove(t, x, y){
-  const f = state.floors[t.floor];
-  const R = reach(t.floor, t.x, t.y, moveAllowance(t), t.id), ti = y * f.W + x;
-  const occ = tokenAt(t.floor, x, y);
-  if (!R.par.has(ti) || (occ && occ.id !== t.id)) return false;
-  let path = pathTo(R.par, f.W, ti);
-  let trapHit = null;
-  if (t.kind !== 'monster'){
-    path = stopForSpotted(t, path);
-    const k = path.findIndex(p => trapAt(f, p.y * f.W + p.x)?.armed);
-    if (k >= 0){ trapHit = trapAt(f, path[k].y * f.W + path[k].x); path = path.slice(0, k + 1); }
-    // a cut-short move never ends on someone else's square
-    while (path.length){ const e = path[path.length - 1], o = tokenAt(t.floor, e.x, e.y); if (!o || o.id === t.id) break; path.pop(); if (trapHit && trapHit.i === e.y * f.W + e.x) trapHit = null; }
+/* The way a creature would walk to (x, y): the traced route if one is given (checked), else the shortest.
+   In a fight, a move longer than what's left of its speed takes the Dash (if it hasn't), so the reach shown
+   includes the Dash. → { path, cost, dash } or null. */
+export function resolvePath(t, x, y, given = null, { trusted = false } = {}){
+  const f = state.floors[t.floor], base = moveAllowance(t);
+  const most = state.combat.active && !t.dashed && !(ui.freeMove && ui.role === 'dm') ? moveAllowance(t, { dash:true }) : base;
+  let path;
+  if (given){
+    const c = trusted ? pathCost(f, given) : checkPath(t, given, most);
+    if (c < 0) return null; path = given.map(p => ({ x:p.x, y:p.y }));
+  } else {
+    const R = reach(t.floor, t.x, t.y, most, t.id), ti = y * f.W + x;
+    if (!R.par.has(ti) || !fits(t.floor, x, y, t.size || 1, t.id)) return null;
+    path = pathTo(R.par, f.W, ti);
   }
+  if (!path.length) return null;
+  const cost = pathCost(f, path);
+  return { path, cost, dash:state.combat.active && cost > base };
+}
+// Where a hero's walk really ends: short of a trap it spots, or on the one it walks into (never on someone
+// else's square, unless a group move planned it). Monsters walk where they mean to. → { path, trapHit }
+export function trapCut(t, path, trusted = false){
+  const f = state.floors[t.floor]; let trapHit = null;
+  if (t.kind === 'monster') return { path, trapHit };
+  path = stopForSpotted(t, path);
+  const k = path.findIndex(p => trapAt(f, p.y * f.W + p.x)?.armed);
+  if (k >= 0){ trapHit = trapAt(f, path[k].y * f.W + path[k].x); path = path.slice(0, k + 1); }
+  while (path.length){ const e = path[path.length - 1], o = tokenAt(t.floor, e.x, e.y); if (!o || o.id === t.id || trusted) break; path.pop(); if (trapHit && trapHit.i === e.y * f.W + e.x) trapHit = null; }
+  return { path, trapHit };
+}
+/* Walk a creature along its way: doors open as it reaches them, a hero stops short of a trap it spots (or
+   walks into one it doesn't), and in a fight, leaving an enemy's reach stops the move right there and offers
+   that enemy its opportunity attack (game/moves.js) — the rest of the walk carries on after.
+   opts: path (a traced route), trusted (planned by a group move: skip the end-square check), skip (enemies
+   that already passed on this move), cont (the rest of a move an opportunity attack paused), delay (ms). */
+export function doMove(t, x, y, opts = {}){
+  if (!t || t.dead || pausedMover(t.id) || (tokenViews.get(t.id)?.anim && !opts.delay)) return false;   // one walk at a time
+  const f = state.floors[t.floor];
+  const way = resolvePath(t, x, y, opts.path, opts);
+  if (!way) return false;
+  let path = way.path;
+  if (way.dash && !opts.cont) takeDash(t, true);
+  if (!opts.cont) t.lastMove = { floor:t.floor, x:t.x, y:t.y, moved:t.moved || 0, dashed:!!t.dashed && !way.dash, key:state.combat.active ? turnKey() : 'free', clean:true };
+  let trapHit;
+  ({ path, trapHit } = trapCut(t, path, opts.trusted));
+  // leaving an enemy's reach: walk up to the edge of it, and stop there for the opportunity attack
+  let rest = null, oa = null;
+  const pv = !(ui.freeMove && ui.role === 'dm') ? provokers(t, path, { skip:opts.skip || [] }) : [];
+  if (pv.length){ oa = pv[0]; rest = path.slice(oa.at + 1); path = path.slice(0, oa.at + 1); if (trapHit && !path.some(p => p.y * f.W + p.x === trapHit.i)) trapHit = null; }
   if (state.combat.active) t.moved = (t.moved || 0) + pathCost(f, path);
-  clearReach();
-  // players see a monster walk only if any of its steps are in the party's sight
-  if (t.kind !== 'monster' || [{ x:t.x, y:t.y }, ...path].some(p => seenNow[t.floor]?.has(p.y * f.W + p.x))) broadcast({ t:'anim', id:t.id, path });
-  animatePath(t.id, path, step => {
-    t.x = step.x; t.y = step.y;
-    const dr = f.doors.find(dd => dd.i === step.y * f.W + step.x);
-    if (dr && dr.state === 'closed'){ dr.state = 'open'; buildFloor(t.floor); animateDoor(t.floor, dr.id, true); sfx('door'); log(`${t.name} opens a door.`); }
-    if (t.kind !== 'monster'){
-      if (t.kind === 'pc') enteredRoom(t.floor, step.x, step.y);
-      const grew = updateVision(), found = detectHidden();
-      if (found.length || (grew && (viewAsPlayer() || ui.previewFog))) rebuildFog(t.floor);   // the DM's own view has no fog to redraw
-      for (const fd of found) announceFound(fd);
-    }
-    syncTokens();
-  }, () => {
+  if ((trapHit || oa) && t.lastMove) t.lastMove.clean = false;
+  if (ui.selected === t.id) clearReach();
+  const finish = () => {
     if (trapHit) triggerTrap(t, trapHit);
-    if (ui.selected === t.id) showReach(t);
+    if (oa) offerOpportunity(t, oa.by, rest, [...(opts.skip || []), oa.by]);
+    if (ui.selected === t.id && !oa) showReach(t);
     changed();
-  }, ui.selected === t.id);
+  };
+  if (!path.length){ finish(); return true; }
+  const go = () => {
+    // players see a monster walk only if any of its steps are in the party's sight
+    if (t.kind !== 'monster' || [{ x:t.x, y:t.y }, ...path].some(p => seenNow[t.floor]?.has(p.y * f.W + p.x))) broadcast({ t:'anim', id:t.id, path });
+    animatePath(t.id, path, step => {
+      t.x = step.x; t.y = step.y;
+      const dr = f.doors.find(dd => dd.i === step.y * f.W + step.x);
+      if (dr && dr.state === 'closed'){ dr.state = 'open'; t.lastMove && (t.lastMove.clean = false); buildFloor(t.floor); animateDoor(t.floor, dr.id, true); sfx('door'); log(`${t.name} opens a door.`); }
+      if (t.kind !== 'monster'){
+        if (t.kind === 'pc') enteredRoom(t.floor, step.x, step.y);
+        const grew = updateVision(), found = detectHidden();
+        if (grew && t.lastMove) t.lastMove.clean = false;
+        if (found.length || (grew && (viewAsPlayer() || ui.previewFog))) rebuildFog(t.floor);   // the DM's own view has no fog to redraw
+        for (const fd of found) announceFound(fd);
+      }
+      syncTokens();
+    }, finish, ui.selected === t.id);
+  };
+  if (opts.delay) setTimeout(go, opts.delay); else go();
   return true;
 }
 export function animatePath(id, path, onStep, onDone, follow){
