@@ -24,6 +24,9 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 - **Room prompts**: the first time a hero walks into a room, the DM gets *"📜 The party enters the Nursery — Read it aloud / Not now"* at the top of the screen (Dungeon tab → Room prompts to turn it off). Players never receive the read-aloud text or room names until it is read.
 - **Candles and fires give light**: the nearest few candelabras, braziers, hearths, lanterns, lamp posts, campfires and altars light the room around them with a flicker (4 lights on Medium, 8 on High, none on Low).
 - **Weather you can see**: rain, drizzle, sleet or snow falls on outdoor maps when the day's weather says so (the Dark Lord desk, or the weather rolled for a journey); players see it too.
+- **Day and night outdoors**: on outdoor maps the valley's clock sets the light — grey day, dim dawn and dusk, dark night.
+- **Each place sounds like itself**: under the drone, rain on outdoor maps when it's raining (wind when it isn't), a crackling hearth in the tavern, slow drips in stone halls, deep water in the Undertow, the cellars and the Bloom.
+- **Search the furniture**: a hero who searches next to a chest, coffin, sarcophagus, desk, bookshelf, wardrobe, crate, barrel, sack, cradle, dollhouse, altar, cage, mine cart, ore or Vistani wagon opens it — one roll on its table in `src/data/loot.js` (coins, potions, letters, keys, scrolls, salt, garlic, and the odd thing that is still warm). Lines starting "DM:" go to the DM alone (the occupant opens its eyes; a child hiding in the wardrobe); everyone else sees only that something isn't right. Each container opens once.
 
 ## v0.7 — multiplayer you can rely on (Phase 6, done)
 

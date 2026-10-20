@@ -9,14 +9,14 @@ import { scene, camera, controls, renderer, ambient, hemi, moon, runTweens, fx }
 import { renderFrame } from './render/post.js';
 import { gfx, onGfx, shadowsOn } from './render/gfx.js';
 import { loadStoredModels } from './render/models.js';
-import { setDrone } from './audio/sound.js';
+import { setDrone, setAmbience } from './audio/sound.js';
 import { syncTokens } from './render/minis.js';
 import { buildAllFloors } from './render/floors.js';
 import { walk } from './engine/tiles.js';
 import { floorViews, mist } from './render/floors.js';
 import { tokenViews } from './render/minis.js';
 import { selRing, updatePings } from './render/effects.js';
-import { updateAmbience } from './render/ambience.js';
+import { updateAmbience, weatherKind } from './render/ambience.js';
 import { sendWhisper } from './ui/hud.js';
 import { renderPanel } from './ui/panels.js';
 import { showStart } from './ui/events.js';
@@ -47,7 +47,13 @@ function frame(){
     scene.fog.density += (fogTarget - scene.fog.density) * Math.min(1, ease * 1.7);
     scene.fog.color.lerp(state.dread >= 8 ? fogRed : fogDark, .02);
     // the DM gets a little work-light; taverns and villages are lit, dungeons are not
-    const lit = (THEMES[state.floors[ui.floor]?.theme] || THEMES[0]).light || 1;
+    const th = THEMES[state.floors[ui.floor]?.theme] || THEMES[0], outdoor = (th.walls === 'trees' || th.walls === 'mixed') && th.id !== 'tavern';
+    // outdoors the valley's clock matters: grey day, dim dawn and dusk, dark night
+    const hour = state.campaign?.valley?.hour ?? state.hour;
+    const dayK = !outdoor || hour == null ? 1 : hour >= 8 && hour < 17 ? 1.25 : (hour >= 5 && hour < 8) || (hour >= 17 && hour < 20) ? .95 : .72;
+    const lit = (th.light || 1) * dayK;
+    if (t - (frame.ambAt || 0) > 1){ frame.ambAt = t;   // the room's own sound
+      const w = weatherKind(); setAmbience(outdoor ? (w && w !== 'snow' ? 'rain' : 'wind') : th.id === 'tavern' ? 'fire' : ['undertow', 'cellar', 'womb'].includes(th.id) ? 'water' : 'drips'); }
     ambient.intensity += (D.amb * 1.5 * lit * (ui.role === 'dm' && !ui.tableView ? 1.35 : 1) - ambient.intensity) * ease;
     const k = ambient.intensity / .93; hemi.intensity = .45 * k; moon.intensity = 1.1 * k;
     const hue = new THREE.Color(D.hue);

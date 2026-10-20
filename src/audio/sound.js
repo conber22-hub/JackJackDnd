@@ -69,6 +69,36 @@ export function setDrone(dread){
   n.hg.gain.setTargetAtTime(dread >= 8 ? .012 * (dread - 7) : 0, t, 3); n.high.frequency.setTargetAtTime(880 + Math.random() * 40, t, 4);
 }
 
+/* ---------- ambience: the room's own sound, under the drone ----------
+   rain · wind (outdoors, dry) · drips (stone halls) · fire (a tavern's hearth) · water (the Undertow, the cellars) */
+const amb = { kind:null, nodes:[], timer:null };
+function ambStop(){
+  const t = now();
+  for (const n of amb.nodes){ try { n.g.gain.setTargetAtTime(0.0001, t, .8); n.src?.stop(t + 3); } catch {} }
+  amb.nodes = []; clearInterval(amb.timer); amb.timer = null;
+}
+function ambNoise(type, freq, q, gain){
+  const src = ctx.createBufferSource(); src.buffer = noiseBuf; src.loop = true;
+  const f = ctx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+  const g = ctx.createGain(); g.gain.value = 0.0001; src.connect(f); f.connect(g); g.connect(droneBus);
+  src.start(now(), Math.random() * 1.5); g.gain.setTargetAtTime(gain, now(), 1.5);
+  const n = { src, f, g }; amb.nodes.push(n); return n;
+}
+const ambBlip = (fn, every, chance) => { amb.timer = setInterval(() => { if (ctx.state === 'running' && Math.random() < chance) fn(); }, every); };
+export function setAmbience(kind){
+  if (!ctx || kind === amb.kind) return;
+  ambStop(); amb.kind = kind;
+  if (kind === 'rain'){ ambNoise('highpass', 1800, .4, .06); ambNoise('lowpass', 500, .6, .05); }
+  else if (kind === 'wind'){ const w = ambNoise('bandpass', 500, 1.2, .05); const l = ctx.createOscillator(); l.frequency.value = .07; const lg = ctx.createGain(); lg.gain.value = 260; l.connect(lg); lg.connect(w.f.frequency); l.start(); amb.nodes.push({ src:l, g:lg }); }
+  else if (kind === 'drips'){ ambNoise('lowpass', 220, .5, .02);
+    ambBlip(() => { const t = now(), f = 900 + Math.random() * 900; const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * 1.6, t + .06);
+      const g = ctx.createGain(); g.gain.value = 0; o.connect(g); g.connect(droneBus); o.start(t); o.stop(t + .25); env(g, t, .003, .03 + Math.random() * .03, .18); }, 700, .45); }
+  else if (kind === 'fire'){ ambNoise('lowpass', 400, .7, .035);
+    ambBlip(() => { const t = now(); const src = ctx.createBufferSource(); src.buffer = noiseBuf; const f = ctx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 2500 + Math.random() * 2500;
+      const g = ctx.createGain(); g.gain.value = 0; src.connect(f); f.connect(g); g.connect(droneBus); src.start(t, Math.random()); src.stop(t + .05); env(g, t, .001, .04 + Math.random() * .05, .03); }, 120, .35); }
+  else if (kind === 'water'){ ambNoise('lowpass', 300, 1.5, .05); ambNoise('bandpass', 700, 3, .015); }
+}
+
 /* ---------- effects ---------- */
 const FX = {
   grind(){ const t = now(); const n = noise(2.4, 'bandpass', 120, 2, .9, t); env(n.g, t, .2, .9, 2.1);

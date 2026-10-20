@@ -150,7 +150,7 @@ let pushTimer = null;
 function forPlayers(){
   const V = state.campaign?.valley, free = !!state.campaign?.freeRolls;
   const s = redactForPlayers(serialize(false), { seen:seenNow, explored:state.explored });   // secrets stay with the DM (engine/redact.js)
-  s.freeRolls = free; s.weather = state.campaign?.weather || '';
+  s.freeRolls = free; s.weather = state.campaign?.weather || ''; s.hour = V?.hour;
   if (V?.shared) s.valley = { at:V.at, visited:[...V.visited], journey:V.journey ? { to:V.journey.to, path:[...V.journey.path] } : null, day:V.day, hour:V.hour, weather:V.weather || '' };   // the map, if the DM shares it
   return s;
 }   // (and not what waits on the road)

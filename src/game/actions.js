@@ -5,6 +5,8 @@ import { makeNoise } from './noise.js';
 import { enteredRoom } from './rooms.js';
 import { reach, pathTo, pathCost, updateVision, detectHidden, vision, passMove, canSeeTile, seenNow } from '../engine/grid.js';
 import { trapAt } from '../engine/generator.js';
+import { SEARCHABLE, rollLoot } from '../data/loot.js';
+import { PROPS, propSize } from '../data/props.js';
 import { TRAP_KINDS } from '../data/rooms.js';
 import { CONDITIONS, WHISPERS } from '../data/dread.js';
 import { d, clamp, cheb, esc, pick, rollDice } from '../util/core.js';
@@ -231,6 +233,18 @@ export function search(actor){
   for (const dr of f.doors) if (dr.state === 'secret' && cheb(actor.x, actor.y, dr.i % f.W, (dr.i / f.W) | 0) <= 3 && tot >= dr.dc){ dr.state = 'closed'; dr.found = true; found.push('a secret door'); }
   showCard({ kind:found.length ? '' : 'miss', title:`${actor.name} searches`, sub:'Perception · 15 ft.', lines:[`d20 <b>${r}</b> ${tot - r >= 0 ? '+' : '−'} ${Math.abs(tot - r)} = <b>${tot}</b>`, found.length ? `Found: <b>${esc(found.join(', '))}</b>` : 'Nothing — or nothing they can find.'] });
   log(`${actor.name} searches${found.length ? ` and finds ${found.join(', ')}` : ''}.`);
+  // containers next to the searcher open: one roll each on their table (data/loot.js)
+  for (const p of (f.props || []).filter(p => SEARCHABLE.has(p.k) && !p.searched)){
+    const s = propSize(p), near = actor.x >= p.x - 1 && actor.x <= p.x + s.w && actor.y >= p.y - 1 && actor.y <= p.y + s.h;
+    if (!near) continue;
+    p.searched = true;
+    const what = rollLoot(p.k), name = PROPS[p.k]?.n.toLowerCase() || 'it';
+    if (what.startsWith('DM:')){
+      showCard({ kind:'', title:`${actor.name} opens the ${name}`, flair:'Something about it is not right…' });
+      showCard({ kind:'seep', title:`For you: the ${name}`, sub:'only you see this', lines:[esc(what.slice(3).trim())] }, false);
+    } else showCard({ kind:'', title:`${actor.name} opens the ${name}`, flair:what });
+    log(`${actor.name} searches the ${name}: ${what}`, what.startsWith('DM:'));
+  }
   if (found.length){ buildFloor(actor.floor); updateVision(); }
   changed();
 }
