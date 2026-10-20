@@ -14,6 +14,12 @@ On a Linux CI image without browser system libraries, use
 npm run e2e
 ```
 
+If a Chromium is already installed and Playwright's own download isn't available (a sandbox, an offline machine), point the tests at it:
+
+```sh
+PW_CHROMIUM=/opt/pw-browsers/chromium npm run e2e
+```
+
 Playwright runs `npm run build`, then serves **only the built
 `dread-delve.html`** at `http://127.0.0.1:4173/dread-delve.html`. It also starts
 a local PeerJS signalling server on port 9000. Both ports must be free.

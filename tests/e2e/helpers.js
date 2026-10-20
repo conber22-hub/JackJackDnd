@@ -63,6 +63,8 @@ export async function arena(page, heroes = [{ name:'Ada', x:6, y:10 }]){
     if (!D.importMap(JSON.stringify({
       name:'Training hall', grid, tokens:heroes.map(t => ({ kind:'pc', ...t })),
     }))) throw new Error('Could not import the E2E arena');
+    // The "Map imported" card stays up for 8 seconds and would sit on top of the map, catching clicks and drags.
+    document.querySelectorAll('#cardLayer .pop').forEach(el => el.remove());
   }, heroes);
   await expectPositions(page, Object.fromEntries(heroes.map(({ name, x, y }) => [name, { x, y }])));
 }
