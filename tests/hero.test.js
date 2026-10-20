@@ -74,3 +74,27 @@ test('castables: buffs and utility spells are castable; Divine Smite is damage',
   const smite = c.find(s => s.n === 'Divine Smite');
   assert.equal(smite.k, 'auto'); assert.equal(smite.smite, 1); assert.equal(smite.l, 1);
 });
+
+test('review fixes: Magic Initiate charge, Paladin\'s Smite from level 2, rays, sustained spells, mass heals', () => {
+  const f = newHero('Fighter'); f.bg = 'Acolyte'; f.spells = ['Cure Wounds'];
+  const mi = heroResources(f).find(r => r.id === 'mi');
+  assert.ok(mi && mi.free === 'Cure Wounds' && mi.max === 1);
+  const p1 = newHero('Paladin'); p1.lvl = 1;
+  assert.ok(!castables(p1).some(s => s.n === 'Divine Smite'));
+  assert.ok(!heroResources(p1).some(r => r.id === 'smite'));
+  const p2 = newHero('Paladin'); p2.lvl = 2;
+  assert.ok(castables(p2).some(s => s.n === 'Divine Smite'));
+  assert.equal(heroResources(p2).find(r => r.id === 'smite').free, 'Divine Smite');
+  const k = newHero('Warlock'); k.lvl = 5; k.spells = ['Eldritch Blast'];
+  const eb = heroAttacks(k).find(a => a.n.startsWith('Eldritch Blast'));
+  assert.equal(eb.rays, 2); assert.equal(eb.d.startsWith('1d10'), true);
+  const w = newHero('Wizard'); w.lvl = 3; w.spells = ['Scorching Ray'];
+  const sr = heroAttacks(w).find(a => a.n.startsWith('Scorching Ray'));
+  assert.equal(sr.rays, 3); assert.ok(sr.d.startsWith('2d6')); assert.equal(sr.l, 2); assert.equal(sr.sn, 'Scorching Ray');
+  const c = newHero('Cleric'); c.lvl = 5; c.spells = ['Spirit Guardians', 'Mass Healing Word'];
+  const cs = castables(c);
+  assert.equal(cs.find(s => s.n === 'Spirit Guardians').again, 1);
+  assert.equal(cs.find(s => s.n === 'Mass Healing Word').multi, 6);
+  const s5 = newHero('Sorcerer'); s5.lvl = 5;
+  assert.equal(heroResources(s5).find(r => r.id === 'sorcrest').points, 2);
+});

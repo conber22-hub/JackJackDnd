@@ -22,7 +22,7 @@ export function buildSessionDelve(n, k){
   const tpl = TEMPLATES.find(t => t.id === d.template);
   newDelve({ name:`${s.title}`, seed:`flood-s${n}-${d.template}`, floors:d.floors || tpl.floors.length, size:40, template:d.template }, true);
   camp().session = +n;
-  log(`Session ${n}: built ${tpl?.name || d.template}.`);
+  log(`Session ${n}: built ${tpl?.name || d.template}.`, true);
   toast(`${tpl?.name || d.template} built — ${d.note || ''}`);
 }
 
@@ -51,7 +51,7 @@ export function placeSessionEncounter(n, k){
     }
   }
   syncTokens(); placed.forEach(riseFrom);
-  log(`${enc.label}: ${placed.length} placed on ${state.floors[L].name}.`);
+  log(`${enc.label}: ${placed.length} placed on ${state.floors[L].name}.`, true);
   toast(`${enc.label} — ${placed.length} on the map`);
   changed();
 }
@@ -60,7 +60,7 @@ export function tickClock(id, d){
   const c = CLOCKS.find(c => c.id === id); if (!c) return;
   const C = camp(), before = C.clocks[id] || 0;
   C.clocks[id] = clamp(before + d, 0, c.max);
-  if (C.clocks[id] === c.max && before < c.max){ showCard({ kind:'crit', title:`${c.label} — full`, flair:c.full }, false); log(`⏱ ${c.label} is full.`); }
+  if (C.clocks[id] === c.max && before < c.max){ showCard({ kind:'crit', title:`${c.label} — full`, flair:c.full }, false); log(`⏱ ${c.label} is full.`, true); }
   // the Bloom tide offends him: each quarter filled raises his Gaze
   if (id === 'bloom' && d > 0 && Math.floor(C.clocks[id] / 2) > Math.floor(before / 2)) setDread(state.dread + 1);
   changed();

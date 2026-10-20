@@ -12,6 +12,7 @@ import { onStairs, selectedDoor, selectedTrap, nearestHero } from '../game/actio
 import { undoCount } from '../game/session.js';
 import { renderPanel } from './panels.js';
 import { canCast, left } from '../game/resources.js';
+import { renderRequests } from '../game/requests.js';
 import { legendOf, legendLeft, resistLeft, lairCreature } from '../game/combat.js';
 import { sfx } from '../audio/sound.js';
 
@@ -75,6 +76,8 @@ export function renderDock(){
 export const hpBar = (t, pc) => `<div class="hpbar ${pc ? 'pc' : ''}"><i style="width:${Math.round(100 * clamp(t.hp / t.maxHp, 0, 1))}%"></i></div>`;
 export const condChips = (t, removable) => (t.conds || []).map(c => `<span class="chip on" style="border-color:${CONDITIONS[c.n]?.color || '#888'}" ${removable ? `data-act="rmCond" data-k="${esc(c.n)}" title="Remove"` : ''}>${CONDITIONS[c.n]?.icon || '•'} ${esc(c.n)}${c.r > 0 ? ` ${c.r}r` : ''}${removable ? ' ✕' : ''}</span>`).join('');
 
+// Can the party see any square of this creature's space?
+const seesAny = t => { const W = state.floors[t.floor].W, s = t.size || 1; for (let dy = 0; dy < s; dy++) for (let dx = 0; dx < s; dx++) if (seenNow[t.floor]?.has((t.y + dy) * W + t.x + dx)) return true; return false; };
 export function renderInit(){
   if (!state) return;
   const bar = $('#initBar'), c = state.combat, pv = viewAsPlayer();
@@ -88,7 +91,7 @@ export function renderInit(){
   $('#initList').innerHTML = c.order.map((id, i) => {
     const t = tokById(id); if (t?.unseen) return `<div class="ini ${i === c.idx ? 'cur' : ''}"><span class="dot" style="color:#555;background:#555"></span><span class="n muted">something unseen</span></div>`;
     if (!t || t.flags.gone) return '';
-    if (pv && t.kind === 'monster' && !seenNow[t.floor]?.has(t.y * state.floors[t.floor].W + t.x) && i !== c.idx) return `<div class="ini"><span class="dot" style="color:#555;background:#555"></span><span class="n muted">something unseen</span></div>`;
+    if (pv && t.kind === 'monster' && !seesAny(t)) return `<div class="ini ${i === c.idx ? 'cur' : ''}"><span class="dot" style="color:#555;background:#555"></span><span class="n muted">something unseen</span></div>`;
     const color = t.kind === 'monster' ? '#c0303a' : t.color;
     const cs = (t.conds || []).map(c => CONDITIONS[c.n]?.icon || '•').join('');
     return `<div class="ini ${i === c.idx ? 'cur' : ''} ${t.dead ? 'dead' : ''}" data-act="sel" data-id="${t.id}"><span class="dot" style="color:${color};background:${color}"></span><span class="n">${esc(t.name)} <span class="muted">${cs}</span></span><span class="v">${t.initRoll ?? ''}</span></div>`;
@@ -115,12 +118,12 @@ export function renderSel(){
   // attacks, spells and features: the DM rolls them directly; a player's taps on their own hero become requests
   if ((dm || mine) && !t.dead){
     acts += `<button class="btn small ${ui.atkMode !== 'normal' ? 'on' : ''}" data-act="atkMode" title="Advantage / disadvantage for the next roll">${ui.atkMode === 'adv' ? '▲ Adv' : ui.atkMode === 'dis' ? '▼ Dis' : '◆ Normal'}</button>`;
-    acts += t.attacks.map((a, i) => `<button class="btn small ${a.l && !canCast(t, a.l, a.n) ? 'off' : ''}" data-act="atk" data-i="${i}">🗡 ${esc(a.n)} <span class="muted">${a.b >= 0 ? '+' : ''}${a.b} · ${esc(a.d)}${a.l ? ` · L${a.l}` : ''}</span></button>`).join('');
+    acts += t.attacks.map((a, i) => `<button class="btn small ${a.l && !canCast(t, a.l, a.sn || a.n, a.again) ? 'off' : ''}" data-act="atk" data-i="${i}">🗡 ${esc(a.n)} <span class="muted">${a.b >= 0 ? '+' : ''}${a.b} · ${esc(a.d)}${a.l ? ` · L${a.l}` : ''}</span></button>`).join('');
     if (dm && b?.specials) acts += b.specials.map((s, i) => `<button class="btn small seep" data-act="special" data-i="${i}">✦ ${esc(s.n)}</button>`).join('');
     const lg = dm && legendOf(t);
     if (lg?.legendary) acts += `<span class="chip on" title="Back at the start of its turn">⚜ ${legendLeft(t)}/${lg.legendary.n}</span>` + lg.legendary.acts.map((a, i) => `<button class="btn small ${legendLeft(t) < (a.cost || 1) ? 'off' : ''}" data-act="legend" data-i="${i}" title="${esc(a.f || '')}">⚜ ${esc(a.n)}${a.cost > 1 ? ` <span class="muted">(${a.cost})</span>` : ''}</button>`).join('');
     if (lg?.resist) acts += `<button class="btn small ${resistLeft(t) ? '' : 'off'}" data-act="lres">🛡 Legendary Resistance ${resistLeft(t)}/${lg.resist}</button>`;
-    if (t.casts?.length) acts += t.casts.map((s, i) => `<button class="btn small ${!canCast(t, s.l, s.n) ? 'off' : ''}" data-act="cast" data-i="${i}" title="${s.k === 'heal' ? 'Heal' : s.d ? `${esc(s.d)} ${esc(s.ty || '')}` : esc(s.cond || s.note || s.k)}${s.sv ? ` · DC ${s.dc} ${s.sv.toUpperCase()}` : ''}${s.rad ? ` · ${s.rad * 5} ft.` : ''}">✨ ${esc(s.n)}${s.l ? ` <span class="muted">L${s.l}</span>` : ''}</button>`).join('');
+    if (t.casts?.length) acts += t.casts.map((s, i) => `<button class="btn small ${!canCast(t, s.l, s.n, s.again) ? 'off' : ''}" data-act="cast" data-i="${i}" title="${s.k === 'heal' ? 'Heal' : s.d ? `${esc(s.d)} ${esc(s.ty || '')}` : esc(s.cond || s.note || s.k)}${s.sv ? ` · DC ${s.dc} ${s.sv.toUpperCase()}` : ''}${s.rad ? ` · ${s.rad * 5} ft.` : ''}">✨ ${esc(s.n)}${s.l ? ` <span class="muted">L${s.l}</span>` : ''}</button>`).join('');
     acts += (t.resources || []).filter(r => !r.slot).map(r => `<button class="btn small ${left(t, r.id) ? '' : 'off'}" data-act="feat" data-k="${r.id}" title="${esc(r.text || '')}">${r.use === 'hitdie' ? '🎲' : '✦'} ${esc(r.id === 'hd' ? 'Hit Die' : r.n)} <span class="muted">${left(t, r.id)}/${r.max}</span></button>`).join('');
   }
   if (dm){
@@ -191,4 +194,4 @@ function renderTrapCard(el){
     <div class="acts">${acts}</div>`;
   el.classList.add('show');
 }
-export function renderAll(){ renderTop(); renderTabs(); renderPanel(); renderInit(); renderSel(); renderDock(); }
+export function renderAll(){ renderTop(); renderTabs(); renderPanel(); renderInit(); renderSel(); renderDock(); renderRequests(); }

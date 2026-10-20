@@ -181,7 +181,7 @@ export function buildFloor(L, opt = {}){
     }
   }
   // difficult terrain: a dark wet patch with stones and debris on it
-  const rt = (f.rough || []).filter(i => !pv || seen(i) || exp.has(i));
+  const rt = (f.rough || []).filter(i => !pv || exp.has(i));
   if (rt.length){
     const mud = new THREE.InstancedMesh(G.tile, fv.mats.mud ||= shared(new THREE.MeshStandardMaterial({ color:'#3d3122', roughness:.3, metalness:.08, transparent:true, opacity:.85, depthWrite:false })), rt.length);
     rt.forEach((i, n) => { mat4.compose(new THREE.Vector3(wx(i % f.W), .012, wz((i / f.W) | 0)), new THREE.Quaternion(), new THREE.Vector3(.94, .05, .94)); mud.setMatrixAt(n, mat4); mud.setColorAt(n, col.setRGB(1, 1, 1).multiplyScalar(.8 + hr(i, 90) * .4)); });

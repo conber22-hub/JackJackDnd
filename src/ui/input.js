@@ -12,7 +12,7 @@ import { floorViews, buildFloor } from '../render/floors.js';
 import { reachState, showGhostRect, showRoomHandles, showPathPreview, clearOverlay, showHover } from '../render/effects.js';
 import { rectProblem } from '../engine/generator.js';
 import { $ } from '../util/core.js';
-import { toast, renderDock, BUILD_TOOLS } from './hud.js';
+import { toast, renderDock, renderSel, BUILD_TOOLS } from './hud.js';
 import { renderPanel } from './panels.js';
 import { select, selectDoor, selectTrap, requestMove, doPing } from '../game/actions.js';
 import { doAttack, placeMonster, castSpell } from '../game/combat.js';
@@ -167,7 +167,7 @@ function handleTap(cx, cy){
       if (ui.role === 'player') requestAct({ kind:'attack', id:ui.modeData.attacker, i:ui.modeData.i, target:tokId, mode:ui.atkMode });
       else if (ui.modeData.legend != null){ const a = tokById(ui.modeData.attacker); if (a && payLegend(a, ui.modeData.legend)) doAttack(a.id, tokId, ui.modeData.i, ui.atkMode); }
       else doAttack(ui.modeData.attacker, tokId, ui.modeData.i, ui.atkMode);
-      ui.atkMode = 'normal'; setMode('select'); } return;
+      ui.atkMode = 'normal'; setMode('select'); renderSel(); } return;
     case 'cast': if (tokId){
       if (ui.role === 'player') requestAct({ kind:'cast', id:ui.modeData.caster, i:ui.modeData.i, target:tokId });
       else castSpell(ui.modeData.caster, tokId, ui.modeData.i);
@@ -179,7 +179,7 @@ function handleTap(cx, cy){
     case 'place':  if (tile && walk(f.grid[ti]) && !tokenAt(tile.floor, tile.x, tile.y)) placeMonster(ui.modeData.bid, tile); return;
     case 'placeTok': if (tile && walk(f.grid[ti])){ const t = tokById(ui.modeData.id); if (t){ t.floor = tile.floor; t.x = tile.x; t.y = tile.y; t.flags.gone = false; updateVision(); rebuildFog(); changed(); } setMode('select'); } return;
     case 'ping':   if (tile) doPing(tile); setMode('select'); return;
-    case 'noise':  if (tile){ if (!makeNoise(tile.floor, tile.x, tile.y, 2, 'A loud noise').length) toast('Nothing near enough heard it.'); } setMode('select'); return;
+    case 'noise':  if (tile){ if (makeNoise(tile.floor, tile.x, tile.y, 2, 'A loud noise').length) changed(); else toast('Nothing near enough heard it.'); } setMode('select'); return;
     case 'paint':  if (tile) paintRoom(tile, ui.modeData.type); return;
     case 'door':   if (tile) placeDoorAt(tile); return;
     case 'trap':   if (tile) placeTrapAt(tile); return;

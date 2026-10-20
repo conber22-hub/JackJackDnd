@@ -6,7 +6,9 @@ import { spawnPing } from '../render/effects.js';
 import { toast } from '../ui/hud.js';
 
 export function makeNoise(L, x, y, loud = 1, why = 'A noise'){
-  const reachOf = dl => dl === 0 ? 8 + 6 * loud : Math.abs(dl) === 1 ? 4 + 5 * loud : loud >= 2 ? 6 : -1;
+  // road stretches and Session 0's tavern / village / road are maps side by side, not one above the other
+  const stacked = !['journey', 'saltroad'].includes(state.meta?.template);
+  const reachOf = dl => dl === 0 ? 8 + 6 * loud : !stacked ? -1 : Math.abs(dl) === 1 ? 4 + 5 * loud : loud >= 2 ? 6 : -1;
   const heard = {};
   for (let dl = -2; dl <= 2; dl++){
     const F = L + dl, R = reachOf(dl); if (R < 0 || !state.floors[F]) continue;

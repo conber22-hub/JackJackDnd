@@ -1,6 +1,6 @@
 /* COMBAT — initiative, attacks, damage, death hooks, the fx language, and the Dread's round-end tide. */
 import { state, ui, tokById, tokenAt, side, makeMonster, log, dreadLevel, isDM } from '../engine/state.js';
-import { freeTilesNear, randomRoomTile, updateVision } from '../engine/grid.js';
+import { freeTilesNear, randomRoomTile, updateVision, spotFor, seenNow } from '../engine/grid.js';
 import { BEST, hasTag, isHost } from '../data/bestiary.js';
 import { CONDITIONS } from '../data/dread.js';
 import { d, rollDice, avgDice, esc, cheb, pick, signed } from '../util/core.js';
@@ -46,11 +46,13 @@ export function addToInit(t){
 export function rollInitiative(){
   const L = ui.floor, list = state.tokens.filter(t => t.floor === L && !t.dead && !t.flags.gone);
   if (!list.length){ toast('No one on this floor.'); return; }
-  list.forEach(t => { t.initRoll = d(20) + (t.init || 0); t.moved = 0; });
+  list.forEach(t => { t.initRoll = d(20) + (t.init || 0); t.moved = 0; delete t.legend; });   // a new fight: legendary actions full
   list.sort((a, b) => b.initRoll - a.initRoll || (a.kind === 'monster') - (b.kind === 'monster'));
   state.combat = { active:true, order:list.map(t => t.id), idx:0, round:1, floor:L };
-  log(`⚔ Initiative on ${state.floors[L].name}: ${list.map(t => `${t.name} ${t.initRoll}`).join(', ')}`);
-  const mid = list.reduce((m, t) => ({ x:m.x + t.x / list.length, y:m.y + t.y / list.length }), { x:0, y:0 });
+  log(`⚔ Initiative on ${state.floors[L].name}: ${list.map(t => `${t.name} ${t.initRoll}`).join(', ')}`, true);
+  log('⚔ Roll for initiative!');
+  const pts = list.filter(t => t.kind !== 'monster').length ? list.filter(t => t.kind !== 'monster') : list;   // the noise is where the party is
+  const mid = pts.reduce((m, t) => ({ x:m.x + t.x / pts.length, y:m.y + t.y / pts.length }), { x:0, y:0 });
   makeNoise(L, Math.round(mid.x), Math.round(mid.y), 1, 'Steel and shouting');
   startTurn(); changed();
 }
@@ -81,7 +83,7 @@ export function startTurn(){
   if (isDM()){ ui.selected = t.id; if (t.floor !== ui.floor) goFloor(t.floor, false); focusTile(t.floor, t.x, t.y); showReach(t); }
   const extra = t.conds?.length ? ` (${t.conds.map(c => c.n).join(', ')})` : '';
   banner(`${t.name}'s turn${extra}`); sfx('turn');
-  broadcast({ t:'banner', text:`${t.name}'s turn` });
+  broadcast({ t:'banner', text:t.kind === 'monster' && !partySees(t) ? 'Something unseen acts…' : `${t.name}'s turn` });
 }
 
 // The Dread Zone acts between rounds.
@@ -109,7 +111,7 @@ export function endCombat(){ state.combat = { active:false, order:[], idx:0, rou
 const nearSeep = (tg, a) => state.tokens.some(o => o.id !== a.id && o.id !== tg.id && !o.dead && o.floor === tg.floor && hasTag(o, 'seep') && cheb(o.x, o.y, tg.x, tg.y) <= 1);
 export function doAttack(aId, tId, i, mode = 'normal'){
   const a = tokById(aId), tg = tokById(tId), atk = a?.attacks?.[i]; if (!a || !tg || !atk) return false;
-  const slot = spendSpell(a, atk.l, atk.n);
+  const slot = spendSpell(a, atk.l, atk.sn || atk.n, !!atk.again);
   if (slot === null){ toast(`${a.name} has no spell slot left for ${atk.n}.`); return false; }
   const b = BEST[a.bid], D = dreadLevel();
   let adv = mode === 'adv', dis = mode === 'dis';
@@ -117,34 +119,43 @@ export function doAttack(aId, tId, i, mode = 'normal'){
   if (b?.pack && nearSeep(tg, a)){ adv = true; why.push('Pack Tide'); }
   if (hasCond(tg, 'prone') || hasCond(tg, 'restrained') || hasCond(tg, 'paralyzed') || hasCond(tg, 'stunned') || hasCond(tg, 'blinded')){ adv = true; why.push(tg.conds.find(c => ['prone','restrained','paralyzed','stunned','blinded'].includes(c.n)).n); }
   if (hasCond(a, 'blinded') || hasCond(a, 'frightened') || hasCond(a, 'poisoned') || hasCond(a, 'prone')){ dis = true; why.push(`${a.name} ${a.conds.find(c => ['blinded','frightened','poisoned','prone'].includes(c.n)).n}`); }
-  const r1 = d(20), r2 = d(20), useBoth = adv !== dis;
-  const r = useBoth ? (adv ? Math.max(r1, r2) : Math.min(r1, r2)) : r1;
-  const bonus = atk.b + (isHis(a) ? D.hit : 0);
-  const tot = r + bonus, crit = r === 20 || (r !== 1 && (hasCond(tg, 'paralyzed')) && cheb(a.x, a.y, tg.x, tg.y) <= 1), hit = crit || (r !== 1 && tot >= tg.ac);
+  const bonus = atk.b + (isHis(a) ? D.hit : 0), useBoth = adv !== dis;
   const rage = atk.m && hasCond(a, 'raging') ? a.rageDmg || 2 : 0;
-  let dmg = 0; if (hit) dmg = rollDice(atk.d, crit).total + rage;
+  const halved = hasCond(tg, 'raging') && PHYS.test(String(atk.t));
+  // one roll per ray / beam (Scorching Ray, Eldritch Blast); everything else is one roll
+  const rolls = [], lines = [];
+  for (let k = 0; k < (atk.rays || 1); k++){
+    const r1 = d(20), r2 = d(20), r = useBoth ? (adv ? Math.max(r1, r2) : Math.min(r1, r2)) : r1;
+    const tot = r + bonus, crit = r === 20 || (r !== 1 && hasCond(tg, 'paralyzed') && cheb(a.x, a.y, tg.x, tg.y) <= 1), hit = crit || (r !== 1 && tot >= tg.ac);
+    let dmg = hit ? rollDice(atk.d, crit).total + rage : 0;
+    if (halved) dmg = Math.floor(dmg / 2);
+    rolls.push({ hit, crit, dmg });
+    lines.push(`${atk.rays > 1 ? `#${k + 1} · ` : ''}d20 ${useBoth ? `(${r1}, ${r2} → ${adv ? 'adv' : 'dis'}) ` : ''}<b>${r}</b> ${signed(bonus)} = <b>${tot}</b> vs AC ${tg.ac} — <b>${crit ? 'CRITICAL' : hit ? 'HIT' : r === 1 ? 'FUMBLE' : 'MISS'}</b>${atk.rays > 1 && hit ? ` → ${dmg}` : ''}`);
+  }
+  const hits = rolls.filter(x => x.hit), crit = rolls.some(x => x.crit), total = hits.reduce((n, x) => n + x.dmg, 0);
   const flair = (atk.f || '{A} strikes at {T}.').replace(/\{A\}/g, a.name).replace(/\{T\}/g, tg.name);
-  const lines = [`d20 ${useBoth ? `(${r1}, ${r2} → ${adv ? 'adv' : 'dis'}) ` : ''}<b>${r}</b> ${signed(bonus)} = <b>${tot}</b> vs AC ${tg.ac} — <b>${crit ? 'CRITICAL' : hit ? 'HIT' : r === 1 ? 'FUMBLE' : 'MISS'}</b>`];
   if (why.length) lines.push(`<span class="muted">${esc(why.join(' · '))}</span>`);
   if (slot) lines.push(`<span class="muted">${esc(slot)}</span>`);
-  if (hit && rage) lines.push(`<span class="muted">+${rage} rage</span>`);
+  if (hits.length && rage) lines.push(`<span class="muted">+${rage} rage</span>`);
+  if (hits.length && halved) lines.push(`<span class="muted">halved — ${esc(tg.name)} is raging</span>`);
   if (isHis(a) && D.hit) lines.push(`<span class="muted">+${D.hit} to hit under his Gaze (${state.dread})</span>`);
-  if (hit && atk.on && !tg.dead){
-    const s = d(20) + saveBonus(tg, atk.on.save), ok = s >= atk.on.dc;
-    lines.push(`${esc(tg.name)} — ${atk.on.save.toUpperCase()} save ${s} vs ${atk.on.dc}: <b>${ok ? 'resists' : atk.on.cond}</b>`);
+  if (hits.length && atk.on && !tg.dead){
+    const sv = d(20) + saveBonus(tg, atk.on.save), ok = sv >= atk.on.dc;
+    lines.push(`${esc(tg.name)} — ${atk.on.save.toUpperCase()} save ${sv} vs ${atk.on.dc}: <b>${ok ? 'resists' : atk.on.cond}</b>`);
     if (!ok && (atk.on.cond !== 'seeded' || isHost(tg))) addCond(tg, atk.on.cond, atk.on.rounds || 1, a.bid);
   }
-  if (hit && atk.latch && !tg.dead && tg.kind !== 'monster'){ tg.flags.latchedBy = a.id; lines.push(`<span class="fam-seep">${esc(a.name)} is latched on.</span>`); }
-  sfx(crit ? 'crit' : hit ? 'hit' : 'miss');
-  showCard({ kind:crit ? 'crit' : hit ? '' : 'miss', title:`${a.name} → ${tg.name}`, sub:atk.n, flair, lines, big:hit ? `${dmg} ${atk.t}` : '' });
-  log(`${a.name} ${atk.n} → ${tg.name}: ${hit ? `${dmg} ${atk.t}${crit ? ' (crit)' : ''}` : 'miss'}`);
-  if (hit) applyDamage(tg, dmg, atk.t, a);
+  if (hits.length && atk.latch && !tg.dead && tg.kind !== 'monster'){ tg.flags.latchedBy = a.id; lines.push(`<span class="fam-seep">${esc(a.name)} is latched on.</span>`); }
+  sfx(crit ? 'crit' : hits.length ? 'hit' : 'miss');
+  showCard({ kind:crit ? 'crit' : hits.length ? '' : 'miss', title:`${a.name} → ${tg.name}`, sub:atk.n, flair, lines, big:hits.length ? `${total} ${atk.t}` : '' });
+  log(`${a.name} ${atk.n} → ${tg.name}: ${hits.length ? `${total} ${atk.t}${crit ? ' (crit)' : ''}` : 'miss'}`);
+  for (const x of hits) applyDamage(tg, x.dmg, atk.t, a, true);
   changed(); return true;
 }
 const PHYS = /bludgeoning|piercing|slashing/;
-export function applyDamage(t, n, type = '', by = null){
+// halvedAlready: the caller already applied Rage's resistance (doAttack shows the real number on its card)
+export function applyDamage(t, n, type = '', by = null, halvedAlready = false){
   if (t.dead || n <= 0) return;
-  if (hasCond(t, 'raging') && PHYS.test(String(type))) n = Math.floor(n / 2);   // Rage: resistance
+  if (!halvedAlready && hasCond(t, 'raging') && PHYS.test(String(type))) n = Math.floor(n / 2);   // Rage: resistance
   t.hp = Math.max(0, t.hp - n);
   burst(t.floor, t.x, t.y, '#c0303a');
   if (t.bid === 'seepling' && n >= 5) t.hp = 0;     // Burst Sac
@@ -163,6 +174,7 @@ export function heal(t, n){
 }
 export function kill(t, type, by){
   t.dead = true;
+  t.conds = (t.conds || []).filter(c => c.n !== 'raging'); delete t.sustain;   // rage and sustained spells end when you drop
   const radiant = /radiant|fire/.test(String(type));
   if (t.kind !== 'monster' || isHost(t)){
     const latcher = t.flags.latchedBy && tokById(t.flags.latchedBy);
@@ -233,6 +245,8 @@ export function spawnWhere(src, where, L){
 }
 // A pseudo-source for effects that come from the floor itself (Shift / Whim tables, traps).
 // The Count's own creatures (wolves, bats, his dead, his spawn) are the ones his Gaze strengthens.
+// Can any hero see any square of this creature's space? (the host's live sight lines)
+export const partySees = t => { const f = state.floors[t.floor]; if (!f) return false; for (let dy = 0; dy < (t.size || 1); dy++) for (let dx = 0; dx < (t.size || 1); dx++) if (seenNow[t.floor]?.has((t.y + dy) * f.W + t.x + dx)) return true; return false; };
 export const isHis = t => BEST[t.bid]?.fam === 'barovia';
 export function zoneSource(L, at){
   const p = at || pick(partyOn(L)) || { x:state.floors[L].rooms[0].cx, y:state.floors[L].rooms[0].cy };
@@ -251,10 +265,15 @@ export function runFx(src, fx, quiet){
       while (n > 0 && bodies.length && (bid === 'husk' || bid === 'bloom-vessel')){ infest(bodies.shift(), 'The Seep claims a body.', bid); n--; }
     }
     if (n <= 0) return;
-    const at = spawnWhere(src, where, L), spots = freeTilesNear(L, at.x, at.y, n, !tokenAt(L, at.x, at.y));
-    for (const s of spots){ const m = makeMonster(bid, L, s.x, s.y); state.tokens.push(m); if (state.combat.active && state.combat.floor === L) addToInit(m); }
+    const at = spawnWhere(src, where, L), sz = BEST[bid].size || 1;
+    // small ones fill the nearest free squares; Large ones are placed one at a time where their whole space fits
+    const spots = sz === 1 ? freeTilesNear(L, at.x, at.y, n, !tokenAt(L, at.x, at.y)) : [];
+    const made = [];
+    if (sz === 1) for (const s of spots) made.push(makeMonster(bid, L, s.x, s.y));
+    else for (let k = 0; k < n; k++){ const s = spotFor(L, at.x, at.y, sz); if (!s) break; const m = makeMonster(bid, L, s.x, s.y); state.tokens.push(m); made.push(m); spots.push(s); }
+    for (const m of made){ if (sz === 1) state.tokens.push(m); if (state.combat.active && state.combat.floor === L) addToInit(m); }
     syncTokens();
-    for (const s of spots){ const m = tokenAt(L, s.x, s.y); if (m) riseFrom(m); }
+    made.forEach(riseFrom);
     log(`${spots.length} ${BEST[bid].name}${spots.length === 1 ? '' : 's'} emerge${spots.length === 1 ? 's' : ''} near ${src.name}.`, true);
     if (!quiet) toast(`${spots.length} × ${BEST[bid].name}`);
   }
@@ -329,23 +348,29 @@ export function runFx(src, fx, quiet){
 /* ---------- heroes' spells (from the character creator) ---------- */
 export function castSpell(casterId, targetId, i){
   const c = tokById(casterId), tg = tokById(targetId), sp = c?.casts?.[i]; if (!c || !tg || !sp) return false;
-  const slot = spendSpell(c, sp.l, sp.n);
+  if (sp.k === 'heal' && tg.dead && tg.kind === 'monster'){ toast(`${tg.name} is beyond healing.`); return false; }
+  const slot = spendSpell(c, sp.l, sp.n, !!sp.again);
   if (slot === null){ toast(`${c.name} has no spell slot left for ${sp.n}.`); return false; }
   const paid = slot ? [`<span class="muted">${esc(slot)}</span>`] : [];
   sfx('roll');
   if (sp.k === 'heal'){
-    const n = rollDice(sp.d).total + (sp.healMod || 0);
-    heal(tg, n); showCard({ kind:'', title:`${c.name}: ${sp.n}`, sub:`on ${tg.name}`, flair:'Warmth, and the wound closes a little.', lines:paid, big:`+${n} HP` });
-    log(`${c.name} casts ${sp.n} on ${tg.name}: +${n} HP.`); changed(); return true;
+    // Mass Healing Word / Mass Cure Wounds: up to six of the caster's side around the creature tapped, each rolled
+    const who = sp.multi ? [tg, ...state.tokens.filter(t => t.id !== tg.id && t.floor === tg.floor && !t.flags.gone && !(t.dead && t.kind === 'monster') && side(t) === side(c) && cheb(t.x, t.y, tg.x, tg.y) <= (sp.rad || 6))].slice(0, sp.multi) : [tg];
+    const got = who.map(t => { const n = Math.max(0, rollDice(sp.d).total + (sp.healMod || 0)); heal(t, n); return [t, n]; });
+    showCard({ kind:'', title:`${c.name}: ${sp.n}`, sub:who.length > 1 ? `${who.length} healed` : `on ${tg.name}`, flair:'Warmth, and the wound closes a little.',
+      lines:[...(who.length > 1 ? got.map(([t, n]) => `${esc(t.name)} <b>+${n} HP</b>`) : []), ...paid], big:who.length > 1 ? '' : `+${got[0][1]} HP` });
+    log(`${c.name} casts ${sp.n}: ${got.map(([t, n]) => `${t.name} +${n}`).join(', ')}.`); changed(); return true;
   }
   if (sp.k === 'auto'){
-    const evil = sp.smite && (hasTag(tg, 'undead') || /fiend|undead/i.test(BEST[tg.bid]?.type || ''));
-    const n = rollDice(sp.d).total + (evil ? d(8) : 0); showCard({ kind:'', title:`${c.name}: ${sp.n}`, sub:`on ${tg.name}${evil ? ' · +1d8 against the undead' : ''}`, lines:paid, big:`${n} ${sp.ty}` });
+    const evil = sp.smite && (hasTag(tg, 'undead') || hasTag(tg, 'fiend'));
+    const n = rollDice(sp.d).total + (evil ? d(8) : 0); showCard({ kind:'', title:`${c.name}: ${sp.n}`, sub:`on ${tg.name}${evil ? ` · +1d8 against the ${hasTag(tg, 'fiend') ? 'fiend' : 'undead'}` : ''}`, lines:paid, big:`${n} ${sp.ty}` });
     log(`${c.name} casts ${sp.n} on ${tg.name}: ${n} ${sp.ty}.`); applyDamage(tg, n, sp.ty, c); changed(); return true;
   }
   if (sp.k === 'buff' || sp.k === 'util'){
     showCard({ kind:'', title:`${c.name}: ${sp.n}`, sub:tg.id === c.id ? 'on themself' : `on ${tg.name}`, lines:[...(sp.note ? [esc(sp.note)] : []), ...paid, '<span class="muted">The DM rules how it plays out.</span>'] });
-    if (sp.n === 'Lesser Restoration' || sp.n === 'Greater Restoration'){ tg.conds = (tg.conds || []).filter(x => !['blinded', 'paralyzed', 'poisoned', 'seeded'].includes(x.n)); if (tg.flags.seeded) heal(tg, 0); }
+    // Lesser Restoration: blinded, paralyzed, poisoned · Greater: charmed, petrified · both burn out the Seep's seed
+    const cures = sp.n === 'Lesser Restoration' ? ['blinded', 'paralyzed', 'poisoned', 'seeded'] : sp.n === 'Greater Restoration' ? ['charmed', 'petrified', 'seeded'] : null;
+    if (cures){ tg.conds = (tg.conds || []).filter(x => !cures.includes(x.n)); if (tg.flags.seeded) heal(tg, 0); }
     log(`${c.name} casts ${sp.n}${tg.id === c.id ? '' : ` on ${tg.name}`}.`); changed(); return true;
   }
   const targets = sp.rad ? state.tokens.filter(t => t.floor === tg.floor && !t.dead && !t.flags.gone && t.id !== c.id && cheb(t.x, t.y, tg.x, tg.y) <= sp.rad) : [tg];

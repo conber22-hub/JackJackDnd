@@ -110,9 +110,12 @@ export function heroAttacks(h, st = heroStats(h)){
   // spell attacks become attack buttons too
   for (const sp of heroSpells(h, st)) if (sp.k === 'atk' && sp.d){
     const d = sp.l === 0 && sp.cs ? cantripDice(sp.d, L) : sp.n === 'Eldritch Blast' ? sp.d : sp.d;
-    const beams = sp.n === 'Eldritch Blast' ? (L >= 11 ? 3 : L >= 5 ? 2 : 1) : 1;
+    // several attack rolls from one casting: Eldritch Blast's beams, Scorching Ray's three rays (2d6 each)
+    const rays = sp.n === 'Eldritch Blast' ? (L >= 11 ? 3 : L >= 5 ? 2 : 1) : sp.n === 'Scorching Ray' ? 3 : 1;
     const agon = sp.n === 'Eldritch Blast' && h.invoc === 'Agonizing Blast' ? st.M('Cha') : 0;
-    out.push({ n:sp.n + (beams > 1 ? ` (×${beams} beams)` : ''), b:st.spAtk, d:`${d}${agon ? sgn(agon) : ''}${sp.addmod ? sgn(st.M(st.castAb)) : ''}`, t:sp.ty, f:`{A} casts ${sp.n} at {T}.`, ...(sp.l ? { l:sp.l } : {}) });
+    const die = sp.n === 'Scorching Ray' ? '2d6' : d;
+    out.push({ n:sp.n + (rays > 1 ? ` (×${rays} ${sp.n === 'Scorching Ray' ? 'rays' : 'beams'})` : ''), b:st.spAtk, d:`${die}${agon ? sgn(agon) : ''}${sp.addmod ? sgn(st.M(st.castAb)) : ''}`, t:sp.ty, f:`{A} casts ${sp.n} at {T}.`,
+      ...(sp.l ? { l:sp.l, sn:sp.n } : {}), ...(rays > 1 ? { rays } : {}), ...(SUSTAINED.has(sp.n) ? { again:1 } : {}) });
   }
   return out;
 }
@@ -120,7 +123,7 @@ export function heroSpells(h, st = heroStats(h)){
   const out = new Set(h.spells || []);
   const ss = st.sub && SUBSPELLS[st.sub];
   if (ss) for (const [lv, list] of Object.entries(ss)) if (st.L >= +lv) list.forEach(n => out.add(n));
-  if (h.cls === 'Paladin') out.add('Divine Smite');
+  if (h.cls === 'Paladin' && st.L >= 2) out.add('Divine Smite');
   if (h.cls === 'Ranger') out.add('Hunter\'s Mark');
   if (h.sp === 'Tiefling'){ const lg = h.spOpt || 'Infernal'; out.add(lg === 'Infernal' ? 'Fire Bolt' : lg === 'Abyssal' ? 'Poison Spray' : 'Chill Touch'); }
   return [...out].map(SP).filter(Boolean);
@@ -131,8 +134,12 @@ export function castables(h, st = heroStats(h)){
   return heroSpells(h, st).filter(sp => sp.k !== 'atk').map(sp => ({
     n:sp.n, k:sp.k, l:sp.l, sv:sp.sv, dc:st.dc, d:sp.d ? (sp.l === 0 && sp.cs ? cantripDice(sp.d, st.L) : sp.d) : null, ty:sp.ty, half:!!sp.half,
     rad:sp.area ? Math.max(1, Math.round(sp.area[1] / (sp.area[0] === 'cone' || sp.area[0] === 'line' ? 10 : 5))) : 0, cond:sp.cond || null,
-    healMod:sp.k === 'heal' ? st.M(st.castAb || 'Wis') : 0, ...(sp.k === 'util' && sp.d ? { k:'auto', smite:1 } : {}), ...(sp.note ? { note:sp.note } : {}) }));
+    healMod:sp.k === 'heal' ? st.M(st.castAb || 'Wis') : 0, ...(sp.k === 'util' && sp.d ? { k:'auto', smite:1 } : {}), ...(sp.note ? { note:sp.note } : {}),
+    ...(SUSTAINED.has(sp.n) ? { again:1 } : {}), ...(/^Mass /.test(sp.n) && sp.k === 'heal' ? { multi:6, rad:6 } : {}) }));
 }
+// Spells whose effect stays and is used again on later turns without a new slot (until a long rest, the caster
+// drops, or they cast another of these — close enough to concentration for the table).
+export const SUSTAINED = new Set(['Spiritual Weapon', 'Vampiric Touch', 'Moonbeam', 'Spirit Guardians']);
 
 /* RESOURCES — what a hero spends and gets back on a rest: spell slots, pact slots, class features, Hit Dice.
    rest: 'long' (back on a long rest) · 'short' (all back on a short rest) · 'short1' (one back on a short rest)
@@ -145,8 +152,9 @@ export function heroResources(h, st = heroStats(h)){
   const f = (id, n, max, rest, use = 'note', text = '', more = {}) => { if (max > 0) out.push({ id, n, max, rest, use, text, ...more }); };
   if (cls === 'Barbarian') f('rage', 'Rage', byLvl(L, [2, 2, 3, 3, 3, 4, 4, 4, 4, 4]), 'short1', 'rage', 'Resistance to bludgeoning, piercing and slashing; extra damage on Strength melee hits. No spells, no concentration.');
   if (cls === 'Bard') f('inspire', 'Bardic Inspiration', Math.max(1, st.M('Cha')), L >= 5 ? 'short' : 'long', 'note', `A creature you can see gets a d${L >= 10 ? 10 : L >= 5 ? 8 : 6} to add to one d20 test in the next hour.`);
-  if (cls === 'Cleric' && L >= 2) f('channel', 'Channel Divinity', L >= 6 ? 3 : 2, 'short1', 'note', `Divine Spark (heal or harm 1d8+${st.M('Wis')}) or Turn Undead (DC ${st.dc} Wis, undead within 30 ft. flee)${L >= 3 ? ' — or Preserve Life' : ''}.`);
+  if (cls === 'Cleric' && L >= 2) f('channel', 'Channel Divinity', L >= 6 ? 3 : 2, 'short1', 'note', `Divine Spark (heal or harm ${L >= 7 ? 2 : 1}d8+${st.M('Wis')}) or Turn Undead (DC ${st.dc} Wis, undead within 30 ft. flee)${L >= 3 ? ' — or Preserve Life' : ''}.`);
   if (cls === 'Paladin' && L >= 3) f('channel', 'Channel Divinity', 2, 'short1', 'note', `Sacred Weapon (+${Math.max(1, st.M('Cha'))} to hit, the weapon sheds light) or Divine Sense.`);
+  if (cls === 'Paladin' && L >= 2) f('smite', 'Paladin\'s Smite', 1, 'long', 'note', 'Cast Divine Smite once without a slot (used first when you cast it).', { free:'Divine Smite' });
   if (cls === 'Paladin') f('lay', 'Lay on Hands', 5 * L, 'long', 'lay', 'Touch a creature: 5 HP from the pool per tap (or 5 points to cure Poisoned).');
   if (cls === 'Druid' && L >= 2) f('wild', 'Wild Shape', L >= 6 ? 3 : 2, 'short1', 'note', 'Take a beast shape for up to an hour (a bonus action).');
   if (cls === 'Fighter') f('wind', 'Second Wind', byLvl(L, [2, 2, 2, 3, 3, 3, 3, 3, 3, 4]), 'short1', 'secondwind', `Regain 1d10+${L} HP (a bonus action).`, { dice:`1d10+${L}` });
@@ -154,9 +162,14 @@ export function heroResources(h, st = heroStats(h)){
   if (cls === 'Fighter' && L >= 9) f('indomitable', 'Indomitable', 1, 'long', 'note', `Reroll a failed saving throw with +${L}.`);
   if (cls === 'Monk' && L >= 2) f('focus', 'Focus Points', L, 'short', 'note', `Flurry of Blows, Patient Defense or Step of the Wind${L >= 5 ? ` — or Stunning Strike (DC ${8 + st.pb + st.M('Wis')} Con)` : ''}.`);
   if (cls === 'Sorcerer' && L >= 2) f('sorcery', 'Sorcery Points', L, 'long', 'note', 'Metamagic, or turn points into spell slots.');
-  if (cls === 'Ranger') f('favored', 'Favored Enemy', byLvl(L, [2, 2, 2, 2, 3, 3, 3, 3, 4, 4]), 'long', 'note', 'Cast Hunter\'s Mark without spending a slot (used first when you cast it).');
+  if (cls === 'Sorcerer' && L >= 5) f('sorcrest', 'Sorcerous Restoration', 1, 'long', 'recover', `After a short rest: up to ${Math.floor(L / 2)} Sorcery Points come back.`, { points:Math.floor(L / 2) });
+  if (cls === 'Ranger') f('favored', 'Favored Enemy', byLvl(L, [2, 2, 2, 2, 3, 3, 3, 3, 4, 4]), 'long', 'note', 'Cast Hunter\'s Mark without spending a slot (used first when you cast it).', { free:'Hunter\'s Mark' });
   if (cls === 'Wizard') f('arcane', 'Arcane Recovery', 1, 'long', 'recover', `After a short rest: spent slots worth up to ${Math.ceil(L / 2)} levels come back.`, { lv:Math.ceil(L / 2) });
   if (cls === 'Warlock' && L >= 2) f('cunning', 'Magical Cunning', 1, 'long', 'recover', 'Half your pact slots come back (one minute\'s rite).', { pact:1 });
+  // Magic Initiate (Acolyte, Sage): one of its level-1 spells once a long rest without a slot
+  const bg = BACKGROUNDS[h.bg];
+  if (bg?.mi){ const mi = (h.spells || []).map(SP).find(s => s?.l === 1 && s.c.includes(bg.mi) && !(C.letter && s.c.includes(C.letter))) || (h.spells || []).map(SP).find(s => s?.l === 1 && s.c.includes(bg.mi));
+    if (mi) f('mi', `Magic Initiate (${mi.n})`, 1, 'long', 'note', `Cast ${mi.n} once without a slot (used first when you cast it).`, { free:mi.n }); }
   if (h.sp === 'Human') f('heroic', 'Heroic Inspiration', 1, 'long', 'note', 'Reroll any die, once. Yours again after every long rest.');
   out.push({ id:'hd', n:`Hit Dice (d${C.hd})`, max:L, rest:'long', use:'hitdie', die:C.hd, mod:st.M('Con'), text:`Spend on a short rest: d${C.hd}${sgn(st.M('Con'))} HP each.` });
   return out;

@@ -103,6 +103,7 @@ function parseJsonFloor(obj, name, warnings){
   fl.rooms = rooms;
   // props and houses round-trip from Dread Delve's own floor JSON
   fl.props = (obj.props || []).filter(p => PROPS[p.k]).map(p => ({ k:p.k, x:u(p.x), y:u(p.y), rot:(+p.rot || 0) % 4 }));
+  fl.rough = (obj.rough || []).map(p => ({ x:u(p.x), y:u(p.y) }));
   fl.buildings = (obj.buildings || []).map(b => ({ ...b, x:u(b.x), y:u(b.y), w:u(b.w), h:u(b.h) })).filter(b => b.w > 0 && b.h > 0);
   fl.tokens = (obj.tokens || obj.units || obj.monsters || obj.creatures || obj.minis || obj.pieces || []).map(t => ({
     name:t.name || t.label || 'Token', x:u(t.x), y:u(t.y), bid:t.bid || t.monster || t.creature || t.type || null, kind:t.kind || (t.pc || t.player ? 'pc' : null), hp:num(t.hp), ac:num(t.ac) }))
@@ -284,6 +285,7 @@ export function buildImportedFloor(pf, L, size, theme, link = {}){
   carve(f);
   f.props = (pf.props || []).filter(p => p.x < size && p.y < size).map(p => ({ id:f.nextObj++, ...p }));
   f.buildings = (pf.buildings || []).filter(b => b.x < size && b.y < size);
+  f.rough = (pf.rough || []).filter(p => p.x < size && p.y < size).map(p => p.y * f.W + p.x).filter(i => walk(f.grid[i]) && f.grid[i] !== T.UP && f.grid[i] !== T.DOWN);
   return { floor:f, warnings, tokens:pf.tokens || [] };
 }
 
@@ -317,5 +319,5 @@ export function floorToJSON(f){
     rooms:f.rooms.map(r => ({ x:r.x, y:r.y, w:r.w, h:r.h, name:r.name, type:r.type, notes:r.notes })),
     doors:f.doors.map(d => ({ ...xy(d.i), state:d.state })), traps:f.traps.map(t => ({ ...xy(t.i), kind:t.kind })),
     stairs:[...(f.up ? [{ ...f.up, dir:'up' }] : []), ...(f.down ? [{ ...f.down, dir:'down' }] : [])],
-    props:(f.props || []).map(p => ({ k:p.k, x:p.x, y:p.y, rot:p.rot || 0 })), buildings:f.buildings || [] };
+    props:(f.props || []).map(p => ({ k:p.k, x:p.x, y:p.y, rot:p.rot || 0 })), buildings:f.buildings || [], rough:(f.rough || []).map(i => ({ x:i % f.W, y:(i / f.W) | 0 })) };
 }

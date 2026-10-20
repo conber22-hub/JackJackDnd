@@ -10,11 +10,15 @@ import { changed } from './session.js';
 const resOf = (t, id) => t.resources?.find(r => r.id === id);
 export const left = (t, id) => t.res?.[id] ?? 0;
 
-// Keep what is left when a sheet is updated, clamped to the new maxima; new resources start full.
-export function fillResources(t){
+// When a sheet is updated, keep what was SPENT (a level-up's new slots and Hit Dice arrive full); new resources
+// start full. oldMax: the maxima before the update (without it, what is left is kept, clamped).
+export function fillResources(t, oldMax = null){
   if (!t.resources){ delete t.res; return; }
   const prev = t.res || {}; t.res = {};
-  for (const r of t.resources) t.res[r.id] = Math.max(0, Math.min(r.max, prev[r.id] ?? r.max));
+  for (const r of t.resources){
+    const spent = oldMax && r.id in prev && oldMax[r.id] != null ? Math.max(0, oldMax[r.id] - prev[r.id]) : null;
+    t.res[r.id] = Math.max(0, Math.min(r.max, spent == null ? prev[r.id] ?? r.max : r.max - spent));
+  }
 }
 export function adjustRes(t, id, delta){
   const r = resOf(t, id); if (!r) return;
@@ -28,14 +32,18 @@ export function slotFor(t, lvl){
 }
 // Spend what a spell costs. Tokens without a sheet (the default party, monsters) cast freely.
 // Returns null when nothing is left to cast it with, else a note for the card.
-export function spendSpell(t, lvl, name = ''){
+// again: a sustained spell (Spiritual Weapon, Moonbeam…) — using it again on a later turn costs nothing.
+const freeFor = (t, name) => (t.resources || []).find(r => r.free && name.startsWith(r.free) && left(t, r.id) > 0);
+export function spendSpell(t, lvl, name = '', again = false){
   if (!lvl || !t.resources) return '';
-  if (/Hunter's Mark/.test(name) && left(t, 'favored') > 0){ t.res.favored--; return `Favored Enemy (${t.res.favored} left)`; }
-  const r = slotFor(t, lvl); if (!r) return null;
-  t.res[r.id]--;
-  return `${r.id === 'pact' ? 'pact' : `level ${r.slot}`} slot · ${t.res[r.id]} left`;
+  if (again && t.sustain === name) return `${name} is still going — no new slot`;
+  const fr = freeFor(t, name);
+  const note = fr ? (t.res[fr.id]--, `${fr.n.replace(/ \(.*\)$/, '')} — no slot (${t.res[fr.id]} left)`) : null;
+  if (!fr){ const r = slotFor(t, lvl); if (!r) return null; t.res[r.id]--; if (again) t.sustain = name; return `${r.id === 'pact' ? 'pact' : `level ${r.slot}`} slot · ${t.res[r.id]} left`; }
+  if (again) t.sustain = name;
+  return note;
 }
-export const canCast = (t, lvl, name = '') => !lvl || !t.resources || (/Hunter's Mark/.test(name) && left(t, 'favored') > 0) || !!slotFor(t, lvl);
+export const canCast = (t, lvl, name = '', again = false) => !lvl || !t.resources || (again && t.sustain === name) || !!freeFor(t, name) || !!slotFor(t, lvl);
 
 /* ---------- class features ---------- */
 // Use one charge of a feature. Lay on Hands goes to `target` (or the hero), everything else to the hero.
@@ -50,6 +58,7 @@ export function useFeature(t, id, target = t){
     heal(t, n); lines.push(`<b>+${n} HP</b> (${t.hp}/${t.maxHp})`);
   }
   else if (r.use === 'lay'){
+    if (target.dead && target.kind === 'monster'){ toast(`${target.name} is beyond healing.`); return false; }
     cost = Math.min(5, left(t, id)); heal(target, cost);
     lines.push(`${esc(target.name)} <b>+${cost} HP</b>`);
   }
@@ -65,6 +74,7 @@ export function useFeature(t, id, target = t){
 }
 function recoverSlots(t, r){
   const got = [];
+  if (r.points){ const s = resOf(t, 'sorcery'); if (!s) return got; const n = Math.min(r.points, s.max - left(t, 'sorcery')); if (n > 0){ t.res.sorcery += n; got.push(`${n} Sorcery Point${n > 1 ? 's' : ''}`); } return got; }
   if (r.pact){ const p = resOf(t, 'pact'); if (!p) return got; const n = Math.min(Math.ceil(p.max / 2), p.max - left(t, 'pact')); if (n > 0){ t.res.pact += n; got.push(`${n} pact slot${n > 1 ? 's' : ''}`); } return got; }
   let budget = r.lv || 1;
   for (const s of (t.resources || []).filter(s => s.slot && s.id !== 'pact').sort((a, b) => b.slot - a.slot)){
@@ -85,10 +95,12 @@ export function shortRest(list = party()){
 }
 export function longRest(list = party(), quiet = false){
   for (const t of list){
-    if (!t.dead){ t.hp = t.maxHp; t.flags.bloodied = false; }
+    if (t.dead) continue;                      // the fallen don't rest; they need raising first
+    t.hp = t.maxHp; t.flags.bloodied = false; delete t.sustain;
     t.conds = (t.conds || []).filter(c => c.n === 'seeded');
     for (const r of t.resources || []) t.res[r.id] = r.max;
   }
+  for (const t of state.tokens) delete t.lres;   // a new day: Legendary Resistance comes back too
   if (!quiet) showCard({ kind:'', title:'A long rest', sub:'Eight hours', flair:'They sleep, after a fashion. In Barovia the dreams are not entirely their own.', lines:['Full HP, every slot and feature back, Hit Dice restored, conditions gone.'] });
   log('The party takes a long rest.'); changed();
 }

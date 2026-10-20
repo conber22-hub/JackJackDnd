@@ -38,9 +38,9 @@ export function applyCharacter(sheet, { owner, key, place = true } = {}){
   const fields = heroToken(sheet);
   let t = state.tokens.find(x => x.charId === sheet.id) || state.tokens.find(x => x.kind === 'pc' && !x.charId && x.name.toLowerCase() === String(sheet.name).toLowerCase());
   if (t){
-    const lost = Math.max(0, (t.maxHp || 0) - (t.hp || 0));
+    const lost = Math.max(0, (t.maxHp || 0) - (t.hp || 0)), oldMax = Object.fromEntries((t.resources || []).map(r => [r.id, r.max]));
     Object.assign(t, fields); t.hp = Math.max(t.dead ? 0 : 1, fields.maxHp - lost);
-    fillResources(t);
+    fillResources(t, oldMax);
     log(`${t.name}'s sheet was updated (${fields.cls}).`);
   } else if (place){
     t = makePC({ name:fields.name }); Object.assign(t, fields); t.hp = fields.maxHp; fillResources(t);

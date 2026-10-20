@@ -59,6 +59,7 @@ export function commitRoom(op){
     if (f.down && inRoom(r, f.down.x, f.down.y)) stairs.push(['down', f.down.x + dx, f.down.y + dy]);
     if (f.up && inRoom(r, f.up.x, f.up.y)) stairs.push(['up', f.up.x + dx, f.up.y + dy]);
     for (const tr of f.traps) if (inRoom(r, tr.i % f.W, (tr.i / f.W) | 0)) tr.i += dy * f.W + dx;
+    f.rough = (f.rough || []).map(i => inRoom(r, i % f.W, (i / f.W) | 0) ? i + dy * f.W + dx : i);   // its mud goes with it
     Object.assign(r, op.rect, { free:true }); recalcRoom(r);
     for (const [dir, x, y] of stairs){
       const err = moveStairs(state.floors, op.L, dir, x, y);
@@ -229,7 +230,12 @@ export function newDelve(meta, keepParty = true){
   const s = newState(meta);
   if (party){
     const r0 = s.floors[0].rooms[0];
-    s.tokens = s.tokens.filter(t => t.kind === 'monster').concat(party.map((t, i) => ({ ...t, floor:0, x:clamp(r0.x + 1 + i % 3, r0.x, r0.x + r0.w - 1), y:clamp(r0.y + 1 + Math.floor(i / 3), r0.y, r0.y + r0.h - 1), dead:false, moved:0, conds:[], flags:{} })));
+    // the party arrives as it is: the dead stay dead, the Seep's taken stay taken, the seeded stay seeded
+    s.tokens = s.tokens.filter(t => t.kind === 'monster').concat(party.map((t, i) => ({ ...t, floor:0, x:clamp(r0.x + 1 + i % 3, r0.x, r0.x + r0.w - 1), y:clamp(r0.y + 1 + Math.floor(i / 3), r0.y, r0.y + r0.h - 1), moved:0,
+      dead:!!t.dead, conds:(t.conds || []).filter(c => c.n === 'seeded'),
+      flags:{ ...(t.flags?.gone ? { gone:true, taken:!!t.flags.taken } : {}), ...(t.flags?.seeded ? { seeded:true, riser:t.flags.riser } : {}), ...(t.flags?.bloodied ? { bloodied:true } : {}) } })));
+    // players keep their seats (their heroes keep their ids)
+    s.seats = Object.fromEntries(Object.entries(state.seats || {}).filter(([, id]) => s.tokens.some(t => t.id === id)));
   }
   s.art = art; if (content) s.content = content; carryCampaign(s);
   loadState(s);

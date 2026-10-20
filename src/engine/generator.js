@@ -220,6 +220,7 @@ export function carve(f, keep = []){
   f.grid = g;
   f.doors = (f.doors || []).filter(dr => walk(g[dr.i]) && g[dr.i] !== T.UP && g[dr.i] !== T.DOWN);
   f.traps = (f.traps || []).filter(tr => walk(g[tr.i]));
+  if (f.rough?.length) f.rough = f.rough.filter(i => walk(g[i]) && g[i] !== T.UP && g[i] !== T.DOWN);
 }
 export const inRoom = (r, x, y) => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h;
 

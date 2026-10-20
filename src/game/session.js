@@ -1,6 +1,7 @@
 /* SESSION — save / load / export, migrating old saves, undo for the Build tools, and changed(). */
 import { heroToken } from '../engine/hero.js';
 import { fillResources } from './resources.js';
+import { clearRequests } from './requests.js';
 import * as THREE from 'three';
 import { state, setState, ui, newCampaign } from '../engine/state.js';
 import { updateVision } from '../engine/grid.js';
@@ -78,6 +79,7 @@ export function resetScene(){
   clearReach(); clearOverlay(); ui.selected = null; ui.selDoor = null; ui.selTrap = null; ui.selRoom = null;
 }
 export function loadState(s){
+  clearRequests();
   setState(s); ui.role = 'dm'; ui.tab = ui.tab === 'hero' ? 'tokens' : ui.tab; undoStack.length = 0;
   resetScene(); ensureFloorViews(); updateVision(); buildAllFloors(); syncTokens();
   const first = state.tokens.find(t => t.kind === 'pc' && !t.flags.gone);

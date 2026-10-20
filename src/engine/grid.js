@@ -29,13 +29,15 @@ export function canStep(f, x, y, dx, dy, pass = passMove){
 export const roughSet = f => new Set(f.rough || []);
 export function reach(L, sx, sy, limit, moverId){
   const f = state.floors[L], start = sy * f.W + sx, par = new Map([[start, -1]]), dist = new Map([[start, 0]]);
-  const mover = tokById(moverId) || {}, rough = roughSet(f), buckets = [[start]];
+  const mover = tokById(moverId) || {}, rough = roughSet(f), buckets = [[start]], sz = mover.size || 1;
+  // a Large creature pays double if any square of its space is difficult
+  const roughAt = (x, y) => { if (sz === 1) return rough.has(y * f.W + x); for (let dy = 0; dy < sz; dy++) for (let dx = 0; dx < sz; dx++) if (rough.has((y + dy) * f.W + x + dx)) return true; return false; };
   for (let d = 0; d < buckets.length; d++) for (const i of buckets[d] || []){
     if (dist.get(i) !== d || d >= limit) continue;
     const x = i % f.W, y = (i / f.W) | 0;
     for (const [dx, dy] of DIRS){
       if (!canStep(f, x, y, dx, dy)) continue;
-      const ni = (y + dy) * f.W + x + dx, nd = d + (rough.has(ni) ? 2 : 1);
+      const ni = (y + dy) * f.W + x + dx, nd = d + (rough.size && roughAt(x + dx, y + dy) ? 2 : 1);
       if (nd > limit || (dist.has(ni) && dist.get(ni) <= nd)) continue;
       const blocker = tokenAt(L, x + dx, y + dy);
       if (blocker && blocker.id !== moverId && side(blocker) !== side(mover)) continue; // can't walk through enemies
@@ -98,10 +100,11 @@ export function canSee(f, x0, y0, x1, y1, pass = passSight){
 export const sightRange = t => t.conds?.some(c => c.n === 'blinded') ? 1 : t.sight || 12;
 export function vision(t){
   const f = state.floors[t.floor], seen = new Set(), R = sightRange(t), R2 = (R + .5) * (R + .5);
+  const wet = f.water?.length ? new Set(f.water) : null, pass = wet ? (ff, i) => wet.has(i) || passSight(ff, i) : passSight;   // you see across water
   for (let y = Math.max(0, t.y - R); y <= Math.min(f.H - 1, t.y + R); y++) for (let x = Math.max(0, t.x - R); x <= Math.min(f.W - 1, t.x + R); x++){
     const i = y * f.W + x;
     if (!walk(f.grid[i]) || (x - t.x) ** 2 + (y - t.y) ** 2 > R2) continue;
-    if (canSee(f, t.x, t.y, x, y)) seen.add(i);
+    if (canSee(f, t.x, t.y, x, y, pass)) seen.add(i);
   }
   return seen;
 }
@@ -138,6 +141,17 @@ export function freeTilesNear(L, x, y, n, includeSelf = false){
   const f = state.floors[L], { dist } = reachSight(f, x, y, 12, passMove);
   return [...dist.entries()].filter(([i]) => passMove(f, i)).sort((a, b) => a[1] - b[1]).map(([i]) => ({ x:i % f.W, y:(i / f.W) | 0 }))
     .filter(p => (includeSelf || p.x !== x || p.y !== y) && !tokenAt(L, p.x, p.y)).slice(0, n);
+}
+// The nearest spot where a creature of this size fits: every square of its space open and nobody standing there.
+export function spotFor(L, x, y, size = 1){
+  const f = state.floors[L];
+  return freeTilesNear(L, x, y, 600, true).find(p => {
+    for (let dy = 0; dy < size; dy++) for (let dx = 0; dx < size; dx++){
+      const nx = p.x + dx, ny = p.y + dy;
+      if (nx >= f.W || ny >= f.H || !passMove(f, ny * f.W + nx) || tokenAt(L, nx, ny)) return false;
+    }
+    return true;
+  }) || null;
 }
 export function randomRoomTile(L, rng = Math.random, filter = () => true){
   const f = state.floors[L], rooms = f.rooms.filter(filter); if (!rooms.length) return null;

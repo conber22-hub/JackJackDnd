@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { state, ui, tokById, tokenAt, log, isDM, viewAsPlayer, dreadLevel } from '../engine/state.js';
 import { makeNoise } from './noise.js';
-import { reach, pathTo, pathCost, updateVision, detectHidden, vision, passMove, canSeeTile } from '../engine/grid.js';
+import { reach, pathTo, pathCost, updateVision, detectHidden, vision, passMove, canSeeTile, seenNow } from '../engine/grid.js';
 import { trapAt } from '../engine/generator.js';
 import { TRAP_KINDS } from '../data/rooms.js';
 import { CONDITIONS, WHISPERS } from '../data/dread.js';
@@ -67,17 +67,20 @@ export function doMove(t, x, y){
     path = stopForSpotted(t, path);
     const k = path.findIndex(p => trapAt(f, p.y * f.W + p.x)?.armed);
     if (k >= 0){ trapHit = trapAt(f, path[k].y * f.W + path[k].x); path = path.slice(0, k + 1); }
+    // a cut-short move never ends on someone else's square
+    while (path.length){ const e = path[path.length - 1], o = tokenAt(t.floor, e.x, e.y); if (!o || o.id === t.id) break; path.pop(); if (trapHit && trapHit.i === e.y * f.W + e.x) trapHit = null; }
   }
   if (state.combat.active) t.moved = (t.moved || 0) + pathCost(f, path);
   clearReach();
-  broadcast({ t:'anim', id:t.id, path });
+  // players see a monster walk only if any of its steps are in the party's sight
+  if (t.kind !== 'monster' || [{ x:t.x, y:t.y }, ...path].some(p => seenNow[t.floor]?.has(p.y * f.W + p.x))) broadcast({ t:'anim', id:t.id, path });
   animatePath(t.id, path, step => {
     t.x = step.x; t.y = step.y;
     const dr = f.doors.find(dd => dd.i === step.y * f.W + step.x);
     if (dr && dr.state === 'closed'){ dr.state = 'open'; buildFloor(t.floor); animateDoor(t.floor, dr.id, true); sfx('door'); log(`${t.name} opens a door.`); }
     if (t.kind !== 'monster'){
       const grew = updateVision(), found = detectHidden();
-      if (grew || found.length) rebuildFog(t.floor);
+      if (found.length || (grew && (viewAsPlayer() || ui.previewFog))) rebuildFog(t.floor);   // the DM's own view has no fog to redraw
       for (const fd of found) announceFound(fd);
     }
     syncTokens();
