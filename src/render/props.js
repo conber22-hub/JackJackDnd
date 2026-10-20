@@ -207,7 +207,39 @@ export function buildProp(p){
 
 /* Buildings: solid houses on outdoor floors (the squares under them stay rock). Lit windows at night. */
 const ROOFS = ['#6a3a32', '#585a62', '#7a6440', '#4e5258'], WALLS = ['#b0a088', '#9a8c74', '#c0b094', '#8e8070'];
+/* A castle keep (Ravenloft): a tall dark block with battlements, round corner towers with slate cones, a spire,
+   and narrow lit windows. Also used for the castle on the skyline (render/skyline.js). */
+export function buildKeep(w, h, o = {}){
+  const g = new THREE.Group(), H = o.H || 3.6, STONE_K = '#2b2830', SLATE = '#1b1922', LIT = { e:'#ff9a40', ei:1.6, r:1 }, RED = { e:'#ff3030', ei:1.4, r:1 };
+  box(g, w - .2, H, h - .2, STONE_K, 0, H / 2, 0, { r:.95 });
+  // battlements
+  for (let x = -w / 2 + .5; x <= w / 2 - .5; x += 1) for (const z of [-h / 2 + .15, h / 2 - .15]) box(g, .45, .4, .3, STONE_K, x, H + .2, z);
+  for (let z = -h / 2 + .5; z <= h / 2 - .5; z += 1) for (const x of [-w / 2 + .15, w / 2 - .15]) box(g, .3, .4, .45, STONE_K, x, H + .2, z);
+  // corner towers
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]){
+    const tx = sx * (w / 2 - .6), tz = sz * (h / 2 - .6), th = H + 1.8 + ((sx + sz + 2) % 3) * .6;
+    cyl(g, .95, 1.05, th, STONE_K, tx, th / 2, tz, { r:.95 }, 14); cone(g, 1.25, 2.2, SLATE, tx, th + 1.1, tz, { r:.7 }, 14);
+    for (const a of [0, 2.1, 4.2]) box(g, .14, .4, .06, '#ffb060', tx + Math.cos(a) * 1.0, th * .7, tz + Math.sin(a) * 1.0, LIT);
+  }
+  // the great tower and its spire, off-centre at the back
+  const gx = w * .12, gz = -h * .18, gh = H + 5.5;
+  cyl(g, 1.5, 1.7, gh, STONE_K, gx, gh / 2, gz, { r:.95 }, 16); cone(g, 1.9, 4.2, SLATE, gx, gh + 2.1, gz, { r:.7 }, 16);
+  box(g, .3, .6, .08, '#ff5a3a', gx, gh * .82, gz + 1.55, RED);                  // the one window that is always lit
+  // windows along the walls
+  for (let x = -w / 2 + 1.5; x < w / 2 - 1; x += 2.2) for (const z of [-1, 1]) if ((Math.round(x * 7) + z) % 3) box(g, .2, .55, .06, '#ffb060', x, H * .62, z * (h / 2 - .08), LIT);
+  // the great doors
+  if (o.door !== false){ box(g, 1.4, 1.6, .1, '#140c0a', 0, .8, h / 2 - .02); cone(g, .72, .5, '#140c0a', 0, 1.82, h / 2 - .02, {}, 3).rotation.z = 0; }
+  return g;
+}
 export function buildBuilding(b, k = 0){
+  if (b.keep){ const g = buildKeep(b.w, b.h); g.position.set(wx(b.x) + (b.w - 1) / 2, 0, wz(b.y) + (b.h - 1) / 2); return g; }
+  if (b.turret){   // a round castle tower: dark stone, a slate cone, one lit slit
+    const g = new THREE.Group(), r = Math.min(b.w, b.h) / 2 - .05, H = b.H || 4.6;
+    cyl(g, r, r + .08, H, '#2b2830', 0, H / 2, 0, { r:.95 }, 16); cone(g, r + .3, r * 2, '#1b1922', 0, H + r, 0, { r:.7 }, 16);
+    for (let k = 0; k < 8; k++){ const a = k / 8 * Math.PI * 2; box(g, .28, .3, .28, '#2b2830', Math.cos(a) * (r - .1), H + .1, Math.sin(a) * (r - .1)); }
+    box(g, .1, .45, .06, '#ffb060', 0, H * .7, r + .01, { e:'#ff9a40', ei:1.5, r:1 });
+    g.position.set(wx(b.x) + (b.w - 1) / 2, 0, wz(b.y) + (b.h - 1) / 2); return g;
+  }
   const g = new THREE.Group(), H = b.tower ? 4.2 : b.mill ? 3.2 : b.tall ? 2.6 : 1.8, long = b.w >= b.h;
   const wallC = b.wall || WALLS[k % WALLS.length], roofC = b.roof || ROOFS[k % ROOFS.length];
   box(g, b.w - .1, H, b.h - .1, wallC, 0, H / 2, 0, { r:.95 });

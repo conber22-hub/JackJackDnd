@@ -36,7 +36,7 @@ for (const tpl of TEMPLATES) test(`template "${tpl.id}": stairs line up and ever
       if (L < 4){ assert.ok(f.down, 'has stairs down'); assert.deepEqual(f.down, s.floors[L + 1].up); assert.equal(f.grid[f.down.y * f.W + f.down.x], T.DOWN); }
       else assert.equal(f.down, null);
     });
-    for (const t of s.tokens) assert.ok(walk(s.floors[t.floor].grid[t.y * 40 + t.x]), `${t.name} stands on rock`);
+    for (const t of s.tokens) assert.ok(walk(s.floors[t.floor].grid[t.y * s.floors[t.floor].W + t.x]), `${t.name} stands on rock`);
   }
 });
 
@@ -242,7 +242,7 @@ test('difficult terrain costs two squares and the path goes around it when that 
 
 test('furnished rooms: props inside rooms, never on doors, stairs or doorways, never overlapping, wall pieces against a wall', async () => {
   const { propSize } = await import('../src/data/props.js');
-  for (const tpl of ['deathhouse', 'andral', 'ravenloft', 'bonegrinder', 'labyrinth']){
+  for (const tpl of ['deathhouse', 'andral', 'castle', 'bonegrinder', 'labyrinth']){
     const s = newState({ seed:'furnish-' + tpl, floors:3, template:tpl, party:false }); setState(s);
     for (const f of s.floors){
       assert.ok(f.props.length > 5, `${tpl}: furnished`);

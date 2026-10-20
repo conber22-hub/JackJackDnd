@@ -35,16 +35,29 @@ function mapSVG(V, sel, onRoute, player = false){
       <circle r="2.6" class="halo"/><circle r="1.7" class="dot"/><text class="glyph" y=".7">${GLYPH[p.kind] || '•'}</text>
       <text class="nm" ${p.lab === 'n' ? 'y="-3.1"' : p.lab === 'w' ? 'x="-2.6" y=".8" text-anchor="end"' : 'y="4.4"'}>${esc(p.name.replace(/^The /, ''))}</text></g>`;
   }).join('');
+  // Castle Ravenloft: always on the map, for everyone, whether or not they have been near it. Its glow and the red line
+  // of its Gaze to the party's lantern strengthen as his Gaze rises.
+  const C = placeById('castle'), gz = Math.max(1, state?.dread || 1) / 10;
+  const castle = `<g class="vcastle" pointer-events="none" transform="translate(${C.x} ${C.y})">
+      <circle r="7" fill="url(#vcglow)" opacity="${(.25 + gz * .75).toFixed(2)}"/>
+      <path d="M-3.2 4.2 L-1.9 -.6 L-1.2 -1.1 L1.3 -1.1 L1.9 -.4 L3.1 4.2 Z" fill="#141114" stroke="#2a2428" stroke-width=".15"/>
+      <path d="M-1.6 -1.1 V-3.4 H-1.25 V-3.9 H-.95 V-3.4 H-.6 V-3.8 H-.3 V-3.4 H.3 V-3.8 H.6 V-3.4 H.95 V-3.9 H1.25 V-3.4 H1.6 V-1.1 Z" fill="#1c181e"/>
+      <path d="M-1.9 -1.1 V-4.6 L-1.55 -5.6 L-1.2 -4.6 V-1.1 Z M1.2 -1.1 V-4.4 L1.55 -5.3 L1.9 -4.4 V-1.1 Z" fill="#17141a"/>
+      <path d="M-.35 -3.4 V-6.4 L0 -7.9 L.35 -6.4 V-3.4 Z" fill="#120f14"/>
+      <circle class="vcwin" cx="0" cy="-5.6" r=".2" fill="#ff4030"/><circle cx="-1.55" cy="-3.9" r=".11" fill="#ffb060"/><circle cx="1.55" cy="-3.7" r=".11" fill="#ffb060"/><circle cx=".9" cy="-2.3" r=".1" fill="#ffb060"/>
+    </g>`;
+  const gazeLine = state?.dread >= 3 && lantern ? `<path class="vgaze" d="M${C.x} ${C.y - 5.6} Q${((C.x + lantern.x) / 2).toFixed(1)} ${(Math.min(C.y, lantern.y) - 8).toFixed(1)} ${lantern.x} ${lantern.y - 3.2}" stroke="#ff3a30" stroke-width=".22" fill="none" opacity="${((state.dread - 2) / 14).toFixed(2)}" stroke-dasharray=".6 .9" pointer-events="none"/>` : '';
   return `<svg class="valley-map" viewBox="0 0 100 64" role="img" aria-label="Map of the valley of Barovia">
     <defs>
       <radialGradient id="vmist" cx="50%" cy="50%" r="62%"><stop offset="62%" stop-color="#c8ccd8" stop-opacity="0"/><stop offset="100%" stop-color="#c8ccd8" stop-opacity=".6"/></radialGradient>
       <radialGradient id="vground" cx="55%" cy="45%" r="70%"><stop offset="0%" stop-color="#1d2219"/><stop offset="100%" stop-color="#0b0d0a"/></radialGradient>
+      <radialGradient id="vcglow"><stop offset="0%" stop-color="#b8202a" stop-opacity=".55"/><stop offset="100%" stop-color="#b8202a" stop-opacity="0"/></radialGradient>
     </defs>
     <rect width="100" height="64" fill="url(#vground)"/>
     <g class="vtrees">${trees}</g><g class="vpeaks">${peaks}</g>
     <path class="vriver" d="M94 42 Q80 39 69 35 T56 37 T44 43 T37 48 T30 52 T26 56"/>
     <ellipse class="vlake" cx="29" cy="20" rx="6.5" ry="3.6"/><ellipse class="vlake" cx="26.5" cy="56.5" rx="3.5" ry="2"/>
-    ${roads}${places}
+    ${castle}${roads}${gazeLine}${places}
     <g class="vlantern" transform="translate(${lantern.x} ${lantern.y - 3.2})"><circle r="1.6"/><text y=".55">🏮</text></g>
     <rect width="100" height="64" fill="url(#vmist)" pointer-events="none"/>
     <g class="vfog" pointer-events="none"><ellipse cx="10" cy="10" rx="18" ry="6"/><ellipse cx="88" cy="56" rx="20" ry="6"/><ellipse cx="96" cy="26" rx="10" ry="12"/><ellipse cx="4" cy="44" rx="10" ry="14"/></g>

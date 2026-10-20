@@ -16,6 +16,20 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v0.9 — Castle Ravenloft
+
+- **The castle is a place you can walk into** (`engine/castle.js`, the **Castle Ravenloft** template, 56×56 squares): five hand-shaped floors instead of generated ones, every room named, furnished and given a read-aloud, every room reachable.
+  1. **The Approach** — the cliff road, a drawbridge over a bottomless chasm, the gatehouse between two round towers, and a fog-filled courtyard of statues and dead trees under the keep's walls, with the stables, the black carriage, and the chapel spire.
+  2. **The Great Halls** — the Hall of Arrival, the Great Hall, the Count's dining room and its pipe organ, the chapel (with a secret door into the vestry), guardrooms, the gallery, the kitchens and larder, the Hall of Arms and the Grand Stair.
+  3. **The Upper Keep** — the audience hall and its throne, a locked treasury, the library and study, the hall of portraits, guest rooms, the Bride's Room, the Moon Terrace and the Servants' Stair.
+  4. **The Dungeons** — a row of twelve cells, the Question Room, the oubliette, wine vaults, storerooms, a black cistern, and the Crypt Stair.
+  5. **The Catacombs** — a grid of crypts (32 names, new each delve) around the Tomb of the Count behind four locked doors, with traps in the aisles.
+- **The keep stands on the courtyard map**: a 3D keep with battlements, corner towers, a spire and one red window; round turrets with slate cones for the gate and the chapel.
+- **It is always on the horizon** (`render/skyline.js`): on every outdoor map in the valley — a road, a village, a landmark — the castle stands in a band along the top of the view, in its true direction from where the party is. It slides like a compass as the camera turns, looms larger when you face it and the nearer you are, glows redder as Strahd's Gaze rises, and at Gaze 6+ lightning breaks behind it. It steps aside indoors, in Stack view, and at the castle itself.
+- **On the Valley map** the castle is drawn on its crag above the village, its windows glowing with the Gaze; at Gaze 3+ a red thread runs from it to the party's lantern.
+- **On the road**: "The castle lights up" (Gaze 2+) and "The black carriage" (Gaze 3+) join the road events.
+- New floor themes: **The Approach to Ravenloft** (`grounds`) and **The Dungeons of Ravenloft** (`dungeon`).
+
 ## v0.8 — maps that feel lived in
 
 - **Every generated room is furnished** (`engine/dressing.js`, kits in `src/data/dressing.js`): by its type (a crypt's coffins and sarcophagi, a shrine's altar and pews, a treasure room's chests, a Seep nest's growths and black puddles, a sanctuary's brazier and salt) and by its floor (the mine's rails, carts, pit props and silver ore; the ossuary's bones; the mill's sacks; the cellar's barrels; the wreck's hull plates). Wall pieces stand with their backs to a wall, doorways, stairs and doors stay clear, nothing overlaps, and big rooms get more. Rooms in **the Narrow House** become bedrooms, a library, a dining room, a parlour, a nursery (cradle, dollhouse), a kitchen and servants' rooms; in **castles** and **Argynvostholt** a great hall, a chapel with pews and an organ, a library, bedchambers, an armoury, a gallery of statues and the cells — each named to match, each use once a floor before any repeats.
@@ -222,6 +236,7 @@ src/engine/             pure logic: no DOM, no Three.js, unit-tested
   tables.js             roll-table parser
   overland.js           the Valley: routes, journeys, and procedural stretches of road from modules
   encounter.js          XP budgets and the encounter generator
+  castle.js             Castle Ravenloft's five hand-shaped floors (approach, halls, upper keep, dungeons, catacombs)
   dressing.js           furnishing generated rooms (kits in src/data/dressing.js, read-aloud in src/data/descriptions.js)
   settlement.js         the Valley's places: villages, towns, Krezk, Berez, the camp, the vineyard, the lake, the hill, the tower
 src/game/               rules that touch the scene and UI
@@ -245,6 +260,7 @@ src/render/             Three.js
   minis.js              procedural 3D minis (SHAPES) + syncing tokens
   effects.js            selection ring, reach glow, pings, bursts, Build overlays
   ambience.js           candle and fire light from props, rain and snow outdoors
+  skyline.js            Castle Ravenloft on the horizon of every outdoor valley map, by compass bearing
 src/net/table.js        multiplayer: host, join, reconnect, heartbeats, seats by identity, relay settings, invite links
 src/engine/redact.js    what players are sent (the delve with the DM's secrets taken out)
 src/audio/sound.js      synthesised drone and sound effects

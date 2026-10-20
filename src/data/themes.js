@@ -162,6 +162,20 @@ export const THEMES = [
       { where:['nest'], group:[['sporeling','1d3+1'],['cyst-node',1]] },
       { where:['lair','chamber'], group:[['bloom-vessel',1],['sporeling',2]] },
       { where:['chamber'], group:[['giant-rat',3]] },
+    ] },  // ---- Castle Ravenloft ----
+  { id:'grounds', walls:'mixed', light:1.05, name:'The Approach to Ravenloft', floor:'#3c3a40', hall:'#33313a', wall:'#24212a', trim:'#4e3a42', mist:'#5a5464',
+    weights:{chamber:5},
+    traps:['pit'],
+    prompt:'the approach to a vast gothic castle on a pillar of rock, a drawbridge over a bottomless chasm, a fog-filled courtyard of dead trees and faceless statues, a black carriage, lit windows high in the keep, Ravenloft, top-down battlemap, painterly',
+    denizens:[{ where:['chamber'], group:[['swarm-of-bats',2]] }] },
+  { id:'dungeon', name:'The Dungeons of Ravenloft', floor:'#3a3634', hall:'#2e2a28', wall:'#1c1918', trim:'#7a5a3a', mist:'#4a4440',
+    weights:{chamber:4,lair:2,trap:1,treasure:1},
+    traps:['pit','wire'],
+    prompt:'castle dungeon, rows of iron-barred cells, chains on the walls, a torture chamber, a black cistern under a vaulted roof, torchlight, gothic horror, top-down battlemap, painterly',
+    denizens:[
+      { where:['chamber','lair'], group:[['spawn',1],['zombie',2]] },
+      { where:['lair'], group:[['ghoul',2]] },
+      { where:['chamber'], group:[['giant-rat',3]] },
     ] },
 ];
 export const themeIndex = id => { const i = THEMES.findIndex(t => t.id === id); return i < 0 ? 0 : i; };
@@ -201,8 +215,8 @@ export const TEMPLATES = [
     floors:[{ theme:'woods', place:{ kind:'tower', name:'The Lonely Tower', part:0 } }, { theme:'castle', place:{ kind:'tower', name:'The Lonely Tower', part:1 } }, { theme:'castle', place:{ kind:'tower', name:'The Lonely Tower', part:2 } }] },
   { id:'argyn', name:'Argynvostholt', blurb:'The burned hall of a fallen order: the courtyard and great hall, the upper galleries, and the crypt of the knights.', campaign:true,
     floors:[{ theme:'burned', rooms:1.1, doors:.6, secret:.15 }, { theme:'burned', rooms:.9, doors:.5, populate:.3 }, { theme:'ossuary', rooms:.7, doors:.4, populate:.3 }] },
-  { id:'ravenloft', name:'Castle Ravenloft', blurb:'The castle on its pillar of rock: the halls above, the crypts below. Not for a long while yet.', campaign:true,
-    floors:[{ theme:'castle', rooms:1.2, doors:.7, locked:.25, secret:.15 }, { theme:'castle', rooms:1.0, doors:.7, locked:.25 }, { theme:'ossuary', rooms:.9, doors:.5, secret:.2 }] },
+  { id:'ravenloft', name:'Castle Ravenloft', size:56, blurb:'The castle on its pillar of rock, five floors deep: the drawbridge and the courtyard, the great halls, the upper keep, the dungeons, and the catacombs round his tomb.', campaign:true,
+    floors:[{ theme:'grounds', castle:0 }, { theme:'castle', castle:1, populate:.15 }, { theme:'castle', castle:2, populate:.15 }, { theme:'dungeon', castle:3, populate:.3 }, { theme:'ossuary', castle:4, populate:.3 }] },
   { id:'ironcoffin', name:'The Iron Coffin', blurb:'Session 5: the burned cut in the Svalich Woods, then down through the decks of the thing that fell from the sky.', campaign:true,
     floors:[{ theme:'woods', rooms:1.1, doors:0 }, { theme:'wreck', doors:.5, locked:.3, populate:.2 }, { theme:'wreck', doors:.5, locked:.3, populate:.25 }, { theme:'womb', populate:.2, boss:true }] },
   { id:'bonegrinder', name:'Old Bonegrinder', blurb:'Session 6: the crooked windmill on the road to Vallaki — ground floor, the loft, and the cellar nobody mentions.', campaign:true,

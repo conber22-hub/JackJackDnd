@@ -86,6 +86,8 @@ export const ROAD_EVENTS = [
   { w:1, label:'A letter on a tree', text:'A letter nailed to a tree, sealed in red wax, addressed to one of them by name. It is an invitation.', gaze:2 },
   { w:2, label:'A fresh grave', text:'A fresh grave beside the road with a wooden marker and no name. The earth is moving, slightly.', module:'graves' },
   { w:2, label:'The road forks', text:'The road forks where it did not before. Both ways look the same. The mist decides.', module:'fork' },
+  { w:2, label:'The castle lights up', text:'Far off on its rock, every window in the castle lights at once. Then, one by one, they go out — all but one, high in the tallest tower, which stays lit until they look away.', gaze:2 },
+  { w:1, label:'The black carriage', text:'A black carriage drawn by two black horses comes up the road behind them at a gallop and stops beside them. The door swings open. There is no one inside. It waits, and the horses do not breathe.', gaze:3, module:'wagon' },
   { w:1, label:'A Vistana on the road', text:'A Vistana walking alone, who will read a single card for anyone who shares their bread. The card is always true.', module:'camp' },
 ];
 

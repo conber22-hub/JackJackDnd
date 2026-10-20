@@ -8,7 +8,8 @@ import { THEMES, TEMPLATES, themeIndex } from '../data/themes.js';
 import { ROOM_NAMES } from '../data/rooms.js';
 import { BEST } from '../data/bestiary.js';
 import { T, walk } from './tiles.js';
-import { furnishFloor } from './dressing.js';
+import { furnishFloor, furnishRoom } from './dressing.js';
+import { ravenloftLayout } from './castle.js';
 import { describeRoom } from '../data/descriptions.js';
 import { journeySpecs, landmarkSpecs } from './overland.js';
 import { genPlace } from './settlement.js';
@@ -46,8 +47,14 @@ export function genDelve(meta){
   }
   // furniture and a read-aloud line for every generated room (its own seeded stream, so layouts don't change)
   floors.forEach((f, L) => {
-    const sp = specs[L]; if (sp.layout || sp.place || sp.blank || !f.rooms) return;
+    const sp = specs[L]; if (sp.blank || !f.rooms) return;
     const drng = mulberry32(hashSeed(`${meta.seed}|dress|${L}`)), tid = THEMES[f.theme]?.id;
+    // hand-built floors: only the rooms marked for it are furnished; the castle's rooms all get a read-aloud
+    if (sp.layout || sp.place || sp.castle !== undefined){
+      for (const r of f.rooms) if (r.dress) furnishRoom(f, r, tid, drng, { rename:false });
+      if (sp.castle !== undefined) for (const r of f.rooms) r.read ||= describeRoom(r, tid, drng);
+      return;
+    }
     furnishFloor(f, tid, drng);
     for (const r of f.rooms) r.read ||= describeRoom(r, tid, drng);
   });
@@ -57,6 +64,8 @@ export function genDelve(meta){
 
 export function genFloor(L, W, H, rng, anchor, isLast, spec = {}){
   if (spec.layout) return layoutFloor(L, W, H, spec, anchor, isLast);
+  // Castle Ravenloft: hand-shaped floors (engine/castle.js)
+  if (spec.castle !== undefined){ const lay = ravenloftLayout(spec.castle, Math.floor(rng() * 1e9)); if (lay) return layoutFloor(L, W, H, { ...spec, layout:lay }, anchor, isLast); }
   // a place from the Valley (village, town, camp, tower…): built fresh from the delve's seed
   if (spec.place){ const lay = genPlace(spec.place.kind, { ...spec.place, seed:Math.floor(rng() * 1e9), last:isLast }); if (lay) return layoutFloor(L, W, H, { ...spec, layout:lay }, anchor, isLast); }
   const theme = spec.theme !== undefined ? themeIndex(spec.theme) : L % 4, th = THEMES[theme];
@@ -111,7 +120,8 @@ export function layoutFloor(L, W, H, spec, anchor, isLast = true){
   const f = { level:L, W, H, theme, name:lay.name || th.name, rooms:[], nextId:0, edges:[], corridors:[], autoLink:false,
               up:null, down:null, grid:null, dug:[], filled:[], doors:[], traps:[], base:null, nextObj:1, props:[], buildings:[], exits:lay.exits || null };
   for (const [x, y, w, h, type = 'chamber', name, notes = '', o = {}] of lay.rooms)
-    f.rooms.push(recalcRoom({ id:f.nextId++, x, y, w, h, type, name:name || pick(ROOM_NAMES[type] || ROOM_NAMES.chamber), notes, free:true, ...(o.outdoor ? { outdoor:true } : {}) }));
+    f.rooms.push(recalcRoom({ id:f.nextId++, x, y, w, h, type, name:name || pick(ROOM_NAMES[type] || ROOM_NAMES.chamber), notes, free:true, ...(o.outdoor ? { outdoor:true } : {}),
+      ...(o.use ? { use:o.use } : {}), ...(o.dress ? { dress:true } : {}), ...(o.read ? { read:o.read } : {}), ...(name ? { named:true } : {}) }));
   for (const path of lay.paths || []){
     const w = path.w || 1, off = Math.floor((w - 1) / 2), tiles = new Set(), pts = path.pts;
     const brush = (x, y) => { for (let dy = 0; dy < w; dy++) for (let dx = 0; dx < w; dx++){ const nx = x - off + dx, ny = y - off + dy; if (nx > 0 && ny > 0 && nx < W - 1 && ny < H - 1) tiles.add(ny * W + nx); } };
