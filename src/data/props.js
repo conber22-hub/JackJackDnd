@@ -3,7 +3,7 @@
    work on Roll20 and Foundry. A prop sits at x, y (its top-left square), covers w × h squares, and turns
    in quarter turns (rot 0–3). The 3D pieces are built in render/props.js.
    cat groups the palette in the Build tab. */
-export const PROP_CATS = { tavern:'Tavern & house', village:'Village', road:'Road & wild', barovia:'Barovia', dungeon:'Dungeon' };
+export const PROP_CATS = { tavern:'Tavern & house', manor:'Manor & castle', village:'Village', road:'Road & wild', barovia:'Barovia', dungeon:'Dungeon', mine:'Mine & cave' };
 
 export const PROPS = {
   // tavern & house
@@ -67,14 +67,39 @@ export const PROPS = {
   bloomgrowth:{ n:'Bloom growth',    cat:'barovia', w:1, h:1 },
   vines:      { n:'Vine row',        cat:'barovia', w:1, h:3 },
   tent:       { n:'Tent',            cat:'barovia', w:2, h:2 },
+  // manor & castle
+  bookshelf:  { n:'Bookshelf',       cat:'manor',   w:1, h:2 },
+  wardrobe:   { n:'Wardrobe',        cat:'manor',   w:1, h:1 },
+  desk:       { n:'Writing desk',    cat:'manor',   w:1, h:1 },
+  cradle:     { n:'Cradle',          cat:'manor',   w:1, h:1 },
+  dollhouse:  { n:'Dollhouse',       cat:'manor',   w:1, h:1 },
+  throne:     { n:'Throne',          cat:'manor',   w:1, h:1 },
+  banner:     { n:'Banner',          cat:'manor',   w:1, h:1 },
+  armor:      { n:'Suit of armour',  cat:'manor',   w:1, h:1 },
+  pew:        { n:'Pew',             cat:'manor',   w:1, h:2 },
+  organ:      { n:'Pipe organ',      cat:'manor',   w:2, h:1 },
   // dungeon
+  statue:     { n:'Statue',          cat:'dungeon', w:1, h:1 },
+  sarcophagus:{ n:'Sarcophagus',     cat:'dungeon', w:1, h:2 },
+  cobweb:     { n:'Cobwebs',         cat:'dungeon', w:1, h:1 },
+  cage:       { n:'Cage',            cat:'dungeon', w:1, h:1 },
+  rack:       { n:'Rack',            cat:'dungeon', w:1, h:2 },
   chest:      { n:'Chest',           cat:'dungeon', w:1, h:1 },
   altar:      { n:'Altar',           cat:'dungeon', w:1, h:2 },
   coffin:     { n:'Coffin',          cat:'dungeon', w:1, h:2 },
   pillar:     { n:'Pillar',          cat:'dungeon', w:1, h:1 },
   bones:      { n:'Bones',           cat:'dungeon', w:1, h:1 },
   brazier:    { n:'Brazier',         cat:'dungeon', w:1, h:1 },
+  // mine & cave
+  minecart:   { n:'Mine cart',       cat:'mine',    w:1, h:1 },
+  rails:      { n:'Rails',           cat:'mine',    w:1, h:1 },
+  ore:        { n:'Silver ore',      cat:'mine',    w:1, h:1 },
+  beam:       { n:'Pit props',       cat:'mine',    w:1, h:1 },
+  fungus:     { n:'Pale fungus',     cat:'mine',    w:1, h:1 },
+  puddle:     { n:'Black puddle',    cat:'mine',    w:1, h:1 },
 };
+// Props that give off light (candles, fire): the renderer puts a real flickering light on the nearest few.
+export const LIT = { candelabra:1, brazier:1.3, hearth:1.6, lantern:.8, lamppost:1, campfire:1.6, altar:.7, cauldron:.8, anvil:.9, longtable:.5, organ:.4 };
 
 // Houses for the Build tab's House tool (solid buildings with roofs, on rock). w × h squares.
 export const HOUSES = {

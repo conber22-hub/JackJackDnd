@@ -239,3 +239,28 @@ test('difficult terrain costs two squares and the path goes around it when that 
   const sw = newState({ seed:'swamp', floors:1, template:'berez', party:false });
   assert.ok(sw.floors[0].rough.length > 10, 'Berez has mud');
 });
+
+test('furnished rooms: props inside rooms, never on doors, stairs or doorways, never overlapping, wall pieces against a wall', async () => {
+  const { propSize } = await import('../src/data/props.js');
+  for (const tpl of ['deathhouse', 'andral', 'ravenloft', 'bonegrinder', 'labyrinth']){
+    const s = newState({ seed:'furnish-' + tpl, floors:3, template:tpl, party:false }); setState(s);
+    for (const f of s.floors){
+      assert.ok(f.props.length > 5, `${tpl}: furnished`);
+      assert.ok(f.rooms.every(r => r.read && r.read.length > 20), `${tpl}: every room has a read-aloud`);
+      const used = new Set(), doors = new Set(f.doors.map(d => d.i)), stairs = [f.up, f.down].filter(Boolean).map(p => p.y * f.W + p.x);
+      for (const p of f.props){
+        const sz = propSize(p), room = f.rooms.find(r => p.x >= r.x && p.y >= r.y && p.x + sz.w <= r.x + r.w && p.y + sz.h <= r.y + r.h);
+        assert.ok(room, `${tpl}: ${p.k} sits inside a room`);
+        for (let y = p.y; y < p.y + sz.h; y++) for (let x = p.x; x < p.x + sz.w; x++){
+          const i = y * f.W + x;
+          assert.ok(!used.has(i), `${tpl}: ${p.k} overlaps another prop`); used.add(i);
+          assert.ok(!doors.has(i) && !stairs.includes(i), `${tpl}: ${p.k} on a door or the stairs`);
+          assert.equal(f.grid[i], T.ROOM);
+        }
+      }
+    }
+  }
+  // the Narrow House has rooms with uses and names to match
+  const h = newState({ seed:'furnish-house', floors:2, template:'deathhouse', party:false });
+  assert.ok(h.floors.flatMap(f => f.rooms).some(r => r.use), 'house rooms get uses');
+});

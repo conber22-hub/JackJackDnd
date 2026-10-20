@@ -60,6 +60,7 @@ export function commitRoom(op){
     if (f.up && inRoom(r, f.up.x, f.up.y)) stairs.push(['up', f.up.x + dx, f.up.y + dy]);
     for (const tr of f.traps) if (inRoom(r, tr.i % f.W, (tr.i / f.W) | 0)) tr.i += dy * f.W + dx;
     f.rough = (f.rough || []).map(i => inRoom(r, i % f.W, (i / f.W) | 0) ? i + dy * f.W + dx : i);   // its mud goes with it
+    for (const p of f.props || []) if (inRoom(r, p.x, p.y)){ p.x += dx; p.y += dy; }                  // and its furniture
     Object.assign(r, op.rect, { free:true }); recalcRoom(r);
     for (const [dir, x, y] of stairs){
       const err = moveStairs(state.floors, op.L, dir, x, y);

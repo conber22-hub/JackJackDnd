@@ -8,6 +8,8 @@ import { THEMES, TEMPLATES, themeIndex } from '../data/themes.js';
 import { ROOM_NAMES } from '../data/rooms.js';
 import { BEST } from '../data/bestiary.js';
 import { T, walk } from './tiles.js';
+import { furnishFloor } from './dressing.js';
+import { describeRoom } from '../data/descriptions.js';
 import { journeySpecs, landmarkSpecs } from './overland.js';
 import { genPlace } from './settlement.js';
 import { state, makeMonster } from './state.js';
@@ -42,6 +44,13 @@ export function genDelve(meta){
     const f = genFloor(L, meta.size, meta.size, rng, anchor, L === meta.floors - 1, specs[L]);
     floors.push(f); anchor = f.down;
   }
+  // furniture and a read-aloud line for every generated room (its own seeded stream, so layouts don't change)
+  floors.forEach((f, L) => {
+    const sp = specs[L]; if (sp.layout || sp.place || sp.blank || !f.rooms) return;
+    const drng = mulberry32(hashSeed(`${meta.seed}|dress|${L}`)), tid = THEMES[f.theme]?.id;
+    furnishFloor(f, tid, drng);
+    for (const r of f.rooms) r.read ||= describeRoom(r, tid, drng);
+  });
   if (state) floors.forEach((f, L) => { if (specs[L].populate) populateFloor(f, L, rng, L === meta.floors - 1 || !!specs[L].boss, specs[L].populate === true ? .4 : specs[L].populate); });
   return floors;
 }

@@ -13,6 +13,7 @@ import { undoCount } from '../game/session.js';
 import { renderPanel } from './panels.js';
 import { canCast, left } from '../game/resources.js';
 import { renderRequests } from '../game/requests.js';
+import { renderPrompts } from '../game/rooms.js';
 import { legendOf, legendLeft, resistLeft, lairCreature } from '../game/combat.js';
 import { sfx } from '../audio/sound.js';
 
@@ -194,4 +195,4 @@ function renderTrapCard(el){
     <div class="acts">${acts}</div>`;
   el.classList.add('show');
 }
-export function renderAll(){ renderTop(); renderTabs(); renderPanel(); renderInit(); renderSel(); renderDock(); renderRequests(); }
+export function renderAll(){ renderTop(); renderTabs(); renderPanel(); renderInit(); renderSel(); renderDock(); renderRequests(); renderPrompts(); }

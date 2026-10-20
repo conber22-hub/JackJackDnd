@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { state, ui, tokById, tokenAt, log, isDM, viewAsPlayer, dreadLevel } from '../engine/state.js';
 import { makeNoise } from './noise.js';
+import { enteredRoom } from './rooms.js';
 import { reach, pathTo, pathCost, updateVision, detectHidden, vision, passMove, canSeeTile, seenNow } from '../engine/grid.js';
 import { trapAt } from '../engine/generator.js';
 import { TRAP_KINDS } from '../data/rooms.js';
@@ -79,6 +80,7 @@ export function doMove(t, x, y){
     const dr = f.doors.find(dd => dd.i === step.y * f.W + step.x);
     if (dr && dr.state === 'closed'){ dr.state = 'open'; buildFloor(t.floor); animateDoor(t.floor, dr.id, true); sfx('door'); log(`${t.name} opens a door.`); }
     if (t.kind !== 'monster'){
+      if (t.kind === 'pc') enteredRoom(t.floor, step.x, step.y);
       const grew = updateVision(), found = detectHidden();
       if (found.length || (grew && (viewAsPlayer() || ui.previewFog))) rebuildFog(t.floor);   // the DM's own view has no fog to redraw
       for (const fd of found) announceFound(fd);

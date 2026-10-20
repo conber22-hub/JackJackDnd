@@ -16,6 +16,7 @@ import { walk } from './engine/tiles.js';
 import { floorViews, mist } from './render/floors.js';
 import { tokenViews } from './render/minis.js';
 import { selRing, updatePings } from './render/effects.js';
+import { updateAmbience } from './render/ambience.js';
 import { sendWhisper } from './ui/hud.js';
 import { renderPanel } from './ui/panels.js';
 import { showStart } from './ui/events.js';
@@ -67,6 +68,7 @@ function frame(){
       fig.children.forEach(c => { if (c.userData.flame) c.scale.x = c.scale.z = .8 + Math.random() * .4; });
     }
     floorViews.forEach(fv => fv?.group.visible && fv.built.traverse(o => { if (o.userData.spin) o.rotation.y += dt * o.userData.spin; if (o.userData.spinZ) o.rotation.z += dt * o.userData.spinZ; if (o.userData.trapId && o.userData.pulse) o.children[0].scale.setScalar(1.05 + Math.sin(t * 3) * .08); }));
+    updateAmbience(t, dt);   // candle and fire light, rain and snow
     // walls breathe red when his Gaze is high
     floorViews.forEach(fv => { if (!fv) return; const m = fv.mats.wall; m.emissive.set('#5a0a10'); m.emissiveIntensity = state.dread >= 7 ? (state.dread - 6) * .06 * (1 + Math.sin(t * 1.3)) : 0; });
     // selection ring

@@ -133,12 +133,16 @@ function dungeonTab(){
       <button class="btn small ${ui.previewFog ? 'on' : ''}" data-act="toggle" data-k="previewFog">Preview fog</button>
       <button class="btn small ${ui.roomLabels ? 'on' : ''}" data-act="toggle" data-k="roomLabels">Room labels</button>
       <button class="btn small ${ui.freeMove ? 'on' : ''}" data-act="toggle" data-k="freeMove">Free move</button>
-      <button class="btn small ${ui.whispers ? 'on' : ''}" data-act="toggle" data-k="whispers">Whispers</button></div>
-    <h4>Rooms (${f.rooms.length})</h4>`;
+      <button class="btn small ${ui.whispers ? 'on' : ''}" data-act="toggle" data-k="whispers">Whispers</button>
+      <button class="btn small ${ui.roomPrompts !== false ? 'on' : ''}" data-act="toggle" data-k="roomPrompts" title="When the party first walks into a room, offer its read-aloud">Room prompts</button></div>
+    <h4>Rooms (${f.rooms.length})</h4>
+    <div class="row"><button class="btn small" data-act="furnishFloor" title="Furniture for every room that has none, by its type and this floor's look">🪑 Furnish empty rooms</button><button class="btn small" data-act="describeFloor" title="A read-aloud line for every room that has none">📜 Describe rooms</button></div>`;
   for (const r of f.rooms) h += `<div class="card ${ui.selRoom === r.id ? 'sel' : ''}"><div class="hd"><span class="dot" style="color:${ROOM_TYPES[r.type]?.color};background:${ROOM_TYPES[r.type]?.color}"></span>
       <input class="txt" style="flex:1" value="${esc(r.name)}" data-edit="room" data-id="${r.id}" data-f="name"><button class="btn small" data-act="goRoom" data-id="${r.id}">Go</button></div>
       <div class="row"><select class="txt" data-edit="room" data-id="${r.id}" data-f="type">${Object.entries(ROOM_TYPES).map(([k, v]) => opt(k, v.label, r.type === k)).join('')}</select></div>
-      <textarea class="txt" style="min-height:44px" placeholder="DM notes — what could happen here…" data-edit="room" data-id="${r.id}" data-f="notes">${esc(r.notes || '')}</textarea></div>`;
+      <textarea class="txt" style="min-height:44px" placeholder="Read-aloud — what the party sees, hears and smells…" data-edit="room" data-id="${r.id}" data-f="read">${esc(r.read || '')}</textarea>
+      <textarea class="txt" style="min-height:44px" placeholder="DM notes — what could happen here…" data-edit="room" data-id="${r.id}" data-f="notes">${esc(r.notes || '')}</textarea>
+      <div class="row"><button class="btn small" data-act="readRoom" data-id="${r.id}">📜 Read aloud</button><button class="btn small" data-act="furnishRoom" data-id="${r.id}">🪑 Furnish</button><button class="btn small" data-act="clearRoom" data-id="${r.id}">✕ Clear furniture</button></div></div>`;
   h += `<h4>Grok prompt for this floor</h4><textarea class="txt" readonly id="pr-floor">${esc((THEMES[f.theme] || THEMES[0]).prompt)}</textarea><div class="row"><button class="btn small" data-act="copy" data-k="pr-floor">Copy prompt</button></div>
     <h3>New delve</h3>
     <div class="row"><label>Name</label><input class="txt" id="ndName" value="${esc(state.meta.name)}"></div>

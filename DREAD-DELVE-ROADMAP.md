@@ -16,6 +16,15 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v0.8 — maps that feel lived in
+
+- **Every generated room is furnished** (`engine/dressing.js`, kits in `src/data/dressing.js`): by its type (a crypt's coffins and sarcophagi, a shrine's altar and pews, a treasure room's chests, a Seep nest's growths and black puddles, a sanctuary's brazier and salt) and by its floor (the mine's rails, carts, pit props and silver ore; the ossuary's bones; the mill's sacks; the cellar's barrels; the wreck's hull plates). Wall pieces stand with their backs to a wall, doorways, stairs and doors stay clear, nothing overlaps, and big rooms get more. Rooms in **the Narrow House** become bedrooms, a library, a dining room, a parlour, a nursery (cradle, dollhouse), a kitchen and servants' rooms; in **castles** and **Argynvostholt** a great hall, a chapel with pews and an organ, a library, bedchambers, an armoury, a gallery of statues and the cells — each named to match, each use once a floor before any repeats.
+- **New props**: bookshelf, wardrobe, writing desk, cradle, dollhouse, throne, banner, suit of armour, pew, pipe organ, statue, sarcophagus, cobwebs, cage, rack, mine cart, rails, silver ore, pit props, pale fungus, black puddle.
+- **Read-aloud for every room** (`src/data/descriptions.js`): a line from what the room is and a line from the air of the floor. The Dungeon tab shows it (editable) with **📜 Read aloud**, **🪑 Furnish** and **✕ Clear furniture** per room, and **Furnish empty rooms** / **Describe rooms** for a whole floor (older saves, hand-drawn rooms).
+- **Room prompts**: the first time a hero walks into a room, the DM gets *"📜 The party enters the Nursery — Read it aloud / Not now"* at the top of the screen (Dungeon tab → Room prompts to turn it off). Players never receive the read-aloud text or room names until it is read.
+- **Candles and fires give light**: the nearest few candelabras, braziers, hearths, lanterns, lamp posts, campfires and altars light the room around them with a flicker (4 lights on Medium, 8 on High, none on Low).
+- **Weather you can see**: rain, drizzle, sleet or snow falls on outdoor maps when the day's weather says so (the Dark Lord desk, or the weather rolled for a journey); players see it too.
+
 ## v0.7 — multiplayer you can rely on (Phase 6, done)
 
 - **Phones that sleep come back on their own.** A player whose connection drops (phone locked, Wi-Fi blip, the DM reloading) reconnects by itself: it backs off (1, 2, 4… 30 s, a little random), tries again the moment the phone wakes or comes back online, and keeps a 5-second heartbeat so a dead connection is noticed. Their name, secret word and seat come back with them. The badge says *reconnecting…*; after a few minutes of nothing, the Hero tab offers **↻ Try again**. When the DM closes the table, players are told.
@@ -210,6 +219,7 @@ src/engine/             pure logic: no DOM, no Three.js, unit-tested
   tables.js             roll-table parser
   overland.js           the Valley: routes, journeys, and procedural stretches of road from modules
   encounter.js          XP budgets and the encounter generator
+  dressing.js           furnishing generated rooms (kits in src/data/dressing.js, read-aloud in src/data/descriptions.js)
   settlement.js         the Valley's places: villages, towns, Krezk, Berez, the camp, the vineyard, the lake, the hill, the tower
 src/game/               rules that touch the scene and UI
   combat.js             initiative, attacks, damage, death hooks, the fx language, round-end Gaze effects
@@ -219,6 +229,7 @@ src/game/               rules that touch the scene and UI
   requests.js           players' attack / spell / feature requests and the DM's approval queue
   fights.js             rolling and placing an encounter
   noise.js              noise that carries to nearby creatures and the floors above and below
+  rooms.js              read a room aloud, furnish by hand, the DM's prompt when the party enters a room
   overworld.js          travelling: set out, the road's events, arrive, enter a place
   actions.js            select, move (doors / traps), stairs, falling, doors, search, disarm, floors, dread
   build.js              Build tools, templates, populate, add/remove floors, import
@@ -230,6 +241,7 @@ src/render/             Three.js
   props.js              the 3D props, houses with roofs, the instanced pine
   minis.js              procedural 3D minis (SHAPES) + syncing tokens
   effects.js            selection ring, reach glow, pings, bursts, Build overlays
+  ambience.js           candle and fire light from props, rain and snow outdoors
 src/net/table.js        multiplayer: host, join, reconnect, heartbeats, seats by identity, relay settings, invite links
 src/engine/redact.js    what players are sent (the delve with the DM's secrets taken out)
 src/audio/sound.js      synthesised drone and sound effects

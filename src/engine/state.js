@@ -20,7 +20,7 @@ export const ui = {                 // local-only (never saved, never sent)
   floor:0, view:'tilt',
   tab:'story', panelOpen: typeof innerWidth === 'undefined' ? true : innerWidth > 760,
   selected:null, mode:'select', modeData:null,
-  previewFog:false, roomLabels:true, freeMove:false, whispers:true,
+  previewFog:false, roomLabels:true, freeMove:false, whispers:true, roomPrompts:true,
   bestFilter:'all', bestSearch:'', openBest:null, openPc:null, editBest:null,
   trapKind:'pit', doorState:'closed', propKind:'table', propCat:'tavern', houseKind:'house', houseDark:false, paintType:'nest', selRoom:null, selDoor:null, selTrap:null, atkMode:'normal', stairsDir:'down',
   myToken:null, myName:'',

@@ -39,6 +39,7 @@ import { requestAct, answerRequest } from '../game/requests.js';
 import { useFeature, adjustRes, shortRest, longRest } from '../game/resources.js';
 import { legendOf, legendLeft, useLegendary, useResistance, lairAction } from '../game/combat.js';
 import { rollEncounter, placeEncounter } from '../game/fights.js';
+import { furnish, clearFurniture, describeRooms, readRoom, answerPrompt } from '../game/rooms.js';
 
 const actor = () => ui.role === 'player' ? tokById(ui.myToken) : (ui.selected && tokById(ui.selected));
 
@@ -70,6 +71,13 @@ document.addEventListener('click', e => {
       else useLegendary(sel, +el.dataset.i); } break;
     case 'lres': if (sel) useResistance(sel); break;
     case 'lair': lairAction(); break;
+    case 'furnishFloor': furnish(ui.floor); break;
+    case 'furnishRoom': furnish(ui.floor, +id); break;
+    case 'clearRoom': clearFurniture(ui.floor, +id); break;
+    case 'describeFloor': describeRooms(ui.floor); break;
+    case 'readRoom': readRoom(ui.floor, +id); break;
+    case 'promptRead': answerPrompt(+k, +id, true); break;
+    case 'promptSkip': answerPrompt(+k, +id, false); break;
     case 'encDiff': ui.encDiff = k; rollEncounter(); renderPanel(); break;
     case 'encRoll': rollEncounter(); renderPanel(); break;
     case 'encPlace': placeEncounter(); break;
@@ -274,7 +282,7 @@ document.addEventListener('change', e => {
   else if (kind === 'encFam'){ ui.encFam = el.value; rollEncounter(); renderPanel(); }
   else if (kind === 'charOwner'){ setCharacterOwner(el.dataset.id, el.value); renderPanel(); }
   else if (kind === 'atk' && t){ t.attacks = parseAttacks(el.value); changed(); }
-  else if (kind === 'room'){ const r = roomById(state.floors[ui.floor], +el.dataset.id); if (!r) return; r[el.dataset.f] = el.value; if (el.dataset.f !== 'notes') buildFloor(ui.floor); renderPanel(); changed(); }
+  else if (kind === 'room'){ const r = roomById(state.floors[ui.floor], +el.dataset.id); if (!r) return; r[el.dataset.f] = el.value; if (el.dataset.f === 'name') r.named = true; if (!['notes', 'read'].includes(el.dataset.f)) buildFloor(ui.floor); renderPanel(); changed(); }
   else if (kind === 'floorName'){ state.floors[ui.floor].name = el.value; renderTop(); changed(); }
   else if (kind === 'floorTheme'){ state.floors[ui.floor].theme = +el.value; buildFloor(ui.floor); renderPanel(); changed(); }
   else if (kind === 'seat'){ seatPlayer(el.dataset.k, el.value || null); renderPanel(); pushState(); }

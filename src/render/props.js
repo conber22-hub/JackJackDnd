@@ -167,6 +167,33 @@ const BUILD = {
   pillar(g){ cyl(g, .3, .32, 1.5, STONE, 0, .75, 0, {}, 12); box(g, .7, .12, .7, '#8a847c', 0, 1.5, 0); box(g, .7, .12, .7, '#8a847c', 0, .06, 0); },
   bones(g){ ball(g, .1, '#e8e0cc', 0, .08, 0); for (const a of [.3, 1.4, 2.5, 3.6]){ const b = cyl(g, .025, .025, .35, '#e0d6c0', Math.cos(a) * .2, .03, Math.sin(a) * .2); b.rotation.set(Math.PI / 2, 0, a); } },
   brazier(g){ for (const a of [0, 2.1, 4.2]) box(g, .04, .6, .04, IRON, Math.cos(a) * .15, .3, Math.sin(a) * .15, METAL); cyl(g, .25, .15, .15, IRON, 0, .65, 0, METAL); flame(g, 0, .8, 0, 2); flame(g, .08, .76, .05, 1.3); },
+  // manor & castle (the back of a wall piece is its -x side: the dresser turns it to face the room)
+  bookshelf(g){ box(g, .32, 1.7, 1.8, DARK, 0, .85, 0); for (const y of [.3, .7, 1.1, 1.5]){ box(g, .34, .04, 1.76, LIGHT, .01, y - .06, 0);
+    for (let k = 0; k < 9; k++){ const hgt = .18 + ((k * 7 + y * 10) % 5) * .025; box(g, .2, hgt, .14, ['#5a2222', '#2a3a5a', '#3a4a2a', '#6a5a3a', '#4a2a4a'][(k + Math.round(y * 10)) % 5], .04, y - .04 + hgt / 2, -.72 + k * .18); } } },
+  wardrobe(g){ box(g, .5, 1.8, .9, DARK, -.15, .9, 0); box(g, .02, 1.6, .02, '#1a120c', .11, .9, 0); for (const z of [-.08, .08]) ball(g, .025, '#a8873a', .12, .95, z, METAL); box(g, .56, .08, .96, LIGHT, -.15, 1.82, 0); },
+  desk(g){ box(g, .55, .05, .9, LIGHT, -.1, .7, 0); legs(g, .55, .9, .68); box(g, .45, .25, .35, DARK, -.1, .5, -.25); box(g, .3, .01, .22, '#e8dcc0', .0, .73, .1); cyl(g, .03, .03, .1, '#efe6cf', -.2, .78, .3); flame(g, -.2, .87, .3); box(g, .4, .05, .4, WOOD, .35, .3, 0); },
+  cradle(g){ const b = box(g, .45, .3, .75, LIGHT, 0, .35, 0); for (const z of [-.38, .38]){ const r = mesh(g, geo('rock', () => new THREE.TorusGeometry(.3, .03, 6, 12, Math.PI)), DARK, 0, .2, z); r.rotation.z = Math.PI; r.position.y = .32; } box(g, .38, .06, .62, '#e2dccd', 0, .5, 0); void b; },
+  dollhouse(g){ box(g, .6, .55, .6, '#6a5a4a', 0, .55, 0); box(g, .5, .02, .02, '#2a1a10', .31, .55, 0); for (const [y, z] of [[.45, -.15], [.45, .15], [.68, -.15], [.68, .15]]) box(g, .02, .1, .08, '#ffcf7a', .31, y, z, GLOW);
+    const roof = cone(g, .5, .35, '#3a2a2a', 0, 1.0, 0, {}, 4); roof.rotation.y = Math.PI / 4; box(g, .62, .3, .62, DARK, 0, .14, 0); },
+  throne(g){ box(g, .7, .5, .7, '#5a1c22', 0, .25, 0); box(g, .12, 1.5, .8, '#3a2a2a', -.32, .75, 0); for (const z of [-.36, .36]) box(g, .7, .3, .08, '#3a2a2a', 0, .55, z); cone(g, .08, .3, '#a8873a', -.32, 1.6, 0, METAL); box(g, .5, .08, .55, '#7a2a2e', .02, .52, 0); },
+  banner(g){ cyl(g, .03, .03, 2.0, IRON, -.1, 1.0, 0, METAL); box(g, .03, .02, .7, IRON, -.1, 1.95, 0, METAL); box(g, .02, 1.1, .6, '#6a1a22', -.08, 1.38, 0, { ds:true }); box(g, .022, .3, .3, '#c9a246', -.07, 1.5, 0); },
+  armor(g){ box(g, .4, .08, .4, '#4a3a30', 0, .04, 0); for (const z of [-.08, .08]) cyl(g, .05, .06, .55, '#8a8f99', 0, .35, z, METAL); box(g, .22, .5, .38, '#9aa0aa', 0, .85, 0, METAL); ball(g, .14, '#9aa0aa', 0, 1.22, 0, METAL); box(g, .05, .03, .16, '#111', .12, 1.22, 0); for (const z of [-.25, .25]) cyl(g, .045, .045, .45, '#8a8f99', 0, .85, z, METAL); },
+  pew(g){ box(g, .45, .06, 1.8, WOOD, 0, .42, 0); box(g, .06, .5, 1.8, WOOD, -.2, .68, 0); for (const z of [-.85, 0, .85]) box(g, .4, .42, .06, DARK, 0, .21, z); },
+  organ(g){ box(g, .6, .9, 1.8, DARK, -.3, .45, 0); for (let k = 0; k < 9; k++){ const hgt = 1.2 + Math.sin(k / 8 * Math.PI) * .9; cyl(g, .07, .07, hgt, '#b8a46a', -.42, .9 + hgt / 2, -.8 + k * .2, METAL, 8); }
+    box(g, .3, .06, 1.4, '#e8e0cc', 0, .82, 0); box(g, .4, .45, .9, WOOD, .5, .22, 0); },
+  // dungeon
+  statue(g){ box(g, .6, .4, .6, '#7a766e', 0, .2, 0); cyl(g, .16, .22, .9, '#8e8a82', 0, .85, 0, {}, 8); ball(g, .14, '#8e8a82', 0, 1.42, 0); for (const z of [-.2, .2]){ const arm = cyl(g, .05, .05, .55, '#8e8a82', .05, 1.0, z, {}, 6); arm.rotation.x = z > 0 ? -.3 : .3; } box(g, .02, .5, .3, '#8e8a82', .15, .6, 0); },
+  sarcophagus(g){ box(g, .75, .55, 1.8, '#7c786e', 0, .28, 0); box(g, .8, .12, 1.85, '#8e8a82', 0, .6, 0); box(g, .4, .08, 1.3, '#9a968c', 0, .7, 0); ball(g, .12, '#9a968c', 0, .76, -.65); },
+  cobweb(g){ const w = mat('#d8d4cc', { op:.35, ds:true, r:1 }); for (const [a, y] of [[0, 1.1], [1.2, .8], [2.4, 1.3]]){ const m = new THREE.Mesh(geo('web', () => new THREE.CircleGeometry(.5, 6, 0, Math.PI / 2)), w); m.position.set(-.45, y, -.45); m.rotation.set(0, a * .3 + Math.PI / 4, 0); g.add(m); } },
+  cage(g){ box(g, .7, .06, .7, IRON, 0, .03, 0, METAL); box(g, .7, .06, .7, IRON, 0, 1.4, 0, METAL); for (let k = 0; k < 12; k++){ const a = k / 12 * Math.PI * 2; cyl(g, .015, .015, 1.35, IRON, Math.cos(a) * .32, .72, Math.sin(a) * .32, METAL, 5); } cyl(g, .02, .02, .6, IRON, 0, 1.75, 0, METAL); ball(g, .08, '#e8e0cc', .1, .12, .05); },
+  rack(g){ box(g, .8, .5, 1.8, DARK, 0, .25, 0); for (const z of [-.85, .85]){ const r = cyl(g, .07, .07, .9, LIGHT, 0, .6, z); r.rotation.z = Math.PI / 2; } for (const x of [-.25, .25]) box(g, .02, .02, 1.6, '#8a7a5e', x, .52, 0); },
+  // mine & cave
+  minecart(g){ box(g, .6, .4, .8, '#5a4a3a', 0, .4, 0, METAL); box(g, .62, .05, .82, IRON, 0, .62, 0, METAL); for (const [x, z] of [[-.3, -.25], [-.3, .25], [.3, -.25], [.3, .25]]) wheel(g, .12, x, .12, z, false); for (const [x, z] of [[-.1, .1], [.12, -.1], [0, .2]]) ball(g, .1, '#9aa0aa', x, .62, z, { r:.3, m:.8 }); },
+  rails(g){ for (const x of [-.25, .25]) box(g, .05, .05, 1, IRON, x, .03, 0, METAL); for (const z of [-.35, 0, .35]) box(g, .7, .04, .12, '#4a3626', 0, .015, z); },
+  ore(g){ for (const [x, z, s, a] of [[0, 0, 1, 0], [.18, .12, .7, .6], [-.15, .16, .6, -.5], [.05, -.2, .55, .3]]){ const c = cone(g, .1 * s, .5 * s, '#d8dde6', x, .25 * s, z, { r:.2, m:.9, e:'#4a5a6a', ei:.4 }, 5); c.rotation.z = a * .4; } box(g, .5, .12, .5, '#5a524a', 0, .05, 0); },
+  beam(g){ for (const z of [-.42, .42]) box(g, .14, 1.7, .14, '#5a4028', 0, .85, z); box(g, .16, .16, 1.0, '#4a3626', 0, 1.72, 0); },
+  fungus(g){ for (const [x, z, s] of [[0, 0, 1], [.2, .15, .6], [-.18, .1, .7], [.1, -.2, .5]]){ cyl(g, .03 * s, .04 * s, .25 * s, '#d8d0c0', x, .12 * s, z); const cap = ball(g, .12 * s, '#c8c0a8', x, .26 * s, z, { e:'#6a8a5a', ei:.25 }); cap.scale.y = .45; } },
+  puddle(g){ const m = mesh(g, geo('pud', () => new THREE.CircleGeometry(.42, 14)), '#0d1418', 0, .012, 0, { r:.05, m:.3 }); m.rotation.x = -Math.PI / 2; m.scale.set(1, .75, 1); },
 };
 
 export function buildProp(p){
