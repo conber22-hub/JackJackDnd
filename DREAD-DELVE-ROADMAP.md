@@ -16,6 +16,31 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.6 — game night: playing in person
+
+- **The table screen** (`src/ui/screen.js`, `src/net/screen.js`): the view for the TV.
+  - **Night tab → 📺 Open the table screen** opens a window to drag onto the TV or a second monitor (⛶ goes full screen). It talks to the DM's window over a BroadcastChannel, so it needs no internet and no open table. It opens with `noopener`, so drawing the TV never slows the DM's window.
+  - On another device (a smart TV's browser, a tablet), it joins with the table code: `?screen=CODE`, and the link is in the Night tab.
+  - It's a player's view (redacted the same way, no seat).
+  - The initiative ribbon across the top shows faces (the heroes' portraits); the party is along the bottom with HP and conditions.
+  - The camera follows the action north-up and closer in: the creature whose turn it is, if seen, else the party. Turn banners and dice cards are bigger.
+- **The Night tab** (`src/game/night.js`):
+  - the map, or 🕯 lights out (black, one candle)
+  - follow the action on or off, and 👁 show what I see (the TV takes the DM's camera for a while)
+  - read-aloud text on the TV, typed in or taken from the party's room, the session's opening or the Gaze
+  - 🎭 introduce someone: their forged portrait (or art), their name and a line
+  - handouts: a picture, scaled down, shown full screen and kept for the evening
+  - a turn timer (a ring that empties on the TV over each hero's turn)
+  - 🔇 quiet this laptop (let the TV's speakers do the sound)
+- **Real dice**: the d20 the players roll at the table, used instead of the app's.
+  - When a hero attacks, the DM gets twenty big buttons (or "roll it for them"). Players' requests can carry their roll, and the request queue has a d20 box.
+  - `combat.doAttack`'s `d20` option uses the die and still adds the bonuses, cover, AC and damage. Cards say "🎲 at the table".
+- **📇 Card only** (`src/ui/cards.js`), a player's phone when the TV has the map:
+  - no 3D (the render loop skips drawing), just the hero as a big card
+  - attacks, spells and features as big buttons, with a list of targets (what's in reach first; area spells centre on the one picked)
+  - their real d20 if the table uses real dice
+  - a pad to step one square at a time, north-up like the TV
+
 ## v1.5 — maps you can move between, and smoother fights
 
 - **The map library** (`src/engine/maps.js`, `src/game/maps.js`; the Dungeon tab is now the **Maps** tab).
@@ -329,6 +354,7 @@ src/game/               rules that touch the scene and UI
   overworld.js          travelling: set out, the road's events, arrive, enter a place
   actions.js            select, move (doors / traps), stairs, falling, doors, search, disarm, floors, dread
   objects.js            open / pick / force / push / topple / smash / swing furniture, stashes, the DM's prop edits
+  night.js              game night: driving the table screen, read-alouds, introductions, handouts, timer, real dice (the d20 prompt)
   maps.js               switching maps (shelve, restore, build), setting up without the party, the players' veil, moving the party
   build.js              Build tools, templates, populate, add/remove floors, import
   rules.js              movement allowance, conditions
@@ -354,6 +380,9 @@ src/game/campaign.js    building session dungeons, placing encounters, clocks, p
 src/game/heroes.js      players' heroes (their browser) and the DM's character roster
 src/ui/creator.js       the character creator
 src/ui/valley.js        the Valley tab and its map (SVG)
+src/ui/screen.js        the table screen for the TV (?screen): ribbon, party, follow camera, read-alouds, faces, handouts, lights out
+src/ui/cards.js         card only: a player's phone at an in-person game (big buttons, target list, move pad)
+src/net/screen.js       the table screen's local wire (BroadcastChannel) between the DM's window and the TV's
 src/render/textures.js · post.js · models.js · gfx.js   Phase 4: textures, post-processing, GLB models, quality settings
 src/ui/                 hud.js (top bar, dock, cards) · panels.js (tabs) · input.js (taps & drags) · events.js (buttons)
 tests/engine.test.js · hero.test.js · overland.test.js · encounter.test.js · redact.test.js · movement.test.js · targeting.test.js · look.test.js · e2e/ (Playwright: npm run e2e)    node --test

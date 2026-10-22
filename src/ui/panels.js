@@ -28,6 +28,8 @@ import { NPC_KINDS } from '../data/looks.js';
 import { mapStatus, away, library } from '../game/maps.js';
 import { sessionKey } from '../game/campaign.js';
 import { libraryList, KIND_LABEL } from '../engine/maps.js';
+import { nightState, screenCount, screenLink, partyRoom, introducible, realDice } from '../game/night.js';
+import { cardHTML } from './cards.js';
 
 const art = (key, label) => {
   const a = state.art[key];
@@ -282,7 +284,7 @@ function tableTab(){
     for (const k of knocks) h += `<div class="row knock ${k.state}"><span style="flex:1">🚪 ${esc(k.name)} ${k.state === 'stuck' ? `<b style="color:var(--blood)">can't get through</b>` : 'is knocking…'}</span>${k.ice ? `<span class="muted">${esc(k.ice)}</span>` : ''}</div>`;
     if (knocks.some(k => k.state === 'stuck')) h += `<div class="muted">Their device found your table but the two of you can't connect directly (different networks, mobile data, a strict router). Try the same Wi-Fi, or add a relay below and send them the new invite link.</div>`;
     if (!net.conns.size && !knocks.length) h += `<div class="muted">Waiting for players to join…</div>`;
-    for (const [pid, s] of net.conns) h += `<div class="row"><span style="flex:1">🎮 ${esc(s.name)}</span><select class="txt" style="width:auto" data-edit="seat" data-k="${pid}"><option value="">— no token —</option>${state.tokens.filter(t => t.kind !== 'monster').map(t => opt(t.id, t.name, state.seats[pid] === t.id)).join('')}</select></div>`;
+    for (const [pid, s] of net.conns) h += s.screen ? `<div class="row"><span style="flex:1">${esc(s.name)}</span><span class="muted">the Night tab drives it</span></div>` : `<div class="row"><span style="flex:1">🎮 ${esc(s.name)}</span><select class="txt" style="width:auto" data-edit="seat" data-k="${pid}"><option value="">— no token —</option>${state.tokens.filter(t => t.kind !== 'monster').map(t => opt(t.id, t.name, state.seats[pid] === t.id)).join('')}</select></div>`;
     h += `<div class="row"><button class="btn small danger" data-act="unhost">Close table</button></div>`;
   }
   const ps = peerServer() || {}, stuck = [...net.knocks.values()].some(k => k.state === 'stuck');
@@ -307,6 +309,39 @@ function tableTab(){
   return h;
 }
 
+/* GAME NIGHT — playing round one table (game/night.js): the TV, what it shows, read-alouds, faces, handouts,
+   the turn timer, real dice, and the players' phones as hero cards. */
+function nightTab(){
+  const N = nightState(), n = screenCount(), room = partyRoom(), sess = SESSIONS.find(x => x.n === state.campaign.session);
+  const seg = (act, k, on, label, title = '') => `<button class="btn small ${on ? 'on' : ''}" data-act="${act}" data-k="${k}" title="${esc(title)}">${label}</button>`;
+  let h = `<h3>🕯 Game night</h3><div class="muted">For playing round one table: the map on the TV, your laptop running it, the players' phones as their hero cards (or no phones at all), and real dice.</div>
+    <h4>📺 The table screen</h4>
+    <div class="row"><button class="btn primary" data-act="ntOpen">📺 Open the table screen</button><span class="muted">${n ? `<b style="color:var(--candle)">${n} screen${n === 1 ? '' : 's'} connected</b>` : 'none connected'}</span></div>
+    <div class="muted">A new window: drag it onto the TV or a second monitor and press ⛶ in its corner. It shows what the party sees (fog, no secrets): the turn order with the heroes' faces across the top, the party along the bottom, and a camera that follows the action and drifts slowly while they explore.</div>
+    ${net.code ? `<div class="muted">On another device (a smart TV's browser, a tablet on the table): open <input class="txt" readonly id="ntLink" value="${esc(screenLink(net.code))}" style="width:100%"></div><div class="row"><button class="btn small" data-act="copy" data-k="ntLink">Copy the screen link</button></div>` : `<div class="muted">To put the screen on another device instead (a smart TV's browser, a tablet), open the table first (Table tab); its link appears here.</div>`}
+    <div class="row">${seg('ntMode', 'map', N.mode === 'map', '🗺 The map')}${seg('ntMode', 'dark', N.mode === 'dark', '🕯 Lights out', 'Black, one candle: for the moment before a reveal')}${seg('ntFollow', N.follow ? 'off' : 'on', N.follow, '🎥 Follow the action', 'The screen keeps whoever is acting in frame')}<button class="btn small" data-act="ntLook" title="The screen's camera goes where yours is (for a while)">👁 Show what I see</button></div>
+    <h4>📜 Read aloud — on the screen</h4>
+    <input class="txt" id="ntTitle" placeholder="A title (optional)" value="${esc(ui.ntTitle || '')}">
+    <textarea class="txt" id="ntText" style="min-height:90px" placeholder="What they see, hear and smell… it fades in on the TV, big, by candlelight.">${esc(ui.ntText || '')}</textarea>
+    <div class="row"><button class="btn small primary" data-act="ntNarrate">📜 Show on the screen</button><button class="btn small" data-act="ntClear">✕ Clear the screen</button></div>
+    <div class="row">${room?.read ? `<button class="btn small" data-act="ntQuick" data-k="room" title="${esc(room.read)}">The room they're in: ${esc(room.name)}</button>` : ''}${sess?.open ? `<button class="btn small" data-act="ntQuick" data-k="open">Session ${sess.n}'s opening</button>` : ''}<button class="btn small" data-act="ntQuick" data-k="gaze">Strahd's Gaze</button></div>
+    <h4>🎭 Introduce someone</h4>
+    <input class="txt" id="ntLine" placeholder="Their first words, or how they come in (optional)" value="${esc(ui.ntLine || '')}">`;
+  const who = introducible();
+  h += who.length ? who.slice(0, 14).map(t => `<div class="row"><span style="flex:1">${t.kind === 'npc' ? '🧑' : '👹'} ${esc(t.name)}${t.look || state.art?.[t.id] ? '' : ' <span class="muted">(no face — just the name)</span>'}</span><button class="btn small" data-act="ntIntro" data-id="${t.id}">🎭 Introduce</button></div>`).join('')
+    : `<div class="muted">Nobody else on this floor. Roll an NPC in the Tokens tab: their forged face is what the table sees.</div>`;
+  h += `<h4>🖼 Handouts</h4><div class="row"><label class="btn small">⬆ Show a picture<input type="file" accept="image/*" data-edit="ntHandout" hidden></label></div>
+    ${(ui.handouts || []).map((x, i) => `<div class="row"><span style="flex:1">${esc(x.title)}</span><button class="btn small" data-act="ntHand" data-k="${i}">Show again</button></div>`).join('')}
+    <div class="muted">A letter, a map, a portrait: it fills the TV until you clear it. (Kept for this evening only.)</div>
+    <h4>⏳ Turn timer</h4><div class="row">${[0, 30, 60, 90].map(s => seg('ntTimer', s, N.timer === s, s ? `${s} s` : 'Off')).join('')}</div>
+    <div class="muted">A ring on the TV empties over each hero's turn. Nothing happens when it runs out; the table just knows.</div>
+    <h4>🎲 Real dice</h4><div class="row"><button class="btn small ${realDice() ? 'on' : ''}" data-act="ntDice">🎲 Players roll real dice: ${realDice() ? 'ON' : 'off'}</button></div>
+    <div class="muted">${realDice() ? 'When a hero attacks, you get twenty big buttons: tap what they rolled (or let the app roll). Players on their phones type their roll in with the attack. The app adds the bonuses, checks AC and cover, and rolls damage.' : 'Turn on to type in the d20 the players roll at the table instead of the app rolling it.'}</div>
+    <h4>📱 Players' phones</h4>
+    <div class="muted">Players join with the table code (Table tab) and turn on <b>📇 Card only</b> in their Hero tab: no map on the phone (the TV has it), just their hero, big buttons, and a list of targets. Or skip the phones: you run the heroes from here.</div>
+    <div class="row"><button class="btn small ${gfx.sfx || gfx.music ? '' : 'on'}" data-act="ntQuiet" title="Let the TV's speakers do the sound">🔇 Quiet this laptop</button></div>`;
+  return h;
+}
 const newAtTable = () => net.host?.open && net.status === 'open' ? `<div class="row"><button class="btn small" data-act="newHeroAtTable">✚ Make a new character</button></div>` : '';
 function heroTab(){
   const me = tokById(ui.myToken);
@@ -324,10 +359,12 @@ function heroTab(){
     h += `<div class="card sel"><div class="hd"><span class="dot" style="color:${me.color};background:${me.color}"></span><span class="nm">${esc(me.name)}${me.dead ? ' ✝' : ''}</span></div>
       <div class="stat">AC ${me.ac} · HP ${me.hp}/${me.maxHp} · Speed ${me.speed} ft${state.combat.active ? ` · moved ${(me.moved || 0) * 5} ft` : ''}</div>${hpBar(me, true)}
       ${me.conds?.length ? `<div>${condChips(me, false)}</div>` : ''}${resChips(me, false)}
-      <div class="row"><button class="btn small" data-act="sel" data-id="${me.id}">Select & show moves</button><button class="btn small" data-act="search">🔍 Search</button>${st ? `<button class="btn small primary" data-act="stairs">${esc(exitLabel(state.floors[me.floor], st))}</button>` : ''}${turn ? `<button class="btn small primary" data-act="endMyTurn">End my turn</button>` : ''}</div></div>`;
+      <div class="row">${ui.cardOnly ? '' : `<button class="btn small" data-act="sel" data-id="${me.id}">Select & show moves</button>`}<button class="btn small" data-act="search">🔍 Search</button>${st ? `<button class="btn small primary" data-act="stairs">${esc(exitLabel(state.floors[me.floor], st))}</button>` : ''}${turn ? `<button class="btn small primary" data-act="endMyTurn">End my turn</button>` : ''}</div></div>`;
+    h += `<div class="row"><button class="btn small ${ui.cardOnly ? 'on' : ''}" data-act="cardOnly" title="At an in-person game, when the TV shows the map: no map on this phone, just your hero as a big card">📇 Card only${ui.cardOnly ? ': ON' : ' (we\'re at the table)'}</button></div>`;
+    if (ui.cardOnly) h += cardHTML(me);
     if (sheet) h += sheetHTML(sheet) + `<div class="row"><button class="btn small" data-act="editHero" data-id="${sheet.id}">✎ Edit / level up</button></div>`;
     h += picker + newAtTable();
-    h += `<div class="muted">${state.combat.active ? (turn ? '<b style="color:var(--candle)">It is your turn.</b> Tap a glowing tile to move.' : 'Combat — wait for your turn to move.') : 'Exploring — tap your hero, then a glowing tile.'}<br>Tap a door next to you to open it. Long-press or use ◎ to ping a spot for everyone.</div>`;
+    if (!ui.cardOnly) h += `<div class="muted">${state.combat.active ? (turn ? '<b style="color:var(--candle)">It is your turn.</b> Tap a glowing tile to move.' : 'Combat — wait for your turn to move.') : 'Exploring — tap your hero, then a glowing tile.'}<br>Tap a door next to you to open it. Long-press or use ◎ to ping a spot for everyone.</div>`;
   }
   h += gfxPanel() + `<h3>Log</h3><div class="log">${logList(25)}</div>`;
   return h;
@@ -388,7 +425,7 @@ export function renderPanel(){
   if (!state) return;
   $('#panel').classList.toggle('closed', !ui.panelOpen);
   const body = $('#tabBody'), scroll = renderPanel.last === ui.tab ? body.scrollTop : 0; renderPanel.last = ui.tab;
-  const tabs = { story:storyTab, valley:valleyTab, tokens:tokensTab, bestiary:bestiaryTab, dungeon:dungeonTab, build:buildTab, gaze:gazeTab, table:tableTab, hero:heroTab,
+  const tabs = { story:storyTab, valley:valleyTab, tokens:tokensTab, bestiary:bestiaryTab, dungeon:dungeonTab, build:buildTab, gaze:gazeTab, table:tableTab, night:nightTab, hero:heroTab,
     map:playerMapTab,
     log:() => `<h3>What has happened</h3><div class="log" style="max-height:none">${logList()}</div>` };
   body.innerHTML = (tabs[ui.tab] || tokensTab)();

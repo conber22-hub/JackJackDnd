@@ -1,5 +1,5 @@
 /* UI EVENT WIRING — every [data-act] button, [data-edit] field, and keyboard shortcut. */
-import { state, setState, ui, tokById, isDM, makePC, makeNPC } from '../engine/state.js';
+import { state, setState, ui, tokById, isDM, makePC, makeNPC, dreadLevel } from '../engine/state.js';
 import { updateVision, freeTilesNear, seenNow } from '../engine/grid.js';
 import { roomById } from '../engine/generator.js';
 import { floorToAscii, floorToJSON } from '../engine/importer.js';
@@ -32,6 +32,8 @@ import { openCreator, sheetHTML } from './creator.js';
 import { PROPS } from '../data/props.js';
 import { propAction, selectProp, selectedProp, actorFor, editProp } from '../game/objects.js';
 import { goToMap, returnToParty, forgetMap } from '../game/maps.js';
+import { setCardOnly, cardAct, cardStep } from './cards.js';
+import { openScreenWindow, setMode as nightMode, setFollow, sendLook, narrate, clearScreen, partyRoom, introduce, reshowHandout, setTimer, showHandout } from '../game/night.js';
 import { valleyMapHTML } from './valley.js';
 import { makeCamp } from '../game/overworld.js';
 import { valley, travel, arrive, enterPlace, readEvent, springEvent, doneEvent, newRoadEvent, goToEvent } from '../game/overworld.js';
@@ -309,6 +311,27 @@ document.addEventListener('click', e => {
     case 'propKind': ui.propKind = k; renderPanel(); break;
     case 'houseKind': ui.houseKind = k; renderPanel(); break;
     case 'houseDark': ui.houseDark = !ui.houseDark; renderPanel(); break;
+    // game night (game/night.js)
+    case 'ntOpen': openScreenWindow(); break;
+    case 'ntMode': nightMode(k); renderPanel(); break;
+    case 'ntFollow': setFollow(k === 'on'); renderPanel(); break;
+    case 'ntLook': sendLook(); break;
+    case 'ntNarrate': narrate($('#ntTitle').value.trim(), $('#ntText').value); break;
+    case 'ntClear': clearScreen(); break;
+    case 'ntQuick': {
+      if (k === 'room'){ const r = partyRoom(); if (r) narrate(r.name, r.read); }
+      else if (k === 'open'){ const se = sessionById(state.campaign.session); if (se) narrate(`Session ${se.n} — ${se.title}`, se.open); }
+      else { const D = dreadLevel(); narrate(`Strahd's Gaze — ${D.n}`, D.text); } } break;
+    case 'ntIntro': introduce(id, $('#ntLine')?.value || ''); break;
+    case 'ntHand': reshowHandout(+k); break;
+    case 'ntTimer': setTimer(+k); renderPanel(); break;
+    case 'ntDice': state.campaign.realDice = !state.campaign.realDice; changed(); renderPanel(); break;
+    case 'ntQuiet': { const quiet = gfx.sfx || gfx.music; setGfx({ sfx:!quiet, music:!quiet }); renderPanel(); } break;
+    case 'cardOnly': setCardOnly(!ui.cardOnly); renderAll(); break;
+    case 'cardAct': cardAct(k, +el.dataset.i, el.dataset.res); break;
+    case 'cardStep': { const [dx, dy] = k.split(',').map(Number); cardStep(dx, dy); } break;
+    case 'scFull': (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.())?.catch?.(() => {}); break;
+    case 'scSound': toast('Sound is on for this screen.'); break;   // the tap itself unlocks the browser's audio
     case 'closeHelp': $('#helpModal').classList.add('hidden'); break;
     case 'help': $('#helpModal').classList.remove('hidden'); break;
     // the threshold (start page)
@@ -340,6 +363,7 @@ document.addEventListener('change', e => {
   else if (['propLock', 'propContents', 'propStash', 'propStashDc'].includes(kind)){ const p = selectedProp(); if (p) editProp(ui.selProp.floor, p.id, { propLock:'lock', propContents:'contents', propStash:'stash', propStashDc:'stashDc' }[kind], el.value); }
   else if (kind === 'fightPick' && ui.fight){ if (el.checked) ui.fight.ids.add(el.dataset.id); else ui.fight.ids.delete(el.dataset.id); renderFightSetup(); }
   else if (kind === 'fightGroup' && ui.fight){ ui.fight.group = el.checked; }
+  else if (kind === 'ntHandout' && el.files[0]) showHandout(el.files[0]).then(() => renderPanel());
   else if (kind === 'doorDc'){ const dr = selectedDoor(); if (dr){ dr.dc = +el.value || 15; changed(); } }
   else if (kind === 'trapKind'){ const tr = selectedTrap(); if (tr){ tr.kind = el.value; buildFloor(ui.selTrap.floor); changed(); } }
   else if (kind === 'model' && el.files[0]){
@@ -360,6 +384,7 @@ document.addEventListener('change', e => {
 });
 document.addEventListener('input', e => {
   if (e.target.id === 'dread') setDread(+e.target.value);
+  if (['ntText', 'ntTitle', 'ntLine'].includes(e.target.id)) ui[e.target.id] = e.target.value;   // the Night tab keeps what's being written
   if (e.target.dataset?.edit === 'gfxVol') setGfx({ volume:+e.target.value });
   if (e.target.id === 'bestSearch'){ ui.bestSearch = e.target.value; const pos = e.target.selectionStart; renderPanel(); const s = $('#bestSearch'); s.focus(); s.setSelectionRange(pos, pos); }
   if (e.target.id === 'ndTemplate' || e.target.id === 'newTemplate'){ const tp = TEMPLATES.find(t => t.id === e.target.value); const b = $(e.target.id === 'ndTemplate' ? '#ndBlurb' : '#newBlurb'); if (b && tp) b.textContent = tp.blurb;

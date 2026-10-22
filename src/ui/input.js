@@ -28,6 +28,7 @@ import { updateVision } from '../engine/grid.js';
 import { rebuildFog } from '../game/actions.js';
 import { selectProp } from '../game/objects.js';
 import { away, bringPartyHere, moveParty } from '../game/maps.js';
+import { askD20, realDice } from '../game/night.js';
 import { isObject, propSquares } from '../engine/objects.js';
 import { propAt } from '../data/props.js';
 
@@ -193,6 +194,10 @@ function handleTap(cx, cy, shift = false){
       if (!passAim(tokId, attackCheck(tokById(ui.modeData.attacker), tokById(tokId), ui.modeData.i))) return;
       if (ui.role === 'player') requestAct({ kind:'attack', id:ui.modeData.attacker, i:ui.modeData.i, target:tokId, mode:ui.atkMode });
       else if (ui.modeData.legend != null){ const a = tokById(ui.modeData.attacker); if (a && payLegend(a, ui.modeData.legend)) doAttack(a.id, tokId, ui.modeData.i, ui.atkMode); }
+      else if (realDice() && tokById(ui.modeData.attacker)?.kind !== 'monster'){   // in person: they rolled a real d20
+        const a = ui.modeData.attacker, i = ui.modeData.i, mode = ui.atkMode, nm = tokById(a)?.name;
+        askD20(`${nm} attacks ${tokById(tokId)?.name}`, n => doAttack(a, tokId, i, mode, { d20:n }));
+      }
       else doAttack(ui.modeData.attacker, tokId, ui.modeData.i, ui.atkMode);
       ui.atkMode = 'normal'; setMode('select'); renderSel(); } return;
     case 'cast': {

@@ -22,6 +22,11 @@ import { updateSkyline } from './render/skyline.js';
 import { sendWhisper } from './ui/hud.js';
 import { renderPanel } from './ui/panels.js';
 import { showStart } from './ui/events.js';
+import { bootScreenUI } from './ui/screen.js';
+import { initCardOnly } from './ui/cards.js';
+import { runLocalScreen, listenForScreens } from './net/screen.js';
+import { joinTable, readInvite, net, setScreenNow } from './net/table.js';
+import { nightNow } from './game/night.js';
 import './ui/input.js';
 import * as api from './debug.js';
 
@@ -96,7 +101,7 @@ function frame(){
   }
   controls.update();
   if (fx.shake > 0){ fx.shake = Math.max(0, fx.shake - dt * .2); camera.position.x += (Math.random() - .5) * fx.shake; camera.position.y += (Math.random() - .5) * fx.shake; }
-  renderFrame(t, state ? (state.dread - 1) / 9 : 0);
+  if (!(ui.cardOnly && ui.role === 'player')) renderFrame(t, state ? (state.dread - 1) / 9 : 0);   // card only: the TV has the map
 }
 
 // Hands crawl up onto the nearest wall and cling there.
@@ -110,6 +115,15 @@ function climb(g, fig, t){
   fig.rotation.x += (rx - fig.rotation.x) * .08; fig.rotation.z += (rz - fig.rotation.z) * .08;
 }
 
-showStart();
+// ?screen: this window is the table screen for the TV (ui/screen.js) — of this computer's DM window, or of a
+// table on another device (?screen=CODE). Otherwise the threshold (start page).
+const scr = new URLSearchParams(location.search).get('screen');
+if (scr !== null){
+  readInvite(); bootScreenUI(); $('#startModal')?.classList.add('hidden');
+  if (scr.length >= 4){ joinTable(scr, '📺 Table screen', 'screen-' + Math.random().toString(36).slice(2, 8)); net.join.screen = true; }
+  else runLocalScreen();
+} else showStart();
+initCardOnly();   // a player's phone at an in-person game: no 3D (ui/cards.js)
+setScreenNow(nightNow); listenForScreens();
 frame();
 window.DreadDelve = api;   // handy for debugging in the console: DreadDelve.state, DreadDelve.shiftFloor(0), …

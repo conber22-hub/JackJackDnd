@@ -178,6 +178,17 @@ textarea.txt{min-height:70px;resize:vertical;font-size:13px}
 .fpick{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;cursor:pointer}.fpick:hover{background:#ffffff08}
 .fpick .why{margin-left:auto;font-size:12px;color:var(--dim)}.fpick.out .nm{color:var(--dim)}
 #fightBox{max-width:440px;width:100%}
+/* card only (ui/cards.js): a player's phone at the table */
+body.cardonly.player #stage, body.cardonly.player #dock, body.cardonly.player #selCard, body.cardonly.player #skyline{display:none}
+body.cardonly.player #panel{left:0;right:0;top:78px;bottom:0;width:auto;height:auto !important;border-radius:0;transform:none !important}
+.cbig h4{display:flex;align-items:center;gap:8px;justify-content:space-between}
+.cturn{text-align:center;padding:8px;border-radius:12px;background:#1d1719;color:var(--dim);font-family:"Cormorant Garamond",Georgia,serif;font-size:22px}
+.cturn.on{background:#3a2412;color:var(--candle);box-shadow:0 0 18px #e9a54a55}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.cact{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:12px;min-height:58px;text-align:left}.cact b{font-size:16px}.cact span{font-size:12px;color:var(--dim)}
+.dpad{display:grid;grid-template-columns:repeat(3,64px);gap:6px;justify-content:center}.dpad .btn{height:56px;font-size:24px;justify-content:center}
+#pickBox{max-width:420px;width:100%}.pickrow{display:flex;justify-content:space-between;width:100%;margin:4px 0;padding:12px}
+#dieBox{max-width:420px;width:100%}.d20grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:12px 0}.d20grid .btn{font-size:20px;padding:12px 0;justify-content:center}
 #initBar .ib{display:flex;gap:6px;padding:8px;border-top:1px solid var(--line)}
 #initBar .ib .btn{flex:1;padding:6px}
 
@@ -227,6 +238,48 @@ textarea.txt{min-height:70px;resize:vertical;font-size:13px}
 .res .pip{letter-spacing:1px;color:var(--candle)}
 
 /* ---------- pop-ups ---------- */
+/* the table screen (ui/screen.js): a TV at an in-person game */
+body.screen #panel, body.screen #dock, body.screen #selCard, body.screen #initBar, body.screen #topbar, body.screen #topPanels,
+body.screen #modeHint, body.screen #moveTip, body.screen #btnPanel, body.screen #roleBadge{display:none !important}
+body.screen #toasts{display:none}
+#screenHud.hidden{display:none}
+.sc-top{position:fixed;top:0;left:0;right:0;z-index:6;display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 18px 22px;background:linear-gradient(#0c0a10f0,#0c0a1000);pointer-events:none}
+#scTitle{font-family:"Cormorant Garamond",Georgia,serif;font-size:30px;color:#efe1c8;text-shadow:0 0 14px #000;display:flex;gap:14px;align-items:baseline}
+#scTitle span{font-size:20px;color:#bfb3a6}
+#scTitle .sc-gaze{color:#e46a6a;font-size:22px}#scTitle .sc-gaze i{color:#bfb3a6;font-size:17px}
+#scRibbon{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;justify-content:center}
+.sc-round{font-family:"Cormorant Garamond",Georgia,serif;color:var(--candle);font-size:22px;margin-right:6px}
+.sc-ini{display:flex;flex-direction:column;align-items:center;gap:3px;opacity:.72;transition:all .4s}
+.sc-ini .nm{font-size:14px;color:#e7dcc8;max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sc-ini.cur{opacity:1;transform:scale(1.25)}.sc-ini.cur .sc-face{box-shadow:0 0 0 3px var(--candle),0 0 24px #e9a54a99}
+.sc-ini.dead{opacity:.3;filter:grayscale(1)}
+.sc-face{width:46px;height:46px;border-radius:50%;object-fit:cover;display:inline-flex;align-items:center;justify-content:center;font:600 20px/1 Georgia,serif;color:#140d10;border:2px solid #0008;background:#444}
+.sc-face.big{width:64px;height:64px;font-size:28px}
+#scParty{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;gap:18px;justify-content:center;padding:26px 18px 14px;background:linear-gradient(#0c0a1000,#0c0a10f0);pointer-events:none}
+.sc-hero{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:96px}
+.sc-hero .nm{font-size:16px;color:#efe1c8}.sc-hero .cd{font-size:16px;min-height:18px}
+.sc-hero.cur .sc-face{box-shadow:0 0 0 3px var(--candle),0 0 24px #e9a54a99}.sc-hero.dead{opacity:.35;filter:grayscale(1)}
+.sc-hp{display:block;width:84px;height:6px;border-radius:3px;background:#2a1a1c;overflow:hidden}.sc-hp b{display:block;height:100%;background:#4fa37a;transition:width .6s}
+#scTimer{position:fixed;right:28px;bottom:120px;z-index:7;width:86px;height:86px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:conic-gradient(var(--candle) calc(var(--k,1) * 360deg),#2a1d16 0);box-shadow:0 0 22px #000}
+#scTimer::before{content:'';position:absolute;inset:7px;border-radius:50%;background:#140d10}
+#scTimer b{position:relative;font:600 28px/1 "Cormorant Garamond",Georgia,serif;color:#efe1c8}#scTimer.out{background:#6a1a1e}
+#scTimer.hidden{display:none}
+#scDark{position:fixed;inset:0;z-index:8;background:#000;display:flex;align-items:center;justify-content:center;transition:opacity 1s}
+#scDark.hidden{display:none}
+#scDark .flame{width:14px;height:34px;border-radius:50% 50% 45% 45%;background:radial-gradient(ellipse at 50% 70%,#fff3c4,#ffb347 40%,#ff6a1a 70%,transparent 72%);filter:blur(1px);animation:flick 1.6s ease-in-out infinite;box-shadow:0 0 60px 20px #ff8a2a33}
+@keyframes flick{0%,100%{transform:scale(1,1) rotate(-2deg)}40%{transform:scale(.92,1.08) rotate(2deg)}70%{transform:scale(1.05,.95)}}
+#scOver{position:fixed;inset:0;z-index:9;display:flex;align-items:center;justify-content:center;padding:6vh 8vw;background:radial-gradient(ellipse at center,rgba(12,9,16,.88),rgba(4,3,6,.97));opacity:0;transition:opacity 1.2s}
+#scOver.in{opacity:1}#scOver.hidden{display:none}
+.sc-narr{max-width:1100px;text-align:center}.sc-narr h2,.sc-intro h2,.sc-hand h2{font-family:"Cormorant Garamond",Georgia,serif;color:var(--candle);font-size:44px;margin:0 0 18px}
+.sc-narr p{font-family:"Cormorant Garamond",Georgia,serif;font-size:clamp(26px,3.2vw,46px);line-height:1.45;color:#efe1c8;font-style:italic;text-shadow:0 0 20px #000}
+.sc-narr .type{animation:reveal 4s ease-out both}@keyframes reveal{from{opacity:0;letter-spacing:.06em;filter:blur(3px)}to{opacity:1;letter-spacing:0;filter:none}}
+.sc-intro{display:flex;gap:5vw;align-items:center;max-width:1200px}.sc-intro img{width:min(38vw,460px);border-radius:18px;box-shadow:0 0 60px #000,0 0 0 2px #8b6a2a;animation:reveal 2.4s ease-out both}
+.sc-intro p{font-family:"Cormorant Garamond",Georgia,serif;font-size:clamp(24px,2.6vw,38px);color:#efe1c8;font-style:italic;line-height:1.4}
+.sc-hand{text-align:center}.sc-hand img{max-width:84vw;max-height:76vh;border-radius:10px;box-shadow:0 0 60px #000}
+.sc-btns{position:fixed;top:12px;right:12px;z-index:10;display:flex;gap:6px;opacity:.25;transition:opacity .3s}.sc-btns:hover{opacity:1}
+body.screen .pop{transform:scale(1.35)}
+body.screen #turnBanner{font-size:52px;top:46%}
 #prepVeil{position:fixed;inset:0;z-index:4;background:radial-gradient(ellipse at center,rgba(12,9,16,.82),rgba(5,4,8,.95));backdrop-filter:blur(4px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;pointer-events:auto;text-align:center;padding:24px}
 #prepVeil.hidden{display:none}
 #prepVeil .t{font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-size:32px;color:var(--candle);text-shadow:0 0 18px #000;animation:veil 3s ease-in-out infinite}
@@ -481,6 +534,14 @@ textarea.txt{min-height:70px;resize:vertical;font-size:13px}
 <div id="topPanels"><div id="oaPanel"></div><div id="reqPanel"></div><div id="roomPrompts"></div></div>
 <div id="moveTip"></div>
 <div id="cardLayer"></div>
+<div id="screenHud" class="hidden">
+  <div class="sc-top"><div id="scTitle"></div><div id="scRibbon"></div></div>
+  <div id="scParty"></div>
+  <div id="scTimer" class="hidden"><b></b></div>
+  <div id="scDark" class="hidden"><div class="flame"></div></div>
+  <div id="scOver" class="hidden"></div>
+  <div class="sc-btns"><button class="btn small" data-act="scFull" title="Full screen">⛶</button><button class="btn small" data-act="scSound" title="Let the screen play sound (browsers need one tap first)">🔊</button></div>
+</div>
 <div id="prepVeil" class="hidden"><div class="t"></div><div class="s">Your hero is safe where you left them. Hold on.</div></div>
 <div id="toasts"></div>
 
@@ -558,6 +619,8 @@ textarea.txt{min-height:70px;resize:vertical;font-size:13px}
   </div>
 </div>
 
+<div class="modal hidden" id="pickModal"><div class="box" id="pickBox"></div></div>
+<div class="modal hidden" id="dieModal"><div class="box" id="dieBox"></div></div>
 <div class="modal hidden" id="fightModal"><div class="box" id="fightBox"></div></div>
 <div class="modal hidden" id="valleyModal"><div class="box wide" id="valleyBox"></div></div>
 
@@ -575,6 +638,9 @@ textarea.txt{min-height:70px;resize:vertical;font-size:13px}
       <b>Moving the party (DM)</b> — outside a fight, the heroes nearby follow the one you move, single file in marching order (Tokens tab: ⇡ reorders, 🚩 Stays keeps one put, 🚶 Party follows turns it off). <kbd>Shift</kbd>-click creatures (or 👥 Select party / Select its kind) to move several at once in formation. 🐾 Close in walks a monster up to the nearest hero.<br>
       <b>Maps (DM)</b> — the Maps tab keeps every map you leave on a shelf, as the party left it: fog, doors, furniture and whoever stayed behind. Session dungeons and Valley places come back off the shelf when you return. <b>⇢ Go there</b> takes the party; <b>✎ Set it up</b> opens a map without them (the players' screens hold still under a veil) until you <b>📍 bring the party here</b> (tap where they arrive) or go <b>↩ back to them</b>. <b>📍 Move the party</b> regroups everyone on a square you tap. Outside a fight, the party follows whoever takes the stairs.<br>
       <b>Starting a fight (DM)</b> — <b>⚔ Start a fight…</b> ticks the party and the creatures in sight, close by or alerted (the rest of the floor stays out), can let identical creatures share one roll, and sets who is surprised (disadvantage on initiative). In the fight: <b>🤖 Its turn</b> runs a monster's turn (hit, shoot, or close in and hit), <b>⏭</b> holds back the current creature, <b>✕</b> takes one out of the fight. When every foe is down, the win is called with its XP.<br>
+      <b>Game night (in person)</b> — the DM's <b>Night</b> tab opens the <b>table screen</b>: a window to drag onto the TV. It shows what the party sees: whose turn it is across the top with the heroes' faces, the party along the bottom, and a camera that follows the action. From the Night tab the DM can:
+      <ul><li>put read-aloud text, a face and a name, or a handout picture on the TV</li><li>turn the lights out</li><li>send the TV where the DM is looking</li><li>run a turn timer</li><li>turn on <b>real dice</b>, then type in the d20 the players rolled</li></ul>
+      Players can join on their phones and turn on <b>📇 Card only</b>: no map, just their hero, big buttons, a list of targets, and a pad to step one square (north is up, as on the TV).<br>
       <b>Doors & traps</b> — tap a door or a found trap for its card: open, pick, force, disarm. <i>Search</i> looks for hidden ones within 15 ft.<br>
       <b>Stairs</b> — stand on a stair rune and press <i>Descend</i> / <i>Ascend</i> on the token card.<br>
       <b>Ping</b> — the ◎ button, or long-press a tile, flashes it for the whole table.<br>

@@ -15,6 +15,7 @@ import { renderPanel } from '../ui/panels.js';
 import { serialize, deserialize, resetScene } from '../game/session.js';
 import { doMove, takeStairs, doPing, goFloor, select, animatePath, doorAction, search, disarmTrap } from '../game/actions.js';
 import { propAction } from '../game/objects.js';
+import { screenMsg, afterScreenState } from '../ui/screen.js';
 import { currentTurn, canAct } from '../game/rules.js';
 import { nextTurn } from '../game/combat.js';
 import { applyCharacter, charactersOf, ownsCharacter, sheetForPlayer, saveMyHero, myHero } from '../game/heroes.js';
@@ -171,11 +172,34 @@ export function sendSheetToOwner(id){
 export function sendToSeat(tokId, m){ for (const [pid, tid] of Object.entries(state.seats || {})) if (tid === tokId){ const s = net.conns.get(pid); if (s?.conn.open) try { s.conn.send(m); } catch {} } }
 export function broadcast(m, except){ for (const [pid, s] of net.conns) if (pid !== except && s.conn.open) try { s.conn.send(m); } catch {} }
 let pushTimer = null;
+// Everything a newcomer needs to draw the table: who they are, the art, the 3D models they lack, the state.
+function welcome(c, have = []){
+  c.send({ t:'you', peer:c.peer });
+  c.send({ t:'art', art:state.art });
+  const got = new Set(Array.isArray(have) ? have : []);
+  for (const md of allModels()) if (!got.has(md.key)) c.send({ t:'model', key:md.key, name:md.name, buf:md.buf });
+  c.send({ t:'state', s:forPlayers() });
+  if (state.campaign?.away) c.send({ t:'prep', on:true, text:'The DM is setting the scene…' });
+  for (const m of screenNow()) c.send(m);
+}
+/* A table screen in another window of this browser (net/screen.js): a connection like any player's, over a
+   BroadcastChannel instead of the network, so it works with no table opened and no internet. */
+export function addLocalScreen(id, send){
+  const conn = { peer:id, open:true, send, close(){ this.open = false; net.conns.delete(id); renderPanel(); } };
+  net.conns.set(id, { conn, name:'📺 Table screen (this computer)', screen:true, seen:Date.now() });
+  welcome(conn); toast('📺 The table screen is up.'); renderPanel();
+}
+export function dropLocalScreen(id){ net.conns.get(id)?.conn.close(); }
+export const screens = () => [...net.conns.values()].filter(s => s.screen);
+// What the screen should be showing right now (sent to a screen when it connects): set by game/night.js.
+let screenNow = () => [];
+export function setScreenNow(fn){ screenNow = fn; }
+export function toScreens(m){ for (const s of net.conns.values()) if (s.screen && s.conn.open) try { s.conn.send(m); } catch {} }
 // What players receive: the delve without the DM's campaign desk (notes, fortune, clocks), anyone's character sheets,
 function forPlayers(){
   const V = state.campaign?.valley, free = !!state.campaign?.freeRolls;
   const s = redactForPlayers(serialize(false), { seen:seenNow, explored:state.explored });   // secrets stay with the DM (engine/redact.js)
-  s.freeRolls = free; s.weather = state.campaign?.weather || ''; s.hour = V?.hour;
+  s.freeRolls = free; s.realDice = !!state.campaign?.realDice; s.weather = state.campaign?.weather || ''; s.hour = V?.hour;
   if (V?.shared) s.valley = { at:V.at, visited:[...V.visited], journey:V.journey ? { to:V.journey.to, path:[...V.journey.path] } : null, day:V.day, hour:V.hour, weather:V.weather || '' };   // the map, if the DM shares it
   return s;
 }   // (and not what waits on the road)
@@ -186,6 +210,10 @@ function onHostMsg(c, m){
   const seat = net.conns.get(c.peer); if (!seat || seat.conn !== c || !m) return;
   const me = tokById(state.seats[c.peer]), mine = id => state.seats[c.peer] === id;
   const near = (L, i) => me && me.floor === L && cheb(me.x, me.y, i % state.floors[L].W, (i / state.floors[L].W) | 0) <= 1;
+  if (m.t === 'hello' && m.screen){   // a table screen (a TV's browser): sees what the players see, sits nowhere
+    seat.name = '📺 Table screen'; seat.screen = true;
+    welcome(c, m.have); toast('📺 A table screen joined.'); renderPanel(); return;
+  }
   if (m.t === 'hello'){
     seat.name = String(m.name || 'Player').trim().slice(0, 30); seat.key = String(m.key || '').slice(0, 20);
     let match = null;
@@ -205,11 +233,7 @@ function onHostMsg(c, m){
     else toast(`${seat.name} is back${match ? ` (${match.name})` : ''}.`);
     c.send({ t:'you', peer:c.peer });
     c.send({ t:'yours', chars:mineAll.length ? charactersOf(seat.name, seat.key).map(sheetForPlayer) : [], quiet:!!m.re });
-    c.send({ t:'art', art:state.art });
-    const have = new Set(Array.isArray(m.have) ? m.have : []);
-    for (const md of allModels()) if (!have.has(md.key)) c.send({ t:'model', key:md.key, name:md.name, buf:md.buf });
-    c.send({ t:'state', s:forPlayers() });
-    if (state.campaign?.away) c.send({ t:'prep', on:true, text:'The DM is setting the scene…' });
+    welcome(c, m.have);
     renderPanel(); pushState();
   }
   else if (m.t === 'pick'){
@@ -337,11 +361,11 @@ function connected(c){
   const first = !net.everOpen, J = net.join;
   net.everOpen = true; net.status = 'open'; net.tries = 0; net.why = ''; net.lastSeen = Date.now();
   if (first){
-    ui.role = 'player'; ui.myName = J.name; ui.tab = 'hero'; ui.tableChars = [];
+    ui.role = 'player'; ui.myName = J.name; ui.tab = ui.screen ? 'log' : 'hero'; ui.tableChars = [];
     $('#startModal').classList.add('hidden'); joinStatus('');
   }
   const hero = J.hero || (J.dirty && myHero(J.dirty)); J.hero = null; J.dirty = null;
-  c.send({ t:'hello', name:J.name, key:J.key, re:!first, have:allModels().map(m => m.key), ...(hero ? { char:hero } : {}) });
+  c.send({ t:'hello', name:J.name, key:J.key, re:!first, have:allModels().map(m => m.key), ...(hero ? { char:hero } : {}), ...(J.screen ? { screen:true } : {}) });
   toast(first ? 'Connected — waiting for the DM…' : 'Back at the table.');
   renderAll(); renderNetStatus();
 }
@@ -387,8 +411,9 @@ export function sendHost(m){
   return false;
 }
 setSender(sendHost);
-function onClientMsg(m){
+export function onClientMsg(m){
   if (!m) return;
+  if (ui.screen && screenMsg(m)) return;   // narration, introductions, handouts, lights out (ui/screen.js)
   if (m.t === 'state') applyRemoteState(m.s);
   else if (m.t === 'propfx' && state) animateProp(m.floor, m.id, m.fx);
   else if (m.t === 'anim' && state){ animatePath(m.id, m.path, s => { const t = tokById(m.id); if (t){ t.x = s.x; t.y = s.y; } updateVision(); syncTokens(); }, null, m.id === ui.myToken); }
@@ -434,4 +459,5 @@ function applyRemoteState(s){
   else if (me && ui.selected === me.id && !tokenViews.get(me.id)?.anim) showReach(me);   // what's left of their move
   lastTurnSeen = key;
   renderAll();
+  if (ui.screen) afterScreenState();
 }

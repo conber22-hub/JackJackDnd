@@ -168,7 +168,8 @@ function animate(id, kind, target){ actOn(id, kind, target); broadcast({ t:'act'
 
 /* ---------- attacks & saves ---------- */
 const nearSeep = (tg, a) => state.tokens.some(o => o.id !== a.id && o.id !== tg.id && !o.dead && o.floor === tg.floor && hasTag(o, 'seep') && cheb(o.x, o.y, tg.x, tg.y) <= 1);
-export function doAttack(aId, tId, i, mode = 'normal'){
+// d20: a die rolled at the table (real dice, game/night.js) — used as the attack's d20 (the first, for rays).
+export function doAttack(aId, tId, i, mode = 'normal', { d20 = null } = {}){
   const a = tokById(aId), tg = tokById(tId), atk = a?.attacks?.[i]; if (!a || !tg || !atk) return false;
   const slot = spendSpell(a, atk.l, atk.sn || atk.n, !!atk.again);
   if (slot === null){ toast(`${a.name} has no spell slot left for ${atk.n}.`); return false; }
@@ -195,12 +196,13 @@ export function doAttack(aId, tId, i, mode = 'normal'){
   // one roll per ray / beam (Scorching Ray, Eldritch Blast); everything else is one roll
   const rolls = [], lines = [];
   for (let k = 0; k < (atk.rays || 1); k++){
-    const r1 = d(20), r2 = d(20), r = useBoth ? (adv ? Math.max(r1, r2) : Math.min(r1, r2)) : r1;
+    const real = k === 0 && d20 >= 1 && d20 <= 20 ? Math.round(d20) : null;
+    const r1 = d(20), r2 = d(20), r = real ?? (useBoth ? (adv ? Math.max(r1, r2) : Math.min(r1, r2)) : r1);
     const tot = r + bonus, crit = r === 20 || (r !== 1 && hasCond(tg, 'paralyzed') && cheb(a.x, a.y, tg.x, tg.y) <= 1), hit = crit || (r !== 1 && tot >= ac);
     let dmg = hit ? rollDice(atk.d, crit).total + rage : 0;
     if (halved) dmg = Math.floor(dmg / 2);
     rolls.push({ hit, crit, dmg });
-    lines.push(`${atk.rays > 1 ? `#${k + 1} · ` : ''}d20 ${useBoth ? `(${r1}, ${r2} → ${adv ? 'adv' : 'dis'}) ` : ''}<b>${r}</b> ${signed(bonus)} = <b>${tot}</b> vs AC ${ac}${cov.ac ? ` <span class="muted">(${cov.cover === 'half' ? 'half' : '¾'} cover)</span>` : ''} — <b>${crit ? 'CRITICAL' : hit ? 'HIT' : r === 1 ? 'FUMBLE' : 'MISS'}</b>${atk.rays > 1 && hit ? ` → ${dmg}` : ''}`);
+    lines.push(`${atk.rays > 1 ? `#${k + 1} · ` : ''}${real ? '🎲 at the table ' : `d20 ${useBoth ? `(${r1}, ${r2} → ${adv ? 'adv' : 'dis'}) ` : ''}`}<b>${r}</b> ${signed(bonus)} = <b>${tot}</b> vs AC ${ac}${cov.ac ? ` <span class="muted">(${cov.cover === 'half' ? 'half' : '¾'} cover)</span>` : ''} — <b>${crit ? 'CRITICAL' : hit ? 'HIT' : r === 1 ? 'FUMBLE' : 'MISS'}</b>${atk.rays > 1 && hit ? ` → ${dmg}` : ''}`);
   }
   const hits = rolls.filter(x => x.hit), crit = rolls.some(x => x.crit), total = hits.reduce((n, x) => n + x.dmg, 0);
   const flair = (atk.f || '{A} strikes at {T}.').replace(/\{A\}/g, a.name).replace(/\{T\}/g, tg.name);

@@ -52,7 +52,7 @@ export function renderTop(){
 }
 export function renderTabs(){
   const tabs = ui.role === 'player' ? [['hero', 'Your hero'], ...(state?.valley ? [['map', 'Map']] : []), ['log', 'Log']]
-    : [['story', 'Story'], ['valley', 'Valley'], ['tokens', 'Tokens'], ['bestiary', 'Beasts'], ['dungeon', 'Maps'], ['build', 'Build'], ['gaze', 'Gaze'], ['table', 'Table']];
+    : [['story', 'Story'], ['valley', 'Valley'], ['tokens', 'Tokens'], ['bestiary', 'Beasts'], ['dungeon', 'Maps'], ['build', 'Build'], ['gaze', 'Gaze'], ['table', 'Table'], ['night', 'Night']];
   if (!tabs.some(t => t[0] === ui.tab)) ui.tab = tabs[0][0];
   $('#tabs').innerHTML = tabs.map(([k, l]) => `<button data-act="tab" data-k="${k}" class="${ui.tab === k ? 'on' : ''}">${l}</button>`).join('');
 }
@@ -268,4 +268,4 @@ export function renderFightSetup(){
     <div class="muted">Surprised creatures roll initiative at disadvantage.</div>
     <div class="row" style="margin-top:10px"><button class="btn primary" data-act="fightGo" ${n ? '' : 'disabled'}>⚔ Roll initiative (${n})</button><button class="btn" data-act="fightCancel">Cancel</button></div>`;
 }
-export function renderAll(){ renderTop(); renderTabs(); renderPanel(); renderInit(); renderSel(); renderDock(); renderRequests(); renderPrompts(); renderOA(); }
+export function renderAll(){ document.body.classList.toggle('player', ui.role === 'player' && !ui.screen); renderTop(); renderTabs(); renderPanel(); renderInit(); renderSel(); renderDock(); renderRequests(); renderPrompts(); renderOA(); }
