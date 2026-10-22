@@ -13,8 +13,7 @@ export default defineConfig({
     baseURL:'http://127.0.0.1:4173',
     browserName:'chromium',
     viewport:{ width:1280, height:800 },
-    // PW_CHROMIUM: use a Chromium that is already installed (e.g. a cloud sandbox's) instead of Playwright's own download
-    launchOptions:{ args:['--enable-unsafe-swiftshader'], ...(process.env.PW_CHROMIUM ? { executablePath:process.env.PW_CHROMIUM } : {}) },
+    launchOptions:{ args:['--enable-unsafe-swiftshader'] },
     trace:'retain-on-failure',
     screenshot:'only-on-failure',
   },
