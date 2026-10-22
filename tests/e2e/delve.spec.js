@@ -66,7 +66,8 @@ test('Strike spends the opportunity reaction and the paused walk continues', asy
   });
   await idle(page);
   await frameMap(page);
-  await page.getByRole('button', { name:/Roll initiative/ }).click();
+  await page.getByRole('button', { name:/Start a fight/ }).click();
+  await page.locator('#fightBox [data-act="fightGo"]').click();
   await selectHero(page);
   await clickTile(page, 3, 10);
   await expect(page.locator('#oaPanel')).toContainText("Ada leaves");
@@ -89,7 +90,8 @@ test('Strike spends the opportunity reaction and the paused walk continues', asy
 test('Dash extends movement and Undo move restores position and movement spent', async ({ page }) => {
   await arena(page);
   await frameMap(page);
-  await page.getByRole('button', { name:/Roll initiative/ }).click();
+  await page.getByRole('button', { name:/Start a fight/ }).click();
+  await page.locator('#fightBox [data-act="fightGo"]').click();
   await selectHero(page);
   await page.locator('#selCard [data-act="turnAct"][data-k="dash"]').click();
   await clickTile(page, 14, 10); // 40 ft: beyond the hero's normal 30 ft speed.
