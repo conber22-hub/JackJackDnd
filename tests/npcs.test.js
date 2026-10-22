@@ -1,19 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import * as npcs from '../src/data/npcs.js';
+import * as npcs from '../src/data/npc-starter.js';
 
-const traits = ['NPC_OCCUPATIONS', 'NPC_LOOKS', 'NPC_QUIRKS', 'NPC_VOICES', 'NPC_WANTS', 'NPC_FEARS'];
-const nameParts = ['feminine', 'masculine', 'neutral', 'surnames'];
-
-test('NPC generator exports both name pools and at least 30 choices per trait', () => {
-  for (const key of ['NPC_NAMES', 'VISTANI_NAMES']){
-    assert.deepEqual(Object.keys(npcs[key]).sort(), [...nameParts].sort(), key);
-    for (const part of nameParts) assert.ok(Array.isArray(npcs[key][part]), `${key}.${part} must be a table`);
-  }
-  for (const key of traits){
+test('NPC starter preserves the five flat tables consumed by the generator', () => {
+  const minimums = { FIRST:90, LAST:30, VISTANI:90, QUIRKS:120, WANTS:60 };
+  assert.deepEqual(Object.keys(npcs).sort(), Object.keys(minimums).sort());
+  for (const [key, minimum] of Object.entries(minimums)){
     assert.ok(Array.isArray(npcs[key]), `${key} must be a table`);
-    assert.ok(npcs[key].length >= 30, `${key} needs at least 30 choices`);
+    assert.ok(npcs[key].length >= minimum, `${key} needs at least ${minimum} choices`);
+    assert.ok(npcs[key].every(line => typeof line === 'string'), `${key} must be flat`);
   }
+  assert.ok(npcs.VISTANI.every(name => name.trim().split(/\s+/).length >= 2), 'Vistani choices include a family name');
+  assert.ok([...npcs.QUIRKS, ...npcs.WANTS].every(line => !line.endsWith('.')), 'The generator adds punctuation');
 });
 
 test('every NPC table is non-empty, unique and contains single lines of at most 120 characters', () => {
