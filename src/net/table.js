@@ -179,7 +179,8 @@ function forPlayers(){
   if (V?.shared) s.valley = { at:V.at, visited:[...V.visited], journey:V.journey ? { to:V.journey.to, path:[...V.journey.path] } : null, day:V.day, hour:V.hour, weather:V.weather || '' };   // the map, if the DM shares it
   return s;
 }   // (and not what waits on the road)
-export function pushState(){ if (ui.role !== 'dm' || !net.conns.size) return; clearTimeout(pushTimer); pushTimer = setTimeout(() => broadcast({ t:'state', s:forPlayers() }), 60); }
+// While the DM sets up a map without the party (game/maps.js), the players' screens hold still under the veil.
+export function pushState(){ if (ui.role !== 'dm' || !net.conns.size || state?.campaign?.away) return; clearTimeout(pushTimer); pushTimer = setTimeout(() => broadcast({ t:'state', s:forPlayers() }), 60); }
 
 function onHostMsg(c, m){
   const seat = net.conns.get(c.peer); if (!seat || seat.conn !== c || !m) return;
@@ -189,7 +190,11 @@ function onHostMsg(c, m){
     seat.name = String(m.name || 'Player').trim().slice(0, 30); seat.key = String(m.key || '').slice(0, 20);
     let match = null;
     const lockedAway = t => t.charId && state.characters[t.charId]?.key && !ownsCharacter(state.characters[t.charId], seat.name, seat.key);
-    if (m.char?.id && m.char.cls) match = claimSheet(c, seat, m.char);
+    // while the DM sets up another map the party waits off it (game/maps.js): seat them on their waiting hero
+    const waiting = state.campaign?.away?.tokens || [], prev = state.campaign?.seatsBy?.[idKey(seat.name, seat.key)];
+    const held = waiting.find(t => t.id === prev || (m.char?.id && t.charId === m.char.id)) || waiting.find(t => t.kind === 'pc' && t.name.toLowerCase() === seat.name.toLowerCase());
+    if (held) match = held;
+    else if (m.char?.id && m.char.cls && !waiting.some(t => t.charId === m.char.id)) match = claimSheet(c, seat, m.char);
     const last = tokById(state.campaign?.seatsBy?.[idKey(seat.name, seat.key)]);
     if (!match && last && !last.flags?.gone && !lockedAway(last) && !seatTaken(c.peer, last.id)) match = last;
     const mineAll = charactersOf(seat.name, seat.key);
@@ -204,6 +209,7 @@ function onHostMsg(c, m){
     const have = new Set(Array.isArray(m.have) ? m.have : []);
     for (const md of allModels()) if (!have.has(md.key)) c.send({ t:'model', key:md.key, name:md.name, buf:md.buf });
     c.send({ t:'state', s:forPlayers() });
+    if (state.campaign?.away) c.send({ t:'prep', on:true, text:'The DM is setting the scene…' });
     renderPanel(); pushState();
   }
   else if (m.t === 'pick'){
@@ -288,7 +294,7 @@ export function joinTable(code, name, key, hero = null){
   connectHost();
 }
 export function leaveTable(quiet){
-  net.gen++; clearTimeout(net.retryTimer);
+  net.gen++; $('#prepVeil')?.classList.add('hidden'); clearTimeout(net.retryTimer);
   try { net.host?.close(); } catch {}
   net.host = null; net.status = 'closed';
   if (!quiet){ net.join = null; net.peer?.destroy(); net.peer = null; renderNetStatus(); }
@@ -403,6 +409,7 @@ function onClientMsg(m){
   else if (m.t === 'ping'){ spawnPing(m.floor, m.x, m.y, m.color); toast(`${m.who} pings the map`); }
   else if (m.t === 'whisper') showWhisper(m.text);
   else if (m.t === 'banner') banner(m.text);
+  else if (m.t === 'prep'){ const v = $('#prepVeil'); if (v){ v.classList.toggle('hidden', !m.on); v.querySelector('.t').textContent = m.text || ''; } }
   else if (m.t === 'sfx') sfx(m.name, false);
   else if (m.t === 'model'){ if (m.buf) putModel(m.key, m.buf, m.name, false).catch(() => {}); else deleteModel(m.key); }
   else if (m.t === 'art'){ if (state){ state.art = m.art || {}; syncTokens(); } else pendingArt = m.art; }

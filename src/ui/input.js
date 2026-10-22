@@ -27,6 +27,7 @@ import { changed, snapshot } from '../game/session.js';
 import { updateVision } from '../engine/grid.js';
 import { rebuildFog } from '../game/actions.js';
 import { selectProp } from '../game/objects.js';
+import { away, bringPartyHere, moveParty } from '../game/maps.js';
 import { isObject, propSquares } from '../engine/objects.js';
 import { propAt } from '../data/props.js';
 
@@ -72,7 +73,7 @@ export function setMode(mode, data = null, text = ''){
 export function refreshBuildOverlay(){
   if (!state) return;
   if (isDM() && ui.mode === 'room') showRoomHandles(ui.floor); else clearOverlay();
-  if (!['room', 'corridor', 'door', 'trap', 'stairs', 'erase', 'dig', 'fill', 'rough', 'paint', 'prop', 'house', 'noise'].includes(ui.mode)) showHover(null, null);
+  if (!['room', 'corridor', 'door', 'trap', 'stairs', 'erase', 'dig', 'fill', 'rough', 'paint', 'prop', 'house', 'noise', 'placeParty'].includes(ui.mode)) showHover(null, null);
 }
 
 /* ---------- pointer handling ---------- */
@@ -221,6 +222,7 @@ function handleTap(cx, cy, shift = false){
     case 'place':  if (tile && walk(f.grid[ti]) && !tokenAt(tile.floor, tile.x, tile.y)) placeMonster(ui.modeData.bid, tile); return;
     case 'placeTok': if (tile && walk(f.grid[ti])){ const t = tokById(ui.modeData.id); if (t){ t.floor = tile.floor; t.x = tile.x; t.y = tile.y; t.flags.gone = false; updateVision(); rebuildFog(); changed(); } setMode('select'); } return;
     case 'ping':   if (tile) doPing(tile); setMode('select'); return;
+    case 'placeParty': if (tile && walk(f.grid[ti])){ if (away()) bringPartyHere({ floor:tile.floor, x:tile.x, y:tile.y }); else moveParty(tile.floor, tile.x, tile.y); setMode('select'); renderPanel(); } return;
     case 'noise':  if (tile){ if (makeNoise(tile.floor, tile.x, tile.y, 2, 'A loud noise').length) changed(); else toast('Nothing near enough heard it.'); } setMode('select'); return;
     case 'paint':  if (tile) paintRoom(tile, ui.modeData.type); return;
     case 'door':   if (tile) placeDoorAt(tile); return;

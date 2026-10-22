@@ -16,6 +16,24 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.5 — maps you can move between, and smoother fights
+
+- **The map library** (`src/engine/maps.js`, `src/game/maps.js`; the Dungeon tab is now the **Maps** tab).
+  - Every map the table leaves goes on a shelf in the campaign (`state.campaign.maps`), with its fog, doors, furniture, dead and living creatures, and where the party stood.
+  - Session dungeons (Story tab), Valley places and generated delves all switch through it. A map built before (same key: `session:<n>:<template>`, `place:<id>:<map>`) comes back off the shelf instead of being rebuilt: the Story and Valley buttons say **Back to…**.
+  - Road maps are trimmed to the last three.
+  - The party (heroes, and NPCs unless 🚩 Stays) travels with the table. It arrives where it last stood on that map, else at the way in (the stairs up, the road's start), else the first room, laid out in marching order.
+- **Setting up** a map without the party (✎ Set it up, or Generate to set up).
+  - The party waits in `state.campaign.away`. The players' screens hold still under a "The DM is setting the scene…" veil: state pushes pause, and a reconnecting player is seated on their waiting hero.
+  - It ends when the DM brings the party over (📍 tap where they arrive) or goes back to them.
+- **📍 Move the party**: tap a square and the party regroups there in marching order. Outside a fight, the party follows whoever takes the stairs (🚩 Stays keeps one behind).
+- **Fights** (`src/engine/fight.js`).
+  - **⚔ Start a fight…** opens a picker. The party and the creatures in sight, within 12 squares or alerted are ticked; the far end of the map stays out.
+  - Identical creatures can share one roll. Surprise gives that side disadvantage on initiative (2024 rules).
+  - **🤖 Its turn** runs a monster's turn: hit whoever it can reach (the most hurt first), else shoot, else close in and hit.
+  - **⏭** holds back the current creature and **✕** takes one out of the fight. HP bars show in the initiative list.
+  - When every foe in the fight is down, a card calls the win with its XP, and **🏆 End the fight** takes the place of Next.
+
 ## v1.4 — furniture you can use
 
 - **Objects** (`src/data/objects.js`, `src/engine/objects.js`, `src/game/objects.js`): tap a piece, or a 🪑 chip on a hero's card for what's beside them.
@@ -294,6 +312,8 @@ src/engine/             pure logic: no DOM, no Three.js, unit-tested
   castle.js             Castle Ravenloft's five hand-shaped floors (approach, halls, upper keep, dungeons, catacombs)
   dressing.js           furnishing generated rooms (kits in src/data/dressing.js, read-aloud in src/data/descriptions.js); locks, stashes, shelves over secret doors
   objects.js            furniture rules: beside, push / topple targets, damage, what a hero can do with a piece
+  maps.js               the map library: who travels, packing a map for the shelf, where the party arrives
+  fight.js              who's in a fight, initiative (grouped, surprise), victory and XP
   settlement.js         the Valley's places: villages, towns, Krezk, Berez, the camp, the vineyard, the lake, the hill, the tower
 src/game/               rules that touch the scene and UI
   combat.js             initiative, attacks, damage, death hooks, the fx language, round-end Gaze effects
@@ -309,6 +329,7 @@ src/game/               rules that touch the scene and UI
   overworld.js          travelling: set out, the road's events, arrive, enter a place
   actions.js            select, move (doors / traps), stairs, falling, doors, search, disarm, floors, dread
   objects.js            open / pick / force / push / topple / smash / swing furniture, stashes, the DM's prop edits
+  maps.js               switching maps (shelve, restore, build), setting up without the party, the players' veil, moving the party
   build.js              Build tools, templates, populate, add/remove floors, import
   rules.js              movement allowance, conditions
   session.js            save / load / export, v1 save migration, undo, changed()

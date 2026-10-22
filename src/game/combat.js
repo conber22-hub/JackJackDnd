@@ -11,9 +11,10 @@ import { showCard, toast, banner, sendWhisper } from '../ui/hud.js';
 import { WHISPERS } from '../data/dread.js';
 import { sfx } from '../audio/sound.js';
 import { currentTurn, addCond, tickConds, hasCond, saveBonus, stopped } from './rules.js';
-import { freshTurn, clearOpportunities } from './moves.js';
+import { freshTurn, clearOpportunities, closeInMove, pausedMover } from './moves.js';
 import { rangeCheck, coverOf, areaOf, areaSquares, caughtIn, coverFromOrigin, spellReach } from '../engine/targeting.js';
-import { tokGap as gapTo } from '../engine/movement.js';
+import { tokGap as gapTo, bestMelee } from '../engine/movement.js';
+import { fightCandidates, rollOrder, fightWon, fightXp } from '../engine/fight.js';
 import { shiftFloor } from './shift.js';
 import { whimRoll, whimStep, whimReset } from './whim.js';
 import { changed, broadcast } from './session.js';
@@ -46,18 +47,69 @@ export function addToInit(t){
   state.combat.order.splice(at, 0, t.id);
   if (at <= state.combat.idx && state.combat.order.length > 1) state.combat.idx++;
 }
-export function rollInitiative(){
-  const L = ui.floor, list = state.tokens.filter(t => t.floor === L && !t.dead && !t.flags.gone);
+/* Start a fight. ids: who's in it (default: the party on this floor and the creatures that are part of it —
+   engine/fight.js); group: identical creatures share one roll; surprise: 'party' or 'foes' roll at disadvantage. */
+export function rollInitiative({ ids = null, group = true, surprise = 'none' } = {}){
+  const L = ui.floor, f = state.floors[L];
+  const list = ids ? ids.map(tokById).filter(t => t && t.floor === L && !t.dead && !t.flags.gone)
+    : fightCandidates(state.tokens, L, f.W, seenNow[L]).filter(c => c.in).map(c => c.t);
   if (!list.length){ toast('No one on this floor.'); return; }
-  list.forEach(t => { t.initRoll = d(20) + (t.init || 0); freshTurn(t); delete t.legend; });   // a new fight: legendary actions full
-  list.sort((a, b) => b.initRoll - a.initRoll || (a.kind === 'monster') - (b.kind === 'monster'));
-  state.combat = { active:true, order:list.map(t => t.id), idx:0, round:1, floor:L };
-  log(`⚔ Initiative on ${state.floors[L].name}: ${list.map(t => `${t.name} ${t.initRoll}`).join(', ')}`, true);
-  log('⚔ Roll for initiative!');
+  const order = rollOrder(list, { group, surprise, d20:() => d(20) });
+  for (const o of order){ const t = tokById(o.id); t.initRoll = o.roll; freshTurn(t); delete t.legend; }   // a new fight: legendary actions full
+  state.combat = { active:true, order:order.map(o => o.id), idx:0, round:1, floor:L, group, surprise };
+  log(`⚔ Initiative on ${f.name}: ${list.map(t => `${t.name} ${t.initRoll}`).join(', ')}`, true);
+  log(`⚔ Roll for initiative!${surprise === 'party' ? ' The party is caught by surprise.' : surprise === 'foes' ? ' The party has the drop on them.' : ''}`);
   const pts = list.filter(t => t.kind !== 'monster').length ? list.filter(t => t.kind !== 'monster') : list;   // the noise is where the party is
   const mid = pts.reduce((m, t) => ({ x:m.x + t.x / pts.length, y:m.y + t.y / pts.length }), { x:0, y:0 });
   makeNoise(L, Math.round(mid.x), Math.round(mid.y), 1, 'Steel and shouting');
   startTurn(); changed();
+}
+// Take a creature out of the fight (fled, made peace, the DM's call). Its place in the order closes up.
+export function leaveFight(id){
+  const c = state.combat, k = c.order.indexOf(id); if (k < 0) return;
+  const wasTurn = k === c.idx;
+  c.order.splice(k, 1);
+  if (k < c.idx) c.idx--;
+  if (!c.order.length){ endCombat(); return; }
+  if (c.idx >= c.order.length){ c.idx = 0; c.round++; }
+  if (wasTurn) startTurn();
+  changed();
+}
+// Delay: the creature whose turn it is steps back one place; the next one goes now.
+export function delayTurn(){
+  const c = state.combat; if (!c.active || c.order.length < 2) return;
+  const k = c.idx, j = (k + 1) % c.order.length; if (j === 0) return;   // already last this round
+  [c.order[k], c.order[j]] = [c.order[j], c.order[k]];
+  const t = tokById(c.order[j]); if (t) log(`${t.name} holds back.`);
+  startTurn(); changed();
+}
+// Once every foe in the fight is down: a card, the XP, and End the fight goes gold in the initiative bar.
+export function checkVictory(){
+  const c = state.combat; if (!c.active || c.won || !fightWon(c.order, tokById)) return;
+  c.won = true;
+  const xp = fightXp(c.order, tokById, BEST), heroes = c.order.map(tokById).filter(t => t?.kind === 'pc').length || 1;
+  showCard({ kind:'crit', title:'The fight is won', sub:`Round ${c.round}`, lines:[xp ? `<b>${xp} XP</b> — ${Math.floor(xp / heroes)} each for ${heroes} hero${heroes === 1 ? '' : 'es'}` : 'Nothing worth counting.'], flair:'For now. Somewhere below, something heard all of that.' });
+  log(`⚔ The fight is won (${xp} XP).`); changed();
+}
+/* A monster takes its turn (the DM's 🤖): hits whoever it can reach — the most hurt first; else shoots one in
+   range; else closes in and, if that brings a hero within reach, hits them. Specials stay the DM's to use. */
+export function autoTurn(t){
+  if (!t || t.dead || stopped(t)) return;
+  const foes = state.tokens.filter(o => o.floor === t.floor && o.kind !== 'monster' && !o.dead && !o.flags.gone);
+  const pickIn = (list, i) => list.filter(o => rangeCheck(t, o, t.attacks[i]).ok && coverOf(t, o).cover !== 'total').sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
+  const strike = () => {
+    const mi = bestMelee(t), mt = mi !== null && pickIn(foes.filter(o => !o.dead), mi);
+    if (mt){ doAttack(t.id, mt.id, mi); return true; }
+    const ri = t.attacks.findIndex(a => !a.m && /bow|sling|crossbow|throw|spit|bolt|ray|dart|javelin/i.test(a.n));
+    const rt = ri >= 0 && pickIn(foes.filter(o => !o.dead), ri);
+    if (rt){ doAttack(t.id, rt.id, ri); return true; }
+    return false;
+  };
+  if (strike()) return;
+  if (!closeInMove(t)) return;
+  const until = Date.now() + 20000;   // after the walk (and any opportunity attack it provoked), swing if it got there
+  const wait = () => { if (tokenViews.get(t.id)?.anim || pausedMover(t.id)){ if (Date.now() < until) setTimeout(wait, 150); return; } if (!t.dead && currentTurn()?.id === t.id && !strike()) toast(`${t.name} closes in, but can't reach anyone yet.`); };
+  setTimeout(wait, 200);
 }
 export function nextTurn(){
   if (!state.combat.active) return;
@@ -183,7 +235,7 @@ export function applyDamage(t, n, type = '', by = null, halvedAlready = false){
     const hooks = BEST[t.bid]?.hooks?.onBloodied;
     if (hooks){ showCard({ kind:'seep', title:`${t.name} is bloodied`, flair:'Something changes in the way it holds itself.' }); for (const fx of hooks) runFx(t, fx); }
   }
-  if (t.hp <= 0) kill(t, type, by);
+  if (t.hp <= 0){ kill(t, type, by); setTimeout(checkVictory, 600); }
 }
 export function heal(t, n){
   t.hp = Math.min(t.maxHp, t.hp + n);

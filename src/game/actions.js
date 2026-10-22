@@ -8,6 +8,7 @@ import { trapAt } from '../engine/generator.js';
 import { SEARCHABLE } from '../data/loot.js';
 import { reveal, searchStashes } from './objects.js';
 import { besideProp } from '../engine/objects.js';
+import { isTraveller, arrivalSpots } from '../engine/maps.js';
 import { TRAP_KINDS } from '../data/rooms.js';
 import { CONDITIONS, WHISPERS } from '../data/dread.js';
 import { d, clamp, cheb, esc, pick, rollDice } from '../util/core.js';
@@ -184,9 +185,20 @@ export function onStairs(t){ const f = state.floors[t.floor], v = f.grid[t.y * f
 export function takeStairs(t){
   if (ui.role === 'player'){ sendHost({ t:'stairs', id:t.id }); return; }
   const dir = onStairs(t); if (!dir) return;
+  const from = t.floor;
   t.floor += dir === 'down' ? 1 : -1;
   const occ = tokenAt(t.floor, t.x, t.y); if (occ && occ.id !== t.id){ const free = nearestOpen(t.floor, t.x, t.y); if (free){ t.x = free.x; t.y = free.y; } }
   log(`${t.name} ${dir === 'down' ? 'descends to' : 'climbs to'} ${state.floors[t.floor].name}.`);
+  // outside a fight, the rest of the party nearby goes with them (🚩 Stays keeps one behind), gathering round the stairs
+  if (!state.combat.active && isTraveller(t) && ui.follow !== false){
+    const fol = state.tokens.filter(o => o !== t && o.floor === from && isTraveller(o) && !o.dead && !o.flags.gone && !o.flags.stay && cheb(o.x, o.y, t.x, t.y) <= 12);
+    if (fol.length){
+      const f = state.floors[t.floor], occ = (x, y) => state.tokens.some(o => o.floor === t.floor && !o.dead && !o.flags?.gone && !fol.includes(o) && x >= o.x && x < o.x + (o.size || 1) && y >= o.y && y < o.y + (o.size || 1));
+      const spots = arrivalSpots(f, t, fol.length + 1, occ).filter(p => p.x !== t.x || p.y !== t.y);
+      fol.forEach((o, i) => { const p = spots[i]; if (!p) return; o.floor = t.floor; o.x = p.x; o.y = p.y; });
+      log(`${fol.filter(o => o.floor === t.floor).map(o => o.name).join(', ')} follow${fol.length === 1 ? 's' : ''}.`);
+    }
+  }
   updateVision(); rebuildFog();
   if (ui.selected === t.id) goFloor(t.floor);
   changed(); if (ui.selected === t.id) showReach(t);

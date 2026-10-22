@@ -1,6 +1,6 @@
 /* UI EVENT WIRING — every [data-act] button, [data-edit] field, and keyboard shortcut. */
 import { state, setState, ui, tokById, isDM, makePC, makeNPC } from '../engine/state.js';
-import { updateVision, freeTilesNear } from '../engine/grid.js';
+import { updateVision, freeTilesNear, seenNow } from '../engine/grid.js';
 import { roomById } from '../engine/generator.js';
 import { floorToAscii, floorToJSON } from '../engine/importer.js';
 import { parseTable } from '../engine/tables.js';
@@ -12,11 +12,13 @@ import { focusTile, focusFloor } from '../render/scene.js';
 import { buildAllFloors, buildFloor } from '../render/floors.js';
 import { syncTokens } from '../render/minis.js';
 import { clearReach, showReach } from '../render/effects.js';
-import { toast, renderAll, renderTop, renderSel, renderDock, renderTabs } from './hud.js';
+import { toast, renderAll, renderTop, renderSel, renderDock, renderTabs, openFightSetup, renderFightSetup } from './hud.js';
 import { renderPanel } from './panels.js';
 import { setMode } from './input.js';
 import { select, takeStairs, goFloor, setView, setDread, rebuildFog, doorAction, search, disarmTrap, triggerTrap, selectedDoor, selectedTrap, nearestHero } from '../game/actions.js';
-import { rollInitiative, nextTurn, endCombat, addToInit, applyDamage, heal, infest, useSpecial, removeToken, restoreTaken } from '../game/combat.js';
+import { rollInitiative, nextTurn, endCombat, addToInit, applyDamage, heal, infest, useSpecial, removeToken, restoreTaken, leaveFight, delayTurn, autoTurn } from '../game/combat.js';
+import { fightCandidates } from '../engine/fight.js';
+import { currentTurn } from '../game/rules.js';
 import { addCond, removeCond } from '../game/rules.js';
 import { shiftFloor } from '../game/shift.js';
 import { whimRoll, whimStep } from '../game/whim.js';
@@ -29,6 +31,7 @@ import { setGfx, gfx } from '../render/gfx.js';
 import { openCreator, sheetHTML } from './creator.js';
 import { PROPS } from '../data/props.js';
 import { propAction, selectProp, selectedProp, actorFor, editProp } from '../game/objects.js';
+import { goToMap, returnToParty, forgetMap } from '../game/maps.js';
 import { valleyMapHTML } from './valley.js';
 import { makeCamp } from '../game/overworld.js';
 import { valley, travel, arrive, enterPlace, readEvent, springEvent, doneEvent, newRoadEvent, goToEvent } from '../game/overworld.js';
@@ -52,7 +55,7 @@ document.addEventListener('click', e => {
   const a = el.dataset.act, k = el.dataset.k, id = el.dataset.id, sel = ui.selected && tokById(ui.selected);
   if (a.startsWith('mode:')){
     const m = a.slice(5);
-    const hint = { ping:'Tap a spot to ping it for everyone', noise:'Tap where the noise is: creatures nearby, and on the floors above and below, hear it' }[m] || '';
+    const hint = { ping:'Tap a spot to ping it for everyone', noise:'Tap where the noise is: creatures nearby, and on the floors above and below, hear it' }[m] || el.dataset.hint || '';
     setMode(ui.mode === m ? 'select' : m, null, hint); return;
   }
   switch (a){
@@ -120,7 +123,14 @@ document.addEventListener('click', e => {
     case 'npcPlace': if (ui.npcRoll){ placeNPC(ui.npcRoll, k === 'foe'); ui.npcRoll = null; renderPanel(); } break;
     case 'stay': toggleStay(id); renderPanel(); break;
     case 'endMyTurn': if (ui.role === 'player') sendHost({ t:'endturn' }); else nextTurn(); break;
-    case 'rollInit': rollInitiative(); break;
+    case 'rollInit': if (state.combat.active) rollInitiative({ ids:[...state.combat.order], group:state.combat.group ?? true, surprise:'none' }); else openFightSetup(); break;
+    case 'fightGo': { const F = ui.fight; $('#fightModal').classList.add('hidden'); if (F){ if (ui.floor !== F.L) goFloor(F.L); rollInitiative({ ids:[...F.ids], group:F.group, surprise:F.surprise }); } } break;
+    case 'fightCancel': $('#fightModal').classList.add('hidden'); break;
+    case 'fightSurprise': if (ui.fight){ ui.fight.surprise = k; renderFightSetup(); } break;
+    case 'fightAll': if (ui.fight){ const f = state.floors[ui.fight.L]; for (const c of fightCandidates(state.tokens, ui.fight.L, f.W, seenNow[ui.fight.L])) if (c.t.kind === 'monster'){ if (k === 'in' || c.in) ui.fight.ids.add(c.t.id); else ui.fight.ids.delete(c.t.id); } renderFightSetup(); } break;
+    case 'leaveFight': leaveFight(id); break;
+    case 'delayTurn': delayTurn(); break;
+    case 'autoTurn': { const t = currentTurn(); if (t) autoTurn(t); } break;
     case 'nextTurn': nextTurn(); break;
     case 'endCombat': endCombat(); break;
     case 'shiftNow': shiftFloor(ui.floor, 'Barovia rearranges itself'); break;
@@ -197,7 +207,7 @@ document.addEventListener('click', e => {
     case 'valleyCamp': makeCamp(ui.floor); break;
     case 'valleyShare': valley().shared = !valley().shared; changed(); renderPanel(); toast(valley().shared ? 'The table can see the map (what they have reached).' : 'The map is hidden from the table.'); break;
     case 'goFloor': goFloor(+k); renderPanel(); break;
-    case 'valleyEnter': if (confirm('Build this place\'s map? It replaces the current one (the party, their characters and the campaign come along).')) enterPlace(k, id); break;
+    case 'valleyEnter': enterPlace(k, id); break;   // the map being left goes on the shelf (Maps tab)
     case 'evRead': readEvent(+k, +id); break;
     case 'evSpring': springEvent(+k, +id); renderPanel(); break;
     case 'evGo': goToEvent(+k, +id); break;
@@ -206,7 +216,7 @@ document.addEventListener('click', e => {
     case 'sessGaze': setSessionGaze(+k); break;
     case 'readOpen': { const se = sessionById(k); readAloud(se.title, se.open); } break;
     case 'readEnd': { const se = sessionById(k); readAloud(`End of session ${se.n}`, se.ending); } break;
-    case 'sessDelve': if (confirm('Build this dungeon? It replaces the current one (the party, their characters and the campaign desk come along).')) buildSessionDelve(+k, +id); break;
+    case 'sessDelve': buildSessionDelve(+k, +id); break;
     case 'sessEnc': placeSessionEncounter(+k, +id); break;
     case 'sessTicks': applyTicks(+k); break;
     case 'clock': tickClock(k, +id); renderPanel(); break;
@@ -236,8 +246,12 @@ document.addEventListener('click', e => {
       importMap(txt, a === 'importFloor' ? 'floor' : 'delve'); } break;
     case 'copyAscii': { const txt = floorToAscii(state.floors[ui.floor]); navigator.clipboard?.writeText(txt).then(() => toast('Floor copied as ASCII.'), () => { $('#importText').value = txt; toast('Put in the import box — copy it from there.'); }); } break;
     case 'downloadFloor': download(`${state.floors[ui.floor].name.replace(/[^\w]+/g, '-').toLowerCase()}.json`, JSON.stringify(floorToJSON(state.floors[ui.floor]), null, 1)); break;
-    case 'regen': if (confirm('Generate a new delve? This replaces the current one (export first if you want to keep it).')){
-      newDelve({ name:$('#ndName').value || 'Dread Delve', seed:$('#ndSeed').value || randomSeed(), floors:+$('#ndFloors').value, size:+$('#ndSize').value, template:$('#ndTemplate').value }); } break;
+    case 'regen': { const tpl = $('#ndTemplate').value;   // the map on the table goes on the shelf; nothing is lost
+      newDelve({ name:$('#ndName').value || TEMPLATES.find(t => t.id === tpl)?.name || 'Dread Delve', seed:$('#ndSeed').value || randomSeed(), floors:+$('#ndFloors').value, size:+$('#ndSize').value, template:tpl }, true, { party:k === 'prep' ? 'stay' : 'bring' }); } break;
+    case 'mapGo': goToMap({ id }); break;
+    case 'mapPrep': goToMap({ id, party:'stay' }); break;
+    case 'mapBack': returnToParty(); break;
+    case 'mapForget': if (confirm('Throw this map away? Its fog, furniture and creatures go with it.')){ forgetMap(id); renderPanel(); } break;
     // table
     case 'host': hostTable(); renderPanel(); break;
     case 'hostNew': hostTable({ code:Array.from({ length:4 }, () => 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 31)]).join('') }); renderPanel(); break;
@@ -324,6 +338,8 @@ document.addEventListener('change', e => {
   else if (kind === 'art' && el.files[0]) loadArt(el.dataset.k, el.files[0]);
   else if (kind === 'addCond' && sel && el.value){ addCond(sel, el.value, -1); changed(); }
   else if (['propLock', 'propContents', 'propStash', 'propStashDc'].includes(kind)){ const p = selectedProp(); if (p) editProp(ui.selProp.floor, p.id, { propLock:'lock', propContents:'contents', propStash:'stash', propStashDc:'stashDc' }[kind], el.value); }
+  else if (kind === 'fightPick' && ui.fight){ if (el.checked) ui.fight.ids.add(el.dataset.id); else ui.fight.ids.delete(el.dataset.id); renderFightSetup(); }
+  else if (kind === 'fightGroup' && ui.fight){ ui.fight.group = el.checked; }
   else if (kind === 'doorDc'){ const dr = selectedDoor(); if (dr){ dr.dc = +el.value || 15; changed(); } }
   else if (kind === 'trapKind'){ const tr = selectedTrap(); if (tr){ tr.kind = el.value; buildFloor(ui.selTrap.floor); changed(); } }
   else if (kind === 'model' && el.files[0]){
@@ -373,7 +389,7 @@ addEventListener('keydown', e => {
   const STEP = { ArrowUp:[0, -1], ArrowDown:[0, 1], ArrowLeft:[-1, 0], ArrowRight:[1, 0], Numpad8:[0, -1], Numpad2:[0, 1], Numpad4:[-1, 0], Numpad6:[1, 0], Numpad7:[-1, -1], Numpad9:[1, -1], Numpad1:[-1, 1], Numpad3:[1, 1] };
   const st = STEP[e.code] || STEP[e.key];
   if (st && ui.selected && ui.mode === 'select'){ e.preventDefault(); stepSelected(st[0], st[1]); return; }
-  if (e.key === 'Escape'){ setMode('select'); ui.selDoor = null; ui.selTrap = null; ui.selProp = null; select(null); }
+  if (e.key === 'Escape'){ $('#fightModal').classList.add('hidden'); setMode('select'); ui.selDoor = null; ui.selTrap = null; ui.selProp = null; select(null); }
   else if (e.key === 'PageUp') goFloor(ui.floor - 1);
   else if (e.key === 'PageDown') goFloor(ui.floor + 1);
   else if (e.key === '1') setView('tilt'); else if (e.key === '2') setView('top'); else if (e.key === '3') setView('stack');

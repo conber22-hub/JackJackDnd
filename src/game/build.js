@@ -8,7 +8,9 @@ import { parseMapInput, buildImportedFloor, farStairs } from '../engine/importer
 import { updateVision } from '../engine/grid.js';
 import { BEST, bestList } from '../data/bestiary.js';
 import { ROOM_NAMES } from '../data/rooms.js';
-import { pick, clamp } from '../util/core.js';
+import { pick, clamp, uid } from '../util/core.js';
+import { goToMap, shelveForImport } from './maps.js';
+import { isTraveller } from '../engine/maps.js';
 import { buildFloor, buildAllFloors, ensureFloorViews } from '../render/floors.js';
 import { syncTokens } from '../render/minis.js';
 import { toast, showCard } from '../ui/hud.js';
@@ -226,19 +228,15 @@ export function clearMonsters(L){
 /* ---------- new delves & import ---------- */
 // The campaign desk and the players' characters live above any one dungeon: they travel to the next delve.
 function carryCampaign(s){ if (!state) return; if (state.campaign) s.campaign = state.campaign; if (state.characters) s.characters = state.characters; s.dread = state.dread; s.grasp = state.grasp; }
-export function newDelve(meta, keepParty = true){
-  const party = keepParty && state ? state.tokens.filter(t => t.kind !== 'monster') : null, art = state?.art || {}, content = state?.content;
+/* A new map. With the party (the usual way): the map being left goes on the shelf (Maps tab) and the party
+   travels — through game/maps.js, which also reuses a map already built under the same key. Without it
+   (a new campaign, the e2e arena): a clean start that keeps only the campaign desk and the art. */
+export function newDelve(meta, keepParty = true, { key = null, kind = null, party = 'bring', fresh = false } = {}){
+  if (state && keepParty) return goToMap({ meta, key, kind:kind || (meta.template === 'journey' ? 'road' : 'delve'), party, fresh });
+  const art = state?.art || {}, content = state?.content;
   const s = newState(meta);
-  if (party){
-    const r0 = s.floors[0].rooms[0];
-    // the party arrives as it is: the dead stay dead, the Seep's taken stay taken, the seeded stay seeded
-    s.tokens = s.tokens.filter(t => t.kind === 'monster').concat(party.map((t, i) => ({ ...t, floor:0, x:clamp(r0.x + 1 + i % 3, r0.x, r0.x + r0.w - 1), y:clamp(r0.y + 1 + Math.floor(i / 3), r0.y, r0.y + r0.h - 1), moved:0,
-      dead:!!t.dead, conds:(t.conds || []).filter(c => c.n === 'seeded'),
-      flags:{ ...(t.flags?.gone ? { gone:true, taken:!!t.flags.taken } : {}), ...(t.flags?.seeded ? { seeded:true, riser:t.flags.riser } : {}), ...(t.flags?.bloodied ? { bloodied:true } : {}) } })));
-    // players keep their seats (their heroes keep their ids)
-    s.seats = Object.fromEntries(Object.entries(state.seats || {}).filter(([, id]) => s.tokens.some(t => t.id === id)));
-  }
   s.art = art; if (content) s.content = content; carryCampaign(s);
+  s.meta.mapId = uid(); s.meta.kind = kind || 'delve'; s.meta.key = key;
   loadState(s);
 }
 // mode 'floor' replaces the current floor; mode 'delve' starts a new delve from every floor in the file.
@@ -287,9 +285,11 @@ export function importMap(text, mode = 'floor'){
       floor._tokens = tokens; s.floors.push(floor);
     });
     s.meta.floors = s.floors.length; s.explored = {}; s.floors.forEach((_, L) => s.explored[L] = new Set());
-    const r0 = s.floors[0].rooms[0], party = state ? state.tokens.filter(t => t.kind !== 'monster') : s.tokens;
+    const r0 = s.floors[0].rooms[0], party = state ? state.tokens.filter(isTraveller) : s.tokens;
     s.tokens = party.map((t, i) => { const p = { ...t, floor:0, dead:false, conds:[], flags:{} }; p.x = clamp(r0.x + i % 3, r0.x, r0.x + r0.w - 1); p.y = clamp(r0.y + Math.floor(i / 3), r0.y, r0.y + r0.h - 1); return p; });
-    s.art = state?.art || {}; if (state?.content) s.content = state.content; carryCampaign(s);
+    s.art = state?.art || {}; if (state?.content) s.content = state.content;
+    if (state){ shelveForImport(); carryCampaign(s); }
+    s.meta.mapId = uid(); s.meta.kind = 'imported';
     loadState(s);
     s.floors.forEach((f, L) => { placeTokens(f._tokens || [], L); delete f._tokens; });
     for (const t of state.tokens) if (!walk(state.floors[t.floor].grid[t.y * state.meta.size + t.x])){ const o = nearestOpen(t.floor, r0.cx, r0.cy); if (o){ t.x = o.x; t.y = o.y; } }

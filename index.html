@@ -171,6 +171,13 @@ textarea.txt{min-height:70px;resize:vertical;font-size:13px}
 .ini.dead{opacity:.4;text-decoration:line-through}
 .ini .n{flex:1;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ini .v{font-size:12px;color:var(--dim);width:22px;text-align:right}
+.ini .ihp{display:block;height:3px;border-radius:2px;background:#2a1a1c;margin-top:2px;overflow:hidden}.ini .ihp i{display:block;height:100%;background:#b3303a}.ini .ihp.pc i{background:#4fa37a}
+.lnk{cursor:pointer;text-decoration:underline;text-underline-offset:2px;color:var(--candle)}
+.ini .x{opacity:0;font-size:12px;color:var(--dim);padding:0 2px}.ini:hover .x{opacity:1}.ini .x:hover{color:#ff8a7a}
+.ini.cur .dl{font-size:12px;padding:0 4px;border:1px solid var(--line);border-radius:8px;color:var(--dim)}
+.fpick{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;cursor:pointer}.fpick:hover{background:#ffffff08}
+.fpick .why{margin-left:auto;font-size:12px;color:var(--dim)}.fpick.out .nm{color:var(--dim)}
+#fightBox{max-width:440px;width:100%}
 #initBar .ib{display:flex;gap:6px;padding:8px;border-top:1px solid var(--line)}
 #initBar .ib .btn{flex:1;padding:6px}
 
@@ -220,6 +227,12 @@ textarea.txt{min-height:70px;resize:vertical;font-size:13px}
 .res .pip{letter-spacing:1px;color:var(--candle)}
 
 /* ---------- pop-ups ---------- */
+#prepVeil{position:fixed;inset:0;z-index:4;background:radial-gradient(ellipse at center,rgba(12,9,16,.82),rgba(5,4,8,.95));backdrop-filter:blur(4px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;pointer-events:auto;text-align:center;padding:24px}
+#prepVeil.hidden{display:none}
+#prepVeil .t{font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-size:32px;color:var(--candle);text-shadow:0 0 18px #000;animation:veil 3s ease-in-out infinite}
+#prepVeil .s{color:#bfb3a6;font-size:14px}
+@keyframes veil{50%{opacity:.55}}
+.card.prep{border-color:#8b6a2a;background:#1d160c}
 #cardLayer{position:fixed;inset:0;z-index:20;pointer-events:none;display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center}
 .pop{pointer-events:auto;width:min(420px,calc(100vw - 32px));background:linear-gradient(#1d1418,#120d11);border:1px solid #6b3a2c;border-radius:18px;padding:16px 18px;box-shadow:0 20px 60px #000c,0 0 40px #b3303a33;animation:popin .28s ease-out}
 .pop.crit{border-color:var(--candle);box-shadow:0 20px 60px #000c,0 0 50px #e9a54a55}
@@ -468,6 +481,7 @@ textarea.txt{min-height:70px;resize:vertical;font-size:13px}
 <div id="topPanels"><div id="oaPanel"></div><div id="reqPanel"></div><div id="roomPrompts"></div></div>
 <div id="moveTip"></div>
 <div id="cardLayer"></div>
+<div id="prepVeil" class="hidden"><div class="t"></div><div class="s">Your hero is safe where you left them. Hold on.</div></div>
 <div id="toasts"></div>
 
 <div class="modal threshold" id="startModal">
@@ -544,6 +558,7 @@ textarea.txt{min-height:70px;resize:vertical;font-size:13px}
   </div>
 </div>
 
+<div class="modal hidden" id="fightModal"><div class="box" id="fightBox"></div></div>
 <div class="modal hidden" id="valleyModal"><div class="box wide" id="valleyBox"></div></div>
 
 <div class="modal hidden" id="charModal"><div class="box wide" id="charBox"></div></div>
@@ -558,6 +573,8 @@ textarea.txt{min-height:70px;resize:vertical;font-size:13px}
       <b>Attacks and spells</b> — pick one on the card and the map shades how far it reaches (bright: normal range, dim: long range, at disadvantage). With a mouse, hovering a target draws the lines from your corner to theirs: green clear, gold past a creature, red through a wall — half cover is +2 AC, three-quarters +5, total cover can't be targeted. A ranged attack with an enemy beside you, or at a prone target far off, has disadvantage. <b>Area spells</b> follow the pointer (on a phone: tap to place, tap again to cast) and ring everyone they'd catch — friends included. Walls stop them. Players can't take shots they can't make; the DM can, with a second tap.<br>
       <b>Minis</b> — heroes, allies and humanoid foes are forged 3D figures built from their sheets: folk, armour, weapons and shield all show. Shape your hero in the creator's <b>Looks</b> (drag the figure to spin it; ⚔ ✨ 🚶 to see it move) and take your portrait from it with 📸. DMs: <b>🎲 Roll an NPC</b> in the Tokens tab.<br>
       <b>Moving the party (DM)</b> — outside a fight, the heroes nearby follow the one you move, single file in marching order (Tokens tab: ⇡ reorders, 🚩 Stays keeps one put, 🚶 Party follows turns it off). <kbd>Shift</kbd>-click creatures (or 👥 Select party / Select its kind) to move several at once in formation. 🐾 Close in walks a monster up to the nearest hero.<br>
+      <b>Maps (DM)</b> — the Maps tab keeps every map you leave on a shelf, as the party left it: fog, doors, furniture and whoever stayed behind. Session dungeons and Valley places come back off the shelf when you return. <b>⇢ Go there</b> takes the party; <b>✎ Set it up</b> opens a map without them (the players' screens hold still under a veil) until you <b>📍 bring the party here</b> (tap where they arrive) or go <b>↩ back to them</b>. <b>📍 Move the party</b> regroups everyone on a square you tap. Outside a fight, the party follows whoever takes the stairs.<br>
+      <b>Starting a fight (DM)</b> — <b>⚔ Start a fight…</b> ticks the party and the creatures in sight, close by or alerted (the rest of the floor stays out), can let identical creatures share one roll, and sets who is surprised (disadvantage on initiative). In the fight: <b>🤖 Its turn</b> runs a monster's turn (hit, shoot, or close in and hit), <b>⏭</b> holds back the current creature, <b>✕</b> takes one out of the fight. When every foe is down, the win is called with its XP.<br>
       <b>Doors & traps</b> — tap a door or a found trap for its card: open, pick, force, disarm. <i>Search</i> looks for hidden ones within 15 ft.<br>
       <b>Stairs</b> — stand on a stair rune and press <i>Descend</i> / <i>Ascend</i> on the token card.<br>
       <b>Ping</b> — the ◎ button, or long-press a tile, flashes it for the whole table.<br>

@@ -7,6 +7,7 @@ import { TEMPLATES } from '../data/themes.js';
 import { route, planJourney, placeById, roadBetween } from '../engine/overland.js';
 import { valley, onJourney, placeMaps, clockText } from '../game/overworld.js';
 import { BEST } from '../data/bestiary.js';
+import { mapStatus } from '../game/maps.js';
 
 const GLYPH = { mists:'🌫', gates:'🚪', village:'🏠', crossroads:'⚖', castle:'🏰', coffin:'☄', camp:'🔥', mill:'⚙', town:'🏘', lake:'🌊', ruin:'🏚', swamp:'🛖', vineyard:'🍇', hill:'🗿', tower:'🗼' };
 const opt = (v, l, on) => `<option value="${esc(v)}" ${on ? 'selected' : ''}>${esc(l)}</option>`;
@@ -94,7 +95,9 @@ export function valleyTab(){
       <div class="row"><button class="btn primary" data-act="valleyTravel" data-k="${p.id}">🧭 Set out for ${esc(p.name)}</button></div>
       <div class="muted">Builds the road as maps — one per stretch — and puts the party at the start. The road's shape stays the same each time; what is on it does not.</div>`;
   else if (path === null && sel !== V.at) h += `<div class="bad">No road reaches ${esc(p.name)} from here.</div>`;
-  if (sel === V.at && !V.journey && maps.length) h += `<div class="row">${maps.map((m, i) => `<button class="btn ${i ? '' : 'primary'}" data-act="valleyEnter" data-k="${p.id}" data-id="${m.id}">▦ ${maps.length > 1 ? esc(m.name) : `Enter ${esc(p.name)}`}</button>`).join('')}</div><div class="muted">Builds the place's own map${maps.length > 1 ? 's' : ''}. Keeps the party.</div>`;
+  if (sel === V.at && !V.journey && maps.length) h += `<div class="row">${maps.map((m, i) => { const st = mapStatus(`place:${p.id}:${m.id}`), nm = maps.length > 1 ? esc(m.name) : esc(p.name);
+      return st === 'here' ? `<span class="chip on">▦ ${nm} — on the table</span>` : `<button class="btn ${i ? '' : 'primary'}" data-act="valleyEnter" data-k="${p.id}" data-id="${m.id}">▦ ${st === 'shelf' ? `Back into ${nm}` : maps.length > 1 ? nm : `Enter ${nm}`}</button>`; }).join('')}</div>
+    <div class="muted">${maps.length > 1 ? 'Each map is built the first time' : 'Built the first time'}; after that it's kept as the party left it (Maps tab). The party comes along.</div>`;
   else if (sel !== V.at && !V.journey && maps.length) h += `<div class="muted">Maps here: ${maps.map(m => esc(m.name)).join(' · ')} (once they arrive).</div>`;
   h += `</div>`;
   if (V.journey){

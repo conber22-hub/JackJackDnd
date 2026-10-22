@@ -38,7 +38,7 @@ export function travel(to){
   V.weather = pick(WEATHER); state.campaign.weather = V.weather;
   V.journey = { from:V.at, to, path:plan.path, hours, left:{ day:V.day, hour:V.hour } };
   const journey = { from:V.at, to, seed:V.seed, n:V.journeys, gaze:state.dread, bloom:bloomLoose() };
-  newDelve({ name:`The road to ${dest.name}`, seed:`${V.seed}|road|${V.journeys}`, floors:plan.stretches.length, size:40, template:'journey', journey }, true);
+  newDelve({ name:`The road to ${dest.name}`, seed:`${V.seed}|road|${V.journeys}`, floors:plan.stretches.length, size:40, template:'journey', journey }, true, { kind:'road', key:`road:${V.journeys}` });
   ui.tab = 'valley';
   log(`🧭 The party sets out for ${dest.name} (${plan.path.map(id => placeById(id).name).join(' → ')}).`);
   toast(`${plan.stretches.length} stretch${plan.stretches.length === 1 ? '' : 'es'} of road to ${dest.name}.`);
@@ -58,11 +58,13 @@ export function arrive(){
 }
 
 // Build the place's own map (the Narrow House and the village, Old Bonegrinder, the Iron Coffin, Vallaki…).
-export function enterPlace(id, mapId){
+export function enterPlace(id, mapId, fresh = false){
   const p = placeById(id); if (!p) return;
   const which = mapId || p.map, seed = `${valley().seed}|${p.id}|${which}`;
-  if (which === 'landmark'){ newDelve({ name:p.name, seed, floors:1, size:40, template:'landmark', place:p.id }, true); }
-  else { const tpl = TEMPLATES.find(t => t.id === which); if (!tpl) return; newDelve({ name:p.name, seed, floors:tpl.floors.length, size:40, template:tpl.id }, true); }
+  // a place the party has been to before comes back off the shelf as they left it (Maps tab), unless fresh
+  const opts = { kind:'place', key:`place:${p.id}:${which}`, fresh };
+  if (which === 'landmark'){ newDelve({ name:p.name, seed, floors:1, size:40, template:'landmark', place:p.id }, true, opts); }
+  else { const tpl = TEMPLATES.find(t => t.id === which); if (!tpl) return; newDelve({ name:p.name, seed, floors:tpl.floors.length, size:40, template:tpl.id }, true, opts); }
   ui.tab = 'valley'; log(`🧭 ${p.name} is on the table.`); changed();
 }
 // The maps a place offers: [{ id, name }]

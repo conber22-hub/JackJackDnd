@@ -17,10 +17,11 @@ import { changed } from './session.js';
 export const sessionById = n => SESSIONS.find(s => s.n === +n);
 export const camp = () => state.campaign;
 
-export function buildSessionDelve(n, k){
+export const sessionKey = (n, k) => `session:${n}:${sessionById(n)?.scenes[k]?.delve?.template}`;
+export function buildSessionDelve(n, k, fresh = false){
   const s = sessionById(n), d = s?.scenes[k]?.delve; if (!d) return;
   const tpl = TEMPLATES.find(t => t.id === d.template);
-  newDelve({ name:`${s.title}`, seed:`flood-s${n}-${d.template}`, floors:d.floors || tpl.floors.length, size:40, template:d.template }, true);
+  newDelve({ name:`${s.title}`, seed:`flood-s${n}-${d.template}`, floors:d.floors || tpl.floors.length, size:40, template:d.template }, true, { kind:'session', key:sessionKey(n, k), fresh });
   camp().session = +n;
   log(`Session ${n}: built ${tpl?.name || d.template}.`, true);
   toast(`${tpl?.name || d.template} built — ${d.note || ''}`);

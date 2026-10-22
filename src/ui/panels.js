@@ -25,6 +25,9 @@ import { modelInfo } from '../render/models.js';
 import { CAMPAIGN, SESSIONS, CLOCKS, PLACES, PLACE_STATES, CAST, FORTUNE } from '../data/campaign.js';
 import { marchOrder } from '../game/moves.js';
 import { NPC_KINDS } from '../data/looks.js';
+import { mapStatus, away, library } from '../game/maps.js';
+import { sessionKey } from '../game/campaign.js';
+import { libraryList, KIND_LABEL } from '../engine/maps.js';
 
 const art = (key, label) => {
   const a = state.art[key];
@@ -132,9 +135,27 @@ function bestiaryTab(){
   return h;
 }
 
+// Time since, for the shelf: "just now", "12 min ago", "3 h ago", "2 days ago".
+const ago = t => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} days ago`; };
+// The map library: the map on the table, the party (here, or waiting elsewhere while the DM sets up), the shelf.
+function mapsSection(){
+  const w = away(), shelf = libraryList(library()), kind = KIND_LABEL[state.meta.kind] || 'Map';
+  let h = `<h3>🗺 Maps</h3>`;
+  if (w) h += `<div class="card sel prep"><div class="hd"><span class="nm">✎ Setting up ${esc(state.meta.name)}</span></div>
+      <div class="look">The party waits in <b>${esc(w.name)}</b>. The players' screens hold still under a veil until you bring the party here or go back to them.</div>
+      <div class="row"><button class="btn small primary" data-act="mode:placeParty" data-hint="Tap where the party arrives">📍 Bring the party here…</button><button class="btn small" data-act="mapBack">↩ Back to the party</button></div></div>`;
+  h += `<div class="card"><div class="hd"><span class="nm">▦ ${esc(state.meta.name)}</span><span class="muted">${kind} · ${state.floors.length} floor${state.floors.length === 1 ? '' : 's'} · on the table</span></div>
+      ${w ? '' : `<div class="row"><button class="btn small" data-act="mode:placeParty" data-hint="Tap where the party should gather">📍 Move the party…</button><span class="muted">tap a square: everyone regroups there in marching order</span></div>`}</div>`;
+  if (shelf.length) h += `<h4>On the shelf (${shelf.length})</h4>` + shelf.map(e => `<div class="card"><div class="hd"><span class="nm">${esc(e.name)}</span><span class="muted">${KIND_LABEL[e.kind] || 'Map'} · ${e.floors.length} floor${e.floors.length === 1 ? '' : 's'} · left ${ago(e.savedAt)}</span></div>
+      ${w?.mapId === e.id ? '<div class="muted">🧍 The party is here.</div>' : ''}
+      <div class="row"><button class="btn small primary" data-act="mapGo" data-id="${esc(e.id)}" title="${w?.mapId === e.id ? 'Back to the party' : 'The party travels there and arrives where it last stood (or at the way in)'}">${w?.mapId === e.id ? '↩ Back to the party' : '⇢ Go there with the party'}</button>
+        ${w?.mapId === e.id ? '' : `<button class="btn small" data-act="mapPrep" data-id="${esc(e.id)}" title="Open it without the party, to set it up">✎ Set it up</button><button class="btn small danger" data-act="mapForget" data-id="${esc(e.id)}" title="Throw this map away">✕</button>`}</div></div>`).join('');
+  else h += `<div class="muted">Maps you leave are kept here as the party left them: fog, doors, furniture and whoever stayed behind. Session dungeons and places in the Valley come back off the shelf when you return to them.</div>`;
+  return h;
+}
 function dungeonTab(){
   const f = state.floors[ui.floor], D = dreadLevel();
-  let h = `<h3>This floor</h3>
+  let h = mapsSection() + `<h3>This floor</h3>
     <div class="row"><input class="txt" value="${esc(f.name)}" data-edit="floorName"></div>
     <div class="row"><label>Look</label><select class="txt" style="flex:1" data-edit="floorTheme">${THEMES.map((t, i) => opt(i, t.name, f.theme === i)).join('')}</select></div>
     <div class="row"><button class="btn primary" data-act="shiftNow">⟲ Shift the halls (d100)</button><input class="txt num" id="shiftForce" type="number" min="1" max="100" placeholder="roll"><button class="btn small" data-act="shiftForced" title="Use this number instead of rolling">Use</button></div>
@@ -155,14 +176,15 @@ function dungeonTab(){
       <textarea class="txt" style="min-height:44px" placeholder="DM notes — what could happen here…" data-edit="room" data-id="${r.id}" data-f="notes">${esc(r.notes || '')}</textarea>
       <div class="row"><button class="btn small" data-act="readRoom" data-id="${r.id}">📜 Read aloud</button><button class="btn small" data-act="furnishRoom" data-id="${r.id}">🪑 Furnish</button><button class="btn small" data-act="clearRoom" data-id="${r.id}">✕ Clear furniture</button></div></div>`;
   h += `<h4>Grok prompt for this floor</h4><textarea class="txt" readonly id="pr-floor">${esc((THEMES[f.theme] || THEMES[0]).prompt)}</textarea><div class="row"><button class="btn small" data-act="copy" data-k="pr-floor">Copy prompt</button></div>
-    <h3>New delve</h3>
-    <div class="row"><label>Name</label><input class="txt" id="ndName" value="${esc(state.meta.name)}"></div>
+    <h3>New map</h3>
+    <div class="row"><label>Name</label><input class="txt" id="ndName" value="" placeholder="(the template's name)"></div>
     <div class="row"><label>Template</label><select class="txt" style="flex:1" id="ndTemplate">${TEMPLATES.map(t => opt(t.id, t.name, t.id === state.meta.template)).join('')}</select></div>
     <div class="muted" id="ndBlurb">${esc((TEMPLATES.find(t => t.id === state.meta.template) || TEMPLATES[0]).blurb)}</div>
     <div class="row"><label>Seed</label><input class="txt" style="flex:1" id="ndSeed" value="${esc(state.meta.seed)}"></div>
     <div class="row"><label>Floors</label><select class="txt" style="width:auto" id="ndFloors">${[1, 2, 3, 4, 5, 6, 7, 8].map(n => opt(n, n, n === state.meta.floors)).join('')}</select>
       <label>Size</label><select class="txt" style="width:auto" id="ndSize">${[32, 40, 48, 56, 64].map(n => opt(n, n, n === state.meta.size)).join('')}</select></div>
-    <div class="row"><button class="btn danger" data-act="regen">Generate (replaces this delve, keeps the party)</button></div>`;
+    <div class="row"><button class="btn primary" data-act="regen" data-k="bring">Generate — the party goes there</button><button class="btn" data-act="regen" data-k="prep">Generate to set up</button></div>
+    <div class="muted">Either way, the map on the table now goes on the shelf above.</div>`;
   return h;
 }
 
@@ -328,7 +350,8 @@ function storyTab(){
   s.scenes.forEach((sc, k) => {
     h += `<div class="card"><div class="hd"><span class="nm">${esc(sc.t)}</span></div>
       ${sc.beats.map((b, i) => `<label class="beat"><input type="checkbox" data-edit="beat" data-k="${s.n}" data-id="${k}.${i}" ${done[`${k}.${i}`] ? 'checked' : ''}><span>${esc(b)}</span></label>`).join('')}
-      ${sc.delve ? `<div class="row"><button class="btn small primary" data-act="sessDelve" data-k="${s.n}" data-id="${k}">▦ Build: ${esc((TEMPLATES.find(t => t.id === sc.delve.template) || {}).name || sc.delve.template)}</button></div><div class="muted">${esc(sc.delve.note || '')} Keeps the party; replaces the current dungeon.</div>` : ''}
+      ${sc.delve ? (() => { const st = mapStatus(sessionKey(s.n, k)), nm = esc((TEMPLATES.find(t => t.id === sc.delve.template) || {}).name || sc.delve.template);
+        return `<div class="row">${st === 'here' ? `<span class="chip on">▦ ${nm} — on the table</span>` : `<button class="btn small primary" data-act="sessDelve" data-k="${s.n}" data-id="${k}">▦ ${st === 'shelf' ? 'Back to' : 'Build'}: ${nm}</button>`}</div><div class="muted">${esc(sc.delve.note || '')} The party comes along; the map you leave is kept in the Maps tab.</div>`; })() : ''}
       ${sc.enc ? `<div class="row"><button class="btn small seep" data-act="sessEnc" data-k="${s.n}" data-id="${k}">⚔ Place: ${esc(sc.enc.label)}</button><span class="muted">${sc.enc.group.map(([b, n]) => `${n} ${esc(name(b))}`).join(', ')} · ${sc.enc.where === 'party' ? 'near the party' : sc.enc.where === 'nest' ? 'in a nest or lair' : 'in a room'}</span></div>` : ''}
     </div>`;
   });

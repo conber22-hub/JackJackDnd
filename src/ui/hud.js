@@ -19,6 +19,7 @@ import { legendOf, legendLeft, resistLeft, lairCreature } from '../game/combat.j
 import { selectedProp, hiddenDoor, actorFor, objectsBeside } from '../game/objects.js';
 import { objectActs, objInfo, objAC, objHp, objMaxHp } from '../engine/objects.js';
 import { PROPS } from '../data/props.js';
+import { fightCandidates } from '../engine/fight.js';
 import { sfx } from '../audio/sound.js';
 
 export function toast(msg){ const el = document.createElement('div'); el.className = 'toast'; el.textContent = msg; $('#toasts').appendChild(el); setTimeout(() => el.remove(), 3800); while ($('#toasts').children.length > 5) $('#toasts').firstChild.remove(); }
@@ -51,7 +52,7 @@ export function renderTop(){
 }
 export function renderTabs(){
   const tabs = ui.role === 'player' ? [['hero', 'Your hero'], ...(state?.valley ? [['map', 'Map']] : []), ['log', 'Log']]
-    : [['story', 'Story'], ['valley', 'Valley'], ['tokens', 'Tokens'], ['bestiary', 'Beasts'], ['dungeon', 'Dungeon'], ['build', 'Build'], ['gaze', 'Gaze'], ['table', 'Table']];
+    : [['story', 'Story'], ['valley', 'Valley'], ['tokens', 'Tokens'], ['bestiary', 'Beasts'], ['dungeon', 'Maps'], ['build', 'Build'], ['gaze', 'Gaze'], ['table', 'Table']];
   if (!tabs.some(t => t[0] === ui.tab)) ui.tab = tabs[0][0];
   $('#tabs').innerHTML = tabs.map(([k, l]) => `<button data-act="tab" data-k="${k}" class="${ui.tab === k ? 'on' : ''}">${l}</button>`).join('');
 }
@@ -89,22 +90,25 @@ export function renderInit(){
   bar.classList.toggle('hidden', !c.active && ui.role === 'player');
   $('#roundLbl').textContent = c.active ? `Round ${c.round}` : '';
   if (!c.active){
-    $('#initList').innerHTML = `<div class="muted" style="padding:8px">No fight yet. Roll initiative for everyone on this floor.</div>`;
-    $('#initBtns').innerHTML = ui.role === 'dm' ? `<button class="btn primary" data-act="rollInit">⚔ Roll initiative</button>` : '';
+    $('#initList').innerHTML = `<div class="muted" style="padding:8px">No fight yet. Start one to pick who's in it: the party, and the creatures they can see or are close to.</div>`;
+    $('#initBtns').innerHTML = ui.role === 'dm' ? `<button class="btn primary" data-act="rollInit">⚔ Start a fight…</button>` : '';
     return;
   }
+  const dmv = ui.role === 'dm';
   $('#initList').innerHTML = c.order.map((id, i) => {
     const t = tokById(id); if (t?.unseen) return `<div class="ini ${i === c.idx ? 'cur' : ''}"><span class="dot" style="color:#555;background:#555"></span><span class="n muted">something unseen</span></div>`;
     if (!t || t.flags.gone) return '';
     if (pv && t.kind === 'monster' && !seesAny(t)) return `<div class="ini ${i === c.idx ? 'cur' : ''}"><span class="dot" style="color:#555;background:#555"></span><span class="n muted">something unseen</span></div>`;
     const color = t.kind === 'monster' ? '#c0303a' : t.color;
     const cs = (t.conds || []).map(c => CONDITIONS[c.n]?.icon || '•').join('');
-    return `<div class="ini ${i === c.idx ? 'cur' : ''} ${t.dead ? 'dead' : ''}" data-act="sel" data-id="${t.id}"><span class="dot" style="color:${color};background:${color}"></span><span class="n">${esc(t.name)} <span class="muted">${cs}</span></span><span class="v">${t.initRoll ?? ''}</span></div>`;
+    const bar = dmv || t.kind !== 'monster' ? `<span class="ihp ${t.kind === 'monster' ? '' : 'pc'}"><i style="width:${Math.round(100 * clamp(t.hp / (t.maxHp || 1), 0, 1))}%"></i></span>` : '';
+    const extra = dmv ? `${i === c.idx && c.order.length > 1 && c.idx < c.order.length - 1 ? '<b class="dl" data-act="delayTurn" title="Hold back: the next one goes first">⏭</b>' : ''}<b class="x" data-act="leaveFight" data-id="${t.id}" title="Out of the fight">✕</b>` : '';
+    return `<div class="ini ${i === c.idx ? 'cur' : ''} ${t.dead ? 'dead' : ''}" data-act="sel" data-id="${t.id}"><span class="dot" style="color:${color};background:${color}"></span><span class="n">${esc(t.name)} <span class="muted">${cs}</span>${bar}</span>${extra}<span class="v">${t.initRoll ?? ''}</span></div>`;
   }).join('');
   const cur = currentTurn();
   const lair = ui.role === 'dm' && lairCreature();
   $('#initBtns').innerHTML = ui.role === 'dm'
-    ? `${lair ? `<button class="btn small seep" data-act="lair" title="${esc(lair.name)}'s lair acts on initiative 20">🏰 Lair</button>` : ''}<button class="btn primary" data-act="nextTurn">Next ▶</button><button class="btn small" data-act="rollInit" title="Re-roll">↻</button><button class="btn small danger" data-act="endCombat">End</button>`
+    ? `${c.won ? `<button class="btn primary" data-act="endCombat">🏆 End the fight</button>` : ''}${lair ? `<button class="btn small seep" data-act="lair" title="${esc(lair.name)}'s lair acts on initiative 20">🏰 Lair</button>` : ''}${cur?.kind === 'monster' && !cur.dead && !c.won ? `<button class="btn small" data-act="autoTurn" title="It hits whoever it can reach (the most hurt first), or shoots, or closes in and then hits">🤖 Its turn</button>` : ''}<button class="btn ${c.won ? '' : 'primary'}" data-act="nextTurn">Next ▶</button><button class="btn small" data-act="rollInit" title="Re-roll initiative for everyone in it">↻</button>${c.won ? '' : '<button class="btn small danger" data-act="endCombat">End</button>'}`
     : (cur && cur.id === ui.myToken ? `<button class="btn primary" data-act="endMyTurn">End my turn</button>` : '');
 }
 
@@ -149,6 +153,7 @@ export function renderSel(){
     if (hasCond(t, 'prone') && turn) acts += `<button class="btn small" data-act="turnAct" data-k="stand" title="${fight ? `Costs half your speed (${Math.ceil(speedSquares(t) / 2) * 5} ft)` : 'Get up'}">⤒ Stand up</button>`;
     if (canUndoMove(t, dm)) acts += `<button class="btn small" data-act="undoMove" title="Take back the last move this turn">↶ Undo move</button>`;
     if (dm && t.kind === 'monster') acts += `<button class="btn small" data-act="closeIn" title="Walk to the nearest foe, as close as its move allows">🐾 Close in</button>`;
+    if (dm && t.kind === 'monster' && fight && currentTurn()?.id === t.id) acts += `<button class="btn small primary" data-act="autoTurn" title="It hits whoever it can reach (the most hurt first), or shoots, or closes in and then hits">🤖 Its turn</button>`;
     if (dm){
       const g = [...(ui.group || [])].filter(id => tokById(id));
       acts += g.length ? `<span class="grp">👥 +${g.length} moving with it <button class="btn small" data-act="groupClear">✕</button></span>`
@@ -239,5 +244,28 @@ function renderTrapCard(el){
     ${dm ? `<div class="look">${esc(k.f)}</div>` : ''}
     <div class="acts">${acts}</div>`;
   el.classList.add('show');
+}
+/* The fight-setup window (⚔ Start a fight…): who's in it, ticked by engine/fight.js's guess (the party; foes in
+   sight, close by or alerted), whether identical creatures share a roll, and who's surprised. */
+export function openFightSetup(){
+  const L = ui.floor, f = state.floors[L], cands = fightCandidates(state.tokens, L, f.W, seenNow[L]);
+  if (!cands.length){ toast('No one on this floor.'); return; }
+  ui.fight = { L, ids:new Set(cands.filter(c => c.in).map(c => c.t.id)), group:ui.fight?.group ?? true, surprise:'none' };
+  renderFightSetup(); $('#fightModal').classList.remove('hidden');
+}
+export function renderFightSetup(){
+  const F = ui.fight; if (!F || !state) return;
+  const f = state.floors[F.L], cands = fightCandidates(state.tokens, F.L, f.W, seenNow[F.L]);
+  const row = c => { const t = c.t, col = t.kind === 'monster' ? '#c0303a' : t.color, on = F.ids.has(t.id);
+    return `<label class="fpick ${on ? '' : 'out'}"><input type="checkbox" data-edit="fightPick" data-id="${t.id}" ${on ? 'checked' : ''}><span class="dot" style="color:${col};background:${col}"></span><span class="nm">${esc(t.name)}</span><span class="why">${esc(c.why)}</span></label>`; };
+  const party = cands.filter(c => c.t.kind !== 'monster'), foes = cands.filter(c => c.t.kind === 'monster');
+  const n = cands.filter(c => F.ids.has(c.t.id)).length, sur = (k, l) => `<button class="btn small ${F.surprise === k ? 'on' : ''}" data-act="fightSurprise" data-k="${k}">${l}</button>`;
+  $('#fightBox').innerHTML = `<h3>⚔ Start a fight</h3><div class="muted">On <b>${esc(f.name)}</b>. Ticked creatures roll initiative; the rest of the floor carries on (add them later with + Initiative on their card).</div>
+    <h4>The party</h4>${party.map(row).join('') || '<div class="muted">No heroes on this floor.</div>'}
+    <h4>Foes <span class="muted" style="font-weight:400">· <a class="lnk" data-act="fightAll" data-k="in">all</a> · <a class="lnk" data-act="fightAll" data-k="near">just the close ones</a></span></h4>${foes.map(row).join('') || '<div class="muted">No creatures on this floor.</div>'}
+    <label class="fpick"><input type="checkbox" data-edit="fightGroup" ${F.group ? 'checked' : ''}><span>Identical creatures share one roll (they act together)</span></label>
+    <h4>Surprise</h4><div class="row">${sur('none', 'Nobody')}${sur('party', 'The party is surprised')}${sur('foes', 'Their foes are surprised')}</div>
+    <div class="muted">Surprised creatures roll initiative at disadvantage.</div>
+    <div class="row" style="margin-top:10px"><button class="btn primary" data-act="fightGo" ${n ? '' : 'disabled'}>⚔ Roll initiative (${n})</button><button class="btn" data-act="fightCancel">Cancel</button></div>`;
 }
 export function renderAll(){ renderTop(); renderTabs(); renderPanel(); renderInit(); renderSel(); renderDock(); renderRequests(); renderPrompts(); renderOA(); }
