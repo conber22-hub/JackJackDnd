@@ -1,6 +1,6 @@
 /* HEROES — a character sheet (what the creator saves) and everything derived from it: ability scores, AC, HP,
    saves, skills, passive Perception, attacks, spells and the token that goes on the map. Pure: no DOM. */
-import { ABILITIES, CLASSES, SPECIES, BACKGROUNDS, WEAPONS, ARMOR, SPELLS, SUBSPELLS, SKILLS, SLOTS_FULL, SLOTS_HALF, PACT, mod, profBonus, MAX_LEVEL } from '../data/srd.js';
+import { ABILITIES, CLASSES, SPECIES, BACKGROUNDS, WEAPONS, ARMOR, SPELLS, SUBSPELLS, SKILLS, SLOTS_FULL, SLOTS_HALF, PACT, FEATS, mod, profBonus, MAX_LEVEL } from '../data/srd.js';
 import { clamp, uid } from '../util/core.js';
 import { heroLook } from './look.js';
 
@@ -17,6 +17,13 @@ export function newHero(cls = 'Fighter'){
     color:C.color, look:'', backstory:'', goBackFor:'', ashamed:'', why:'', homeSmell:'', notes:'' };
 }
 export const asiLevels = h => [4, 8, ...(CLASSES[h.cls].asiExtra || [])].filter(l => l <= h.lvl).sort((a, b) => a - b);
+/* What the hero took at each Ability Score Improvement level: { l, feat, ab, ab2, list, skills, name, note, hp }.
+   Old sheets stored just an ability ('Str'): that's the Ability Score Improvement, +2. */
+export function asiPicks(h){
+  return asiLevels(h).map(l => { const v = h.asi?.[l]; if (!v) return null; return typeof v === 'string' ? { l, feat:'Ability Score Improvement', ab:v } : { l, ...v }; }).filter(p => p?.feat);
+}
+// Magic Initiate lists a hero has: from their background and from feats.
+const miLists = h => [BACKGROUNDS[h.bg]?.mi, ...asiPicks(h).filter(p => p.feat === 'Magic Initiate' && p.list).map(p => p.list)].filter(Boolean);
 export function expertiseSlots(h){ const ex = CLASSES[h.cls].expertise || {}; return Object.entries(ex).filter(([l]) => +l <= h.lvl).reduce((a, [, n]) => a + n, 0); }
 export function maxSpellLevel(h){
   const C = CLASSES[h.cls], L = clamp(+h.lvl || 1, 1, MAX_LEVEL);
@@ -26,19 +33,25 @@ export function maxSpellLevel(h){
 export function spellPool(h){
   const C = CLASSES[h.cls], bg = BACKGROUNDS[h.bg], maxL = maxSpellLevel(h);
   const pool = C.letter ? SPELLS.filter(s => s.c.includes(C.letter) && s.l <= maxL && s.n !== 'Divine Smite') : [];
-  const bgPool = bg?.mi ? SPELLS.filter(s => s.c.includes(bg.mi) && s.l <= 1) : [];
+  const bgPool = miLists(h).flatMap(L => SPELLS.filter(s => s.c.includes(L) && s.l <= 1)); void bg;
   return [...new Map([...pool, ...bgPool].map(s => [s.n, s])).values()].sort((a, b) => a.l - b.l || a.n.localeCompare(b.n));
 }
 export function spellLimits(h){
   const C = CLASSES[h.cls], L = clamp(+h.lvl || 1, 1, MAX_LEVEL), bg = BACKGROUNDS[h.bg];
-  return { cantrips:(C.cantrips?.[L - 1] || 0) + (bg?.mi ? 2 : 0), prepared:(C.prep?.[L - 1] || 0) + (bg?.mi ? 1 : 0) };
+  const mi = miLists(h).length; void bg;
+  return { cantrips:(C.cantrips?.[L - 1] || 0) + mi * 2, prepared:(C.prep?.[L - 1] || 0) + mi };
 }
 
 export function heroStats(h){
   const C = CLASSES[h.cls] || CLASSES.Fighter, L = clamp(+h.lvl || 1, 1, MAX_LEVEL), pb = profBonus(L), bg = BACKGROUNDS[h.bg], spc = SPECIES[h.sp] || SPECIES.Human;
   const sc = {}; for (const a of ABILITIES) sc[a] = +h.ab?.[a] || 10;
   if (bg){ if (h.bg2 && bg.ab.includes(h.bg2)) sc[h.bg2] += 2; if (h.bg1 && bg.ab.includes(h.bg1) && h.bg1 !== h.bg2) sc[h.bg1] += 1; }
-  for (const l of asiLevels(h)){ const a = h.asi?.[l]; if (a && sc[a] !== undefined) sc[a] = Math.min(20, sc[a] + 2); }
+  const picks = asiPicks(h), took = n => picks.some(p => p.feat === n);
+  const up = (a, n) => { if (sc[a] !== undefined) sc[a] = Math.min(20, sc[a] + n); };
+  for (const p of picks){
+    if (p.feat === 'Ability Score Improvement'){ if (p.ab2 && p.ab2 !== p.ab){ up(p.ab, 1); up(p.ab2, 1); } else up(p.ab, 2); }
+    else if ((FEATS[p.feat]?.plus || p.feat === 'Other') && p.ab && (!FEATS[p.feat]?.plus || FEATS[p.feat].plus.includes(p.ab))) up(p.ab, 1);
+  }
   const M = a => mod(sc[a]);
   const sub = L >= 3 ? C.sub : null;
   // armour class
@@ -52,11 +65,13 @@ export function heroStats(h){
   }
   if (h.shield && h.cls !== 'Monk') ac += 2;
   const style = C.style && L >= C.style ? h.style : null;
-  if (style === 'Defense' && armorName !== 'None') ac += 1;
+  const styles = new Set([style, ...picks.filter(p => FEATS[p.feat]?.style).map(p => p.feat)].filter(Boolean));
+  if (styles.has('Defense') && armorName !== 'None') ac += 1;
   // hit points: max at level 1, then the fixed average
   let hp = C.hd + M('Con') + (L - 1) * (C.hd / 2 + 1 + M('Con'));
   if (h.sp === 'Dwarf') hp += L;
   if (sub === 'Draconic Sorcery') hp += L;
+  for (const p of picks) if (p.feat === 'Other' && +p.hp > 0) hp += Math.min(3, +p.hp) * L;   // a written-in feat with hit points (like one that makes you tough)
   hp = Math.max(1, Math.floor(hp));
   // speed
   let spd = spc.spd;
@@ -64,25 +79,27 @@ export function heroStats(h){
   if (h.cls === 'Monk' && L >= 2 && armorName === 'None' && !h.shield) spd += L >= 6 ? 15 : 10;
   if (h.cls === 'Ranger' && L >= 6) spd += 10;
   // spellcasting
-  const castAb = C.cast || (bg?.mi ? (bg.mi === 'C' ? 'Wis' : 'Int') : null);
+  const mi0 = miLists(h)[0], castAb = C.cast || (mi0 ? (mi0 === 'W' ? 'Int' : 'Wis') : null);
   const dc = castAb ? 8 + pb + M(castAb) : null, spAtk = castAb ? pb + M(castAb) : null;
   // saves & skills
   const saves = {}; for (const a of ABILITIES) saves[a] = M(a) + (C.sv.includes(a) ? pb : 0);
   const prof = new Set([...(h.skills || []), ...(bg?.skills || [])]);
   if (h.sp === 'Elf') prof.add('Perception');
   if (h.sp === 'Human' && h.extraSkill) prof.add(h.extraSkill);
+  for (const p of picks) if (p.feat === 'Skilled') for (const sk of (p.skills || []).slice(0, 3)) if (SKILLS[sk]) prof.add(sk);
   const expert = new Set((h.expert || []).filter(s => prof.has(s)).slice(0, expertiseSlots(h)));
   const jack = h.cls === 'Bard' && L >= 2;
   const skills = {}; for (const [s, a] of Object.entries(SKILLS)) skills[s] = M(a) + (prof.has(s) ? pb : jack ? Math.floor(pb / 2) : 0) + (expert.has(s) ? pb : 0);
   const passive = 10 + skills.Perception;
   const tools = C.tools || bg?.tools;
   const check = M('Dex') + (tools ? pb : 0);
-  let init = M('Dex') + (bg?.alert ? pb : 0);
+  let init = M('Dex') + (bg?.alert || took('Alert') ? pb : 0);
   const slots = C.full ? SLOTS_FULL[L - 1] : C.half ? SLOTS_HALF[L - 1] : null;
   const pact = C.pact ? { n:PACT[L - 1][0], l:PACT[L - 1][1] } : null;
   const features = [];
   for (let l = 1; l <= L; l++) for (const f of C.features[l] || []) features.push(`${f} (${l})`);
-  return { sc, M, pb, ac, hp, spd, dc, spAtk, castAb, init, saves, skills, prof, expert, passive, check, slots, pact, features, sub, L, C, style };
+  for (const p of picks) if (p.feat !== 'Ability Score Improvement') features.push(`${p.feat === 'Other' ? (p.name || 'A feat') : p.feat}${p.feat === 'Magic Initiate' && p.list ? ` (${FEATS['Magic Initiate'].lists[p.list]})` : ''} — feat (${p.l})`);
+  return { sc, M, pb, ac, hp, spd, dc, spAtk, castAb, init, saves, skills, prof, expert, passive, check, slots, pact, features, sub, L, C, style, styles, picks };
 }
 
 const dieMul = (d, n) => d.replace(/^(\d*)d(\d+)/, (_, c, f) => `${(+c || 1) * n}d${f}`);
@@ -98,8 +115,8 @@ export function heroAttacks(h, st = heroStats(h)){
     const m = st.M(ab);
     const two = !h.shield && /V:/.test(w.p) && (h.weapons || []).filter(Boolean).length === 1;
     const die = two ? w.p.match(/V:(\d*d\d+)/)[1] : w.d;
-    const hit = st.pb + m + (ranged && st.style === 'Archery' ? 2 : 0);
-    const dmgBonus = m + (!ranged && st.style === 'Dueling' && !/2/.test(w.p) && !two ? 2 : 0);
+    const hit = st.pb + m + (ranged && st.styles.has('Archery') ? 2 : 0);
+    const dmgBonus = m + (!ranged && st.styles.has('Dueling') && !/2/.test(w.p) && !two ? 2 : 0);
     // range [normal, long] in feet for bows and thrown weapons (a thrown dagger is melee too); reach weapons hit 10 ft. away
     out.push({ n:name, b:hit, d:`${die}${dmgBonus ? sgn(dmgBonus) : ''}`, t:w.ty, f:`{A} attacks {T} with a ${name.toLowerCase()}.`, ...(ranged ? {} : { m:1 }),
       ...(Array.isArray(w.rng) ? { rng:[...w.rng] } : {}), ...(/R/.test(w.p) ? { reach:2 } : {}) });
@@ -184,8 +201,12 @@ export function heroResources(h, st = heroStats(h)){
   if (cls === 'Warlock' && L >= 2) f('cunning', 'Magical Cunning', 1, 'long', 'recover', 'Half your pact slots come back (one minute\'s rite).', { pact:1 });
   // Magic Initiate (Acolyte, Sage): one of its level-1 spells once a long rest without a slot
   const bg = BACKGROUNDS[h.bg];
-  if (bg?.mi){ const mi = (h.spells || []).map(SP).find(s => s?.l === 1 && s.c.includes(bg.mi) && !(C.letter && s.c.includes(C.letter))) || (h.spells || []).map(SP).find(s => s?.l === 1 && s.c.includes(bg.mi));
-    if (mi) f('mi', `Magic Initiate (${mi.n})`, 1, 'long', 'note', `Cast ${mi.n} once without a slot (used first when you cast it).`, { free:mi.n }); }
+  const usedMi = new Set();
+  miLists(h).forEach((list, i) => {
+    const mine = (h.spells || []).map(SP).filter(s => s?.l === 1 && s.c.includes(list) && !usedMi.has(s.n));
+    const mi = mine.find(s => !(C.letter && s.c.includes(C.letter))) || mine[0];
+    if (mi){ usedMi.add(mi.n); f(i ? `mi${i}` : 'mi', `Magic Initiate (${mi.n})`, 1, 'long', 'note', `Cast ${mi.n} once without a slot (used first when you cast it).`, { free:mi.n }); }
+  }); void bg;
   if (h.sp === 'Human') f('heroic', 'Heroic Inspiration', 1, 'long', 'note', 'Reroll any die, once. Yours again after every long rest.');
   out.push({ id:'hd', n:`Hit Dice (d${C.hd})`, max:L, rest:'long', use:'hitdie', die:C.hd, mod:st.M('Con'), text:`Spend on a short rest: d${C.hd}${sgn(st.M('Con'))} HP each.` });
   return out;
@@ -199,9 +220,19 @@ export function heroWarnings(h){
   if (lim.cantrips && can > lim.cantrips) w.push(`Too many cantrips: ${can} of ${lim.cantrips}.`);
   if (lim.prepared && prep > lim.prepared) w.push(`Too many prepared spells: ${prep} of ${lim.prepared}.`);
   if (h.method === 'pointbuy'){ const pts = Object.values(h.ab).reduce((a, v) => a + (({ 8:0, 9:1, 10:2, 11:3, 12:4, 13:5, 14:7, 15:9 })[v] ?? 99), 0); if (pts > 27) w.push(`Point buy over budget: ${pts} of 27.`); }
-  for (const l of asiLevels(h)) if (!h.asi?.[l]) w.push(`Choose your level ${l} ability increase.`);
+  for (const l of asiLevels(h)){
+    const v = h.asi?.[l], p = typeof v === 'string' ? { feat:'Ability Score Improvement', ab:v } : v;
+    if (!p?.feat){ w.push(`Choose your level ${l} ability increase or feat.`); continue; }
+    if (p.feat === 'Ability Score Improvement' && !p.ab) w.push(`Level ${l}: pick the ability to increase.`);
+    if (p.feat === 'Grappler' && !['Str', 'Dex'].includes(p.ab)) w.push(`Level ${l} Grappler: +1 to Str or Dex?`);
+    if (p.feat === 'Magic Initiate' && !p.list) w.push(`Level ${l} Magic Initiate: choose Cleric, Druid or Wizard.`);
+    if (p.feat === 'Skilled' && (p.skills || []).filter(Boolean).length < 3) w.push(`Level ${l} Skilled: choose three skills.`);
+    if (p.feat === 'Other' && !p.name) w.push(`Level ${l}: name your feat.`);
+    if (FEATS[p.feat]?.style && !C.style) w.push(`Level ${l}: ${p.feat} needs the Fighting Style feature.`);
+    if (asiLevels(h).some(o => o !== l && (h.asi?.[o]?.feat === p.feat) && p.feat !== 'Ability Score Improvement' && p.feat !== 'Other' && p.feat !== 'Magic Initiate')) w.push(`${p.feat} can only be taken once.`);
+  }
   void sp;
-  return w;
+  return [...new Set(w)];
 }
 // The token fields a hero gets on the map (the DM's app keeps damage and position when a sheet is updated).
 export function heroToken(h){

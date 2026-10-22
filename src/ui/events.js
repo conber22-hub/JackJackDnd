@@ -21,7 +21,7 @@ import { addCond, removeCond } from '../game/rules.js';
 import { shiftFloor } from '../game/shift.js';
 import { whimRoll, whimStep } from '../game/whim.js';
 import { changed, exportDelve, importDelve, loadLocal, loadState, deserialize, saveSoon, undo, download, snapshot } from '../game/session.js';
-import { hostTable, closeTable, joinTable, sendHost, broadcast, pushState, net, rejoin, leaveTable, seatPlayer, sendSheetToOwner, savedTable, savedJoin, readInvite, inviteLink, setPeerServer, peerOpts } from '../net/table.js';
+import { hostTable, closeTable, joinTable, sendHost, broadcast, pushState, net, rejoin, leaveTable, seatPlayer, sendSheetToOwner, savedTable, savedJoin, readInvite, inviteLink, setPeerServer, peerOpts, peerServer } from '../net/table.js';
 import { Peer } from 'peerjs';
 import { newDelve, importMap, setAutoLink, removeRoom, populate, clearMonsters, addFloorBelow, removeBottomFloor, randomSeed } from '../game/build.js';
 import { populateFloor } from '../engine/generator.js';
@@ -237,13 +237,23 @@ document.addEventListener('click', e => {
     case 'host': hostTable(); renderPanel(); break;
     case 'hostNew': hostTable({ code:Array.from({ length:4 }, () => 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 31)]).join('') }); renderPanel(); break;
     case 'rejoin': rejoin(); break;
+    case 'turnClear': { const ps = peerServer() || {}; delete ps.turn; setPeerServer(ps); toast('Relay removed.'); renderPanel(); } break;
+    case 'turnTest': {   // does the relay hand out a relayed address? (the same check a browser makes before relaying)
+      const urls = ($('#psTurn')?.value || '').split(/[\s,]+/).filter(Boolean); if (!urls.length){ toast('Paste a relay address first.'); break; }
+      toast('Testing the relay…');
+      let pc; try { pc = new RTCPeerConnection({ iceServers:[{ urls, username:$('#psTurnUser')?.value.trim() || undefined, credential:$('#psTurnPass')?.value.trim() || undefined }], iceTransportPolicy:'relay' }); } catch (e){ toast(`✗ ${e.message}`); break; }
+      let ok = false; const end = msg => { clearTimeout(tt); try { pc.close(); } catch {} toast(msg); };
+      const tt = setTimeout(() => end(ok ? '✓ The relay works.' : '✗ No answer from the relay in 8 s — check the address, username and password.'), 8000);
+      pc.onicecandidate = e => { if (e.candidate && / relay /.test(e.candidate.candidate) && !ok){ ok = true; end('✓ The relay works — players who couldn\'t connect should get through now.'); } };
+      pc.createDataChannel('t'); pc.createOffer().then(o => pc.setLocalDescription(o)).catch(e => end(`✗ ${e.message}`));
+    } break;
     case 'copyInvite': { const link = inviteLink(); navigator.clipboard?.writeText(link).then(() => toast('Invite link copied — paste it to your players.'), () => { $('#inviteLink')?.select(); toast('Select the link and copy it.'); }); } break;
     case 'psSave': case 'psTest': {
       const v = id => $(id)?.value.trim() || '';
       const host = v('#psHost').replace(/^\w+:\/\//, '').replace(/\/.*$/, '');
-      setPeerServer(host ? { host, port:v('#psPort') || '', path:v('#psPath') || '', key:v('#psKey') || '', secure:$('#psSecure')?.checked !== false,
-        ...(v('#psTurn') ? { turn:{ urls:v('#psTurn'), username:v('#psTurnUser'), credential:v('#psTurnPass') } } : {}) } : null);
-      if (a === 'psSave'){ toast(host ? `Relay server saved: ${host}. Reopen the table to use it.` : 'Using the free PeerJS server.'); renderPanel(); break; }
+      const turn = v('#psTurn') ? { urls:v('#psTurn'), username:v('#psTurnUser'), credential:v('#psTurnPass') } : null;
+      setPeerServer({ ...(host ? { host, port:v('#psPort') || '', path:v('#psPath') || '', key:v('#psKey') || '', secure:$('#psSecure')?.checked !== false } : {}), ...(turn ? { turn } : {}) });
+      if (a === 'psSave'){ toast(turn && !host ? 'Relay saved. Close and reopen the table, then send your players the invite link again.' : host ? `Signalling server saved: ${host}. Reopen the table to use it.` : 'Using the free PeerJS server.'); renderPanel(); break; }
       toast('Testing…'); const p = new Peer(peerOpts()); const done = msg => { toast(msg); clearTimeout(tt); setTimeout(() => p.destroy(), 100); };
       const tt = setTimeout(() => done('No answer from the server in 8 s.'), 8000);
       p.on('open', () => done(`✓ ${host || 'The free server'} answers.`)); p.on('error', e => done(`✗ ${host || 'The free server'}: ${e.type}`));

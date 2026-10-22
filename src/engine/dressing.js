@@ -2,10 +2,10 @@
    has coffins, a mine gallery has carts and ore, and the Narrow House has bedrooms, a library and a nursery.
    Pure: works on a floor object (rooms, grid, doors, stairs) and a seeded rng; adds to f.props.
    Rooms of the manor and castle themes also get a use (bedroom, library, great hall…) and a name to match.
-   Props never block movement or sight, but the dresser still keeps doorways, stairs and the middle of
-   small rooms clear, and puts wall pieces with their backs to the wall. */
+   Tall pieces (shelves, statues, pillars…) block movement, so the dresser keeps doorways and stairs clear,
+   never lets a blocking piece cut a room in two, and puts wall pieces with their backs to the wall. */
 import { T, walk } from './tiles.js';
-import { PROPS } from '../data/props.js';
+import { PROPS, PROP_BLOCK } from '../data/props.js';
 import { ROOM_USES, THEME_KIT, TYPE_KIT } from '../data/dressing.js';
 
 const pickOne = (arr, rng) => arr[Math.floor(rng() * arr.length)];
@@ -54,12 +54,27 @@ export function furnishRoom(f, r, themeId, rng, { rename = true, taken = null } 
   const solid = (x, y) => x < 0 || y < 0 || x >= W || y >= f.H || !walk(f.grid[y * W + x]);
   const budget = Math.max(1, Math.floor(area * (area <= 12 ? .25 : .32)));   // squares of furniture at most
   let used = 0, placed = 0;
+  // squares a blocking piece stands on; one more must leave the rest of the room's floor in one piece
+  const blocked = new Set();
+  for (const p of f.props || []) if (PROP_BLOCK.has(p.k)){ const s = sizeOf(p); for (let y = p.y; y < p.y + s.h; y++) for (let x = p.x; x < p.x + s.w; x++) blocked.add(y * W + x); }
+  const splits = (k, x, y, rot) => {
+    if (!PROP_BLOCK.has(k)) return false;
+    const s = sizeOf({ k, rot }), add = new Set();
+    for (let yy = y; yy < y + s.h; yy++) for (let xx = x; xx < x + s.w; xx++) add.add(yy * W + xx);
+    const open = [];
+    for (let yy = r.y; yy < r.y + r.h; yy++) for (let xx = r.x; xx < r.x + r.w; xx++){ const i = yy * W + xx; if (walk(f.grid[i]) && !blocked.has(i) && !add.has(i)) open.push(i); }
+    if (!open.length) return true;
+    const ok = new Set(open), seen = new Set([open[0]]), q = [open[0]];
+    while (q.length){ const i = q.pop(); for (const j of [i + 1, i - 1, i + W, i - W]){ if (Math.abs((j % W) - (i % W)) > 1 || !ok.has(j) || seen.has(j)) continue; seen.add(j); q.push(j); } }
+    return seen.size < open.length;
+  };
   const take = (k, x, y, rot) => {
     const s = sizeOf({ k, rot });
     for (let yy = y; yy < y + s.h; yy++) for (let xx = x; xx < x + s.w; xx++) free.delete(yy * W + xx);
+    if (PROP_BLOCK.has(k)) for (let yy = y; yy < y + s.h; yy++) for (let xx = x; xx < x + s.w; xx++) blocked.add(yy * W + xx);
     f.props.push({ id:f.nextObj++, k, x, y, rot }); used += s.w * s.h; placed++;
   };
-  const fits = (k, x, y, rot) => { const s = sizeOf({ k, rot }); for (let yy = y; yy < y + s.h; yy++) for (let xx = x; xx < x + s.w; xx++) if (!free.has(yy * W + xx)) return false; return true; };
+  const fits = (k, x, y, rot) => { const s = sizeOf({ k, rot }); for (let yy = y; yy < y + s.h; yy++) for (let xx = x; xx < x + s.w; xx++) if (!free.has(yy * W + xx)) return false; return !splits(k, x, y, rot); };
   for (const [k, lo, hi, where = 'scatter'] of kit){
     if (!PROPS[k]) continue;
     const n = lo + Math.floor(rng() * (hi - lo + 1));

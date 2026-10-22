@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { state, ui, tokById, tokenAt, log, isDM, viewAsPlayer, dreadLevel } from '../engine/state.js';
 import { makeNoise } from './noise.js';
 import { enteredRoom } from './rooms.js';
-import { reach, pathTo, pathCost, updateVision, detectHidden, vision, passMove, canSeeTile, seenNow } from '../engine/grid.js';
+import { reach, pathTo, pathCost, updateVision, detectHidden, vision, passMove, canSeeTile, seenNow, standHeight } from '../engine/grid.js';
 import { trapAt } from '../engine/generator.js';
 import { SEARCHABLE, rollLoot } from '../data/loot.js';
 import { PROPS, propSize } from '../data/props.js';
@@ -148,14 +148,16 @@ export function animatePath(id, path, onStep, onDone, follow){
   const tv = tokenViews.get(id), t = tokById(id);
   if (!tv || !t || !path.length){ onDone && onDone(); return; }
   tv.anim = true;
-  const s = (t.size - 1) / 2;
+  const s = (t.size - 1) / 2, f = state.floors[t.floor];
   const step = i => {
     if (i >= path.length){ tv.anim = null; onDone && onDone(); return; }
-    const from = tv.group.position.clone(), to = new THREE.Vector3(wx(path[i].x + s), 0, wz(path[i].y + s));
+    const from = tv.group.position.clone(), to = new THREE.Vector3(wx(path[i].x + s), standHeight(f, path[i].x, path[i].y, t.size || 1), wz(path[i].y + s));
     faceStep(id, to.x - from.x, to.z - from.z);
+    // a little bob each step; a hop up onto a table (or down off it) gets a proper jump and a beat longer
+    const climb = Math.abs(to.y - from.y), arc = .15 + climb * .5;
     let last = from.clone();
-    tween(.13, k => {
-      tv.group.position.lerpVectors(from, to, k); tv.group.position.y = Math.sin(k * Math.PI) * .15;
+    tween(climb > .05 ? .22 : .13, k => {
+      tv.group.position.lerpVectors(from, to, k); tv.group.position.y = from.y + (to.y - from.y) * k + Math.sin(k * Math.PI) * arc;
       if (follow){ const dx = tv.group.position.x - last.x, dz = tv.group.position.z - last.z; controls.target.x += dx; controls.target.z += dz; camera.position.x += dx; camera.position.z += dz; }
       last = tv.group.position.clone();
     }, () => { onStep && onStep(path[i]); step(i + 1); });

@@ -98,3 +98,37 @@ test('review fixes: Magic Initiate charge, Paladin\'s Smite from level 2, rays, 
   const s5 = newHero('Sorcerer'); s5.lvl = 5;
   assert.equal(heroResources(s5).find(r => r.id === 'sorcrest').points, 2);
 });
+
+test('feats at Ability Score Improvement levels', async () => {
+  const { newHero, heroStats, heroWarnings, heroToken, spellLimits, spellPool, heroResources } = await import('../src/engine/hero.js');
+  const h = newHero('Fighter'); h.lvl = 8; h.ab = { Str:15, Dex:14, Con:14, Int:10, Wis:12, Cha:8 }; h.bg = 'Soldier'; h.bg2 = 'Str'; h.bg1 = 'Con';
+  const base = heroStats({ ...h, asi:{} });
+  // an old sheet: just an ability is +2
+  assert.equal(heroStats({ ...h, asi:{ 4:'Dex', 8:'Dex' } }).sc.Dex, base.sc.Dex + 4);
+  // +1 and +1
+  const split = heroStats({ ...h, asi:{ 4:{ feat:'Ability Score Improvement', ab:'Str', ab2:'Con' } } });
+  assert.equal(split.sc.Str, base.sc.Str + 1); assert.equal(split.sc.Con, base.sc.Con + 1);
+  // Alert adds the Proficiency Bonus to initiative; Grappler +1 Str or Dex
+  const alert = heroStats({ ...h, asi:{ 4:{ feat:'Alert' }, 8:{ feat:'Grappler', ab:'Dex' } } });
+  assert.equal(alert.init, base.init + base.pb + (Math.floor((base.sc.Dex + 1 - 10) / 2) - Math.floor((base.sc.Dex - 10) / 2)));
+  assert.ok(alert.features.some(f => /Alert — feat \(4\)/.test(f)));
+  // Skilled: three skills
+  const sk = heroStats({ ...h, asi:{ 4:{ feat:'Skilled', skills:['Arcana', 'Stealth', 'Medicine'] } } });
+  for (const s of ['Arcana', 'Stealth', 'Medicine']) assert.ok(sk.prof.has(s));
+  // a fighting style feat stacks with the class's own style; Defense +1 AC in armour
+  const def = heroStats({ ...h, style:'Archery', armor:'Chain Mail', asi:{ 4:{ feat:'Defense' } } });
+  assert.equal(def.ac, heroStats({ ...h, style:'Archery', armor:'Chain Mail', asi:{} }).ac + 1); assert.ok(def.styles.has('Archery') && def.styles.has('Defense'));
+  // a written-in feat: +1 ability and hit points per level
+  const tough = heroStats({ ...h, asi:{ 4:{ feat:'Other', name:'Hardy', ab:'Con', hp:'2' } } });
+  assert.ok(tough.hp >= base.hp + 2 * 8); assert.ok(tough.features.some(f => /Hardy/.test(f)));
+  // Magic Initiate: a spell list for a fighter, two cantrips and a level-1 spell, one free cast
+  const mi = { ...h, asi:{ 4:{ feat:'Magic Initiate', list:'W' } }, spells:['Fire Bolt', 'Ray of Frost', 'Magic Missile'] };
+  assert.deepEqual(spellLimits(mi), { cantrips:2, prepared:1 });
+  assert.ok(spellPool(mi).some(s => s.n === 'Magic Missile'));
+  assert.ok(heroResources(mi).some(r => /Magic Initiate \(Magic Missile\)/.test(r.n)));
+  assert.equal(heroStats(mi).castAb, 'Int');
+  // warnings ask for what's missing
+  assert.ok(heroWarnings({ ...h, asi:{ 4:{ feat:'Skilled', skills:['Arcana'] } } }).some(w => /Skilled/.test(w)));
+  assert.ok(heroWarnings({ ...h, asi:{} }).some(w => /ability increase or feat/.test(w)));
+  assert.ok(heroToken({ ...h, name:'X', asi:{ 4:{ feat:'Alert' }, 8:'Str' } }).maxHp > 0);
+});

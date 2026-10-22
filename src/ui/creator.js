@@ -1,7 +1,7 @@
 /* CHARACTER CREATOR — SRD 5.2, levels 1–10. Players use it from the start screen (their heroes are kept in their
    browser and sent to the DM when they join); the DM can open any sheet from the Tokens tab.
    openCreator(sheet | null, { onSave, title }) */
-import { ABILITIES, ABILITY_NAMES, CLASSES, SPECIES, BACKGROUNDS, WEAPONS, ARMOR, STYLES, INVOCATIONS, SKILLS, STANDARD_ARRAY, POINT_COST, MAX_LEVEL, mod } from '../data/srd.js';
+import { ABILITIES, ABILITY_NAMES, CLASSES, SPECIES, BACKGROUNDS, WEAPONS, ARMOR, STYLES, INVOCATIONS, SKILLS, STANDARD_ARRAY, POINT_COST, MAX_LEVEL, FEATS, mod } from '../data/srd.js';
 import { newHero, heroStats, heroAttacks, heroSpells, spellPool, spellLimits, asiLevels, expertiseSlots, heroWarnings, SP } from '../engine/hero.js';
 import { $, esc, clamp, d } from '../util/core.js';
 import { toast } from './hud.js';
@@ -37,6 +37,30 @@ export function sheetHTML(h){
     <div class="sheet-l"><b>Features</b> ${st.features.map(esc).join(' · ')}</div>
     <div class="sheet-l muted">${esc(SPECIES[h.sp]?.note || '')} Origin feat: ${esc(BACKGROUNDS[h.bg]?.feat || '')}.</div>
   </div>`;
+}
+
+/* An Ability Score Improvement level: the improvement itself (+2, or +1 and +1), or a feat instead. */
+const asel = (l, k, list, v) => `<select class="txt" data-asi="${l}" data-k="${k}">${list.map(o => { const [val, lab] = Array.isArray(o) ? o : [o, o]; return `<option value="${esc(val)}" ${String(val) === String(v ?? '') ? 'selected' : ''}>${esc(lab)}</option>`; }).join('')}</select>`;
+function asiHTML(h, l){
+  const raw = h.asi?.[l], p = typeof raw === 'string' ? { feat:'Ability Score Improvement', ab:raw } : (raw || {});
+  const C = CLASSES[h.cls], feats = Object.entries(FEATS).filter(([, f]) => !f.style || C.style);
+  let more = '';
+  if (p.feat === 'Ability Score Improvement') more = `${asel(l, 'ab', [['', '— ability —'], ...ABILITIES], p.ab)}${asel(l, 'ab2', [['', '+2 to it'], ...ABILITIES.filter(a => a !== p.ab).map(a => [a, `+1 to it, +1 to ${a}`])], p.ab2)}`;
+  if (p.feat === 'Grappler') more = asel(l, 'ab', [['', '+1 to…'], ['Str', '+1 Str'], ['Dex', '+1 Dex']], p.ab);
+  if (p.feat === 'Magic Initiate') more = asel(l, 'list', [['', 'Which list?'], ...Object.entries(FEATS['Magic Initiate'].lists)], p.list);
+  if (p.feat === 'Skilled') more = [0, 1, 2].map(i => asel(l, `skill${i}`, [['', '— skill —'], ...Object.keys(SKILLS)], (p.skills || [])[i])).join('');
+  if (p.feat === 'Other') more = `<input class="txt" data-asi="${l}" data-k="name" placeholder="Feat name" value="${esc(p.name || '')}">${asel(l, 'ab', [['', 'No ability bonus'], ...ABILITIES.map(a => [a, `+1 ${a}`])], p.ab)}${asel(l, 'hp', [['0', 'No extra HP'], ['1', '+1 HP a level'], ['2', '+2 HP a level']], p.hp || '0')}
+    <input class="txt" data-asi="${l}" data-k="note" placeholder="What it does (shown on your sheet for the DM)" value="${esc(p.note || '')}">`;
+  return `<div class="cr-asi"><div class="row"><label>Level ${l}</label>${asel(l, 'feat', [['', '— ability increase or a feat —'], ...feats.map(([n]) => [n, n === 'Other' ? 'Another feat (write it in)' : n === 'Ability Score Improvement' ? 'Ability Score Improvement (+2 / +1 +1)' : `Feat: ${n}`])], p.feat)}</div>
+    ${more ? `<div class="row">${more}</div>` : ''}${p.feat ? `<div class="muted">${esc(FEATS[p.feat]?.text || '')}${FEATS[p.feat]?.req ? ` <i>(${esc(FEATS[p.feat].req)})</i>` : ''}</div>` : ''}</div>`;
+}
+function setAsi(l, k, v){
+  edit.asi ||= {};
+  const raw = edit.asi[l]; let p = typeof raw === 'string' ? { feat:'Ability Score Improvement', ab:raw } : { ...(raw || {}) };
+  if (k === 'feat') p = v ? { feat:v } : {};
+  else if (k.startsWith('skill')){ p.skills = [...(p.skills || [])]; p.skills[+k.slice(5)] = v || null; }
+  else if (v === '' || v == null) delete p[k]; else p[k] = v;
+  edit.asi[l] = p.feat ? p : undefined;
 }
 
 function render(){
@@ -77,7 +101,7 @@ function render(){
       return `<div class="${dup ? 'dup' : ''}"><small title="${ABILITY_NAMES[a]}">${a}</small>${input}<b>${st.sc[a]}</b><i>${sgn(mod(st.sc[a]))}</i></div>`;
     }).join('')}</div>
     ${h.method === 'roll' && h.rolled ? `<div class="muted">Rolled: ${h.rolled.join(', ')} — assign each once.</div>` : ''}
-    ${asiLevels(h).map(l => `<div class="row"><label>Level ${l} ability increase (+2)</label>${sel(`asi.${l}`, [['', '— choose —'], ...ABILITIES], h.asi?.[l] || '')}</div>`).join('')}
+    ${asiLevels(h).map(l => asiHTML(h, l)).join('')}
 
     <h2>Skills</h2>
     <div class="muted">Choose ${nSkills} from your class (${(h.skills || []).length} chosen). From your background: ${bg.skills.join(', ')}${h.sp === 'Elf' ? '; Elf: Perception' : ''}.</div>
@@ -109,7 +133,7 @@ function render(){
     <label>A smell that means home<input class="txt" data-cf="homeSmell" value="${esc(h.homeSmell)}"></label>
     <label>Backstory & notes<textarea class="txt" data-cf="backstory">${esc(h.backstory)}</textarea></label>
   </div>
-  <div class="cr-side"><div class="cr-mini" id="crMini"><div class="cr-mini-b"><button class="btn small" data-cr="mini:attack" title="See them swing">⚔</button><button class="btn small" data-cr="mini:cast" title="See them cast">✨</button><button class="btn small ${miniWalk ? 'on' : ''}" data-cr="mini:walk" title="Walk">🚶</button></div></div>${sheetHTML(h)}
+  <div class="cr-side">${narrow() ? '' : miniHost()}${sheetHTML(h)}
     ${warnings.length ? `<div class="bad">${warnings.map(w => `• ${esc(w)}`).join('<br>')}</div>` : '<div class="muted" style="color:var(--ok)">Ready for the table.</div>'}
     <div class="row"><button class="btn primary" data-cr="save">${esc(opts.saveLabel || 'Save hero')}</button><button class="btn small" data-cr="export">⬇ Export</button><label class="btn small">⬆ Import<input type="file" accept=".json" data-cr-file="import" hidden></label><button class="btn small" data-cr="close">Cancel</button></div>
   </div></div>`;
@@ -117,6 +141,8 @@ function render(){
 }
 
 /* ---------- the Look studio: the hero's 3D mini, live ---------- */
+const narrow = () => typeof matchMedia !== 'undefined' && matchMedia('(max-width:760px)').matches;
+const miniHost = () => `<div class="cr-mini" id="crMini"><div class="cr-mini-b"><button class="btn small" data-cr="mini:attack" title="See them swing">⚔</button><button class="btn small" data-cr="mini:cast" title="See them cast">✨</button><button class="btn small ${miniWalk ? 'on' : ''}" data-cr="mini:walk" title="Walk">🚶</button></div></div>`;
 let miniYaw = .5, miniRaf = 0, miniDrag = null, miniWalk = false, miniLast = 0;
 const swatches = (key, list, cur) => `<div class="sw">${list.map(c => `<i data-cr="miniSet" data-k="${key}" data-v="${c}" style="background:${c}" class="${c === cur ? 'on' : ''}"></i>`).join('')}<input type="color" data-mini="${key}" value="${cur}"></div>`;
 const msel = (key, list, cur, auto = null) => `<select class="txt" data-mini="${key}">${auto ? `<option value="">${esc(auto)}</option>` : ''}${list.map(([v, l]) => `<option value="${esc(v)}" ${!auto || (edit.mini || {})[key] !== undefined ? (v === cur ? 'selected' : '') : ''}>${esc(l)}</option>`).join('')}</select>`;
@@ -124,7 +150,7 @@ const pairs = o => Array.isArray(o) ? o.map(v => [v, v[0].toUpperCase() + v.slic
 function lookHTML(h){
   const L = heroLook(h), S = sheetLook(h), m = h.mini || {}, B = BODIES[L.body];
   const skins = SKINS_FANTASY[L.body] ? [...SKINS_FANTASY[L.body], ...SKINS.slice(0, 3)] : SKINS;
-  return `<h2>Looks</h2>
+  return `<h2>Looks</h2>${narrow() ? miniHost() : ''}
     <div class="muted">Your mini is built from your sheet — your folk, armour, weapons and shield all show, and it changes when they do. Make it yours; this is what the table sees.</div>
     <div class="cr-look">
       <label>Skin${swatches('skin', skins, L.skin)}</label>
@@ -153,9 +179,10 @@ function mountMini(){
   if (stageKey() !== JSON.stringify([look])) setStage([look]);
   if (!cv.dataset.wired){
     cv.dataset.wired = 1;
-    cv.addEventListener('pointerdown', e => { miniDrag = { x:e.clientX, yaw:miniYaw }; cv.setPointerCapture(e.pointerId); });
+    cv.addEventListener('pointerdown', e => { miniDrag = { x:e.clientX, yaw:miniYaw }; if (e.pointerType === 'mouse') cv.setPointerCapture(e.pointerId); });
     cv.addEventListener('pointermove', e => { if (miniDrag) miniYaw = miniDrag.yaw - (e.clientX - miniDrag.x) / 90; });
     cv.addEventListener('pointerup', () => { miniDrag = null; });
+    cv.addEventListener('pointercancel', () => { miniDrag = null; });   // the browser took the swipe to scroll
   }
   if (!miniRaf) miniRaf = requestAnimationFrame(miniLoop);
 }
@@ -165,7 +192,8 @@ function miniLoop(now){
   miniRaf = requestAnimationFrame(miniLoop);
   const dt = Math.min(.05, (now - (miniLast || now)) / 1000); miniLast = now;
   if (!miniDrag) miniYaw += dt * .35;
-  const w = Math.max(200, cv.parentElement.clientWidth), h = Math.round(w * 1.05);
+  // never more than half the screen's height (on a phone the page must still scroll past it)
+  const w = Math.max(160, Math.min(cv.parentElement.clientWidth, Math.round(innerHeight * .5 / 1.05))), h = Math.round(w * 1.05);
   frame({ w, h, yaw:miniYaw, t:now / 1000, dt, y:.52, dist:2.15, moving:miniWalk });
 }
 function setMini(key, v){
@@ -190,6 +218,7 @@ document.addEventListener('change', e => {
   if (!edit || !$('#charBox')?.contains(e.target)) return;
   const el = e.target;
   if (el.dataset.mini){ setMini(el.dataset.mini, el.type === 'checkbox' ? el.checked : el.value); render(); return; }
+  if (el.dataset.asi){ setAsi(el.dataset.asi, el.dataset.k, el.value); render(); return; }
   if (el.dataset.cf){ set(el.dataset.cf, el.type === 'checkbox' ? el.checked : el.value); render(); }
   else if (el.dataset.ab){ const lo = edit.method === 'pointbuy' ? 8 : 3, hi = edit.method === 'pointbuy' ? 15 : 20; edit.ab[el.dataset.ab] = clamp(+el.value || 10, lo, hi); render(); }
   else if (el.dataset.skill){ const s = el.dataset.skill; edit.skills = (edit.skills || []).filter(x => x !== s); if (el.checked) edit.skills.push(s); render(); }
@@ -206,6 +235,7 @@ document.addEventListener('change', e => {
 });
 // text fields: keep what is typed without re-rendering (so focus is not lost); the sheet updates on blur
 document.addEventListener('input', e => { if (!edit || !$('#charBox')?.contains(e.target)) return; const el = e.target; if (el.dataset.cf && /INPUT|TEXTAREA/.test(el.tagName) && el.type !== 'color' && el.type !== 'checkbox') set(el.dataset.cf, el.value);
+  if (el.dataset.asi && el.tagName === 'INPUT') setAsi(el.dataset.asi, el.dataset.k, el.value);
   // sliders and colours reshape the mini as they move (the sheet re-renders when they're let go)
   if (el.dataset.mini && (el.type === 'range' || el.type === 'color')){ setMini(el.dataset.mini, el.value); const l = heroLook(edit); if (stageKey() !== JSON.stringify([l])) setStage([l]); } });
 document.addEventListener('click', e => {

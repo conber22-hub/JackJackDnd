@@ -1,6 +1,7 @@
 /* PROPS — furniture and set dressing you can drop on any square (Build tab → Props).
-   Props are scenery: they don't block movement or sight (walls do that), the way tokens of furniture
-   work on Roll20 and Foundry. A prop sits at x, y (its top-left square), covers w × h squares, and turns
+   Props never block sight (walls do that). For movement, minis climb onto low pieces (tables, crates, beds),
+   hop fences and go round tall ones (shelves, statues, pillars): see PROP_TOP / PROP_HOP / PROP_BLOCK below.
+   A prop sits at x, y (its top-left square), covers w × h squares, and turns
    in quarter turns (rot 0–3). The 3D pieces are built in render/props.js.
    cat groups the palette in the Build tab. */
 export const PROP_CATS = { tavern:'Tavern & house', manor:'Manor & castle', village:'Village', road:'Road & wild', barovia:'Barovia', dungeon:'Dungeon', mine:'Mine & cave' };
@@ -113,6 +114,16 @@ export const HOUSES = {
   windmill: { n:'Windmill', w:4, h:4, mill:true },
 };
 
+/* How minis meet each piece. PROP_TOP: they climb up and stand on it (its top, in units; getting onto it is
+   difficult terrain). PROP_HOP: they hop over it (difficult terrain, feet stay on the floor). PROP_BLOCK: they go
+   round it (it blocks movement but not sight). Anything else (rugs, mist, rails, puddles, bridges, gates): walk over. */
+export const PROP_TOP = { table:.51, longtable:.51, chair:.29, bench:.29, stool:.33, bar:.64, bed:.45, barrel:.62, kegs:.6, crate:.56, sacks:.25, cart:.51, hay:.66,
+  trough:.35, anvil:.7, stump:.3, boulder:.42, log:.37, rubble:.12, chest:.55, altar:.86, coffin:.46, desk:.72, cradle:.5, throne:.5, pew:.45, sarcophagus:.8,
+  rack:.5, minecart:.64, cauldron:.5, saltcrock:.4, stall:.5, wreck:.3, wheel:.12, ore:.2, boat:.25 };
+export const PROP_HOP = new Set(['fence']);
+export const PROP_BLOCK = new Set(['shelf', 'hearth', 'bookshelf', 'wardrobe', 'statue', 'pillar', 'organ', 'armor', 'banner', 'lamppost', 'signpost', 'candelabra',
+  'gravestone', 'shrine', 'cage', 'pine', 'deadtree', 'scarecrow', 'well', 'carriage', 'horse', 'vardo', 'tent', 'hull', 'beam', 'brazier', 'lantern', 'milestone',
+  'dollhouse', 'gallows', 'palisade', 'stone']);
 // The squares a prop covers, after turning.
 export function propSize(p){ const d = PROPS[p.k] || { w:1, h:1 }; return (p.rot || 0) % 2 ? { w:d.h, h:d.w } : { w:d.w, h:d.h }; }
 export function propAt(f, x, y){

@@ -22,7 +22,7 @@ import { sfx, onSfx } from '../audio/sound.js';
 import { putModel, allModels, deleteModel } from '../render/models.js';
 import { setSender, validAct, receiveAct, dropRequestsFrom } from '../game/requests.js';
 
-export const net = { peer:null, conns:new Map(), host:null, code:null, online:false, hostTries:0, hostTimer:null,
+export const net = { peer:null, conns:new Map(), knocks:new Map(), host:null, code:null, online:false, hostTries:0, hostTimer:null,
   join:null, status:'idle', tries:0, gen:0, myId:null, everOpen:false, lastSeen:0, retryTimer:null };
 onSfx(name => { if (ui.role === 'dm' && net.conns.size) broadcast({ t:'sfx', name }); });
 let pendingArt = null, lastTurnSeen = '';
@@ -32,13 +32,23 @@ const TKEY = 'dreaddelve.table.v1', JKEY = 'dreaddelve.join.v1', SKEY = 'dreadde
 const load = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch { return null; } };
 const save = (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch {} };
 export const peerServer = () => load(SKEY);
-export function setPeerServer(s){ save(SKEY, s?.host ? s : null); }
-// Options for new Peer(): a custom signalling server (host / port / path / key) and an optional TURN server
-// for phones on mobile data that can't reach the DM directly.
+export function setPeerServer(s){ save(SKEY, s?.host || s?.turn?.urls ? s : null); }   // a relay (TURN) alone is worth keeping too
+/* How two devices find a way to each other (ICE). Several public STUN servers (they tell each device its own
+   address), and relays (TURN) for when they can't connect directly — phones on mobile data, strict home routers,
+   two different networks. PeerJS's free relays are always on the list (over UDP and TCP); a relay of the DM's own
+   (Table tab → Relay) goes first, and the invite link carries it to the players. Several URLs: comma-separated. */
+export const ICE_BASE = [
+  { urls:['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302', 'stun:stun.cloudflare.com:3478'] },
+  { urls:['turn:eu-0.turn.peerjs.com:3478', 'turn:us-0.turn.peerjs.com:3478', 'turn:eu-0.turn.peerjs.com:3478?transport=tcp', 'turn:us-0.turn.peerjs.com:3478?transport=tcp'], username:'peerjs', credential:'peerjsp' },
+];
+export function iceServers(s = peerServer()){
+  const own = s?.turn?.urls ? [{ urls:String(s.turn.urls).split(/[\s,]+/).filter(Boolean), ...(s.turn.username ? { username:s.turn.username } : {}), ...(s.turn.credential ? { credential:s.turn.credential } : {}) }] : [];
+  return [...own, ...ICE_BASE];
+}
+// Options for new Peer(): a custom signalling server (host / port / path / key), and the ICE servers above.
 export function peerOpts(){
-  const s = peerServer(), o = {};
+  const s = peerServer(), o = { config:{ iceServers:iceServers(s) } };
   if (s?.host) Object.assign(o, { host:s.host, port:+s.port || 443, path:s.path || '/', key:s.key || 'peerjs', secure:s.secure ?? (typeof location === 'undefined' || location.protocol !== 'http:') });
-  if (s?.turn?.urls) o.config = { iceServers:[{ urls:'stun:stun.l.google.com:19302' }, { urls:s.turn.urls, username:s.turn.username || undefined, credential:s.turn.credential || undefined }] };
   return o;
 }
 const serverName = () => peerServer()?.host || 'the PeerJS server';
@@ -51,7 +61,7 @@ export function inviteLink(code = net.code){
   if (!code || typeof location === 'undefined') return '';
   const s = peerServer(), u = new URL(location.href.split('#')[0].split('?')[0]);
   u.searchParams.set('join', code);
-  if (s?.host) u.searchParams.set('ps', btoa(JSON.stringify(s)).replace(/=+$/, ''));
+  if (s?.host || s?.turn?.urls) u.searchParams.set('ps', btoa(JSON.stringify(s)).replace(/=+$/, ''));   // the relay travels with the link
   return u.toString();
 }
 // Read ?join=CODE&ps=… once at start-up: remember the server and pre-fill the code.
@@ -76,7 +86,18 @@ export function hostTable({ code = savedTable()?.code || newCode(), tries = 0 } 
     renderTop(); renderPanel(); if (first) toast(`Table open — code ${code}`); else toast('Table back online.');
   });
   peer.on('connection', c => {
+    // someone knocked: show the DM at once, before the connection opens (if it never does, say why)
+    const who = String(c.metadata?.name || 'Someone').slice(0, 30);
+    net.knocks.set(c.peer, { name:who, at:Date.now(), state:'connecting', conn:c });
+    if (!net.conns.has(c.peer)) toast(`🚪 ${who} is knocking…`);
+    renderPanel();
+    const stuck = setTimeout(() => {
+      const k = net.knocks.get(c.peer); if (!k || k.conn !== c || c.open) return;
+      k.state = 'stuck'; toast(`⚠ ${who} can't get through — their network and yours can't connect directly. Table tab → Relay.`); renderPanel();
+    }, 9000);
+    c.on('iceStateChanged', st => { const k = net.knocks.get(c.peer); if (k && k.conn === c){ k.ice = st; if (st === 'failed') k.state = 'stuck'; renderPanel(); } });
     c.on('open', () => {
+      clearTimeout(stuck); if (net.knocks.get(c.peer)?.conn === c) net.knocks.delete(c.peer);
       if (net.peer !== peer) return c.close();
       const old = net.conns.get(c.peer); if (old && old.conn !== c) try { old.conn.close(); } catch {}
       net.conns.set(c.peer, { conn:c, name:'(joining)', seen:Date.now() }); renderPanel();
@@ -127,7 +148,7 @@ export function closeTable(){
   broadcast({ t:'bye' });
   clearTimeout(net.hostTimer); save(TKEY, null);
   const p = net.peer; net.peer = null; setTimeout(() => p?.destroy(), 200);
-  net.conns.clear(); net.code = null; net.online = false; net.opening = null; if (state) state.seats = {};
+  net.conns.clear(); net.knocks.clear(); net.code = null; net.online = false; net.opening = null; if (state) state.seats = {};
   renderTop(); renderPanel();
 }
 // Drop players whose phone stopped answering heartbeats (a sleeping phone's connection can stay "open" for minutes).
@@ -291,7 +312,7 @@ async function connectHost(){
   try { peer = await ensurePeer(); }
   catch (e){ if (gen === net.gen) retry(e?.type === 'timeout' ? 'server' : e?.type || 'server'); return; }
   if (gen !== net.gen) return;
-  const c = peer.connect('dreaddelve-' + net.join.code.toLowerCase(), { reliable:true });
+  const c = peer.connect('dreaddelve-' + net.join.code.toLowerCase(), { reliable:true, metadata:{ name:net.join.name } });
   if (!c){ retry('server'); return; }
   net.host = c;
   const timer = setTimeout(() => { if (gen === net.gen && !c.open){ try { c.close(); } catch {} retry(net.why || 'timeout'); } }, 10000);
@@ -322,7 +343,8 @@ function retry(why){
   const cap = !net.everOpen && why === 'unavailable' ? 4000 : 30000;
   const wait = Math.min(cap, 1000 * 2 ** Math.min(n, 5)) * (0.75 + Math.random() * 0.5);
   net.status = net.everOpen ? 'retrying' : 'connecting'; net.why = why;
-  if (!net.everOpen) joinStatus(why === 'unavailable' ? `Waiting for the DM to open table ${net.join.code}… (is the code right?)` : why === 'server' ? `Can't reach ${serverName()} — trying again…` : `Knocking on table ${net.join.code}…`);
+  if (!net.everOpen) joinStatus(why === 'unavailable' ? `Waiting for the DM to open table ${net.join.code}… (is the code right?)` : why === 'server' ? `Can't reach ${serverName()} — trying again…`
+    : n >= 2 ? `Knocking on table ${net.join.code}… The DM's table is there, but your connection can't get through to it. Try the same Wi-Fi as the DM, or ask them for an invite link with a relay (their Table tab → Relay).` : `Knocking on table ${net.join.code}…`);
   renderNetStatus();
   net.retryTimer = setTimeout(connectHost, wait);
 }

@@ -4,6 +4,7 @@
 import { T, walk } from './tiles.js';
 import { doorAt } from './generator.js';
 import { TRAP_KINDS } from '../data/rooms.js';
+import { PROP_TOP, PROP_HOP, PROP_BLOCK, propSize } from '../data/props.js';
 import { state, tokById, tokenAt, side } from './state.js';
 import { cheb } from '../util/core.js';
 
@@ -11,7 +12,27 @@ export const DIRS = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
 export const ORTHO = DIRS.slice(0, 4);
 
 const doorState = (f, i) => f.doors?.length ? doorAt(f, i)?.state : undefined;
-export function passMove(f, i){ if (!walk(f.grid[i])) return false; const s = doorState(f, i); return s !== 'locked' && s !== 'secret'; }
+/* What a floor's furniture means for moving (data/props.js): squares it blocks, squares you climb or hop
+   (difficult terrain), and how high a mini stands on each. Cached per props list; a turned prop bumps f.propsV. */
+const propCache = new WeakMap();
+export function propTerrain(f){
+  const props = f.props || [], key = `${props.length}|${f.propsV || 0}`;
+  let c = propCache.get(props); if (c && c.key === key) return c;
+  c = { key, block:new Set(), rough:new Set(), top:new Map() };
+  for (const p of props){
+    const s = propSize(p), k = p.k, blk = PROP_BLOCK.has(k), top = PROP_TOP[k], hop = PROP_HOP.has(k);
+    if (!blk && !top && !hop) continue;
+    for (let y = p.y; y < p.y + s.h; y++) for (let x = p.x; x < p.x + s.w; x++){
+      if (x < 0 || y < 0 || x >= f.W || y >= f.H) continue;
+      const i = y * f.W + x;
+      if (blk) c.block.add(i); else { c.rough.add(i); if (top) c.top.set(i, Math.max(c.top.get(i) || 0, top)); }
+    }
+  }
+  propCache.set(props, c); return c;
+}
+// How high a creature stands on its square(s): on top of a table, a crate, an altar… (0 on the floor)
+export function standHeight(f, x, y, size = 1){ if (!f?.props?.length) return 0; const T = propTerrain(f).top; let h = 0; for (let dy = 0; dy < size; dy++) for (let dx = 0; dx < size; dx++) h = Math.max(h, T.get((y + dy) * f.W + x + dx) || 0); return h; }
+export function passMove(f, i){ if (!walk(f.grid[i])) return false; if (f.props?.length && propTerrain(f).block.has(i)) return false; const s = doorState(f, i); return s !== 'locked' && s !== 'secret'; }
 export function passSight(f, i){ if (!walk(f.grid[i])) return false; const s = doorState(f, i); return !s || s === 'open'; }
 
 export function canStep(f, x, y, dx, dy, pass = passMove){
@@ -26,7 +47,7 @@ export function canStep(f, x, y, dx, dy, pass = passMove){
 
 /* Difficult terrain (f.rough: square indexes — mud, rubble, black water to the knee) costs 2 squares to enter.
    reach: every square reachable within `limit` squares of movement → { par: index -> parent, dist: index -> cost } */
-export const roughSet = f => new Set(f.rough || []);
+export const roughSet = f => { const r = new Set(f.rough || []); if (f.props?.length) for (const i of propTerrain(f).rough) r.add(i); return r; };   // mud, rubble, water — and climbing over furniture
 export function reach(L, sx, sy, limit, moverId){
   const f = state.floors[L], start = sy * f.W + sx, par = new Map([[start, -1]]), dist = new Map([[start, 0]]);
   const mover = tokById(moverId) || {}, rough = roughSet(f), buckets = [[start]], sz = mover.size || 1;
@@ -73,7 +94,7 @@ export function reachSight(f, sx, sy, limit, pass = passSight){
 /* LINE OF SIGHT — a square is seen if a straight line reaches it from the middle of the viewer's square
    (to its middle or near one of its corners) without crossing anything that blocks sight: rock, buildings,
    trees, closed doors. A line squeezing between two blocking squares that touch at a corner is blocked.
-   Props don't block (they are scenery). The blocking square itself is seen, so walls and doors show. */
+   Props don't block sight (tall ones block movement only). The blocking square itself is seen, so walls and doors show. */
 export function lineClear(f, x0, y0, x1, y1, pass = passSight){
   let x = Math.floor(x0), y = Math.floor(y0);
   const tx = Math.floor(x1), ty = Math.floor(y1), dx = x1 - x0, dy = y1 - y0, sx = Math.sign(dx), sy = Math.sign(dy);

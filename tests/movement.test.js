@@ -91,3 +91,40 @@ test('Close in: a monster walks to the nearest hero and stops within reach', () 
   const adj = tok('z2', 'monster', 9, 5); arena([adj, near]);
   assert.deepEqual(closeIn(adj, 6).path, []);
 });
+
+test('furniture: minis go round tall props, climb onto low ones (difficult terrain) and stand on top', async () => {
+  const { reach, pathCost, standHeight, passMove, propTerrain } = await import('../src/engine/grid.js');
+  const hero = tok('h', 'pc', 0, 10);
+  const s = arena([hero], { combat:false });
+  const f = s.floors[0];
+  f.props = [{ id:1, k:'shelf', x:2, y:10, rot:0 }, { id:2, k:'table', x:1, y:11 }];
+  assert.equal(passMove(f, 10 * f.W + 2), false, 'a shelf blocks');
+  assert.equal(passMove(f, 11 * f.W + 1), true, 'a table does not');
+  assert.equal(pathCost(f, [{ x:1, y:11 }]), 2, 'climbing onto the table costs double');
+  assert.ok(standHeight(f, 1, 11) > .4 && standHeight(f, 0, 10) === 0, 'stands on the tabletop, the floor is 0');
+  const r = reach(0, 0, 10, 6, 'h');
+  assert.ok(!r.dist.has(10 * f.W + 2), 'no square inside the shelf');
+  assert.ok(r.dist.has(10 * f.W + 3), 'but walks round it');
+  // turning a prop is seen (the cache is keyed on propsV)
+  f.props[0].rot = 1; f.propsV = 1;
+  assert.ok(propTerrain(f).block.has(10 * f.W + 3) && !propTerrain(f).block.has(11 * f.W + 2));
+});
+
+test('the room dresser never lets a tall piece cut a room in two', async () => {
+  const { furnishRoom } = await import('../src/engine/dressing.js');
+  const { canStep, propTerrain } = await import('../src/engine/grid.js');
+  // narrow rooms (2 and 3 wide): a beam or a pillar across the middle would seal one end off
+  for (const theme of ['silver', 'ossuary', 'chapel', 'manor', 'cellar', 'woods']) for (const rw of [2, 3]) for (let seed = 1; seed <= 25; seed++){
+    const W = 9, H = 9, grid = Array(W * H).fill(T.ROCK);
+    for (let y = 1; y < 8; y++) for (let x = 1; x < 1 + rw; x++) grid[y * W + x] = T.ROOM;
+    const f = { W, H, grid, doors:[], traps:[], rough:[], props:[], nextObj:1, rooms:[{ x:1, y:1, w:rw, h:7, type:'chamber' }] };
+    setState({ floors:[f], tokens:[] });
+    let n = seed; const rng = () => (n = (n * 16807) % 2147483647) / 2147483647;
+    furnishRoom(f, f.rooms[0], theme, rng);
+    const block = propTerrain(f).block, open = []; for (let i = 0; i < W * H; i++) if (grid[i] === T.ROOM && !block.has(i)) open.push(i);
+    const seen = new Set([open[0]]), q = [open[0]];
+    while (q.length){ const i = q.pop(); for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]]){ const x = i % W, y = (i / W) | 0; if (!canStep(f, x, y, dx, dy)) continue; const j = (y + dy) * W + x + dx; if (!seen.has(j)){ seen.add(j); q.push(j); } } }
+    const blocked = new Set(); for (const i of open) if (!seen.has(i)) blocked.add(i);
+    assert.equal(blocked.size, 0, `${theme} ${rw} wide, seed ${seed}: ${[...blocked]}`);
+  }
+});

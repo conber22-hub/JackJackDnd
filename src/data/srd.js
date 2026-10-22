@@ -115,6 +115,21 @@ export const ARMOR = {
   Breastplate:{ ac:14, dex:2, t:'medium' }, 'Half Plate':{ ac:15, dex:2, t:'medium' },
   'Ring Mail':{ ac:14, dex:0, t:'heavy' }, 'Chain Mail':{ ac:16, dex:0, t:'heavy' }, Splint:{ ac:17, dex:0, t:'heavy' }, Plate:{ ac:18, dex:0, t:'heavy' },
 };
+/* Feats a hero can take at an Ability Score Improvement level (SRD 5.2), in our own words. plus: abilities that
+   get +1 · style: needs the Fighting Style feature · lists: Magic Initiate's spell lists · skills: how many. */
+export const FEATS = {
+  'Ability Score Improvement':{ text:'+2 to one ability, or +1 to two (none above 20).' },
+  Alert:{ origin:true, text:'Add your Proficiency Bonus to Initiative; you may swap your Initiative with a willing ally\'s.' },
+  Grappler:{ plus:['Str', 'Dex'], req:'Str or Dex 13+', text:'+1 Str or Dex. Your unarmed strike can damage and grapple at once; you have Advantage on attacks against a creature you\'re grappling; dragging it costs no extra movement.' },
+  'Magic Initiate':{ origin:true, lists:{ C:'Cleric', D:'Druid', W:'Wizard' }, text:'Two cantrips and one level-1 spell from one list (pick them under Spells). Cast that spell once a long rest without a slot.' },
+  'Savage Attacker':{ origin:true, text:'Once a turn when you hit with a weapon, roll its damage dice twice and use either roll.' },
+  Skilled:{ origin:true, skills:3, text:'Proficiency in three skills of your choice.' },
+  Archery:{ style:true, text:'+2 to attack rolls with ranged weapons.' },
+  Defense:{ style:true, text:'+1 AC while you wear armour.' },
+  'Great Weapon Fighting':{ style:true, text:'Treat 1s and 2s on the damage dice of two-handed and versatile weapons as 3s.' },
+  'Two-Weapon Fighting':{ style:true, text:'Add your ability modifier to the damage of your extra light-weapon attack.' },
+  Other:{ text:'Any other feat your DM allows: write its name and what it does. Most give +1 to an ability; a few give extra hit points.' },
+};
 export const STYLES = { Archery:'+2 to ranged weapon attacks', Defense:'+1 AC while armoured', Dueling:'+2 damage with a one-handed melee weapon and no other weapon', 'Great Weapon Fighting':'Treat 1s and 2s on weapon damage dice as 3s (two-handed/versatile)' };
 export const INVOCATIONS = ['Agonizing Blast', 'Repelling Blast', 'Armor of Shadows', 'Devil\'s Sight', 'Eldritch Mind'];
 

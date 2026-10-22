@@ -1,7 +1,7 @@
 /* MINIS — procedural 3D figures for every token (swap for GLB models later), and keeping them in sync with state. */
 import * as THREE from 'three';
 import { state, ui, viewAsPlayer, tokById } from '../engine/state.js';
-import { seenNow } from '../engine/grid.js';
+import { seenNow, standHeight } from '../engine/grid.js';
 import { BEST } from '../data/bestiary.js';
 import { CONDITIONS } from '../data/dread.js';
 import { wx, wz, makeLabel, tween } from './scene.js';
@@ -304,7 +304,7 @@ export function syncTokens(){
     }
     const parent = floorViews[t.floor]?.tokens;
     if (parent && tv.group.parent !== parent) parent.add(tv.group);
-    if (!tv.anim) tv.group.position.set(wx(t.x + (t.size - 1) / 2), 0, wz(t.y + (t.size - 1) / 2));
+    if (!tv.anim) tv.group.position.set(wx(t.x + (t.size - 1) / 2), standHeight(state.floors[t.floor], t.x, t.y, t.size || 1), wz(t.y + (t.size - 1) / 2));   // up on a table or a crate
     // visibility: players only see monsters the party can currently see
     let vis = !t.flags.gone;
     if (vis && pv && t.kind === 'monster'){

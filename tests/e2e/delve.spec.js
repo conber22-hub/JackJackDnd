@@ -126,3 +126,25 @@ test('Castle Ravenloft loads and displays all five floors', async ({ page }) => 
   await expect(page.locator('#floorLabel')).toContainText('Floor 5 of 5');
   expect(await page.evaluate(() => window.DreadDelve.ui.floor)).toBe(4);
 });
+
+test('minis walk round a tall shelf and climb up onto a table', async ({ page }) => {
+  await arena(page, [{ name:'Ada', x:6, y:10 }]);
+  await page.evaluate(() => {
+    const D = window.DreadDelve;
+    D.placePropAt({ floor:0, x:8, y:9 }, 'shelf');     // covers 8,9 and 8,10: right across Ada's straight line
+    D.placePropAt({ floor:0, x:11, y:10 }, 'table');
+    window.__trail = [];
+    window.__watch = setInterval(() => { const t = D.get().tokens.find(t => t.name === 'Ada'); window.__trail.push(`${t.x},${t.y}`); }, 20);
+  });
+  await frameMap(page);
+  await selectHero(page);
+  await clickTile(page, 9, 10);
+  await expectPositions(page, { Ada:{ x:9, y:10 } });
+  const trail = await page.evaluate(() => window.__trail);
+  expect(trail).not.toContain('8,10');
+  expect(trail).not.toContain('8,9');
+  await clickTile(page, 11, 10);
+  await expectPositions(page, { Ada:{ x:11, y:10 } });
+  const y = await page.evaluate(() => { const D = window.DreadDelve, t = D.get().tokens.find(t => t.name === 'Ada'); return D.tokenViews.get(t.id).group.position.y; });
+  expect(y).toBeGreaterThan(.45);   // standing on the tabletop
+});
