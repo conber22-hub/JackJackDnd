@@ -16,6 +16,19 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.4 — furniture you can use
+
+- **Objects** (`src/data/objects.js`, `src/engine/objects.js`, `src/game/objects.js`): tap a piece, or a 🪑 chip on a hero's card for what's beside them.
+  - **Open and shut** chests, coffins, sarcophagi (Strength to heave the lid), wardrobes, desks, barrels, crates and cages. The first opening shows what's inside: the DM's text, or a roll on its table in `data/loot.js`.
+  - **Pick or force** a lock (forcing is noisy).
+  - **Push** a piece a square away from you. Light things just move; heavier ones need Athletics DC 10 or 15. It never goes into a wall, a doorway, a person or another piece.
+  - **Topple** a tall one (shelf, bookshelf, wardrobe, statue, suit of armour, banner, candelabra, brazier): it falls one or two squares away from you. Anyone there makes a DC 13 Dex save or takes its damage and falls prone. It then lies there as climbable rubble, and a shelf spills its books or bottles.
+  - **Smash** anything solid: an attack against its AC (by material), damage against its HP (by size, from the SRD object rules). It breaks into debris (rough ground), spilling its contents.
+- **Secrets**: the dresser locks some chests, desks, wardrobes and cages, tucks hidden stashes into some furniture (found with Search), and stands a bookshelf or wardrobe in front of some secret doors. Find the door and the shelf swings aside on its hinge; push, topple or smash the shelf and the door is exposed. A whole-floor check makes sure a hiding shelf never walls anything else off.
+- **DM controls** on the prop card: lock DC, what's inside, a hidden stash and its DC, and ↺ to set a piece back.
+- Players' moves arrive as `{ t:'prop' }` and are checked on the DM's side: their own hero, beside the piece, on their turn, with an action the rules offer them. What's inside, unfound stashes and which shelf hides a door are stripped from what players receive. Animations (lids, slides, falls, swings, smashes) play on every screen.
+- **For Codex**: `docs/codex/rules-data.md` (the full SRD 5.2.1, and a private library format for the DM's own books, kept out of this public repo). **Art**: `docs/assets.md` (CC0 sources and how they'd plug in).
+
 ## v1.3 — first playtest fixes
 
 - **Joining from anywhere**: every table now uses relays (STUN and a public TURN) by default, so a player behind a phone carrier or a strict router can get through. The DM sees each knock in the Table tab and a toast; a player who can't get through after 9 s is flagged ("can't get through") with a pointer to **Table tab → Relay**, where the DM can add their own TURN relay (URLs, username, credential), test it, and send it out in the invite link. Players don't need to be accepted: a knock that connects comes straight in.
@@ -257,7 +270,8 @@ src/util/core.js        dice, seeded random, tiny event bus
 src/data/               ← the content. Edit freely.
   dread.js              Strahd's Gaze 1–10 (look + rules + read-aloud), whispers, conditions
   legendary.js          legendary actions, Legendary Resistance and lair actions
-  props.js              PROPS (furniture & scenery for the Build tab), footprints
+  props.js              PROPS (furniture & scenery for the Build tab), footprints, which ones block / can be climbed / hopped
+  objects.js            what furniture is made of (AC, HP), how heavy, what opens or topples, hidden-stash text
   session0.js           Session 0's hand-built maps: tavern, village, the Old Salt Road
   barovia-map.js        the Valley: places, roads, and what the road throws at travellers
   bestiary.js           FAMILIES, BESTIARY, default party
@@ -278,7 +292,8 @@ src/engine/             pure logic: no DOM, no Three.js, unit-tested
   targeting.js          reach and range, cover (grid corner rule), area templates and who they catch
   movement.js           dragged routes, threat & opportunity attacks, following in marching order, formations, Close in
   castle.js             Castle Ravenloft's five hand-shaped floors (approach, halls, upper keep, dungeons, catacombs)
-  dressing.js           furnishing generated rooms (kits in src/data/dressing.js, read-aloud in src/data/descriptions.js)
+  dressing.js           furnishing generated rooms (kits in src/data/dressing.js, read-aloud in src/data/descriptions.js); locks, stashes, shelves over secret doors
+  objects.js            furniture rules: beside, push / topple targets, damage, what a hero can do with a piece
   settlement.js         the Valley's places: villages, towns, Krezk, Berez, the camp, the vineyard, the lake, the hill, the tower
 src/game/               rules that touch the scene and UI
   combat.js             initiative, attacks, damage, death hooks, the fx language, round-end Gaze effects
@@ -293,6 +308,7 @@ src/game/               rules that touch the scene and UI
   rooms.js              read a room aloud, furnish by hand, the DM's prompt when the party enters a room
   overworld.js          travelling: set out, the road's events, arrive, enter a place
   actions.js            select, move (doors / traps), stairs, falling, doors, search, disarm, floors, dread
+  objects.js            open / pick / force / push / topple / smash / swing furniture, stashes, the DM's prop edits
   build.js              Build tools, templates, populate, add/remove floors, import
   rules.js              movement allowance, conditions
   session.js            save / load / export, v1 save migration, undo, changed()

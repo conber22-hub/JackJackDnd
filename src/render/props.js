@@ -3,6 +3,8 @@
    h squares along z (1 square = 1 unit = 5 ft; a person is about 1.2 tall). */
 import * as THREE from 'three';
 import { PROPS, propSize } from '../data/props.js';
+import { OBJECTS } from '../data/objects.js';
+import { mulberry32 } from '../util/core.js';
 import { wx, wz } from './scene.js';
 
 const mats = new Map(), geos = new Map();
@@ -32,6 +34,15 @@ function wheel(g, r, x, y, z, turn = true){
   const hub = cyl(g, r * .2, r * .2, .08, IRON, x, y, z, METAL); hub.rotation.z = Math.PI / 2; if (!turn) hub.rotation.set(Math.PI / 2, 0, 0);
   return w;
 }
+/* A part that opens (a lid, a door, a drawer): a group at its hinge. key: which rotation or position axis moves;
+   a: closed, b: open. Built in its current pose; animateProp (render/floors.js) tweens between the two. */
+function opener(g, p, key, a, b, x = 0, y = 0, z = 0){
+  const h = new THREE.Group(); h.position.set(x, y, z); g.add(h);
+  const [kind, axis] = key.split('.'); h[kind][axis] = p?.open ? b : a;
+  (g.userData.openers ||= []).push({ o:h, kind, axis, a, b });
+  return h;
+}
+const hollow = (g, w, d, y, x = 0, z = 0) => box(g, w, .01, d, '#0c0807', x, y, z, { r:1 });   // the dark inside, seen when open
 function flame(g, x, y, z, s = 1){ cone(g, .06 * s, .16 * s, '#ffd27a', x, y, z, FIRE, 6); }
 function pineAt(g, x, z, s = 1, tint = '#1f3a24'){
   cyl(g, .07 * s, .1 * s, .5 * s, '#3e2c1c', x, .25 * s, z);
@@ -57,9 +68,11 @@ const BUILD = {
   bed(g){ box(g, .9, .3, 1.9, DARK, 0, .15, 0); box(g, .82, .12, 1.75, '#c8bfa8', 0, .36, .05); box(g, .5, .1, .3, '#e2dccd', 0, .45, -.7); box(g, .9, .6, .08, DARK, 0, .3, -.95); box(g, .84, .06, 1.1, '#6a2228', 0, .44, .35); },
   rug(g){ box(g, 1.8, .015, 2.8, '#5e1c22', 0, .01, 0); box(g, 1.5, .02, 2.5, '#7a2a2e', 0, .012, 0); box(g, .9, .025, 1.8, '#a07a3a', 0, .014, 0); },
   candelabra(g){ cyl(g, .03, .05, 1.1, IRON, 0, .55, 0, METAL); cyl(g, .18, .18, .03, IRON, 0, 1.1, 0, METAL); for (const a of [0, 2.1, 4.2]){ cyl(g, .025, .025, .12, '#efe6cf', Math.cos(a) * .15, 1.18, Math.sin(a) * .15); flame(g, Math.cos(a) * .15, 1.3, Math.sin(a) * .15); } },
-  barrel(g){ cyl(g, .28, .25, .62, WOOD, 0, .31, 0); for (const y of [.12, .5]) cyl(g, .29, .29, .04, IRON, 0, y, 0, METAL); },
+  barrel(g, p){ cyl(g, .28, .25, .62, WOOD, 0, .31, 0); for (const y of [.12, .5]) cyl(g, .29, .29, .04, IRON, 0, y, 0, METAL);
+    if (p?.open) hollow(g, .4, .4, .625); const lid = opener(g, p, 'rotation.z', 0, -1.9, .27, .63, 0); cyl(lid, .27, .27, .03, LIGHT, -.27, 0, 0); },
   kegs(g){ for (const x of [-.45, .45]){ const k = cyl(g, .28, .28, .7, WOOD, x, .3, 0); k.rotation.x = Math.PI / 2; const h = cyl(g, .29, .29, .04, IRON, x, .3, .2, METAL); h.rotation.x = Math.PI / 2; } box(g, 1.7, .06, .3, DARK, 0, .03, 0); },
-  crate(g){ const c = box(g, .62, .62, .62, LIGHT, 0, .31, 0); c.rotation.y = .3; const s = box(g, .64, .06, .64, WOOD, 0, .52, 0); s.rotation.y = .3; },
+  crate(g, p){ const c = box(g, .62, .58, .62, LIGHT, 0, .29, 0); c.rotation.y = .3; const s = box(g, .64, .06, .64, WOOD, 0, .45, 0); s.rotation.y = .3;
+    if (p?.open) hollow(g, .5, .5, .585); const lid = opener(g, p, 'rotation.x', 0, -2.1, 0, .6, -.31); const l = box(lid, .64, .05, .64, WOOD, 0, .02, .31); void l; lid.rotation.y = .3; },
   sacks(g){ for (const [x, z, s] of [[-.15, -.1, 1], [.18, .05, .9], [-.02, .2, .8]]){ const b = ball(g, .2 * s, '#a08a62', x, .14 * s, z); b.scale.set(1, .75, 1.2); } },
   well(g){
     cyl(g, .7, .75, .55, '#6e6a64', 0, .27, 0, {}, 16); cyl(g, .55, .55, .02, '#0a0d10', 0, .56, 0, { r:.1 }, 16);
@@ -161,17 +174,24 @@ const BUILD = {
     for (let k = 0; k < 7; k++) ball(g, .2, k % 2 ? '#2f4a26' : '#3a5a2c', 0, .62, -1.2 + k * .4); for (let k = 0; k < 4; k++) ball(g, .06, '#3a1a3a', .12, .5, -1 + k * .65); },
   tent(g){ const t = cone(g, 1.0, 1.3, '#7a3a2a', 0, .65, 0, { r:.9 }, 4); t.rotation.y = Math.PI / 4; t.scale.set(1, 1, .8);
     box(g, .3, .7, .02, '#2a1410', 0, .35, .78); cyl(g, .03, .03, .3, '#4a3626', 0, 1.4, 0); box(g, .5, .25, .02, '#c9a246', 0, 1.5, 0, { r:.5 }); },
-  chest(g){ box(g, .7, .4, .45, WOOD, 0, .2, 0); const lid = cyl(g, .225, .225, .7, LIGHT, 0, .4, 0, {}, 10); lid.rotation.z = Math.PI / 2; lid.scale.set(1, 1, .6); for (const x of [-.25, .25]) box(g, .05, .46, .47, IRON, x, .23, 0, METAL); },
+  chest(g, p){ box(g, .7, .4, .45, WOOD, 0, .2, 0); for (const x of [-.25, .25]) box(g, .05, .42, .47, IRON, x, .21, 0, METAL);
+    if (p?.open){ hollow(g, .6, .36, .405); for (const [x, z] of [[-.1, .05], [.08, -.06], [.15, .08]]) cyl(g, .04, .04, .015, '#d8b04a', x, .415, z, { m:.8, r:.3 }); }
+    const lid = opener(g, p, 'rotation.x', 0, -1.95, 0, .4, -.225), c = cyl(lid, .225, .225, .7, LIGHT, 0, 0, .225, {}, 10); c.rotation.z = Math.PI / 2; c.scale.set(1, 1, .6);
+    if (p?.lock) box(lid, .1, .12, .03, '#a8873a', 0, -.02, .46, METAL); },
   altar(g){ box(g, .8, .8, 1.7, '#8e8a82', 0, .4, 0); box(g, .9, .08, 1.8, '#a6a29a', 0, .82, 0); flame(g, 0, .95, -.5); flame(g, 0, .95, .5); },
-  coffin(g){ box(g, .6, .4, 1.7, '#2a1c14', 0, .2, 0); box(g, .64, .06, 1.74, '#3a281c', 0, .43, 0); box(g, .06, .02, .5, '#a8873a', 0, .47, -.2, { m:.6 }); },
+  coffin(g, p){ box(g, .6, .4, 1.7, '#2a1c14', 0, .2, 0); if (p?.open){ hollow(g, .5, 1.6, .405); box(g, .44, .02, 1.5, '#6a2228', 0, .41, 0); }
+    const lid = opener(g, p, 'position.x', 0, .55, 0, .43, 0); box(lid, .64, .06, 1.74, '#3a281c', 0, 0, 0); box(lid, .06, .02, .5, '#a8873a', 0, .04, -.2, { m:.6 });
+    if (p?.open){ lid.position.y = .25; lid.rotation.z = -.6; } },
   pillar(g){ cyl(g, .3, .32, 1.5, STONE, 0, .75, 0, {}, 12); box(g, .7, .12, .7, '#8a847c', 0, 1.5, 0); box(g, .7, .12, .7, '#8a847c', 0, .06, 0); },
   bones(g){ ball(g, .1, '#e8e0cc', 0, .08, 0); for (const a of [.3, 1.4, 2.5, 3.6]){ const b = cyl(g, .025, .025, .35, '#e0d6c0', Math.cos(a) * .2, .03, Math.sin(a) * .2); b.rotation.set(Math.PI / 2, 0, a); } },
   brazier(g){ for (const a of [0, 2.1, 4.2]) box(g, .04, .6, .04, IRON, Math.cos(a) * .15, .3, Math.sin(a) * .15, METAL); cyl(g, .25, .15, .15, IRON, 0, .65, 0, METAL); flame(g, 0, .8, 0, 2); flame(g, .08, .76, .05, 1.3); },
   // manor & castle (the back of a wall piece is its -x side: the dresser turns it to face the room)
   bookshelf(g){ box(g, .32, 1.7, 1.8, DARK, 0, .85, 0); for (const y of [.3, .7, 1.1, 1.5]){ box(g, .34, .04, 1.76, LIGHT, .01, y - .06, 0);
     for (let k = 0; k < 9; k++){ const hgt = .18 + ((k * 7 + y * 10) % 5) * .025; box(g, .2, hgt, .14, ['#5a2222', '#2a3a5a', '#3a4a2a', '#6a5a3a', '#4a2a4a'][(k + Math.round(y * 10)) % 5], .04, y - .04 + hgt / 2, -.72 + k * .18); } } },
-  wardrobe(g){ box(g, .5, 1.8, .9, DARK, -.15, .9, 0); box(g, .02, 1.6, .02, '#1a120c', .11, .9, 0); for (const z of [-.08, .08]) ball(g, .025, '#a8873a', .12, .95, z, METAL); box(g, .56, .08, .96, LIGHT, -.15, 1.82, 0); },
-  desk(g){ box(g, .55, .05, .9, LIGHT, -.1, .7, 0); legs(g, .55, .9, .68); box(g, .45, .25, .35, DARK, -.1, .5, -.25); box(g, .3, .01, .22, '#e8dcc0', .0, .73, .1); cyl(g, .03, .03, .1, '#efe6cf', -.2, .78, .3); flame(g, -.2, .87, .3); box(g, .4, .05, .4, WOOD, .35, .3, 0); },
+  wardrobe(g, p){ box(g, .5, 1.8, .9, DARK, -.15, .9, 0); box(g, .56, .08, .96, LIGHT, -.15, 1.82, 0);
+    if (p?.open){ box(g, .02, 1.6, .8, '#0c0807', .105, .9, 0, { r:1 }); for (const z of [-.25, 0, .25]) box(g, .3, .7, .14, ['#4a2a3a', '#2a3a4a', '#5a4a2a'][Math.abs(z * 4)], -.05, 1.2, z); }
+    for (const s of [-1, 1]){ const dr = opener(g, p, 'rotation.y', 0, s * 1.9, .1, .9, s * .44); box(dr, .03, 1.6, .43, '#46301e', .01, 0, -s * .215); ball(dr, .025, '#a8873a', .04, .05, -s * .4, METAL); } },
+  desk(g, p){ box(g, .55, .05, .9, LIGHT, -.1, .7, 0); legs(g, .55, .9, .68); const dw = opener(g, p, 'position.x', -.1, .18, 0, .5, -.25); box(dw, .45, .25, .35, DARK, 0, 0, 0); if (p?.open) hollow(dw, .4, .3, .126); box(g, .3, .01, .22, '#e8dcc0', .0, .73, .1); cyl(g, .03, .03, .1, '#efe6cf', -.2, .78, .3); flame(g, -.2, .87, .3); box(g, .4, .05, .4, WOOD, .35, .3, 0); },
   cradle(g){ const b = box(g, .45, .3, .75, LIGHT, 0, .35, 0); for (const z of [-.38, .38]){ const r = mesh(g, geo('rock', () => new THREE.TorusGeometry(.3, .03, 6, 12, Math.PI)), DARK, 0, .2, z); r.rotation.z = Math.PI; r.position.y = .32; } box(g, .38, .06, .62, '#e2dccd', 0, .5, 0); void b; },
   dollhouse(g){ box(g, .6, .55, .6, '#6a5a4a', 0, .55, 0); box(g, .5, .02, .02, '#2a1a10', .31, .55, 0); for (const [y, z] of [[.45, -.15], [.45, .15], [.68, -.15], [.68, .15]]) box(g, .02, .1, .08, '#ffcf7a', .31, y, z, GLOW);
     const roof = cone(g, .5, .35, '#3a2a2a', 0, 1.0, 0, {}, 4); roof.rotation.y = Math.PI / 4; box(g, .62, .3, .62, DARK, 0, .14, 0); },
@@ -183,7 +203,9 @@ const BUILD = {
     box(g, .3, .06, 1.4, '#e8e0cc', 0, .82, 0); box(g, .4, .45, .9, WOOD, .5, .22, 0); },
   // dungeon
   statue(g){ box(g, .6, .4, .6, '#7a766e', 0, .2, 0); cyl(g, .16, .22, .9, '#8e8a82', 0, .85, 0, {}, 8); ball(g, .14, '#8e8a82', 0, 1.42, 0); for (const z of [-.2, .2]){ const arm = cyl(g, .05, .05, .55, '#8e8a82', .05, 1.0, z, {}, 6); arm.rotation.x = z > 0 ? -.3 : .3; } box(g, .02, .5, .3, '#8e8a82', .15, .6, 0); },
-  sarcophagus(g){ box(g, .75, .55, 1.8, '#7c786e', 0, .28, 0); box(g, .8, .12, 1.85, '#8e8a82', 0, .6, 0); box(g, .4, .08, 1.3, '#9a968c', 0, .7, 0); ball(g, .12, '#9a968c', 0, .76, -.65); },
+  sarcophagus(g, p){ box(g, .75, .55, 1.8, '#7c786e', 0, .28, 0); if (p?.open) hollow(g, .6, 1.6, .56);
+    const lid = opener(g, p, 'position.x', 0, .45, 0, .6, 0); box(lid, .8, .12, 1.85, '#8e8a82', 0, 0, 0); box(lid, .4, .08, 1.3, '#9a968c', 0, .1, 0); ball(lid, .12, '#9a968c', 0, .16, -.65);
+    if (p?.open){ lid.rotation.y = .25; lid.rotation.z = -.12; } },
   cobweb(g){ const w = mat('#d8d4cc', { op:.35, ds:true, r:1 }); for (const [a, y] of [[0, 1.1], [1.2, .8], [2.4, 1.3]]){ const m = new THREE.Mesh(geo('web', () => new THREE.CircleGeometry(.5, 6, 0, Math.PI / 2)), w); m.position.set(-.45, y, -.45); m.rotation.set(0, a * .3 + Math.PI / 4, 0); g.add(m); } },
   cage(g){ box(g, .7, .06, .7, IRON, 0, .03, 0, METAL); box(g, .7, .06, .7, IRON, 0, 1.4, 0, METAL); for (let k = 0; k < 12; k++){ const a = k / 12 * Math.PI * 2; cyl(g, .015, .015, 1.35, IRON, Math.cos(a) * .32, .72, Math.sin(a) * .32, METAL, 5); } cyl(g, .02, .02, .6, IRON, 0, 1.75, 0, METAL); ball(g, .08, '#e8e0cc', .1, .12, .05); },
   rack(g){ box(g, .8, .5, 1.8, DARK, 0, .25, 0); for (const z of [-.85, .85]){ const r = cyl(g, .07, .07, .9, LIGHT, 0, .6, z); r.rotation.z = Math.PI / 2; } for (const x of [-.25, .25]) box(g, .02, .02, 1.6, '#8a7a5e', x, .52, 0); },
@@ -196,13 +218,57 @@ const BUILD = {
   puddle(g){ const m = mesh(g, geo('pud', () => new THREE.CircleGeometry(.42, 14)), '#0d1418', 0, .012, 0, { r:.05, m:.3 }); m.rotation.x = -Math.PI / 2; m.scale.set(1, .75, 1); },
 };
 
+// What a smashed piece leaves: planks, stone chunks, twisted iron, rags or shards, in its own colours.
+const DEBRIS_LOOK = { wood:[WOOD, LIGHT], stone:['#7c786e', '#9a968c'], iron:[IRON, '#5a5a62'], glass:['#c8d8d0', '#3a5a4a'], cloth:['#8a7a5a', STRAW], bone:['#e0d6c0', '#c8bea8'] };
+function debris(g, p, s){
+  const m = OBJECTS[p.k]?.m || 'wood', [c1, c2] = DEBRIS_LOOK[m], rnd = mulberry32(p.id * 7919 + 13), n = 5 + s.w * s.h * 3;
+  for (let k = 0; k < n; k++){
+    const x = (rnd() - .5) * (s.w - .15), z = (rnd() - .5) * (s.h - .15), c = rnd() < .5 ? c1 : c2, r = rnd() * Math.PI;
+    const b = m === 'wood' ? box(g, .5 + rnd() * .3, .04, .1, c, x, .03 + rnd() * .05, z) : m === 'iron' ? box(g, .5, .03, .03, c, x, .03, z, METAL)
+      : m === 'cloth' ? ball(g, .14, c, x, .04, z) : m === 'glass' ? box(g, .08, .01, .05, c, x, .01, z, { r:.1, m:.3 }) : box(g, .14 + rnd() * .12, .1, .16, c, x, .05, z);
+    b.rotation.set(rnd() * .4, r, rnd() * .3); if (m === 'cloth') b.scale.y = .35;
+  }
+  if (m === 'glass'){ const st = mesh(g, geo('stain', () => new THREE.CircleGeometry(.4, 14)), '#2a1410', 0, .008, 0, { r:.1, op:.8 }); st.rotation.x = -Math.PI / 2; }
+}
+/* A prop as it stands now: whole (lids open or shut), smashed to debris, fallen on its side across the squares
+   it landed on, or (a secret shelf) swung out from the wall on its hinge. The outer group is placed in world
+   space; animateProp finds the moving part through userData (pivot, hinge, openers). */
 export function buildProp(p){
-  const g = new THREE.Group(), s = propSize(p);
-  (BUILD[p.k] || BUILD.crate)(g);
+  const outer = new THREE.Group(); outer.userData.propId = p.id;
+  if (p.broken){ const s = propSize(p); debris(outer, p, s); outer.position.set(wx(p.x) + (s.w - 1) / 2, 0, wz(p.y) + (s.h - 1) / 2); outer.userData.debris = true; return outer; }
+  const g = new THREE.Group(); (BUILD[p.k] || BUILD.crate)(g, p);
   g.rotation.y = -(p.rot || 0) * Math.PI / 2;
-  g.position.set(wx(p.x) + (s.w - 1) / 2, 0, wz(p.y) + (s.h - 1) / 2);
-  g.userData.propId = p.id;
-  return g;
+  outer.userData.openers = g.userData.openers;
+  const fl = p.fallen, s = fl ? { w:fl.ow, h:fl.oh } : propSize(p), x0 = fl ? fl.ox : p.x, y0 = fl ? fl.oy : p.y;
+  const cx = wx(x0) + (s.w - 1) / 2, cz = wz(y0) + (s.h - 1) / 2;
+  if (fl){
+    // it tips over the edge of its footprint, and comes to rest lying on the floor
+    const px = cx + fl.dx * s.w / 2, pz = cz + fl.dy * s.h / 2, pivot = new THREE.Group();
+    pivot.position.set(px, 0, pz); outer.add(pivot); g.position.set(cx - px, 0, cz - pz); pivot.add(g);
+    const axis = fl.dx ? 'z' : 'x', end = fl.dx ? -fl.dx * Math.PI / 2 : fl.dy * Math.PI / 2;
+    pivot.rotation[axis] = end; outer.updateMatrixWorld(true);
+    const lift = -new THREE.Box3().setFromObject(pivot).min.y; pivot.position.y = lift;
+    outer.userData.pivot = { o:pivot, axis, end, lift };
+    // a toppled shelf spills what was on it
+    if (p.k === 'shelf' || p.k === 'bookshelf'){
+      const rnd = mulberry32(p.id * 31 + 7), fs = propSize(p);
+      for (let k = 0; k < 9; k++){
+        const x = wx(p.x) - .5 + rnd() * fs.w, z = wz(p.y) - .5 + rnd() * fs.h, c = ['#5a2222', '#2a3a5a', '#3a4a2a', '#6a5a3a', '#2f5a2a'][k % 5];
+        const b = p.k === 'shelf' ? cyl(outer, .04, .04, .2, c, x, .04, z, { r:.3 }) : box(outer, .2, .05, .14, c, x, .03, z);
+        b.rotation.set(p.k === 'shelf' ? Math.PI / 2 : 0, rnd() * 3, 0);
+      }
+    }
+    return outer;
+  }
+  if (p.swung){
+    // a hinge at one end of its back edge: it stands out from the wall like an open door
+    const len = (PROPS[p.k]?.h || 1) * .95, hinge = new THREE.Group(), inner = new THREE.Group();
+    hinge.position.set(-.3, 0, len / 2); inner.position.set(.3, 0, -len / 2); hinge.add(inner);
+    while (g.children.length) inner.add(g.children[0]);
+    g.add(hinge); hinge.rotation.y = -1.35; outer.userData.hinge = { o:hinge, end:-1.35 };
+  }
+  g.position.set(cx, 0, cz); outer.add(g);
+  return outer;
 }
 
 /* Buildings: solid houses on outdoor floors (the squares under them stay rock). Lit windows at night. */

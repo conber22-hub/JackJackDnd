@@ -32,6 +32,9 @@ import * as forgeStudio from './render/forge/studio.js';
 import * as look from './engine/look.js';
 export { forgeStudio, look, renderer };
 export { tokenViews };
+import * as objects from './game/objects.js';
+export { objects };
+export { buildFloor } from './render/floors.js';
 export { camera, controls, net, receiveAct, makeNoise, rollEncounter, placeEncounter, castSpell, useLegendary, useResistance, lairAction, lairCreature, useFeature, shortRest, longRest, adjustRes, requestAct, answerRequest, requests };
 export { ui, tokById, BEST, reach, shiftFloor, whimRoll, whimStep, rollInitiative, nextTurn, placeMonster, doAttack, runFx, useSpecial, kill, applyDamage, infest,
   select, doMove, requestMove, setView, goFloor, takeStairs, setDread, doorAction, search, triggerTrap, fall,

@@ -5,8 +5,9 @@
    Tall pieces (shelves, statues, pillars…) block movement, so the dresser keeps doorways and stairs clear,
    never lets a blocking piece cut a room in two, and puts wall pieces with their backs to the wall. */
 import { T, walk } from './tiles.js';
-import { PROPS, PROP_BLOCK } from '../data/props.js';
+import { PROPS, PROP_BLOCK, propSize } from '../data/props.js';
 import { ROOM_USES, THEME_KIT, TYPE_KIT } from '../data/dressing.js';
+import { OBJECTS, STASHES } from '../data/objects.js';
 
 const pickOne = (arr, rng) => arr[Math.floor(rng() * arr.length)];
 // back of a wall piece → rot: wall to the west 0, north 1, east 2, south 3
@@ -111,7 +112,58 @@ export function furnishRoom(f, r, themeId, rng, { rename = true, taken = null } 
   }
   return placed;
 }
-function sizeOf(p){ const d = PROPS[p.k] || { w:1, h:1 }; return (p.rot || 0) % 2 ? { w:d.h, h:d.w } : { w:d.w, h:d.h }; }
+const sizeOf = propSize;
+
+/* SECRETS — after furnishing: some chests, desks and wardrobes are locked, some furniture has a hidden stash
+   (found with Search), and a secret door may hide behind a bookshelf or a wardrobe standing in front of it
+   on the room side (find the door, then swing the shelf aside). Its own rng, so layouts don't shift. */
+// How many squares the party can walk to from the stairs (secret doors shut, tall furniture in the way).
+function reachable(f){
+  const W = f.W, block = new Set();
+  for (const p of f.props) if (PROP_BLOCK.has(p.k) && !p.swung && !p.broken && !p.fallen){ const s = sizeOf(p); for (let y = p.y; y < p.y + s.h; y++) for (let x = p.x; x < p.x + s.w; x++) block.add(y * W + x); }
+  for (const d of f.doors || []) if (d.state === 'secret') block.add(d.i);
+  const st = f.up || f.down || (f.rooms?.[0] && { x:f.rooms[0].x, y:f.rooms[0].y }); if (!st) return 0;
+  const s0 = st.y * W + st.x, seen = new Set([s0]), q = [s0];
+  while (q.length){ const i = q.pop(); for (const j of [i + 1, i - 1, i + W, i - W]){ if (j < 0 || j >= f.grid.length || Math.abs((j % W) - (i % W)) > 1 || seen.has(j) || block.has(j) || !walk(f.grid[j])) continue; seen.add(j); q.push(j); } }
+  return seen.size;
+}
+export function hideSecrets(f, rng){
+  f.props ||= [];
+  for (const p of f.props){
+    const o = OBJECTS[p.k];
+    if (o?.lockable && rng() < .3) p.lock = 12 + Math.floor(rng() * 5);
+    if (STASHES[p.k] && rng() < .12) p.stash = { dc:12 + Math.floor(rng() * 5), text:pickOne(STASHES[p.k], rng) };
+  }
+  const W = f.W, open = (x, y) => x >= 0 && y >= 0 && x < W && y < f.H && walk(f.grid[y * W + x]);
+  const taken = (x, y) => f.props.some(p => { const s = sizeOf(p); return x >= p.x && x < p.x + s.w && y >= p.y && y < p.y + s.h; })
+    || (f.doors || []).some(d => d.i === y * W + x) || [f.up, f.down].some(s => s && Math.abs(s.x - x) <= 1 && Math.abs(s.y - y) <= 1);
+  const inRoom = (x, y) => (f.rooms || []).some(r => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h);
+  // never in front of another way in or out (an opening, a corridor mouth), only the hidden door
+  const doorway = (x, y, door) => [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => (x + a) + (y + b) * W !== door && open(x + a, y + b) && !inRoom(x + a, y + b));
+  for (const dr of (f.doors || []).filter(d => d.state === 'secret')){
+    if (rng() > .6) continue;
+    const dx0 = dr.i % W, dy0 = (dr.i / W) | 0;
+    // the room square in front of the door, and which way the wall runs there
+    for (const [dx, dy, rot] of SIDES){
+      const x = dx0 - dx, y = dy0 - dy;          // the door is on this square's (dx, dy) side
+      if (!open(x, y) || !inRoom(x, y) || taken(x, y) || doorway(x, y, dr.i)) continue;
+      const along = dx ? [[0, 1], [0, -1]] : [[1, 0], [-1, 0]];
+      let placed = null;
+      // a bookshelf (two squares along the wall) if the next square along has wall behind it, else a wardrobe
+      for (const [ax, ay] of along){
+        const x2 = x + ax, y2 = y + ay;
+        if (!open(x2, y2) || !inRoom(x2, y2) || taken(x2, y2) || open(x2 + dx, y2 + dy) || doorway(x2, y2, dr.i)) continue;
+        placed = { k:'bookshelf', x:Math.min(x, x2), y:Math.min(y, y2), rot }; break;
+      }
+      placed ||= { k:'wardrobe', x, y, rot };
+      const before = reachable(f);
+      const p = { id:f.nextObj++, ...placed, hides:dr.id }; f.props.push(p);
+      if (reachable(f) < before - sizeOf(p).w * sizeOf(p).h) f.props.pop();   // it would wall something off
+      break;
+    }
+  }
+  f.propsV = (f.propsV || 0) + 1;
+}
 // Take a room's furniture out (Build tab → Clear).
 export function clearRoomProps(f, r){
   const before = (f.props || []).length;

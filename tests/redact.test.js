@@ -42,3 +42,22 @@ test('players get no secrets: unexplored map, secret doors, unfound traps, unsee
   // the DM's own state is untouched
   assert.ok(s.floors[0].doors.some(d => d.state === 'secret')); assert.equal(s.tokens.find(t => t.id === 'm1').attacks.length, 1);
 });
+
+test('furniture keeps its secrets: contents, unfound stashes and the shelf that hides a door', () => {
+  const s = newState({ seed:'redact-props', floors:1, template:'andral' }); setState(s);
+  updateVision();
+  const f = s.floors[0], pc = s.tokens.find(t => t.kind === 'pc');
+  const door = { id:950, i:(pc.y + 1) * f.W + pc.x, state:'secret', dc:15 }; f.doors.push(door);
+  f.props = [
+    { id:1, k:'chest', x:pc.x, y:pc.y, contents:'a cursed ring', stash:{ dc:14, text:'a false bottom', found:false } },
+    { id:2, k:'bookshelf', x:pc.x, y:pc.y, hides:950, stash:{ dc:12, text:'a hollow book', found:true } },
+  ];
+  let out = redactForPlayers(ser(s), { seen:seenNow, explored:s.explored }).floors[0].props;
+  assert.equal(out[0].contents, undefined); assert.equal(out[0].stash, undefined);
+  assert.equal(out[1].hides, undefined, 'which shelf hides the secret door stays hidden');
+  assert.equal(out[1].stash.text, 'a hollow book', 'a found stash is shared');
+  door.state = 'closed';
+  out = redactForPlayers(ser(s), { seen:seenNow, explored:s.explored }).floors[0].props;
+  assert.equal(out[1].hides, 950, 'once the door is found, players can swing the shelf');
+  assert.equal(f.props[0].contents, 'a cursed ring', 'the DM\'s copy is untouched');
+});

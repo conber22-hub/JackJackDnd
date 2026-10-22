@@ -16,6 +16,9 @@ import { canCast, left } from '../game/resources.js';
 import { renderRequests } from '../game/requests.js';
 import { renderPrompts } from '../game/rooms.js';
 import { legendOf, legendLeft, resistLeft, lairCreature } from '../game/combat.js';
+import { selectedProp, hiddenDoor, actorFor, objectsBeside } from '../game/objects.js';
+import { objectActs, objInfo, objAC, objHp, objMaxHp } from '../engine/objects.js';
+import { PROPS } from '../data/props.js';
 import { sfx } from '../audio/sound.js';
 
 export function toast(msg){ const el = document.createElement('div'); el.className = 'toast'; el.textContent = msg; $('#toasts').appendChild(el); setTimeout(() => el.remove(), 3800); while ($('#toasts').children.length > 5) $('#toasts').firstChild.remove(); }
@@ -110,6 +113,7 @@ export function renderSel(){
   if (!state){ el.classList.remove('show'); return; }
   if (ui.selDoor) return renderDoorCard(el);
   if (ui.selTrap) return renderTrapCard(el);
+  if (ui.selProp) return renderPropCard(el);
   const t = ui.selected && tokById(ui.selected);
   if (!t){ el.classList.remove('show'); return; }
   const dm = isDM(), mine = t.id === ui.myToken, b = BEST[t.bid];
@@ -152,6 +156,8 @@ export function renderSel(){
     }
   }
   if (!t.dead && t.kind !== 'monster' && (dm || mine)) acts += `<button class="btn small" data-act="search">🔍 Search</button>`;
+  // the furniture beside it: tap to open its card (open, push, topple, smash…)
+  if (!t.dead && (dm || mine)) acts += objectsBeside(t).slice(0, 4).map(p => `<button class="btn small" data-act="selProp" data-k="${p.id}" title="What ${esc(t.name)} can do with it">🪑 ${esc(PROPS[p.k]?.n || p.k)}${p.lock ? ' 🔒' : ''}</button>`).join('');
   if (stairs && (dm || mine) && !t.dead) acts += `<button class="btn small primary" data-act="stairs">${esc(exitLabel(state.floors[t.floor], stairs))}</button>`;
   if (mine && currentTurn()?.id === t.id) acts += `<button class="btn small primary" data-act="endMyTurn">End my turn</button>`;
   acts += `<button class="btn small" data-act="focus">⌖ Focus</button>`;
@@ -190,6 +196,26 @@ function renderDoorCard(el){
   }
   el.innerHTML = `<div class="top"><span class="dot" style="color:${DOOR_STATES[dr.state].color};background:${DOOR_STATES[dr.state].color}"></span><span class="nm">Door — ${DOOR_STATES[dr.state].label}${dr.found ? ' <span class="muted">(found)</span>' : ''}</span><button class="btn small" data-act="deselect">✕</button></div>
     <div class="acts">${acts}</div>`;
+  el.classList.add('show');
+}
+function renderPropCard(el){
+  const p = selectedProp(); if (!p){ ui.selProp = null; el.classList.remove('show'); return; }
+  const L = ui.selProp.floor, f = state.floors[L], dm = isDM(), o = objInfo(p.k), who = actorFor(L, p), door = hiddenDoor(L, p);
+  const acts = objectActs(f, p, who, { dm:dm && !who, door });
+  let h = acts.map(a => a.act ? `<button class="btn small ${a.why ? 'off' : a.act === 'open' || a.act === 'swing' ? 'primary' : ''}" data-act="propDo" data-k="${a.act}" ${a.why ? `title="${esc(a.why)}"` : ''}>${esc(a.label)}${a.why ? ` <span class="muted">· ${esc(a.why)}</span>` : ''}</button>` : `<span class="muted">${esc(a.label)}</span>`).join('');
+  if (dm){
+    h += `<div class="prop-dm"><label class="muted">🔒 Lock DC <input class="txt num" type="number" min="0" value="${p.lock || 0}" data-edit="propLock"></label>
+      <label class="muted">Inside <input class="txt" placeholder="${o?.open || p.searched ? 'What they find (blank: roll on its table)' : 'What they find if they search it'}" value="${esc(p.contents || '')}" data-edit="propContents"></label>
+      <label class="muted">Hidden stash <input class="txt" placeholder="Found with Search — e.g. a false bottom with a key" value="${esc(p.stash?.text || '')}" data-edit="propStash"></label>
+      ${p.stash ? `<label class="muted">DC <input class="txt num" type="number" value="${p.stash.dc || 13}" data-edit="propStashDc"></label>${p.stash.found ? ' <span class="chip on">found</span>' : ''}` : ''}
+      ${door ? `<div class="muted">Hides a secret door — ${door.state === 'secret' ? 'not yet found' : 'found'}.</div>` : ''}
+      ${p.broken || p.fallen || p.swung || p.open ? `<button class="btn small" data-act="propDo" data-k="repair">↺ Set it back</button>` : ''}</div>`;
+  }
+  const state2 = [p.broken && 'broken', p.fallen && 'toppled', p.swung && 'swung aside', p.open && 'open', p.lock && 'locked'].filter(Boolean).join(' · ');
+  el.innerHTML = `<div class="top"><span class="dot" style="color:#c9a246;background:#c9a246"></span><span class="nm">${esc(PROPS[p.k]?.n || p.k)}${state2 ? ` <span class="muted" style="font-size:13px">${esc(state2)}</span>` : ''}</span><button class="btn small" data-act="deselect">✕</button></div>
+    ${o ? `<div class="stat">AC <b>${objAC(p)}</b> · HP <b>${objHp(p)}/${objMaxHp(p)}</b> · ${o.m}${who ? ` · <span class="muted">${esc(who.name)} acts</span>` : dm ? ' · <span class="muted">no hero beside it: your hand, no rolls</span>' : ''}</div>` : ''}
+    ${p.found ? `<div class="look">Inside: ${esc(p.found)}</div>` : ''}${p.stash?.found ? `<div class="look">Hidden: ${esc(p.stash.text)}</div>` : ''}
+    <div class="acts">${h}</div>`;
   el.classList.add('show');
 }
 function renderTrapCard(el){

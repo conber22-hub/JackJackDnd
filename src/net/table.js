@@ -6,7 +6,7 @@ import { updateVision, seenNow } from '../engine/grid.js';
 import { redactForPlayers } from '../engine/redact.js';
 import { $ } from '../util/core.js';
 import { focusTile } from '../render/scene.js';
-import { ensureFloorViews, buildAllFloors, buildFloor, animateGridChange } from '../render/floors.js';
+import { ensureFloorViews, buildAllFloors, buildFloor, animateGridChange, animateProp } from '../render/floors.js';
 import { syncTokens, tokenViews, actOn } from '../render/minis.js';
 import { turnAction, undoMove, answerOpportunity, askOpportunity, dropAsk } from '../game/moves.js';
 import { showReach, spawnPing, flashArea } from '../render/effects.js';
@@ -14,6 +14,7 @@ import { toast, banner, showCard, showWhisper, renderAll, renderTop } from '../u
 import { renderPanel } from '../ui/panels.js';
 import { serialize, deserialize, resetScene } from '../game/session.js';
 import { doMove, takeStairs, doPing, goFloor, select, animatePath, doorAction, search, disarmTrap } from '../game/actions.js';
+import { propAction } from '../game/objects.js';
 import { currentTurn, canAct } from '../game/rules.js';
 import { nextTurn } from '../game/combat.js';
 import { applyCharacter, charactersOf, ownsCharacter, sheetForPlayer, saveMyHero, myHero } from '../game/heroes.js';
@@ -236,6 +237,11 @@ function onHostMsg(c, m){
     receiveAct(ok, c.peer, seat.name, deny);
   }
   else if (m.t === 'search'){ if (me && canAct(me)) search(me); }
+  else if (m.t === 'prop'){
+    // their own hero, beside it, on their turn; the act must be one the rules offer them there (engine/objects.js)
+    const p = state.floors[m.floor]?.props?.find(q => q.id === m.id);
+    if (p && me && me.floor === m.floor && !me.dead && canAct(me) && ['open', 'close', 'pick', 'force', 'push', 'topple', 'smash', 'swing'].includes(m.act)) propAction(me, m.floor, p.id, m.act);
+  }
   else if (m.t === 'disarm'){
     const tr = state.floors[m.floor]?.traps.find(t => t.id === m.id);
     if (tr && tr.found && near(m.floor, tr.i) && canAct(me)) disarmTrap(me, m.floor, m.id);
@@ -378,6 +384,7 @@ setSender(sendHost);
 function onClientMsg(m){
   if (!m) return;
   if (m.t === 'state') applyRemoteState(m.s);
+  else if (m.t === 'propfx' && state) animateProp(m.floor, m.id, m.fx);
   else if (m.t === 'anim' && state){ animatePath(m.id, m.path, s => { const t = tokById(m.id); if (t){ t.x = s.x; t.y = s.y; } updateVision(); syncTokens(); }, null, m.id === ui.myToken); }
   else if (m.t === 'you') net.myId = m.peer;
   else if (m.t === 'yours'){

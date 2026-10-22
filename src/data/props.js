@@ -124,8 +124,8 @@ export const PROP_HOP = new Set(['fence']);
 export const PROP_BLOCK = new Set(['shelf', 'hearth', 'bookshelf', 'wardrobe', 'statue', 'pillar', 'organ', 'armor', 'banner', 'lamppost', 'signpost', 'candelabra',
   'gravestone', 'shrine', 'cage', 'pine', 'deadtree', 'scarecrow', 'well', 'carriage', 'horse', 'vardo', 'tent', 'hull', 'beam', 'brazier', 'lantern', 'milestone',
   'dollhouse', 'gallows', 'palisade', 'stone']);
-// The squares a prop covers, after turning.
-export function propSize(p){ const d = PROPS[p.k] || { w:1, h:1 }; return (p.rot || 0) % 2 ? { w:d.h, h:d.w } : { w:d.w, h:d.h }; }
+// The squares a prop covers, after turning (a toppled one lies across fw × fh squares).
+export function propSize(p){ if (p.fw) return { w:p.fw, h:p.fh }; const d = PROPS[p.k] || { w:1, h:1 }; return (p.rot || 0) % 2 ? { w:d.h, h:d.w } : { w:d.w, h:d.h }; }
 export function propAt(f, x, y){
   for (let i = (f.props || []).length - 1; i >= 0; i--){ const p = f.props[i], s = propSize(p); if (x >= p.x && x < p.x + s.w && y >= p.y && y < p.y + s.h) return p; }
   return null;

@@ -293,6 +293,20 @@ export function animateDoor(L, id, open){
   leaf.rotation.y = a0; tween(.45, k => leaf.rotation.y = a0 + (a1 - a0) * ease(k));
 }
 
+/* A prop's moment: a lid or door opening or shutting, a shove (slide in from where it was), a topple, a swing
+   on its hinge, a smash (the pieces drop and scatter) or a blow that doesn't break it (a shudder). */
+export function animateProp(L, id, fx){
+  const fv = floorViews[L]; if (!fv || !fx) return;
+  const g = fv.built.children.find(c => c.userData.propId === id); if (!g) return;
+  const u = g.userData, set = (o, kind, axis, v) => { o[kind][axis] = v; };
+  if (fx === 'open' || fx === 'close') for (const op of u.openers || []){ const [a, b] = fx === 'open' ? [op.a, op.b] : [op.b, op.a]; set(op.o, op.kind, op.axis, a); tween(.5, k => set(op.o, op.kind, op.axis, a + (b - a) * ease(k))); }
+  else if (fx.slide){ const x0 = g.position.x, z0 = g.position.z; tween(.45, k => { const e = 1 - ease(k); g.position.x = x0 + fx.slide.dx * e; g.position.z = z0 + fx.slide.dy * e; }); }
+  else if (fx === 'topple' && u.pivot){ const { o, axis, end, lift } = u.pivot; tween(.7, k => { const e = k * k; o.rotation[axis] = end * e; o.position.y = lift * e; }); }
+  else if (fx === 'swing' && u.hinge){ const { o, end } = u.hinge; tween(.9, k => o.rotation.y = end * ease(k)); }
+  else if (fx === 'break'){ const kids = [...g.children]; kids.forEach(c => { const y = c.position.y; tween(.45, k => c.position.y = y + (1 - k) * (1 - k) * .6); }); }
+  else if (fx === 'shake'){ const x0 = g.position.x; tween(.35, k => g.position.x = x0 + Math.sin(k * 40) * .04 * (1 - k)); }
+}
+
 function buildTrap(f, tr, pv){
   const x = tr.i % f.W, y = (tr.i / f.W) | 0, k = TRAP_KINDS[tr.kind] || TRAP_KINDS.pit;
   const armed = tr.armed, c = !armed ? '#6a6a6a' : tr.found ? '#ff5a4a' : '#b3303a';

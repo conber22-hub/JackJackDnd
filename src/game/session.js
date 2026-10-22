@@ -83,7 +83,7 @@ export function importDelve(file){
 export function resetScene(){
   clearTokenViews();
   floorViews.forEach(fv => fv && scene.remove(fv.group)); floorViews.length = 0;
-  clearReach(); clearOverlay(); ui.selected = null; ui.selDoor = null; ui.selTrap = null; ui.selRoom = null;
+  clearReach(); clearOverlay(); ui.selected = null; ui.selDoor = null; ui.selTrap = null; ui.selProp = null; ui.selRoom = null;
 }
 export function loadState(s){
   clearRequests(); clearPrompts();

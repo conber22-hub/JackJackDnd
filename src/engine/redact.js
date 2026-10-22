@@ -69,7 +69,13 @@ function redactFloor(f, exp){
     doors:(f.doors || []).filter(d => d.state !== 'secret' && kept(d.i)).map(d => ({ id:d.id, i:d.i, state:d.state, dc:d.dc, ...(d.found ? { found:true } : {}) })),
     traps:(f.traps || []).filter(t => t.found && kept(t.i)),
     corridors:[], dug:[], filled:[], events:[],
-    props:(f.props || []).filter(p => rectKept(p.x, p.y, 3, 3, 1)),
+    // furniture keeps its secrets: what's inside until someone looks, a stash until it's found, which shelf hides a door
+    props:(f.props || []).filter(p => rectKept(p.x, p.y, 3, 3, 1)).map(p => {
+      const c = { ...p }; delete c.contents; delete c.hides;
+      if (p.stash && !p.stash.found) delete c.stash;
+      if (p.hides && f.doors?.some(d => d.id === p.hides && d.state !== 'secret')) c.hides = p.hides;
+      return c;
+    }),
     buildings:(f.buildings || []).filter(b => rectKept(b.x, b.y, b.w, b.h, 1)).map(b => { const c = { ...b }; delete c.name; return c; }),
     water:(f.water || []).filter(kept), masonry:(f.masonry || []).filter(kept), clear:(f.clear || []).filter(kept), rough:(f.rough || []).filter(kept),
     up:f.up && kept(f.up.y * W + f.up.x) ? f.up : null,

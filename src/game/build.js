@@ -135,7 +135,7 @@ export function placePropAt(tile, k = ui.propKind){
   if (!PROPS[k]) return;
   snapshot('prop');
   const p = propAt(f, tile.x, tile.y);
-  if (p){ p.rot = ((p.rot || 0) + 1) % 4; f.propsV = (f.propsV || 0) + 1; }   // its footprint turned: movement re-reads it
+  if (p){ if (p.fallen || p.broken) return; p.rot = ((p.rot || 0) + 1) % 4; f.propsV = (f.propsV || 0) + 1; }   // its footprint turned: movement re-reads it (a toppled or smashed piece stays put)
   else f.props.push({ id:f.nextObj++, k, x:tile.x, y:tile.y, rot:0 });
   rebuild(tile.floor); changed();
 }

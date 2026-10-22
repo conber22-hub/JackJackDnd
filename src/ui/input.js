@@ -26,6 +26,9 @@ import { editTile, paintRoom, commitRoom, traceStep, commitCorridor, eraseAt, pl
 import { changed, snapshot } from '../game/session.js';
 import { updateVision } from '../engine/grid.js';
 import { rebuildFog } from '../game/actions.js';
+import { selectProp } from '../game/objects.js';
+import { isObject, propSquares } from '../engine/objects.js';
+import { propAt } from '../data/props.js';
 
 const raycaster = new THREE.Raycaster(), ndc = new THREE.Vector2();
 function setNdc(cx, cy){ ndc.set(cx / innerWidth * 2 - 1, -(cy / innerHeight) * 2 + 1); raycaster.setFromCamera(ndc, camera); }
@@ -40,6 +43,13 @@ function pickDoor(cx, cy){
   const fv = floorViews[ui.floor]; if (!fv) return null;
   const doors = fv.built.children.filter(c => c.userData.doorId);
   for (const h of raycaster.intersectObjects(doors, true)){ let o = h.object; while (o && !o.userData.doorId) o = o.parent; if (o) return o.userData.doorId; }
+  return null;
+}
+function pickProp(cx, cy){
+  setNdc(cx, cy);
+  const fv = floorViews[ui.floor]; if (!fv) return null;
+  const props = fv.built.children.filter(c => c.userData.propId);
+  for (const h of raycaster.intersectObjects(props, true)){ let o = h.object; while (o && !o.userData.propId) o = o.parent; if (o) return o.userData.propId; }
   return null;
 }
 export function pickTile(cx, cy){
@@ -230,7 +240,10 @@ function handleTap(cx, cy, shift = false){
   if (door && (!pv || (door.state !== 'secret' && exp.has(door.i)))){ selectDoor(ui.floor, door.id); return; }
   const trap = tile && f.traps.find(t => t.i === ti);
   if (trap && (!pv || (trap.found && exp.has(trap.i)))){ selectTrap(ui.floor, trap.id); return; }
-  ui.selDoor = null; ui.selTrap = null; select(null);
+  // furniture: open, push, topple, smash (only pieces the party has seen)
+  const propId = pickProp(cx, cy) ?? (tile && propAt(f, tile.x, tile.y)?.id), prop = propId && f.props.find(p => p.id === propId);
+  if (prop && isObject(prop) && (!pv || propSquares(prop).some(q => exp.has(q.y * f.W + q.x)))){ selectProp(ui.floor, prop.id); return; }
+  ui.selDoor = null; ui.selTrap = null; ui.selProp = null; select(null);
 }
 
 /* ---------- moving a creature: drag along a route, or hover to see the way ---------- */

@@ -8,7 +8,7 @@ import { THEMES, TEMPLATES, themeIndex } from '../data/themes.js';
 import { ROOM_NAMES } from '../data/rooms.js';
 import { BEST } from '../data/bestiary.js';
 import { T, walk } from './tiles.js';
-import { furnishFloor, furnishRoom } from './dressing.js';
+import { furnishFloor, furnishRoom, hideSecrets } from './dressing.js';
 import { ravenloftLayout } from './castle.js';
 import { describeRoom } from '../data/descriptions.js';
 import { journeySpecs, landmarkSpecs } from './overland.js';
@@ -57,6 +57,7 @@ export function genDelve(meta){
     }
     furnishFloor(f, tid, drng);
     for (const r of f.rooms) r.read ||= describeRoom(r, tid, drng);
+    hideSecrets(f, mulberry32(hashSeed(`${meta.seed}|secrets|${L}`)));
   });
   if (state) floors.forEach((f, L) => { if (specs[L].populate) populateFloor(f, L, rng, L === meta.floors - 1 || !!specs[L].boss, specs[L].populate === true ? .4 : specs[L].populate); });
   return floors;

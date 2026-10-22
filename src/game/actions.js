@@ -5,8 +5,9 @@ import { makeNoise } from './noise.js';
 import { enteredRoom } from './rooms.js';
 import { reach, pathTo, pathCost, updateVision, detectHidden, vision, passMove, canSeeTile, seenNow, standHeight } from '../engine/grid.js';
 import { trapAt } from '../engine/generator.js';
-import { SEARCHABLE, rollLoot } from '../data/loot.js';
-import { PROPS, propSize } from '../data/props.js';
+import { SEARCHABLE } from '../data/loot.js';
+import { reveal, searchStashes } from './objects.js';
+import { besideProp } from '../engine/objects.js';
 import { TRAP_KINDS } from '../data/rooms.js';
 import { CONDITIONS, WHISPERS } from '../data/dread.js';
 import { d, clamp, cheb, esc, pick, rollDice } from '../util/core.js';
@@ -27,15 +28,15 @@ import { sfx } from '../audio/sound.js';
 export function select(id){
   // picking someone in the group makes them the one who leads it; picking anyone else lets the group go
   if (ui.group?.size){ if (id && ui.group.has(id)){ ui.group.delete(id); if (ui.selected) ui.group.add(ui.selected); } else ui.group.clear(); }
-  ui.selected = id; if (id){ ui.selDoor = null; ui.selTrap = null; }
+  ui.selected = id; if (id){ ui.selDoor = null; ui.selTrap = null; ui.selProp = null; }
   clearMovePath();
   const t = id && tokById(id);
   if (t && t.floor !== ui.floor && ui.view !== 'stack') goFloor(t.floor, false);
   showReach(t); refreshSelectionRing(); renderSel();
   if (ui.tab === 'tokens') renderPanel();
 }
-export function selectDoor(L, id){ ui.selected = null; ui.selTrap = null; ui.selDoor = { floor:L, id }; clearReach(); refreshSelectionRing(); renderSel(); }
-export function selectTrap(L, id){ ui.selected = null; ui.selDoor = null; ui.selTrap = { floor:L, id }; clearReach(); refreshSelectionRing(); renderSel(); }
+export function selectDoor(L, id){ ui.selected = null; ui.selTrap = null; ui.selProp = null; ui.selDoor = { floor:L, id }; clearReach(); refreshSelectionRing(); renderSel(); }
+export function selectTrap(L, id){ ui.selected = null; ui.selDoor = null; ui.selProp = null; ui.selTrap = { floor:L, id }; clearReach(); refreshSelectionRing(); renderSel(); }
 export const selectedDoor = () => ui.selDoor && state.floors[ui.selDoor.floor]?.doors.find(d => d.id === ui.selDoor.id);
 export const selectedTrap = () => ui.selTrap && state.floors[ui.selTrap.floor]?.traps.find(t => t.id === ui.selTrap.id);
 
@@ -285,18 +286,11 @@ export function search(actor){
   for (const dr of f.doors) if (dr.state === 'secret' && cheb(actor.x, actor.y, dr.i % f.W, (dr.i / f.W) | 0) <= 3 && tot >= dr.dc){ dr.state = 'closed'; dr.found = true; found.push('a secret door'); }
   showCard({ kind:found.length ? '' : 'miss', title:`${actor.name} searches`, sub:'Perception · 15 ft.', lines:[`d20 <b>${r}</b> ${tot - r >= 0 ? '+' : '−'} ${Math.abs(tot - r)} = <b>${tot}</b>`, found.length ? `Found: <b>${esc(found.join(', '))}</b>` : 'Nothing — or nothing they can find.'] });
   log(`${actor.name} searches${found.length ? ` and finds ${found.join(', ')}` : ''}.`);
-  // containers next to the searcher open: one roll each on their table (data/loot.js)
-  for (const p of (f.props || []).filter(p => SEARCHABLE.has(p.k) && !p.searched)){
-    const s = propSize(p), near = actor.x >= p.x - 1 && actor.x <= p.x + s.w && actor.y >= p.y - 1 && actor.y <= p.y + s.h;
-    if (!near) continue;
-    p.searched = true;
-    const what = rollLoot(p.k), name = PROPS[p.k]?.n.toLowerCase() || 'it';
-    if (what.startsWith('DM:')){
-      showCard({ kind:'', title:`${actor.name} opens the ${name}`, flair:'Something about it is not right…' });
-      showCard({ kind:'seep', title:`For you: the ${name}`, sub:'only you see this', lines:[esc(what.slice(3).trim())] }, false);
-    } else showCard({ kind:'', title:`${actor.name} opens the ${name}`, flair:what });
-    log(`${actor.name} searches the ${name}: ${what}`, what.startsWith('DM:'));
-  }
+  // containers next to the searcher open (one roll each on their table, data/loot.js, unless the DM wrote what's
+  // inside); a locked one stays shut. Hidden stashes in the furniture beside them are found on a good enough roll.
+  for (const p of (f.props || []).filter(p => (SEARCHABLE.has(p.k) || p.contents) && !p.searched && !p.lock && !p.broken && besideProp(actor, p))) reveal(actor, p, 'searches');
+  const stashes = searchStashes(actor, tot);
+  if (stashes.length) found.push(...stashes.map(n => `a hiding place in the ${n}`));
   if (found.length){ buildFloor(actor.floor); updateVision(); }
   changed();
 }
@@ -317,7 +311,7 @@ export function goFloor(L, focus = true){
   ui.floor = clamp(L, 0, state.floors.length - 1);
   applyFloorLook(); if (focus) focusFloor();
   const t = ui.selected && tokById(ui.selected); if (!t || t.floor !== ui.floor && ui.view !== 'stack') clearReach();
-  if (ui.selDoor?.floor !== ui.floor) ui.selDoor = null; if (ui.selTrap?.floor !== ui.floor) ui.selTrap = null;
+  if (ui.selDoor?.floor !== ui.floor) ui.selDoor = null; if (ui.selTrap?.floor !== ui.floor) ui.selTrap = null; if (ui.selProp?.floor !== ui.floor) ui.selProp = null;
   renderTop(); renderSel(); if (['dungeon', 'tokens', 'build'].includes(ui.tab)) renderPanel();
   import('../ui/input.js').then(m => m.refreshBuildOverlay());
 }

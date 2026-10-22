@@ -20,8 +20,10 @@ export function propTerrain(f){
   let c = propCache.get(props); if (c && c.key === key) return c;
   c = { key, block:new Set(), rough:new Set(), top:new Map() };
   for (const p of props){
-    const s = propSize(p), k = p.k, blk = PROP_BLOCK.has(k), top = PROP_TOP[k], hop = PROP_HOP.has(k);
-    if (!blk && !top && !hop) continue;
+    // smashed: debris underfoot · toppled: lying down, low enough to clamber over · swung aside: out of the way
+    const s = propSize(p), k = p.k, down = p.broken || p.fallen, blk = !down && !p.swung && PROP_BLOCK.has(k);
+    const top = p.broken ? 0 : p.fallen ? .3 : PROP_TOP[k], hop = !down && PROP_HOP.has(k);
+    if (!blk && !top && !hop && !down) continue;
     for (let y = p.y; y < p.y + s.h; y++) for (let x = p.x; x < p.x + s.w; x++){
       if (x < 0 || y < 0 || x >= f.W || y >= f.H) continue;
       const i = y * f.W + x;

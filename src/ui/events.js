@@ -28,6 +28,7 @@ import { populateFloor } from '../engine/generator.js';
 import { setGfx, gfx } from '../render/gfx.js';
 import { openCreator, sheetHTML } from './creator.js';
 import { PROPS } from '../data/props.js';
+import { propAction, selectProp, selectedProp, actorFor, editProp } from '../game/objects.js';
 import { valleyMapHTML } from './valley.js';
 import { makeCamp } from '../game/overworld.js';
 import { valley, travel, arrive, enterPlace, readEvent, springEvent, doneEvent, newRoadEvent, goToEvent } from '../game/overworld.js';
@@ -58,7 +59,11 @@ document.addEventListener('click', e => {
     case 'tab': ui.tab = k; if (k !== 'build' && ['room', 'corridor', 'door', 'trap', 'stairs', 'erase', 'dig', 'fill', 'rough', 'prop', 'house'].includes(ui.mode)) setMode('select'); renderTabs(); renderPanel(); renderDock(); break;
     case 'cancelMode': setMode('select'); break;
     case 'sel': select(id); { const t = tokById(id); if (t) focusTile(t.floor, t.x, t.y); } break;
-    case 'deselect': ui.selDoor = null; ui.selTrap = null; select(null); break;
+    case 'deselect': ui.selDoor = null; ui.selTrap = null; ui.selProp = null; select(null); break;
+    case 'selProp': { const who = sel || tokById(ui.myToken); if (who) selectProp(who.floor, +k); } break;
+    case 'propDo': { const p = selectedProp(); if (!p) break; const L = ui.selProp.floor;
+      if (k === 'repair'){ snapshot('prop'); editProp(L, p.id, 'repair'); }
+      else propAction(ui.role === 'player' ? tokById(ui.myToken) : actorFor(L, p), L, p.id, k); } break;
     case 'focus': { const t = sel || tokById(ui.myToken); if (t) focusTile(t.floor, t.x, t.y); else focusFloor(); } break;
     case 'atkMode': ui.atkMode = { normal:'adv', adv:'dis', dis:'normal' }[ui.atkMode]; renderSel(); break;
     case 'atk': if (sel) setMode('attack', { attacker:sel.id, i:+el.dataset.i }, `${sel.name}: ${sel.attacks[+el.dataset.i].n}${ui.atkMode !== 'normal' ? ` (${ui.atkMode})` : ''} — tap the target (the shading is its reach)`); break;
@@ -318,6 +323,7 @@ document.addEventListener('change', e => {
   else if (kind === 'importMap' && el.files[0]){ const r = new FileReader(); r.onload = () => { $('#importText').value = r.result; toast('File loaded — choose how to import it.'); }; r.readAsText(el.files[0]); }
   else if (kind === 'art' && el.files[0]) loadArt(el.dataset.k, el.files[0]);
   else if (kind === 'addCond' && sel && el.value){ addCond(sel, el.value, -1); changed(); }
+  else if (['propLock', 'propContents', 'propStash', 'propStashDc'].includes(kind)){ const p = selectedProp(); if (p) editProp(ui.selProp.floor, p.id, { propLock:'lock', propContents:'contents', propStash:'stash', propStashDc:'stashDc' }[kind], el.value); }
   else if (kind === 'doorDc'){ const dr = selectedDoor(); if (dr){ dr.dc = +el.value || 15; changed(); } }
   else if (kind === 'trapKind'){ const tr = selectedTrap(); if (tr){ tr.kind = el.value; buildFloor(ui.selTrap.floor); changed(); } }
   else if (kind === 'model' && el.files[0]){
@@ -367,7 +373,7 @@ addEventListener('keydown', e => {
   const STEP = { ArrowUp:[0, -1], ArrowDown:[0, 1], ArrowLeft:[-1, 0], ArrowRight:[1, 0], Numpad8:[0, -1], Numpad2:[0, 1], Numpad4:[-1, 0], Numpad6:[1, 0], Numpad7:[-1, -1], Numpad9:[1, -1], Numpad1:[-1, 1], Numpad3:[1, 1] };
   const st = STEP[e.code] || STEP[e.key];
   if (st && ui.selected && ui.mode === 'select'){ e.preventDefault(); stepSelected(st[0], st[1]); return; }
-  if (e.key === 'Escape'){ setMode('select'); ui.selDoor = null; ui.selTrap = null; select(null); }
+  if (e.key === 'Escape'){ setMode('select'); ui.selDoor = null; ui.selTrap = null; ui.selProp = null; select(null); }
   else if (e.key === 'PageUp') goFloor(ui.floor - 1);
   else if (e.key === 'PageDown') goFloor(ui.floor + 1);
   else if (e.key === '1') setView('tilt'); else if (e.key === '2') setView('top'); else if (e.key === '3') setView('stack');

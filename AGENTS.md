@@ -21,6 +21,8 @@ A 3D multi-floor dungeon simulator and virtual tabletop for a Curse of Strahd: F
 - Match the surrounding style: compact modern JS, ES modules, a short comment above anything non-obvious, and British-flavoured, plain player-facing text.
 
 ## Content
+- Task briefs for you live in `docs/codex/` (start with `docs/codex/rules-data.md`: the full SRD 5.2.1 and a private content library).
+- This repository and the app are public. Only openly licensed rules (SRD 5.2.1, CC BY 4.0, with its attribution) go in `src/data/`. Text, stat blocks and tables from other books stay out of the repo; they belong in a DM's private library file, which is imported in the browser and never committed.
 - Don't reprint text from the published Curse of Strahd module (boxed text, stat blocks, unique item text). Use original names and descriptions, or SRD 5.2 material.
 - Creatures, tables, themes, props, loot, the Valley's places and road events, and the campaign sessions all live in `src/data/`.
 
