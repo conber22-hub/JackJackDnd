@@ -5,6 +5,9 @@ import { ABILITIES, ABILITY_NAMES, CLASSES, SPECIES, BACKGROUNDS, WEAPONS, ARMOR
 import { newHero, heroStats, heroAttacks, heroSpells, spellPool, spellLimits, asiLevels, expertiseSlots, heroWarnings, SP } from '../engine/hero.js';
 import { $, esc, clamp, d } from '../util/core.js';
 import { toast } from './hud.js';
+import { heroLook, sheetLook } from '../engine/look.js';
+import { BODIES, SKINS, SKINS_FANTASY, HAIR_COLS, CLOTHS, HAIR, BEARDS, HORNS, OUTFITS, CLOAKS, HELMS, WEAPON_MODELS, OFFHANDS, POSES } from '../data/looks.js';
+import { setStage, frame, portrait, act, studioCanvas, stageKey } from '../render/forge/studio.js';
 
 let edit = null, opts = {};
 const sgn = n => (n >= 0 ? '+' : '−') + Math.abs(n);
@@ -92,9 +95,11 @@ function render(){
     ${pool.length ? `<h2>Spells</h2><div class="muted">Cantrips ${nCan}${lim.cantrips ? ` / ${lim.cantrips}` : ''} · prepared ${nPrep}${lim.prepared ? ` / ${lim.prepared}` : ''}. Subclass and species spells are added for you.</div>
       ${[0, 1, 2, 3, 4, 5].filter(l => pool.some(s => s.l === l)).map(l => `<h4>${l ? `Level ${l}` : 'Cantrips'}</h4><div class="cr-chk">${pool.filter(s => s.l === l).map(s => `<label class="crc"><input type="checkbox" data-spell="${esc(s.n)}" ${(h.spells || []).includes(s.n) ? 'checked' : ''}><span>${esc(s.n)}</span></label>`).join('')}</div>`).join('')}` : ''}
 
+    ${lookHTML(h)}
     <h2>Portrait</h2>
     <div class="artslot">${h.portrait ? `<img src="${h.portrait}" alt="">` : '<div style="width:56px;height:56px;border-radius:8px;background:#1d1720;display:grid;place-items:center">🖼</div>'}
-      <div>Your mini on the map shows this picture.<br><label class="btn small" style="display:inline-block;margin-top:4px">Choose image<input type="file" accept="image/*" data-cr-file="portrait" hidden></label>${h.portrait ? ' <button class="btn small" data-cr="clearPortrait">Clear</button>' : ''}</div></div>
+      <div>Shown on your sheet and the cards. <button class="btn small" data-cr="portraitFromMini">📸 Take it from my mini</button><br><label class="btn small" style="display:inline-block;margin-top:4px">Choose image<input type="file" accept="image/*" data-cr-file="portrait" hidden></label>${h.portrait ? ' <button class="btn small" data-cr="clearPortrait">Clear</button>' : ''}</div></div>
+    <div class="row"><label style="margin:0">On the map</label><span class="chip ${h.miniStyle !== 'picture' ? 'on' : ''}" data-cr="miniStyle" data-k="forge">🗿 My 3D mini</span><span class="chip ${h.miniStyle === 'picture' ? 'on' : ''}" data-cr="miniStyle" data-k="picture">🖼 My picture, standing</span></div>
 
     <h2>Story</h2>
     <label>What they look like<textarea class="txt" data-cf="look">${esc(h.look)}</textarea></label>
@@ -104,11 +109,70 @@ function render(){
     <label>A smell that means home<input class="txt" data-cf="homeSmell" value="${esc(h.homeSmell)}"></label>
     <label>Backstory & notes<textarea class="txt" data-cf="backstory">${esc(h.backstory)}</textarea></label>
   </div>
-  <div class="cr-side">${sheetHTML(h)}
+  <div class="cr-side"><div class="cr-mini" id="crMini"><div class="cr-mini-b"><button class="btn small" data-cr="mini:attack" title="See them swing">⚔</button><button class="btn small" data-cr="mini:cast" title="See them cast">✨</button><button class="btn small ${miniWalk ? 'on' : ''}" data-cr="mini:walk" title="Walk">🚶</button></div></div>${sheetHTML(h)}
     ${warnings.length ? `<div class="bad">${warnings.map(w => `• ${esc(w)}`).join('<br>')}</div>` : '<div class="muted" style="color:var(--ok)">Ready for the table.</div>'}
     <div class="row"><button class="btn primary" data-cr="save">${esc(opts.saveLabel || 'Save hero')}</button><button class="btn small" data-cr="export">⬇ Export</button><label class="btn small">⬆ Import<input type="file" accept=".json" data-cr-file="import" hidden></label><button class="btn small" data-cr="close">Cancel</button></div>
   </div></div>`;
+  mountMini();
 }
+
+/* ---------- the Look studio: the hero's 3D mini, live ---------- */
+let miniYaw = .5, miniRaf = 0, miniDrag = null, miniWalk = false, miniLast = 0;
+const swatches = (key, list, cur) => `<div class="sw">${list.map(c => `<i data-cr="miniSet" data-k="${key}" data-v="${c}" style="background:${c}" class="${c === cur ? 'on' : ''}"></i>`).join('')}<input type="color" data-mini="${key}" value="${cur}"></div>`;
+const msel = (key, list, cur, auto = null) => `<select class="txt" data-mini="${key}">${auto ? `<option value="">${esc(auto)}</option>` : ''}${list.map(([v, l]) => `<option value="${esc(v)}" ${!auto || (edit.mini || {})[key] !== undefined ? (v === cur ? 'selected' : '') : ''}>${esc(l)}</option>`).join('')}</select>`;
+const pairs = o => Array.isArray(o) ? o.map(v => [v, v[0].toUpperCase() + v.slice(1)]) : Object.entries(o);
+function lookHTML(h){
+  const L = heroLook(h), S = sheetLook(h), m = h.mini || {}, B = BODIES[L.body];
+  const skins = SKINS_FANTASY[L.body] ? [...SKINS_FANTASY[L.body], ...SKINS.slice(0, 3)] : SKINS;
+  return `<h2>Looks</h2>
+    <div class="muted">Your mini is built from your sheet — your folk, armour, weapons and shield all show, and it changes when they do. Make it yours; this is what the table sees.</div>
+    <div class="cr-look">
+      <label>Skin${swatches('skin', skins, L.skin)}</label>
+      <label>Hair ${msel('hair', pairs(HAIR), L.hair)}${swatches('hairCol', HAIR_COLS, L.hairCol)}</label>
+      <div class="grid3"><label>Beard ${msel('beard', pairs(BEARDS), L.beard)}</label><label>Eyes <input type="color" data-mini="eyes" value="${L.eyes}"></label>
+        <label>Horns ${msel('horns', pairs(HORNS), L.horns)}</label></div>
+      <div class="grid3"><label>Height <input type="range" min=".88" max="1.12" step=".01" data-mini="height" value="${L.height}"></label><label>Build <input type="range" min="0" max="1" step=".02" data-mini="build" value="${L.build}"></label><label>Shoulders <input type="range" min="0" max="1" step=".02" data-mini="frame" value="${L.frame}"></label></div>
+      <label>Clothes${swatches('c1', [h.color, ...CLOTHS.slice(0, 9)].filter(Boolean), L.c1)}</label>
+      <label>Trim${swatches('c2', ['#a08a6a', '#c0a050', '#d8d0b8', '#8a2a2a', '#2a2a30', '#6a5040', '#3a4a6a'], L.c2)}</label>
+      <div class="grid3"><label>Cloak ${msel('cloak', pairs(CLOAKS), L.cloak)}</label><label>Cloak colour <input type="color" data-mini="cloakCol" value="${L.cloakCol}"></label><label>On the head ${msel('helm', pairs(HELMS), L.helm)}</label></div>
+      <div class="grid3"><label>Outfit ${msel('outfit', pairs(OUTFITS), L.outfit, `From my armour (${OUTFITS[S.outfit] || S.outfit})`)}</label>
+        <label>In hand ${msel('main', WEAPON_MODELS.map(w => [w, w === 'none' ? 'Nothing' : w[0].toUpperCase() + w.slice(1)]), L.main, `From my weapons (${S.main})`)}</label>
+        <label>Other hand ${msel('off', pairs(OFFHANDS), L.off, `From my sheet (${OFFHANDS[S.off] || S.off})`)}</label></div>
+      <div class="grid3"><label>Stance ${msel('pose', pairs(POSES).filter(([k]) => !['slump', 'stiff'].includes(k)), L.pose)}</label>
+        <label>Shield colour <input type="color" data-mini="shieldCol" value="${L.shieldCol}"></label>
+        <label class="crc" style="margin-top:22px"><input type="checkbox" data-mini="lantern" ${L.lantern ? 'checked' : ''}><span>Lantern at the belt</span></label></div>
+      <div class="row"><button class="btn small" data-cr="miniRandom">🎲 Surprise me</button><button class="btn small" data-cr="miniReset">↺ Back to my sheet</button>${B?.tail ? '' : ''}</div>
+    </div>`;
+}
+function mountMini(){
+  const host = $('#crMini'); if (!host || !edit) return;
+  let cv;
+  try { cv = studioCanvas(); } catch { host.innerHTML = '<div class="muted" style="padding:12px">3D preview unavailable on this device.</div>'; return; }
+  cv.className = 'cr-mini-cv'; host.prepend(cv);
+  const look = heroLook(edit);
+  if (stageKey() !== JSON.stringify([look])) setStage([look]);
+  if (!cv.dataset.wired){
+    cv.dataset.wired = 1;
+    cv.addEventListener('pointerdown', e => { miniDrag = { x:e.clientX, yaw:miniYaw }; cv.setPointerCapture(e.pointerId); });
+    cv.addEventListener('pointermove', e => { if (miniDrag) miniYaw = miniDrag.yaw - (e.clientX - miniDrag.x) / 90; });
+    cv.addEventListener('pointerup', () => { miniDrag = null; });
+  }
+  if (!miniRaf) miniRaf = requestAnimationFrame(miniLoop);
+}
+function miniLoop(now){
+  const cv = document.querySelector('#crMini .cr-mini-cv');
+  if (!edit || !cv || $('#charModal').classList.contains('hidden')){ miniRaf = 0; return; }
+  miniRaf = requestAnimationFrame(miniLoop);
+  const dt = Math.min(.05, (now - (miniLast || now)) / 1000); miniLast = now;
+  if (!miniDrag) miniYaw += dt * .35;
+  const w = Math.max(200, cv.parentElement.clientWidth), h = Math.round(w * 1.05);
+  frame({ w, h, yaw:miniYaw, t:now / 1000, dt, y:.52, dist:2.15, moving:miniWalk });
+}
+function setMini(key, v){
+  edit.mini ||= {};
+  if (v === '' || v === undefined) delete edit.mini[key]; else edit.mini[key] = ['height', 'build', 'frame'].includes(key) ? +v : v;
+}
+const pick = a => a[Math.floor(Math.random() * a.length)];
 
 function set(path, v){
   const h = edit;
@@ -125,6 +189,7 @@ function set(path, v){
 document.addEventListener('change', e => {
   if (!edit || !$('#charBox')?.contains(e.target)) return;
   const el = e.target;
+  if (el.dataset.mini){ setMini(el.dataset.mini, el.type === 'checkbox' ? el.checked : el.value); render(); return; }
   if (el.dataset.cf){ set(el.dataset.cf, el.type === 'checkbox' ? el.checked : el.value); render(); }
   else if (el.dataset.ab){ const lo = edit.method === 'pointbuy' ? 8 : 3, hi = edit.method === 'pointbuy' ? 15 : 20; edit.ab[el.dataset.ab] = clamp(+el.value || 10, lo, hi); render(); }
   else if (el.dataset.skill){ const s = el.dataset.skill; edit.skills = (edit.skills || []).filter(x => x !== s); if (el.checked) edit.skills.push(s); render(); }
@@ -140,7 +205,9 @@ document.addEventListener('change', e => {
   }
 });
 // text fields: keep what is typed without re-rendering (so focus is not lost); the sheet updates on blur
-document.addEventListener('input', e => { if (!edit || !$('#charBox')?.contains(e.target)) return; const el = e.target; if (el.dataset.cf && /INPUT|TEXTAREA/.test(el.tagName) && el.type !== 'color' && el.type !== 'checkbox') set(el.dataset.cf, el.value); });
+document.addEventListener('input', e => { if (!edit || !$('#charBox')?.contains(e.target)) return; const el = e.target; if (el.dataset.cf && /INPUT|TEXTAREA/.test(el.tagName) && el.type !== 'color' && el.type !== 'checkbox') set(el.dataset.cf, el.value);
+  // sliders and colours reshape the mini as they move (the sheet re-renders when they're let go)
+  if (el.dataset.mini && (el.type === 'range' || el.type === 'color')){ setMini(el.dataset.mini, el.value); const l = heroLook(edit); if (stageKey() !== JSON.stringify([l])) setStage([l]); } });
 document.addEventListener('click', e => {
   if (!edit) return;
   const b = e.target.closest('[data-cr]'); if (!b || !$('#charBox').contains(b)) return;
@@ -155,6 +222,19 @@ document.addEventListener('click', e => {
     order.forEach((k, i) => edit.ab[k] = edit.rolled[i]); render();
   }
   if (a === 'clearPortrait'){ delete edit.portrait; render(); }
+  if (a === 'portraitFromMini'){ setStage([heroLook(edit)]); const url = portrait(); if (url){ edit.portrait = url; toast('Portrait taken.'); } render(); }
+  if (a === 'miniStyle'){ edit.miniStyle = b.dataset.k === 'picture' ? 'picture' : undefined; if (edit.miniStyle === 'picture' && !edit.portrait) toast('Choose a picture (or take one from your mini) for the standee.'); render(); }
+  if (a === 'miniSet'){ setMini(b.dataset.k, b.dataset.v); render(); }
+  if (a === 'miniReset'){ delete edit.mini; render(); }
+  if (a === 'miniRandom'){
+    const L = heroLook(edit), B = BODIES[L.body], skins = SKINS_FANTASY[L.body] || SKINS;
+    edit.mini = { ...(edit.mini || {}), skin:pick(skins), hair:B.snout ? 'bald' : pick(HAIR), hairCol:pick(HAIR_COLS), beard:B.beard ? pick(['full', 'long', 'braided']) : Math.random() < .4 ? pick(BEARDS) : 'none',
+      c2:pick(['#a08a6a', '#c0a050', '#d8d0b8', '#8a2a2a', '#2a2a30']), cloak:pick(Object.keys(CLOAKS)), cloakCol:pick(['#2a2430', '#3a2a24', '#24302a', '#4a1e22', '#22283a', '#3a3a30']),
+      helm:Math.random() < .7 ? 'none' : pick(Object.keys(HELMS)), height:+(.92 + Math.random() * .16).toFixed(2), build:+Math.random().toFixed(2), frame:+Math.random().toFixed(2) };
+    if (B.horns) edit.mini.horns = pick(['curled', 'swept', 'ram', 'small']);
+    render();
+  }
+  if (a.startsWith('mini:')){ const k = a.slice(5); if (k === 'walk'){ miniWalk = !miniWalk; render(); } else act(0, k); }
   if (a === 'export'){ const blob = new Blob([JSON.stringify(edit, null, 1)], { type:'application/json' }); const l = document.createElement('a'); l.href = URL.createObjectURL(blob); l.download = `${(edit.name || 'hero').replace(/[^\w]+/g, '-').toLowerCase()}.json`; l.click(); }
   if (a === 'save'){
     if (!edit.name?.trim()){ toast('Give your hero a name first.'); return; }

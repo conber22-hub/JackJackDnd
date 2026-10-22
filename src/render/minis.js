@@ -9,6 +9,10 @@ import { floorViews } from './floors.js';
 import { refreshSelectionRing } from './effects.js';
 import { modelKeyFor, instanceModel, modelState } from './models.js';
 import { shadowsOn } from './gfx.js';
+import { buildForge, disposeForge } from './forge/build.js';
+import { poseRig, playAction } from './forge/anim.js';
+import { lookFor } from '../engine/look.js';
+import { hashSeed } from '../util/core.js';
 
 export function M(geo, color, emi, opts = {}){
   const mat = new THREE.MeshStandardMaterial({ color, roughness:opts.rough ?? .7, metalness:opts.metal ?? .05,
@@ -229,7 +233,10 @@ export const SHAPES = {
 export const SHAPE_NAMES = Object.keys(SHAPES).filter(k => k !== 'pc' && k !== 'npc');
 
 export function artFor(t){ return state.art[t.id] || (t.bid && state.art[t.bid]) || null; }
-function figureKey(t){ const mk = modelKeyFor(t); return [t.kind, t.bid, t.color, t.dead, t.flags.rising, artFor(t) ? artFor(t).length : '', t.size, BEST[t.bid]?.shape, mk ? mk + modelState.version : '', shadowsOn()].join('|'); }
+// Which figure a token gets: a dropped-in GLB model; a hero's own picture if they chose a standee; the forge for
+// heroes, allies and humanoid creatures (render/forge); a creature's art; else its old procedural shape.
+function forgeLook(t){ if (t.standee && artFor(t)) return null; if (t.kind === 'monster' && artFor(t)) return null; return lookFor(t, BEST[t.bid]); }
+function figureKey(t){ const mk = modelKeyFor(t), fl = !mk && forgeLook(t); return [t.kind, t.bid, t.color, t.dead, t.flags.rising, artFor(t) ? artFor(t).length : '', t.size, BEST[t.bid]?.shape, mk ? mk + modelState.version : '', shadowsOn(), fl ? hashSeed(JSON.stringify(fl)) : '', t.standee ? 1 : 0].join('|'); }
 
 const texCache = new Map();
 function artTexture(url){ if (!texCache.has(url)){ const tx = new THREE.TextureLoader().load(url); tx.colorSpace = THREE.SRGBColorSpace; texCache.set(url, tx); } return texCache.get(url); }
@@ -241,8 +248,12 @@ export function buildFigure(t){
   g.add(at(M(new THREE.TorusGeometry(.44, .03, 6, 32), sideCol, sideCol, { ei:.8 }), 0, .07, 0, Math.PI / 2));
   const art = artFor(t), mk = modelKeyFor(t);
   let fig;
+  const fl = !mk && forgeLook(t);
   if (mk && (fig = instanceModel(mk))){                                    // a GLB model
     g.userData.mixer = fig.userData.mixer;
+  } else if (fl){                                     // forged: a sculpted, jointed, animated figure
+    fig = buildForge(fl);
+    if (t.dead) poseRig(fig, 0, 1, false, 'fallen');
   } else if (art){                                    // paper-mini standee using your Grok art
     fig = new THREE.Group();
     const plate = new THREE.Mesh(new THREE.PlaneGeometry(.8, 1.05), new THREE.MeshBasicMaterial({ map:artTexture(art), side:THREE.DoubleSide, transparent:true }));
@@ -278,14 +289,14 @@ const condText = t => (t.conds || []).map(c => `${CONDITIONS[c.n]?.icon || '•'
 export function syncTokens(){
   if (!state) return;
   const pv = viewAsPlayer();
-  for (const [id, tv] of tokenViews) if (!tokById(id)){ tv.group.parent?.remove(tv.group); tokenViews.delete(id); }
+  for (const [id, tv] of tokenViews) if (!tokById(id)){ tv.group.parent?.remove(tv.group); if (tv.group.userData.fig?.userData.rig) disposeForge(tv.group.userData.fig); tokenViews.delete(id); }
   for (const t of state.tokens){
     let tv = tokenViews.get(t.id);
     const key = figureKey(t);
     if (!tv || tv.key !== key){
       const wasAlive = tv && !tv.group.userData.wasDead;
       const keepPos = tv ? tv.group.position.clone() : null;
-      if (tv) tv.group.parent?.remove(tv.group);
+      if (tv){ tv.group.parent?.remove(tv.group); if (tv.group.userData.fig?.userData.rig) disposeForge(tv.group.userData.fig); }
       const group = buildFigure(t); group.userData.tokenId = t.id; group.userData.wasDead = t.dead;
       tv = { group, key, labelKey:'', label:null, anim:tv?.anim || null }; tokenViews.set(t.id, tv);
       if (keepPos) group.position.copy(keepPos);
@@ -324,3 +335,14 @@ export function syncTokens(){
   refreshSelectionRing();
 }
 export function clearTokenViews(){ for (const tv of tokenViews.values()) tv.group.parent?.remove(tv.group); tokenViews.clear(); }
+
+/* A forged figure acts: turns to face its target and swings, casts or flinches (render/forge/anim.js).
+   kind: 'attack' | 'cast' | 'hit'. Anything else (models, standees, old shapes) just ignores it. */
+export function actOn(id, kind, targetId = null){
+  const tv = tokenViews.get(id), fig = tv?.group.userData.fig, rig = fig?.userData.rig; if (!rig) return;
+  const tg = targetId && tokById(targetId), me = tokById(id);
+  if (tg && me && tg.id !== me.id) fig.userData.faceTo = Math.atan2(tg.x - me.x, tg.y - me.y);
+  playAction(rig, kind);
+}
+// Turn a walking figure toward its next square.
+export function faceStep(id, dx, dy){ const fig = tokenViews.get(id)?.group.userData.fig; if (fig?.userData.rig && (dx || dy)) fig.userData.faceTo = Math.atan2(dx, dy); }

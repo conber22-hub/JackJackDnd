@@ -16,6 +16,17 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.2 — forged minis
+
+- **Every hero, ally and humanoid foe is a forged mini** (`render/forge/`): a jointed figure — hips, waist, chest, neck, head, shoulders, elbows, wrists, knees, feet — sculpted from lathed and shaped parts, with skinned arms, legs and torso that bend smoothly at the joints. Faces (eyes, brows, nose, mouth, ears by folk), ten hair styles, beards, horns, tails, a dragonborn's muzzle and crest, an orc's tusks, a vampire's fangs, glowing eyes for the dead and the fiendish.
+- **Built from the sheet** (`engine/look.js`): folk sets the body (a stocky dwarf, a small halfling, a tall goliath…); armour sets the outfit (robes, leathers, hide and fur, mail and tabard, breastplate, full plate, a monk's gi, vestments); weapons go in the hands (22 sculpted weapons — swords, axes, maces, spears, glaives, staves with glowing crystals, bows, crossbows…), a shield, a book, an orb, a holy symbol or a torch in the other, and a lantern at the belt. Class sets the stance and the cloak, hood, mantle or hat. Change the sheet and the mini changes.
+- **The Look studio** in the character creator: the hero turns on a candlelit stage at the top of the sheet; drag to spin them, ⚔ / ✨ / 🚶 to see them swing, cast and walk. Skin, hair, beard, eyes, horns, height, build, shoulders, clothes and trim, cloak and its colour, headwear, stance, and outfit / weapon overrides. 🎲 Surprise me; ↺ Back to my sheet. **📸 Take it from my mini** makes the hero's portrait from the figure. Players can still choose to stand their own picture on the map instead.
+- **They come to life**: breathing and small shifts of weight; a walk with a stride, a bob and a cloak that streams behind; they turn to face where they go and what they fight. Attacks by weapon — a slash with a wrist snap, an overhead smash, a thrust, a drawn bow, a zombie's claw — a spellcaster's raised hands, a flinch when hit, a sprawl when they fall. Cloaks ripple, torches flicker, staves, spears and lanterns stay upright. Players see every swing.
+- **Foes and folk**: bandits, cultists, guards, scouts, veterans, nobles, priests, zombies, ghouls, revenants, skeletons, wights and the Count have presets (`src/data/looks.js`); any humanoid creature holds what it fights with; every one varies by its own seed — height, skin, hair, rags, the tilt of a head — so a pack of zombies is a pack, not one zombie copied. Wolves, swarms and the Seep's things keep their own shapes; creature art and dropped-in GLB models still win.
+- **🎲 Roll an NPC** (Tokens tab): villager, Vistani, guard, priest, noble, bandit, cultist, hunter or adventurer — a name, a portrait from their mini, one line of what the party sees (`describeLook`), a quirk and a want; place them as an ally or as a foe. The DM sees their notes on their card. Starter tables in `src/data/npc-starter.js`.
+- Materials: cloth, leather, chainmail and brushed-metal bump textures painted at load, a painted surrounding for metal to reflect, and a soft cold rim light on every forged figure so minis read against dark floors. Parts that don't bend are merged per joint and material (~35–50 draw calls a figure).
+- Tests: `tests/look.test.js`, `tests/e2e/forge.spec.js`.
+
 ## v1.1 — targeting and areas
 
 - **Reach and range** (`engine/targeting.js`): melee needs reach (5 ft., 10 ft. with a glaive, halberd, pike, lance or whip); weapons use their SRD normal/long range (beyond normal: disadvantage); spells their SRD range (`SPELL_RANGE` in `src/data/srd.js`). A ranged attack with a hostile creature beside the attacker has disadvantage; a prone target is easy up close and hard far off. Picking an attack or spell shades its reach on the map.
@@ -243,6 +254,8 @@ src/data/               ← the content. Edit freely.
   session0.js           Session 0's hand-built maps: tavern, village, the Old Salt Road
   barovia-map.js        the Valley: places, roads, and what the road throws at travellers
   bestiary.js           FAMILIES, BESTIARY, default party
+  looks.js              forged minis' parts, palettes, class styles and creature presets
+  npc-starter.js        names, quirks and wants for Roll an NPC
   themes.js             floor themes (+ denizens, Grok prompts) and TEMPLATES
   rooms.js              room types & names, TRAP_KINDS, DOOR_STATES
   tables.js             the d100 Shift table and the Whim Die table (+ the effect list)
@@ -254,6 +267,7 @@ src/engine/             pure logic: no DOM, no Three.js, unit-tested
   tables.js             roll-table parser
   overland.js           the Valley: routes, journeys, and procedural stretches of road from modules
   encounter.js          XP budgets and the encounter generator
+  look.js               a figure's recipe: from a sheet, a creature's preset (varied), an NPC roll; describeLook
   targeting.js          reach and range, cover (grid corner rule), area templates and who they catch
   movement.js           dragged routes, threat & opportunity attacks, following in marching order, formations, Close in
   castle.js             Castle Ravenloft's five hand-shaped floors (approach, halls, upper keep, dungeons, catacombs)
@@ -268,6 +282,7 @@ src/game/               rules that touch the scene and UI
   fights.js             rolling and placing an encounter
   noise.js              noise that carries to nearby creatures and the floors above and below
   moves.js              the party following, groups, Dash / Disengage / Dodge / Stand up, undo, opportunity-attack prompts, arrow keys
+  npcgen.js             🎲 Roll an NPC: name, look, line, quirk, want; place as ally or foe
   rooms.js              read a room aloud, furnish by hand, the DM's prompt when the party enters a room
   overworld.js          travelling: set out, the road's events, arrive, enter a place
   actions.js            select, move (doors / traps), stairs, falling, doors, search, disarm, floors, dread
@@ -281,6 +296,8 @@ src/render/             Three.js
   minis.js              procedural 3D minis (SHAPES) + syncing tokens
   effects.js            selection ring, reach glow, pings, bursts, Build overlays
   ambience.js           candle and fire light from props, rain and snow outdoors
+  forge/                forged minis: build.js (the jointed, sculpted figure), geo.js (shapes, skinning), mat.js (materials, rim light),
+                        anim.js (stances, walk, actions, cloaks), studio.js (the creator's live stage, portraits)
   skyline.js            Castle Ravenloft on the horizon of every outdoor valley map, by compass bearing
 src/net/table.js        multiplayer: host, join, reconnect, heartbeats, seats by identity, relay settings, invite links
 src/engine/redact.js    what players are sent (the delve with the DM's secrets taken out)
@@ -295,7 +312,7 @@ src/ui/creator.js       the character creator
 src/ui/valley.js        the Valley tab and its map (SVG)
 src/render/textures.js · post.js · models.js · gfx.js   Phase 4: textures, post-processing, GLB models, quality settings
 src/ui/                 hud.js (top bar, dock, cards) · panels.js (tabs) · input.js (taps & drags) · events.js (buttons)
-tests/engine.test.js · hero.test.js · overland.test.js · encounter.test.js · redact.test.js · movement.test.js · targeting.test.js · e2e/ (Playwright: npm run e2e)    node --test
+tests/engine.test.js · hero.test.js · overland.test.js · encounter.test.js · redact.test.js · movement.test.js · targeting.test.js · look.test.js · e2e/ (Playwright: npm run e2e)    node --test
 ```
 
 ## Adding a monster

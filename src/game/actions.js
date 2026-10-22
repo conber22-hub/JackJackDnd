@@ -12,7 +12,7 @@ import { CONDITIONS, WHISPERS } from '../data/dread.js';
 import { d, clamp, cheb, esc, pick, rollDice } from '../util/core.js';
 import { controls, camera, tween, focusTile, focusFloor, wx, wz } from '../render/scene.js';
 import { buildFloor, applyFloorLook, animateDoor } from '../render/floors.js';
-import { syncTokens, tokenViews } from '../render/minis.js';
+import { syncTokens, tokenViews, faceStep } from '../render/minis.js';
 import { showReach, clearReach, refreshSelectionRing, spawnPing, burst, clearMovePath } from '../render/effects.js';
 import { showCard, toast, sendWhisper, renderTop, renderSel } from '../ui/hud.js';
 import { renderPanel } from '../ui/panels.js';
@@ -152,6 +152,7 @@ export function animatePath(id, path, onStep, onDone, follow){
   const step = i => {
     if (i >= path.length){ tv.anim = null; onDone && onDone(); return; }
     const from = tv.group.position.clone(), to = new THREE.Vector3(wx(path[i].x + s), 0, wz(path[i].y + s));
+    faceStep(id, to.x - from.x, to.z - from.z);
     let last = from.clone();
     tween(.13, k => {
       tv.group.position.lerpVectors(from, to, k); tv.group.position.y = Math.sin(k * Math.PI) * .15;

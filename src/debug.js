@@ -11,7 +11,7 @@ import { commitRoom, commitCorridor, placeDoorAt, placeTrapAt, placeStairsAt, pl
 import { undo, serialize } from './game/session.js';
 import { makeNoise } from './game/noise.js';
 import { net } from './net/table.js';
-import { camera, controls } from './render/scene.js';
+import { camera, controls, renderer } from './render/scene.js';
 import { rollEncounter, placeEncounter } from './game/fights.js';
 import { castSpell, useLegendary, useResistance, lairAction, lairCreature } from './game/combat.js';
 import { useFeature, shortRest, longRest, adjustRes } from './game/resources.js';
@@ -28,6 +28,10 @@ import { tokenViews } from './render/minis.js';
 import { reachState } from './render/effects.js';
 export const busy = () => [...tokenViews.values()].some(tv => tv.anim);
 export { reachState };
+import * as forgeStudio from './render/forge/studio.js';
+import * as look from './engine/look.js';
+export { forgeStudio, look, renderer };
+export { tokenViews };
 export { camera, controls, net, receiveAct, makeNoise, rollEncounter, placeEncounter, castSpell, useLegendary, useResistance, lairAction, lairCreature, useFeature, shortRest, longRest, adjustRes, requestAct, answerRequest, requests };
 export { ui, tokById, BEST, reach, shiftFloor, whimRoll, whimStep, rollInitiative, nextTurn, placeMonster, doAttack, runFx, useSpecial, kill, applyDamage, infest,
   select, doMove, requestMove, setView, goFloor, takeStairs, setDread, doorAction, search, triggerTrap, fall,
