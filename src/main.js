@@ -15,6 +15,7 @@ import { buildAllFloors } from './render/floors.js';
 import { walk } from './engine/tiles.js';
 import { floorViews, mist } from './render/floors.js';
 import { tokenViews } from './render/minis.js';
+import { poseRig } from './render/forge/anim.js';
 import { selRing, updatePings, updateGroupRings } from './render/effects.js';
 import { updateAmbience, weatherKind } from './render/ambience.js';
 import { updateSkyline } from './render/skyline.js';
@@ -62,6 +63,7 @@ function frame(){
       const g = tv.group, u = g.userData, fig = u.fig;
       if (u.light){ u.light.intensity = u.light.userData.base * (1 - D.flick * (.5 + .5 * Math.sin(t * 13 + g.id) * Math.sin(t * 7.3 + g.id * 2))); if (u.light.userData.torch) u.light.color.lerp(hue, .05); }
       if (!fig || g.userData.wasDead || !g.visible) continue;
+      if (fig.userData.rig){ poseRig(fig, t, dt, !!tv.anim); continue; }   // forged figures animate themselves
       if (fig.userData.billboard){ const v = camera.position.clone(); g.worldToLocal(v); fig.rotation.y = Math.atan2(v.x, v.z); }
       if (fig.userData.hover) fig.position.y = .15 + Math.sin(t * 2 + g.id) * .08;
       if (fig.userData.pulse){ const s = 1 + Math.sin(t * 2.4 + g.id) * .04; fig.scale.set(s, 1 / s, s); }

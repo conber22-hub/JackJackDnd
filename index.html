@@ -87,6 +87,16 @@ details.card summary{cursor:pointer;font-size:13px}
 .cr-head h1{font-size:28px}
 .cr-cols{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:18px;align-items:start}
 .cr-side{position:sticky;top:0}
+.cr-mini{position:relative;border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:10px;background:radial-gradient(circle at 50% 35%,#2a2030,#0e0b0d 75%)}
+.cr-mini-cv{display:block;width:100%;height:auto;cursor:grab;touch-action:none}
+.cr-mini-b{position:absolute;right:8px;bottom:8px;display:flex;gap:4px}
+.cr-look .sw{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:4px}
+.cr-look .sw i{width:22px;height:22px;border-radius:50%;border:2px solid #0006;cursor:pointer;display:inline-block}
+.cr-look .sw i.on{border-color:var(--candle);box-shadow:0 0 0 2px #0008}
+.cr-look .sw input[type=color]{width:34px;height:26px;padding:0;border:none;background:none}
+.cr-look input[type=range]{width:100%}
+.card.npc .hd{display:flex;gap:10px;align-items:center}
+.npc-pt{width:64px;height:64px;border-radius:10px;border:1px solid var(--line);object-fit:cover}
 .cr-form label{display:block;font-size:12px;color:var(--dim);margin:6px 0}
 .cr-form label .txt{margin-top:3px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
@@ -543,6 +553,7 @@ textarea.txt{min-height:70px;resize:vertical;font-size:13px}
       <b>Move</b> — tap a token, then tap a glowing tile; or <b>drag the mini</b> along the way you want it to go (back over your route to shorten it). With a mouse, hovering a tile shows the way and its cost. <kbd>←</kbd><kbd>↑</kbd><kbd>→</kbd><kbd>↓</kbd> or the number pad step one square. Closed doors open as you walk through; heroes stop short of traps they spot. <b>↶ Undo move</b> takes a move back (players: only if it revealed nothing).<br>
       <b>In a fight</b> — the bright glow is the move you have left, the dim red-orange glow needs the <b>Dash</b> (walking there takes it). The card has 🏃 Dash, 🛡 Disengage, 🌀 Dodge and ⤒ Stand up (half your speed). Leaving an enemy's reach stops you at its edge: the enemy's player (or the DM) chooses <b>Strike</b> or <b>Let them go</b>, then the walk carries on. A red dot on the path warns you first.<br>
       <b>Attacks and spells</b> — pick one on the card and the map shades how far it reaches (bright: normal range, dim: long range, at disadvantage). With a mouse, hovering a target draws the lines from your corner to theirs: green clear, gold past a creature, red through a wall — half cover is +2 AC, three-quarters +5, total cover can't be targeted. A ranged attack with an enemy beside you, or at a prone target far off, has disadvantage. <b>Area spells</b> follow the pointer (on a phone: tap to place, tap again to cast) and ring everyone they'd catch — friends included. Walls stop them. Players can't take shots they can't make; the DM can, with a second tap.<br>
+      <b>Minis</b> — heroes, allies and humanoid foes are forged 3D figures built from their sheets: folk, armour, weapons and shield all show. Shape your hero in the creator's <b>Looks</b> (drag the figure to spin it; ⚔ ✨ 🚶 to see it move) and take your portrait from it with 📸. DMs: <b>🎲 Roll an NPC</b> in the Tokens tab.<br>
       <b>Moving the party (DM)</b> — outside a fight, the heroes nearby follow the one you move, single file in marching order (Tokens tab: ⇡ reorders, 🚩 Stays keeps one put, 🚶 Party follows turns it off). <kbd>Shift</kbd>-click creatures (or 👥 Select party / Select its kind) to move several at once in formation. 🐾 Close in walks a monster up to the nearest hero.<br>
       <b>Doors & traps</b> — tap a door or a found trap for its card: open, pick, force, disarm. <i>Search</i> looks for hidden ones within 15 ft.<br>
       <b>Stairs</b> — stand on a stair rune and press <i>Descend</i> / <i>Ascend</i> on the token card.<br>

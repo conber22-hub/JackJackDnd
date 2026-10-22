@@ -24,6 +24,7 @@ import { valleyTab, placesForSession, playerMapTab } from './valley.js';
 import { modelInfo } from '../render/models.js';
 import { CAMPAIGN, SESSIONS, CLOCKS, PLACES, PLACE_STATES, CAST, FORTUNE } from '../data/campaign.js';
 import { marchOrder } from '../game/moves.js';
+import { NPC_KINDS } from '../data/looks.js';
 
 const art = (key, label) => {
   const a = state.art[key];
@@ -73,6 +74,12 @@ function tokensTab(){
     </div>`;
   }
   h += `<div class="row"><input class="txt" style="flex:1" id="newName" placeholder="Name (e.g. Ireena, Father Lucian)"><button class="btn small" data-act="addPc">+ Hero</button><button class="btn small" data-act="addNpc">+ Ally NPC</button></div>`;
+  // 🎲 Roll an NPC: a name, a forged mini, what the party sees, a quirk and a want
+  const N = ui.npcRoll;
+  h += `<h3>Roll an NPC</h3><div class="row"><select class="txt" style="flex:1" id="npcKind">${Object.entries(NPC_KINDS).map(([k, v]) => opt(k, v.n, k === (N?.kind || ui.npcKind || 'villager'))).join('')}</select><button class="btn small primary" data-act="npcRoll">🎲 Roll</button></div>`;
+  if (N) h += `<div class="card npc"><div class="hd">${N.img ? `<img class="npc-pt" src="${N.img}" alt="">` : ''}<div><div class="nm">${esc(N.name)}</div><div class="muted">${esc(NPC_KINDS[N.kind]?.n || '')}</div></div></div>
+      <div class="look">${esc(N.line)}</div><div class="muted">They ${esc(N.quirk)}, and ${esc(N.want.replace(/^wants/, 'want'))}.</div>
+      <div class="row"><button class="btn small" data-act="npcRoll">🎲 Another</button><button class="btn small primary" data-act="npcPlace">📍 Place as ally</button><button class="btn small danger" data-act="npcPlace" data-k="foe">📍 Place as foe</button></div></div>`;
   const chars = Object.values(state.characters || {});
   h += `<h3>Characters (${chars.length})</h3><div class="muted">Every sheet your players bring is kept here, in this campaign's save — even after they leave the table. A player who signs in with the same name and secret word gets theirs back on any device. 🔒 = locked to that player's secret word.</div>`;
   for (const c of chars){

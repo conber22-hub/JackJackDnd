@@ -161,6 +161,7 @@ export function renderSel(){
   el.innerHTML = `<div class="top"><span class="dot" style="color:${color};background:${color}"></span><span class="nm">${esc(t.name)}${t.dead ? ' ✝' : ''}${mine ? ' <span class="muted">(you)</span>' : ''}${t.cls ? ` <span class="muted" style="font-size:13px">${esc(t.cls)}</span>` : ''}</span>
     ${b ? `<span class="muted">CR ${b.cr}</span>` : ''}<button class="btn small" data-act="deselect">✕</button></div>
     ${showStats ? `<div class="stat">AC <b>${t.ac}</b> · HP <b>${t.hp}/${t.maxHp}</b> · Speed <b>${t.speed} ft</b>${move}${flags.length ? ' · ' + flags.join(' · ') : ''}</div>${hpBar(t, t.kind !== 'monster')}` : (b ? `<div class="look">${esc(b.look)}</div>` : '')}
+    ${dm && t.notes ? `<div class="look">${esc(t.notes)}</div>` : ''}
     ${t.conds?.length ? `<div>${condChips(t, dm)}</div>` : ''}
     ${showStats ? resChips(t, dm) : ''}
     <div class="acts">${acts}</div>`;

@@ -2,6 +2,7 @@
    saves, skills, passive Perception, attacks, spells and the token that goes on the map. Pure: no DOM. */
 import { ABILITIES, CLASSES, SPECIES, BACKGROUNDS, WEAPONS, ARMOR, SPELLS, SUBSPELLS, SKILLS, SLOTS_FULL, SLOTS_HALF, PACT, mod, profBonus, MAX_LEVEL } from '../data/srd.js';
 import { clamp, uid } from '../util/core.js';
+import { heroLook } from './look.js';
 
 export const W = n => WEAPONS.find(w => w.n === n);
 export const SP = n => SPELLS.find(s => s.n === n);
@@ -208,5 +209,6 @@ export function heroToken(h){
   return { kind:'pc', name:h.name || 'Hero', color:h.color || st.C.color, ac:st.ac, maxHp:st.hp, speed:st.spd, init:st.init,
     saveMod:Math.max(...Object.values(st.saves)), saves:Object.fromEntries(Object.entries(st.saves).map(([a, v]) => [lower(a), v])),
     check:st.check, passive:st.passive, attacks:heroAttacks(h, st), casts:castables(h, st), charId:h.id,
-    cls:`${h.cls} ${st.L}${st.sub ? ` · ${st.sub}` : ''}`, spellDc:st.dc, resources:heroResources(h, st), ...(h.cls === 'Barbarian' ? { rageDmg:st.L >= 9 ? 3 : 2 } : {}) };
+    cls:`${h.cls} ${st.L}${st.sub ? ` · ${st.sub}` : ''}`, spellDc:st.dc, resources:heroResources(h, st), ...(h.cls === 'Barbarian' ? { rageDmg:st.L >= 9 ? 3 : 2 } : {}),
+    look:heroLook(h), standee:h.miniStyle === 'picture' };
 }

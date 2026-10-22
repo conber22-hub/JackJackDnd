@@ -5,7 +5,7 @@ import { BEST, hasTag, isHost } from '../data/bestiary.js';
 import { CONDITIONS } from '../data/dread.js';
 import { d, rollDice, avgDice, esc, cheb, pick, signed } from '../util/core.js';
 import { tween, ease, focusTile } from '../render/scene.js';
-import { syncTokens, tokenViews } from '../render/minis.js';
+import { syncTokens, tokenViews, actOn } from '../render/minis.js';
 import { burst, showReach, clearReach, flashArea } from '../render/effects.js';
 import { showCard, toast, banner, sendWhisper } from '../ui/hud.js';
 import { WHISPERS } from '../data/dread.js';
@@ -111,6 +111,9 @@ function endOfRound(){
 }
 export function endCombat(){ clearOpportunities(); state.tokens.forEach(freshTurn); state.combat = { active:false, order:[], idx:0, round:1, floor:ui.floor }; log('Combat ends.'); clearReach(); const t = ui.selected && tokById(ui.selected); if (t) showReach(t); changed(); }
 
+// A figure's swing, spell or flinch, on every screen (only forged figures move; the rest ignore it).
+function animate(id, kind, target){ actOn(id, kind, target); broadcast({ t:'act', id, kind, target }); }
+
 /* ---------- attacks & saves ---------- */
 const nearSeep = (tg, a) => state.tokens.some(o => o.id !== a.id && o.id !== tg.id && !o.dead && o.floor === tg.floor && hasTag(o, 'seep') && cheb(o.x, o.y, tg.x, tg.y) <= 1);
 export function doAttack(aId, tId, i, mode = 'normal'){
@@ -161,6 +164,7 @@ export function doAttack(aId, tId, i, mode = 'normal'){
   }
   if (hits.length && atk.latch && !tg.dead && tg.kind !== 'monster'){ tg.flags.latchedBy = a.id; lines.push(`<span class="fam-seep">${esc(a.name)} is latched on.</span>`); }
   sfx(crit ? 'crit' : hits.length ? 'hit' : 'miss');
+  animate(a.id, 'attack', tg.id); if (hits.length) setTimeout(() => animate(tg.id, 'hit', a.id), 330);
   showCard({ kind:crit ? 'crit' : hits.length ? '' : 'miss', title:`${a.name} → ${tg.name}`, sub:atk.n, flair, lines, big:hits.length ? `${total} ${atk.t}` : '' });
   log(`${a.name} ${atk.n} → ${tg.name}: ${hits.length ? `${total} ${atk.t}${crit ? ' (crit)' : ''}` : 'miss'}`);
   for (const x of hits) applyDamage(tg, x.dmg, atk.t, a, true);
@@ -371,7 +375,7 @@ export function castSpell(casterId, targetId, i, aim = null){
   if (slot !== null) c.lastMove = null;
   if (slot === null){ toast(`${c.name} has no spell slot left for ${sp.n}.`); return false; }
   const paid = slot ? [`<span class="muted">${esc(slot)}</span>`] : [];
-  sfx('roll');
+  sfx('roll'); animate(c.id, 'cast', tg.id !== c.id ? tg.id : null);
   if (sp.k === 'heal'){
     // Mass Healing Word / Mass Cure Wounds: up to six of the caster's side around the creature tapped, each rolled
     const who = sp.multi ? [tg, ...state.tokens.filter(t => t.id !== tg.id && t.floor === tg.floor && !t.flags.gone && !(t.dead && t.kind === 'monster') && side(t) === side(c) && cheb(t.x, t.y, tg.x, tg.y) <= (sp.rad || 6))].slice(0, sp.multi) : [tg];

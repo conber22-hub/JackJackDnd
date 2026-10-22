@@ -7,7 +7,7 @@ import { redactForPlayers } from '../engine/redact.js';
 import { $ } from '../util/core.js';
 import { focusTile } from '../render/scene.js';
 import { ensureFloorViews, buildAllFloors, buildFloor, animateGridChange } from '../render/floors.js';
-import { syncTokens, tokenViews } from '../render/minis.js';
+import { syncTokens, tokenViews, actOn } from '../render/minis.js';
 import { turnAction, undoMove, answerOpportunity, askOpportunity, dropAsk } from '../game/moves.js';
 import { showReach, spawnPing, flashArea } from '../render/effects.js';
 import { toast, banner, showCard, showWhisper, renderAll, renderTop } from '../ui/hud.js';
@@ -367,6 +367,7 @@ function onClientMsg(m){
   else if (m.t === 'oa' && m.q?.id) askOpportunity(m.q);
   else if (m.t === 'area' && state && Array.isArray(m.sq)){ const ex = state.explored?.[m.floor]; flashArea(m.floor, m.sq.filter(i => ex?.has(i)), m.ty); }   // only where they've been
   else if (m.t === 'oaDone') dropAsk(m.id);
+  else if (m.t === 'act' && state && ['attack', 'cast', 'hit'].includes(m.kind)) actOn(m.id, m.kind, m.target);
   else if (m.t === 'bye'){ net.status = 'closed'; clearTimeout(net.retryTimer); toast('The DM closed the table.'); renderNetStatus(); }
   else if (m.t === 'denied'){ toast(m.text); if (ui.myHeroId && !tokById(ui.myToken)) ui.myHeroId = null; const me = tokById(ui.myToken); if (me && ui.selected === me.id) showReach(me); renderPanel(); }
   else if (m.t === 'card') showCard(m.c, false);

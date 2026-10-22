@@ -36,6 +36,8 @@ import { putModel, deleteModel } from '../render/models.js';
 import { buildSessionDelve, placeSessionEncounter, readAloud, tickClock, applyTicks, rollNight, shareNight, setSessionGaze, markBeat, printSessions, sessionById, SESSIONS } from '../game/campaign.js';
 
 import { requestAct, answerRequest } from '../game/requests.js';
+import { rollNPC, placeNPC } from '../game/npcgen.js';
+import { setStage as forgeStage, portrait as forgePortrait } from '../render/forge/studio.js';
 import { turnAction, undoMove, closeInMove, selectParty, selectKin, clearGroup, answerOpportunity, playerAnswer, marchUp, toggleStay, stepSelected } from '../game/moves.js';
 import { useFeature, adjustRes, shortRest, longRest } from '../game/resources.js';
 import { legendOf, legendLeft, useLegendary, useResistance, lairAction } from '../game/combat.js';
@@ -107,6 +109,10 @@ document.addEventListener('click', e => {
     case 'groupClear': clearGroup(); break;
     case 'oaTake': case 'oaPass': if (ui.role === 'player') playerAnswer(id, a === 'oaTake'); else answerOpportunity(id, a === 'oaTake'); break;
     case 'marchUp': marchUp(id); renderPanel(); break;
+    case 'npcRoll': { ui.npcKind = $('#npcKind')?.value || ui.npcKind || 'villager'; const n = rollNPC(ui.npcKind);
+      try { forgeStage([n.look]); n.img = forgePortrait({ size:160 }); } catch {}
+      ui.npcRoll = n; renderPanel(); } break;
+    case 'npcPlace': if (ui.npcRoll){ placeNPC(ui.npcRoll, k === 'foe'); ui.npcRoll = null; renderPanel(); } break;
     case 'stay': toggleStay(id); renderPanel(); break;
     case 'endMyTurn': if (ui.role === 'player') sendHost({ t:'endturn' }); else nextTurn(); break;
     case 'rollInit': rollInitiative(); break;

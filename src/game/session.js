@@ -1,5 +1,6 @@
 /* SESSION — save / load / export, migrating old saves, undo for the Build tools, and changed(). */
 import { heroToken, addRanges } from '../engine/hero.js';
+import { heroLook } from '../engine/look.js';
 import { fillResources } from './resources.js';
 import { clearRequests } from './requests.js';
 import { clearPrompts } from './rooms.js';
@@ -55,6 +56,8 @@ export function deserialize(s){
   for (const t of st.tokens) if (t.charId && !t.resources && st.characters[t.charId]){ const f = heroToken(st.characters[t.charId]); Object.assign(t, { resources:f.resources, casts:f.casts, attacks:f.attacks, ...(f.rageDmg ? { rageDmg:f.rageDmg } : {}) }); fillResources(t); }
   // saves from before ranges and areas (targeting): weapons get their range and reach, spells their range and shape
   for (const t of st.tokens) if (t.kind !== 'monster') addRanges(t);
+  // saves from before forged minis: a hero's mini comes from their sheet
+  for (const t of st.tokens) if (t.charId && !t.look && st.characters[t.charId]) t.look = heroLook(st.characters[t.charId]);
   st.v = 2;
   return st;
 }
