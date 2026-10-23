@@ -13,6 +13,7 @@ Dread Delve ships as **one HTML file** (`npm run build` → `dread-delve.html`) 
 | [three.js](https://threejs.org) 0.169 | MIT | the 3D table, minis, forge figures |
 | [PeerJS](https://peerjs.com) 1.5.4 | MIT | the table's connections (DM ↔ players ↔ TV) |
 | [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) 1.4.4 | MIT | invite link and screen link as QR codes (`src/util/qr.js`) |
+| [idb-keyval](https://github.com/jakearchibald/idb-keyval) 6.2.1 | Apache-2.0 | the DM's imported books in IndexedDB (`src/game/library.js`) |
 | Screen Wake Lock (browser API) | — | the TV and card-only phones stay awake (`src/util/wake.js`) |
 | Web App Manifest (browser) | — | "Add to Home Screen" from the Vercel site (`public/manifest.webmanifest`) |
 
@@ -20,7 +21,7 @@ Dev only: Vite with vite-plugin-singlefile, Playwright, `peer` (a local signalli
 
 ## Worth adding next (best first)
 
-1. **[idb-keyval](https://github.com/jakearchibald/idb-keyval)** (Apache-2.0, under 1 KB): keep saves in IndexedDB instead of `localStorage`. `localStorage` holds about 5 MB per site, and portraits and handouts are data URLs, so a long campaign with art will hit that ceiling. It's a small change in `src/game/session.js`, with a one-time move of the old save.
+1. **Saves in IndexedDB too**: idb-keyval is now in (for the books); moving the delve's autosave from `localStorage` (about 5 MB per site) to it would lift the ceiling a long campaign with portraits and handouts will hit. It's a small change in `src/game/session.js`, with a one-time move of the old save.
 2. **[marked](https://github.com/markedjs/marked)** (MIT) **+ [DOMPurify](https://github.com/cure53/DOMPurify)** (Apache-2.0 / MPL-2.0): the new spell text is Markdown with embedded tables and stat blocks (Animate Objects, Teleport…). A "read the spell" card in the creator and on the hero card would render it properly. DOMPurify matters because the private library (Codex task 7) is imported text.
 3. **[driver.js](https://github.com/kamranahmedse/driver.js)** (MIT): a first-night walkthrough for a new player ("this is your card, tap an attack, tap a target"). It's cheap and helps the friend who joins on a phone.
 4. **[three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh)** (MIT): faster picking and line-of-sight raycasts on big maps (Castle Ravenloft, the Valley), if those ever feel slow on a phone.

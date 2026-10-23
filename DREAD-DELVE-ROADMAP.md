@@ -16,6 +16,17 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.9 — your books, at your table
+
+- **📚 Your books** (Table tab, DM): import the compendium export from your character app (a `.prism` file, or its JSON). `src/engine/library.js` converts it; `src/game/library.js` keeps it in **this browser's IndexedDB** (idb-keyval) and merges it into the app's tables at start-up. None of it is in the code, the built page or the website, and `.gitignore` keeps `*.prism` files out of git.
+  - **Spells**: about 210 that the SRD doesn't have (Xanathar's, Tasha's and the rest), with their full text. They roll what the description says plainly: a spell attack, a save, the dice and damage type, half on a success, a condition on a failed save, an area. Upcasting reads their higher-level sentence like the SRD's. Everything else is `util`, for the DM to read.
+  - **Species** (with subraces as options), **backgrounds**, **feats** (with their +1 choices) and **subclasses** join the character creator in a "📚 Your books" group. A library subclass replaces the class's own subclass features on the sheet (the built-in one stays the default, since its mechanics are wired in), and comes at its first feature's level. **📖 What your features do** on the sheet shows the text.
+  - **Creatures** go in the Beasts tab (family "📚 Your books"): AC, HP, speed, CR and XP, with attacks read from the stat block (several damage parts, ranges). The rest of the actions, traits, reactions and legendary actions become traits. When an attack's damage didn't come through in the export, a stand-in die is used and the creature says so. A placed creature is copied into the delve, so players' screens and the save have it. Random encounters on "any creatures" stay with the campaign's own; choose the family to use the books.
+  - **Look it up**: a search box for every spell, magic item, creature, feat, species, background and subclass, read in full.
+  - **Choose what to use**: Official books / Unearthed Arcana / Homebrew toggles (official and UA by default). The app's own entries win any name clash (Fireball, Dwarf, Alert…), because those are the ones the rules are wired to.
+  - **Players' phones**: when a player joins, the DM's app offers the version it has (a hash). A phone that lacks it asks once, and gets the creator's part (no creatures or items) gzipped over the table connection. The phone keeps it for next time.
+- Not yet: the compendium's classes (Artificer, Blood Hunter…) and the class features past level 10 (the app stops at 10; Codex's task 2). Magic items are for reading and handing out by hand; there's no inventory yet.
+
 ## v1.8 — every spell, cast properly, and a table that's easy to join
 
 - **The whole SRD spellbook** (Codex's PR #3): `src/data/srd-spells.js` holds all 339 SRD 5.2.1 spells, levels 0–9, with school, casting time, range, components, duration, Concentration, Ritual, the full text and the higher-level line. It also has 4 extra spells (`extra-spells.js`) and 10 Flood homebrew spells (`flood-spells.js`). Codex's PR #2 added the NPC name tables (`npc-starter.js`).
@@ -341,6 +352,7 @@ src/main.js             boot + the render loop (fog, flicker, mist, whispers)
 src/debug.js            window.DreadDelve console handle (also used by the smoke tests)
 src/util/core.js        dice, seeded random, tiny event bus
 src/util/qr.js          invite links as QR codes (qrcode-generator)
+src/game/library.js     your books in this browser (IndexedDB): merge at start-up, share the creator's part with the table, look up
 src/util/wake.js        keep the TV and card-only phones awake (Screen Wake Lock)
 src/data/               ← the content. Edit freely.
   dread.js              Strahd's Gaze 1–10 (look + rules + read-aloud), whispers, conditions
@@ -372,6 +384,7 @@ src/engine/             pure logic: no DOM, no Three.js, unit-tested
   maps.js               the map library: who travels, packing a map for the shelf, where the party arrives
   fight.js              who's in a fight, initiative (grouped, surprise, real dice), victory and XP
   checks.js             checks & saves at the table: bonuses from a sheet, a roll against a DC, group checks
+  library.js            your books: a compendium export (.prism) → spells, species, backgrounds, feats, subclasses, creatures, items (pure)
   spellcast.js          upcasting (dice per slot level from the higher-level text, extra rays) and the Concentration DC
   settlement.js         the Valley's places: villages, towns, Krezk, Berez, the camp, the vineyard, the lake, the hill, the tower
 src/game/               rules that touch the scene and UI

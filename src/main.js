@@ -28,9 +28,12 @@ import { runLocalScreen, listenForScreens } from './net/screen.js';
 import { joinTable, readInvite, net, setScreenNow } from './net/table.js';
 import { nightNow } from './game/night.js';
 import { onAskChange } from './game/asks.js';
+import { loadLibrary, onLibrary } from './game/library.js';
 import './ui/input.js';
 import * as api from './debug.js';
 
+// the DM's books (game/library.js): load them from this browser, and redraw what lists them when they change
+onLibrary(() => renderPanel()); loadLibrary();
 bus.on('log', () => { if (ui.tab === 'table' || ui.tab === 'log' || ui.role === 'player') renderPanel(); });
 bus.on('models', key => { if (!state) return; if (String(key).startsWith('kit:')) buildAllFloors(); syncTokens(); });
 function applyQuality(){

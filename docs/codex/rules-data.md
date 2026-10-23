@@ -78,7 +78,9 @@ Compare `SPECIES` and `BACKGROUNDS` with SRD 5.2.1:
 
 Fix any gaps.
 
-### 7. The private library: schema, validator and merge (no UI)
+### 7. The private library — DONE by Claude (don't start it)
+Claude built this from the owner's real compendium export (a `.prism` file from their character app): `src/engine/library.js` (converter, pure), `src/game/library.js` (IndexedDB, merge, sharing), the Table tab's **📚 Your books**, and `tests/library.test.js` with an invented fixture. The plan below is kept for the record.
+
 This is what lets the owner use their own books at their own table without publishing them.
 - `docs/library-format.md` documents a JSON format whose sections mirror the data files above:
   - `{ name, version, spells:[], feats:{}, classes:{}, subclasses:{}, species:{}, backgrounds:{}, items:[], monsters:[] }`

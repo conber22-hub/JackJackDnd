@@ -260,3 +260,17 @@ test('level-20 derivation leaves saved sheets untouched and clamps imported out-
   assert.deepEqual(h, original);
   assert.equal(heroStats({ ...h, lvl:-5 }).L, 1);
 });
+
+test('level 20 keeps imported subclass choices while granting class features', async () => {
+  const { SUBCLASSES } = await import('../src/data/srd.js');
+  SUBCLASSES.Paladin = { 'Lantern Oath':{ features:{ 3:['Lantern Ward'] }, texts:{} } };
+  SUBCLASSES.Bard = { 'Lantern College':{ features:{ 3:['Lantern Song'] }, texts:{} } };
+  try {
+    const p = { ...newHero('Paladin'), lvl:20, sub:'Lantern Oath' };
+    assert.equal(heroStats(p).sub, 'Lantern Oath');
+    assert.ok(!heroStats(p).features.includes('Devotion: Holy Nimbus (20)'));
+    const r = heroResources(p).find(r => r.id === 'channel');
+    assert.equal(r.max, 3); assert.match(r.text, /Lantern Oath/); assert.doesNotMatch(r.text, /Sacred Weapon/);
+    assert.ok(heroSpells({ ...newHero('Bard'), lvl:20, sub:'Lantern College' }).some(s => s.n === 'Power Word Kill'));
+  } finally { delete SUBCLASSES.Paladin; delete SUBCLASSES.Bard; }
+});

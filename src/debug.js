@@ -41,3 +41,6 @@ export { camera, controls, net, receiveAct, makeNoise, rollEncounter, placeEncou
 export { ui, tokById, BEST, reach, shiftFloor, whimRoll, whimStep, rollInitiative, nextTurn, placeMonster, doAttack, runFx, useSpecial, kill, applyDamage, infest,
   select, doMove, requestMove, setView, goFloor, takeStairs, setDread, doorAction, search, triggerTrap, fall,
   commitRoom, commitCorridor, placeDoorAt, placeTrapAt, placeStairsAt, placePropAt, placeHouseAt, eraseAt, importMap, newDelve, addFloorBelow, populate, setAutoLink, undo, serialize, setMode, focusTile };
+import * as srd from './data/srd.js';
+import * as library from './game/library.js';
+export { srd, library };

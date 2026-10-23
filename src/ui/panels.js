@@ -10,6 +10,7 @@ import { DEFAULT_SHIFT_TABLE, DEFAULT_WHIM_TABLE, WHIM_STEPS } from '../data/tab
 import { $, esc, avgDice, attacksToText } from '../util/core.js';
 import { net, savedTable, peerServer, inviteLink } from '../net/table.js';
 import { qrSvg, scannable } from '../util/qr.js';
+import { libraryState, libraryCounts, libraryKinds, lookUp } from '../game/library.js';
 import { currentTurn } from '../game/rules.js';
 import { onStairs, dreadRulesLines } from '../game/actions.js';
 import { undoCount } from '../game/session.js';
@@ -307,10 +308,30 @@ function tableTab(){
   h += `<div class="row"><button class="btn ${ui.tableView ? 'on' : ''}" data-act="tableView">📺 Table view ${ui.tableView ? 'ON' : 'off'}</button></div>
     <div class="muted">Table view shows what players see — fog, no room secrets, no hidden traps or secret doors, no monster HP. Use it when the screen is cast to a TV.</div>
     ${gfxPanel()}
+    ${booksPanel()}
     <h3>Save</h3><div class="muted">Autosaves in this browser. Export to move a delve between devices or keep backups. Your edited tables and creatures travel with the save.</div>
     <div class="row"><button class="btn" data-act="export">⬇ Export</button><label class="btn">⬆ Import<input type="file" accept=".json" data-edit="import" hidden></label><button class="btn small" data-act="startScreen">Start screen</button></div>
     <h3>Log</h3><div class="log">${logList()}</div>`;
   return h;
+}
+
+/* YOUR BOOKS — the DM's own compendium (game/library.js): import it, choose what kinds of material to use, look things up. */
+function booksPanel(){
+  const L = libraryState(), c = libraryCounts(), kinds = libraryKinds();
+  let h = `<h3>📚 Your books</h3>`;
+  if (!L.ready) return h + '<div class="muted">Opening…</div>';
+  if (!L.mine) h += `<div class="muted">Import the compendium export from your character app (a <code>.prism</code> or <code>.json</code> file). It's converted and kept in <b>this browser only</b>: it never goes on the website or into the code. Its species, backgrounds, feats, subclasses and spells appear in the character creator, and on your players' phones once they join your table. Its creatures go in the Beasts tab, and everything can be looked up here.</div>${L.table ? '<div class="muted">This browser also has the books a table it joined shared with it.</div>' : ''}`;
+  else h += `<div class="look"><b>${esc(L.mine.name)}</b> · imported ${esc(new Date(L.mine.at).toLocaleDateString())}<br>In use: ${c.spells} spells · ${c.species} species · ${c.backgrounds} backgrounds · ${c.feats} feats · ${c.subclasses} subclasses · ${c.monsters} creatures · ${c.items} magic items</div>
+    <div class="row">${[['canon', 'Official books'], ['ua', 'Unearthed Arcana'], ['homebrew', 'Homebrew']].map(([k, l]) => `<button class="btn small ${L.mine.kinds.includes(k) ? 'on' : ''}" data-act="libKind" data-k="${k}">${L.mine.kinds.includes(k) ? '✓ ' : ''}${l} (${kinds[k] || 0})</button>`).join('')}</div>
+    <div class="muted">Anything with the same name as one of the app's own (Fireball, Dwarf, Alert…) uses the app's version: that's the one the rules are wired to. Library spells roll what their description says plainly (a spell attack, a save, the dice, an area); the rest is for you to read and rule.</div>`;
+  h += `<div class="row"><label class="btn small">${L.mine ? '⬆ Import again' : '⬆ Import your compendium'}<input type="file" accept=".prism,.json,application/json" data-edit="libImport" hidden></label>${L.mine ? '<button class="btn small danger" data-act="libRemove">Remove from this browser</button>' : ''}</div>`;
+  if (L.mine || L.table) h += `<input class="txt" id="libQ" placeholder="Look it up: a spell, magic item, creature, feat, species…" value="${esc(ui.libQ || '')}"><div id="libHits">${libHits()}</div>`;
+  return h;
+}
+export function libHits(){
+  const hits = ui.libHits = lookUp(ui.libQ || '');
+  if (!ui.libQ) return '';
+  return hits.length ? hits.map((x, i) => `<button class="btn pickrow" data-act="libRead" data-k="${i}"><span>${esc(x.n)}</span><span class="muted">${esc(x.kind)}</span></button>`).join('') : '<div class="muted">Nothing by that name.</div>';
 }
 
 /* GAME NIGHT — playing round one table (game/night.js): the TV, what it shows, read-alouds, faces, handouts,

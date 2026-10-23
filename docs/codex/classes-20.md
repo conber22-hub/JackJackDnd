@@ -83,8 +83,8 @@ separate one-per-level Arcanum selection/count using `arcanumLevels`, and exclud
 those spells from the UI's ordinary prepared count, matching `heroWarnings`.
 The current import/export path can already carry those choices in `h.spells`.
 
-Add a safe feature-text reader using `FEATURES`; currently the sheet displays only
-names. Label level 19 as Epic Boon or another qualifying feat. The existing `Other`
+Extend the existing library feature-text reader to use built-in `FEATURES` too;
+built-in class features currently display only names. Label level 19 as Epic Boon or another qualifying feat. The existing `Other`
 choice can record a boon name/note, but the full boon catalogue, prerequisites and
 effects belong to task 3. In particular, its current +1 ability input still caps
 at 20 and does not model a boon's higher cap. Multiple invocations, additional

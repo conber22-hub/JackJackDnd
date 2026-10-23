@@ -22,6 +22,7 @@ export const FAMILIES = {
   dread:  { label:'Barovian Undead',     cls:'fam-dread',  blurb:'Fresh horrors of the Dread Zone — what Barovia grows in the dark when the sun is summoned above it.' },
   bloom:  { label:'The Bloom',           cls:'fam-seep',   blurb:'What climbed out of the Iron Coffin when it came down burning in the Svalich Woods. Above ground they call it the Bloom; once it reached the font beneath Saint Andral\'s it became the Seep. Same hunger. Sweet rot, a cough that is not a cough, flies that will not land. Seeded humanoids rise as Vessels unless burned or blessed.' },
   barovia:{ label:'Barovia',             cls:'fam-dread',  blurb:'The valley\'s own: the Count\'s wolves, the dead that walk because he allows it, hags, mist and scarecrows. The Count is the weather. The Bloom is the insult.' },
+  library:{ label:'📚 Your books',       cls:'fam-andral', blurb:'Creatures from the compendium you imported (Table tab → Your books). They live in this browser; one you place on the map is copied into the delve, so your players see it and the save keeps it.' },
   folk:   { label:'Folk & Foes',         cls:'fam-andral', blurb:'People: villagers, guards, cultists, knights, priests and the rest — the hosts the Bloom wants most.' },
 };
 
@@ -253,10 +254,17 @@ export const BESTIARY = [
 
 // The live registry: built-ins plus any creatures the DM has edited or added (state.content.bestiary).
 export const BEST = {};
-export function rebuildBestiary(custom = {}){
+// Creatures from the DM's own books (game/library.js): in this browser only, until one is placed on the map,
+// when it's copied into the delve (state.content.bestiary) and travels with it like a custom creature.
+let LIBRARY = [];
+export function setLibraryBestiary(list){ LIBRARY = Array.isArray(list) ? list : []; }
+let lastCustom = {};
+export function rebuildBestiary(custom = lastCustom){
+  lastCustom = custom || {};
   for (const k of Object.keys(BEST)) delete BEST[k];
   for (const b of BESTIARY) BEST[b.id] = b;
   for (const b of BAROVIA) BEST[b.id] = b;
+  for (const b of LIBRARY) if (!BEST[b.id]) BEST[b.id] = b;
   for (const [id, b] of Object.entries(custom || {})) if (b && b.name) BEST[id] = { ...b, id, custom:true };
 }
 rebuildBestiary();

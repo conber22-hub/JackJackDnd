@@ -154,13 +154,16 @@ export const INVOCATIONS = ['Agonizing Blast', 'Repelling Blast', 'Armor of Shad
 import { SPELLS as SPELL_LIBRARY } from './srd-spells.js';
 import { TABLE_PLAY } from './spell-play.js';
 export const SPELLS = SPELL_LIBRARY.map(s => TABLE_PLAY[s.n] ? { ...s, ...TABLE_PLAY[s.n] } : s);
+// Subclasses from the DM's own books (engine/library.js), by class: { Fighter:{ 'Name':{ features:{ 3:[…] }, texts, text } } }.
+// Empty in the app itself; game/library.js fills it in each browser that has the library.
+export const SUBCLASSES = {};
 export const SUBSPELLS = {
   'Life Domain':{ 3:['Bless', 'Cure Wounds', 'Aid', 'Lesser Restoration'], 5:['Mass Healing Word', 'Revivify'], 7:['Death Ward', 'Guardian of Faith'], 9:['Mass Cure Wounds', 'Raise Dead'] },
   'Fiend Patron':{ 3:['Burning Hands', 'Command', 'Scorching Ray'], 5:['Fireball'], 7:['Wall of Fire'], 9:['Flame Strike'] },
   'Draconic Sorcery':{ 3:['Chromatic Orb', 'Command'], 5:['Fear'], 7:['Banishment'], 9:['Hold Monster'] },
   'Oath of Devotion':{ 3:['Shield of Faith', 'Protection from Evil and Good'], 5:['Aid', 'Zone of Truth'], 9:['Dispel Magic'], 13:['Freedom of Movement', 'Guardian of Faith'], 17:['Commune', 'Flame Strike'] },
   'Circle of the Land':{ 3:['Hold Person', 'Moonbeam'], 5:['Fireball'], 7:['Ice Storm'], 9:['Cone of Cold'] },
-  'College of Lore':{ 20:['Power Word Heal', 'Power Word Kill'] }, 'Hunter':{}, 'Evoker':{},
+  'College of Lore':{}, 'Hunter':{}, 'Evoker':{},
 };
 
 // Full SRD class and subclass descriptions; shared names include labelled class variants.

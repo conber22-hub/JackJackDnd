@@ -1,7 +1,8 @@
 /* CHARACTER CREATOR — SRD 5.2, levels 1–10. Players use it from the start screen (their heroes are kept in their
    browser and sent to the DM when they join); the DM can open any sheet from the Tokens tab.
    openCreator(sheet | null, { onSave, title }) */
-import { ABILITIES, ABILITY_NAMES, CLASSES, SPECIES, BACKGROUNDS, WEAPONS, ARMOR, STYLES, INVOCATIONS, SKILLS, STANDARD_ARRAY, POINT_COST, MAX_LEVEL, FEATS, mod } from '../data/srd.js';
+import { ABILITIES, ABILITY_NAMES, CLASSES, SPECIES, BACKGROUNDS, WEAPONS, ARMOR, STYLES, INVOCATIONS, SKILLS, STANDARD_ARRAY, POINT_COST, MAX_LEVEL, FEATS, SUBCLASSES, mod } from '../data/srd.js';
+import { textOf } from '../game/library.js';
 import { newHero, heroStats, heroAttacks, heroSpells, spellPool, spellLimits, asiLevels, expertiseSlots, heroWarnings, SP } from '../engine/hero.js';
 import { $, esc, clamp, d } from '../util/core.js';
 import { toast } from './hud.js';
@@ -11,6 +12,11 @@ import { setStage, frame, portrait, act, studioCanvas, stageKey } from '../rende
 
 let edit = null, opts = {};
 const sgn = n => (n >= 0 ? '+' : '−') + Math.abs(n);
+// A choice from one of the rules tables: the app's own entries, then the DM's books (game/library.js) in a group of their own.
+const selLib = (f, table, v) => { const own = Object.keys(table).filter(k => !table[k]?.lib), lib = Object.keys(table).filter(k => table[k]?.lib).sort();
+  const o = k => `<option value="${esc(k)}" ${k === v ? 'selected' : ''}>${esc(k)}</option>`;
+  return `<select class="txt" data-cf="${f}">${own.map(o).join('')}${lib.length ? `<optgroup label="📚 Your books">${lib.map(o).join('')}</optgroup>` : ''}${table[v] ? '' : `<option selected value="${esc(v)}">${esc(v)} (not in this browser's books)</option>`}</select>`; };
+const spcOf = h => SPECIES[h.sp] || SPECIES.Human, bgOf = h => BACKGROUNDS[h.bg] || BACKGROUNDS.Soldier;
 const sel = (f, list, v, attrs = '') => `<select class="txt" data-cf="${f}" ${attrs}>${list.map(o => { const [val, lab] = Array.isArray(o) ? o : [o, o]; return `<option value="${esc(val)}" ${String(val) === String(v) ? 'selected' : ''}>${esc(lab)}</option>`; }).join('')}</select>`;
 
 export function openCreator(sheet, o = {}){
@@ -35,23 +41,32 @@ export function sheetHTML(h){
     ${sps.length ? `<div class="sheet-l"><b>Spells</b> ${sps.map(s => `${esc(s.n)}${s.l ? ` <sup>${s.l}</sup>` : ''}`).join(' · ')}</div>` : ''}
     ${st.slots ? `<div class="sheet-l"><b>Slots</b> ${st.slots.map((n, i) => `L${i + 1}×${n}`).join(' ')}</div>` : ''}${st.pact ? `<div class="sheet-l"><b>Pact slots</b> ${st.pact.n} × level ${st.pact.l}</div>` : ''}
     <div class="sheet-l"><b>Features</b> ${st.features.map(esc).join(' · ')}</div>
-    <div class="sheet-l muted">${esc(SPECIES[h.sp]?.note || '')} Origin feat: ${esc(BACKGROUNDS[h.bg]?.feat || '')}.</div>
+    <div class="sheet-l muted">${esc([spcOf(h).note, spcOf(h).subs?.[h.spOpt]?.note].filter(Boolean).join(' · '))}${bgOf(h).feat ? ` Origin feat: ${esc(bgOf(h).feat)}.` : bgOf(h).note ? ` Background: ${esc(bgOf(h).note)}.` : ''}</div>
+    ${readHTML(h, st)}
   </div>`;
+}
+// The words behind a hero's features from the DM's books: their species traits, subclass features and feats.
+function readHTML(h, st){
+  const spc = spcOf(h), rows = [...(spc.feats || []), ...(spc.subs?.[h.spOpt]?.feats || [])].filter(f => f.text && !/language/i.test(f.n)).map(f => [f.n, f.text]);
+  for (const f of st.features){ const n = f.replace(/ \(\d+\)$/, '').replace(/ — feat$/, ''); const t = textOf(n); if (t) rows.push([n, t]); }
+  for (const p of st.picks || []) if (FEATS[p.feat]?.lib) rows.push([p.feat, FEATS[p.feat].text]);
+  const seen = new Set(), list = rows.filter(([n]) => !seen.has(n) && seen.add(n));
+  return list.length ? `<details class="sheet-l"><summary><b>📖 What your features do</b> <span class="muted">(${list.length}, from the DM's books)</span></summary>${list.map(([n, t]) => `<p><b>${esc(n)}.</b> ${esc(t).replace(/\n+/g, '<br>')}</p>`).join('')}</details>` : '';
 }
 
 /* An Ability Score Improvement level: the improvement itself (+2, or +1 and +1), or a feat instead. */
 const asel = (l, k, list, v) => `<select class="txt" data-asi="${l}" data-k="${k}">${list.map(o => { const [val, lab] = Array.isArray(o) ? o : [o, o]; return `<option value="${esc(val)}" ${String(val) === String(v ?? '') ? 'selected' : ''}>${esc(lab)}</option>`; }).join('')}</select>`;
 function asiHTML(h, l){
   const raw = h.asi?.[l], p = typeof raw === 'string' ? { feat:'Ability Score Improvement', ab:raw } : (raw || {});
-  const C = CLASSES[h.cls], feats = Object.entries(FEATS).filter(([, f]) => !f.style || C.style);
+  const C = CLASSES[h.cls], feats = Object.entries(FEATS).filter(([, f]) => !f.style || C.style).sort(([a, x], [b, y]) => !!x.lib - !!y.lib || (x.lib ? a.localeCompare(b) : 0));
   let more = '';
   if (p.feat === 'Ability Score Improvement') more = `${asel(l, 'ab', [['', '— ability —'], ...ABILITIES], p.ab)}${asel(l, 'ab2', [['', '+2 to it'], ...ABILITIES.filter(a => a !== p.ab).map(a => [a, `+1 to it, +1 to ${a}`])], p.ab2)}`;
-  if (p.feat === 'Grappler') more = asel(l, 'ab', [['', '+1 to…'], ['Str', '+1 Str'], ['Dex', '+1 Dex']], p.ab);
+  if (FEATS[p.feat]?.plus) more = asel(l, 'ab', [['', '+1 to…'], ...FEATS[p.feat].plus.map(a => [a, `+1 ${a}`])], p.ab);   // Grappler, and feats from the DM's books
   if (p.feat === 'Magic Initiate') more = asel(l, 'list', [['', 'Which list?'], ...Object.entries(FEATS['Magic Initiate'].lists)], p.list);
   if (p.feat === 'Skilled') more = [0, 1, 2].map(i => asel(l, `skill${i}`, [['', '— skill —'], ...Object.keys(SKILLS)], (p.skills || [])[i])).join('');
   if (p.feat === 'Other') more = `<input class="txt" data-asi="${l}" data-k="name" placeholder="Feat name" value="${esc(p.name || '')}">${asel(l, 'ab', [['', 'No ability bonus'], ...ABILITIES.map(a => [a, `+1 ${a}`])], p.ab)}${asel(l, 'hp', [['0', 'No extra HP'], ['1', '+1 HP a level'], ['2', '+2 HP a level']], p.hp || '0')}
     <input class="txt" data-asi="${l}" data-k="note" placeholder="What it does (shown on your sheet for the DM)" value="${esc(p.note || '')}">`;
-  return `<div class="cr-asi"><div class="row"><label>Level ${l}</label>${asel(l, 'feat', [['', '— ability increase or a feat —'], ...feats.map(([n]) => [n, n === 'Other' ? 'Another feat (write it in)' : n === 'Ability Score Improvement' ? 'Ability Score Improvement (+2 / +1 +1)' : `Feat: ${n}`])], p.feat)}</div>
+  return `<div class="cr-asi"><div class="row"><label>Level ${l}</label>${asel(l, 'feat', [['', '— ability increase or a feat —'], ...feats.map(([n]) => [n, n === 'Other' ? 'Another feat (write it in)' : n === 'Ability Score Improvement' ? 'Ability Score Improvement (+2 / +1 +1)' : `${FEATS[n].lib ? '📚 ' : ''}Feat: ${n}`])], p.feat)}</div>
     ${more ? `<div class="row">${more}</div>` : ''}${p.feat ? `<div class="muted">${esc(FEATS[p.feat]?.text || '')}${FEATS[p.feat]?.req ? ` <i>(${esc(FEATS[p.feat].req)})</i>` : ''}</div>` : ''}</div>`;
 }
 function setAsi(l, k, v){
@@ -64,7 +79,7 @@ function setAsi(l, k, v){
 }
 
 function render(){
-  const h = edit, C = CLASSES[h.cls], st = heroStats(h), L = st.L, bg = BACKGROUNDS[h.bg], spOpts = SPECIES[h.sp].opts;
+  const h = edit, C = CLASSES[h.cls], st = heroStats(h), L = st.L, bg = bgOf(h), spc = spcOf(h), spOpts = spc.opts, subs = SUBCLASSES[h.cls];
   const spOptKey = spOpts ? Object.keys(spOpts)[0] : null;
   const lim = spellLimits(h), pool = spellPool(h);
   const nCan = (h.spells || []).filter(n => SP(n)?.l === 0).length, nPrep = (h.spells || []).filter(n => SP(n)?.l > 0).length;
@@ -81,11 +96,12 @@ function render(){
     <div class="grid3"><label>Level${sel('lvl', Array.from({ length:MAX_LEVEL }, (_, i) => i + 1), h.lvl)}</label>
       <label>Class${sel('cls', Object.keys(CLASSES), h.cls)}</label>
       <label>Colour<input type="color" class="txt" data-cf="color" value="${esc(h.color)}"></label></div>
-    <div class="muted">${L >= 3 ? `Subclass: <b>${esc(C.sub)}</b>` : `Subclass at level 3: ${esc(C.sub)}`} · d${C.hd} hit die · saves ${C.sv.join(', ')}${C.cast ? ` · casts with ${C.cast}` : ''}</div>
-    <div class="grid2"><label>Species${sel('sp', Object.keys(SPECIES), h.sp)}</label>${spOptKey ? `<label>${esc(spOptKey)}${sel('spOpt', spOpts[spOptKey], h.spOpt || spOpts[spOptKey][0])}</label>` : '<span></span>'}</div>
-    <div class="muted">${esc(SPECIES[h.sp].note)}</div>
-    <div class="grid3"><label>Background${sel('bg', Object.keys(BACKGROUNDS), h.bg)}</label><label>+2 to${sel('bg2', bg.ab, h.bg2)}</label><label>+1 to${sel('bg1', bg.ab.filter(a => a !== h.bg2), h.bg1)}</label></div>
-    <div class="muted">Origin feat: ${esc(bg.feat)} · skills: ${bg.skills.join(', ')}</div>
+    ${subs ? `<div class="grid2"><label>Subclass${sel('sub', [[C.sub, `${C.sub} (wired into the rules)`], ...Object.keys(subs).sort().map(n => [n, `📚 ${n}`])], h.sub && subs[h.sub] ? h.sub : C.sub)}</label><span class="muted" style="align-self:end">${h.sub && subs[h.sub] ? `${esc(subs[h.sub].src)} · its features are on your sheet to read; the DM rules what they do` : ''}</span></div>` : ''}
+    <div class="muted">${L >= 3 || st.sub ? `Subclass: <b>${esc(st.sub || C.sub)}</b>` : `Subclass at level 3: ${esc(h.sub && subs?.[h.sub] ? h.sub : C.sub)}`} · d${C.hd} hit die · saves ${C.sv.join(', ')}${C.cast ? ` · casts with ${C.cast}` : ''}</div>
+    <div class="grid2"><label>Species${selLib('sp', SPECIES, h.sp)}</label>${spOptKey ? `<label>${esc(spOptKey)}${sel('spOpt', spOpts[spOptKey], h.spOpt || spOpts[spOptKey][0])}</label>` : '<span></span>'}</div>
+    <div class="muted">${esc([spc.note, spc.subs?.[h.spOpt]?.note].filter(Boolean).join(' · '))}${spc.lib ? ` <i>(${esc(spc.src)})</i>` : ''}</div>
+    <div class="grid3"><label>Background${selLib('bg', BACKGROUNDS, h.bg)}</label><label>+2 to${sel('bg2', bg.ab, h.bg2)}</label><label>+1 to${sel('bg1', bg.ab.filter(a => a !== h.bg2), h.bg1)}</label></div>
+    <div class="muted">${bg.feat ? `Origin feat: ${esc(bg.feat)} · ` : bg.note ? `${esc(bg.note)} · ` : ''}skills: ${bg.skills.join(', ') || '—'}${bg.lib ? ` <i>(${esc(bg.src)})</i>` : ''}</div>
 
     <h2>Ability scores</h2>
     <div class="row">${[['standard', 'Standard array'], ['pointbuy', `Point buy (${pts}/27)`], ['manual', 'Enter my own'], ['roll', 'Roll 4d6']].map(([k, l]) => `<button class="btn small ${h.method === k ? 'on' : ''}" data-cr="method" data-k="${k}">${l}</button>`).join('')}
@@ -104,7 +120,7 @@ function render(){
     ${asiLevels(h).map(l => asiHTML(h, l)).join('')}
 
     <h2>Skills</h2>
-    <div class="muted">Choose ${nSkills} from your class (${(h.skills || []).length} chosen). From your background: ${bg.skills.join(', ')}${h.sp === 'Elf' ? '; Elf: Perception' : ''}.</div>
+    <div class="muted">Choose ${nSkills} from your class (${(h.skills || []).length} chosen). From your background: ${bg.skills.join(', ')}${h.sp === 'Elf' ? '; Elf: Perception' : ''}${[...(spc.skills || []), ...(spc.subs?.[h.spOpt]?.skills || [])].length ? `; ${esc(h.sp)}: ${[...(spc.skills || []), ...(spc.subs?.[h.spOpt]?.skills || [])].join(', ')}` : ''}.</div>
     <div class="cr-chk">${classSkills.map(s => `<label class="crc"><input type="checkbox" data-skill="${esc(s)}" ${(h.skills || []).includes(s) ? 'checked' : ''} ${bg.skills.includes(s) ? 'disabled' : ''}><span>${esc(s)} <span class="muted">${SKILLS[s]}</span></span></label>`).join('')}</div>
     ${h.sp === 'Human' ? `<div class="row"><label>Human — Skillful</label>${sel('extraSkill', Object.keys(SKILLS), h.extraSkill || 'Perception')}</div>` : ''}
     ${exSlots ? `<div class="muted">Expertise: pick ${exSlots} proficient skills (double proficiency).</div><div class="cr-chk">${[...st.prof].map(s => `<label class="crc"><input type="checkbox" data-exp="${esc(s)}" ${(h.expert || []).includes(s) ? 'checked' : ''}><span>${esc(s)}</span></label>`).join('')}</div>` : ''}
@@ -205,11 +221,12 @@ const pick = a => a[Math.floor(Math.random() * a.length)];
 function set(path, v){
   const h = edit;
   if (path === 'lvl') h.lvl = clamp(+v, 1, MAX_LEVEL);
-  else if (path === 'cls'){ h.cls = v; const C = CLASSES[v]; h.ab = { ...C.arr }; h.method = 'standard'; h.skills = C.skills[1].slice(0, C.skills[0]); h.expert = []; h.spells = []; h.color = C.color;
+  else if (path === 'cls'){ h.cls = v; h.sub = null; const C = CLASSES[v]; h.ab = { ...C.arr }; h.method = 'standard'; h.skills = C.skills[1].slice(0, C.skills[0]); h.expert = []; h.spells = []; h.color = C.color;
     h.armor = C.armor?.startsWith('heavy') ? 'Chain Mail' : C.armor?.startsWith('medium') ? 'Scale Mail' : C.armor?.startsWith('light') ? 'Leather' : 'None'; h.shield = /shield/.test(C.armor || ''); }
-  else if (path === 'bg'){ h.bg = v; const b = BACKGROUNDS[v]; h.bg2 = b.ab[0]; h.bg1 = b.ab[1]; h.skills = (h.skills || []).filter(s => !b.skills.includes(s)); }
-  else if (path === 'bg2'){ h.bg2 = v; if (h.bg1 === v) h.bg1 = BACKGROUNDS[h.bg].ab.find(a => a !== v); }
-  else if (path === 'sp'){ h.sp = v; const o = SPECIES[v].opts; h.spOpt = o ? Object.values(o)[0][0] : null; }
+  else if (path === 'sub') h.sub = v === CLASSES[h.cls].sub ? null : v;   // null: the class's own
+  else if (path === 'bg'){ h.bg = v; const b = BACKGROUNDS[v]; if (!b) return; h.bg2 = b.ab[0]; h.bg1 = b.ab[1]; h.skills = (h.skills || []).filter(s => !b.skills.includes(s)); }
+  else if (path === 'bg2'){ h.bg2 = v; if (h.bg1 === v) h.bg1 = bgOf(h).ab.find(a => a !== v); }
+  else if (path === 'sp'){ h.sp = v; const o = SPECIES[v]?.opts; h.spOpt = o ? Object.values(o)[0][0] : null; }
   else if (path.startsWith('asi.')){ (h.asi ||= {})[path.slice(4)] = v || undefined; }
   else if (path.startsWith('w.')){ const ws = [0, 1, 2].map(i => (h.weapons || [])[i] || null); ws[+path.slice(2)] = v === '—' ? null : v; h.weapons = ws.filter(Boolean); }
   else h[path] = v;
