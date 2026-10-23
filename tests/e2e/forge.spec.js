@@ -17,8 +17,11 @@ test('the creator\'s Look studio shows the hero as a live 3D mini and takes a po
   expect(await page.evaluate(() => window.DreadDelve.forgeStudio.studio().figs[0].userData.fig.userData.rig.look.horns)).not.toBe('none');
   await page.locator('#charBox [data-cr="portraitFromMini"]').click();
   await expect(page.locator('#charBox .artslot img')).toHaveAttribute('src', /^data:image\/jpeg/);
+  // the swing is short: under load it can be over before a single read sees it, so watch for it from before the click
+  await page.evaluate(() => { const rig = window.DreadDelve.forgeStudio.studio().figs[0].userData.fig.userData.rig; window.__swung = false;
+    const tick = () => { if (rig.action) window.__swung = true; else requestAnimationFrame(tick); }; tick(); });
   await page.locator('#charBox [data-cr="mini:attack"]').click();
-  expect(await page.evaluate(() => !!window.DreadDelve.forgeStudio.studio().figs[0].userData.fig.userData.rig.action)).toBe(true);
+  await expect.poll(() => page.evaluate(() => window.__swung || !!window.DreadDelve.forgeStudio.studio().figs[0].userData.fig.userData.rig.action)).toBe(true);
 });
 
 test('forged minis on the map: heroes and humanoid foes are jointed figures that swing and flinch', async ({ page }) => {
