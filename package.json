@@ -9,6 +9,7 @@
     "build": "vite build && node scripts/copy-build.js",
     "preview": "vite preview",
     "test": "node --test tests/*.test.js",
+    "pree2e": "playwright install chromium",
     "e2e": "playwright test",
     "campaign-doc": "node scripts/campaign-doc.js"
   },
