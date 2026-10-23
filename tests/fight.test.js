@@ -37,3 +37,10 @@ test('a fight is won when every foe in it is down; XP for the fallen', () => {
   assert.equal(fightWon(['h'], by), false, 'no foes, no victory');
   assert.equal(fightXp(order, by, { zombie:{ cr:'1/4' } }), 100);
 });
+
+test('initiative from real dice: a hero\'s d20 rolled at the table is used as it is', () => {
+  const list = [tok('h', 'pc', 0, 0, { init:3 }), tok('m', 'monster', 0, 0, { init:0, bid:'x' })];
+  const o = rollOrder(list, { d20:() => 10, fixed:{ h:2 } });
+  assert.deepEqual(o.map(x => [x.id, x.die, x.roll]), [['m', 10, 10], ['h', 2, 5]]);
+  assert.equal(rollOrder(list, { d20:() => 10, fixed:{ h:25 } }).find(x => x.id === 'h').die, 10, 'nonsense is ignored');
+});

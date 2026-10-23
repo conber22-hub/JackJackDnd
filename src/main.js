@@ -27,6 +27,7 @@ import { initCardOnly } from './ui/cards.js';
 import { runLocalScreen, listenForScreens } from './net/screen.js';
 import { joinTable, readInvite, net, setScreenNow } from './net/table.js';
 import { nightNow } from './game/night.js';
+import { onAskChange } from './game/asks.js';
 import './ui/input.js';
 import * as api from './debug.js';
 
@@ -125,5 +126,6 @@ if (scr !== null){
 } else showStart();
 initCardOnly();   // a player's phone at an in-person game: no 3D (ui/cards.js)
 setScreenNow(nightNow); listenForScreens();
+onAskChange(() => { if (ui.tab === 'night') renderPanel(); });
 frame();
 window.DreadDelve = api;   // handy for debugging in the console: DreadDelve.state, DreadDelve.shiftFloor(0), …

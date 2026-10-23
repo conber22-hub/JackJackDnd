@@ -16,6 +16,20 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.7 — game night, part two
+
+- **🎲 Ask the table for a roll** (`src/engine/checks.js`, `src/game/asks.js`).
+  - The DM picks any save, skill or ability check, a DC (shown or secret), advantage or disadvantage, and who rolls.
+  - Seated players get a prompt on their phone (twenty buttons for their real d20, or "roll for me"). For everyone else the DM types the die or lets the app roll.
+  - A bar at the top of the DM's screen shows who has rolled. **Reveal** rolls the rest and shows everyone's result: a card for the table, and on the TV a staggered reveal with faces, totals, ✓/✗ and the group verdict (half or more succeed).
+  - Hero tokens now carry their skill bonuses and ability modifiers (`heroToken` → `skills`, `mods`; older saves are filled in by `deserialize()`).
+- **Real-dice initiative**: with real dice on, the fight picker has a d20 box for each hero (`rollOrder`'s `fixed`).
+- **The dice moment**: every attack card carries its d20, and the TV tumbles a die across the screen that lands on it (gold on a 20, blood on a 1), then steps aside for the card.
+- **Turns**: phones buzz on their hero's turn and tap when they're next ("up next" on the TV's ribbon too).
+- **🤫 Pass a note**: one player's phone buzzes with something only they see, optionally in Strahd's voice. The TV can show that a note changed hands, not what it says. Players keep their notes in the Hero tab.
+- **📜 Previously on…**: the story so far from the public log (fights won, places reached, finds, what fell), dropped into the read-aloud box to trim and show.
+- **A face for everyone**: introducing a creature without art or a sheet portrait uses its forged figure's head and shoulders. If it has no forged figure, it uses a portrait of its mini (`studio.portraitOfObject`).
+
 ## v1.6 — game night: playing in person
 
 - **The table screen** (`src/ui/screen.js`, `src/net/screen.js`): the view for the TV.
@@ -338,7 +352,8 @@ src/engine/             pure logic: no DOM, no Three.js, unit-tested
   dressing.js           furnishing generated rooms (kits in src/data/dressing.js, read-aloud in src/data/descriptions.js); locks, stashes, shelves over secret doors
   objects.js            furniture rules: beside, push / topple targets, damage, what a hero can do with a piece
   maps.js               the map library: who travels, packing a map for the shelf, where the party arrives
-  fight.js              who's in a fight, initiative (grouped, surprise), victory and XP
+  fight.js              who's in a fight, initiative (grouped, surprise, real dice), victory and XP
+  checks.js             checks & saves at the table: bonuses from a sheet, a roll against a DC, group checks
   settlement.js         the Valley's places: villages, towns, Krezk, Berez, the camp, the vineyard, the lake, the hill, the tower
 src/game/               rules that touch the scene and UI
   combat.js             initiative, attacks, damage, death hooks, the fx language, round-end Gaze effects
@@ -354,6 +369,7 @@ src/game/               rules that touch the scene and UI
   overworld.js          travelling: set out, the road's events, arrive, enter a place
   actions.js            select, move (doors / traps), stairs, falling, doors, search, disarm, floors, dread
   objects.js            open / pick / force / push / topple / smash / swing furniture, stashes, the DM's prop edits
+  asks.js               ask the table for a roll: the DM's bar, the phones' prompt, the reveal; notes passed to one player
   night.js              game night: driving the table screen, read-alouds, introductions, handouts, timer, real dice (the d20 prompt)
   maps.js               switching maps (shelve, restore, build), setting up without the party, the players' veil, moving the party
   build.js              Build tools, templates, populate, add/remove floors, import

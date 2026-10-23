@@ -28,16 +28,23 @@ const face = (t, big) => {
 };
 const hp = t => `<i class="sc-hp"><b style="width:${Math.round(100 * clamp(t.hp / (t.maxHp || 1), 0, 1))}%"></b></i>`;
 
+// Who goes after the one acting now (skipping the dead and the gone). → an index into the order, or -1
+export function upNext(){
+  const c = state.combat, n = c.order.length;
+  for (let k = 1; k < n; k++){ const i = (c.idx + k) % n, t = tokById(c.order[i]); if (t && !t.flags?.gone && (!t.dead || t.flags?.rising)) return i; }
+  return -1;
+}
 // The top (whose turn, in order) and the bottom (the party): redrawn with every state.
 export function renderScreen(){
   if (!ui.screen || !state) return;
   const c = state.combat, f = state.floors[ui.floor], D = dreadLevel();
   $('#scTitle').innerHTML = `${esc(f?.name || '')}${state.weather ? ` <span>· ${esc(state.weather)}</span>` : ''}<span class="sc-gaze" title="Strahd's Gaze">👁 ${state.dread} <i>${esc(D.n)}</i></span>`;
   if (c.active){
+    const nextIdx = upNext();
     $('#scRibbon').innerHTML = `<span class="sc-round">Round ${c.round}</span>` + c.order.map((id, i) => {
       const t = tokById(id); if (!t || t.flags?.gone) return '';
       const hidden = t.kind === 'monster' && !visible(t);
-      return `<span class="sc-ini ${i === c.idx ? 'cur' : ''} ${t.dead ? 'dead' : ''}">${hidden ? '<span class="sc-face" style="background:#333">?</span>' : face(t)}<span class="nm">${hidden ? 'Something' : esc(t.name)}</span></span>`;
+      return `<span class="sc-ini ${i === c.idx ? 'cur' : ''} ${i === nextIdx ? 'next' : ''} ${t.dead ? 'dead' : ''}">${hidden ? '<span class="sc-face" style="background:#333">?</span>' : face(t)}<span class="nm">${hidden ? 'Something' : esc(t.name)}</span></span>`;
     }).join('');
   } else $('#scRibbon').innerHTML = '';
   const party = state.tokens.filter(t => t.kind !== 'monster' && !t.flags?.gone);
@@ -79,6 +86,19 @@ function tick(){
   el.querySelector('b').textContent = left > 0 ? Math.ceil(left) : '⌛';
 }
 
+/* The dice moment: an attack's d20 tumbles across the TV and lands — gold on a 20, blood on a 1 — then the card.
+   c: the card ({ die:{ n, crit, hit } }); show: shows the card. */
+export function screenDie(c, show){
+  const el = $('#scDie'), n = c.die.n; if (!el || !n){ show(); return; }
+  el.className = 'sc-die spin'; el.querySelector('b').textContent = '';
+  const flick = setInterval(() => { el.querySelector('b').textContent = 1 + Math.floor(Math.random() * 20); }, 70);
+  setTimeout(() => {
+    clearInterval(flick); el.querySelector('b').textContent = n;
+    el.className = `sc-die land ${n === 20 || c.die.crit ? 'n20' : n === 1 ? 'n1' : c.die.hit ? 'hit' : 'miss'}`;
+    setTimeout(() => { el.classList.add('aside'); show(); }, 650); setTimeout(() => { el.className = 'sc-die hidden'; }, 4200);   // it steps aside for the card
+  }, 950);
+}
+
 // What the DM sends from the Night tab. → true if it was one of these
 export function screenMsg(m){
   const over = $('#scOver');
@@ -101,6 +121,27 @@ export function screenMsg(m){
       afterScreenState(); return true;
     case 'scFollow': S.follow = !!m.on; if (S.follow) frameAction(true); afterScreenState(); return true;
     case 'timer': S.timer = +m.secs || 0; S.turnAt = performance.now(); return true;
+    // ask the table (game/asks.js): who's still rolling, then everyone's result at once
+    case 'askState': {
+      const el = $('#scAsk'); el.classList.remove('hidden');
+      el.innerHTML = `<b>🎲 ${esc(m.label)}</b>${m.dc != null ? ` <span>DC ${m.dc}</span>` : ''}<div>${m.who.map(w => `<span class="${w.done ? 'done' : ''}">${esc(w.name)}${w.done ? ' ✓' : ' …'}</span>`).join('')}</div>`;
+      return true;
+    }
+    case 'askClear': $('#scAsk').classList.add('hidden'); return true;
+    case 'notePassed': {   // a note changes hands: the table sees that, not what it says
+      const el = $('#scAsk'); el.classList.remove('hidden');
+      el.innerHTML = m.strahd ? `<b style="color:#e46a6a">👁 Someone hears a voice</b><div><span>${esc(m.name)} looks up, very still.</span></div>` : `<b>✉ A note passes to ${esc(m.name)}</b><div><span>for their eyes only</span></div>`;
+      clearTimeout(S.noteT); S.noteT = setTimeout(() => el.classList.add('hidden'), 6000);
+      return true;
+    }
+    case 'askReveal': {
+      $('#scAsk').classList.add('hidden');
+      const rows = m.rows.map((r, i) => { const t = tokById(r.id) || { name:r.name };
+        return `<div class="sc-roll ${r.ok === true ? 'ok' : r.ok === false ? 'no' : ''} ${r.d20 === 20 ? 'n20' : r.d20 === 1 ? 'n1' : ''}" style="animation-delay:${.35 + i * .45}s">${face(t, true)}<b>${r.total}</b><span>🎲 ${r.d20} ${r.bonus >= 0 ? '+' : '−'} ${Math.abs(r.bonus)}</span><i>${esc(r.name)}${r.ok === true ? ' ✓' : r.ok === false ? ' ✗' : ''}</i></div>`; }).join('');
+      show(`<div class="sc-reveal"><h2>${esc(m.label)}${m.dc != null ? ` <span>DC ${m.dc}</span>` : ''}</h2><div class="sc-rolls">${rows}</div>${m.group == null ? '' : `<h3 style="animation-delay:${.6 + m.rows.length * .45}s">${m.group ? 'They make it — together.' : 'Not enough of them.'}</h3>`}</div>`);
+      clearTimeout(S.revealT); S.revealT = setTimeout(() => over.classList.add('hidden'), 14000);
+      return true;
+    }
     case 'look':
       if (!state) return true;
       S.holdUntil = performance.now() + 25000;

@@ -239,7 +239,7 @@ export function heroToken(h){
   const st = heroStats(h);
   return { kind:'pc', name:h.name || 'Hero', color:h.color || st.C.color, ac:st.ac, maxHp:st.hp, speed:st.spd, init:st.init,
     saveMod:Math.max(...Object.values(st.saves)), saves:Object.fromEntries(Object.entries(st.saves).map(([a, v]) => [lower(a), v])),
-    check:st.check, passive:st.passive, attacks:heroAttacks(h, st), casts:castables(h, st), charId:h.id,
+    check:st.check, passive:st.passive, skills:{ ...st.skills }, mods:Object.fromEntries(ABILITIES.map(a => [lower(a), st.M(a)])), attacks:heroAttacks(h, st), casts:castables(h, st), charId:h.id,
     cls:`${h.cls} ${st.L}${st.sub ? ` · ${st.sub}` : ''}`, spellDc:st.dc, resources:heroResources(h, st), ...(h.cls === 'Barbarian' ? { rageDmg:st.L >= 9 ? 3 : 2 } : {}),
     look:heroLook(h), standee:h.miniStyle === 'picture' };
 }

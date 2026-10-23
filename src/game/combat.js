@@ -49,12 +49,12 @@ export function addToInit(t){
 }
 /* Start a fight. ids: who's in it (default: the party on this floor and the creatures that are part of it —
    engine/fight.js); group: identical creatures share one roll; surprise: 'party' or 'foes' roll at disadvantage. */
-export function rollInitiative({ ids = null, group = true, surprise = 'none' } = {}){
+export function rollInitiative({ ids = null, group = true, surprise = 'none', fixed = {} } = {}){
   const L = ui.floor, f = state.floors[L];
   const list = ids ? ids.map(tokById).filter(t => t && t.floor === L && !t.dead && !t.flags.gone)
     : fightCandidates(state.tokens, L, f.W, seenNow[L]).filter(c => c.in).map(c => c.t);
   if (!list.length){ toast('No one on this floor.'); return; }
-  const order = rollOrder(list, { group, surprise, d20:() => d(20) });
+  const order = rollOrder(list, { group, surprise, fixed, d20:() => d(20) });
   for (const o of order){ const t = tokById(o.id); t.initRoll = o.roll; freshTurn(t); delete t.legend; }   // a new fight: legendary actions full
   state.combat = { active:true, order:order.map(o => o.id), idx:0, round:1, floor:L, group, surprise };
   log(`⚔ Initiative on ${f.name}: ${list.map(t => `${t.name} ${t.initRoll}`).join(', ')}`, true);
@@ -201,10 +201,11 @@ export function doAttack(aId, tId, i, mode = 'normal', { d20 = null } = {}){
     const tot = r + bonus, crit = r === 20 || (r !== 1 && hasCond(tg, 'paralyzed') && cheb(a.x, a.y, tg.x, tg.y) <= 1), hit = crit || (r !== 1 && tot >= ac);
     let dmg = hit ? rollDice(atk.d, crit).total + rage : 0;
     if (halved) dmg = Math.floor(dmg / 2);
-    rolls.push({ hit, crit, dmg });
+    rolls.push({ hit, crit, dmg, r });
     lines.push(`${atk.rays > 1 ? `#${k + 1} · ` : ''}${real ? '🎲 at the table ' : `d20 ${useBoth ? `(${r1}, ${r2} → ${adv ? 'adv' : 'dis'}) ` : ''}`}<b>${r}</b> ${signed(bonus)} = <b>${tot}</b> vs AC ${ac}${cov.ac ? ` <span class="muted">(${cov.cover === 'half' ? 'half' : '¾'} cover)</span>` : ''} — <b>${crit ? 'CRITICAL' : hit ? 'HIT' : r === 1 ? 'FUMBLE' : 'MISS'}</b>${atk.rays > 1 && hit ? ` → ${dmg}` : ''}`);
   }
   const hits = rolls.filter(x => x.hit), crit = rolls.some(x => x.crit), total = hits.reduce((n, x) => n + x.dmg, 0);
+  const die = { n:rolls[0]?.r, crit:rolls[0]?.crit, hit:rolls[0]?.hit };   // the TV spins a d20 to it (ui/screen.js)
   const flair = (atk.f || '{A} strikes at {T}.').replace(/\{A\}/g, a.name).replace(/\{T\}/g, tg.name);
   if (why.length) lines.push(`<span class="muted">${esc(why.join(' · '))}</span>`);
   if (slot) lines.push(`<span class="muted">${esc(slot)}</span>`);
@@ -219,7 +220,7 @@ export function doAttack(aId, tId, i, mode = 'normal', { d20 = null } = {}){
   if (hits.length && atk.latch && !tg.dead && tg.kind !== 'monster'){ tg.flags.latchedBy = a.id; lines.push(`<span class="fam-seep">${esc(a.name)} is latched on.</span>`); }
   sfx(crit ? 'crit' : hits.length ? 'hit' : 'miss');
   animate(a.id, 'attack', tg.id); if (hits.length) setTimeout(() => animate(tg.id, 'hit', a.id), 330);
-  showCard({ kind:crit ? 'crit' : hits.length ? '' : 'miss', title:`${a.name} → ${tg.name}`, sub:atk.n, flair, lines, big:hits.length ? `${total} ${atk.t}` : '' });
+  showCard({ kind:crit ? 'crit' : hits.length ? '' : 'miss', title:`${a.name} → ${tg.name}`, sub:atk.n, flair, lines, big:hits.length ? `${total} ${atk.t}` : '', die });
   log(`${a.name} ${atk.n} → ${tg.name}: ${hits.length ? `${total} ${atk.t}${crit ? ' (crit)' : ''}` : 'miss'}`);
   for (const x of hits) applyDamage(tg, x.dmg, atk.t, a, true);
   changed(); return true;

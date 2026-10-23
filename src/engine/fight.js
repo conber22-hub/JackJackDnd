@@ -28,13 +28,14 @@ export function fightCandidates(tokens, L, W, seen = new Set()){
 
 /* Roll initiative. list: the tokens in the fight. group: identical creatures (same bid) share a roll.
    surprise: 'party' or 'foes' — that side rolls at disadvantage. d20: the die (a function, for tests).
+   fixed: { id: d20 } dice already rolled at the table (real dice), used as they are.
    → [{ id, roll, die }] best first; ties go to the better bonus, then the heroes. */
-export function rollOrder(list, { group = true, surprise = 'none', d20 } = {}){
+export function rollOrder(list, { group = true, surprise = 'none', d20, fixed = {} } = {}){
   const shared = new Map(), out = [];
   for (const t of list){
     const side = party(t) ? 'party' : 'foes', dis = surprise === side;
     const key = group && t.kind === 'monster' && t.bid ? t.bid : null;
-    let die = key && shared.get(key);
+    let die = Number.isInteger(fixed[t.id]) && fixed[t.id] >= 1 && fixed[t.id] <= 20 ? fixed[t.id] : key && shared.get(key);   // fixed: a die rolled at the table
     if (die === undefined || die === null){ const a = d20(), b = dis ? d20() : a; die = Math.min(a, b); if (key) shared.set(key, die); }
     out.push({ id:t.id, die, roll:die + (t.init || 0), init:t.init || 0, foe:!party(t), bid:t.bid || '' });
   }

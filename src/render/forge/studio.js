@@ -67,6 +67,22 @@ export function portrait({ size = 384, yaw = .45, t = 1.2 } = {}){
   r.scene.background = null;
   return r.renderer.domElement.toDataURL('image/jpeg', .88);
 }
+/* A portrait of any figure (a creature's procedural mini, a model): framed on its upper half by its bounds,
+   three-quarter view, candlelit. The object is lent: it's taken off the stage again afterwards. → a JPEG */
+export function portraitOfObject(obj, { size = 512, yaw = .55 } = {}){
+  const r = stage(); clear(); r.key = '';
+  const holder = new THREE.Group(); holder.add(obj); r.scene.add(holder);
+  holder.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(obj), H = Math.max(.3, box.max.y - box.min.y), cy = box.max.y - H * .32;
+  const d = H * 1.25 + .5;
+  r.renderer.setSize(size, size, false); r.w = r.h = size;
+  r.camera.fov = 30; r.camera.aspect = 1; r.camera.updateProjectionMatrix();
+  r.camera.position.set(Math.sin(yaw) * d, cy + H * .08, Math.cos(yaw) * d); r.camera.lookAt(0, cy, 0);
+  r.scene.background = new THREE.Color('#17121a');
+  r.renderer.render(r.scene, r.camera);
+  r.scene.background = null; r.scene.remove(holder); holder.remove(obj);
+  return r.renderer.domElement.toDataURL('image/jpeg', .88);
+}
 export function act(i, kind){ const g = stage().figs[i]; if (g) playAction(g.userData.fig.userData.rig, kind); }
 export const studioCanvas = () => stage().renderer.domElement;
 export const studio = () => stage();

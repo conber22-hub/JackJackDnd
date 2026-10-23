@@ -20,6 +20,7 @@ import { selectedProp, hiddenDoor, actorFor, objectsBeside } from '../game/objec
 import { objectActs, objInfo, objAC, objHp, objMaxHp } from '../engine/objects.js';
 import { PROPS } from '../data/props.js';
 import { fightCandidates } from '../engine/fight.js';
+import { renderAskBar } from '../game/asks.js';
 import { sfx } from '../audio/sound.js';
 
 export function toast(msg){ const el = document.createElement('div'); el.className = 'toast'; el.textContent = msg; $('#toasts').appendChild(el); setTimeout(() => el.remove(), 3800); while ($('#toasts').children.length > 5) $('#toasts').firstChild.remove(); }
@@ -256,16 +257,18 @@ export function openFightSetup(){
 export function renderFightSetup(){
   const F = ui.fight; if (!F || !state) return;
   const f = state.floors[F.L], cands = fightCandidates(state.tokens, F.L, f.W, seenNow[F.L]);
+  const real = !!state.campaign?.realDice;
   const row = c => { const t = c.t, col = t.kind === 'monster' ? '#c0303a' : t.color, on = F.ids.has(t.id);
-    return `<label class="fpick ${on ? '' : 'out'}"><input type="checkbox" data-edit="fightPick" data-id="${t.id}" ${on ? 'checked' : ''}><span class="dot" style="color:${col};background:${col}"></span><span class="nm">${esc(t.name)}</span><span class="why">${esc(c.why)}</span></label>`; };
+    const die = real && t.kind !== 'monster' ? `<input class="txt num" type="number" min="1" max="20" placeholder="d20" title="The d20 they rolled for initiative (blank: the app rolls)" data-edit="fightD20" data-id="${t.id}" value="${F.d20?.[t.id] ?? ''}" onclick="event.stopPropagation()">` : '';
+    return `<label class="fpick ${on ? '' : 'out'}"><input type="checkbox" data-edit="fightPick" data-id="${t.id}" ${on ? 'checked' : ''}><span class="dot" style="color:${col};background:${col}"></span><span class="nm">${esc(t.name)}</span><span class="why">${esc(c.why)}</span>${die}</label>`; };
   const party = cands.filter(c => c.t.kind !== 'monster'), foes = cands.filter(c => c.t.kind === 'monster');
   const n = cands.filter(c => F.ids.has(c.t.id)).length, sur = (k, l) => `<button class="btn small ${F.surprise === k ? 'on' : ''}" data-act="fightSurprise" data-k="${k}">${l}</button>`;
   $('#fightBox').innerHTML = `<h3>⚔ Start a fight</h3><div class="muted">On <b>${esc(f.name)}</b>. Ticked creatures roll initiative; the rest of the floor carries on (add them later with + Initiative on their card).</div>
-    <h4>The party</h4>${party.map(row).join('') || '<div class="muted">No heroes on this floor.</div>'}
+    <h4>The party${real ? ' <span class="muted" style="font-weight:400">· type the d20 each rolled (blank: the app rolls)</span>' : ''}</h4>${party.map(row).join('') || '<div class="muted">No heroes on this floor.</div>'}
     <h4>Foes <span class="muted" style="font-weight:400">· <a class="lnk" data-act="fightAll" data-k="in">all</a> · <a class="lnk" data-act="fightAll" data-k="near">just the close ones</a></span></h4>${foes.map(row).join('') || '<div class="muted">No creatures on this floor.</div>'}
     <label class="fpick"><input type="checkbox" data-edit="fightGroup" ${F.group ? 'checked' : ''}><span>Identical creatures share one roll (they act together)</span></label>
     <h4>Surprise</h4><div class="row">${sur('none', 'Nobody')}${sur('party', 'The party is surprised')}${sur('foes', 'Their foes are surprised')}</div>
     <div class="muted">Surprised creatures roll initiative at disadvantage.</div>
     <div class="row" style="margin-top:10px"><button class="btn primary" data-act="fightGo" ${n ? '' : 'disabled'}>⚔ Roll initiative (${n})</button><button class="btn" data-act="fightCancel">Cancel</button></div>`;
 }
-export function renderAll(){ document.body.classList.toggle('player', ui.role === 'player' && !ui.screen); renderTop(); renderTabs(); renderPanel(); renderInit(); renderSel(); renderDock(); renderRequests(); renderPrompts(); renderOA(); }
+export function renderAll(){ document.body.classList.toggle('player', ui.role === 'player' && !ui.screen); renderTop(); renderTabs(); renderPanel(); renderInit(); renderSel(); renderDock(); renderRequests(); renderAskBar(); renderPrompts(); renderOA(); }

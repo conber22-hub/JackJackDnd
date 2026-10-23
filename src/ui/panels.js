@@ -30,6 +30,8 @@ import { sessionKey } from '../game/campaign.js';
 import { libraryList, KIND_LABEL } from '../engine/maps.js';
 import { nightState, screenCount, screenLink, partyRoom, introducible, realDice } from '../game/night.js';
 import { cardHTML } from './cards.js';
+import { currentAsk } from '../game/asks.js';
+import { CHECKS } from '../engine/checks.js';
 
 const art = (key, label) => {
   const a = state.art[key];
@@ -311,6 +313,24 @@ function tableTab(){
 
 /* GAME NIGHT — playing round one table (game/night.js): the TV, what it shows, read-alouds, faces, handouts,
    the turn timer, real dice, and the players' phones as hero cards. */
+// Ask the table for a roll (game/asks.js): the form, then who has rolled (type or roll for anyone without a phone).
+function askSection(){
+  const F = ui.askForm ||= { check:'save:Dex', dc:13, secret:false, mode:'normal', who:null };
+  const heroes = state.tokens.filter(t => t.kind !== 'monster' && t.floor === ui.floor && !t.dead && !t.flags?.gone);
+  const who = F.who || new Set(heroes.filter(t => t.kind === 'pc').map(t => t.id)), A = currentAsk();
+  const group = (kind, label) => `<optgroup label="${label}">${CHECKS.filter(c => c.kind === kind).map(c => opt(c.id, c.short, c.id === F.check)).join('')}</optgroup>`;
+  let h = `<h4>🎲 Ask the table for a roll</h4>
+    <div class="row"><select class="txt" style="flex:1" data-edit="askCheck">${group('save', 'Saving throws')}${group('skill', 'Skills')}${group('ability', 'Ability checks')}</select>
+      <label class="muted">DC <input class="txt num" type="number" min="1" max="40" value="${F.dc ?? ''}" data-edit="askDc" placeholder="—"></label></div>
+    <div class="row"><label class="muted"><input type="checkbox" data-edit="askSecret" ${F.secret ? 'checked' : ''}> secret DC</label>
+      ${['normal', 'adv', 'dis'].map(m => `<button class="btn small ${F.mode === m ? 'on' : ''}" data-act="askMode" data-k="${m}">${m === 'adv' ? '▲ Adv' : m === 'dis' ? '▼ Dis' : 'Normal'}</button>`).join('')}</div>
+    <div class="row">${heroes.map(t => `<span class="chip ${who.has(t.id) ? 'on' : ''}" data-act="askWho" data-id="${t.id}">${esc(t.name)}${Object.values(state.seats || {}).includes(t.id) ? ' 📱' : ''}</span>`).join('') || '<span class="muted">No heroes on this floor.</span>'}</div>
+    <div class="row"><button class="btn small primary" data-act="askGo">🎲 Ask</button><span class="muted">📱 = it comes up on their phone; the rest, type in or roll below</span></div>`;
+  if (A && !A.revealed) h += `<div class="card sel">${A.who.map(id => { const t = tokById(id), r = A.res[id];
+      return `<div class="row"><span style="flex:1">${esc(t?.name || '?')}</span>${r ? `<span class="chip on">🎲 ${r.d20} → ${r.total}</span>` : `<input class="txt num" type="number" min="1" max="20" id="askIn-${id}" placeholder="d20"><button class="btn small" data-act="askEnter" data-id="${id}">✓</button><button class="btn small" data-act="askRoll" data-id="${id}" title="The app rolls for them">🎲</button>`}</div>`; }).join('')}
+      <div class="row"><button class="btn small primary" data-act="askReveal">Reveal</button><button class="btn small" data-act="askCancel">Cancel</button></div></div>`;
+  return h;
+}
 function nightTab(){
   const N = nightState(), n = screenCount(), room = partyRoom(), sess = SESSIONS.find(x => x.n === state.campaign.session);
   const seg = (act, k, on, label, title = '') => `<button class="btn small ${on ? 'on' : ''}" data-act="${act}" data-k="${k}" title="${esc(title)}">${label}</button>`;
@@ -325,11 +345,21 @@ function nightTab(){
     <textarea class="txt" id="ntText" style="min-height:90px" placeholder="What they see, hear and smell… it fades in on the TV, big, by candlelight.">${esc(ui.ntText || '')}</textarea>
     <div class="row"><button class="btn small primary" data-act="ntNarrate">📜 Show on the screen</button><button class="btn small" data-act="ntClear">✕ Clear the screen</button></div>
     <div class="row">${room?.read ? `<button class="btn small" data-act="ntQuick" data-k="room" title="${esc(room.read)}">The room they're in: ${esc(room.name)}</button>` : ''}${sess?.open ? `<button class="btn small" data-act="ntQuick" data-k="open">Session ${sess.n}'s opening</button>` : ''}<button class="btn small" data-act="ntQuick" data-k="gaze">Strahd's Gaze</button></div>
+    ${askSection()}
     <h4>🎭 Introduce someone</h4>
     <input class="txt" id="ntLine" placeholder="Their first words, or how they come in (optional)" value="${esc(ui.ntLine || '')}">`;
   const who = introducible();
-  h += who.length ? who.slice(0, 14).map(t => `<div class="row"><span style="flex:1">${t.kind === 'npc' ? '🧑' : '👹'} ${esc(t.name)}${t.look || state.art?.[t.id] ? '' : ' <span class="muted">(no face — just the name)</span>'}</span><button class="btn small" data-act="ntIntro" data-id="${t.id}">🎭 Introduce</button></div>`).join('')
+  h += who.length ? who.slice(0, 14).map(t => `<div class="row"><span style="flex:1">${t.kind === 'npc' ? '🧑' : '👹'} ${esc(t.name)}</span><button class="btn small" data-act="ntIntro" data-id="${t.id}">🎭 Introduce</button></div>`).join('')
     : `<div class="muted">Nobody else on this floor. Roll an NPC in the Tokens tab: their forged face is what the table sees.</div>`;
+  const phones = state.tokens.filter(t => t.kind === 'pc' && Object.values(state.seats || {}).includes(t.id));
+  h += `<h4>🤫 Pass a note</h4>
+    ${phones.length ? `<div class="row"><select class="txt" style="flex:1" id="ntNoteTo">${phones.map(t => opt(t.id, t.name, ui.ntNoteTo === t.id)).join('')}</select></div>
+    <textarea class="txt" id="ntNote" style="min-height:60px" placeholder="For their eyes only: what their character alone sees, hears, or remembers…">${esc(ui.ntNote || '')}</textarea>
+    <div class="row"><label class="muted"><input type="checkbox" id="ntNoteStrahd" ${ui.ntNoteStrahd ? 'checked' : ''}> in Strahd's voice</label><label class="muted"><input type="checkbox" id="ntNoteTell" ${ui.ntNoteTell ? 'checked' : ''}> the TV shows a note was passed</label></div>
+    <div class="row"><button class="btn small primary" data-act="ntNoteSend">🤫 Pass it</button></div>`
+    : `<div class="muted">Once players are on their phones (Table tab), you can slip one of them a note: it buzzes their phone, only they see it.</div>`}
+    <h4>📜 Previously on…</h4>
+    <div class="row"><button class="btn small" data-act="ntRecap" title="The story so far, from the log: put it in the read-aloud box above to trim, then show it">📜 Fill the read-aloud with the story so far</button></div>`;
   h += `<h4>🖼 Handouts</h4><div class="row"><label class="btn small">⬆ Show a picture<input type="file" accept="image/*" data-edit="ntHandout" hidden></label></div>
     ${(ui.handouts || []).map((x, i) => `<div class="row"><span style="flex:1">${esc(x.title)}</span><button class="btn small" data-act="ntHand" data-k="${i}">Show again</button></div>`).join('')}
     <div class="muted">A letter, a map, a portrait: it fills the TV until you clear it. (Kept for this evening only.)</div>
@@ -362,6 +392,7 @@ function heroTab(){
       <div class="row">${ui.cardOnly ? '' : `<button class="btn small" data-act="sel" data-id="${me.id}">Select & show moves</button>`}<button class="btn small" data-act="search">🔍 Search</button>${st ? `<button class="btn small primary" data-act="stairs">${esc(exitLabel(state.floors[me.floor], st))}</button>` : ''}${turn ? `<button class="btn small primary" data-act="endMyTurn">End my turn</button>` : ''}</div></div>`;
     h += `<div class="row"><button class="btn small ${ui.cardOnly ? 'on' : ''}" data-act="cardOnly" title="At an in-person game, when the TV shows the map: no map on this phone, just your hero as a big card">📇 Card only${ui.cardOnly ? ': ON' : ' (we\'re at the table)'}</button></div>`;
     if (ui.cardOnly) h += cardHTML(me);
+    if (ui.notes?.length) h += `<details class="card"><summary>🤫 Notes for you (${ui.notes.length})</summary>${ui.notes.map(n => `<div class="look" ${n.strahd ? 'style="color:#f0b0b0"' : ''}>${esc(n.text)}</div>`).join('')}</details>`;
     if (sheet) h += sheetHTML(sheet) + `<div class="row"><button class="btn small" data-act="editHero" data-id="${sheet.id}">✎ Edit / level up</button></div>`;
     h += picker + newAtTable();
     if (!ui.cardOnly) h += `<div class="muted">${state.combat.active ? (turn ? '<b style="color:var(--candle)">It is your turn.</b> Tap a glowing tile to move.' : 'Combat — wait for your turn to move.') : 'Exploring — tap your hero, then a glowing tile.'}<br>Tap a door next to you to open it. Long-press or use ◎ to ping a spot for everyone.</div>`;

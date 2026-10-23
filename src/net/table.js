@@ -15,7 +15,8 @@ import { renderPanel } from '../ui/panels.js';
 import { serialize, deserialize, resetScene } from '../game/session.js';
 import { doMove, takeStairs, doPing, goFloor, select, animatePath, doorAction, search, disarmTrap } from '../game/actions.js';
 import { propAction } from '../game/objects.js';
-import { screenMsg, afterScreenState } from '../ui/screen.js';
+import { screenMsg, afterScreenState, screenDie, upNext } from '../ui/screen.js';
+import { answerAsk, askPrompt, askClosed, notePrompt } from '../game/asks.js';
 import { currentTurn, canAct } from '../game/rules.js';
 import { nextTurn } from '../game/combat.js';
 import { applyCharacter, charactersOf, ownsCharacter, sheetForPlayer, saveMyHero, myHero } from '../game/heroes.js';
@@ -267,6 +268,7 @@ function onHostMsg(c, m){
     receiveAct(ok, c.peer, seat.name, deny);
   }
   else if (m.t === 'search'){ if (me && canAct(me)) search(me); }
+  else if (m.t === 'askAns'){ if (mine(m.tok)) answerAsk(m.id, m.tok, Number.isInteger(m.d20) ? m.d20 : null, 'phone'); }   // their own hero only
   else if (m.t === 'prop'){
     // their own hero, beside it, on their turn; the act must be one the rules offer them there (engine/objects.js)
     const p = state.floors[m.floor]?.props?.find(q => q.id === m.id);
@@ -430,15 +432,20 @@ export function onClientMsg(m){
   else if (m.t === 'act' && state && ['attack', 'cast', 'hit'].includes(m.kind)) actOn(m.id, m.kind, m.target);
   else if (m.t === 'bye'){ net.status = 'closed'; clearTimeout(net.retryTimer); toast('The DM closed the table.'); renderNetStatus(); }
   else if (m.t === 'denied'){ toast(m.text); if (ui.myHeroId && !tokById(ui.myToken)) ui.myHeroId = null; const me = tokById(ui.myToken); if (me && ui.selected === me.id) showReach(me); renderPanel(); }
-  else if (m.t === 'card') showCard(m.c, false);
+  else if (m.t === 'card'){ if (ui.screen && m.c?.ask) return; if (ui.screen && m.c?.die?.n) screenDie(m.c, () => showCard(m.c, false)); else showCard(m.c, false); }
   else if (m.t === 'ping'){ spawnPing(m.floor, m.x, m.y, m.color); toast(`${m.who} pings the map`); }
   else if (m.t === 'whisper') showWhisper(m.text);
   else if (m.t === 'banner') banner(m.text);
+  else if (m.t === 'ask') askPrompt(m);
+  else if (m.t === 'note') notePrompt(m);
+  else if (m.t === 'askDone') askClosed(m);
   else if (m.t === 'prep'){ const v = $('#prepVeil'); if (v){ v.classList.toggle('hidden', !m.on); v.querySelector('.t').textContent = m.text || ''; } }
   else if (m.t === 'sfx') sfx(m.name, false);
   else if (m.t === 'model'){ if (m.buf) putModel(m.key, m.buf, m.name, false).catch(() => {}); else deleteModel(m.key); }
   else if (m.t === 'art'){ if (state){ state.art = m.art || {}; syncTokens(); } else pendingArt = m.art; }
 }
+// A phone at the table buzzes when it's your turn (and a tap when you're next).
+const buzz = p => { try { if (!ui.screen) navigator.vibrate?.(p); } catch {} };
 function applyRemoteState(s){
   const prev = state, ns = deserialize(s);
   ns.art = prev?.art || pendingArt || {};
@@ -455,7 +462,8 @@ function applyRemoteState(s){
   if (me && (me.floor !== ui.floor || myPrev !== ui.myToken || !sameDelve)){ goFloor(me.floor, false); focusTile(me.floor, me.x, me.y); if (!ui.selected) select(me.id); }
   if (ui.selected && !tokById(ui.selected)) ui.selected = null;
   const cur = currentTurn(), key = `${state.combat.round}:${state.combat.idx}`;
-  if (cur && cur.id === ui.myToken && key !== lastTurnSeen){ banner('Your turn'); select(me.id); }
+  if (cur && cur.id === ui.myToken && key !== lastTurnSeen){ banner('Your turn'); select(me.id); buzz([180, 90, 180]); sfx('turn', false); }
+  else if (me && key !== lastTurnSeen && state.combat.active && state.combat.order[upNext()] === me.id){ toast('You\'re up next — get ready.'); buzz([60]); }   // on deck
   else if (me && ui.selected === me.id && !tokenViews.get(me.id)?.anim) showReach(me);   // what's left of their move
   lastTurnSeen = key;
   renderAll();

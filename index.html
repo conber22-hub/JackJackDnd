@@ -188,7 +188,9 @@ body.cardonly.player #panel{left:0;right:0;top:78px;bottom:0;width:auto;height:a
 .cact{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:12px;min-height:58px;text-align:left}.cact b{font-size:16px}.cact span{font-size:12px;color:var(--dim)}
 .dpad{display:grid;grid-template-columns:repeat(3,64px);gap:6px;justify-content:center}.dpad .btn{height:56px;font-size:24px;justify-content:center}
 #pickBox{max-width:420px;width:100%}.pickrow{display:flex;justify-content:space-between;width:100%;margin:4px 0;padding:12px}
-#dieBox{max-width:420px;width:100%}.d20grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:12px 0}.d20grid .btn{font-size:20px;padding:12px 0;justify-content:center}
+#dieBox,#askBox{max-width:420px;width:100%}
+.note h3{font-family:"Cormorant Garamond",Georgia,serif;color:var(--candle);font-size:26px}.note p{font-family:"Cormorant Garamond",Georgia,serif;font-size:22px;line-height:1.45;font-style:italic;color:#efe1c8}
+.note.strahd h3{color:#e46a6a}.note.strahd p{color:#f0d6d6;text-shadow:0 0 14px #b3303a88}.d20grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:12px 0}.d20grid .btn{font-size:20px;padding:12px 0;justify-content:center}
 #initBar .ib{display:flex;gap:6px;padding:8px;border-top:1px solid var(--line)}
 #initBar .ib .btn{flex:1;padding:6px}
 
@@ -221,7 +223,7 @@ body.cardonly.player #panel{left:0;right:0;top:78px;bottom:0;width:auto;height:a
 #skyline.flash .sky-bolt{opacity:1}#skyline.flash .sky-glow{opacity:1}#skyline.flash .sky-sil{fill:#2a2630}
 #skyline .sky-bat{animation:skybat 9s linear infinite}#skyline .sky-bat.b{animation-duration:12s;animation-delay:-4s}#skyline .sky-bat.c{animation-duration:15s;animation-delay:-8s}
 @keyframes skybat{from{transform:rotate(0deg) translateX(26px) rotate(0deg)}to{transform:rotate(360deg) translateX(26px) rotate(-360deg)}}
-#reqPanel,#roomPrompts,#oaPanel{display:flex;flex-direction:column;gap:6px}
+#reqPanel,#roomPrompts,#oaPanel,#askBar{display:flex;flex-direction:column;gap:6px}
 #topPanels #oaPanel .req{border-color:#c0303a;box-shadow:0 0 0 1px #c0303a55,0 10px 30px #000a}
 #moveTip{position:fixed;z-index:30;pointer-events:none;background:#140d10ee;border:1px solid #6a4a2a;border-radius:10px;padding:4px 9px;font-size:13px;color:#f4e6cc;white-space:nowrap;opacity:0;transition:opacity .12s;box-shadow:0 6px 18px #000a}
 #moveTip.show{opacity:1}
@@ -229,7 +231,7 @@ body.cardonly.player #panel{left:0;right:0;top:78px;bottom:0;width:auto;height:a
 #moveTip .warn{color:#ff6a5a;font-size:12px;margin-top:2px}
 .acts .grp{display:inline-flex;gap:4px;align-items:center;padding:2px 6px;border:1px dashed #5a4a3a;border-radius:10px}
 .req{pointer-events:auto}
-#reqPanel .req,#roomPrompts .req,#oaPanel .req{background:linear-gradient(#22171a,#160f13);border:1px solid #8b3a2a;border-radius:14px;padding:8px 10px;box-shadow:0 10px 30px #000a;animation:popin .2s}
+#reqPanel .req,#roomPrompts .req,#oaPanel .req,#askBar .req{background:linear-gradient(#22171a,#160f13);border:1px solid #8b3a2a;border-radius:14px;padding:8px 10px;box-shadow:0 10px 30px #000a;animation:popin .2s}
 #topPanels .req .w{font-size:14px}
 #topPanels .req .b{display:flex;gap:6px;margin-top:6px}
 #topPanels .req .b .btn{flex:1;padding:5px}
@@ -253,6 +255,7 @@ body.screen #toasts{display:none}
 .sc-ini .nm{font-size:14px;color:#e7dcc8;max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sc-ini.cur{opacity:1;transform:scale(1.25)}.sc-ini.cur .sc-face{box-shadow:0 0 0 3px var(--candle),0 0 24px #e9a54a99}
 .sc-ini.dead{opacity:.3;filter:grayscale(1)}
+.sc-ini.next{opacity:.95}.sc-ini.next::after{content:'up next';font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--candle)}
 .sc-face{width:46px;height:46px;border-radius:50%;object-fit:cover;display:inline-flex;align-items:center;justify-content:center;font:600 20px/1 Georgia,serif;color:#140d10;border:2px solid #0008;background:#444}
 .sc-face.big{width:64px;height:64px;font-size:28px}
 #scParty{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;gap:18px;justify-content:center;padding:26px 18px 14px;background:linear-gradient(#0c0a1000,#0c0a10f0);pointer-events:none}
@@ -271,7 +274,7 @@ body.screen #toasts{display:none}
 @keyframes flick{0%,100%{transform:scale(1,1) rotate(-2deg)}40%{transform:scale(.92,1.08) rotate(2deg)}70%{transform:scale(1.05,.95)}}
 #scOver{position:fixed;inset:0;z-index:9;display:flex;align-items:center;justify-content:center;padding:6vh 8vw;background:radial-gradient(ellipse at center,rgba(12,9,16,.88),rgba(4,3,6,.97));opacity:0;transition:opacity 1.2s}
 #scOver.in{opacity:1}#scOver.hidden{display:none}
-.sc-narr{max-width:1100px;text-align:center}.sc-narr h2,.sc-intro h2,.sc-hand h2{font-family:"Cormorant Garamond",Georgia,serif;color:var(--candle);font-size:44px;margin:0 0 18px}
+.sc-narr{max-width:1100px;text-align:center}.sc-narr h2,.sc-intro h2,.sc-hand h2,.sc-reveal h2{font-family:"Cormorant Garamond",Georgia,serif;color:var(--candle);font-size:44px;margin:0 0 18px}
 .sc-narr p{font-family:"Cormorant Garamond",Georgia,serif;font-size:clamp(26px,3.2vw,46px);line-height:1.45;color:#efe1c8;font-style:italic;text-shadow:0 0 20px #000}
 .sc-narr .type{animation:reveal 4s ease-out both}@keyframes reveal{from{opacity:0;letter-spacing:.06em;filter:blur(3px)}to{opacity:1;letter-spacing:0;filter:none}}
 .sc-intro{display:flex;gap:5vw;align-items:center;max-width:1200px}.sc-intro img{width:min(38vw,460px);border-radius:18px;box-shadow:0 0 60px #000,0 0 0 2px #8b6a2a;animation:reveal 2.4s ease-out both}
@@ -280,6 +283,29 @@ body.screen #toasts{display:none}
 .sc-btns{position:fixed;top:12px;right:12px;z-index:10;display:flex;gap:6px;opacity:.25;transition:opacity .3s}.sc-btns:hover{opacity:1}
 body.screen .pop{transform:scale(1.35)}
 body.screen #turnBanner{font-size:52px;top:46%}
+#scAsk{position:fixed;left:50%;top:150px;transform:translateX(-50%);z-index:7;background:#140d10ee;border:1px solid #8b6a2a;border-radius:16px;padding:12px 22px;text-align:center;box-shadow:0 0 30px #000;font-size:22px;color:#efe1c8}
+#scAsk.hidden{display:none}#scAsk b{font-family:"Cormorant Garamond",Georgia,serif;font-size:30px;color:var(--candle)}#scAsk div{display:flex;gap:14px;justify-content:center;margin-top:6px;color:#9a8f86}#scAsk .done{color:#efe1c8}
+.sc-reveal{text-align:center}.sc-reveal h2 span{color:#bfb3a6;font-size:30px;margin-left:12px}
+.sc-reveal h3{font-family:"Cormorant Garamond",Georgia,serif;font-size:40px;color:var(--candle);opacity:0;animation:rollin .6s ease-out forwards}
+.sc-rolls{display:flex;gap:4vw;justify-content:center;flex-wrap:wrap;margin:24px 0}
+.sc-roll{display:flex;flex-direction:column;align-items:center;gap:6px;opacity:0;animation:rollin .7s cubic-bezier(.2,1.4,.4,1) forwards}
+.sc-roll b{font:600 72px/1 "Cormorant Garamond",Georgia,serif;color:#efe1c8}.sc-roll span{color:#bfb3a6;font-size:18px}.sc-roll i{font-style:normal;font-size:22px;color:#efe1c8}
+.sc-roll.ok b{color:#7fd6a0;text-shadow:0 0 24px #4fa37a99}.sc-roll.no b{color:#e46a6a;text-shadow:0 0 24px #b3303a99}
+.sc-roll.n20 .sc-face{box-shadow:0 0 0 3px #ffd66a,0 0 40px #ffd66a}.sc-roll.n1 .sc-face{box-shadow:0 0 0 3px #b3303a,0 0 40px #b3303a}
+@keyframes rollin{0%{opacity:0;transform:translateY(30px) scale(.6) rotate(-8deg)}100%{opacity:1;transform:none}}
+.sc-die{position:fixed;left:50%;top:44%;width:190px;height:190px;margin:-95px 0 0 -95px;z-index:21;transition:transform .5s ease-in-out;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.sc-die.hidden{display:none}
+.sc-die svg{position:absolute;inset:0;width:100%;height:100%;filter:drop-shadow(0 0 22px #000)}
+.sc-die polygon{fill:#2a1d16;stroke:#c9a246;stroke-width:2}.sc-die polygon.in{fill:#3a2818}.sc-die .ln{stroke:#c9a24688;stroke-width:1.2;fill:none}
+.sc-die b{position:relative;top:10px;font:700 54px/1 "Cormorant Garamond",Georgia,serif;color:#efe1c8;text-shadow:0 0 12px #000}
+.sc-die.spin{animation:dieroll .95s cubic-bezier(.25,.6,.3,1) both}
+@keyframes dieroll{0%{transform:translate(-60vw,30vh) rotate(-540deg) scale(.5)}70%{transform:translate(4vw,-3vh) rotate(-20deg) scale(1.08)}100%{transform:none}}
+.sc-die.land{animation:dieland .45s ease-out}
+.sc-die.aside{transform:translateX(min(-34vw,-420px)) scale(.7)}
+@keyframes dieland{0%{transform:scale(1.25)}100%{transform:scale(1)}}
+.sc-die.n20 polygon{fill:#4a3608;stroke:#ffd66a}.sc-die.n20 svg{filter:drop-shadow(0 0 40px #ffd66a)}.sc-die.n20 b{color:#ffe59a}
+.sc-die.n1 polygon{fill:#3a0c10;stroke:#e46a6a}.sc-die.n1 svg{filter:drop-shadow(0 0 40px #b3303a)}.sc-die.n1 b{color:#ff9a9a}
+.sc-die.hit b{color:#bff0cf}.sc-die.miss b{color:#bfb3a6}
 #prepVeil{position:fixed;inset:0;z-index:4;background:radial-gradient(ellipse at center,rgba(12,9,16,.82),rgba(5,4,8,.95));backdrop-filter:blur(4px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;pointer-events:auto;text-align:center;padding:24px}
 #prepVeil.hidden{display:none}
 #prepVeil .t{font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-size:32px;color:var(--candle);text-shadow:0 0 18px #000;animation:veil 3s ease-in-out infinite}
@@ -531,13 +557,15 @@ body.screen #turnBanner{font-size:52px;top:46%}
     <path class="sky-bat c" d="M104 30 l-2 -1 l1 1 l-1 .3 z M104 30 l2 -1 l-1 1 l1 .3 z" style="transform-origin:104px 30px"/></g>
   <g fill="#c8ccd8" opacity=".18"><ellipse cx="70" cy="118" rx="40" ry="7"/><ellipse cx="135" cy="122" rx="46" ry="8"/><ellipse cx="100" cy="128" rx="70" ry="6"/></g>
 </svg></div>
-<div id="topPanels"><div id="oaPanel"></div><div id="reqPanel"></div><div id="roomPrompts"></div></div>
+<div id="topPanels"><div id="oaPanel"></div><div id="askBar"></div><div id="reqPanel"></div><div id="roomPrompts"></div></div>
 <div id="moveTip"></div>
 <div id="cardLayer"></div>
 <div id="screenHud" class="hidden">
   <div class="sc-top"><div id="scTitle"></div><div id="scRibbon"></div></div>
   <div id="scParty"></div>
   <div id="scTimer" class="hidden"><b></b></div>
+  <div id="scAsk" class="hidden"></div>
+  <div id="scDie" class="sc-die hidden"><svg viewBox="0 0 100 100"><polygon points="50,4 93,28 93,72 50,96 7,72 7,28" /><polygon class="in" points="50,22 76,66 24,66" /><path class="ln" d="M50,4 L50,22 M93,28 L76,66 M7,28 L24,66 M93,72 L76,66 M7,72 L24,66 M50,96 L50,66 M50,22 L24,66 M50,22 L76,66" /></svg><b></b></div>
   <div id="scDark" class="hidden"><div class="flame"></div></div>
   <div id="scOver" class="hidden"></div>
   <div class="sc-btns"><button class="btn small" data-act="scFull" title="Full screen">⛶</button><button class="btn small" data-act="scSound" title="Let the screen play sound (browsers need one tap first)">🔊</button></div>
@@ -619,6 +647,7 @@ body.screen #turnBanner{font-size:52px;top:46%}
   </div>
 </div>
 
+<div class="modal hidden" id="askModal"><div class="box" id="askBox"></div></div>
 <div class="modal hidden" id="pickModal"><div class="box" id="pickBox"></div></div>
 <div class="modal hidden" id="dieModal"><div class="box" id="dieBox"></div></div>
 <div class="modal hidden" id="fightModal"><div class="box" id="fightBox"></div></div>
@@ -640,6 +669,7 @@ body.screen #turnBanner{font-size:52px;top:46%}
       <b>Starting a fight (DM)</b> — <b>⚔ Start a fight…</b> ticks the party and the creatures in sight, close by or alerted (the rest of the floor stays out), can let identical creatures share one roll, and sets who is surprised (disadvantage on initiative). In the fight: <b>🤖 Its turn</b> runs a monster's turn (hit, shoot, or close in and hit), <b>⏭</b> holds back the current creature, <b>✕</b> takes one out of the fight. When every foe is down, the win is called with its XP.<br>
       <b>Game night (in person)</b> — the DM's <b>Night</b> tab opens the <b>table screen</b>: a window to drag onto the TV. It shows what the party sees: whose turn it is across the top with the heroes' faces, the party along the bottom, and a camera that follows the action. From the Night tab the DM can:
       <ul><li>put read-aloud text, a face and a name, or a handout picture on the TV</li><li>turn the lights out</li><li>send the TV where the DM is looking</li><li>run a turn timer</li><li>turn on <b>real dice</b>, then type in the d20 the players rolled</li></ul>
+      <b>🎲 Ask the table for a roll</b> (any save or check, DC shown or secret): it pops up on the players' phones for their real d20 (or "roll for me"); you type or roll for anyone without one; then the TV reveals everyone's result at once, group check included. With real dice on, the fight picker takes the players' initiative rolls too, and the TV tumbles a d20 for every attack. <b>🤫 Pass a note</b> buzzes one player's phone with something only they see (optionally in Strahd's voice, and the TV can show that a note changed hands). <b>📜 Previously on…</b> fills the read-aloud with the story so far from the log, to trim and show. Phones buzz on your turn, and the TV marks who's <i>up next</i>.<br>
       Players can join on their phones and turn on <b>📇 Card only</b>: no map, just their hero, big buttons, a list of targets, and a pad to step one square (north is up, as on the TV).<br>
       <b>Doors & traps</b> — tap a door or a found trap for its card: open, pick, force, disarm. <i>Search</i> looks for hidden ones within 15 ft.<br>
       <b>Stairs</b> — stand on a stair rune and press <i>Descend</i> / <i>Ascend</i> on the token card.<br>

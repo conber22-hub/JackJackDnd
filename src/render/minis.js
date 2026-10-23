@@ -235,7 +235,7 @@ export const SHAPE_NAMES = Object.keys(SHAPES).filter(k => k !== 'pc' && k !== '
 export function artFor(t){ return state.art[t.id] || (t.bid && state.art[t.bid]) || null; }
 // Which figure a token gets: a dropped-in GLB model; a hero's own picture if they chose a standee; the forge for
 // heroes, allies and humanoid creatures (render/forge); a creature's art; else its old procedural shape.
-function forgeLook(t){ if (t.standee && artFor(t)) return null; if (t.kind === 'monster' && artFor(t)) return null; return lookFor(t, BEST[t.bid]); }
+export function forgeLook(t){ if (t.standee && artFor(t)) return null; if (t.kind === 'monster' && artFor(t)) return null; return lookFor(t, BEST[t.bid]); }
 function figureKey(t){ const mk = modelKeyFor(t), fl = !mk && forgeLook(t); return [t.kind, t.bid, t.color, t.dead, t.flags.rising, artFor(t) ? artFor(t).length : '', t.size, BEST[t.bid]?.shape, mk ? mk + modelState.version : '', shadowsOn(), fl ? hashSeed(JSON.stringify(fl)) : '', t.standee ? 1 : 0].join('|'); }
 
 const texCache = new Map();

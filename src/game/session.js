@@ -53,6 +53,8 @@ export function deserialize(s){
   st.meta.template ||= 'andral';
   st.tokens.forEach(t => { t.flags = t.flags || {}; t.size = t.size || 1; t.conds = t.conds || []; t.check ??= 4; t.passive ??= 12; });
   // heroes saved before slots and features: give them their resources (full) from the sheet
+  // saves from before checks and saves at the table: heroes get their skill bonuses and ability modifiers
+  for (const t of st.tokens) if (t.charId && !t.skills && st.characters[t.charId]){ const f = heroToken(st.characters[t.charId]); t.skills = f.skills; t.mods = f.mods; }
   for (const t of st.tokens) if (t.charId && !t.resources && st.characters[t.charId]){ const f = heroToken(st.characters[t.charId]); Object.assign(t, { resources:f.resources, casts:f.casts, attacks:f.attacks, ...(f.rageDmg ? { rageDmg:f.rageDmg } : {}) }); fillResources(t); }
   // saves from before ranges and areas (targeting): weapons get their range and reach, spells their range and shape
   for (const t of st.tokens) if (t.kind !== 'monster') addRanges(t);

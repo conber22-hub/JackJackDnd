@@ -2,11 +2,12 @@
    (ui/screen.js): opens it, says what it shows (the map following the action, lights out, a read-aloud, a face
    and a name, a handout, a turn timer), and points its camera. Also: real dice — players roll their own d20s
    and the app takes the number (combat.doAttack's d20 option, the request queue, the die prompt). */
-import { state, ui, tokById } from '../engine/state.js';
+import { state, ui, tokById, log } from '../engine/state.js';
 import { $, esc } from '../util/core.js';
 import { camera, controls } from '../render/scene.js';
-import { toScreens, screens } from '../net/table.js';
-import { setStage, portrait } from '../render/forge/studio.js';
+import { toScreens, screens, sendToSeat } from '../net/table.js';
+import { setStage, portrait, portraitOfObject } from '../render/forge/studio.js';
+import { buildFigure, forgeLook } from '../render/minis.js';
 import { toast } from '../ui/hud.js';
 import { changed } from './session.js';
 
@@ -32,12 +33,39 @@ export function setTimer(secs){ N.timer = secs; toScreens({ t:'timer', secs }); 
 // Send the DM's own camera to the screen (it holds there for a while, then goes back to following).
 export function sendLook(){ toScreens({ t:'look', floor:ui.floor, target:controls.target.toArray(), pos:camera.position.toArray() }); toast('The screen looks where you are looking.'); }
 
-// Introduce someone: their forged face (or their art), their name, and a line.
+// A face for anyone: their art, else their forged portrait, else a portrait of their mini as it stands on the map.
+export function faceOf(t){
+  let img = state.art?.[t.id] || state.art?.[t.bid] || null;
+  const fl = !img && (t.look || forgeLook(t));   // a forged figure: head and shoulders
+  if (fl){ try { setStage([fl]); img = portrait({ size:512 }); } catch { img = null; } }
+  if (!img){ try { const g = buildFigure({ ...t, dead:false }); g.children.slice(0, 2).forEach(o => g.remove(o)); img = portraitOfObject(g); } catch { img = null; } }   // without its base ring
+  return img;
+}
+// Introduce someone: their face, their name, and a line.
 export function introduce(id, line = ''){
   const t = tokById(id); if (!t) return;
-  let img = state.art?.[t.id] || state.art?.[t.bid] || null;
-  if (!img && t.look){ try { setStage([t.look]); img = portrait({ size:512 }); } catch { img = null; } }
-  over({ t:'intro', name:t.name, line:String(line || '').trim(), img });
+  over({ t:'intro', name:t.name, line:String(line || '').trim(), img:faceOf(t) });
+}
+
+/* A note for one player's eyes (passed across the table): it buzzes their phone and waits there to be read.
+   strahd: it's his voice, not the DM's. tell: the TV shows that a note was passed (not what it says). */
+export function passNote(id, text, { strahd = false, tell = false } = {}){
+  const t = tokById(id), msg = String(text || '').trim(); if (!t || !msg){ toast('Pick a hero and write the note.'); return; }
+  if (!Object.values(state.seats || {}).includes(id)){ toast(`${t.name} has no phone at this table — you'll have to whisper it.`); return; }
+  sendToSeat(id, { t:'note', text:msg.slice(0, 1200), strahd:!!strahd });
+  if (tell) toScreens({ t:'notePassed', name:t.name, strahd:!!strahd });
+  log(`🤫 A note to ${t.name}: ${msg}`, true);
+  toast(`Note passed to ${t.name}.`);
+}
+
+/* Previously on…: the evening's story so far, from the public log (finds, fights won, places reached, what fell),
+   for the DM to trim and put on the TV at the start of the next session. */
+const STORY = /finds|reaches|sets out|arrives|fight is won|is destroyed|is taken by|falls through|joins the party|enters the story|Strahd's Gaze \d|Whim d\d+ =|smashes|topples|swings the|secret door|make camp|disarms|unlocks|forces open|searches the|opens the|CRITICAL|holds back|gets back up|seeded/i;
+export function recapText(max = 12){
+  const lines = (state.log || []).filter(l => !l.dm && STORY.test(l.m)).map(l => l.m.replace(/^[^\p{L}\p{N}]+/u, '').trim());
+  const seen = new Set(), out = [];
+  for (const m of lines.reverse()){ if (seen.has(m)) continue; seen.add(m); out.unshift(m); if (out.length >= max) break; }
+  return out.join('\n');
 }
 // A picture for the table: scaled down to travel light. → a promise
 export function showHandout(file, title = ''){

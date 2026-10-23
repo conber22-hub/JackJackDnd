@@ -33,6 +33,8 @@ import { PROPS } from '../data/props.js';
 import { propAction, selectProp, selectedProp, actorFor, editProp } from '../game/objects.js';
 import { goToMap, returnToParty, forgetMap } from '../game/maps.js';
 import { setCardOnly, cardAct, cardStep } from './cards.js';
+import { askTable, answerAsk, revealAsk, cancelAsk, clearAsk, currentAsk } from '../game/asks.js';
+import { passNote, recapText } from '../game/night.js';
 import { openScreenWindow, setMode as nightMode, setFollow, sendLook, narrate, clearScreen, partyRoom, introduce, reshowHandout, setTimer, showHandout } from '../game/night.js';
 import { valleyMapHTML } from './valley.js';
 import { makeCamp } from '../game/overworld.js';
@@ -126,7 +128,7 @@ document.addEventListener('click', e => {
     case 'stay': toggleStay(id); renderPanel(); break;
     case 'endMyTurn': if (ui.role === 'player') sendHost({ t:'endturn' }); else nextTurn(); break;
     case 'rollInit': if (state.combat.active) rollInitiative({ ids:[...state.combat.order], group:state.combat.group ?? true, surprise:'none' }); else openFightSetup(); break;
-    case 'fightGo': { const F = ui.fight; $('#fightModal').classList.add('hidden'); if (F){ if (ui.floor !== F.L) goFloor(F.L); rollInitiative({ ids:[...F.ids], group:F.group, surprise:F.surprise }); } } break;
+    case 'fightGo': { const F = ui.fight; $('#fightModal').classList.add('hidden'); if (F){ if (ui.floor !== F.L) goFloor(F.L); rollInitiative({ ids:[...F.ids], group:F.group, surprise:F.surprise, fixed:F.d20 || {} }); } } break;
     case 'fightCancel': $('#fightModal').classList.add('hidden'); break;
     case 'fightSurprise': if (ui.fight){ ui.fight.surprise = k; renderFightSetup(); } break;
     case 'fightAll': if (ui.fight){ const f = state.floors[ui.fight.L]; for (const c of fightCandidates(state.tokens, ui.fight.L, f.W, seenNow[ui.fight.L])) if (c.t.kind === 'monster'){ if (k === 'in' || c.in) ui.fight.ids.add(c.t.id); else ui.fight.ids.delete(c.t.id); } renderFightSetup(); } break;
@@ -324,9 +326,23 @@ document.addEventListener('click', e => {
       else { const D = dreadLevel(); narrate(`Strahd's Gaze — ${D.n}`, D.text); } } break;
     case 'ntIntro': introduce(id, $('#ntLine')?.value || ''); break;
     case 'ntHand': reshowHandout(+k); break;
+    case 'ntNoteSend': passNote($('#ntNoteTo')?.value, $('#ntNote')?.value, { strahd:$('#ntNoteStrahd')?.checked, tell:$('#ntNoteTell')?.checked }); ui.ntNote = ''; renderPanel(); break;
+    case 'ntRecap': { const r = recapText(); if (!r){ toast('Nothing worth retelling in the log yet.'); break; } ui.ntTitle = 'Previously…'; ui.ntText = r; renderPanel(); $('#ntText')?.scrollIntoView({ block:'center' }); toast('The story so far is in the read-aloud box: trim it, then Show on the screen.'); } break;
     case 'ntTimer': setTimer(+k); renderPanel(); break;
     case 'ntDice': state.campaign.realDice = !state.campaign.realDice; changed(); renderPanel(); break;
     case 'ntQuiet': { const quiet = gfx.sfx || gfx.music; setGfx({ sfx:!quiet, music:!quiet }); renderPanel(); } break;
+    // ask the table for a roll (game/asks.js)
+    case 'askMode': ui.askForm.mode = k; renderPanel(); break;
+    case 'askWho': { const F = ui.askForm, heroes = state.tokens.filter(t => t.kind !== 'monster' && t.floor === ui.floor && !t.dead && !t.flags?.gone);
+      F.who ||= new Set(heroes.filter(t => t.kind === 'pc').map(t => t.id)); if (F.who.has(id)) F.who.delete(id); else F.who.add(id); renderPanel(); } break;
+    case 'askGo': { const F = ui.askForm, heroes = state.tokens.filter(t => t.kind !== 'monster' && t.floor === ui.floor && !t.dead && !t.flags?.gone);
+      const who = [...(F.who || new Set(heroes.filter(t => t.kind === 'pc').map(t => t.id)))].filter(id => heroes.some(t => t.id === id));
+      askTable({ check:F.check, dc:Number.isFinite(F.dc) ? F.dc : null, secret:F.secret, mode:F.mode, who }); } break;
+    case 'askEnter': { const n = +$(`#askIn-${id}`)?.value; if (n >= 1 && n <= 20) answerAsk(currentAsk()?.id, id, Math.round(n), 'dm'); else toast('A number from 1 to 20.'); } break;
+    case 'askRoll': answerAsk(currentAsk()?.id, id, null); break;
+    case 'askReveal': revealAsk(); break;
+    case 'askCancel': cancelAsk(); break;
+    case 'askClear': clearAsk(); break;
     case 'cardOnly': setCardOnly(!ui.cardOnly); renderAll(); break;
     case 'cardAct': cardAct(k, +el.dataset.i, el.dataset.res); break;
     case 'cardStep': { const [dx, dy] = k.split(',').map(Number); cardStep(dx, dy); } break;
@@ -363,6 +379,10 @@ document.addEventListener('change', e => {
   else if (['propLock', 'propContents', 'propStash', 'propStashDc'].includes(kind)){ const p = selectedProp(); if (p) editProp(ui.selProp.floor, p.id, { propLock:'lock', propContents:'contents', propStash:'stash', propStashDc:'stashDc' }[kind], el.value); }
   else if (kind === 'fightPick' && ui.fight){ if (el.checked) ui.fight.ids.add(el.dataset.id); else ui.fight.ids.delete(el.dataset.id); renderFightSetup(); }
   else if (kind === 'fightGroup' && ui.fight){ ui.fight.group = el.checked; }
+  else if (kind === 'fightD20' && ui.fight){ const n = Math.round(+el.value); (ui.fight.d20 ||= {})[el.dataset.id] = n >= 1 && n <= 20 ? n : undefined; }
+  else if (kind === 'askCheck') ui.askForm.check = el.value;
+  else if (kind === 'askDc') ui.askForm.dc = el.value === '' ? null : +el.value;
+  else if (kind === 'askSecret') ui.askForm.secret = el.checked;
   else if (kind === 'ntHandout' && el.files[0]) showHandout(el.files[0]).then(() => renderPanel());
   else if (kind === 'doorDc'){ const dr = selectedDoor(); if (dr){ dr.dc = +el.value || 15; changed(); } }
   else if (kind === 'trapKind'){ const tr = selectedTrap(); if (tr){ tr.kind = el.value; buildFloor(ui.selTrap.floor); changed(); } }
@@ -384,7 +404,9 @@ document.addEventListener('change', e => {
 });
 document.addEventListener('input', e => {
   if (e.target.id === 'dread') setDread(+e.target.value);
-  if (['ntText', 'ntTitle', 'ntLine'].includes(e.target.id)) ui[e.target.id] = e.target.value;   // the Night tab keeps what's being written
+  if (['ntText', 'ntTitle', 'ntLine', 'ntNote'].includes(e.target.id)) ui[e.target.id] = e.target.value;
+  if (['ntNoteStrahd', 'ntNoteTell'].includes(e.target.id)) ui[e.target.id] = e.target.checked;
+  if (e.target.id === 'ntNoteTo') ui.ntNoteTo = e.target.value;   // the Night tab keeps what's being written
   if (e.target.dataset?.edit === 'gfxVol') setGfx({ volume:+e.target.value });
   if (e.target.id === 'bestSearch'){ ui.bestSearch = e.target.value; const pos = e.target.selectionStart; renderPanel(); const s = $('#bestSearch'); s.focus(); s.setSelectionRange(pos, pos); }
   if (e.target.id === 'ndTemplate' || e.target.id === 'newTemplate'){ const tp = TEMPLATES.find(t => t.id === e.target.value); const b = $(e.target.id === 'ndTemplate' ? '#ndBlurb' : '#newBlurb'); if (b && tp) b.textContent = tp.blurb;
