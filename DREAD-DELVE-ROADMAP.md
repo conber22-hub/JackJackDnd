@@ -16,6 +16,17 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.11 — regal glass
+
+A new look for the DM and the players, after Apple's glass design with a gothic court's gold:
+- **Glass surfaces**: every floating surface is frosted glass with a lit top edge, soft deep shadows and a gold hairline catching the light. That covers the top bar, side panel, initiative, hero card, tool dock, roll cards, banners and dialogs.
+- **Capsule controls**: the top bar is a row of glass pills; the view switch and the panel's tabs are capsule segmented controls. On desktop every tab is in sight; on a phone they swipe.
+- **Gold and type**: buttons are glass, with small ones as capsules, and the primary ones gilded. Inputs are glass wells with a gold focus ring and gold chevrons. Champagne gold replaces the orange accent. **Inter** is the interface face; Cormorant Garamond and Cinzel are for titles and small-caps section labels.
+- **Motion**: springy and quick; cards rise, banners drop from the top like a phone's, buttons give under a tap.
+- **On a phone**: the top bar is one swipeable row instead of three, the panel is a bottom sheet with a grabber, and "Start a fight" is one gold pill until a fight begins. Card-only heroes get round step keys.
+- The start screen's panels and doors share the same glass and gold.
+- All in `index.html`'s stylesheet. The tokens at the top (`--glass`, `--gold`, `--spec`, `--lift`, `--r-*`, `--spring`) restyle everything at once.
+
 ## v1.10 — heroes to level 20
 
 - **Codex's PR #4**: all 12 classes and their SRD subclasses go to **level 20**:

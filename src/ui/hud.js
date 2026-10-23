@@ -55,7 +55,10 @@ export function renderTabs(){
   const tabs = ui.role === 'player' ? [['hero', 'Your hero'], ...(state?.valley ? [['map', 'Map']] : []), ['log', 'Log']]
     : [['story', 'Story'], ['valley', 'Valley'], ['tokens', 'Tokens'], ['bestiary', 'Beasts'], ['dungeon', 'Maps'], ['build', 'Build'], ['gaze', 'Gaze'], ['table', 'Table'], ['night', 'Night']];
   if (!tabs.some(t => t[0] === ui.tab)) ui.tab = tabs[0][0];
-  $('#tabs').innerHTML = tabs.map(([k, l]) => `<button data-act="tab" data-k="${k}" class="${ui.tab === k ? 'on' : ''}">${l}</button>`).join('');
+  const bar = $('#tabs');
+  bar.innerHTML = tabs.map(([k, l]) => `<button data-act="tab" data-k="${k}" class="${ui.tab === k ? 'on' : ''}">${l}</button>`).join('');
+  const on = bar.querySelector('.on');   // on a phone the tabs are a strip that swipes: keep the open one in view
+  if (on && bar.scrollWidth > bar.clientWidth){ const l = on.offsetLeft - 16, r = on.offsetLeft + on.offsetWidth + 16 - bar.clientWidth; if (bar.scrollLeft > l) bar.scrollLeft = l; else if (bar.scrollLeft < r) bar.scrollLeft = r; }
 }
 export const BUILD_TOOLS = [
   ['room', '▭', 'Room', 'Drag a room to move it · drag a corner to resize · drag on bare rock to draw a new room · tap a room to select it'],
@@ -88,7 +91,7 @@ const seesAny = t => { const W = state.floors[t.floor].W, s = t.size || 1; for (
 export function renderInit(){
   if (!state) return;
   const bar = $('#initBar'), c = state.combat, pv = viewAsPlayer();
-  bar.classList.toggle('hidden', !c.active && ui.role === 'player');
+  bar.classList.toggle('hidden', !c.active && ui.role === 'player'); bar.classList.toggle('idle', !c.active);   // idle: on a phone, just the Start button
   $('#roundLbl').textContent = c.active ? `Round ${c.round}` : '';
   if (!c.active){
     $('#initList').innerHTML = `<div class="muted" style="padding:8px">No fight yet. Start one to pick who's in it: the party, and the creatures they can see or are close to.</div>`;
