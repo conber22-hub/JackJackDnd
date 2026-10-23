@@ -17,11 +17,12 @@ test('the creator\'s Look studio shows the hero as a live 3D mini and takes a po
   expect(await page.evaluate(() => window.DreadDelve.forgeStudio.studio().figs[0].userData.fig.userData.rig.look.horns)).not.toBe('none');
   await page.locator('#charBox [data-cr="portraitFromMini"]').click();
   await expect(page.locator('#charBox .artslot img')).toHaveAttribute('src', /^data:image\/jpeg/);
-  // the swing is short: under load it can be over before a single read sees it, so watch for it from before the click
-  await page.evaluate(() => { const rig = window.DreadDelve.forgeStudio.studio().figs[0].userData.fig.userData.rig; window.__swung = false;
-    const tick = () => { if (rig.action) window.__swung = true; else requestAnimationFrame(tick); }; tick(); });
+  // the swing runs on the wall clock: on a busy machine it can be over by the first frame that draws it, so record
+  // the moment it starts rather than trying to catch it mid-swing
+  await page.evaluate(() => { const rig = window.DreadDelve.forgeStudio.studio().figs[0].userData.fig.userData.rig; let v = rig.action; window.__swung = false;
+    Object.defineProperty(rig, 'action', { configurable:true, get:() => v, set:x => { if (x) window.__swung = x.k; v = x; } }); });
   await page.locator('#charBox [data-cr="mini:attack"]').click();
-  await expect.poll(() => page.evaluate(() => window.__swung || !!window.DreadDelve.forgeStudio.studio().figs[0].userData.fig.userData.rig.action)).toBe(true);
+  await expect.poll(() => page.evaluate(() => window.__swung)).toMatch(/slash|smash|thrust|shoot|claw|attack/);
 });
 
 test('forged minis on the map: heroes and humanoid foes are jointed figures that swing and flinch', async ({ page }) => {

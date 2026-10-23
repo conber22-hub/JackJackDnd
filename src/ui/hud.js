@@ -31,7 +31,8 @@ export function showCard(c, share = true){
   const layer = $('#cardLayer'), el = document.createElement('div');
   el.className = 'pop ' + (c.kind || '');
   el.innerHTML = `<div class="t">${esc(c.title)}</div>${c.sub ? `<div class="s">${esc(c.sub)}</div>` : ''}${c.flair ? `<div class="f">${esc(c.flair)}</div>` : ''}${(c.lines || []).map(l => `<div class="r">${l}</div>`).join('')}${c.big ? `<div class="big">${esc(c.big)}</div>` : ''}<div class="tap">tap to dismiss</div>`;
-  el.onclick = () => el.remove();
+  const born = performance.now();
+  el.onclick = () => { if (performance.now() - born > 400) el.remove(); };   // the tap that made it (a cast on a phone) mustn't also dismiss it
   layer.appendChild(el); while (layer.children.length > 3) layer.firstChild.remove();
   setTimeout(() => el.remove(), 8000);
   if (share && ui.role === 'dm') broadcast({ t:'card', c });
