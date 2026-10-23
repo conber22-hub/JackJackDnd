@@ -211,7 +211,7 @@ export function heroResources(h, st = heroStats(h)){
   if (cls === 'Sorcerer' && L >= 5) f('sorcrest', 'Sorcerous Restoration', 1, 'long', 'recover', `After a short rest: up to ${Math.floor(L / 2)} Sorcery Points come back.`, { points:Math.floor(L / 2) });
   if (cls === 'Ranger') f('favored', 'Favored Enemy', L >= 17 ? 6 : L >= 13 ? 5 : L >= 9 ? 4 : L >= 5 ? 3 : 2, 'long', 'note', 'Cast Hunter\'s Mark without spending a slot (used first when you cast it).', { free:'Hunter\'s Mark' });
   if (cls === 'Wizard') f('arcane', 'Arcane Recovery', 1, 'long', 'recover', `After a short rest: spent slots worth up to ${Math.ceil(L / 2)} levels come back; none may be level 6 or higher.`, { lv:Math.ceil(L / 2) });
-  if (cls === 'Warlock' && L >= 2) f('cunning', 'Magical Cunning', 1, 'long', 'recover', `${L >= 20 ? 'All' : 'Half (round up) of'} your pact slots come back (one minute's rite).`, { pact:1 });
+  if (cls === 'Warlock' && L >= 2) f('cunning', 'Magical Cunning', 1, 'long', 'recover', `${L >= 20 ? 'All' : 'Half (round up) of'} your pact slots come back (one minute's rite).`, { pact:L >= 20 ? 'all' : 1 });   // Eldritch Master at 20
   for (const level of arcanumLevels(h)){
     const sp = (h.spells || []).map(SP).find(s => s?.l === level && s.c.includes('K'));
     f(`arcanum${level}`, `Mystic Arcanum (level ${level}${sp ? `: ${sp.n}` : ''})`, 1, 'long', 'note', sp ? `Cast ${sp.n} once without a slot.` : `Choose one level ${level} Warlock spell.`, sp ? { free:sp.n } : {});

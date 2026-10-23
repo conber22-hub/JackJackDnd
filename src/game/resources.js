@@ -83,9 +83,10 @@ export function useFeature(t, id, target = t){
 function recoverSlots(t, r){
   const got = [];
   if (r.points){ const s = resOf(t, 'sorcery'); if (!s) return got; const n = Math.min(r.points, s.max - left(t, 'sorcery')); if (n > 0){ t.res.sorcery += n; got.push(`${n} Sorcery Point${n > 1 ? 's' : ''}`); } return got; }
-  if (r.pact){ const p = resOf(t, 'pact'); if (!p) return got; const n = Math.min(Math.ceil(p.max / 2), p.max - left(t, 'pact')); if (n > 0){ t.res.pact += n; got.push(`${n} pact slot${n > 1 ? 's' : ''}`); } return got; }
+  // Magical Cunning brings back half the pact slots; Eldritch Master (Warlock 20) all of them
+  if (r.pact){ const p = resOf(t, 'pact'); if (!p) return got; const n = Math.min(r.pact === 'all' ? p.max : Math.ceil(p.max / 2), p.max - left(t, 'pact')); if (n > 0){ t.res.pact += n; got.push(`${n} pact slot${n > 1 ? 's' : ''}`); } return got; }
   let budget = r.lv || 1;
-  for (const s of (t.resources || []).filter(s => s.slot && s.id !== 'pact').sort((a, b) => b.slot - a.slot)){
+  for (const s of (t.resources || []).filter(s => s.slot && s.slot < 6 && s.id !== 'pact').sort((a, b) => b.slot - a.slot)){   // Arcane Recovery: nothing of level 6 or higher
     while (s.slot <= budget && left(t, s.id) < s.max){ t.res[s.id]++; budget -= s.slot; got.push(`a level ${s.slot} slot`); }
   }
   return got;

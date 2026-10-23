@@ -1,9 +1,10 @@
-/* CHARACTER CREATOR — SRD 5.2, levels 1–10. Players use it from the start screen (their heroes are kept in their
+/* CHARACTER CREATOR — SRD 5.2, levels 1–20. Players use it from the start screen (their heroes are kept in their
    browser and sent to the DM when they join); the DM can open any sheet from the Tokens tab.
    openCreator(sheet | null, { onSave, title }) */
 import { ABILITIES, ABILITY_NAMES, CLASSES, SPECIES, BACKGROUNDS, WEAPONS, ARMOR, STYLES, INVOCATIONS, SKILLS, STANDARD_ARRAY, POINT_COST, MAX_LEVEL, FEATS, SUBCLASSES, mod } from '../data/srd.js';
+import { FEATURES } from '../data/srd-features.js';
 import { textOf } from '../game/library.js';
-import { newHero, heroStats, heroAttacks, heroSpells, spellPool, spellLimits, asiLevels, expertiseSlots, heroWarnings, SP } from '../engine/hero.js';
+import { newHero, heroStats, heroAttacks, heroSpells, spellPool, spellLimits, asiLevels, expertiseSlots, heroWarnings, SP, arcanumLevels } from '../engine/hero.js';
 import { $, esc, clamp, d } from '../util/core.js';
 import { toast } from './hud.js';
 import { heroLook, sheetLook } from '../engine/look.js';
@@ -17,6 +18,8 @@ const selLib = (f, table, v) => { const own = Object.keys(table).filter(k => !ta
   const o = k => `<option value="${esc(k)}" ${k === v ? 'selected' : ''}>${esc(k)}</option>`;
   return `<select class="txt" data-cf="${f}">${own.map(o).join('')}${lib.length ? `<optgroup label="📚 Your books">${lib.map(o).join('')}</optgroup>` : ''}${table[v] ? '' : `<option selected value="${esc(v)}">${esc(v)} (not in this browser's books)</option>`}</select>`; };
 const spcOf = h => SPECIES[h.sp] || SPECIES.Human, bgOf = h => BACKGROUNDS[h.bg] || BACKGROUNDS.Soldier;
+// Rules text (SRD feats and features, the DM's books) as safe HTML: escaped first, then _italics_, **bold** and paragraphs.
+export const rulesHTML = t => String(t || '').split(/\n{2,}/).map(p => `<p>${esc(p).replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/(^|\W)_([^_]+)_(?=\W|$)/g, '$1<i>$2</i>').replace(/^#{2,4}\s*(.+)$/gm, '<b>$1</b>').replace(/\n/g, '<br>')}</p>`).join('');
 const sel = (f, list, v, attrs = '') => `<select class="txt" data-cf="${f}" ${attrs}>${list.map(o => { const [val, lab] = Array.isArray(o) ? o : [o, o]; return `<option value="${esc(val)}" ${String(val) === String(v) ? 'selected' : ''}>${esc(lab)}</option>`; }).join('')}</select>`;
 
 export function openCreator(sheet, o = {}){
@@ -45,20 +48,28 @@ export function sheetHTML(h){
     ${readHTML(h, st)}
   </div>`;
 }
-// The words behind a hero's features from the DM's books: their species traits, subclass features and feats.
+// What a feature says: the SRD's text (shared names like Extra Attack keep a section per class: "### Fighter, level 5"),
+// else the DM's books (game/library.js).
+function featureText(name, cls){
+  const t = FEATURES[name];
+  if (!t) return textOf(name);
+  if (!/^### /m.test(t)) return t;
+  const parts = t.split(/^### /m).filter(Boolean), mine = parts.find(x => x.startsWith(cls)) || parts[0];
+  return mine.replace(/^[^\n]*\n+/, '');
+}
+// The words behind a hero's features, species traits and feats, to read on the sheet.
 function readHTML(h, st){
   const spc = spcOf(h), rows = [...(spc.feats || []), ...(spc.subs?.[h.spOpt]?.feats || [])].filter(f => f.text && !/language/i.test(f.n)).map(f => [f.n, f.text]);
-  for (const f of st.features){ const n = f.replace(/ \(\d+\)$/, '').replace(/ — feat$/, ''); const t = textOf(n); if (t) rows.push([n, t]); }
-  for (const p of st.picks || []) if (FEATS[p.feat]?.lib) rows.push([p.feat, FEATS[p.feat].text]);
+  for (const f of st.features){ const n = f.replace(/ \(\d+\)$/, '').replace(/ — feat$/, ''); const t = FEATS[n]?.text || featureText(n, h.cls); if (t) rows.push([n, t]); }
   const seen = new Set(), list = rows.filter(([n]) => !seen.has(n) && seen.add(n));
-  return list.length ? `<details class="sheet-l"><summary><b>📖 What your features do</b> <span class="muted">(${list.length}, from the DM's books)</span></summary>${list.map(([n, t]) => `<p><b>${esc(n)}.</b> ${esc(t).replace(/\n+/g, '<br>')}</p>`).join('')}</details>` : '';
+  return list.length ? `<details class="sheet-l"><summary><b>📖 What your features do</b> <span class="muted">(${list.length})</span></summary>${list.map(([n, t]) => `<div class="feat-read"><b>${esc(n)}</b>${rulesHTML(t)}</div>`).join('')}</details>` : '';
 }
 
 /* An Ability Score Improvement level: the improvement itself (+2, or +1 and +1), or a feat instead. */
 const asel = (l, k, list, v) => `<select class="txt" data-asi="${l}" data-k="${k}">${list.map(o => { const [val, lab] = Array.isArray(o) ? o : [o, o]; return `<option value="${esc(val)}" ${String(val) === String(v ?? '') ? 'selected' : ''}>${esc(lab)}</option>`; }).join('')}</select>`;
 function asiHTML(h, l){
   const raw = h.asi?.[l], p = typeof raw === 'string' ? { feat:'Ability Score Improvement', ab:raw } : (raw || {});
-  const C = CLASSES[h.cls], feats = Object.entries(FEATS).filter(([, f]) => !f.style || C.style).sort(([a, x], [b, y]) => !!x.lib - !!y.lib || (x.lib ? a.localeCompare(b) : 0));
+  const C = CLASSES[h.cls];
   let more = '';
   if (p.feat === 'Ability Score Improvement') more = `${asel(l, 'ab', [['', '— ability —'], ...ABILITIES], p.ab)}${asel(l, 'ab2', [['', '+2 to it'], ...ABILITIES.filter(a => a !== p.ab).map(a => [a, `+1 to it, +1 to ${a}`])], p.ab2)}`;
   if (FEATS[p.feat]?.plus) more = asel(l, 'ab', [['', '+1 to…'], ...FEATS[p.feat].plus.map(a => [a, `+1 ${a}`])], p.ab);   // Grappler, and feats from the DM's books
@@ -66,8 +77,18 @@ function asiHTML(h, l){
   if (p.feat === 'Skilled') more = [0, 1, 2].map(i => asel(l, `skill${i}`, [['', '— skill —'], ...Object.keys(SKILLS)], (p.skills || [])[i])).join('');
   if (p.feat === 'Other') more = `<input class="txt" data-asi="${l}" data-k="name" placeholder="Feat name" value="${esc(p.name || '')}">${asel(l, 'ab', [['', 'No ability bonus'], ...ABILITIES.map(a => [a, `+1 ${a}`])], p.ab)}${asel(l, 'hp', [['0', 'No extra HP'], ['1', '+1 HP a level'], ['2', '+2 HP a level']], p.hp || '0')}
     <input class="txt" data-asi="${l}" data-k="note" placeholder="What it does (shown on your sheet for the DM)" value="${esc(p.note || '')}">`;
-  return `<div class="cr-asi"><div class="row"><label>Level ${l}</label>${asel(l, 'feat', [['', '— ability increase or a feat —'], ...feats.map(([n]) => [n, n === 'Other' ? 'Another feat (write it in)' : n === 'Ability Score Improvement' ? 'Ability Score Improvement (+2 / +1 +1)' : `${FEATS[n].lib ? '📚 ' : ''}Feat: ${n}`])], p.feat)}</div>
-    ${more ? `<div class="row">${more}</div>` : ''}${p.feat ? `<div class="muted">${esc(FEATS[p.feat]?.text || '')}${FEATS[p.feat]?.req ? ` <i>(${esc(FEATS[p.feat].req)})</i>` : ''}</div>` : ''}</div>`;
+  // the feats in groups: the SRD's by category (Epic Boons from level 19, fighting styles for classes that have the feature),
+  // then the DM's books, then a written-in one
+  const groups = [['General', n => FEATS[n].cat === 'General' && n !== 'Ability Score Improvement'], ['Origin', n => FEATS[n].cat === 'Origin'],
+    ...(C.style ? [['Fighting Style', n => FEATS[n].cat === 'Fighting Style' || (FEATS[n].style && !FEATS[n].lib)]] : []), ...(l >= 19 ? [['Epic Boon', n => FEATS[n].cat === 'Epic Boon']] : []),
+    ['📚 Your books', n => FEATS[n].lib && (!FEATS[n].style || C.style)]];
+  const opt = (n, lab) => `<option value="${esc(n)}" ${n === p.feat ? 'selected' : ''}>${esc(lab)}</option>`;
+  const names = Object.keys(FEATS).sort((a, b) => a.localeCompare(b));
+  const pickFeat = `<select class="txt" data-asi="${l}" data-k="feat"><option value="">${l === 19 ? '— an Epic Boon, an ability increase or a feat —' : '— ability increase or a feat —'}</option>${opt('Ability Score Improvement', 'Ability Score Improvement (+2 / +1 +1)')}
+    ${groups.map(([g, ok]) => { const list = names.filter(n => !FEATS[n].lib === !g.startsWith('📚') && ok(n)); return list.length ? `<optgroup label="${esc(g)}">${list.map(n => opt(n, n)).join('')}</optgroup>` : ''; }).join('')}${opt('Other', 'Another feat (write it in)')}</select>`;
+  const f = FEATS[p.feat];
+  return `<div class="cr-asi"><div class="row"><label>Level ${l}${l === 19 ? ' · Epic Boon' : ''}</label>${pickFeat}</div>
+    ${more ? `<div class="row">${more}</div>` : ''}${p.feat ? `<div class="muted">${f?.req && f.req !== 'None' ? `<i>Prerequisite: ${esc(f.req)}</i> · ` : ''}${f?.cat ? `${esc(f.cat)} feat` : ''}${f?.lib ? esc(f.src) : ''}</div>${f?.text ? `<details class="muted"><summary>What it does</summary>${rulesHTML(f.text)}</details>` : ''}` : ''}</div>`;
 }
 function setAsi(l, k, v){
   edit.asi ||= {};
@@ -82,7 +103,8 @@ function render(){
   const h = edit, C = CLASSES[h.cls], st = heroStats(h), L = st.L, bg = bgOf(h), spc = spcOf(h), spOpts = spc.opts, subs = SUBCLASSES[h.cls];
   const spOptKey = spOpts ? Object.keys(spOpts)[0] : null;
   const lim = spellLimits(h), pool = spellPool(h);
-  const nCan = (h.spells || []).filter(n => SP(n)?.l === 0).length, nPrep = (h.spells || []).filter(n => SP(n)?.l > 0).length;
+  const arc = new Set(arcanumLevels(h));   // a Warlock's Mystic Arcanum levels: one spell each, not prepared
+  const nCan = (h.spells || []).filter(n => SP(n)?.l === 0).length, nPrep = (h.spells || []).filter(n => SP(n)?.l > 0 && !arc.has(SP(n).l)).length;
   const classSkills = C.skills[1], nSkills = C.skills[0], exSlots = expertiseSlots(h);
   const usedStd = Object.values(h.ab);
   const pts = Object.values(h.ab).reduce((a, v) => a + (POINT_COST[v] ?? 99), 0);
@@ -133,7 +155,7 @@ function render(){
     ${h.cls === 'Warlock' ? `<div class="row"><label>Invocation</label>${sel('invoc', INVOCATIONS, h.invoc || 'Agonizing Blast')}</div>` : ''}
 
     ${pool.length ? `<h2>Spells</h2><div class="muted">Cantrips ${nCan}${lim.cantrips ? ` / ${lim.cantrips}` : ''} · prepared ${nPrep}${lim.prepared ? ` / ${lim.prepared}` : ''}. Subclass and species spells are added for you.</div>
-      ${[0, 1, 2, 3, 4, 5].filter(l => pool.some(s => s.l === l)).map(l => `<h4>${l ? `Level ${l}` : 'Cantrips'}</h4><div class="cr-chk">${pool.filter(s => s.l === l).map(s => `<label class="crc"><input type="checkbox" data-spell="${esc(s.n)}" ${(h.spells || []).includes(s.n) ? 'checked' : ''}><span>${esc(s.n)}</span></label>`).join('')}</div>`).join('')}` : ''}
+      ${[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].filter(l => pool.some(s => s.l === l)).map(l => `<h4>${arc.has(l) ? `Mystic Arcanum · level ${l} <span class="muted">(choose one; once a long rest, no slot)</span>` : l ? `Level ${l}` : 'Cantrips'}</h4><div class="cr-chk">${pool.filter(s => s.l === l).map(s => `<label class="crc"><input type="checkbox" data-spell="${esc(s.n)}" ${(h.spells || []).includes(s.n) ? 'checked' : ''}><span>${esc(s.n)}</span></label>`).join('')}</div>`).join('')}` : ''}
 
     ${lookHTML(h)}
     <h2>Portrait</h2>

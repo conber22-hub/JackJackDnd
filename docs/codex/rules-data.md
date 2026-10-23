@@ -39,7 +39,7 @@ Lesson from task 1: faithful data is right, but don't take automation away. If a
   - every `area` shape is one `targeting.js` knows
   - the spell count matches the SRD
 
-### 2. Classes to level 20
+### 2. Classes to level 20 — DONE (PR #4)
 - Raise `MAX_LEVEL` to 20.
 - Extend all of these to 20:
   - every class's `features`, `cantrips` and `prep` arrays
@@ -49,7 +49,9 @@ Lesson from task 1: faithful data is right, but don't take automation away. If a
 - Add a `FEATURES` map (feature name → SRD text) so the sheet can show what each one does.
 - Update `src/engine/hero.js` wherever it assumes 10 levels, and extend `tests/hero.test.js` with level 20 sheets for a full caster, a half caster, a Warlock and a martial class.
 
-### 3. All SRD feats
+### 3. All SRD feats — DONE (PR #5)
+Claude did the follow-ups both PRs listed: spells to level 9 in the creator, Mystic Arcanum as its own choice, feats grouped by category with Epic Boons at 19, the sheet's "What your features do" reader (FEATURES), Arcane Recovery's level-6 limit and Eldritch Master.
+
 - Add every SRD 5.2.1 feat to `FEATS`, keeping the flags the engine understands (`origin`, `plus`, `style`, `lists`, `skills`).
 - Origin, General, Fighting Style and Epic Boon feats each need `cat`, `req` (prerequisite) and `text`.
 - The engine applies effects only for the flags it knows. Text-only feats are fine; list the ones that could get real effects in the PR description.
@@ -64,7 +66,7 @@ Lesson from task 1: faithful data is right, but don't take automation away. If a
 ### 5. SRD monsters
 - Put every SRD 5.2.1 creature in `src/data/srd-monsters.js`, in the bestiary format (`id`, `name`, `cr`, `ac`, `hp` dice, `speed`/`spd`, `size` in squares, `init`, `attacks` with to-hit and damage, `traits`, `saves`, `senses`, `look`).
 - Set `fam:'srd'` and a `shape` that `src/engine/look.js` presets can map (humanoid, beast, undead…).
-- Export a list and add it to `rebuildBestiary()` behind the existing ones: Barovia's versions win on id clashes.
+- Export a list and add it to `rebuildBestiary()` behind the existing ones: Barovia's versions win on id clashes, and the SRD's win over the DM's library (`LIBRARY`, already in `rebuildBestiary`, only adds ids nobody has).
 - Split the work by CR band if it's too big for one PR.
 - Tests:
   - every attack parses
