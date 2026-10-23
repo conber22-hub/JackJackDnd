@@ -50,10 +50,10 @@ export function heroStats(h){
   const sc = {}; for (const a of ABILITIES) sc[a] = +h.ab?.[a] || 10;
   if (bg){ if (h.bg2 && bg.ab.includes(h.bg2)) sc[h.bg2] += 2; if (h.bg1 && bg.ab.includes(h.bg1) && h.bg1 !== h.bg2) sc[h.bg1] += 1; }
   const picks = asiPicks(h), took = n => picks.some(p => p.feat === n);
-  const up = (a, n) => { if (sc[a] !== undefined) sc[a] = Math.min(20, sc[a] + n); };
+  const up = (a, n, max = 20) => { if (sc[a] !== undefined) sc[a] = Math.max(sc[a], Math.min(max, sc[a] + n)); };
   for (const p of picks){
     if (p.feat === 'Ability Score Improvement'){ if (p.ab2 && p.ab2 !== p.ab){ up(p.ab, 1); up(p.ab2, 1); } else up(p.ab, 2); }
-    else if ((FEATS[p.feat]?.plus || p.feat === 'Other') && p.ab && (!FEATS[p.feat]?.plus || FEATS[p.feat].plus.includes(p.ab))) up(p.ab, 1);
+    else if ((FEATS[p.feat]?.plus || p.feat === 'Other') && p.ab && (!FEATS[p.feat]?.plus || FEATS[p.feat].plus.includes(p.ab))) up(p.ab, 1, FEATS[p.feat]?.max || 20);
   }
   if (L === 20) for (const a of h.cls === 'Barbarian' ? ['Str', 'Con'] : h.cls === 'Monk' ? ['Dex', 'Wis'] : []) sc[a] = Math.min(25, sc[a] + 4);
   const M = a => mod(sc[a]);
@@ -253,7 +253,7 @@ export function heroWarnings(h){
     if (p.feat === 'Skilled' && (p.skills || []).filter(Boolean).length < 3) w.push(`Level ${l} Skilled: choose three skills.`);
     if (p.feat === 'Other' && !p.name) w.push(`Level ${l}: name your feat.`);
     if (FEATS[p.feat]?.style && !C.style) w.push(`Level ${l}: ${p.feat} needs the Fighting Style feature.`);
-    if (asiLevels(h).some(o => o !== l && (h.asi?.[o]?.feat === p.feat) && p.feat !== 'Ability Score Improvement' && p.feat !== 'Other' && p.feat !== 'Magic Initiate')) w.push(`${p.feat} can only be taken once.`);
+    if (asiLevels(h).some(o => o !== l && (h.asi?.[o]?.feat === p.feat) && p.feat !== 'Ability Score Improvement' && p.feat !== 'Other' && !FEATS[p.feat]?.repeatable)) w.push(`${p.feat} can only be taken once.`);
   }
   void sp;
   return [...new Set(w)];
