@@ -54,6 +54,8 @@ export function makePC(p){
 }
 export function makeMonster(bid, floor, x, y){
   const b = BEST[bid]; const hp = avgDice(b.hp);
+  // a creature from the DM's books (game/library.js) joins the delve's own creatures: players' screens and the save need it
+  if (b.lib && state?.content && !state.content.bestiary?.[bid]){ const { lib, kind, ...own } = b; (state.content.bestiary ||= {})[bid] = own; rebuildBestiary(state.content.bestiary); }
   const n = state ? state.tokens.filter(t => t.bid === bid).length : 0;
   return { id:uid(), kind:'monster', bid, name:n ? `${b.name} ${n + 1}` : b.name, color:b.color, ac:b.ac, hp, maxHp:hp, speed:b.speed, init:b.init, saveMod:1,
            check:2, passive:12, attacks:b.attacks.map(a => ({ ...a })), floor, x, y, dead:false, flags:{}, conds:[], size:b.size || 1, moved:0 };

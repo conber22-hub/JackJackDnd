@@ -1,0 +1,84 @@
+{
+  "languages": [{ "name": "Fogspeech", "tags": "Type: Language", "source": { "sourceType": "homebrew" }, "additionalInformation": "", "isStandard": false }],
+  "spells": [
+    { "name": "Gloamlance", "level": 2, "school": "Evocation", "castingTime": "1 Action", "range": "90 feet", "components": "V, S", "duration": "Instantaneous",
+      "isConcentration": false, "isRitual": false, "casters": { "wizard": true, "sorcerer": true }, "allCasterNames": ["Wizard", "Sorcerer"],
+      "officialDescription": "A spear of dusk flies at a creature. Make a ranged spell attack against it. On a hit, the target takes 3d8 necrotic damage.\n\nWhen you cast this spell using a spell slot of 3rd level or higher, the damage increases by 1d8 for each slot level above 2nd.",
+      "source": { "sourceType": "canon", "book": "Tome of Test Fixtures" }, "damageDice": [], "appliedDamageIndex": 0, "isStandard": false, "additionalInfo": "", "tags": "Type: Spell" },
+    { "name": "Gloamlance 2024", "level": 2, "school": "Evocation", "castingTime": "Action", "range": "90 feet", "components": "V, S", "duration": "Instantaneous",
+      "isConcentration": false, "isRitual": false, "casters": { "wizard": true }, "allCasterNames": ["Wizard 2024", "Sorcerer 2024"],
+      "officialDescription": "A spear of dusk flies at a creature. Make a ranged spell attack against it. On a hit, the target takes 4d8 necrotic damage.\n\nUsing a Higher-Level Spell Slot. The damage increases by 1d8 for each spell slot level above 2.",
+      "source": { "sourceType": "canon", "book": "Tome of Test Fixtures 2024" }, "damageDice": [], "appliedDamageIndex": 0, "isStandard": false, "additionalInfo": "", "tags": "2024#####Type: Spell" },
+    { "name": "Mire Burst", "level": 3, "school": "Conjuration", "castingTime": "1 Action", "range": "120 feet", "components": "V, S, M (a pinch of bog peat)", "duration": "Instantaneous",
+      "isConcentration": false, "isRitual": false, "casters": { "druid": true }, "allCasterNames": ["Druid"],
+      "officialDescription": "Mud erupts in a 15-foot cube centered on a point you choose. Each creature there must make a Strength save. It takes 4d6 bludgeoning damage and is knocked prone on a failed save, or half damage on a success.",
+      "source": { "sourceType": "canon", "book": "Tome of Test Fixtures" }, "damageDice": [], "appliedDamageIndex": 0, "isStandard": false, "additionalInfo": "", "tags": "Type: Spell" },
+    { "name": "Hush of Lanterns", "level": 1, "school": "Illusion", "castingTime": "1 Action", "range": "Self (10 foot radius)", "components": "S", "duration": "Concentration, up to 1 minute",
+      "isConcentration": true, "isRitual": true, "casters": { "bard": true, "warlock": true }, "allCasterNames": ["Bard", "Warlock"],
+      "officialDescription": "Every flame within 10 feet of you dims to an ember until the spell ends.",
+      "source": { "sourceType": "unearthedArcana" }, "damageDice": [], "appliedDamageIndex": 0, "isStandard": false, "additionalInfo": "", "tags": "Type: Spell" },
+    { "name": "Fireball", "level": 3, "school": "Evocation", "castingTime": "1 Action", "range": "150 feet", "components": "V, S, M", "duration": "Instantaneous",
+      "isConcentration": false, "isRitual": false, "casters": { "wizard": true }, "allCasterNames": ["Wizard"],
+      "officialDescription": "An invented stand-in for a spell the app already has.", "source": { "sourceType": "canon", "book": "Tome of Test Fixtures" },
+      "damageDice": [], "appliedDamageIndex": 0, "isStandard": false, "additionalInfo": "", "tags": "Type: Spell" },
+    { "name": "Pocket Sparkle", "level": 0, "school": "Evocation", "castingTime": "1 Action", "range": "30 feet", "components": "V", "duration": "Instantaneous",
+      "isConcentration": false, "isRitual": false, "casters": { "sorcerer": true }, "allCasterNames": ["Sorcerer"],
+      "officialDescription": "A creature must succeed on a Dexterity saving throw or take 1d6 radiant damage.", "source": { "sourceType": "homebrew", "customName": "Kitchen Table Homebrew" },
+      "damageDice": [], "appliedDamageIndex": 0, "isStandard": false, "additionalInfo": "", "tags": "Type: Spell" }
+  ],
+  "races": [
+    { "name": "Mistborn", "is2024": true, "sizes": ["Medium"], "movement": { "speed": 35, "fly": -1, "swim": -1, "climb": -1, "burrow": -1, "hover": -1 }, "freeSkills": { "stealth": true, "sleightOfHand": true },
+      "raceDescription": "Folk born on nights the fog never lifted.", "source": { "sourceType": "canon", "book": "Tome of Test Fixtures" }, "subraces": [], "tags": "Type: Race/Species", "isStandard": false,
+      "newFeatures": [
+        { "name": "Darkvision", "customFeat": { "name": "Darkvision", "featureDescription": "You can see in dim light within 60 feet of you as if it were bright light.", "level": 0, "type": "noLevelFeature" } },
+        { "name": "Choose One Language", "customFeat": { "name": "Choose One Language", "featureDescription": "Learn a language.", "level": 0, "type": "noLevelFeature" } },
+        { "name": "Fogstep", "customFeat": { "name": "Fogstep", "featureDescription": "As a bonus action you turn to mist and move 10 feet.", "level": 0, "type": "noLevelFeature" } }
+      ] },
+    { "name": "Dwarf", "is2024": false, "sizes": ["Medium"], "movement": { "speed": 25 }, "freeSkills": {}, "raceDescription": "A stand-in for a species the app already has.",
+      "source": { "sourceType": "canon", "book": "Tome of Test Fixtures" }, "subraces": [], "tags": "Type: Race/Species", "isStandard": false, "newFeatures": [] },
+    { "name": "Bogling", "is2024": false, "sizes": ["Small"], "movement": { "speed": 25, "swim": 25 }, "freeSkills": {}, "raceDescription": "Small swamp folk.",
+      "source": { "sourceType": "canon", "book": "Tome of Test Fixtures" }, "subraces": [], "tags": "Type: Race/Species", "isStandard": false, "newFeatures": [] }
+  ],
+  "subraces": [
+    { "name": "Reed Bogling", "raceName": "Bogling", "movement": { "speed": 30 }, "freeSkills": { "survival": true }, "subraceDescription": "They walk the reeds.", "source": { "sourceType": "canon" },
+      "newFeatures": [{ "name": "Reedwalk", "customFeat": { "name": "Reedwalk", "featureDescription": "Reeds don't slow you.", "level": 0 } }], "tags": "", "isStandard": false },
+    { "name": "Peat Bogling", "raceName": "Bogling", "movement": { "speed": -1 }, "freeSkills": {}, "subraceDescription": "They sleep in the peat.", "source": { "sourceType": "canon" }, "newFeatures": [], "tags": "", "isStandard": false }
+  ],
+  "backgrounds": [
+    { "name": "Lamplighter", "is2024": false, "freeSkills": { "perception": true, "athletics": true }, "backgroundDescription": "You kept the lamps lit on the long street.",
+      "source": { "sourceType": "canon", "book": "Tome of Test Fixtures" }, "tags": "Type: Background", "isStandard": false,
+      "features": [{ "name": "Lamplighter Tools", "customFeat": { "name": "Lamplighter Tools", "featureDescription": "Proficiency with tinker's tools.", "level": 0, "newEffects": { "selections": [{ "type": "toolProficiency" }] } } },
+                   { "name": "Night Rounds", "customFeat": { "name": "Night Rounds", "featureDescription": "Watchmen know your face.", "level": 0 } }] }
+  ],
+  "feats": [
+    { "name": "Lantern Bearer", "type": "feat", "level": 0, "featureDescription": "Prerequisite: Wisdom 13 or higher\n\nIncrease your Wisdom or Charisma by 1. Your light can't be snuffed by magic.",
+      "newEffects": { "abilityScores": [{ "type": "distributePoints", "stats": { "stats": { "wisdom": true, "charisma": true } } }] }, "tags": "Type: Feat", "source": { "sourceType": "canon", "book": "Tome of Test Fixtures" }, "isStandard": false },
+    { "name": "Lucky Lantern 2024", "type": "feat", "level": 0, "featureDescription": "Once a day, reroll a d20.", "newEffects": {}, "tags": "Feat: Origin#####2024#####2024 Edition", "source": { "sourceType": "canon", "book": "Tome of Test Fixtures 2024" }, "isStandard": false },
+    { "name": "Fog Fencing", "type": "fightingStyle", "level": 0, "featureDescription": "+1 to hit while lightly obscured.", "newEffects": {}, "tags": "", "source": { "sourceType": "canon" }, "isStandard": false },
+    { "name": "Fogstep", "type": "noLevelFeature", "level": 0, "featureDescription": "A species feature, not a feat.", "newEffects": {}, "tags": "", "source": { "sourceType": "canon" }, "isStandard": false }
+  ],
+  "subclasses": [
+    { "name": "Lantern Knight", "className": "Fighter 2024", "subclassDescription": "Knights who carry the last light.", "source": { "sourceType": "canon", "book": "Tome of Test Fixtures" }, "tags": "", "isStandard": false,
+      "newFeatures": [
+        { "name": "Kindle", "customFeat": { "name": "Kindle", "featureDescription": "Your weapon sheds light.", "level": 3, "type": "leveledFeature" } },
+        { "name": "Bright Ward", "customFeat": { "name": "Bright Ward", "featureDescription": "Allies near your light gain +1 AC.", "level": 7, "type": "leveledFeature" } }
+      ] },
+    { "name": "Path of the Gearwright", "className": "Artificer", "subclassDescription": "For a class the app doesn't have.", "source": { "sourceType": "canon" }, "tags": "", "isStandard": false, "newFeatures": [] }
+  ],
+  "monsters": [
+    { "name": "Bog Hound", "challengeRating": 2, "experiencePoints": 450, "ac": 13, "hp": 33, "hpDice": { "num": 6, "type": 8, "base": 6 }, "movement": { "speed": 40, "swim": 30, "fly": -1, "climb": -1, "burrow": -1 },
+      "stats": { "str": 16, "dex": 14, "con": 12, "int": 3, "wis": 12, "chr": 6 }, "sizes": { "large": true }, "race": "Beast",
+      "monsterTraits": ["Challenge. 2 (450 XP)", "Keen Nose. It has advantage on Perception checks that rely on smell."],
+      "actions": ["Bite. Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 10 (2d6 + 3) piercing damage.", "Howl. Each creature within 30 feet must succeed on a DC 11 Wisdom saving throw or be frightened."],
+      "bonusActions": [], "reactions": [], "legendaryActions": [], "legendaryActionsDescription": "", "source": { "sourceType": "canon", "book": "Tome of Test Fixtures" }, "tags": "Type: Monster", "isStandard": false },
+    { "name": "Reed Wisp", "challengeRating": 0.25, "experiencePoints": 50, "ac": 15, "hp": 7, "movement": { "speed": 0, "fly": 50 }, "stats": { "str": 3, "dex": 18, "con": 10, "int": 8, "wis": 12, "chr": 10 },
+      "sizes": { "tiny": true }, "race": "Fey", "monsterTraits": [],
+      "actions": ["Spark. Ranged Attack Roll: +6, range 30/90 ft. Hit: 5 (1d4 + 3) Lightning damage.", "Flicker. Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: ."],
+      "bonusActions": [], "reactions": [], "legendaryActions": [], "legendaryActionsDescription": "", "source": { "sourceType": "unearthedArcana" }, "tags": "Type: Monster", "isStandard": false }
+  ],
+  "magicItems": [
+    { "name": "Lantern of Long Nights", "rarity": "Uncommon", "type": "Wondrous Item", "itemType": "Wondrous Item", "attunement": true, "additionalInformation": "Requires attunement",
+      "properties": [{ "name": "Long Light", "customFeat": { "name": "Long Light", "featureDescription": "It burns for a week on one candle." } }], "source": { "sourceType": "canon", "book": "Tome of Test Fixtures" }, "tags": "Type: Magic Item", "isStandard": false }
+  ],
+  "classes": [], "weapons": [], "armor": [], "items": [], "invocations": [], "selectionGroup": []
+}

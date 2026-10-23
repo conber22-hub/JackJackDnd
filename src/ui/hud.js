@@ -273,6 +273,14 @@ export function renderFightSetup(){
 }
 /* Which slot to cast with, when there's a choice (higher slots: more dice — engine/spellcast.js). Straight on with
    the only option; otherwise a row of levels. cb(level or null for the lowest). */
+// Read something from the DM's books (or any rules text): the whole of it, in the pick dialog.
+export function readCard(x){
+  const paras = String(x.text || '').split(/\n{2,}/).map(p => `<p>${esc(p).replace(/\n/g, '<br>')}</p>`).join('');
+  $('#pickBox').innerHTML = `<h3>${esc(x.n)}</h3><div class="muted">${esc([x.kind, x.sub].filter(Boolean).join(' · '))}</div><div class="readtext">${paras || '<p class="muted">No text came with it.</p>'}</div>
+    <div class="row"><button class="btn" data-read="close">Close</button></div>`;
+  $('#pickModal').classList.remove('hidden');
+  $('#pickBox').onclick = e => { if (e.target.closest('[data-read]')){ $('#pickModal').classList.add('hidden'); $('#pickBox').onclick = null; } };
+}
 export function pickSlot(t, lvl, name, cb){
   const levels = lvl && t.sustain !== name ? slotLevels(t, lvl) : [];   // a sustained spell used again costs no slot
   if (levels.length <= 1){ cb(null); return; }

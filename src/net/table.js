@@ -24,6 +24,7 @@ import { cheb } from '../util/core.js';
 import { sfx, onSfx } from '../audio/sound.js';
 import { putModel, allModels, deleteModel } from '../render/models.js';
 import { setSender, validAct, receiveAct, dropRequestsFrom } from '../game/requests.js';
+import { tableHash, packForTable, haveTableLibrary, receiveTableLibrary } from '../game/library.js';
 
 export const net = { peer:null, conns:new Map(), knocks:new Map(), host:null, code:null, online:false, hostTries:0, hostTimer:null,
   join:null, status:'idle', tries:0, gen:0, myId:null, everOpen:false, lastSeen:0, retryTimer:null };
@@ -171,6 +172,8 @@ export function sendSheetToOwner(id){
 }
 // Send to whoever sits at this token (a hero's player), if they are at the table.
 export function sendToSeat(tokId, m){ for (const [pid, tid] of Object.entries(state.seats || {})) if (tid === tokId){ const s = net.conns.get(pid); if (s?.conn.open) try { s.conn.send(m); } catch {} } }
+// The DM imported or changed their books: phones at the table ask for the new version.
+export function offerLibrary(){ const hash = tableHash(); if (hash) for (const [, s] of net.conns) if (!s.screen && s.conn.open) try { s.conn.send({ t:'libHash', hash }); } catch {} }
 export function broadcast(m, except){ for (const [pid, s] of net.conns) if (pid !== except && s.conn.open) try { s.conn.send(m); } catch {} }
 let pushTimer = null;
 // Everything a newcomer needs to draw the table: who they are, the art, the 3D models they lack, the state.
@@ -235,7 +238,13 @@ function onHostMsg(c, m){
     c.send({ t:'you', peer:c.peer });
     c.send({ t:'yours', chars:mineAll.length ? charactersOf(seat.name, seat.key).map(sheetForPlayer) : [], quiet:!!m.re });
     welcome(c, m.have);
+    if (tableHash()) c.send({ t:'libHash', hash:tableHash() });   // the DM's books, for their character creator (game/library.js)
     renderPanel(); pushState();
+  }
+  else if (m.t === 'libWant'){   // their phone doesn't have this version of the DM's books yet: once per connection
+    if (seat.libSent === tableHash() || !tableHash()) return;
+    seat.libSent = tableHash();
+    packForTable().then(p => { if (c.open) c.send({ t:'lib', hash:seat.libSent, ...p }); }).catch(() => {});
   }
   else if (m.t === 'pick'){
     const sheet = state.characters[m.id];
@@ -421,6 +430,8 @@ export function onClientMsg(m){
   else if (m.t === 'propfx' && state) animateProp(m.floor, m.id, m.fx);
   else if (m.t === 'anim' && state){ animatePath(m.id, m.path, s => { const t = tokById(m.id); if (t){ t.x = s.x; t.y = s.y; } updateVision(); syncTokens(); }, null, m.id === ui.myToken); }
   else if (m.t === 'you') net.myId = m.peer;
+  else if (m.t === 'libHash'){ if (!ui.screen && m.hash && !haveTableLibrary(m.hash)) sendHost({ t:'libWant' }); }
+  else if (m.t === 'lib' && !ui.screen) receiveTableLibrary(m.hash, m).then(c => { toast(`📚 The DM's books are here: ${c.species} species, ${c.subclasses} subclasses, ${c.feats} feats and ${c.spells} spells for your character.`); renderPanel(); }).catch(() => {});
   else if (m.t === 'yours'){
     // The DM's copies are the real sheets (they may have been levelled or edited at the table): keep them in this browser.
     ui.tableChars = (m.chars || []).map(c => { const local = myHero(c.id); const h = { ...c, portrait:c.portrait || local?.portrait }; if (!h.portrait) delete h.portrait; saveMyHero(h); return h; });

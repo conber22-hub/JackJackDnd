@@ -12,8 +12,9 @@ import { focusTile, focusFloor } from '../render/scene.js';
 import { buildAllFloors, buildFloor } from '../render/floors.js';
 import { syncTokens } from '../render/minis.js';
 import { clearReach, showReach } from '../render/effects.js';
-import { toast, renderAll, renderTop, renderSel, renderDock, renderTabs, openFightSetup, renderFightSetup, pickSlot } from './hud.js';
-import { renderPanel } from './panels.js';
+import { toast, renderAll, renderTop, renderSel, renderDock, renderTabs, openFightSetup, renderFightSetup, pickSlot, readCard } from './hud.js';
+import { renderPanel, libHits } from './panels.js';
+import { importLibrary, setLibraryKinds, removeLibrary, libraryState } from '../game/library.js';
 import { setMode } from './input.js';
 import { select, takeStairs, goFloor, setView, setDread, rebuildFog, doorAction, search, disarmTrap, triggerTrap, selectedDoor, selectedTrap, nearestHero } from '../game/actions.js';
 import { rollInitiative, nextTurn, endCombat, addToInit, applyDamage, heal, infest, useSpecial, removeToken, restoreTaken, leaveFight, delayTurn, autoTurn } from '../game/combat.js';
@@ -23,7 +24,7 @@ import { addCond, removeCond, endConc } from '../game/rules.js';
 import { shiftFloor } from '../game/shift.js';
 import { whimRoll, whimStep } from '../game/whim.js';
 import { changed, exportDelve, importDelve, loadLocal, loadState, deserialize, saveSoon, undo, download, snapshot } from '../game/session.js';
-import { hostTable, closeTable, joinTable, sendHost, broadcast, pushState, net, rejoin, leaveTable, seatPlayer, sendSheetToOwner, savedTable, savedJoin, readInvite, inviteLink, setPeerServer, peerOpts, peerServer } from '../net/table.js';
+import { hostTable, closeTable, joinTable, sendHost, broadcast, pushState, net, rejoin, leaveTable, seatPlayer, sendSheetToOwner, savedTable, savedJoin, readInvite, inviteLink, setPeerServer, peerOpts, peerServer, offerLibrary } from '../net/table.js';
 import { Peer } from 'peerjs';
 import { newDelve, importMap, setAutoLink, removeRoom, populate, clearMonsters, addFloorBelow, removeBottomFloor, randomSeed } from '../game/build.js';
 import { populateFloor } from '../engine/generator.js';
@@ -323,6 +324,9 @@ document.addEventListener('click', e => {
     case 'ntNarrate': narrate($('#ntTitle').value.trim(), $('#ntText').value); break;
     case 'ntClear': clearScreen(); break;
     case 'ntJoin': showJoin(); break;
+    case 'libKind': { const L = libraryState(), ks = new Set(L.mine?.kinds || []); ks.has(k) ? ks.delete(k) : ks.add(k); setLibraryKinds([...ks]).then(() => { offerLibrary(); renderPanel(); }); } break;
+    case 'libRemove': if (confirm('Remove your books from this browser? (The file itself is untouched; you can import it again any time.)')) removeLibrary().then(() => { toast('Your books are no longer in this browser.'); renderPanel(); }); break;
+    case 'libRead': { const x = ui.libHits?.[+k]; if (x) readCard(x); } break;
     case 'ntQr': toggleQr(); break;
     case 'ntQuick': {
       if (k === 'room'){ const r = partyRoom(); if (r) narrate(r.name, r.read); }
@@ -377,6 +381,11 @@ document.addEventListener('change', e => {
   else if (kind === 'floorTheme'){ state.floors[ui.floor].theme = +el.value; buildFloor(ui.floor); renderPanel(); changed(); }
   else if (kind === 'seat'){ seatPlayer(el.dataset.k, el.value || null); renderPanel(); pushState(); }
   else if (kind === 'import' && el.files[0]) importDelve(el.files[0]);
+  else if (kind === 'libImport' && el.files[0]){
+    const f = el.files[0]; el.value = ''; toast(`Reading ${f.name}…`);
+    f.text().then(text => importLibrary(text, f.name)).then(c => { toast(`📚 ${f.name}: ${c.spells} spells, ${c.species} species, ${c.backgrounds} backgrounds, ${c.feats} feats, ${c.subclasses} subclasses, ${c.monsters} creatures and ${c.items} magic items, in this browser.`); offerLibrary(); renderPanel(); })
+      .catch(err => { toast(`Couldn't import that: ${err?.message || err}`); renderPanel(); });
+  }
   else if (kind === 'importMap' && el.files[0]){ const r = new FileReader(); r.onload = () => { $('#importText').value = r.result; toast('File loaded — choose how to import it.'); }; r.readAsText(el.files[0]); }
   else if (kind === 'art' && el.files[0]) loadArt(el.dataset.k, el.files[0]);
   else if (kind === 'addCond' && sel && el.value){ addCond(sel, el.value, -1); changed(); }
@@ -411,6 +420,7 @@ document.addEventListener('input', e => {
   if (['ntText', 'ntTitle', 'ntLine', 'ntNote'].includes(e.target.id)) ui[e.target.id] = e.target.value;
   if (['ntNoteStrahd', 'ntNoteTell'].includes(e.target.id)) ui[e.target.id] = e.target.checked;
   if (e.target.id === 'ntNoteTo') ui.ntNoteTo = e.target.value;   // the Night tab keeps what's being written
+  if (e.target.id === 'libQ'){ ui.libQ = e.target.value; const box = $('#libHits'); if (box) box.innerHTML = libHits(); }
   if (e.target.dataset?.edit === 'gfxVol') setGfx({ volume:+e.target.value });
   if (e.target.id === 'bestSearch'){ ui.bestSearch = e.target.value; const pos = e.target.selectionStart; renderPanel(); const s = $('#bestSearch'); s.focus(); s.setSelectionRange(pos, pos); }
   if (e.target.id === 'ndTemplate' || e.target.id === 'newTemplate'){ const tp = TEMPLATES.find(t => t.id === e.target.value); const b = $(e.target.id === 'ndTemplate' ? '#ndBlurb' : '#newBlurb'); if (b && tp) b.textContent = tp.blurb;

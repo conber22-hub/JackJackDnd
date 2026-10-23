@@ -1,6 +1,6 @@
 /* HEROES — a character sheet (what the creator saves) and everything derived from it: ability scores, AC, HP,
    saves, skills, passive Perception, attacks, spells and the token that goes on the map. Pure: no DOM. */
-import { ABILITIES, CLASSES, SPECIES, BACKGROUNDS, WEAPONS, ARMOR, SPELLS, SUBSPELLS, SKILLS, SLOTS_FULL, SLOTS_HALF, PACT, FEATS, mod, profBonus, MAX_LEVEL } from '../data/srd.js';
+import { ABILITIES, CLASSES, SPECIES, BACKGROUNDS, WEAPONS, ARMOR, SPELLS, SUBSPELLS, SUBCLASSES, SKILLS, SLOTS_FULL, SLOTS_HALF, PACT, FEATS, mod, profBonus, MAX_LEVEL } from '../data/srd.js';
 import { clamp, uid } from '../util/core.js';
 import { heroLook } from './look.js';
 
@@ -10,7 +10,7 @@ const lower = a => a.toLowerCase();
 
 export function newHero(cls = 'Fighter'){
   const C = CLASSES[cls];
-  return { id:uid(), v:1, name:'', player:'', lvl:1, cls, sp:'Human', spOpt:null, bg:'Soldier', bg2:'Str', bg1:'Con',
+  return { id:uid(), v:1, name:'', player:'', lvl:1, cls, sp:'Human', spOpt:null, sub:null, bg:'Soldier', bg2:'Str', bg1:'Con',
     ab:{ ...C.arr }, method:'standard', asi:{}, skills:C.skills[1].slice(0, C.skills[0]), expert:[], extraSkill:'Perception',
     armor:C.armor?.startsWith('heavy') ? 'Chain Mail' : C.armor?.startsWith('medium') ? 'Scale Mail' : C.armor === 'light' || C.armor?.startsWith('light') ? 'Leather' : 'None',
     shield:/shield/.test(C.armor || ''), weapons:cls === 'Fighter' ? ['Longsword', 'Javelin'] : [], style:'Defense', invoc:'Agonizing Blast', spells:[],
@@ -53,7 +53,10 @@ export function heroStats(h){
     else if ((FEATS[p.feat]?.plus || p.feat === 'Other') && p.ab && (!FEATS[p.feat]?.plus || FEATS[p.feat].plus.includes(p.ab))) up(p.ab, 1);
   }
   const M = a => mod(sc[a]);
-  const sub = L >= 3 ? C.sub : null;
+  // the subclass: the class's own (its features are wired into the rules), or one from the DM's books (game/library.js),
+  // which comes at its first feature's level (3 in the 2024 rules; 1 or 2 for some older ones)
+  const libSub = SUBCLASSES[h.cls]?.[h.sub], subAt = libSub ? Math.min(3, ...Object.keys(libSub.features).map(Number)) : 3;
+  const sub = L >= subAt ? (libSub ? h.sub : C.sub) : null;
   // armour class
   const armorName = ARMOR[h.armor] ? h.armor : 'None', arm = ARMOR[armorName];
   let ac = arm.ac + Math.min(M('Dex'), arm.dex);
@@ -74,7 +77,8 @@ export function heroStats(h){
   for (const p of picks) if (p.feat === 'Other' && +p.hp > 0) hp += Math.min(3, +p.hp) * L;   // a written-in feat with hit points (like one that makes you tough)
   hp = Math.max(1, Math.floor(hp));
   // speed
-  let spd = spc.spd;
+  const spSub = spc.subs?.[h.spOpt];   // a subrace from the DM's books
+  let spd = spSub?.spd || spc.spd;
   if (h.cls === 'Barbarian' && L >= 5 && arm.t !== 'heavy') spd += 10;
   if (h.cls === 'Monk' && L >= 2 && armorName === 'None' && !h.shield) spd += L >= 6 ? 15 : 10;
   if (h.cls === 'Ranger' && L >= 6) spd += 10;
@@ -85,6 +89,7 @@ export function heroStats(h){
   const saves = {}; for (const a of ABILITIES) saves[a] = M(a) + (C.sv.includes(a) ? pb : 0);
   const prof = new Set([...(h.skills || []), ...(bg?.skills || [])]);
   if (h.sp === 'Elf') prof.add('Perception');
+  for (const sk of [...(spc.skills || []), ...(spSub?.skills || [])]) prof.add(sk);   // species from the DM's books
   if (h.sp === 'Human' && h.extraSkill) prof.add(h.extraSkill);
   for (const p of picks) if (p.feat === 'Skilled') for (const sk of (p.skills || []).slice(0, 3)) if (SKILLS[sk]) prof.add(sk);
   const expert = new Set((h.expert || []).filter(s => prof.has(s)).slice(0, expertiseSlots(h)));
@@ -97,7 +102,10 @@ export function heroStats(h){
   const slots = C.full ? SLOTS_FULL[L - 1] : C.half ? SLOTS_HALF[L - 1] : null;
   const pact = C.pact ? { n:PACT[L - 1][0], l:PACT[L - 1][1] } : null;
   const features = [];
-  for (let l = 1; l <= L; l++) for (const f of C.features[l] || []) features.push(`${f} (${l})`);
+  for (let l = 1; l <= L; l++){
+    for (const f of C.features[l] || []) if (!libSub || !f.includes(': ')) features.push(`${f} (${l})`);   // a library subclass replaces the built-in one's ("Champion: …")
+    for (const f of libSub?.features[l] || []) features.push(`${f} (${l})`);
+  }
   for (const p of picks) if (p.feat !== 'Ability Score Improvement') features.push(`${p.feat === 'Other' ? (p.name || 'A feat') : p.feat}${p.feat === 'Magic Initiate' && p.list ? ` (${FEATS['Magic Initiate'].lists[p.list]})` : ''} — feat (${p.l})`);
   return { sc, M, pb, ac, hp, spd, dc, spAtk, castAb, init, saves, skills, prof, expert, passive, check, slots, pact, features, sub, L, C, style, styles, picks };
 }
@@ -185,8 +193,8 @@ export function heroResources(h, st = heroStats(h)){
   const f = (id, n, max, rest, use = 'note', text = '', more = {}) => { if (max > 0) out.push({ id, n, max, rest, use, text, ...more }); };
   if (cls === 'Barbarian') f('rage', 'Rage', byLvl(L, [2, 2, 3, 3, 3, 4, 4, 4, 4, 4]), 'short1', 'rage', 'Resistance to bludgeoning, piercing and slashing; extra damage on Strength melee hits. No spells, no concentration.');
   if (cls === 'Bard') f('inspire', 'Bardic Inspiration', Math.max(1, st.M('Cha')), L >= 5 ? 'short' : 'long', 'note', `A creature you can see gets a d${L >= 10 ? 10 : L >= 5 ? 8 : 6} to add to one d20 test in the next hour.`);
-  if (cls === 'Cleric' && L >= 2) f('channel', 'Channel Divinity', L >= 6 ? 3 : 2, 'short1', 'note', `Divine Spark (heal or harm ${L >= 7 ? 2 : 1}d8+${st.M('Wis')}) or Turn Undead (DC ${st.dc} Wis, undead within 30 ft. flee)${L >= 3 ? ' — or Preserve Life' : ''}.`);
-  if (cls === 'Paladin' && L >= 3) f('channel', 'Channel Divinity', 2, 'short1', 'note', `Sacred Weapon (+${Math.max(1, st.M('Cha'))} to hit, the weapon sheds light) or Divine Sense.`);
+  if (cls === 'Cleric' && L >= 2) f('channel', 'Channel Divinity', L >= 6 ? 3 : 2, 'short1', 'note', `Divine Spark (heal or harm ${L >= 7 ? 2 : 1}d8+${st.M('Wis')}) or Turn Undead (DC ${st.dc} Wis, undead within 30 ft. flee)${st.sub === 'Life Domain' ? ' — or Preserve Life' : st.sub ? ` — or ${st.sub}'s own` : ''}.`);
+  if (cls === 'Paladin' && L >= 3) f('channel', 'Channel Divinity', 2, 'short1', 'note', st.sub === 'Oath of Devotion' ? `Sacred Weapon (+${Math.max(1, st.M('Cha'))} to hit, the weapon sheds light) or Divine Sense.` : `Divine Sense, or ${st.sub}'s own Channel Divinity.`);
   if (cls === 'Paladin' && L >= 2) f('smite', 'Paladin\'s Smite', 1, 'long', 'note', 'Cast Divine Smite once without a slot (used first when you cast it).', { free:'Divine Smite' });
   if (cls === 'Paladin') f('lay', 'Lay on Hands', 5 * L, 'long', 'lay', 'Touch a creature: 5 HP from the pool per tap (or 5 points to cure Poisoned).');
   if (cls === 'Druid' && L >= 2) f('wild', 'Wild Shape', L >= 6 ? 3 : 2, 'short1', 'note', 'Take a beast shape for up to an hour (a bonus action).');

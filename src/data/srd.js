@@ -139,6 +139,9 @@ export const INVOCATIONS = ['Agonizing Blast', 'Repelling Blast', 'Armor of Shad
 import { SPELLS as SPELL_LIBRARY } from './srd-spells.js';
 import { TABLE_PLAY } from './spell-play.js';
 export const SPELLS = SPELL_LIBRARY.map(s => TABLE_PLAY[s.n] ? { ...s, ...TABLE_PLAY[s.n] } : s);
+// Subclasses from the DM's own books (engine/library.js), by class: { Fighter:{ 'Name':{ features:{ 3:[…] }, texts, text } } }.
+// Empty in the app itself; game/library.js fills it in each browser that has the library.
+export const SUBCLASSES = {};
 export const SUBSPELLS = {
   'Life Domain':{ 3:['Bless', 'Cure Wounds', 'Aid', 'Lesser Restoration'], 5:['Mass Healing Word', 'Revivify'], 7:['Death Ward', 'Guardian of Faith'], 9:['Mass Cure Wounds', 'Raise Dead'] },
   'Fiend Patron':{ 3:['Burning Hands', 'Command', 'Scorching Ray'], 5:['Fireball'], 7:['Wall of Fire'], 9:['Flame Strike'] },

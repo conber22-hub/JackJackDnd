@@ -18,7 +18,7 @@ export function budgetFor(levels, difficulty = 'moderate', gaze = 1){
    fam: a family id, or 'any'. Bosses and creatures worth nothing are left out. The count stays playable. */
 export function buildEncounter(list, { levels = [1, 1, 1, 1], difficulty = 'moderate', gaze = 1, fam = 'any', rng = Math.random } = {}){
   const budget = budgetFor(levels, difficulty, gaze), maxN = Math.max(2, levels.length * 2);
-  const pool = list.filter(b => !b.tags?.includes('boss') && xpOf(b) > 0 && xpOf(b) <= budget && (fam === 'any' || b.fam === fam));
+  const pool = list.filter(b => !b.tags?.includes('boss') && xpOf(b) > 0 && xpOf(b) <= budget && (fam === 'any' ? b.fam !== 'library' : b.fam === fam));   // 'any' is the campaign's own; the DM's books by choice
   if (!pool.length) return { budget, xp:0, group:[] };
   const weight = b => (b.fam === 'barovia' && gaze >= 4 ? 1 + gaze / 3 : 1);
   const pickW = arr => { const tot = arr.reduce((s, b) => s + weight(b), 0); let r = rng() * tot; for (const b of arr){ r -= weight(b); if (r <= 0) return b; } return arr[arr.length - 1]; };
