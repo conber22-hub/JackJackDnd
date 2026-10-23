@@ -26,7 +26,7 @@ const label = m => {
   const a = tokById(m.id), tg = tokById(m.target);
   const what = m.kind === 'attack' ? a?.attacks?.[m.i]?.n : m.kind === 'cast' ? a?.casts?.[m.i]?.n : a?.resources?.find(r => r.id === m.res)?.n;
   const mode = m.mode === 'adv' ? ' with advantage' : m.mode === 'dis' ? ' with disadvantage' : '';
-  return `<b>${esc(a?.name || '?')}</b> ${m.kind === 'attack' ? 'attacks' : m.kind === 'cast' ? 'casts' : 'uses'} <b>${esc(what || '?')}</b>${m.aim ? ' <span class="muted">(aimed on the map)</span>' : tg && tg.id !== a?.id ? ` → ${esc(tg.name)}` : ''}${mode}${m.d20 ? ` · 🎲 rolled <b>${m.d20}</b>` : ''}`;
+  return `<b>${esc(a?.name || '?')}</b> ${m.kind === 'attack' ? 'attacks' : m.kind === 'cast' ? 'casts' : 'uses'} <b>${esc(what || '?')}</b>${m.aim ? ' <span class="muted">(aimed on the map)</span>' : tg && tg.id !== a?.id ? ` → ${esc(tg.name)}` : ''}${m.at ? ` at level ${m.at}` : ''}${mode}${m.d20 ? ` · 🎲 rolled <b>${m.d20}</b>` : ''}`;
 };
 // Is this a request the seat may make? (its own token, alive, and its turn if there's a fight)
 export function validAct(m, ownsId){
@@ -48,7 +48,8 @@ export function validAct(m, ownsId){
     } else if (tg.id !== a.id && (tokGap(a, tg) > Math.max(1, spellReach(sp)) || coverOf(a, tg).cover === 'total')) return null;
   }
   const d20 = Number.isInteger(m.d20) && m.d20 >= 1 && m.d20 <= 20 ? m.d20 : null;   // a real die they rolled at the table
-  return { kind:m.kind, id:a.id, target:tg.id, i:+m.i || 0, res:m.res, mode:['adv', 'dis'].includes(m.mode) ? m.mode : 'normal', ...(aim ? { aim } : {}), ...(d20 ? { d20 } : {}) };
+  const at = Number.isInteger(m.at) && m.at >= 1 && m.at <= 9 ? m.at : null;          // the slot level they chose
+  return { kind:m.kind, id:a.id, target:tg.id, i:+m.i || 0, res:m.res, mode:['adv', 'dis'].includes(m.mode) ? m.mode : 'normal', ...(aim ? { aim } : {}), ...(d20 ? { d20 } : {}), ...(at ? { at } : {}) };
 }
 export function receiveAct(m, peer, who, deny){
   if (state.campaign?.freeRolls){ if (!runAct(m)) deny('That could not be done (no slot or charge left?).'); return; }
@@ -57,8 +58,8 @@ export function receiveAct(m, peer, who, deny){
 }
 export function runAct(m, mode = m.mode){
   const a = tokById(m.id); if (!a) return false;
-  if (m.kind === 'attack') return doAttack(m.id, m.target, m.i, mode, { d20:m.d20 });
-  if (m.kind === 'cast') return castSpell(m.id, m.target, m.i, m.aim || null);
+  if (m.kind === 'attack') return doAttack(m.id, m.target, m.i, mode, { d20:m.d20, at:m.at });
+  if (m.kind === 'cast') return castSpell(m.id, m.target, m.i, m.aim || null, { at:m.at });
   if (m.kind === 'feat') return useFeature(a, m.res, tokById(m.target) || a);
   return false;
 }

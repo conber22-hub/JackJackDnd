@@ -10,7 +10,9 @@ import { burst, showReach, clearReach, flashArea } from '../render/effects.js';
 import { showCard, toast, banner, sendWhisper } from '../ui/hud.js';
 import { WHISPERS } from '../data/dread.js';
 import { sfx } from '../audio/sound.js';
-import { currentTurn, addCond, tickConds, hasCond, saveBonus, stopped } from './rules.js';
+import { currentTurn, addCond, tickConds, hasCond, saveBonus, stopped, startConc, endConc } from './rules.js';
+import { diceAt, upRays, concDC } from '../engine/spellcast.js';
+import { SPELLS } from '../data/srd.js';
 import { freshTurn, clearOpportunities, closeInMove, pausedMover } from './moves.js';
 import { rangeCheck, coverOf, areaOf, areaSquares, caughtIn, coverFromOrigin, spellReach } from '../engine/targeting.js';
 import { tokGap as gapTo, bestMelee } from '../engine/movement.js';
@@ -142,6 +144,9 @@ export function startTurn(){
   broadcast({ t:'banner', text:t.kind === 'monster' && !partySees(t) ? 'Something unseen acts…' : `${t.name}'s turn` });
 }
 
+// A spell from the library by name (the hero's cast or attack carries the name).
+const spellInfo = n => SPELLS.find(s => s.n === String(n || '').replace(/ \(×.*\)$/, '')) || null;
+
 // The Dread Zone acts between rounds.
 function endOfRound(){
   log(`— Round ${state.combat.round} —`);
@@ -169,10 +174,15 @@ function animate(id, kind, target){ actOn(id, kind, target); broadcast({ t:'act'
 /* ---------- attacks & saves ---------- */
 const nearSeep = (tg, a) => state.tokens.some(o => o.id !== a.id && o.id !== tg.id && !o.dead && o.floor === tg.floor && hasTag(o, 'seep') && cheb(o.x, o.y, tg.x, tg.y) <= 1);
 // d20: a die rolled at the table (real dice, game/night.js) — used as the attack's d20 (the first, for rays).
-export function doAttack(aId, tId, i, mode = 'normal', { d20 = null } = {}){
-  const a = tokById(aId), tg = tokById(tId), atk = a?.attacks?.[i]; if (!a || !tg || !atk) return false;
-  const slot = spendSpell(a, atk.l, atk.sn || atk.n, !!atk.again);
-  if (slot === null){ toast(`${a.name} has no spell slot left for ${atk.n}.`); return false; }
+export function doAttack(aId, tId, i, mode = 'normal', { d20 = null, at = null } = {}){
+  const a = tokById(aId), tg = tokById(tId), atk0 = a?.attacks?.[i]; if (!a || !tg || !atk0) return false;
+  const reuse = !!atk0.again && a.sustain === (atk0.sn || atk0.n);   // a sustained spell, used again: not a fresh casting
+  const slot = spendSpell(a, atk0.l, atk0.sn || atk0.n, !!atk0.again, at);
+  if (slot === null){ toast(`${a.name} has no spell slot left for ${atk0.n}.`); return false; }
+  // a spell attack cast with a higher slot: more dice, or more rays (engine/spellcast.js); some need Concentration
+  const lib = atk0.l ? spellInfo(atk0.sn || atk0.n) : null, level = !atk0.l ? 0 : slot === '' ? Math.max(atk0.l, at || 0) : (a.castAt || atk0.l), extra = level - (atk0.l || 0);
+  const atk = extra > 0 ? { ...atk0, ...(upRays(lib) ? { rays:(atk0.rays || 1) + extra } : { d:diceAt({ ...lib, d:atk0.d }, level) }) } : atk0;
+  if (lib?.conc && !reuse) startConc(a, lib.n);
   const b = BEST[a.bid], D = dreadLevel();
   let adv = mode === 'adv', dis = mode === 'dis';
   const why = [];
@@ -208,7 +218,8 @@ export function doAttack(aId, tId, i, mode = 'normal', { d20 = null } = {}){
   const die = { n:rolls[0]?.r, crit:rolls[0]?.crit, hit:rolls[0]?.hit };   // the TV spins a d20 to it (ui/screen.js)
   const flair = (atk.f || '{A} strikes at {T}.').replace(/\{A\}/g, a.name).replace(/\{T\}/g, tg.name);
   if (why.length) lines.push(`<span class="muted">${esc(why.join(' · '))}</span>`);
-  if (slot) lines.push(`<span class="muted">${esc(slot)}</span>`);
+  if (slot) lines.push(`<span class="muted">${esc(slot)}${extra > 0 ? ` · cast at level ${level}` : ''}</span>`);
+  if (lib?.conc) lines.push(`<span class="muted">🌀 ${esc(a.name)} is concentrating on it</span>`);
   if (hits.length && rage) lines.push(`<span class="muted">+${rage} rage</span>`);
   if (hits.length && halved) lines.push(`<span class="muted">halved — ${esc(tg.name)} is raging</span>`);
   if (isHis(a) && D.hit) lines.push(`<span class="muted">+${D.hit} to hit under his Gaze (${state.dread})</span>`);
@@ -239,6 +250,14 @@ export function applyDamage(t, n, type = '', by = null, halvedAlready = false){
     if (hooks){ showCard({ kind:'seep', title:`${t.name} is bloodied`, flair:'Something changes in the way it holds itself.' }); for (const fx of hooks) runFx(t, fx); }
   }
   if (t.hp <= 0){ kill(t, type, by); setTimeout(checkVictory, 600); }
+  if (t.conc){
+    if (t.dead) endConc(t, 'goes down');
+    else {   // a Constitution save to keep hold of it: DC 10 or half the damage (2024 rules)
+      const dc = concDC(n), r = d(20), tot = r + saveBonus(t, 'con'), held = tot >= dc;
+      showCard({ kind:held ? '' : 'miss', title:`${t.name} ${held ? 'holds on' : 'loses concentration'}`, sub:`${t.conc.n} · Constitution save DC ${dc}`, lines:[`d20 <b>${r}</b> ${signed(tot - r)} = <b>${tot}</b>`] });
+      if (!held) endConc(t, 'loses concentration');
+    }
+  }
 }
 export function heal(t, n){
   t.hp = Math.min(t.maxHp, t.hp + n);
@@ -422,14 +441,19 @@ export function runFx(src, fx, quiet){
 /* ---------- heroes' spells (from the character creator) ---------- */
 // targetId: the creature tapped (single-target spells, heals, buffs). aim: { x, y } — the square an area spell is
 // centred on or pointed at (when it isn't given, the creature tapped is the aim).
-export function castSpell(casterId, targetId, i, aim = null){
-  const c = tokById(casterId), sp = c?.casts?.[i], area = sp && areaOf(sp);
-  const tg = tokById(targetId) || (area && aim ? c : null); if (!c || !tg || !sp) return false;
-  if (sp.k === 'heal' && tg.dead && tg.kind === 'monster'){ toast(`${tg.name} is beyond healing.`); return false; }
-  const slot = spendSpell(c, sp.l, sp.n, !!sp.again);
+// at: the slot level to cast it with (upcasting: more dice from the spell's higher-level rule, engine/spellcast.js).
+export function castSpell(casterId, targetId, i, aim = null, { at = null } = {}){
+  const c = tokById(casterId), base0 = c?.casts?.[i], area = base0 && areaOf(base0);
+  const tg = tokById(targetId) || (area && aim ? c : null); if (!c || !tg || !base0) return false;
+  if (base0.k === 'heal' && tg.dead && tg.kind === 'monster'){ toast(`${tg.name} is beyond healing.`); return false; }
+  const reuse = !!base0.again && c.sustain === base0.n;   // a sustained spell, used again: not a fresh casting
+  const slot = spendSpell(c, base0.l, base0.n, !!base0.again, at);
   if (slot !== null) c.lastMove = null;
-  if (slot === null){ toast(`${c.name} has no spell slot left for ${sp.n}.`); return false; }
-  const paid = slot ? [`<span class="muted">${esc(slot)}</span>`] : [];
+  if (slot === null){ toast(`${c.name} has no spell slot left for ${base0.n}.`); return false; }
+  const lib = spellInfo(base0.n), level = !base0.l ? 0 : slot === '' ? Math.max(base0.l, at || 0) : (c.castAt || base0.l);
+  const sp = { ...base0, d:base0.d && diceAt({ ...base0, hl:lib?.hl, up:base0.up || lib?.up }, level) }, conc = !!(base0.conc || lib?.conc);
+  if (conc && base0.l && !reuse) startConc(c, base0.n);
+  const paid = [...(slot ? [`<span class="muted">${esc(slot)}${level > base0.l ? ` · cast at level ${level}${sp.d !== base0.d ? ` (${esc(sp.d)})` : ''}` : ''}</span>`] : []), ...(conc && base0.l ? [`<span class="muted">🌀 ${esc(c.name)} is concentrating on it</span>`] : [])];
   sfx('roll'); animate(c.id, 'cast', tg.id !== c.id ? tg.id : null);
   if (sp.k === 'heal'){
     // Mass Healing Word / Mass Cure Wounds: up to six of the caster's side around the creature tapped, each rolled
@@ -466,7 +490,7 @@ export function castSpell(casterId, targetId, i, aim = null){
     const cv = area && sp.sv === 'dex' ? coverFromOrigin(c.floor, origin, t) : null, cb = cv && cv.cover !== 'total' ? cv.ac : 0;
     const r = d(20) + saveBonus(t, sp.sv) + cb, ok = r >= sp.dc, dmg = base ? (ok ? (sp.half ? Math.floor(base / 2) : 0) : base) : 0;
     lines.push(`${esc(t.name)} — ${String(sp.sv).toUpperCase()} ${r}${cb ? ` <span class="muted">(+${cb} cover)</span>` : ''} vs ${sp.dc}: <b>${ok ? 'saved' : 'failed'}</b>${dmg ? ` → ${dmg} ${sp.ty}` : ''}${!ok && sp.cond ? ` + ${sp.cond}` : ''}`);
-    if (!ok && sp.cond && CONDITIONS[sp.cond]) addCond(t, sp.cond, 1, null);
+    if (!ok && sp.cond && CONDITIONS[sp.cond]) addCond(t, sp.cond, conc ? -1 : 1, conc ? `conc:${c.id}` : null);   // a concentration spell's hold lasts until it ends
     if (dmg) applyDamage(t, dmg, sp.ty, c);
   }
   if (!targets.length) lines.push('<span class="muted">No one is caught in it.</span>');

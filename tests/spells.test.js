@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { SPELLS as reexported } from '../src/data/srd.js';
+import { TABLE_PLAY } from '../src/data/spell-play.js';
 import { SPELLS, SRD_SPELLS } from '../src/data/srd-spells.js';
 import { EXTRA_SPELLS } from '../src/data/extra-spells.js';
 import { FLOOD_SPELLS } from '../src/data/flood-spells.js';
@@ -21,7 +22,9 @@ test('every official SRD 5.2.1 spell is present with its level, school and class
   const identity = ({ n, l, c, school }) => ({ n, l, c, school });
   assert.deepEqual(byName(SRD_SPELLS.map(identity)), byName(index.map(identity)));
   assert.ok(SRD_SPELLS.every(s => s.src === 'SRD 5.2.1' && !s.homebrew));
-  assert.strictEqual(reexported, SPELLS);
+  // srd.js hands the app the same library, in the same order, with the table's combat fields on top (spell-play.js)
+  assert.deepEqual(reexported.map(s => s.n), SPELLS.map(s => s.n));
+  assert.ok(reexported.every((s, i) => s === SPELLS[i] || TABLE_PLAY[s.n]));
   assert.deepEqual(SPELLS, [...SRD_SPELLS, ...EXTRA_SPELLS, ...FLOOD_SPELLS]);
 });
 
@@ -94,7 +97,8 @@ test('unsupported effects stay manual instead of applying invented conditions or
   const fireball = castables(h).find(s => s.n === 'Fireball');
   assert.deepEqual([fireball.d, fireball.sv, fireball.half, fireball.r, fireball.area],
     ['8d6', 'dex', true, 150, ['sphere', 20]]);
-  assert.equal(castables(h).find(s => s.n === 'Sleep').k, 'util');
+  // at the table (spell-play.js) Sleep is a Wisdom save against Incapacitated; the data layer above stays manual
+  assert.deepEqual((({ k, sv, cond }) => ({ k, sv, cond }))(castables(h).find(s => s.n === 'Sleep')), { k:'save', sv:'wis', cond:'incapacitated' });
   assert.ok(spellPool(h).some(s => s.n === 'Find Familiar'));
   const paladin = newHero('Paladin'); paladin.lvl = 2;
   assert.equal(castables(paladin).find(s => s.n === 'Divine Smite').smite, 1);
@@ -111,4 +115,18 @@ test('supplemental spells survive the move and original Flood spells are clearly
   const cyst = castables(h).find(s => s.n === 'Cyst Rupture');
   assert.deepEqual([cyst.d, cyst.ty, cyst.sv, cyst.half], ['3d6', 'acid', 'dex', true]);
   assert.match(castables(h).find(s => s.n === 'Synapse Sever').note, /collective/);
+});
+
+test('at the table, the spells heroes cast most roll their dice; the DM\'s calls stay manual', () => {
+  const play = n => { const s = reexported.find(s => s.n === n); assert.ok(s, n); return s; };
+  for (const [n, k] of [['Magic Missile', 'auto'], ['Hold Person', 'save'], ['Spirit Guardians', 'save'], ['Moonbeam', 'save'], ['Spiritual Weapon', 'atk'],
+    ['Toll the Dead', 'save'], ['Web', 'save'], ['Fear', 'save'], ['Flame Strike', 'save'], ['Hold Monster', 'save'], ['Charm Person', 'save']]) assert.equal(play(n).k, k, n);
+  for (const n of ['Bane', 'Command', 'Heal', 'Meteor Swarm', 'Power Word Kill', 'Sorcerous Burst']) assert.equal(play(n).k, 'util', n);
+  for (const [n, s] of Object.entries(TABLE_PLAY)){
+    assert.ok(SPELLS.some(x => x.n === n), `${n} is in the library`);
+    assert.ok(s.k !== 'util', `${n}: an override that changes nothing`);
+    if (s.k === 'save') assert.match(s.sv, /^(str|dex|con|int|wis|cha)$/, n);
+    if (s.area) assert.ok(['sphere', 'cube', 'cone', 'line', 'cylinder', 'aura'].includes(s.area[0]), n);
+    if (s.cond) assert.ok(s.cond === s.cond.toLowerCase(), n);
+  }
 });

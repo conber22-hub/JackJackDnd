@@ -34,12 +34,20 @@ export function slotFor(t, lvl){
 // Returns null when nothing is left to cast it with, else a note for the card.
 // again: a sustained spell (Spiritual Weapon, Moonbeam…) — using it again on a later turn costs nothing.
 const freeFor = (t, name) => (t.resources || []).find(r => r.free && name.startsWith(r.free) && left(t, r.id) > 0);
-export function spendSpell(t, lvl, name = '', again = false){
+// The slot that would pay for a spell: the one at level `at` if asked for (upcasting), else the lowest that will do.
+export function slotToUse(t, lvl, at = null){
+  if (at && at > lvl){ const r = (t.resources || []).filter(r => r.slot === at && left(t, r.id) > 0).sort((a, b) => (a.id === 'pact') - (b.id === 'pact'))[0]; if (r) return r; }
+  return slotFor(t, lvl);
+}
+// The slot levels a hero could cast a spell of this level with right now (for "cast it at level…").
+export const slotLevels = (t, lvl) => [...new Set((t.resources || []).filter(r => r.slot >= lvl && left(t, r.id) > 0).map(r => r.slot))].sort((a, b) => a - b);
+export function spendSpell(t, lvl, name = '', again = false, at = null){
   if (!lvl || !t.resources) return '';
   if (again && t.sustain === name) return `${name} is still going — no new slot`;
-  const fr = freeFor(t, name);
+  const fr = !at || at <= lvl ? freeFor(t, name) : null;   // a free casting is at the spell's own level
   const note = fr ? (t.res[fr.id]--, `${fr.n.replace(/ \(.*\)$/, '')} — no slot (${t.res[fr.id]} left)`) : null;
-  if (!fr){ const r = slotFor(t, lvl); if (!r) return null; t.res[r.id]--; if (again) t.sustain = name; return `${r.id === 'pact' ? 'pact' : `level ${r.slot}`} slot · ${t.res[r.id]} left`; }
+  if (!fr){ const r = slotToUse(t, lvl, at); if (!r) return null; t.res[r.id]--; t.castAt = r.slot; if (again) t.sustain = name; return `${r.id === 'pact' ? `pact (level ${r.slot})` : `level ${r.slot}`} slot · ${t.res[r.id]} left`; }
+  t.castAt = lvl;
   if (again) t.sustain = name;
   return note;
 }

@@ -11,11 +11,14 @@ import { askD20 } from '../game/night.js';
 import { canCast, left } from '../game/resources.js';
 import { requestMove } from '../game/actions.js';
 import { currentTurn } from '../game/rules.js';
+import { pickSlot } from './hud.js';
+import { keepAwake } from '../util/wake.js';
 
 const KEY = 'dreaddelve.cardonly';
 export function setCardOnly(on){
   ui.cardOnly = !!on; try { localStorage.setItem(KEY, on ? '1' : ''); } catch {}
   document.body.classList.toggle('cardonly', ui.cardOnly);
+  keepAwake(ui.cardOnly);   // the card is the player's sheet for the night: it shouldn't lock between turns
 }
 export function initCardOnly(){ let on = false; try { on = !!localStorage.getItem(KEY); } catch {} if (on) setCardOnly(true); }
 
@@ -37,18 +40,21 @@ export function cardAct(kind, i, res){
   const t = me(); if (!t) return;
   if (kind === 'atk'){
     const a = t.attacks[i]; if (!a) return;
-    pick(`${a.n} — at whom?`, targets(t, o => rangeCheck(t, o, a).ok && coverOf(t, o).cover !== 'total'), tg => {
-      const send = d20 => requestAct({ kind:'attack', id:t.id, i, target:tg.id, mode:ui.atkMode, ...(d20 ? { d20 } : {}) });
+    pickSlot(t, a.l, a.sn || a.n, at => pick(`${a.n} — at whom?`, targets(t, o => rangeCheck(t, o, a).ok && coverOf(t, o).cover !== 'total'), tg => {
+      const send = d20 => requestAct({ kind:'attack', id:t.id, i, target:tg.id, mode:ui.atkMode, ...(d20 ? { d20 } : {}), ...(at ? { at } : {}) });
       if (state.realDice) askD20(`${t.name}: ${a.n} → ${tg.name}`, send); else send(null);
       ui.atkMode = 'normal';
-    });
+    }));
   } else if (kind === 'cast'){
     const sp = t.casts[i]; if (!sp) return;
     const area = areaOf(sp), heal = sp.k === 'heal' || sp.k === 'buff';
-    if (area && area.shape === 'aura'){ requestAct({ kind:'cast', id:t.id, i, target:t.id, aim:{ x:t.x, y:t.y } }); return; }
-    const ok = o => area ? areaSquares(t, area, { x:o.x, y:o.y }).ok : o.id === t.id || (tokGap(t, o) <= Math.max(1, spellReach(sp)) && coverOf(t, o).cover !== 'total');
-    pick(`${sp.n} — ${area ? 'centred on whom?' : heal ? 'on whom?' : 'at whom?'}`, targets(t, ok, !heal), tg =>
-      requestAct({ kind:'cast', id:t.id, i, target:tg.id, ...(area ? { aim:{ x:tg.x, y:tg.y } } : {}) }));
+    pickSlot(t, sp.l, sp.n, at => {
+      const lv = at ? { at } : {};
+      if (area && area.shape === 'aura'){ requestAct({ kind:'cast', id:t.id, i, target:t.id, aim:{ x:t.x, y:t.y }, ...lv }); return; }
+      const ok = o => area ? areaSquares(t, area, { x:o.x, y:o.y }).ok : o.id === t.id || (tokGap(t, o) <= Math.max(1, spellReach(sp)) && coverOf(t, o).cover !== 'total');
+      pick(`${sp.n} — ${area ? 'centred on whom?' : heal ? 'on whom?' : 'at whom?'}`, targets(t, ok, !heal), tg =>
+        requestAct({ kind:'cast', id:t.id, i, target:tg.id, ...(area ? { aim:{ x:tg.x, y:tg.y } } : {}), ...lv }));
+    });
   } else if (kind === 'feat'){
     const r = t.resources?.find(r => r.id === res); if (!r) return;
     if (r.use === 'lay') pick(`${r.n} — who?`, targets(t, o => cheb(t.x, t.y, o.x, o.y) <= 1, false), tg => requestAct({ kind:'feat', id:t.id, res, target:tg.id }));

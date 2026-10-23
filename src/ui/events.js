@@ -12,14 +12,14 @@ import { focusTile, focusFloor } from '../render/scene.js';
 import { buildAllFloors, buildFloor } from '../render/floors.js';
 import { syncTokens } from '../render/minis.js';
 import { clearReach, showReach } from '../render/effects.js';
-import { toast, renderAll, renderTop, renderSel, renderDock, renderTabs, openFightSetup, renderFightSetup } from './hud.js';
+import { toast, renderAll, renderTop, renderSel, renderDock, renderTabs, openFightSetup, renderFightSetup, pickSlot } from './hud.js';
 import { renderPanel } from './panels.js';
 import { setMode } from './input.js';
 import { select, takeStairs, goFloor, setView, setDread, rebuildFog, doorAction, search, disarmTrap, triggerTrap, selectedDoor, selectedTrap, nearestHero } from '../game/actions.js';
 import { rollInitiative, nextTurn, endCombat, addToInit, applyDamage, heal, infest, useSpecial, removeToken, restoreTaken, leaveFight, delayTurn, autoTurn } from '../game/combat.js';
 import { fightCandidates } from '../engine/fight.js';
 import { currentTurn } from '../game/rules.js';
-import { addCond, removeCond } from '../game/rules.js';
+import { addCond, removeCond, endConc } from '../game/rules.js';
 import { shiftFloor } from '../game/shift.js';
 import { whimRoll, whimStep } from '../game/whim.js';
 import { changed, exportDelve, importDelve, loadLocal, loadState, deserialize, saveSoon, undo, download, snapshot } from '../game/session.js';
@@ -35,7 +35,7 @@ import { goToMap, returnToParty, forgetMap } from '../game/maps.js';
 import { setCardOnly, cardAct, cardStep } from './cards.js';
 import { askTable, answerAsk, revealAsk, cancelAsk, clearAsk, currentAsk } from '../game/asks.js';
 import { passNote, recapText } from '../game/night.js';
-import { openScreenWindow, setMode as nightMode, setFollow, sendLook, narrate, clearScreen, partyRoom, introduce, reshowHandout, setTimer, showHandout } from '../game/night.js';
+import { openScreenWindow, setMode as nightMode, setFollow, sendLook, narrate, clearScreen, showJoin, toggleQr, partyRoom, introduce, reshowHandout, setTimer, showHandout } from '../game/night.js';
 import { valleyMapHTML } from './valley.js';
 import { makeCamp } from '../game/overworld.js';
 import { valley, travel, arrive, enterPlace, readEvent, springEvent, doneEvent, newRoadEvent, goToEvent } from '../game/overworld.js';
@@ -73,7 +73,9 @@ document.addEventListener('click', e => {
       else propAction(ui.role === 'player' ? tokById(ui.myToken) : actorFor(L, p), L, p.id, k); } break;
     case 'focus': { const t = sel || tokById(ui.myToken); if (t) focusTile(t.floor, t.x, t.y); else focusFloor(); } break;
     case 'atkMode': ui.atkMode = { normal:'adv', adv:'dis', dis:'normal' }[ui.atkMode]; renderSel(); break;
-    case 'atk': if (sel) setMode('attack', { attacker:sel.id, i:+el.dataset.i }, `${sel.name}: ${sel.attacks[+el.dataset.i].n}${ui.atkMode !== 'normal' ? ` (${ui.atkMode})` : ''} — tap the target (the shading is its reach)`); break;
+    case 'atk': if (sel){ const a = sel.attacks[+el.dataset.i], i = +el.dataset.i, who = sel;
+      pickSlot(who, a?.l, a?.sn || a?.n, at => setMode('attack', { attacker:who.id, i, at }, `${who.name}: ${a.n}${at ? ` (level ${at})` : ''}${ui.atkMode !== 'normal' ? ` (${ui.atkMode})` : ''} — tap the target (the shading is its reach)`)); } break;
+    case 'dropConc': { const t = ui.role === 'player' ? tokById(ui.myToken) : sel; if (!t?.conc) break; if (ui.role === 'player') sendHost({ t:'dropConc' }); else { endConc(t, 'lets go'); changed(); } } break;
     case 'special': if (sel) useSpecial(sel, BEST[sel.bid].specials[+el.dataset.i]); break;
     case 'feat': if (sel){
       const r = sel.resources?.find(r => r.id === k); if (!r) break;
@@ -101,9 +103,9 @@ document.addEventListener('click', e => {
     case 'shortRest': shortRest(); break;
     case 'longRest': longRest(); break;
     case 'freeRolls': state.campaign.freeRolls = !state.campaign.freeRolls; changed(); renderPanel(); break;
-    case 'cast': if (sel){ const sp = sel.casts[+el.dataset.i], ar = sp.area?.[0];
+    case 'cast': if (sel){ const sp = sel.casts[+el.dataset.i], ar = sp.area?.[0], i = +el.dataset.i, who = sel;
       const how = sp.k === 'heal' ? 'tap who to heal' : ar === 'aura' ? 'tap anywhere to cast it around them' : ar && !sp.r ? 'point it, then tap (tap twice on a phone)' : ar ? 'tap where it lands (twice on a phone)' : 'tap the target';
-      setMode('cast', { caster:sel.id, i:+el.dataset.i }, `${sel.name}: ${sp.n} — ${how}`); } break;
+      pickSlot(who, sp.l, sp.n, at => setMode('cast', { caster:who.id, i, at }, `${who.name}: ${sp.n}${at ? ` (level ${at})` : ''} — ${how}`)); } break;
     case 'dmg': if (sel){ const n = +$('#hpAmt').value || 0; applyDamage(sel, n, 'manual'); changed(); } break;
     case 'heal': if (sel){ heal(sel, +$('#hpAmt').value || 0); changed(); } break;
     case 'rmCond': if (sel){ removeCond(sel, k); changed(); } break;
@@ -320,6 +322,8 @@ document.addEventListener('click', e => {
     case 'ntLook': sendLook(); break;
     case 'ntNarrate': narrate($('#ntTitle').value.trim(), $('#ntText').value); break;
     case 'ntClear': clearScreen(); break;
+    case 'ntJoin': showJoin(); break;
+    case 'ntQr': toggleQr(); break;
     case 'ntQuick': {
       if (k === 'room'){ const r = partyRoom(); if (r) narrate(r.name, r.read); }
       else if (k === 'open'){ const se = sessionById(state.campaign.session); if (se) narrate(`Session ${se.n} — ${se.title}`, se.open); }

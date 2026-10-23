@@ -1,0 +1,16 @@
+{
+  "name": "Dread Delve — Curse of Strahd",
+  "short_name": "Dread Delve",
+  "description": "A 3D tabletop for Curse of Strahd: Flood Edition. The DM's table, the players' heroes, the TV screen.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#09080d",
+  "theme_color": "#09080d",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

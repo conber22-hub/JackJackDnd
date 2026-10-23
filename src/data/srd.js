@@ -134,7 +134,11 @@ export const STYLES = { Archery:'+2 to ranged weapon attacks', Defense:'+1 AC wh
 export const INVOCATIONS = ['Agonizing Blast', 'Repelling Blast', 'Armor of Shadows', 'Devil\'s Sight', 'Eldritch Mind'];
 
 // Full spell library (SRD 5.2.1 plus separately labelled supplemental and Flood homebrew spells).
-export { SPELLS } from './srd-spells.js';
+// The spell library: the SRD data as generated (srd-spells.js) with the combat fields the table rolls with on top
+// (spell-play.js: Magic Missile, Hold Person, Spirit Guardians… which the import left to the DM).
+import { SPELLS as SPELL_LIBRARY } from './srd-spells.js';
+import { TABLE_PLAY } from './spell-play.js';
+export const SPELLS = SPELL_LIBRARY.map(s => TABLE_PLAY[s.n] ? { ...s, ...TABLE_PLAY[s.n] } : s);
 export const SUBSPELLS = {
   'Life Domain':{ 3:['Bless', 'Cure Wounds', 'Aid', 'Lesser Restoration'], 5:['Mass Healing Word', 'Revivify'], 7:['Death Ward', 'Guardian of Faith'], 9:['Mass Cure Wounds', 'Raise Dead'] },
   'Fiend Patron':{ 3:['Burning Hands', 'Command', 'Scorching Ray'], 5:['Fireball'], 7:['Wall of Fire'], 9:['Flame Strike'] },

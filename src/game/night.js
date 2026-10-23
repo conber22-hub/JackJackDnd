@@ -5,7 +5,7 @@
 import { state, ui, tokById, log } from '../engine/state.js';
 import { $, esc } from '../util/core.js';
 import { camera, controls } from '../render/scene.js';
-import { toScreens, screens, sendToSeat } from '../net/table.js';
+import { toScreens, screens, sendToSeat, inviteLink, net } from '../net/table.js';
 import { setStage, portrait, portraitOfObject } from '../render/forge/studio.js';
 import { buildFigure, forgeLook } from '../render/minis.js';
 import { toast } from '../ui/hud.js';
@@ -27,6 +27,9 @@ export const screenLink = code => { const u = new URL(location.href.split('#')[0
 const over = m => { N.over = m.off ? null : m; toScreens(m); changed(); };
 export function narrate(title, text){ if (!String(text || '').trim()) { toast('Nothing to read yet.'); return; } over({ t:'narrate', title, text }); }
 export function clearScreen(){ over({ t:'narrate', off:true }); }
+// The join card: the table's code and the invite as a QR, big on the TV, for players to scan as they sit down.
+export function showJoin(){ if (!net.code){ toast('Open the table first (Table tab).'); return; } over({ t:'joinCard', code:net.code, url:inviteLink() }); }
+export function toggleQr(){ N.qr = !N.qr; changed(); }
 export function setMode(mode){ N.mode = mode; if (mode !== 'dark') N.over = null; toScreens({ t:'scMode', mode }); changed(); }
 export function setFollow(on){ N.follow = on; toScreens({ t:'scFollow', on }); changed(); }
 export function setTimer(secs){ N.timer = secs; toScreens({ t:'timer', secs }); changed(); }

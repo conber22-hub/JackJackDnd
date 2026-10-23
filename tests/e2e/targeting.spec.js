@@ -66,3 +66,38 @@ test('on a touch screen an area is placed with the first tap and cast with the s
     expect(errors).toEqual([]);
   } finally { await context.close(); }
 });
+
+test('a higher slot makes Fireball hotter, and a held spell breaks when its caster fails to hold on', async ({ page }) => {
+  await range(page);
+  await page.evaluate(() => {
+    const D = window.DreadDelve, ada = D.get().tokens.find(t => t.name === 'Ada');
+    ada.resources = [{ id:'s3', n:'Level 3 slots', slot:3, max:1 }, { id:'s5', n:'Level 5 slots', slot:5, max:1 }];
+    ada.res = { s3:1, s5:1 };
+    ada.casts.push({ n:'Hold Person', k:'save', l:2, sv:'wis', dc:30, cond:'paralyzed', conc:true, r:60 });
+  });
+  await selectHero(page);
+  await page.locator('#selCard [data-act="cast"][data-i="0"]').click();
+  await expect(page.locator('#pickBox')).toContainText('Cast it with which slot?');
+  await page.locator('#pickBox [data-slot="5"]').click();
+  const p = await hover(page, 12, 13);
+  await page.mouse.click(p.x + 2, p.y + 1);
+  await expect(page.locator('#cardLayer .pop').last()).toContainText('cast at level 5 (10d6)');
+  expect(await page.evaluate(() => window.DreadDelve.get().tokens.find(t => t.name === 'Ada').res)).toEqual({ s3:1, s5:0 });
+
+  // Hold Person (DC 30: it lands) paralyzes the zombie in the open while Ada concentrates
+  const held = await page.evaluate(() => {
+    const D = window.DreadDelve, s = D.get(), ada = s.tokens.find(t => t.name === 'Ada'), z = s.tokens.find(t => t.name === 'Zombie 2');
+    D.castSpell(ada.id, z.id, 2);
+    return { conc:ada.conc?.n, conds:z.conds.map(c => c.n) };
+  });
+  expect(held).toEqual({ conc:'Hold Person', conds:['paralyzed'] });
+  await expect(page.locator('#selCard')).toContainText('🌀 Hold Person');
+  // 70 damage: a DC 30 Constitution save she can't make, so the zombie is free again
+  const after = await page.evaluate(() => {
+    const D = window.DreadDelve, s = D.get(), ada = s.tokens.find(t => t.name === 'Ada'), z = s.tokens.find(t => t.name === 'Zombie 2');
+    ada.hp = ada.maxHp = 200; D.applyDamage(ada, 70, 'fire');
+    return { conc:ada.conc || null, conds:z.conds.map(c => c.n) };
+  });
+  expect(after).toEqual({ conc:null, conds:[] });
+  await expect(page.locator('#cardLayer')).toContainText('Ada loses concentration');
+});

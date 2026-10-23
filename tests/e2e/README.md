@@ -50,3 +50,9 @@ npx playwright show-report
 Failures retain screenshots and traces in `test-results/`; the HTML report is in
 `playwright-report/`. Both are ignored by Git. The build may update
 `dread-delve.html`; do not include it in test PRs.
+
+If Playwright's own download isn't available (a sandbox, an offline machine) but a Chromium is installed, point the tests at it; the `pree2e` download is then skipped:
+
+```sh
+PW_CHROMIUM=/opt/pw-browsers/chromium npm run e2e
+```

@@ -12,12 +12,12 @@ import { turnAction, undoMove, answerOpportunity, askOpportunity, dropAsk } from
 import { showReach, spawnPing, flashArea } from '../render/effects.js';
 import { toast, banner, showCard, showWhisper, renderAll, renderTop } from '../ui/hud.js';
 import { renderPanel } from '../ui/panels.js';
-import { serialize, deserialize, resetScene } from '../game/session.js';
+import { serialize, deserialize, resetScene, changed } from '../game/session.js';
 import { doMove, takeStairs, doPing, goFloor, select, animatePath, doorAction, search, disarmTrap } from '../game/actions.js';
 import { propAction } from '../game/objects.js';
 import { screenMsg, afterScreenState, screenDie, upNext } from '../ui/screen.js';
 import { answerAsk, askPrompt, askClosed, notePrompt } from '../game/asks.js';
-import { currentTurn, canAct } from '../game/rules.js';
+import { currentTurn, canAct, endConc } from '../game/rules.js';
 import { nextTurn } from '../game/combat.js';
 import { applyCharacter, charactersOf, ownsCharacter, sheetForPlayer, saveMyHero, myHero } from '../game/heroes.js';
 import { cheb } from '../util/core.js';
@@ -268,6 +268,7 @@ function onHostMsg(c, m){
     receiveAct(ok, c.peer, seat.name, deny);
   }
   else if (m.t === 'search'){ if (me && canAct(me)) search(me); }
+  else if (m.t === 'dropConc'){ if (me?.conc){ endConc(me, 'lets go'); changed(); } }
   else if (m.t === 'askAns'){ if (mine(m.tok)) answerAsk(m.id, m.tok, Number.isInteger(m.d20) ? m.d20 : null, 'phone'); }   // their own hero only
   else if (m.t === 'prop'){
     // their own hero, beside it, on their turn; the act must be one the rules offer them there (engine/objects.js)

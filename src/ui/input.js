@@ -192,13 +192,13 @@ function handleTap(cx, cy, shift = false){
   switch (ui.mode){
     case 'attack': if (tokId && tokId !== ui.modeData.attacker){
       if (!passAim(tokId, attackCheck(tokById(ui.modeData.attacker), tokById(tokId), ui.modeData.i))) return;
-      if (ui.role === 'player') requestAct({ kind:'attack', id:ui.modeData.attacker, i:ui.modeData.i, target:tokId, mode:ui.atkMode });
+      if (ui.role === 'player') requestAct({ kind:'attack', id:ui.modeData.attacker, i:ui.modeData.i, target:tokId, mode:ui.atkMode, ...(ui.modeData.at ? { at:ui.modeData.at } : {}) });
       else if (ui.modeData.legend != null){ const a = tokById(ui.modeData.attacker); if (a && payLegend(a, ui.modeData.legend)) doAttack(a.id, tokId, ui.modeData.i, ui.atkMode); }
       else if (realDice() && tokById(ui.modeData.attacker)?.kind !== 'monster'){   // in person: they rolled a real d20
         const a = ui.modeData.attacker, i = ui.modeData.i, mode = ui.atkMode, nm = tokById(a)?.name;
-        askD20(`${nm} attacks ${tokById(tokId)?.name}`, n => doAttack(a, tokId, i, mode, { d20:n }));
+        const at = ui.modeData.at; askD20(`${nm} attacks ${tokById(tokId)?.name}`, n => doAttack(a, tokId, i, mode, { d20:n, at }));
       }
-      else doAttack(ui.modeData.attacker, tokId, ui.modeData.i, ui.atkMode);
+      else doAttack(ui.modeData.attacker, tokId, ui.modeData.i, ui.atkMode, { at:ui.modeData.at });
       ui.atkMode = 'normal'; setMode('select'); renderSel(); } return;
     case 'cast': {
       const c = tokById(ui.modeData.caster), sp = c?.casts?.[ui.modeData.i], area = areaOf(sp);
@@ -210,14 +210,14 @@ function handleTap(cx, cy, shift = false){
         }
         const res = areaSquares(c, area, aim);
         if (!res.ok && !passAim(`${aim.x},${aim.y}`, { ok:false, why:res.why })) return;
-        if (ui.role === 'player') requestAct({ kind:'cast', id:c.id, i:ui.modeData.i, target:c.id, aim });
-        else castSpell(c.id, null, ui.modeData.i, aim);
+        if (ui.role === 'player') requestAct({ kind:'cast', id:c.id, i:ui.modeData.i, target:c.id, aim, ...(ui.modeData.at ? { at:ui.modeData.at } : {}) });
+        else castSpell(c.id, null, ui.modeData.i, aim, { at:ui.modeData.at });
         setMode('select'); return;
       }
       if (tokId){
         if (!passAim(tokId, spellCheck(c, tokById(tokId), sp))) return;
-        if (ui.role === 'player') requestAct({ kind:'cast', id:ui.modeData.caster, i:ui.modeData.i, target:tokId });
-        else castSpell(ui.modeData.caster, tokId, ui.modeData.i);
+        if (ui.role === 'player') requestAct({ kind:'cast', id:ui.modeData.caster, i:ui.modeData.i, target:tokId, ...(ui.modeData.at ? { at:ui.modeData.at } : {}) });
+        else castSpell(ui.modeData.caster, tokId, ui.modeData.i, null, { at:ui.modeData.at });
         setMode('select'); }
     } return;
     case 'feat': if (tokId){

@@ -88,3 +88,8 @@ awareness and containment, not a biblical flood. They carry `homebrew:true` and
 class letters, duplicates, JSON round trips, retained embedded creatures/tables, higher-slot rules,
 actual targeting of every automated area, unsupported-effect regressions, existing hero conversion,
 and Flood spell selection/casting data. Existing hero and targeting tests remain unchanged.
+
+## After the merge (Claude)
+
+- **Table play** (`src/data/spell-play.js`, applied in `src/data/srd.js`): about 25 spells that the import left as `util` got their combat fields back on top of the faithful data, so they roll at the table again. These include Magic Missile, Spirit Guardians, Hold Person, Moonbeam, Sleep, Toll the Dead and Flame Strike. `srd-spells.js` stays exactly as generated, so re-running the importer never loses them. `tests/spells.test.js` checks both layers. **If you regenerate `srd-spells.js`, don't touch `spell-play.js`; if a spell's name changes, the test will say so.**
+- **Upcasting and Concentration are now in the engine** (`src/engine/spellcast.js`, `src/game/rules.js`), driven by the `hl` and `conc` fields from this PR. So the `hl` line matters: keep the SRD wording "increases by XdY for each spell slot level above N"; the parser reads it. A spell whose extra dice aren't in that wording can carry `up:'1d4+1'` (dice per level above).

@@ -37,6 +37,13 @@ test('the table screen: a window for the TV that follows the table, with read-al
   await expect(screen.locator('#scOver .sc-intro img')).toBeVisible();   // a face for anyone: the zombie's mini, portrayed
   if (SP) await screen.screenshot({ path:SP + '/n-intro.png' });
   await page.locator('[data-act="ntClear"]').click();
+  // the join card: the table's code, big, for players sitting down (with a QR when the page is on the website)
+  await page.evaluate(() => { window.DreadDelve.net.code = 'WXYZ'; });
+  await openNight(page);
+  await page.locator('[data-act="ntJoin"]').click();
+  await expect(screen.locator('#scOver .sc-join')).toContainText('WXYZ');
+  await page.locator('[data-act="ntClear"]').click();
+  await page.evaluate(() => { window.DreadDelve.net.code = null; });
   // a fight: the screen's ribbon shows the order
   await frameMap(page);
   await page.getByRole('button', { name:/Start a fight/ }).click();

@@ -16,6 +16,22 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.8 — every spell, cast properly, and a table that's easy to join
+
+- **The whole SRD spellbook** (Codex's PR #3): `src/data/srd-spells.js` holds all 339 SRD 5.2.1 spells, levels 0–9, with school, casting time, range, components, duration, Concentration, Ritual, the full text and the higher-level line. It also has 4 extra spells (`extra-spells.js`) and 10 Flood homebrew spells (`flood-spells.js`). Codex's PR #2 added the NPC name tables (`npc-starter.js`).
+- **Spells at the table** (`src/data/spell-play.js`): the import marks anything it can't model exactly as manual (`util`). That's honest, but Magic Missile, Spirit Guardians, Hold Person, Moonbeam and about 20 more had stopped rolling. This layer restores their dice, save and condition on top of the faithful data (`srd.js` applies it), with notes for what the dice can't carry. Spells that really are the DM's call stay manual: Bane, Command, Heal, Meteor Swarm, Power Word Kill, Sorcerous Burst.
+- **Upcasting** (`src/engine/spellcast.js`): with more than one slot level left, casting asks which slot to use. The extra dice are read from the spell's higher-level line ("increases by 1d6 for each slot level above 3"): Fireball at 5 rolls 10d6, Cure Wounds adds 1d8 a level, Magic Missile adds a dart, Scorching Ray adds a ray. This works from the DM's card, a player's request and a card-only phone, and the card says "cast at level N".
+- **🌀 Concentration** (`game/rules.js` `startConc` / `endConc`):
+  - A caster holds one concentration spell at a time.
+  - Damage calls for a Constitution save at DC 10 or half the damage (up to 30); the app rolls it and shows a card.
+  - Incapacitating conditions and death end it.
+  - When it ends, the conditions it imposed (tagged `conc:<caster>`) lift from everyone.
+  - A 🌀 chip on the hero's card lets go on purpose, and 🌀 shows in the initiative list and on the TV.
+- **Joining by QR** (`src/util/qr.js`, [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator), MIT): the Table tab shows the invite link as a QR code. The Night tab's **📲 Join card** puts the code and the QR big on the TV for players sitting down, and a ▦ QR for the screen link sets up a tablet as the screen. Links only this computer can open (the offline file, localhost) get no QR.
+- **Staying awake** (`src/util/wake.js`, the Screen Wake Lock API): the TV screen and card-only phones don't dim or lock mid-session. It is asked for again whenever the page comes back. This needs https (the Vercel site); elsewhere it quietly does nothing.
+- **Installable**: `public/manifest.webmanifest` and the icons (the Gaze in a blood moon) let phones "Add to Home Screen" from the Vercel site and open it full-screen like an app. Vite copies `public/` next to the page; the offline file doesn't need them.
+- More libraries worth adding, and why some aren't: `docs/libraries.md`.
+
 ## v1.7 — game night, part two
 
 - **🎲 Ask the table for a roll** (`src/engine/checks.js`, `src/game/asks.js`).
@@ -324,6 +340,8 @@ index.html              page markup + all CSS
 src/main.js             boot + the render loop (fog, flicker, mist, whispers)
 src/debug.js            window.DreadDelve console handle (also used by the smoke tests)
 src/util/core.js        dice, seeded random, tiny event bus
+src/util/qr.js          invite links as QR codes (qrcode-generator)
+src/util/wake.js        keep the TV and card-only phones awake (Screen Wake Lock)
 src/data/               ← the content. Edit freely.
   dread.js              Strahd's Gaze 1–10 (look + rules + read-aloud), whispers, conditions
   legendary.js          legendary actions, Legendary Resistance and lair actions
@@ -354,6 +372,7 @@ src/engine/             pure logic: no DOM, no Three.js, unit-tested
   maps.js               the map library: who travels, packing a map for the shelf, where the party arrives
   fight.js              who's in a fight, initiative (grouped, surprise, real dice), victory and XP
   checks.js             checks & saves at the table: bonuses from a sheet, a roll against a DC, group checks
+  spellcast.js          upcasting (dice per slot level from the higher-level text, extra rays) and the Concentration DC
   settlement.js         the Valley's places: villages, towns, Krezk, Berez, the camp, the vineyard, the lake, the hill, the tower
 src/game/               rules that touch the scene and UI
   combat.js             initiative, attacks, damage, death hooks, the fx language, round-end Gaze effects
@@ -390,7 +409,10 @@ src/engine/redact.js    what players are sent (the delve with the DM's secrets t
 src/audio/sound.js      synthesised drone and sound effects
 src/data/campaign.js    Curse of Strahd: Flood Edition — sessions, clocks, faces, the night tables
 src/data/bestiary-barovia.js  creatures ported from the Battle Table
-src/data/srd.js         SRD 5.2 classes, species, backgrounds, weapons, armour, spells (levels 1–10)
+src/data/srd.js         SRD 5.2 classes, species, backgrounds, weapons, armour; SPELLS = the library + table play
+src/data/srd-spells.js  every SRD 5.2.1 spell, 0–9, with full text (generated by scripts/import-srd-spells.mjs; Codex's)
+src/data/spell-play.js  the combat fields the table rolls with, over the faithful spell data
+src/data/npc-starter.js names, Vistani names, quirks and wants for generated NPCs (Codex's)
 src/engine/hero.js      character sheet → stats, attacks, spells, token (pure, tested)
 src/game/campaign.js    building session dungeons, placing encounters, clocks, printing the guide
 src/game/heroes.js      players' heroes (their browser) and the DM's character roster

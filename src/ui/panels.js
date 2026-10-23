@@ -9,6 +9,7 @@ import { THEMES, TEMPLATES } from '../data/themes.js';
 import { DEFAULT_SHIFT_TABLE, DEFAULT_WHIM_TABLE, WHIM_STEPS } from '../data/tables.js';
 import { $, esc, avgDice, attacksToText } from '../util/core.js';
 import { net, savedTable, peerServer, inviteLink } from '../net/table.js';
+import { qrSvg, scannable } from '../util/qr.js';
 import { currentTurn } from '../game/rules.js';
 import { onStairs, dreadRulesLines } from '../game/actions.js';
 import { undoCount } from '../game/session.js';
@@ -280,7 +281,8 @@ function tableTab(){
   else {
     const link = inviteLink();
     h += `<div class="code">${net.code}</div>${net.online ? '' : `<div class="muted" style="color:var(--blood)">⚠ Lost touch with the server — reconnecting. Players already here keep playing; new ones can't join until it's back.</div>`}
-      ${link ? `<div class="row"><input class="txt" style="flex:1;font-size:12px" readonly value="${esc(link)}" id="inviteLink"><button class="btn small" data-act="copyInvite">📋 Copy invite</button></div>` : ''}
+      ${link ? `<div class="row"><input class="txt" style="flex:1;font-size:12px" readonly value="${esc(link)}" id="inviteLink"><button class="btn small" data-act="copyInvite">📋 Copy invite</button></div>
+        ${scannable(link) ? `<div class="qrrow"><div class="qr">${qrSvg(link)}</div><div class="muted">Players at the table: point the phone's camera at this. It opens the page with the code filled in.</div></div>` : '<div class="muted">Phones can\'t open this link (it only works on this computer). For a QR code to scan, open the table from the website.</div>'}` : ''}
       <h4>Players (${net.conns.size})</h4>`;
     const knocks = [...net.knocks.values()].filter(k => Date.now() - k.at < 180000);
     for (const k of knocks) h += `<div class="row knock ${k.state}"><span style="flex:1">🚪 ${esc(k.name)} ${k.state === 'stuck' ? `<b style="color:var(--blood)">can't get through</b>` : 'is knocking…'}</span>${k.ice ? `<span class="muted">${esc(k.ice)}</span>` : ''}</div>`;
@@ -338,7 +340,8 @@ function nightTab(){
     <h4>📺 The table screen</h4>
     <div class="row"><button class="btn primary" data-act="ntOpen">📺 Open the table screen</button><span class="muted">${n ? `<b style="color:var(--candle)">${n} screen${n === 1 ? '' : 's'} connected</b>` : 'none connected'}</span></div>
     <div class="muted">A new window: drag it onto the TV or a second monitor and press ⛶ in its corner. It shows what the party sees (fog, no secrets): the turn order with the heroes' faces across the top, the party along the bottom, and a camera that follows the action and drifts slowly while they explore.</div>
-    ${net.code ? `<div class="muted">On another device (a smart TV's browser, a tablet on the table): open <input class="txt" readonly id="ntLink" value="${esc(screenLink(net.code))}" style="width:100%"></div><div class="row"><button class="btn small" data-act="copy" data-k="ntLink">Copy the screen link</button></div>` : `<div class="muted">To put the screen on another device instead (a smart TV's browser, a tablet), open the table first (Table tab); its link appears here.</div>`}
+    ${net.code ? `<div class="muted">On another device (a smart TV's browser, a tablet on the table): open <input class="txt" readonly id="ntLink" value="${esc(screenLink(net.code))}" style="width:100%"></div><div class="row"><button class="btn small" data-act="copy" data-k="ntLink">Copy the screen link</button>${scannable(screenLink(net.code)) ? `<button class="btn small" data-act="ntQr" title="A QR code for a tablet's camera">▦ QR</button>` : ''}<button class="btn small" data-act="ntJoin" title="The table's code and a QR on the screen, for players to scan as they sit down">📲 Join card on the screen</button></div>
+      ${N.qr && scannable(screenLink(net.code)) ? `<div class="qrrow"><div class="qr">${qrSvg(screenLink(net.code))}</div><div class="muted">Scan with the tablet that will be the screen.</div></div>` : ''}` : `<div class="muted">To put the screen on another device instead (a smart TV's browser, a tablet), open the table first (Table tab); its link appears here.</div>`}
     <div class="row">${seg('ntMode', 'map', N.mode === 'map', '🗺 The map')}${seg('ntMode', 'dark', N.mode === 'dark', '🕯 Lights out', 'Black, one candle: for the moment before a reveal')}${seg('ntFollow', N.follow ? 'off' : 'on', N.follow, '🎥 Follow the action', 'The screen keeps whoever is acting in frame')}<button class="btn small" data-act="ntLook" title="The screen's camera goes where yours is (for a while)">👁 Show what I see</button></div>
     <h4>📜 Read aloud — on the screen</h4>
     <input class="txt" id="ntTitle" placeholder="A title (optional)" value="${esc(ui.ntTitle || '')}">
@@ -368,7 +371,7 @@ function nightTab(){
     <h4>🎲 Real dice</h4><div class="row"><button class="btn small ${realDice() ? 'on' : ''}" data-act="ntDice">🎲 Players roll real dice: ${realDice() ? 'ON' : 'off'}</button></div>
     <div class="muted">${realDice() ? 'When a hero attacks, you get twenty big buttons: tap what they rolled (or let the app roll). Players on their phones type their roll in with the attack. The app adds the bonuses, checks AC and cover, and rolls damage.' : 'Turn on to type in the d20 the players roll at the table instead of the app rolling it.'}</div>
     <h4>📱 Players' phones</h4>
-    <div class="muted">Players join with the table code (Table tab) and turn on <b>📇 Card only</b> in their Hero tab: no map on the phone (the TV has it), just their hero, big buttons, and a list of targets. Or skip the phones: you run the heroes from here.</div>
+    <div class="muted">Players join with the table code (Table tab), or by scanning the QR code there or on the TV's <b>📲 Join card</b>, and turn on <b>📇 Card only</b> in their Hero tab: no map on the phone (the TV has it), just their hero, big buttons, and a list of targets. The card keeps the phone's screen awake, as the TV screen does. Or skip the phones: you run the heroes from here.</div>
     <div class="row"><button class="btn small ${gfx.sfx || gfx.music ? '' : 'on'}" data-act="ntQuiet" title="Let the TV's speakers do the sound">🔇 Quiet this laptop</button></div>`;
   return h;
 }

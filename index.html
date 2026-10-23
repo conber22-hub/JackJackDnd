@@ -4,6 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Curse of Strahd · Dread Delve</title>
+<meta name="theme-color" content="#09080d">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <!--
   DREAD DELVE — a 3D virtual tabletop for Curse of Strahd: Flood Edition (multi-floor maps, minis, fog, the Count's Gaze).
 
@@ -274,11 +279,14 @@ body.screen #toasts{display:none}
 @keyframes flick{0%,100%{transform:scale(1,1) rotate(-2deg)}40%{transform:scale(.92,1.08) rotate(2deg)}70%{transform:scale(1.05,.95)}}
 #scOver{position:fixed;inset:0;z-index:9;display:flex;align-items:center;justify-content:center;padding:6vh 8vw;background:radial-gradient(ellipse at center,rgba(12,9,16,.88),rgba(4,3,6,.97));opacity:0;transition:opacity 1.2s}
 #scOver.in{opacity:1}#scOver.hidden{display:none}
-.sc-narr{max-width:1100px;text-align:center}.sc-narr h2,.sc-intro h2,.sc-hand h2,.sc-reveal h2{font-family:"Cormorant Garamond",Georgia,serif;color:var(--candle);font-size:44px;margin:0 0 18px}
+.sc-narr{max-width:1100px;text-align:center}.sc-narr h2,.sc-intro h2,.sc-hand h2,.sc-reveal h2,.sc-join h2{font-family:"Cormorant Garamond",Georgia,serif;color:var(--candle);font-size:44px;margin:0 0 18px}
 .sc-narr p{font-family:"Cormorant Garamond",Georgia,serif;font-size:clamp(26px,3.2vw,46px);line-height:1.45;color:#efe1c8;font-style:italic;text-shadow:0 0 20px #000}
 .sc-narr .type{animation:reveal 4s ease-out both}@keyframes reveal{from{opacity:0;letter-spacing:.06em;filter:blur(3px)}to{opacity:1;letter-spacing:0;filter:none}}
 .sc-intro{display:flex;gap:5vw;align-items:center;max-width:1200px}.sc-intro img{width:min(38vw,460px);border-radius:18px;box-shadow:0 0 60px #000,0 0 0 2px #8b6a2a;animation:reveal 2.4s ease-out both}
 .sc-intro p{font-family:"Cormorant Garamond",Georgia,serif;font-size:clamp(24px,2.6vw,38px);color:#efe1c8;font-style:italic;line-height:1.4}
+.qrrow{display:flex;gap:10px;align-items:center;margin:6px 0}.qr{flex:0 0 auto;width:128px;height:128px;border-radius:6px;overflow:hidden;background:#fff}.qr svg{display:block;width:100%;height:100%}
+.sc-join{display:flex;gap:48px;align-items:center;max-width:1100px}.sc-join .qr{width:min(46vh,420px);height:min(46vh,420px);border-radius:14px;box-shadow:0 0 60px #000}
+.sc-join p{font-family:"Cormorant Garamond",Georgia,serif;font-size:clamp(22px,2.4vw,34px);color:#efe1c8;margin:0 0 14px}.sc-join .code{font-family:Cinzel,serif;font-size:clamp(56px,8vw,120px);letter-spacing:.18em;color:var(--candle);text-shadow:0 0 30px #000}
 .sc-hand{text-align:center}.sc-hand img{max-width:84vw;max-height:76vh;border-radius:10px;box-shadow:0 0 60px #000}
 .sc-btns{position:fixed;top:12px;right:12px;z-index:10;display:flex;gap:6px;opacity:.25;transition:opacity .3s}.sc-btns:hover{opacity:1}
 body.screen .pop{transform:scale(1.35)}
@@ -670,13 +678,13 @@ body.screen #turnBanner{font-size:52px;top:46%}
       <b>Game night (in person)</b> — the DM's <b>Night</b> tab opens the <b>table screen</b>: a window to drag onto the TV. It shows what the party sees: whose turn it is across the top with the heroes' faces, the party along the bottom, and a camera that follows the action. From the Night tab the DM can:
       <ul><li>put read-aloud text, a face and a name, or a handout picture on the TV</li><li>turn the lights out</li><li>send the TV where the DM is looking</li><li>run a turn timer</li><li>turn on <b>real dice</b>, then type in the d20 the players rolled</li></ul>
       <b>🎲 Ask the table for a roll</b> (any save or check, DC shown or secret): it pops up on the players' phones for their real d20 (or "roll for me"); you type or roll for anyone without one; then the TV reveals everyone's result at once, group check included. With real dice on, the fight picker takes the players' initiative rolls too, and the TV tumbles a d20 for every attack. <b>🤫 Pass a note</b> buzzes one player's phone with something only they see (optionally in Strahd's voice, and the TV can show that a note changed hands). <b>📜 Previously on…</b> fills the read-aloud with the story so far from the log, to trim and show. Phones buzz on your turn, and the TV marks who's <i>up next</i>.<br>
-      Players can join on their phones and turn on <b>📇 Card only</b>: no map, just their hero, big buttons, a list of targets, and a pad to step one square (north is up, as on the TV).<br>
+      Players can join on their phones (scan the QR on the Table tab, or put the <b>📲 Join card</b> on the TV) and turn on <b>📇 Card only</b>: no map, just their hero, big buttons, a list of targets, and a pad to step one square (north is up, as on the TV). The TV screen and card-only phones stay awake.<br>
       <b>Doors & traps</b> — tap a door or a found trap for its card: open, pick, force, disarm. <i>Search</i> looks for hidden ones within 15 ft.<br>
       <b>Stairs</b> — stand on a stair rune and press <i>Descend</i> / <i>Ascend</i> on the token card.<br>
       <b>Ping</b> — the ◎ button, or long-press a tile, flashes it for the whole table.<br>
-      <b>Playing together</b> — the DM opens a table (Table tab) and sends the invite link or the code. If a phone sleeps or the DM reloads, everyone reconnects on their own, back on the same hero. There's nothing to accept: a player who knocks comes straight in. If they're stuck on <i>Knocking…</i> (the DM sees "can't get through" in the Table tab), their network won't let the two devices talk directly: add a free relay in <b>Table tab → Relay</b>, press <i>Test the relay</i>, then send the invite link again.<br>
+      <b>Playing together</b> — the DM opens a table (Table tab) and sends the invite link or the code; players in the room can scan its QR code instead. If a phone sleeps or the DM reloads, everyone reconnects on their own, back on the same hero. There's nothing to accept: a player who knocks comes straight in. If they're stuck on <i>Knocking…</i> (the DM sees "can't get through" in the Table tab), their network won't let the two devices talk directly: add a free relay in <b>Table tab → Relay</b>, press <i>Test the relay</i>, then send the invite link again.<br>
       <b>Attack</b> — select a creature, press an attack or spell (◆ toggles advantage/disadvantage), tap the target. The roll pops up for everyone. <b>Players</b> do the same with their own hero: the DM approves the roll (or turns on <i>Players roll freely</i> in the Table tab).<br>
-      <b>Slots & features</b> — casting spends a spell slot; Rage, Second Wind, Lay on Hands, Hit Dice and the rest are buttons on the hero's card. Short and long rests are in the Tokens tab; making camp on the road is a long rest.<br>
+      <b>Slots & features</b> — casting spends a spell slot. With more than one slot level left you choose which: a higher slot makes most spells stronger (Fireball at level 5 rolls 10d6, Magic Missile adds a dart, Scorching Ray a ray). <b>🌀 Concentration</b>: casting a concentration spell drops the one you were holding; taking damage calls for a Constitution save (DC 10 or half the damage, the app rolls it), and being incapacitated or killed ends it. When it ends, whatever it was holding (Hold Person's paralysis, Web's grip) lets go. The ✕ on the 🌀 chip lets go on purpose. Rage, Second Wind, Lay on Hands, Hit Dice and the rest are buttons on the hero's card. Short and long rests are in the Tokens tab; making camp on the road is a long rest.<br>
       <b>Legendary & lair</b> — a legendary creature's card counts its legendary actions; in its lair a 🏰 button appears in the initiative list each round.<br>
       <b>Noise</b> (📢) — fights, forced doors, traps and thunder wake things nearby and on the floors above and below.<br>
       <b>Rooms</b> — the first time the party enters a room, the DM is offered its read-aloud. The Dungeon tab can read any room aloud, furnish it or clear it.<br>

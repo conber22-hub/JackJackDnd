@@ -11,6 +11,8 @@ import { $, esc, clamp } from '../util/core.js';
 import { controls, camTo, viewOffset, wx, wz, floorY } from '../render/scene.js';
 import { goFloor } from '../game/actions.js';
 import { currentTurn } from '../game/rules.js';
+import { qrSvg, scannable } from '../util/qr.js';
+import { keepAwake } from '../util/wake.js';
 
 const S = { follow:true, holdUntil:0, lastKey:'', timer:0, turnKey:'', turnAt:0, dark:false };
 
@@ -18,6 +20,7 @@ export function bootScreenUI(){
   ui.screen = true; ui.role = 'player'; ui.panelOpen = false; ui.view = 'tilt';
   document.body.classList.add('screen');
   $('#screenHud').classList.remove('hidden');
+  keepAwake(true);   // a TV that dims mid-session is no use
   setInterval(tick, 250);
 }
 const visible = t => { const W = state.floors[t.floor]?.W, s = t.size || 1; if (!W) return false; for (let dy = 0; dy < s; dy++) for (let dx = 0; dx < s; dx++) if (seenNow[t.floor]?.has((t.y + dy) * W + t.x + dx)) return true; return false; };
@@ -48,7 +51,7 @@ export function renderScreen(){
     }).join('');
   } else $('#scRibbon').innerHTML = '';
   const party = state.tokens.filter(t => t.kind !== 'monster' && !t.flags?.gone);
-  $('#scParty').innerHTML = party.map(t => `<span class="sc-hero ${t.dead ? 'dead' : ''} ${c.active && currentTurn()?.id === t.id ? 'cur' : ''}">${face(t, true)}<span class="nm">${esc(t.name)}${t.dead ? ' ✝' : ''}</span>${hp(t)}<span class="cd">${(t.conds || []).map(x => CONDITIONS[x.n]?.icon || '•').join('')}</span></span>`).join('');
+  $('#scParty').innerHTML = party.map(t => `<span class="sc-hero ${t.dead ? 'dead' : ''} ${c.active && currentTurn()?.id === t.id ? 'cur' : ''}">${face(t, true)}<span class="nm">${esc(t.name)}${t.dead ? ' ✝' : ''}</span>${hp(t)}<span class="cd">${(t.conds || []).map(x => CONDITIONS[x.n]?.icon || '•').join('')}${t.conc ? '🌀' : ''}</span></span>`).join('');
 }
 
 // Keep the action in frame: the creature whose turn it is (if the party can see it), else the party.
@@ -110,6 +113,9 @@ export function screenMsg(m){
       return true;
     case 'intro':
       show(`<div class="sc-intro">${m.img ? `<img src="${m.img}" alt="">` : ''}<div><h2>${esc(m.name || '')}</h2>${m.line ? `<p>${esc(m.line)}</p>` : ''}</div></div>`);
+      return true;
+    case 'joinCard':   // players sitting down: scan to join (or type the code)
+      show(`<div class="sc-join">${scannable(m.url) ? `<div class="qr">${qrSvg(m.url)}</div>` : ''}<div><h2>Join the table</h2><p>${scannable(m.url) ? 'Point your phone\'s camera here' : 'Open Dread Delve on your phone'}, choose <i>Accept the invitation</i>, and the code is</p><div class="code">${esc(m.code || '')}</div></div></div>`);
       return true;
     case 'handout':
       show(`<div class="sc-hand">${m.title ? `<h2>${esc(m.title)}</h2>` : ''}<img src="${m.img}" alt=""></div>`);

@@ -12,7 +12,7 @@ import { canUndoMove, renderOA } from '../game/moves.js';
 import { onStairs, selectedDoor, selectedTrap, nearestHero } from '../game/actions.js';
 import { undoCount } from '../game/session.js';
 import { renderPanel } from './panels.js';
-import { canCast, left } from '../game/resources.js';
+import { canCast, left, slotLevels } from '../game/resources.js';
 import { renderRequests } from '../game/requests.js';
 import { renderPrompts } from '../game/rooms.js';
 import { legendOf, legendLeft, resistLeft, lairCreature } from '../game/combat.js';
@@ -101,7 +101,7 @@ export function renderInit(){
     if (!t || t.flags.gone) return '';
     if (pv && t.kind === 'monster' && !seesAny(t)) return `<div class="ini ${i === c.idx ? 'cur' : ''}"><span class="dot" style="color:#555;background:#555"></span><span class="n muted">something unseen</span></div>`;
     const color = t.kind === 'monster' ? '#c0303a' : t.color;
-    const cs = (t.conds || []).map(c => CONDITIONS[c.n]?.icon || '•').join('');
+    const cs = (t.conds || []).map(c => CONDITIONS[c.n]?.icon || '•').join('') + (t.conc ? '🌀' : '');
     const bar = dmv || t.kind !== 'monster' ? `<span class="ihp ${t.kind === 'monster' ? '' : 'pc'}"><i style="width:${Math.round(100 * clamp(t.hp / (t.maxHp || 1), 0, 1))}%"></i></span>` : '';
     const extra = dmv ? `${i === c.idx && c.order.length > 1 && c.idx < c.order.length - 1 ? '<b class="dl" data-act="delayTurn" title="Hold back: the next one goes first">⏭</b>' : ''}<b class="x" data-act="leaveFight" data-id="${t.id}" title="Out of the fight">✕</b>` : '';
     return `<div class="ini ${i === c.idx ? 'cur' : ''} ${t.dead ? 'dead' : ''}" data-act="sel" data-id="${t.id}"><span class="dot" style="color:${color};background:${color}"></span><span class="n">${esc(t.name)} <span class="muted">${cs}</span>${bar}</span>${extra}<span class="v">${t.initRoll ?? ''}</span></div>`;
@@ -174,7 +174,7 @@ export function renderSel(){
     ${b ? `<span class="muted">CR ${b.cr}</span>` : ''}<button class="btn small" data-act="deselect">✕</button></div>
     ${showStats ? `<div class="stat">AC <b>${t.ac}</b> · HP <b>${t.hp}/${t.maxHp}</b> · Speed <b>${t.speed} ft</b>${move}${flags.length ? ' · ' + flags.join(' · ') : ''}</div>${hpBar(t, t.kind !== 'monster')}` : (b ? `<div class="look">${esc(b.look)}</div>` : '')}
     ${dm && t.notes ? `<div class="look">${esc(t.notes)}</div>` : ''}
-    ${t.conds?.length ? `<div>${condChips(t, dm)}</div>` : ''}
+    ${t.conds?.length || t.conc ? `<div>${t.conc ? `<span class="chip on" style="border-color:#8a7ad8" ${dm || mine ? 'data-act="dropConc" title="Concentrating — tap to end it"' : 'title="Concentrating"'}>🌀 ${esc(t.conc.n)}${dm || mine ? ' ✕' : ''}</span> ` : ''}${condChips(t, dm)}</div>` : ''}
     ${showStats ? resChips(t, dm) : ''}
     <div class="acts">${acts}</div>`;
   el.classList.add('show');
@@ -270,5 +270,17 @@ export function renderFightSetup(){
     <h4>Surprise</h4><div class="row">${sur('none', 'Nobody')}${sur('party', 'The party is surprised')}${sur('foes', 'Their foes are surprised')}</div>
     <div class="muted">Surprised creatures roll initiative at disadvantage.</div>
     <div class="row" style="margin-top:10px"><button class="btn primary" data-act="fightGo" ${n ? '' : 'disabled'}>⚔ Roll initiative (${n})</button><button class="btn" data-act="fightCancel">Cancel</button></div>`;
+}
+/* Which slot to cast with, when there's a choice (higher slots: more dice — engine/spellcast.js). Straight on with
+   the only option; otherwise a row of levels. cb(level or null for the lowest). */
+export function pickSlot(t, lvl, name, cb){
+  const levels = lvl && t.sustain !== name ? slotLevels(t, lvl) : [];   // a sustained spell used again costs no slot
+  if (levels.length <= 1){ cb(null); return; }
+  $('#pickBox').innerHTML = `<h3>✨ ${esc(name)}</h3><div class="muted">Cast it with which slot? Higher slots make many spells stronger.</div>
+    ${levels.map(l => `<button class="btn pickrow" data-slot="${l}"><span>Level ${l}${l === lvl ? ' <span class="muted">(its own level)</span>' : ''}</span><span class="muted">${(t.resources || []).filter(r => r.slot === l).map(r => `${left(t, r.id)} left`).join(' · ')}</span></button>`).join('')}
+    <div class="row"><button class="btn" data-slot="cancel">Cancel</button></div>`;
+  $('#pickModal').classList.remove('hidden');
+  $('#pickBox').onclick = e => { const b = e.target.closest('[data-slot]'); if (!b) return; $('#pickModal').classList.add('hidden'); $('#pickBox').onclick = null;
+    if (b.dataset.slot !== 'cancel') cb(+b.dataset.slot === lvl ? null : +b.dataset.slot); };
 }
 export function renderAll(){ document.body.classList.toggle('player', ui.role === 'player' && !ui.screen); renderTop(); renderTabs(); renderPanel(); renderInit(); renderSel(); renderDock(); renderRequests(); renderAskBar(); renderPrompts(); renderOA(); }

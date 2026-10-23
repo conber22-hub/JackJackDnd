@@ -285,7 +285,7 @@ export function buildFigure(t){
 }
 
 export const tokenViews = new Map();   // token id -> { group, key, labelKey, label, anim }
-const condText = t => (t.conds || []).map(c => `${CONDITIONS[c.n]?.icon || '•'}${c.n}`).join(' ');
+const condText = t => [...(t.conds || []).map(c => `${CONDITIONS[c.n]?.icon || '•'}${c.n}`), ...(t.conc ? [`🌀${t.conc.n}`] : [])].join(' ');
 export function syncTokens(){
   if (!state) return;
   const pv = viewAsPlayer();

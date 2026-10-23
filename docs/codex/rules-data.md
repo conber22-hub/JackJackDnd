@@ -18,14 +18,16 @@ Source of truth for the SRD: the official SRD 5.2.1 PDF from Wizards of the Coas
   - 9 species and 4 backgrounds
   - weapons and armour
   - 11 feats (`FEATS`)
-  - **88 spells, levels 0–5** (`SPELLS`, with the field legend in the comment above it)
+  - **every SRD 5.2.1 spell, levels 0–9** (task 1, done: `srd-spells.js`, re-exported as `SPELLS` with the table-play layer from `spell-play.js` on top; see `docs/codex/spell-library.md`)
 - `src/engine/hero.js` turns a sheet into stats, attacks, spell lists and resources. It is pure, and covered by `tests/hero.test.js`.
 - `src/data/bestiary.js` plus `bestiary-barovia.js`: about 72 creatures in a condensed format (the comment at the top of `bestiary.js` explains every field).
 - The character creator (`src/ui/creator.js`) and the combat code read all of this. Claude owns `src/ui`, `src/game`, `src/net` and `src/render`. If a task needs a UI change, describe it in the PR instead of making it.
 
 ## Tasks (one PR each, in this order)
 
-### 1. All SRD spells, levels 0–9
+Lesson from task 1: faithful data is right, but don't take automation away. If a field the app rolls with (`k`, `d`, `sv`, `cond`, `area`…) was set before and you can't model the spell exactly, say so in the PR. Don't silently turn it into `util`: Claude keeps a table-play layer for those (`spell-play.js`), and the tests should show what changed.
+
+### 1. All SRD spells, levels 0–9 — DONE (PR #3)
 - Put every SRD 5.2.1 spell in a new `src/data/srd-spells.js`. Keep the existing format and re-export `SPELLS` from `srd.js` so nothing else changes.
 - Add these fields:
   - `school`, `time` (action / bonus / reaction / 1 minute…), `range` text, `comp` (V/S/M plus the material in brackets), `dur`, `conc:true`, `ritual:true`
