@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { newHero, heroStats, heroAttacks, heroToken, castables, heroWarnings, spellLimits, maxSpellLevel, heroResources } from '../src/engine/hero.js';
+import { newHero, heroStats, heroAttacks, heroToken, castables, heroWarnings, spellLimits, maxSpellLevel, heroResources, asiLevels, spellPool, heroSpells, arcanumLevels, cantripDice } from '../src/engine/hero.js';
 
 test('level 1 fighter: chain mail + shield + Defense, Soldier background', () => {
   const h = newHero('Fighter'); h.name = 'Ilse';
@@ -131,4 +131,132 @@ test('feats at Ability Score Improvement levels', async () => {
   assert.ok(heroWarnings({ ...h, asi:{ 4:{ feat:'Skilled', skills:['Arcana'] } } }).some(w => /Skilled/.test(w)));
   assert.ok(heroWarnings({ ...h, asi:{} }).some(w => /ability increase or feat/.test(w)));
   assert.ok(heroToken({ ...h, name:'X', asi:{ 4:{ feat:'Alert' }, 8:'Str' } }).maxHp > 0);
+});
+
+test('level 20 Wizard: ninth-level slots, preparation, DC and spell attacks reach the token', () => {
+  const h = { ...newHero('Wizard'), lvl:20, ab:{ Str:8, Dex:14, Con:14, Int:20, Wis:12, Cha:10 }, spells:['Fire Bolt', 'Meteor Swarm'] };
+  const st = heroStats(h), token = heroToken(h);
+  assert.equal(st.L, 20); assert.equal(st.pb, 6); assert.equal(st.dc, 19); assert.equal(st.spAtk, 11);
+  assert.deepEqual(st.slots, [4,3,3,3,3,2,2,1,1]);
+  assert.deepEqual(spellLimits(h), { cantrips:5, prepared:25 });
+  assert.equal(maxSpellLevel(h), 9);
+  assert.ok(spellPool(h).some(s => s.n === 'Wish' && s.l === 9));
+  assert.equal(token.attacks.find(a => a.n === 'Fire Bolt').d, '4d10');
+  assert.equal(token.casts.find(c => c.n === 'Meteor Swarm').l, 9);
+  assert.equal(token.resources.find(r => r.id === 'slot9').max, 1);
+  assert.equal(token.resources.find(r => r.id === 'arcane').lv, 10);
+  assert.equal(token.resources.find(r => r.id === 'arcane').use, 'recover', 'keep the existing recovery automation');
+  assert.match(token.cls, /Wizard 20/);
+  for (const f of ['Evoker: Overchannel (14)', 'Spell Mastery (18)', 'Epic Boon (19)', 'Signature Spells (20)']) assert.ok(st.features.includes(f));
+});
+
+test('level 20 Paladin: half-caster progression, Devotion spells and existing smite automation', () => {
+  const h = { ...newHero('Paladin'), lvl:20, weapons:['Longsword'] }, st = heroStats(h), token = heroToken(h);
+  assert.deepEqual(st.slots, [4,3,3,3,2]);
+  assert.equal(st.pb, 6); assert.equal(maxSpellLevel(h), 5);
+  assert.deepEqual(spellLimits(h), { cantrips:0, prepared:15 });
+  assert.equal(token.resources.find(r => r.id === 'lay').max, 100);
+  assert.equal(token.resources.find(r => r.id === 'lay').use, 'lay');
+  assert.equal(token.resources.find(r => r.id === 'channel').max, 3);
+  assert.equal(token.resources.find(r => r.id === 'smite').free, 'Divine Smite');
+  const smite = token.casts.find(c => c.n === 'Divine Smite');
+  assert.equal(smite.k, 'auto'); assert.equal(smite.d, '2d8'); assert.equal(smite.smite, 1);
+  for (const [level, names] of [[13, ['Freedom of Movement', 'Guardian of Faith']], [17, ['Commune', 'Flame Strike']]]){
+    for (const name of names){
+      assert.ok(heroSpells({ ...h, lvl:level }).some(s => s.n === name));
+      assert.ok(!heroSpells({ ...h, lvl:level - 1 }).some(s => s.n === name));
+    }
+  }
+  assert.ok(st.features.includes('Radiant Strikes (11)'));
+  assert.ok(st.features.includes('Devotion: Holy Nimbus (20)'));
+});
+
+test('level 20 Warlock: four fifth-level pact slots, four beams and separate arcanum uses', () => {
+  const arcana = ['Circle of Death', 'Finger of Death', 'Power Word Stun', 'Power Word Kill'];
+  const h = { ...newHero('Warlock'), lvl:20, spells:['Eldritch Blast', ...arcana] }, st = heroStats(h), token = heroToken(h);
+  assert.equal(st.slots, null); assert.deepEqual(st.pact, { n:4, l:5 });
+  assert.equal(maxSpellLevel(h), 5, 'Arcanum never upgrades pact slots');
+  assert.deepEqual(arcanumLevels(h), [6,7,8,9]);
+  assert.deepEqual(spellLimits(h), { cantrips:4, prepared:15 });
+  assert.ok(spellPool(h).some(s => s.n === 'Power Word Kill'));
+  const beam = token.attacks.find(a => a.n.startsWith('Eldritch Blast'));
+  assert.equal(beam.rays, 4); assert.equal(beam.d, '1d10+2'); assert.equal(beam.b, 8);
+  assert.deepEqual(token.resources.filter(r => r.slot).map(r => [r.id, r.max, r.slot]), [['pact', 4, 5]]);
+  for (const [i, name] of arcana.entries()){
+    const r = token.resources.find(r => r.id === `arcanum${i + 6}`);
+    assert.equal(r.free, name); assert.equal(r.max, 1); assert.equal(r.rest, 'long'); assert.equal(r.slot, undefined);
+  }
+  assert.ok(!heroWarnings(h).some(w => /Arcanum/.test(w)));
+  const ordinary = spellPool(h).filter(s => s.l > 0 && s.l <= 5).slice(0, 15).map(s => s.n);
+  assert.ok(!heroWarnings({ ...h, spells:[...ordinary, ...arcana] }).some(w => /Too many prepared/.test(w)));
+  assert.ok(heroWarnings({ ...h, spells:[...arcana, 'Eyebite'] }).some(w => /one level 6/.test(w)));
+  assert.ok(heroWarnings({ ...h, lvl:10 }).some(w => /not an available Mystic Arcanum/.test(w)));
+  assert.ok(heroWarnings({ ...h, spells:['Heal'] }).some(w => /Heal is not an available/.test(w)));
+  for (const [level, count] of [[10,0],[11,1],[12,1],[13,2],[14,2],[15,3],[16,3],[17,4],[20,4]]){
+    assert.equal(heroResources({ ...h, lvl:level }).filter(r => r.id.startsWith('arcanum')).length, count);
+    assert.equal(Math.max(...spellPool({ ...h, lvl:level }).map(s => s.l)), count ? 5 + count : 5);
+  }
+});
+
+test('level 20 Fighter: extra feat levels, scaled resources and martial features', () => {
+  const h = { ...newHero('Fighter'), lvl:20, asi:{ 4:'Str', 6:'Con', 8:'Dex', 12:'Str', 14:'Con', 16:'Dex', 19:{ feat:'Other', name:'A chosen boon' } } };
+  const st = heroStats(h), token = heroToken(h);
+  assert.deepEqual(asiLevels(h), [4,6,8,12,14,16,19]);
+  assert.equal(st.sc.Str, 20); assert.equal(st.sc.Con, 18); assert.equal(st.sc.Dex, 18);
+  assert.equal(token.attacks[0].b, 11);
+  assert.equal(token.resources.find(r => r.id === 'wind').dice, '1d10+20');
+  assert.equal(token.resources.find(r => r.id === 'wind').use, 'secondwind');
+  assert.equal(token.resources.find(r => r.id === 'surge').max, 2);
+  assert.equal(token.resources.find(r => r.id === 'indomitable').max, 3);
+  assert.equal(token.resources.find(r => r.id === 'hd').max, 20);
+  assert.ok(st.features.includes('Two Extra Attacks (11)'));
+  assert.ok(st.features.includes('Three Extra Attacks (20)'));
+  assert.ok(st.features.includes('A chosen boon — feat (19)'));
+  assert.ok(!heroWarnings(h).some(w => /ability increase or feat/.test(w)));
+  assert.deepEqual(asiLevels({ ...newHero('Rogue'), lvl:20 }), [4,8,10,12,16,19]);
+  assert.deepEqual(asiLevels({ ...newHero('Wizard'), lvl:20 }), [4,8,12,16,19]);
+  for (const [level, surge, indomitable] of [[12,1,1],[13,1,2],[16,1,2],[17,2,3]]){
+    const res = heroResources({ ...h, lvl:level });
+    assert.equal(res.find(r => r.id === 'surge').max, surge);
+    assert.equal(res.find(r => r.id === 'indomitable').max, indomitable);
+  }
+});
+
+test('high-level ability boosts, saving throws and cantrip boundaries', () => {
+  const b = { ...newHero('Barbarian'), lvl:20, armor:'None', shield:false, asi:{ 4:'Str', 8:'Str', 12:'Con', 16:'Con' } };
+  const before = heroStats({ ...b, lvl:19 }), after = heroStats(b);
+  assert.equal(after.sc.Str, 24); assert.equal(after.sc.Con, before.sc.Con + 4);
+  assert.equal(after.hp, before.hp + 7 + before.M('Con') + 40, 'capstone Constitution applies to all Hit Dice');
+  assert.equal(after.ac, before.ac + 2);
+  assert.equal(heroStats({ ...b, ab:{ ...b.ab, Con:24 }, asi:{} }).sc.Con, 25, 'capstone maximum is 25');
+  const m = { ...newHero('Monk'), lvl:20, asi:{ 4:'Dex', 8:'Wis', 12:'Dex', 16:'Wis' } }, ms = heroStats(m);
+  assert.equal(ms.sc.Dex, 23); assert.equal(ms.sc.Wis, 22); assert.equal(ms.ac, 22); assert.equal(ms.spd, 60);
+  assert.equal(heroAttacks(m)[0].d, '1d12+6');
+  assert.equal(heroStats({ ...m, armor:'Leather' }).spd, 30);
+  for (const cls of ['Monk', 'Rogue']){
+    const at = cls === 'Monk' ? 14 : 15, h = newHero(cls);
+    const low = heroStats({ ...h, lvl:at - 1 }), high = heroStats({ ...h, lvl:at });
+    for (const a of cls === 'Monk' ? ['Con','Int','Wis','Cha'] : ['Wis','Cha']){
+      assert.equal(low.saves[a], low.M(a)); assert.equal(high.saves[a], high.M(a) + 5);
+    }
+  }
+  for (const [level, dice] of [[10,2],[11,3],[16,3],[17,4],[20,4]]){
+    assert.equal(cantripDice('1d8', level), `${dice}d8`);
+    assert.equal(castables({ ...newHero('Cleric'), lvl:level, spells:['Sacred Flame'] }).find(c => c.n === 'Sacred Flame').d, `${dice}d8`);
+    assert.equal(heroAttacks({ ...newHero('Warlock'), lvl:level, spells:['Eldritch Blast'] }).find(a => a.rays).rays, dice);
+  }
+  assert.ok(!heroSpells({ ...newHero('Bard'), lvl:19 }).some(s => s.n === 'Power Word Kill'));
+  assert.ok(heroSpells({ ...newHero('Bard'), lvl:20 }).some(s => s.n === 'Power Word Kill'));
+});
+
+test('level-20 derivation leaves saved sheets untouched and clamps imported out-of-range levels', () => {
+  const h = { ...newHero('Wizard'), lvl:99, spells:['Fire Bolt'], asi:{ 4:'Int', 12:'Int' } }, original = structuredClone(h);
+  const freeze = o => { Object.freeze(o); for (const v of Object.values(o)) if (v && typeof v === 'object') freeze(v); };
+  freeze(h);
+  assert.equal(heroStats(h).L, 20);
+  assert.equal(heroResources(h).find(r => r.id === 'hd').max, 20);
+  assert.equal(maxSpellLevel(h), 9); assert.equal(spellLimits(h).prepared, 25);
+  heroToken(h); heroWarnings(h); spellPool(h);
+  assert.deepEqual(h, original);
+  assert.equal(heroStats({ ...h, lvl:-5 }).L, 1);
 });
