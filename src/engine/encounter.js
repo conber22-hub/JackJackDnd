@@ -8,6 +8,8 @@ const BUDGET = [[50, 75, 100], [100, 150, 200], [150, 225, 400], [250, 375, 500]
   [1300, 2000, 2600], [1600, 2300, 3100], [1900, 2900, 4100], [2200, 3700, 4700], [2600, 4200, 5400], [2900, 4900, 6200], [3300, 5400, 7800], [3800, 6100, 9800],
   [4500, 7200, 11700], [5000, 8700, 14200], [5500, 10700, 17200], [6400, 13200, 22000]];
 export const DIFFICULTY = ['low', 'moderate', 'high'];
+// Whole rulebooks of creatures (the SRD's 330, the DM's books): only when the DM picks that family.
+const OPEN_FAMS = new Set(['srd', 'library']);
 export const xpOf = b => CR_XP[String(b?.cr)] ?? 0;
 export const gazeScale = gaze => 1 + Math.max(0, (+gaze || 1) - 1) * 0.06;
 export function budgetFor(levels, difficulty = 'moderate', gaze = 1){
@@ -18,7 +20,7 @@ export function budgetFor(levels, difficulty = 'moderate', gaze = 1){
    fam: a family id, or 'any'. Bosses and creatures worth nothing are left out. The count stays playable. */
 export function buildEncounter(list, { levels = [1, 1, 1, 1], difficulty = 'moderate', gaze = 1, fam = 'any', rng = Math.random } = {}){
   const budget = budgetFor(levels, difficulty, gaze), maxN = Math.max(2, levels.length * 2);
-  const pool = list.filter(b => !b.tags?.includes('boss') && xpOf(b) > 0 && xpOf(b) <= budget && (fam === 'any' ? b.fam !== 'library' : b.fam === fam));   // 'any' is the campaign's own; the DM's books by choice
+  const pool = list.filter(b => !b.tags?.includes('boss') && xpOf(b) > 0 && xpOf(b) <= budget && (fam === 'any' ? !OPEN_FAMS.has(b.fam) : b.fam === fam));   // 'any' is the campaign's own; the SRD and the DM's books by choice
   if (!pool.length) return { budget, xp:0, group:[] };
   const weight = b => (b.fam === 'barovia' && gaze >= 4 ? 1 + gaze / 3 : 1);
   const pickW = arr => { const tot = arr.reduce((s, b) => s + weight(b), 0); let r = rng() * tot; for (const b of arr){ r -= weight(b); if (r <= 0) return b; } return arr[arr.length - 1]; };

@@ -9,6 +9,8 @@ import { SPELLS, SPECIES, BACKGROUNDS, FEATS, CLASSES, SUBCLASSES } from '../dat
 import { bestList, setLibraryBestiary, rebuildBestiary } from '../data/bestiary.js';
 import { convertPrism, pickLibrary, libCounts, kindCounts, creatorPart, nameKey } from '../engine/library.js';
 import { state } from '../engine/state.js';
+import { MAGIC_ITEMS } from '../data/srd-items.js';
+import { FEATURES } from '../data/srd-features.js';
 
 const KEY = 'dreaddelve.library.v1', TABLE_KEY = 'dreaddelve.tablelibrary.v1';
 // What the app has of its own (read before anything is merged in).
@@ -85,19 +87,23 @@ export async function receiveTableLibrary(hash, packed){
   return libCounts(part);
 }
 
-/* Looking things up (the DM's reader): every entry whose name has the words, any kind. → [{ kind, n, sub, text }] */
-export function lookUp(q, max = 40){
-  const lib = L.mine?.lib || L.table?.part; if (!lib) return [];
+/* Looking things up: every spell, magic item, feat and class feature the app knows (the SRD's and the DM's books),
+   creatures too when it's the DM asking (players don't get stat blocks), and the books' species, backgrounds and
+   subclasses. Every entry whose name has all the words. → [{ kind, n, sub, text }] */
+export function lookUp(q, { max = 40, creatures = true } = {}){
   const words = String(q || '').toLowerCase().split(/\s+/).filter(Boolean); if (!words.length) return [];
-  const hit = n => words.every(w => n.toLowerCase().includes(w)), out = [];
-  const add = (kind, n, sub, text) => { if (out.length < max && hit(n)) out.push({ kind, n, sub, text }); };
-  for (const s of lib.spells || []) add('Spell', s.n, `${s.l ? `Level ${s.l}` : 'Cantrip'} ${s.school} · ${s.src}`, [`${s.time} · ${s.range} · ${s.comp} · ${s.dur}`, s.text, s.hl && `Higher levels. ${s.hl}`].filter(Boolean).join('\n\n'));
-  for (const i of lib.items || []) add('Magic item', i.n, `${i.rarity} ${i.type}${i.attune ? ` · ${i.attune}` : ''} · ${i.src}`, i.text);
-  for (const m of lib.monsters || []) add('Creature', m.name, `CR ${m.cr} · AC ${m.ac} · HP ${m.hp} · ${m.src}`, m.traits.map(t => t.replace(/<[^>]+>/g, '')).join('\n'));
-  for (const [n, f] of Object.entries(lib.feats || {})) add('Feat', n, f.src, f.text);
-  for (const [n, s] of Object.entries(lib.species || {})) add('Species', n, s.src, [s.text, ...s.feats.map(f => `${f.n}. ${f.text}`)].join('\n\n'));
-  for (const [n, b] of Object.entries(lib.backgrounds || {})) add('Background', n, b.src, [b.text, ...(b.feats || []).map(f => `${f.n}. ${f.text}`)].join('\n\n'));
-  for (const [c, subs] of Object.entries(lib.subclasses || {})) for (const [n, s] of Object.entries(subs)) add('Subclass', n, `${c} · ${s.src}`, [s.text, ...Object.entries(s.texts).map(([k, v]) => `${k}. ${v}`)].join('\n\n'));
+  const lib = L.mine?.lib || L.table?.part, out = [], seen = new Set();
+  const hit = n => words.every(w => n.toLowerCase().includes(w));
+  const add = (kind, n, sub, text) => { const k = kind + '|' + n; if (out.length < max && !seen.has(k) && hit(n)){ seen.add(k); out.push({ kind, n, sub, text }); } };
+  for (const s of SPELLS) add('Spell', s.n, `${s.l ? `Level ${s.l}` : 'Cantrip'} ${s.school || ''} · ${s.src || ''}`, [`${s.time || ''} · ${s.range || ''} · ${s.comp || ''} · ${s.dur || ''}`, s.text || s.note || '', s.hl && `Higher levels. ${s.hl}`].filter(Boolean).join('\n\n'));
+  for (const i of [...MAGIC_ITEMS, ...(lib?.items || [])]) add('Magic item', i.n, `${i.rarity} ${i.type}${i.attune ? ` · ${i.attune}` : ''} · ${i.src}`, i.text);
+  for (const [n, f] of Object.entries(FEATS)) if (n !== 'Other') add('Feat', n, [f.cat, f.src].filter(Boolean).join(' · '), [f.req && f.req !== 'None' ? `Prerequisite: ${f.req}` : '', f.text].filter(Boolean).join('\n\n'));
+  for (const [n, t] of Object.entries(FEATURES)) add('Class feature', n, 'SRD 5.2.1', t);
+  if (creatures) for (const b of bestList()) add('Creature', b.name, `CR ${b.cr} · AC ${b.ac} · HP ${b.hp}${b.src ? ` · ${b.src}` : b.fam === 'srd' ? ' · SRD 5.2.1' : ''}`,
+    [b.spd ? `Speed ${b.spd}` : '', ...(b.attacks || []).map(a => `${a.n}. +${a.b} to hit, ${a.d} ${a.t}${a.text ? ` — ${a.text}` : ''}`), ...(b.traits || [])].filter(Boolean).map(t => t.replace(/<[^>]+>/g, '')).join('\n\n'));
+  for (const [n, s] of Object.entries(lib?.species || {})) add('Species', n, s.src, [s.text, ...s.feats.map(f => `${f.n}. ${f.text}`)].join('\n\n'));
+  for (const [n, b] of Object.entries(lib?.backgrounds || {})) add('Background', n, b.src, [b.text, ...(b.feats || []).map(f => `${f.n}. ${f.text}`)].join('\n\n'));
+  for (const [c, subs] of Object.entries(lib?.subclasses || {})) for (const [n, s] of Object.entries(subs)) add('Subclass', n, `${c} · ${s.src}`, [s.text, ...Object.entries(s.texts).map(([k, v]) => `${k}. ${v}`)].join('\n\n'));
   return out;
 }
 // The text of something a hero has (a library feature, feat, species trait), for their sheet. → string or ''

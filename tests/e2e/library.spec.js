@@ -75,3 +75,20 @@ test('a player who joins gets the DM\'s books for their character creator, packe
     await context.close();
   }
 });
+
+test('📖 Look it up reads the SRD with no books imported: spells, magic items, creatures, class features', async ({ page }) => {
+  await arena(page);
+  await tableTab(page);
+  await page.locator('#libQ').fill('fireball');
+  await page.locator('[data-act="libRead"]', { hasText:'Fireball' }).first().click();
+  await expect(page.locator('#pickBox .readtext')).toContainText('Dexterity saving throw');
+  await page.locator('#pickBox [data-read="close"]').click();
+  await page.locator('#libQ').fill('bag of holding');
+  await expect(page.locator('#libHits')).toContainText('Magic item');
+  await page.locator('#libQ').fill('aboleth');
+  await expect(page.locator('#libHits')).toContainText('Creature');
+  await page.locator('#libQ').fill('action surge');
+  await expect(page.locator('#libHits')).toContainText('Class feature');
+  // a placed SRD creature brings its own saving throws and passive Perception
+  expect(await page.evaluate(() => { const t = window.DreadDelve.placeMonster('srd-aboleth', { floor:0, x:8, y:10 }); return { con:t.saves?.con, passive:t.passive }; })).toEqual({ con:6, passive:20 });
+});

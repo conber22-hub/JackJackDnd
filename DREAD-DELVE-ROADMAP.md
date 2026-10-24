@@ -16,6 +16,16 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.12 — the whole SRD at the table
+
+- **Codex's PR #6**: the SRD's equipment: 38 weapons (Lance, Blowgun, Musket and Pistol are new in the creator), armour (with Padded), tools, gear and packs, and **258 magic items** with their full text (`src/data/srd-items.js`).
+- **Codex's PR #7**: **all 330 SRD creatures**, monsters and animals, as a new "SRD 5.2.1" family in the Beasts tab (`src/data/srd-monsters.js`). They come with their full stat lines, saves, senses and 423 parsed attacks; their other actions are traits to read.
+- Claude's side:
+  - A placed SRD creature carries its own saving throws and passive Perception.
+  - Random encounters on "any creatures" keep to the campaign's own; pick the SRD family to roll from it.
+  - The Beasts tab's "All" lists the campaign's creatures (the SRD's are under their chip, or found by search), so the tab stays quick.
+- **📖 Look it up** (Table tab for the DM, Hero tab for players): every spell, magic item, feat and class feature, the DM's books, and for the DM every creature. Read in full.
+
 ## v1.11 — regal glass
 
 A new look for the DM and the players, after Apple's glass design with a gothic court's gold:
@@ -454,6 +464,8 @@ src/data/srd-spells.js  every SRD 5.2.1 spell, 0–9, with full text (generated 
 src/data/spell-play.js  the combat fields the table rolls with, over the faithful spell data
 src/data/srd-features.js  the SRD text of every class feature, by the names the sheets use (Codex's)
 src/data/srd-feats.js   the 17 SRD feats: category, prerequisite, text, flags (Codex's)
+src/data/srd-items.js   SRD weapons, armour, tools, gear and 258 magic items (Codex's)
+src/data/srd-monsters.js  all 330 SRD creatures in the bestiary format, family 'srd' (Codex's)
 src/data/npc-starter.js names, Vistani names, quirks and wants for generated NPCs (Codex's)
 src/engine/hero.js      character sheet → stats, attacks, spells, token (pure, tested)
 src/game/campaign.js    building session dungeons, placing encounters, clocks, printing the guide

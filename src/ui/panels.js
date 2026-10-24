@@ -118,8 +118,11 @@ function bestiaryTab(){
     <h3>Bestiary</h3><div>${fams.map(([k, l]) => `<span class="chip ${ui.bestFilter === k ? 'on' : ''}" data-act="bestFilter" data-k="${k}">${l}</span>`).join('')}</div>
     <div class="row"><input class="txt" id="bestSearch" placeholder="Search…" value="${esc(ui.bestSearch)}"></div>`;
   if (FAMILIES[ui.bestFilter]) h += `<div class="look">${esc(FAMILIES[ui.bestFilter].blurb)}</div>`;
+  else if (ui.bestFilter === 'all' && !ui.bestSearch) h += `<div class="muted">The campaign's own creatures. The SRD's 330 and your books' are under their own chips, or search for one by name.</div>`;
   const q = ui.bestSearch.toLowerCase();
-  const list = bestList().filter(b => (ui.bestFilter === 'all' || b.fam === ui.bestFilter || (ui.bestFilter === 'custom' && b.custom)) && (!q || b.name.toLowerCase().includes(q)));
+  // "All" is the campaign's own creatures; the SRD's 330 (and the DM's books) show under their family, or when searched for
+  const wide = b => b.fam === 'srd' || (b.fam === 'library' && !b.custom);
+  const list = bestList().filter(b => (ui.bestFilter === 'all' ? !wide(b) || !!q : b.fam === ui.bestFilter || (ui.bestFilter === 'custom' && b.custom)) && (!q || b.name.toLowerCase().includes(q)));
   for (const b of list){
     const open = ui.openBest === b.id, fam = FAMILIES[b.fam] || FAMILIES.dread, editing = ui.editBest === b.id;
     h += `<div class="card"><div class="hd"><span class="dot ${fam.cls}" style="background:currentColor"></span><span class="nm">${esc(b.name)}${b.custom ? ' <span class="muted">(edited)</span>' : ''}</span><span class="muted">CR ${esc(b.cr)}</span></div>
@@ -308,6 +311,7 @@ function tableTab(){
   h += `<div class="row"><button class="btn ${ui.tableView ? 'on' : ''}" data-act="tableView">📺 Table view ${ui.tableView ? 'ON' : 'off'}</button></div>
     <div class="muted">Table view shows what players see — fog, no room secrets, no hidden traps or secret doors, no monster HP. Use it when the screen is cast to a TV.</div>
     ${gfxPanel()}
+    ${readerPanel()}
     ${booksPanel()}
     <h3>Save</h3><div class="muted">Autosaves in this browser. Export to move a delve between devices or keep backups. Your edited tables and creatures travel with the save.</div>
     <div class="row"><button class="btn" data-act="export">⬇ Export</button><label class="btn">⬆ Import<input type="file" accept=".json" data-edit="import" hidden></label><button class="btn small" data-act="startScreen">Start screen</button></div>
@@ -325,11 +329,12 @@ function booksPanel(){
     <div class="row">${[['canon', 'Official books'], ['ua', 'Unearthed Arcana'], ['homebrew', 'Homebrew']].map(([k, l]) => `<button class="btn small ${L.mine.kinds.includes(k) ? 'on' : ''}" data-act="libKind" data-k="${k}">${L.mine.kinds.includes(k) ? '✓ ' : ''}${l} (${kinds[k] || 0})</button>`).join('')}</div>
     <div class="muted">Anything with the same name as one of the app's own (Fireball, Dwarf, Alert…) uses the app's version: that's the one the rules are wired to. Library spells roll what their description says plainly (a spell attack, a save, the dice, an area); the rest is for you to read and rule.</div>`;
   h += `<div class="row"><label class="btn small">${L.mine ? '⬆ Import again' : '⬆ Import your compendium'}<input type="file" accept=".prism,.json,application/json" data-edit="libImport" hidden></label>${L.mine ? '<button class="btn small danger" data-act="libRemove">Remove from this browser</button>' : ''}</div>`;
-  if (L.mine || L.table) h += `<input class="txt" id="libQ" placeholder="Look it up: a spell, magic item, creature, feat, species…" value="${esc(ui.libQ || '')}"><div id="libHits">${libHits()}</div>`;
   return h;
 }
+// The rules, to read at the table: every spell, magic item, feat and class feature (and creature, for the DM), plus the DM's books.
+const readerPanel = () => `<h3>📖 Look it up</h3><input class="txt" id="libQ" placeholder="${ui.role === 'dm' ? 'A spell, a magic item, a creature, a feat…' : 'A spell, a magic item, a feat, a feature…'}" value="${esc(ui.libQ || '')}"><div id="libHits">${libHits()}</div>`;
 export function libHits(){
-  const hits = ui.libHits = lookUp(ui.libQ || '');
+  const hits = ui.libHits = lookUp(ui.libQ || '', { creatures:ui.role === 'dm' });
   if (!ui.libQ) return '';
   return hits.length ? hits.map((x, i) => `<button class="btn pickrow" data-act="libRead" data-k="${i}"><span>${esc(x.n)}</span><span class="muted">${esc(x.kind)}</span></button>`).join('') : '<div class="muted">Nothing by that name.</div>';
 }
@@ -421,7 +426,7 @@ function heroTab(){
     h += picker + newAtTable();
     if (!ui.cardOnly) h += `<div class="muted">${state.combat.active ? (turn ? '<b style="color:var(--candle)">It is your turn.</b> Tap a glowing tile to move.' : 'Combat — wait for your turn to move.') : 'Exploring — tap your hero, then a glowing tile.'}<br>Tap a door next to you to open it. Long-press or use ◎ to ping a spot for everyone.</div>`;
   }
-  h += gfxPanel() + `<h3>Log</h3><div class="log">${logList(25)}</div>`;
+  h += readerPanel() + gfxPanel() + `<h3>Log</h3><div class="log">${logList(25)}</div>`;
   return h;
 }
 

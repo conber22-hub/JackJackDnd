@@ -58,7 +58,8 @@ export function makeMonster(bid, floor, x, y){
   if (b.lib && state?.content && !state.content.bestiary?.[bid]){ const { lib, kind, ...own } = b; (state.content.bestiary ||= {})[bid] = own; rebuildBestiary(state.content.bestiary); }
   const n = state ? state.tokens.filter(t => t.bid === bid).length : 0;
   return { id:uid(), kind:'monster', bid, name:n ? `${b.name} ${n + 1}` : b.name, color:b.color, ac:b.ac, hp, maxHp:hp, speed:b.speed, init:b.init, saveMod:1,
-           check:2, passive:12, attacks:b.attacks.map(a => ({ ...a })), floor, x, y, dead:false, flags:{}, conds:[], size:b.size || 1, moved:0 };
+           ...(b.saves ? { saves:{ ...b.saves } } : {}),   // a full stat block's saving throws (the SRD's), else the generic +1
+           check:2, passive:b.passive || 12, attacks:b.attacks.map(a => ({ ...a })), floor, x, y, dead:false, flags:{}, conds:[], size:b.size || 1, moved:0 };
 }
 export function makeNPC(name){
   return { id:uid(), kind:'npc', name, color:'#b9a7e0', ac:12, hp:20, maxHp:20, speed:30, init:1, saveMod:1, check:2, passive:12,

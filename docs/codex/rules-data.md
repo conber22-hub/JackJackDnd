@@ -56,14 +56,16 @@ Claude did the follow-ups both PRs listed: spells to level 9 in the creator, Mys
 - Origin, General, Fighting Style and Epic Boon feats each need `cat`, `req` (prerequisite) and `text`.
 - The engine applies effects only for the flags it knows. Text-only feats are fine; list the ones that could get real effects in the PR description.
 
-### 4. Equipment and magic items
+### 4. Equipment and magic items — DONE (PR #6)
 - Create `src/data/srd-items.js` with:
   - all SRD weapons (with mastery properties) and armour
   - adventuring gear, tools and packs (cost, weight)
   - SRD magic items: `n`, `type`, `rarity`, `attune`, `text`, plus mechanical fields where simple (`ac:+1`, `atk:+1`, `dmg:'1d6 fire'`)
 - Tests for shape and duplicates.
 
-### 5. SRD monsters
+### 5. SRD monsters — DONE (PR #7)
+Claude's side: placed SRD creatures carry their saves and passive Perception; random "any creatures" encounters keep to the campaign's own (pick the SRD family to roll from it); the Beasts tab's "All" lists the campaign's creatures, with the SRD's under their chip or by search; the 📖 Look it up reader covers creatures, magic items, spells, feats and class features. Still manual: special actions, recharge, riders, typed damage parts against resistances.
+
 - Put every SRD 5.2.1 creature in `src/data/srd-monsters.js`, in the bestiary format (`id`, `name`, `cr`, `ac`, `hp` dice, `speed`/`spd`, `size` in squares, `init`, `attacks` with to-hit and damage, `traits`, `saves`, `senses`, `look`).
 - Set `fam:'srd'` and a `shape` that `src/engine/look.js` presets can map (humanoid, beast, undead…).
 - Export a list and add it to `rebuildBestiary()` behind the existing ones: Barovia's versions win on id clashes, and the SRD's win over the DM's library (`LIBRARY`, already in `rebuildBestiary`, only adds ids nobody has).
