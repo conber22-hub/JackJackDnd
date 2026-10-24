@@ -1,5 +1,6 @@
 /* UI EVENT WIRING — every [data-act] button, [data-edit] field, and keyboard shortcut. */
 import { state, setState, ui, tokById, isDM, makePC, makeNPC, dreadLevel } from '../engine/state.js';
+import { ensureTourButton } from './tour.js';
 import { updateVision, freeTilesNear, seenNow } from '../engine/grid.js';
 import { roomById } from '../engine/generator.js';
 import { floorToAscii, floorToJSON } from '../engine/importer.js';
@@ -438,6 +439,7 @@ function loadArt(key, file){
 }
 $('#btnPanel').onclick = () => { ui.panelOpen = !ui.panelOpen; renderPanel(); renderDock(); };
 $('#btnHelp').onclick = () => $('#helpModal').classList.remove('hidden');
+ensureTourButton();   // the help modal's "Show me around" button (idempotent)
 $('#floorUp').onclick = () => state && goFloor(ui.floor - 1);
 $('#floorDown').onclick = () => state && goFloor(ui.floor + 1);
 $('#whimBadge').onclick = () => { if (state && isDM()){ ui.tab = 'gaze'; ui.panelOpen = true; renderTabs(); renderPanel(); renderDock(); } };
