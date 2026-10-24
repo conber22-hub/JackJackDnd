@@ -4,7 +4,7 @@ const SP = process.env.NIGHT_SHOTS;   // set to a folder to keep screenshots of 
 const openNight = async page => { if (!await page.evaluate(() => window.DreadDelve.ui.panelOpen)) await page.locator('#btnPanel').click(); await page.locator('[data-act="tab"][data-k="night"]').click(); };
 
 test('the table screen: a window for the TV that follows the table, with read-alouds, lights out and introductions', async ({ page }) => {
-  test.setTimeout(180_000);   // two 3D windows on a software renderer
+  test.setTimeout(360_000);   // two 3D windows on a software renderer: ~3 min on a quiet machine, more on a busy one
   await arena(page, [{ name:'Ada', x:6, y:10 }, { name:'Bram', x:5, y:10 }]);
   await page.evaluate(() => { const D = window.DreadDelve; D.placeMonster('zombie', { floor:0, x:7, y:10 }); D.get().campaign.notes = { 1:'Strahd is the innkeeper' }; });
   await openNight(page);
