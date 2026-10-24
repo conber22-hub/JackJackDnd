@@ -125,6 +125,6 @@ export function changed(){
   if (!state) return;
   syncTokens(); renderInit(); renderSel();
   const typing = document.activeElement && $('#tabBody').contains(document.activeElement) && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
-  if (!typing && ['tokens', 'hero', 'table', 'dread', 'build', 'story'].includes(ui.tab)) renderPanel();
+  if (!typing && ['tokens', 'hero', 'table', 'gaze', 'build', 'story'].includes(ui.tab)) renderPanel();
   saveSoon(); pushState();
 }
