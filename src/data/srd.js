@@ -104,31 +104,11 @@ export const BACKGROUNDS = {
   Sage:{ ab:['Con', 'Int', 'Wis'], feat:'Magic Initiate (Wizard)', mi:'W', skills:['Arcana', 'History'] },
   Soldier:{ ab:['Str', 'Dex', 'Con'], feat:'Savage Attacker', savage:true, skills:['Athletics', 'Intimidation'] },
 };
-// n, damage, type, properties (F finesse, L light, T thrown, H heavy, 2 two-handed, V:die versatile, R reach, A ammunition), range, mastery, category
-export const WEAPONS = [
-  ['Club','1d4','bludgeoning','L',0,'Slow','s'],['Dagger','1d4','piercing','FLT',[20,60],'Nick','s'],
-  ['Greatclub','1d8','bludgeoning','2',0,'Push','s'],['Handaxe','1d6','slashing','LT',[20,60],'Vex','s'],
-  ['Javelin','1d6','piercing','T',[30,120],'Slow','s'],['Light Hammer','1d4','bludgeoning','LT',[20,60],'Nick','s'],
-  ['Mace','1d6','bludgeoning','',0,'Sap','s'],['Quarterstaff','1d6','bludgeoning','V:1d8',0,'Topple','s'],
-  ['Sickle','1d4','slashing','L',0,'Nick','s'],['Spear','1d6','piercing','TV:1d8',[20,60],'Sap','s'],
-  ['Dart','1d4','piercing','FT',[20,60],'Vex','sr'],['Light Crossbow','1d8','piercing','A2',[80,320],'Slow','sr'],
-  ['Shortbow','1d6','piercing','A2',[80,320],'Vex','sr'],['Sling','1d4','bludgeoning','A',[30,120],'Slow','sr'],
-  ['Battleaxe','1d8','slashing','V:1d10',0,'Topple','m'],['Flail','1d8','bludgeoning','',0,'Sap','m'],
-  ['Glaive','1d10','slashing','H2R',0,'Graze','m'],['Greataxe','1d12','slashing','H2',0,'Cleave','m'],
-  ['Greatsword','2d6','slashing','H2',0,'Graze','m'],['Halberd','1d10','slashing','H2R',0,'Cleave','m'],
-  ['Longsword','1d8','slashing','V:1d10',0,'Sap','m'],['Maul','2d6','bludgeoning','H2',0,'Topple','m'],
-  ['Morningstar','1d8','piercing','',0,'Sap','m'],['Pike','1d10','piercing','H2R',0,'Push','m'],
-  ['Rapier','1d8','piercing','F',0,'Vex','m'],['Scimitar','1d6','slashing','FL',0,'Nick','m'],
-  ['Shortsword','1d6','piercing','FL',0,'Vex','m'],['Trident','1d8','piercing','TV:1d10',[20,60],'Topple','m'],
-  ['Warhammer','1d8','bludgeoning','V:1d10',0,'Push','m'],['War Pick','1d8','piercing','V:1d10',0,'Sap','m'],
-  ['Whip','1d4','slashing','FR',0,'Slow','m'],['Hand Crossbow','1d6','piercing','AL',[30,120],'Vex','mr'],
-  ['Heavy Crossbow','1d10','piercing','AH2',[100,400],'Push','mr'],['Longbow','1d8','piercing','AH2',[150,600],'Slow','mr'],
-].map(w => ({ n:w[0], d:w[1], ty:w[2], p:w[3], rng:w[4], ms:w[5], cat:w[6] }));
-export const ARMOR = {
-  None:{ ac:10, dex:99 }, Leather:{ ac:11, dex:99, t:'light' }, 'Studded Leather':{ ac:12, dex:99, t:'light' },
-  Hide:{ ac:12, dex:2, t:'medium' }, 'Chain Shirt':{ ac:13, dex:2, t:'medium' }, 'Scale Mail':{ ac:14, dex:2, t:'medium' },
-  Breastplate:{ ac:14, dex:2, t:'medium' }, 'Half Plate':{ ac:15, dex:2, t:'medium' },
-  'Ring Mail':{ ac:14, dex:0, t:'heavy' }, 'Chain Mail':{ ac:16, dex:0, t:'heavy' }, Splint:{ ac:17, dex:0, t:'heavy' }, Plate:{ ac:18, dex:0, t:'heavy' },
+// Complete SRD equipment; preserve saved sheet names and the creator's separate shield control.
+import { SRD_WEAPONS, ARMOR_ITEMS } from './srd-items.js';
+export const WEAPONS = SRD_WEAPONS;
+export const ARMOR = { None:{ ac:10, dex:99 },
+  ...Object.fromEntries(ARMOR_ITEMS.filter(a => a.t !== 'shield').map(a => [a.n.replace(/ Armor$/, ''), a])),
 };
 // Full SRD feats retain the flags the creator and pure hero engine already understand.
 import { SRD_FEATS } from './srd-feats.js';
