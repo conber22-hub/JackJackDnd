@@ -17,6 +17,7 @@ import { renderPanel } from '../ui/panels.js';
 import { broadcast, sendHost, pushState } from '../net/table.js';
 import { goFloor } from './actions.js';
 import { scene } from '../render/scene.js';
+import { get, set } from 'idb-keyval';   // the DM's saves live here now (library.js already uses it for books)
 
 export { broadcast, sendHost, pushState };
 
@@ -65,13 +66,43 @@ export function deserialize(s){
 }
 
 const SAVE_KEY = 'dreaddelve.save.v1';
+// The DM's delve, in IndexedDB with the art included: localStorage's ~5 MB ceiling dropped
+// long campaigns' art. The save read at boot is cached, so loadLocal() stays synchronous.
+let cachedSave = null, savesReady = false;
+// Read the save into the cache before the start screen appears (called from main.js).
+// Migrates once: an old localStorage save moves across and the old key is removed.
+// If IndexedDB fails, localStorage keeps working as before.
+export async function initSaves(){
+  if (savesReady) return;
+  savesReady = true;
+  try {
+    const stored = await get(SAVE_KEY);
+    if (stored != null){ cachedSave = stored; return; }
+    let old = null;
+    try { const s = localStorage.getItem(SAVE_KEY); old = s ? JSON.parse(s) : null; } catch {}
+    if (old){
+      try { await set(SAVE_KEY, old); }
+      catch { return; }   // keep the localStorage save: it still loads below
+      cachedSave = old;
+      try { localStorage.removeItem(SAVE_KEY); } catch {}
+    }
+  } catch { /* IndexedDB unavailable: loadLocal() falls back to localStorage */ }
+}
 let saveTimer = null, warnedQuota = false;
 export function saveSoon(){ if (ui.role !== 'dm') return; clearTimeout(saveTimer); saveTimer = setTimeout(saveLocal, 500); }
 export function saveLocal(){
-  try { localStorage.setItem(SAVE_KEY, JSON.stringify(serialize(true))); }
-  catch { try { localStorage.setItem(SAVE_KEY, JSON.stringify(serialize(false))); if (!warnedQuota){ warnedQuota = true; toast('Autosave skipped art (too big) — use Export to keep it.'); } } catch {} }
+  const data = serialize(true);
+  cachedSave = data;
+  set(SAVE_KEY, data).catch(() => {
+    // IndexedDB failed: the old localStorage path, art first, then without it.
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(data)); }
+    catch { try { localStorage.setItem(SAVE_KEY, JSON.stringify(serialize(false))); if (!warnedQuota){ warnedQuota = true; toast('Autosave skipped art (too big) — use Export to keep it.'); } } catch {} }
+  });
 }
-export function loadLocal(){ try { const s = localStorage.getItem(SAVE_KEY); return s ? JSON.parse(s) : null; } catch { return null; } }
+export function loadLocal(){
+  if (cachedSave) return cachedSave;
+  try { const s = localStorage.getItem(SAVE_KEY); return s ? JSON.parse(s) : null; } catch { return null; }
+}
 export function download(name, text, type = 'application/json'){
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type }));
   a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);

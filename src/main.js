@@ -27,6 +27,7 @@ import { initCardOnly } from './ui/cards.js';
 import { runLocalScreen, listenForScreens } from './net/screen.js';
 import { joinTable, readInvite, net, setScreenNow } from './net/table.js';
 import { nightNow } from './game/night.js';
+import { initSaves } from './game/session.js';
 import { onAskChange } from './game/asks.js';
 import { loadLibrary, onLibrary } from './game/library.js';
 import './ui/input.js';
@@ -126,7 +127,7 @@ if (scr !== null){
   readInvite(); bootScreenUI(); $('#startModal')?.classList.add('hidden');
   if (scr.length >= 4){ joinTable(scr, '📺 Table screen', 'screen-' + Math.random().toString(36).slice(2, 8)); net.join.screen = true; }
   else runLocalScreen();
-} else showStart();
+} else initSaves().then(showStart);   // the save is cached before the start screen reads it
 initCardOnly();   // a player's phone at an in-person game: no 3D (ui/cards.js)
 setScreenNow(nightNow); listenForScreens();
 onAskChange(() => { if (ui.tab === 'night') renderPanel(); });
