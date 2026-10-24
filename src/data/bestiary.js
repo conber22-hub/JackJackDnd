@@ -15,8 +15,10 @@
    look: written appearance (feeds your art)   prompt: Grok prompt
    --------------------------------------------------------------------- */
 import { BAROVIA } from './bestiary-barovia.js';
+import { SRD_MONSTERS } from './srd-monsters.js';
 
 export const FAMILIES = {
+  srd:    { label:'SRD 5.2.1',          cls:'fam-andral', blurb:'Openly licensed creatures and animals from the SRD. Read their traits for special actions and conditional effects.' },
   seep:   { label:'The Seep',            cls:'fam-seep',   blurb:'When Saint Andral\'s bones were stolen, the font beneath the church kept running — and what ran down into the silver mine was not water. The Seep is a parasite-tide: it takes the dead, bloats inside the living, reshapes its biomass into whatever the hunt needs, and drains every scrap of flesh and memory toward a growing mind at the bottom of the mine. Infection forms seed hosts; hosts become Husks; Husks feed Carriers; Carriers birth more seed. Kill the mind or burn everything.' },
   andral: { label:'Andral\'s Labyrinth', cls:'fam-andral', blurb:'The lich-saint\'s own defences — the hands that never stop coming, and the saint himself, still praying over a font that has turned against him. The Seep wants his mind more than anything else down here.' },
   dread:  { label:'Barovian Undead',     cls:'fam-dread',  blurb:'Fresh horrors of the Dread Zone — what Barovia grows in the dark when the sun is summoned above it.' },
@@ -262,6 +264,7 @@ let lastCustom = {};
 export function rebuildBestiary(custom = lastCustom){
   lastCustom = custom || {};
   for (const k of Object.keys(BEST)) delete BEST[k];
+  for (const b of SRD_MONSTERS) BEST[b.id] = b;
   for (const b of BESTIARY) BEST[b.id] = b;
   for (const b of BAROVIA) BEST[b.id] = b;
   for (const b of LIBRARY) if (!BEST[b.id]) BEST[b.id] = b;

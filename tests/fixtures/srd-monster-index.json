@@ -1,0 +1,7922 @@
+[
+  {
+    "name": "Aboleth",
+    "ac": 17,
+    "init": 7,
+    "hp": "20d10+40",
+    "hpAverage": 150,
+    "cr": "10",
+    "stats": {
+      "Str": 21,
+      "Dex": 9,
+      "Con": 15,
+      "Int": 18,
+      "Wis": 15,
+      "Cha": 18
+    },
+    "saves": {
+      "str": 5,
+      "dex": 3,
+      "con": 6,
+      "int": 8,
+      "wis": 6,
+      "cha": 4
+    }
+  },
+  {
+    "name": "Air Elemental",
+    "ac": 15,
+    "init": 5,
+    "hp": "12d10+24",
+    "hpAverage": 90,
+    "cr": "5",
+    "stats": {
+      "Str": 14,
+      "Dex": 20,
+      "Con": 14,
+      "Int": 6,
+      "Wis": 10,
+      "Cha": 6
+    },
+    "saves": {
+      "str": 2,
+      "dex": 5,
+      "con": 2,
+      "int": -2,
+      "wis": 0,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Animated Armor",
+    "ac": 18,
+    "init": 2,
+    "hp": "6d8+6",
+    "hpAverage": 33,
+    "cr": "1",
+    "stats": {
+      "Str": 14,
+      "Dex": 11,
+      "Con": 13,
+      "Int": 1,
+      "Wis": 3,
+      "Cha": 1
+    },
+    "saves": {
+      "str": 2,
+      "dex": 0,
+      "con": 1,
+      "int": -5,
+      "wis": -4,
+      "cha": -5
+    }
+  },
+  {
+    "name": "Animated Flying Sword",
+    "ac": 17,
+    "init": 4,
+    "hp": "4d6",
+    "hpAverage": 14,
+    "cr": "1/4",
+    "stats": {
+      "Str": 12,
+      "Dex": 15,
+      "Con": 11,
+      "Int": 1,
+      "Wis": 5,
+      "Cha": 1
+    },
+    "saves": {
+      "str": 1,
+      "dex": 4,
+      "con": 0,
+      "int": -5,
+      "wis": -3,
+      "cha": -5
+    }
+  },
+  {
+    "name": "Animated Rug of Smothering",
+    "ac": 12,
+    "init": 4,
+    "hp": "5d10",
+    "hpAverage": 27,
+    "cr": "2",
+    "stats": {
+      "Str": 17,
+      "Dex": 14,
+      "Con": 10,
+      "Int": 1,
+      "Wis": 3,
+      "Cha": 1
+    },
+    "saves": {
+      "str": 3,
+      "dex": 2,
+      "con": 0,
+      "int": -5,
+      "wis": -4,
+      "cha": -5
+    }
+  },
+  {
+    "name": "Ankheg",
+    "ac": 14,
+    "init": 0,
+    "hp": "6d10+12",
+    "hpAverage": 45,
+    "cr": "2",
+    "stats": {
+      "Str": 17,
+      "Dex": 11,
+      "Con": 14,
+      "Int": 1,
+      "Wis": 13,
+      "Cha": 6
+    },
+    "saves": {
+      "str": 3,
+      "dex": 0,
+      "con": 2,
+      "int": -5,
+      "wis": 1,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Assassin",
+    "ac": 16,
+    "init": 10,
+    "hp": "15d8+30",
+    "hpAverage": 97,
+    "cr": "8",
+    "stats": {
+      "Str": 11,
+      "Dex": 18,
+      "Con": 14,
+      "Int": 16,
+      "Wis": 11,
+      "Cha": 10
+    },
+    "saves": {
+      "str": 0,
+      "dex": 7,
+      "con": 2,
+      "int": 6,
+      "wis": 0,
+      "cha": 0
+    }
+  },
+  {
+    "name": "Awakened Shrub",
+    "ac": 9,
+    "init": -1,
+    "hp": "3d6",
+    "hpAverage": 10,
+    "cr": "0",
+    "stats": {
+      "Str": 3,
+      "Dex": 8,
+      "Con": 11,
+      "Int": 10,
+      "Wis": 10,
+      "Cha": 6
+    },
+    "saves": {
+      "str": -4,
+      "dex": -1,
+      "con": 0,
+      "int": 0,
+      "wis": 0,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Awakened Tree",
+    "ac": 13,
+    "init": -2,
+    "hp": "7d12+14",
+    "hpAverage": 59,
+    "cr": "2",
+    "stats": {
+      "Str": 19,
+      "Dex": 6,
+      "Con": 15,
+      "Int": 10,
+      "Wis": 10,
+      "Cha": 7
+    },
+    "saves": {
+      "str": 4,
+      "dex": -2,
+      "con": 2,
+      "int": 0,
+      "wis": 0,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Axe Beak",
+    "ac": 11,
+    "init": 1,
+    "hp": "3d10+3",
+    "hpAverage": 19,
+    "cr": "1/4",
+    "stats": {
+      "Str": 14,
+      "Dex": 12,
+      "Con": 12,
+      "Int": 2,
+      "Wis": 10,
+      "Cha": 5
+    },
+    "saves": {
+      "str": 2,
+      "dex": 1,
+      "con": 1,
+      "int": -4,
+      "wis": 0,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Azer Sentinel",
+    "ac": 17,
+    "init": 1,
+    "hp": "6d8+12",
+    "hpAverage": 39,
+    "cr": "2",
+    "stats": {
+      "Str": 17,
+      "Dex": 12,
+      "Con": 15,
+      "Int": 12,
+      "Wis": 13,
+      "Cha": 10
+    },
+    "saves": {
+      "str": 3,
+      "dex": 1,
+      "con": 4,
+      "int": 1,
+      "wis": 1,
+      "cha": 0
+    }
+  },
+  {
+    "name": "Balor",
+    "ac": 19,
+    "init": 14,
+    "hp": "23d12+138",
+    "hpAverage": 287,
+    "cr": "19",
+    "stats": {
+      "Str": 26,
+      "Dex": 15,
+      "Con": 22,
+      "Int": 20,
+      "Wis": 16,
+      "Cha": 22
+    },
+    "saves": {
+      "str": 8,
+      "dex": 2,
+      "con": 12,
+      "int": 5,
+      "wis": 9,
+      "cha": 6
+    }
+  },
+  {
+    "name": "Bandit",
+    "ac": 12,
+    "init": 1,
+    "hp": "2d8+2",
+    "hpAverage": 11,
+    "cr": "1/8",
+    "stats": {
+      "Str": 11,
+      "Dex": 12,
+      "Con": 12,
+      "Int": 10,
+      "Wis": 10,
+      "Cha": 10
+    },
+    "saves": {
+      "str": 0,
+      "dex": 1,
+      "con": 1,
+      "int": 0,
+      "wis": 0,
+      "cha": 0
+    }
+  },
+  {
+    "name": "Bandit Captain",
+    "ac": 15,
+    "init": 3,
+    "hp": "8d8+16",
+    "hpAverage": 52,
+    "cr": "2",
+    "stats": {
+      "Str": 15,
+      "Dex": 16,
+      "Con": 14,
+      "Int": 14,
+      "Wis": 11,
+      "Cha": 14
+    },
+    "saves": {
+      "str": 4,
+      "dex": 5,
+      "con": 2,
+      "int": 2,
+      "wis": 2,
+      "cha": 2
+    }
+  },
+  {
+    "name": "Barbed Devil",
+    "ac": 15,
+    "init": 3,
+    "hp": "13d8+52",
+    "hpAverage": 110,
+    "cr": "5",
+    "stats": {
+      "Str": 16,
+      "Dex": 17,
+      "Con": 18,
+      "Int": 12,
+      "Wis": 14,
+      "Cha": 14
+    },
+    "saves": {
+      "str": 6,
+      "dex": 3,
+      "con": 7,
+      "int": 1,
+      "wis": 5,
+      "cha": 5
+    }
+  },
+  {
+    "name": "Basilisk",
+    "ac": 15,
+    "init": -1,
+    "hp": "8d8+16",
+    "hpAverage": 52,
+    "cr": "3",
+    "stats": {
+      "Str": 16,
+      "Dex": 8,
+      "Con": 15,
+      "Int": 2,
+      "Wis": 8,
+      "Cha": 7
+    },
+    "saves": {
+      "str": 3,
+      "dex": -1,
+      "con": 2,
+      "int": -4,
+      "wis": -1,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Bearded Devil",
+    "ac": 13,
+    "init": 2,
+    "hp": "9d8+18",
+    "hpAverage": 58,
+    "cr": "3",
+    "stats": {
+      "Str": 16,
+      "Dex": 15,
+      "Con": 15,
+      "Int": 9,
+      "Wis": 11,
+      "Cha": 14
+    },
+    "saves": {
+      "str": 5,
+      "dex": 2,
+      "con": 4,
+      "int": -1,
+      "wis": 0,
+      "cha": 4
+    }
+  },
+  {
+    "name": "Behir",
+    "ac": 17,
+    "init": 3,
+    "hp": "16d12+64",
+    "hpAverage": 168,
+    "cr": "11",
+    "stats": {
+      "Str": 23,
+      "Dex": 16,
+      "Con": 18,
+      "Int": 7,
+      "Wis": 14,
+      "Cha": 12
+    },
+    "saves": {
+      "str": 6,
+      "dex": 3,
+      "con": 4,
+      "int": -2,
+      "wis": 2,
+      "cha": 1
+    }
+  },
+  {
+    "name": "Berserker",
+    "ac": 13,
+    "init": 1,
+    "hp": "9d8+27",
+    "hpAverage": 67,
+    "cr": "2",
+    "stats": {
+      "Str": 16,
+      "Dex": 12,
+      "Con": 17,
+      "Int": 9,
+      "Wis": 11,
+      "Cha": 9
+    },
+    "saves": {
+      "str": 3,
+      "dex": 1,
+      "con": 3,
+      "int": -1,
+      "wis": 0,
+      "cha": -1
+    }
+  },
+  {
+    "name": "Black Dragon Wyrmling",
+    "ac": 17,
+    "init": 4,
+    "hp": "6d8+6",
+    "hpAverage": 33,
+    "cr": "2",
+    "stats": {
+      "Str": 15,
+      "Dex": 14,
+      "Con": 13,
+      "Int": 10,
+      "Wis": 11,
+      "Cha": 13
+    },
+    "saves": {
+      "str": 2,
+      "dex": 4,
+      "con": 1,
+      "int": 0,
+      "wis": 2,
+      "cha": 1
+    }
+  },
+  {
+    "name": "Young Black Dragon",
+    "ac": 18,
+    "init": 5,
+    "hp": "15d10+45",
+    "hpAverage": 127,
+    "cr": "7",
+    "stats": {
+      "Str": 19,
+      "Dex": 14,
+      "Con": 17,
+      "Int": 12,
+      "Wis": 11,
+      "Cha": 15
+    },
+    "saves": {
+      "str": 4,
+      "dex": 5,
+      "con": 3,
+      "int": 1,
+      "wis": 3,
+      "cha": 2
+    }
+  },
+  {
+    "name": "Adult Black Dragon",
+    "ac": 19,
+    "init": 12,
+    "hp": "17d12+85",
+    "hpAverage": 195,
+    "cr": "14",
+    "stats": {
+      "Str": 23,
+      "Dex": 14,
+      "Con": 21,
+      "Int": 14,
+      "Wis": 13,
+      "Cha": 19
+    },
+    "saves": {
+      "str": 6,
+      "dex": 7,
+      "con": 5,
+      "int": 2,
+      "wis": 6,
+      "cha": 4
+    }
+  },
+  {
+    "name": "Ancient Black Dragon",
+    "ac": 22,
+    "init": 16,
+    "hp": "21d20+147",
+    "hpAverage": 367,
+    "cr": "21",
+    "stats": {
+      "Str": 27,
+      "Dex": 14,
+      "Con": 25,
+      "Int": 16,
+      "Wis": 15,
+      "Cha": 22
+    },
+    "saves": {
+      "str": 8,
+      "dex": 9,
+      "con": 7,
+      "int": 3,
+      "wis": 9,
+      "cha": 6
+    }
+  },
+  {
+    "name": "Black Pudding",
+    "ac": 7,
+    "init": -3,
+    "hp": "8d10+24",
+    "hpAverage": 68,
+    "cr": "4",
+    "stats": {
+      "Str": 16,
+      "Dex": 5,
+      "Con": 16,
+      "Int": 1,
+      "Wis": 6,
+      "Cha": 1
+    },
+    "saves": {
+      "str": 3,
+      "dex": -3,
+      "con": 3,
+      "int": -5,
+      "wis": -2,
+      "cha": -5
+    }
+  },
+  {
+    "name": "Blink Dog",
+    "ac": 13,
+    "init": 3,
+    "hp": "4d8+4",
+    "hpAverage": 22,
+    "cr": "1/4",
+    "stats": {
+      "Str": 12,
+      "Dex": 17,
+      "Con": 12,
+      "Int": 10,
+      "Wis": 13,
+      "Cha": 11
+    },
+    "saves": {
+      "str": 1,
+      "dex": 3,
+      "con": 1,
+      "int": 0,
+      "wis": 1,
+      "cha": 0
+    }
+  },
+  {
+    "name": "Blue Dragon Wyrmling",
+    "ac": 17,
+    "init": 2,
+    "hp": "10d8+20",
+    "hpAverage": 65,
+    "cr": "3",
+    "stats": {
+      "Str": 17,
+      "Dex": 10,
+      "Con": 15,
+      "Int": 12,
+      "Wis": 11,
+      "Cha": 15
+    },
+    "saves": {
+      "str": 3,
+      "dex": 2,
+      "con": 2,
+      "int": 1,
+      "wis": 2,
+      "cha": 2
+    }
+  },
+  {
+    "name": "Young Blue Dragon",
+    "ac": 18,
+    "init": 4,
+    "hp": "16d10+64",
+    "hpAverage": 152,
+    "cr": "9",
+    "stats": {
+      "Str": 21,
+      "Dex": 10,
+      "Con": 19,
+      "Int": 14,
+      "Wis": 13,
+      "Cha": 17
+    },
+    "saves": {
+      "str": 5,
+      "dex": 4,
+      "con": 4,
+      "int": 2,
+      "wis": 5,
+      "cha": 3
+    }
+  },
+  {
+    "name": "Adult Blue Dragon",
+    "ac": 19,
+    "init": 10,
+    "hp": "17d12+102",
+    "hpAverage": 212,
+    "cr": "16",
+    "stats": {
+      "Str": 25,
+      "Dex": 10,
+      "Con": 23,
+      "Int": 16,
+      "Wis": 15,
+      "Cha": 20
+    },
+    "saves": {
+      "str": 7,
+      "dex": 5,
+      "con": 6,
+      "int": 3,
+      "wis": 7,
+      "cha": 5
+    }
+  },
+  {
+    "name": "Ancient Blue Dragon",
+    "ac": 22,
+    "init": 14,
+    "hp": "26d20+208",
+    "hpAverage": 481,
+    "cr": "23",
+    "stats": {
+      "Str": 29,
+      "Dex": 10,
+      "Con": 27,
+      "Int": 18,
+      "Wis": 17,
+      "Cha": 25
+    },
+    "saves": {
+      "str": 9,
+      "dex": 7,
+      "con": 8,
+      "int": 4,
+      "wis": 10,
+      "cha": 7
+    }
+  },
+  {
+    "name": "Bone Devil",
+    "ac": 16,
+    "init": 7,
+    "hp": "17d10+68",
+    "hpAverage": 161,
+    "cr": "9",
+    "stats": {
+      "Str": 18,
+      "Dex": 16,
+      "Con": 18,
+      "Int": 13,
+      "Wis": 14,
+      "Cha": 16
+    },
+    "saves": {
+      "str": 8,
+      "dex": 3,
+      "con": 4,
+      "int": 5,
+      "wis": 6,
+      "cha": 7
+    }
+  },
+  {
+    "name": "Brass Dragon Wyrmling",
+    "ac": 15,
+    "init": 2,
+    "hp": "4d8+4",
+    "hpAverage": 22,
+    "cr": "1",
+    "stats": {
+      "Str": 15,
+      "Dex": 10,
+      "Con": 13,
+      "Int": 10,
+      "Wis": 11,
+      "Cha": 13
+    },
+    "saves": {
+      "str": 2,
+      "dex": 2,
+      "con": 1,
+      "int": 0,
+      "wis": 2,
+      "cha": 1
+    }
+  },
+  {
+    "name": "Young Brass Dragon",
+    "ac": 17,
+    "init": 3,
+    "hp": "13d10+39",
+    "hpAverage": 110,
+    "cr": "6",
+    "stats": {
+      "Str": 19,
+      "Dex": 10,
+      "Con": 17,
+      "Int": 12,
+      "Wis": 11,
+      "Cha": 15
+    },
+    "saves": {
+      "str": 4,
+      "dex": 3,
+      "con": 3,
+      "int": 1,
+      "wis": 3,
+      "cha": 2
+    }
+  },
+  {
+    "name": "Adult Brass Dragon",
+    "ac": 18,
+    "init": 10,
+    "hp": "15d12+75",
+    "hpAverage": 172,
+    "cr": "13",
+    "stats": {
+      "Str": 23,
+      "Dex": 10,
+      "Con": 21,
+      "Int": 14,
+      "Wis": 13,
+      "Cha": 17
+    },
+    "saves": {
+      "str": 6,
+      "dex": 5,
+      "con": 5,
+      "int": 2,
+      "wis": 6,
+      "cha": 3
+    }
+  },
+  {
+    "name": "Ancient Brass Dragon",
+    "ac": 20,
+    "init": 12,
+    "hp": "19d20+133",
+    "hpAverage": 332,
+    "cr": "20",
+    "stats": {
+      "Str": 27,
+      "Dex": 10,
+      "Con": 25,
+      "Int": 16,
+      "Wis": 15,
+      "Cha": 22
+    },
+    "saves": {
+      "str": 8,
+      "dex": 6,
+      "con": 7,
+      "int": 3,
+      "wis": 8,
+      "cha": 6
+    }
+  },
+  {
+    "name": "Bronze Dragon Wyrmling",
+    "ac": 15,
+    "init": 2,
+    "hp": "6d8+12",
+    "hpAverage": 39,
+    "cr": "2",
+    "stats": {
+      "Str": 17,
+      "Dex": 10,
+      "Con": 15,
+      "Int": 12,
+      "Wis": 11,
+      "Cha": 15
+    },
+    "saves": {
+      "str": 3,
+      "dex": 2,
+      "con": 2,
+      "int": 1,
+      "wis": 2,
+      "cha": 2
+    }
+  },
+  {
+    "name": "Young Bronze Dragon",
+    "ac": 17,
+    "init": 3,
+    "hp": "15d10+60",
+    "hpAverage": 142,
+    "cr": "8",
+    "stats": {
+      "Str": 21,
+      "Dex": 10,
+      "Con": 19,
+      "Int": 14,
+      "Wis": 13,
+      "Cha": 17
+    },
+    "saves": {
+      "str": 5,
+      "dex": 3,
+      "con": 4,
+      "int": 2,
+      "wis": 4,
+      "cha": 3
+    }
+  },
+  {
+    "name": "Adult Bronze Dragon",
+    "ac": 18,
+    "init": 10,
+    "hp": "17d12+102",
+    "hpAverage": 212,
+    "cr": "15",
+    "stats": {
+      "Str": 25,
+      "Dex": 10,
+      "Con": 23,
+      "Int": 16,
+      "Wis": 15,
+      "Cha": 20
+    },
+    "saves": {
+      "str": 7,
+      "dex": 5,
+      "con": 6,
+      "int": 3,
+      "wis": 7,
+      "cha": 5
+    }
+  },
+  {
+    "name": "Ancient Bronze Dragon",
+    "ac": 22,
+    "init": 14,
+    "hp": "24d20+192",
+    "hpAverage": 444,
+    "cr": "22",
+    "stats": {
+      "Str": 29,
+      "Dex": 10,
+      "Con": 27,
+      "Int": 18,
+      "Wis": 17,
+      "Cha": 25
+    },
+    "saves": {
+      "str": 9,
+      "dex": 7,
+      "con": 8,
+      "int": 4,
+      "wis": 10,
+      "cha": 7
+    }
+  },
+  {
+    "name": "Bugbear Stalker",
+    "ac": 15,
+    "init": 2,
+    "hp": "10d8+20",
+    "hpAverage": 65,
+    "cr": "3",
+    "stats": {
+      "Str": 17,
+      "Dex": 14,
+      "Con": 14,
+      "Int": 11,
+      "Wis": 12,
+      "Cha": 11
+    },
+    "saves": {
+      "str": 3,
+      "dex": 2,
+      "con": 4,
+      "int": 0,
+      "wis": 3,
+      "cha": 0
+    }
+  },
+  {
+    "name": "Bugbear Warrior",
+    "ac": 14,
+    "init": 2,
+    "hp": "6d8+6",
+    "hpAverage": 33,
+    "cr": "1",
+    "stats": {
+      "Str": 15,
+      "Dex": 14,
+      "Con": 13,
+      "Int": 8,
+      "Wis": 11,
+      "Cha": 9
+    },
+    "saves": {
+      "str": 2,
+      "dex": 2,
+      "con": 1,
+      "int": -1,
+      "wis": 0,
+      "cha": -1
+    }
+  },
+  {
+    "name": "Bulette",
+    "ac": 17,
+    "init": 0,
+    "hp": "9d10+45",
+    "hpAverage": 94,
+    "cr": "5",
+    "stats": {
+      "Str": 19,
+      "Dex": 11,
+      "Con": 21,
+      "Int": 2,
+      "Wis": 10,
+      "Cha": 5
+    },
+    "saves": {
+      "str": 4,
+      "dex": 0,
+      "con": 5,
+      "int": -4,
+      "wis": 0,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Centaur Trooper",
+    "ac": 16,
+    "init": 2,
+    "hp": "6d10+12",
+    "hpAverage": 45,
+    "cr": "2",
+    "stats": {
+      "Str": 18,
+      "Dex": 14,
+      "Con": 14,
+      "Int": 9,
+      "Wis": 13,
+      "Cha": 11
+    },
+    "saves": {
+      "str": 4,
+      "dex": 2,
+      "con": 2,
+      "int": -1,
+      "wis": 1,
+      "cha": 0
+    }
+  },
+  {
+    "name": "Chain Devil",
+    "ac": 15,
+    "init": 5,
+    "hp": "10d8+40",
+    "hpAverage": 85,
+    "cr": "8",
+    "stats": {
+      "Str": 18,
+      "Dex": 15,
+      "Con": 18,
+      "Int": 11,
+      "Wis": 12,
+      "Cha": 14
+    },
+    "saves": {
+      "str": 4,
+      "dex": 2,
+      "con": 7,
+      "int": 0,
+      "wis": 4,
+      "cha": 2
+    }
+  },
+  {
+    "name": "Chimera",
+    "ac": 14,
+    "init": 0,
+    "hp": "12d10+48",
+    "hpAverage": 114,
+    "cr": "6",
+    "stats": {
+      "Str": 19,
+      "Dex": 11,
+      "Con": 19,
+      "Int": 3,
+      "Wis": 14,
+      "Cha": 10
+    },
+    "saves": {
+      "str": 4,
+      "dex": 0,
+      "con": 4,
+      "int": -4,
+      "wis": 2,
+      "cha": 0
+    }
+  },
+  {
+    "name": "Chuul",
+    "ac": 16,
+    "init": 0,
+    "hp": "9d10+27",
+    "hpAverage": 76,
+    "cr": "4",
+    "stats": {
+      "Str": 19,
+      "Dex": 10,
+      "Con": 16,
+      "Int": 5,
+      "Wis": 11,
+      "Cha": 5
+    },
+    "saves": {
+      "str": 4,
+      "dex": 0,
+      "con": 3,
+      "int": -3,
+      "wis": 0,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Clay Golem",
+    "ac": 14,
+    "init": 3,
+    "hp": "13d10+52",
+    "hpAverage": 123,
+    "cr": "9",
+    "stats": {
+      "Str": 20,
+      "Dex": 9,
+      "Con": 18,
+      "Int": 3,
+      "Wis": 8,
+      "Cha": 1
+    },
+    "saves": {
+      "str": 5,
+      "dex": -1,
+      "con": 4,
+      "int": -4,
+      "wis": -1,
+      "cha": -5
+    }
+  },
+  {
+    "name": "Cloaker",
+    "ac": 14,
+    "init": 5,
+    "hp": "14d10+14",
+    "hpAverage": 91,
+    "cr": "8",
+    "stats": {
+      "Str": 17,
+      "Dex": 15,
+      "Con": 12,
+      "Int": 13,
+      "Wis": 14,
+      "Cha": 7
+    },
+    "saves": {
+      "str": 3,
+      "dex": 2,
+      "con": 1,
+      "int": 1,
+      "wis": 2,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Cloud Giant",
+    "ac": 14,
+    "init": 4,
+    "hp": "16d12+96",
+    "hpAverage": 200,
+    "cr": "9",
+    "stats": {
+      "Str": 27,
+      "Dex": 10,
+      "Con": 22,
+      "Int": 12,
+      "Wis": 16,
+      "Cha": 16
+    },
+    "saves": {
+      "str": 8,
+      "dex": 0,
+      "con": 10,
+      "int": 1,
+      "wis": 7,
+      "cha": 3
+    }
+  },
+  {
+    "name": "Cockatrice",
+    "ac": 11,
+    "init": 1,
+    "hp": "5d6+5",
+    "hpAverage": 22,
+    "cr": "1/2",
+    "stats": {
+      "Str": 6,
+      "Dex": 12,
+      "Con": 12,
+      "Int": 2,
+      "Wis": 13,
+      "Cha": 5
+    },
+    "saves": {
+      "str": -2,
+      "dex": 1,
+      "con": 1,
+      "int": -4,
+      "wis": 1,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Commoner",
+    "ac": 10,
+    "init": 0,
+    "hp": "1d8",
+    "hpAverage": 4,
+    "cr": "0",
+    "stats": {
+      "Str": 10,
+      "Dex": 10,
+      "Con": 10,
+      "Int": 10,
+      "Wis": 10,
+      "Cha": 10
+    },
+    "saves": {
+      "str": 0,
+      "dex": 0,
+      "con": 0,
+      "int": 0,
+      "wis": 0,
+      "cha": 0
+    }
+  },
+  {
+    "name": "Copper Dragon Wyrmling",
+    "ac": 16,
+    "init": 3,
+    "hp": "4d8+4",
+    "hpAverage": 22,
+    "cr": "1",
+    "stats": {
+      "Str": 15,
+      "Dex": 12,
+      "Con": 13,
+      "Int": 14,
+      "Wis": 11,
+      "Cha": 13
+    },
+    "saves": {
+      "str": 2,
+      "dex": 3,
+      "con": 1,
+      "int": 2,
+      "wis": 2,
+      "cha": 1
+    }
+  },
+  {
+    "name": "Young Copper Dragon",
+    "ac": 17,
+    "init": 4,
+    "hp": "14d10+42",
+    "hpAverage": 119,
+    "cr": "7",
+    "stats": {
+      "Str": 19,
+      "Dex": 12,
+      "Con": 17,
+      "Int": 16,
+      "Wis": 13,
+      "Cha": 15
+    },
+    "saves": {
+      "str": 4,
+      "dex": 4,
+      "con": 3,
+      "int": 3,
+      "wis": 4,
+      "cha": 2
+    }
+  },
+  {
+    "name": "Adult Copper Dragon",
+    "ac": 18,
+    "init": 11,
+    "hp": "16d12+80",
+    "hpAverage": 184,
+    "cr": "14",
+    "stats": {
+      "Str": 23,
+      "Dex": 12,
+      "Con": 21,
+      "Int": 18,
+      "Wis": 15,
+      "Cha": 18
+    },
+    "saves": {
+      "str": 6,
+      "dex": 6,
+      "con": 5,
+      "int": 4,
+      "wis": 7,
+      "cha": 4
+    }
+  },
+  {
+    "name": "Ancient Copper Dragon",
+    "ac": 21,
+    "init": 15,
+    "hp": "21d20+147",
+    "hpAverage": 367,
+    "cr": "21",
+    "stats": {
+      "Str": 27,
+      "Dex": 12,
+      "Con": 25,
+      "Int": 20,
+      "Wis": 17,
+      "Cha": 22
+    },
+    "saves": {
+      "str": 8,
+      "dex": 8,
+      "con": 7,
+      "int": 5,
+      "wis": 10,
+      "cha": 6
+    }
+  },
+  {
+    "name": "Couatl",
+    "ac": 19,
+    "init": 5,
+    "hp": "8d8+24",
+    "hpAverage": 60,
+    "cr": "4",
+    "stats": {
+      "Str": 16,
+      "Dex": 20,
+      "Con": 17,
+      "Int": 18,
+      "Wis": 20,
+      "Cha": 18
+    },
+    "saves": {
+      "str": 3,
+      "dex": 5,
+      "con": 5,
+      "int": 4,
+      "wis": 7,
+      "cha": 4
+    }
+  },
+  {
+    "name": "Swarm of Crawling Claws",
+    "ac": 12,
+    "init": 2,
+    "hp": "11d8",
+    "hpAverage": 49,
+    "cr": "3",
+    "stats": {
+      "Str": 14,
+      "Dex": 14,
+      "Con": 11,
+      "Int": 5,
+      "Wis": 10,
+      "Cha": 4
+    },
+    "saves": {
+      "str": 2,
+      "dex": 2,
+      "con": 0,
+      "int": -3,
+      "wis": 0,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Cultist",
+    "ac": 12,
+    "init": 1,
+    "hp": "2d8",
+    "hpAverage": 9,
+    "cr": "1/8",
+    "stats": {
+      "Str": 11,
+      "Dex": 12,
+      "Con": 10,
+      "Int": 10,
+      "Wis": 11,
+      "Cha": 10
+    },
+    "saves": {
+      "str": 0,
+      "dex": 1,
+      "con": 0,
+      "int": 0,
+      "wis": 2,
+      "cha": 0
+    }
+  },
+  {
+    "name": "Cultist Fanatic",
+    "ac": 13,
+    "init": 2,
+    "hp": "8d8+8",
+    "hpAverage": 44,
+    "cr": "2",
+    "stats": {
+      "Str": 11,
+      "Dex": 14,
+      "Con": 12,
+      "Int": 10,
+      "Wis": 14,
+      "Cha": 13
+    },
+    "saves": {
+      "str": 0,
+      "dex": 2,
+      "con": 1,
+      "int": 0,
+      "wis": 4,
+      "cha": 1
+    }
+  },
+  {
+    "name": "Darkmantle",
+    "ac": 11,
+    "init": 3,
+    "hp": "5d6+5",
+    "hpAverage": 22,
+    "cr": "1/2",
+    "stats": {
+      "Str": 16,
+      "Dex": 12,
+      "Con": 13,
+      "Int": 2,
+      "Wis": 10,
+      "Cha": 5
+    },
+    "saves": {
+      "str": 3,
+      "dex": 1,
+      "con": 1,
+      "int": -4,
+      "wis": 0,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Death Dog",
+    "ac": 12,
+    "init": 2,
+    "hp": "6d8+12",
+    "hpAverage": 39,
+    "cr": "1",
+    "stats": {
+      "Str": 15,
+      "Dex": 14,
+      "Con": 14,
+      "Int": 3,
+      "Wis": 13,
+      "Cha": 6
+    },
+    "saves": {
+      "str": 2,
+      "dex": 2,
+      "con": 2,
+      "int": -4,
+      "wis": 1,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Deva",
+    "ac": 17,
+    "init": 4,
+    "hp": "27d8+108",
+    "hpAverage": 229,
+    "cr": "10",
+    "stats": {
+      "Str": 18,
+      "Dex": 18,
+      "Con": 18,
+      "Int": 17,
+      "Wis": 20,
+      "Cha": 20
+    },
+    "saves": {
+      "str": 4,
+      "dex": 4,
+      "con": 4,
+      "int": 3,
+      "wis": 9,
+      "cha": 9
+    }
+  },
+  {
+    "name": "Djinni",
+    "ac": 17,
+    "init": 2,
+    "hp": "19d10+114",
+    "hpAverage": 218,
+    "cr": "11",
+    "stats": {
+      "Str": 21,
+      "Dex": 15,
+      "Con": 22,
+      "Int": 15,
+      "Wis": 16,
+      "Cha": 20
+    },
+    "saves": {
+      "str": 5,
+      "dex": 6,
+      "con": 6,
+      "int": 2,
+      "wis": 7,
+      "cha": 5
+    }
+  },
+  {
+    "name": "Doppelganger",
+    "ac": 14,
+    "init": 4,
+    "hp": "8d8+16",
+    "hpAverage": 52,
+    "cr": "3",
+    "stats": {
+      "Str": 11,
+      "Dex": 18,
+      "Con": 14,
+      "Int": 11,
+      "Wis": 12,
+      "Cha": 14
+    },
+    "saves": {
+      "str": 0,
+      "dex": 4,
+      "con": 2,
+      "int": 0,
+      "wis": 1,
+      "cha": 2
+    }
+  },
+  {
+    "name": "Dragon Turtle",
+    "ac": 20,
+    "init": 6,
+    "hp": "23d20+115",
+    "hpAverage": 356,
+    "cr": "17",
+    "stats": {
+      "Str": 25,
+      "Dex": 10,
+      "Con": 20,
+      "Int": 10,
+      "Wis": 12,
+      "Cha": 12
+    },
+    "saves": {
+      "str": 7,
+      "dex": 0,
+      "con": 11,
+      "int": 0,
+      "wis": 7,
+      "cha": 1
+    }
+  },
+  {
+    "name": "Dretch",
+    "ac": 11,
+    "init": 0,
+    "hp": "4d6+4",
+    "hpAverage": 18,
+    "cr": "1/4",
+    "stats": {
+      "Str": 12,
+      "Dex": 11,
+      "Con": 12,
+      "Int": 5,
+      "Wis": 8,
+      "Cha": 3
+    },
+    "saves": {
+      "str": 1,
+      "dex": 0,
+      "con": 1,
+      "int": -3,
+      "wis": -1,
+      "cha": -4
+    }
+  },
+  {
+    "name": "Drider",
+    "ac": 19,
+    "init": 4,
+    "hp": "13d10+52",
+    "hpAverage": 123,
+    "cr": "6",
+    "stats": {
+      "Str": 16,
+      "Dex": 19,
+      "Con": 18,
+      "Int": 13,
+      "Wis": 16,
+      "Cha": 12
+    },
+    "saves": {
+      "str": 3,
+      "dex": 4,
+      "con": 4,
+      "int": 1,
+      "wis": 3,
+      "cha": 1
+    }
+  },
+  {
+    "name": "Druid",
+    "ac": 13,
+    "init": 1,
+    "hp": "8d8+8",
+    "hpAverage": 44,
+    "cr": "2",
+    "stats": {
+      "Str": 10,
+      "Dex": 12,
+      "Con": 13,
+      "Int": 12,
+      "Wis": 16,
+      "Cha": 11
+    },
+    "saves": {
+      "str": 0,
+      "dex": 1,
+      "con": 1,
+      "int": 1,
+      "wis": 3,
+      "cha": 0
+    }
+  },
+  {
+    "name": "Dryad",
+    "ac": 16,
+    "init": 1,
+    "hp": "5d8",
+    "hpAverage": 22,
+    "cr": "1",
+    "stats": {
+      "Str": 10,
+      "Dex": 12,
+      "Con": 11,
+      "Int": 14,
+      "Wis": 15,
+      "Cha": 18
+    },
+    "saves": {
+      "str": 0,
+      "dex": 1,
+      "con": 0,
+      "int": 2,
+      "wis": 2,
+      "cha": 4
+    }
+  },
+  {
+    "name": "Earth Elemental",
+    "ac": 17,
+    "init": -1,
+    "hp": "14d10+70",
+    "hpAverage": 147,
+    "cr": "5",
+    "stats": {
+      "Str": 20,
+      "Dex": 8,
+      "Con": 20,
+      "Int": 5,
+      "Wis": 10,
+      "Cha": 5
+    },
+    "saves": {
+      "str": 5,
+      "dex": -1,
+      "con": 5,
+      "int": -3,
+      "wis": 0,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Efreeti",
+    "ac": 17,
+    "init": 1,
+    "hp": "17d10+119",
+    "hpAverage": 212,
+    "cr": "11",
+    "stats": {
+      "Str": 22,
+      "Dex": 12,
+      "Con": 24,
+      "Int": 16,
+      "Wis": 15,
+      "Cha": 19
+    },
+    "saves": {
+      "str": 6,
+      "dex": 1,
+      "con": 7,
+      "int": 3,
+      "wis": 6,
+      "cha": 8
+    }
+  },
+  {
+    "name": "Erinyes",
+    "ac": 18,
+    "init": 7,
+    "hp": "21d8+84",
+    "hpAverage": 178,
+    "cr": "12",
+    "stats": {
+      "Str": 18,
+      "Dex": 16,
+      "Con": 18,
+      "Int": 14,
+      "Wis": 14,
+      "Cha": 18
+    },
+    "saves": {
+      "str": 4,
+      "dex": 7,
+      "con": 8,
+      "int": 2,
+      "wis": 2,
+      "cha": 8
+    }
+  },
+  {
+    "name": "Ettercap",
+    "ac": 13,
+    "init": 2,
+    "hp": "8d8+8",
+    "hpAverage": 44,
+    "cr": "2",
+    "stats": {
+      "Str": 14,
+      "Dex": 15,
+      "Con": 13,
+      "Int": 7,
+      "Wis": 12,
+      "Cha": 8
+    },
+    "saves": {
+      "str": 2,
+      "dex": 2,
+      "con": 1,
+      "int": -2,
+      "wis": 1,
+      "cha": -1
+    }
+  },
+  {
+    "name": "Ettin",
+    "ac": 12,
+    "init": -1,
+    "hp": "10d10+30",
+    "hpAverage": 85,
+    "cr": "4",
+    "stats": {
+      "Str": 21,
+      "Dex": 8,
+      "Con": 17,
+      "Int": 6,
+      "Wis": 10,
+      "Cha": 8
+    },
+    "saves": {
+      "str": 5,
+      "dex": -1,
+      "con": 3,
+      "int": -2,
+      "wis": 0,
+      "cha": -1
+    }
+  },
+  {
+    "name": "Fire Elemental",
+    "ac": 13,
+    "init": 3,
+    "hp": "11d10+33",
+    "hpAverage": 93,
+    "cr": "5",
+    "stats": {
+      "Str": 10,
+      "Dex": 17,
+      "Con": 16,
+      "Int": 6,
+      "Wis": 10,
+      "Cha": 7
+    },
+    "saves": {
+      "str": 0,
+      "dex": 3,
+      "con": 3,
+      "int": -2,
+      "wis": 0,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Fire Giant",
+    "ac": 18,
+    "init": 3,
+    "hp": "13d12+78",
+    "hpAverage": 162,
+    "cr": "9",
+    "stats": {
+      "Str": 25,
+      "Dex": 9,
+      "Con": 23,
+      "Int": 10,
+      "Wis": 14,
+      "Cha": 13
+    },
+    "saves": {
+      "str": 7,
+      "dex": 3,
+      "con": 10,
+      "int": 0,
+      "wis": 2,
+      "cha": 5
+    }
+  },
+  {
+    "name": "Flesh Golem",
+    "ac": 9,
+    "init": -1,
+    "hp": "15d8+60",
+    "hpAverage": 127,
+    "cr": "5",
+    "stats": {
+      "Str": 19,
+      "Dex": 9,
+      "Con": 18,
+      "Int": 6,
+      "Wis": 10,
+      "Cha": 5
+    },
+    "saves": {
+      "str": 4,
+      "dex": -1,
+      "con": 4,
+      "int": -2,
+      "wis": 0,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Frost Giant",
+    "ac": 15,
+    "init": 2,
+    "hp": "13d12+65",
+    "hpAverage": 149,
+    "cr": "8",
+    "stats": {
+      "Str": 23,
+      "Dex": 9,
+      "Con": 21,
+      "Int": 9,
+      "Wis": 10,
+      "Cha": 12
+    },
+    "saves": {
+      "str": 6,
+      "dex": -1,
+      "con": 8,
+      "int": -1,
+      "wis": 3,
+      "cha": 4
+    }
+  },
+  {
+    "name": "Shrieker Fungus",
+    "ac": 5,
+    "init": -5,
+    "hp": "3d8",
+    "hpAverage": 13,
+    "cr": "0",
+    "stats": {
+      "Str": 1,
+      "Dex": 1,
+      "Con": 10,
+      "Int": 1,
+      "Wis": 3,
+      "Cha": 1
+    },
+    "saves": {
+      "str": -5,
+      "dex": -5,
+      "con": 0,
+      "int": -5,
+      "wis": -4,
+      "cha": -5
+    }
+  },
+  {
+    "name": "Violet Fungus",
+    "ac": 5,
+    "init": -5,
+    "hp": "4d8",
+    "hpAverage": 18,
+    "cr": "1/4",
+    "stats": {
+      "Str": 3,
+      "Dex": 1,
+      "Con": 10,
+      "Int": 1,
+      "Wis": 3,
+      "Cha": 1
+    },
+    "saves": {
+      "str": -4,
+      "dex": -5,
+      "con": 0,
+      "int": -5,
+      "wis": -4,
+      "cha": -5
+    }
+  },
+  {
+    "name": "Gargoyle",
+    "ac": 15,
+    "init": 2,
+    "hp": "9d8+27",
+    "hpAverage": 67,
+    "cr": "2",
+    "stats": {
+      "Str": 15,
+      "Dex": 11,
+      "Con": 16,
+      "Int": 6,
+      "Wis": 11,
+      "Cha": 7
+    },
+    "saves": {
+      "str": 2,
+      "dex": 0,
+      "con": 3,
+      "int": -2,
+      "wis": 0,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Gelatinous Cube",
+    "ac": 6,
+    "init": -4,
+    "hp": "6d10+30",
+    "hpAverage": 63,
+    "cr": "2",
+    "stats": {
+      "Str": 14,
+      "Dex": 3,
+      "Con": 20,
+      "Int": 1,
+      "Wis": 6,
+      "Cha": 1
+    },
+    "saves": {
+      "str": 2,
+      "dex": -4,
+      "con": 5,
+      "int": -5,
+      "wis": -2,
+      "cha": -5
+    }
+  },
+  {
+    "name": "Ghast",
+    "ac": 13,
+    "init": 3,
+    "hp": "8d8",
+    "hpAverage": 36,
+    "cr": "2",
+    "stats": {
+      "Str": 16,
+      "Dex": 17,
+      "Con": 10,
+      "Int": 11,
+      "Wis": 10,
+      "Cha": 8
+    },
+    "saves": {
+      "str": 3,
+      "dex": 3,
+      "con": 0,
+      "int": 0,
+      "wis": 2,
+      "cha": -1
+    }
+  },
+  {
+    "name": "Ghost",
+    "ac": 11,
+    "init": 1,
+    "hp": "10d8",
+    "hpAverage": 45,
+    "cr": "4",
+    "stats": {
+      "Str": 7,
+      "Dex": 13,
+      "Con": 10,
+      "Int": 10,
+      "Wis": 12,
+      "Cha": 17
+    },
+    "saves": {
+      "str": -2,
+      "dex": 1,
+      "con": 0,
+      "int": 0,
+      "wis": 1,
+      "cha": 3
+    }
+  },
+  {
+    "name": "Ghoul",
+    "ac": 12,
+    "init": 2,
+    "hp": "5d8",
+    "hpAverage": 22,
+    "cr": "1",
+    "stats": {
+      "Str": 13,
+      "Dex": 15,
+      "Con": 10,
+      "Int": 7,
+      "Wis": 10,
+      "Cha": 6
+    },
+    "saves": {
+      "str": 1,
+      "dex": 2,
+      "con": 0,
+      "int": -2,
+      "wis": 0,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Gibbering Mouther",
+    "ac": 9,
+    "init": -1,
+    "hp": "7d8+21",
+    "hpAverage": 52,
+    "cr": "2",
+    "stats": {
+      "Str": 10,
+      "Dex": 8,
+      "Con": 16,
+      "Int": 3,
+      "Wis": 10,
+      "Cha": 6
+    },
+    "saves": {
+      "str": 0,
+      "dex": -1,
+      "con": 3,
+      "int": -4,
+      "wis": 0,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Glabrezu",
+    "ac": 17,
+    "init": 6,
+    "hp": "18d10+90",
+    "hpAverage": 189,
+    "cr": "9",
+    "stats": {
+      "Str": 20,
+      "Dex": 15,
+      "Con": 21,
+      "Int": 19,
+      "Wis": 17,
+      "Cha": 16
+    },
+    "saves": {
+      "str": 9,
+      "dex": 2,
+      "con": 9,
+      "int": 4,
+      "wis": 7,
+      "cha": 7
+    }
+  },
+  {
+    "name": "Gladiator",
+    "ac": 16,
+    "init": 5,
+    "hp": "15d8+45",
+    "hpAverage": 112,
+    "cr": "5",
+    "stats": {
+      "Str": 18,
+      "Dex": 15,
+      "Con": 16,
+      "Int": 10,
+      "Wis": 12,
+      "Cha": 15
+    },
+    "saves": {
+      "str": 7,
+      "dex": 5,
+      "con": 6,
+      "int": 0,
+      "wis": 4,
+      "cha": 2
+    }
+  },
+  {
+    "name": "Gnoll Warrior",
+    "ac": 15,
+    "init": 1,
+    "hp": "6d8",
+    "hpAverage": 27,
+    "cr": "1/2",
+    "stats": {
+      "Str": 14,
+      "Dex": 12,
+      "Con": 11,
+      "Int": 6,
+      "Wis": 10,
+      "Cha": 7
+    },
+    "saves": {
+      "str": 2,
+      "dex": 1,
+      "con": 0,
+      "int": -2,
+      "wis": 0,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Goblin Minion",
+    "ac": 12,
+    "init": 2,
+    "hp": "2d6",
+    "hpAverage": 7,
+    "cr": "1/8",
+    "stats": {
+      "Str": 8,
+      "Dex": 15,
+      "Con": 10,
+      "Int": 10,
+      "Wis": 8,
+      "Cha": 8
+    },
+    "saves": {
+      "str": -1,
+      "dex": 2,
+      "con": 0,
+      "int": 0,
+      "wis": -1,
+      "cha": -1
+    }
+  },
+  {
+    "name": "Goblin Warrior",
+    "ac": 15,
+    "init": 2,
+    "hp": "3d6",
+    "hpAverage": 10,
+    "cr": "1/4",
+    "stats": {
+      "Str": 8,
+      "Dex": 15,
+      "Con": 10,
+      "Int": 10,
+      "Wis": 8,
+      "Cha": 8
+    },
+    "saves": {
+      "str": -1,
+      "dex": 2,
+      "con": 0,
+      "int": 0,
+      "wis": -1,
+      "cha": -1
+    }
+  },
+  {
+    "name": "Goblin Boss",
+    "ac": 17,
+    "init": 2,
+    "hp": "6d6",
+    "hpAverage": 21,
+    "cr": "1",
+    "stats": {
+      "Str": 10,
+      "Dex": 15,
+      "Con": 10,
+      "Int": 10,
+      "Wis": 8,
+      "Cha": 10
+    },
+    "saves": {
+      "str": 0,
+      "dex": 2,
+      "con": 0,
+      "int": 0,
+      "wis": -1,
+      "cha": 0
+    }
+  },
+  {
+    "name": "Gold Dragon Wyrmling",
+    "ac": 17,
+    "init": 4,
+    "hp": "8d8+24",
+    "hpAverage": 60,
+    "cr": "3",
+    "stats": {
+      "Str": 19,
+      "Dex": 14,
+      "Con": 17,
+      "Int": 14,
+      "Wis": 11,
+      "Cha": 16
+    },
+    "saves": {
+      "str": 4,
+      "dex": 4,
+      "con": 3,
+      "int": 2,
+      "wis": 2,
+      "cha": 3
+    }
+  },
+  {
+    "name": "Young Gold Dragon",
+    "ac": 18,
+    "init": 6,
+    "hp": "17d10+85",
+    "hpAverage": 178,
+    "cr": "10",
+    "stats": {
+      "Str": 23,
+      "Dex": 14,
+      "Con": 21,
+      "Int": 16,
+      "Wis": 13,
+      "Cha": 20
+    },
+    "saves": {
+      "str": 6,
+      "dex": 6,
+      "con": 5,
+      "int": 3,
+      "wis": 5,
+      "cha": 5
+    }
+  },
+  {
+    "name": "Adult Gold Dragon",
+    "ac": 19,
+    "init": 14,
+    "hp": "18d12+126",
+    "hpAverage": 243,
+    "cr": "17",
+    "stats": {
+      "Str": 27,
+      "Dex": 14,
+      "Con": 25,
+      "Int": 16,
+      "Wis": 15,
+      "Cha": 24
+    },
+    "saves": {
+      "str": 8,
+      "dex": 8,
+      "con": 7,
+      "int": 3,
+      "wis": 8,
+      "cha": 7
+    }
+  },
+  {
+    "name": "Ancient Gold Dragon",
+    "ac": 22,
+    "init": 16,
+    "hp": "28d20+252",
+    "hpAverage": 546,
+    "cr": "24",
+    "stats": {
+      "Str": 30,
+      "Dex": 14,
+      "Con": 29,
+      "Int": 18,
+      "Wis": 17,
+      "Cha": 28
+    },
+    "saves": {
+      "str": 10,
+      "dex": 9,
+      "con": 9,
+      "int": 4,
+      "wis": 10,
+      "cha": 9
+    }
+  },
+  {
+    "name": "Gorgon",
+    "ac": 19,
+    "init": 0,
+    "hp": "12d10+48",
+    "hpAverage": 114,
+    "cr": "5",
+    "stats": {
+      "Str": 20,
+      "Dex": 11,
+      "Con": 18,
+      "Int": 2,
+      "Wis": 12,
+      "Cha": 7
+    },
+    "saves": {
+      "str": 5,
+      "dex": 0,
+      "con": 4,
+      "int": -4,
+      "wis": 1,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Gray Ooze",
+    "ac": 9,
+    "init": -2,
+    "hp": "3d8+9",
+    "hpAverage": 22,
+    "cr": "1/2",
+    "stats": {
+      "Str": 12,
+      "Dex": 6,
+      "Con": 16,
+      "Int": 1,
+      "Wis": 6,
+      "Cha": 2
+    },
+    "saves": {
+      "str": 1,
+      "dex": -2,
+      "con": 3,
+      "int": -5,
+      "wis": -2,
+      "cha": -4
+    }
+  },
+  {
+    "name": "Green Dragon Wyrmling",
+    "ac": 17,
+    "init": 3,
+    "hp": "7d8+7",
+    "hpAverage": 38,
+    "cr": "2",
+    "stats": {
+      "Str": 15,
+      "Dex": 12,
+      "Con": 13,
+      "Int": 14,
+      "Wis": 11,
+      "Cha": 13
+    },
+    "saves": {
+      "str": 2,
+      "dex": 3,
+      "con": 1,
+      "int": 2,
+      "wis": 2,
+      "cha": 1
+    }
+  },
+  {
+    "name": "Young Green Dragon",
+    "ac": 18,
+    "init": 4,
+    "hp": "16d10+48",
+    "hpAverage": 136,
+    "cr": "8",
+    "stats": {
+      "Str": 19,
+      "Dex": 12,
+      "Con": 17,
+      "Int": 16,
+      "Wis": 13,
+      "Cha": 15
+    },
+    "saves": {
+      "str": 4,
+      "dex": 4,
+      "con": 3,
+      "int": 3,
+      "wis": 4,
+      "cha": 2
+    }
+  },
+  {
+    "name": "Adult Green Dragon",
+    "ac": 19,
+    "init": 11,
+    "hp": "18d12+90",
+    "hpAverage": 207,
+    "cr": "15",
+    "stats": {
+      "Str": 23,
+      "Dex": 12,
+      "Con": 21,
+      "Int": 18,
+      "Wis": 15,
+      "Cha": 18
+    },
+    "saves": {
+      "str": 6,
+      "dex": 6,
+      "con": 5,
+      "int": 4,
+      "wis": 7,
+      "cha": 4
+    }
+  },
+  {
+    "name": "Ancient Green Dragon",
+    "ac": 21,
+    "init": 15,
+    "hp": "23d20+161",
+    "hpAverage": 402,
+    "cr": "22",
+    "stats": {
+      "Str": 27,
+      "Dex": 12,
+      "Con": 25,
+      "Int": 20,
+      "Wis": 17,
+      "Cha": 22
+    },
+    "saves": {
+      "str": 8,
+      "dex": 8,
+      "con": 7,
+      "int": 5,
+      "wis": 10,
+      "cha": 6
+    }
+  },
+  {
+    "name": "Green Hag",
+    "ac": 17,
+    "init": 1,
+    "hp": "11d8+33",
+    "hpAverage": 82,
+    "cr": "3",
+    "stats": {
+      "Str": 18,
+      "Dex": 12,
+      "Con": 16,
+      "Int": 13,
+      "Wis": 14,
+      "Cha": 14
+    },
+    "saves": {
+      "str": 4,
+      "dex": 1,
+      "con": 3,
+      "int": 1,
+      "wis": 2,
+      "cha": 2
+    }
+  },
+  {
+    "name": "Grick",
+    "ac": 14,
+    "init": 2,
+    "hp": "12d8",
+    "hpAverage": 54,
+    "cr": "2",
+    "stats": {
+      "Str": 14,
+      "Dex": 14,
+      "Con": 11,
+      "Int": 3,
+      "Wis": 14,
+      "Cha": 5
+    },
+    "saves": {
+      "str": 2,
+      "dex": 2,
+      "con": 0,
+      "int": -4,
+      "wis": 2,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Griffon",
+    "ac": 12,
+    "init": 2,
+    "hp": "7d10+21",
+    "hpAverage": 59,
+    "cr": "2",
+    "stats": {
+      "Str": 18,
+      "Dex": 15,
+      "Con": 16,
+      "Int": 2,
+      "Wis": 13,
+      "Cha": 8
+    },
+    "saves": {
+      "str": 4,
+      "dex": 2,
+      "con": 3,
+      "int": -4,
+      "wis": 1,
+      "cha": -1
+    }
+  },
+  {
+    "name": "Grimlock",
+    "ac": 11,
+    "init": 1,
+    "hp": "2d8+2",
+    "hpAverage": 11,
+    "cr": "1/4",
+    "stats": {
+      "Str": 16,
+      "Dex": 12,
+      "Con": 12,
+      "Int": 9,
+      "Wis": 8,
+      "Cha": 6
+    },
+    "saves": {
+      "str": 3,
+      "dex": 1,
+      "con": 1,
+      "int": -1,
+      "wis": -1,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Guardian Naga",
+    "ac": 18,
+    "init": 4,
+    "hp": "16d10+48",
+    "hpAverage": 136,
+    "cr": "10",
+    "stats": {
+      "Str": 19,
+      "Dex": 18,
+      "Con": 16,
+      "Int": 16,
+      "Wis": 19,
+      "Cha": 18
+    },
+    "saves": {
+      "str": 4,
+      "dex": 8,
+      "con": 7,
+      "int": 7,
+      "wis": 8,
+      "cha": 8
+    }
+  },
+  {
+    "name": "Guard",
+    "ac": 16,
+    "init": 1,
+    "hp": "2d8+2",
+    "hpAverage": 11,
+    "cr": "1/8",
+    "stats": {
+      "Str": 13,
+      "Dex": 12,
+      "Con": 12,
+      "Int": 10,
+      "Wis": 11,
+      "Cha": 10
+    },
+    "saves": {
+      "str": 1,
+      "dex": 1,
+      "con": 1,
+      "int": 0,
+      "wis": 0,
+      "cha": 0
+    }
+  },
+  {
+    "name": "Guard Captain",
+    "ac": 18,
+    "init": 4,
+    "hp": "10d8+30",
+    "hpAverage": 75,
+    "cr": "4",
+    "stats": {
+      "Str": 18,
+      "Dex": 14,
+      "Con": 16,
+      "Int": 12,
+      "Wis": 14,
+      "Cha": 13
+    },
+    "saves": {
+      "str": 4,
+      "dex": 2,
+      "con": 3,
+      "int": 1,
+      "wis": 2,
+      "cha": 1
+    }
+  },
+  {
+    "name": "Half-Dragon",
+    "ac": 18,
+    "init": 5,
+    "hp": "14d8+42",
+    "hpAverage": 105,
+    "cr": "5",
+    "stats": {
+      "Str": 19,
+      "Dex": 14,
+      "Con": 16,
+      "Int": 10,
+      "Wis": 15,
+      "Cha": 14
+    },
+    "saves": {
+      "str": 4,
+      "dex": 5,
+      "con": 3,
+      "int": 0,
+      "wis": 5,
+      "cha": 2
+    }
+  },
+  {
+    "name": "Harpy",
+    "ac": 11,
+    "init": 1,
+    "hp": "7d8+7",
+    "hpAverage": 38,
+    "cr": "1",
+    "stats": {
+      "Str": 12,
+      "Dex": 13,
+      "Con": 12,
+      "Int": 7,
+      "Wis": 10,
+      "Cha": 13
+    },
+    "saves": {
+      "str": 1,
+      "dex": 1,
+      "con": 1,
+      "int": -2,
+      "wis": 0,
+      "cha": 1
+    }
+  },
+  {
+    "name": "Hell Hound",
+    "ac": 15,
+    "init": 1,
+    "hp": "9d8+18",
+    "hpAverage": 58,
+    "cr": "3",
+    "stats": {
+      "Str": 17,
+      "Dex": 12,
+      "Con": 14,
+      "Int": 6,
+      "Wis": 13,
+      "Cha": 6
+    },
+    "saves": {
+      "str": 3,
+      "dex": 1,
+      "con": 2,
+      "int": -2,
+      "wis": 1,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Hezrou",
+    "ac": 18,
+    "init": 6,
+    "hp": "15d10+75",
+    "hpAverage": 157,
+    "cr": "8",
+    "stats": {
+      "Str": 19,
+      "Dex": 17,
+      "Con": 20,
+      "Int": 5,
+      "Wis": 12,
+      "Cha": 13
+    },
+    "saves": {
+      "str": 7,
+      "dex": 3,
+      "con": 8,
+      "int": -3,
+      "wis": 4,
+      "cha": 1
+    }
+  },
+  {
+    "name": "Hill Giant",
+    "ac": 13,
+    "init": 2,
+    "hp": "10d12+40",
+    "hpAverage": 105,
+    "cr": "5",
+    "stats": {
+      "Str": 21,
+      "Dex": 8,
+      "Con": 19,
+      "Int": 5,
+      "Wis": 9,
+      "Cha": 6
+    },
+    "saves": {
+      "str": 5,
+      "dex": -1,
+      "con": 4,
+      "int": -3,
+      "wis": -1,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Hippogriff",
+    "ac": 11,
+    "init": 1,
+    "hp": "4d10+4",
+    "hpAverage": 26,
+    "cr": "1",
+    "stats": {
+      "Str": 17,
+      "Dex": 13,
+      "Con": 13,
+      "Int": 2,
+      "Wis": 12,
+      "Cha": 8
+    },
+    "saves": {
+      "str": 3,
+      "dex": 1,
+      "con": 1,
+      "int": -4,
+      "wis": 1,
+      "cha": -1
+    }
+  },
+  {
+    "name": "Hobgoblin Warrior",
+    "ac": 18,
+    "init": 3,
+    "hp": "2d8+2",
+    "hpAverage": 11,
+    "cr": "1/2",
+    "stats": {
+      "Str": 13,
+      "Dex": 12,
+      "Con": 12,
+      "Int": 10,
+      "Wis": 10,
+      "Cha": 9
+    },
+    "saves": {
+      "str": 1,
+      "dex": 1,
+      "con": 1,
+      "int": 0,
+      "wis": 0,
+      "cha": -1
+    }
+  },
+  {
+    "name": "Hobgoblin Captain",
+    "ac": 17,
+    "init": 4,
+    "hp": "9d8+18",
+    "hpAverage": 58,
+    "cr": "3",
+    "stats": {
+      "Str": 15,
+      "Dex": 14,
+      "Con": 14,
+      "Int": 12,
+      "Wis": 10,
+      "Cha": 13
+    },
+    "saves": {
+      "str": 2,
+      "dex": 2,
+      "con": 2,
+      "int": 1,
+      "wis": 0,
+      "cha": 1
+    }
+  },
+  {
+    "name": "Homunculus",
+    "ac": 13,
+    "init": 2,
+    "hp": "1d4+2",
+    "hpAverage": 4,
+    "cr": "0",
+    "stats": {
+      "Str": 4,
+      "Dex": 15,
+      "Con": 14,
+      "Int": 10,
+      "Wis": 10,
+      "Cha": 7
+    },
+    "saves": {
+      "str": -3,
+      "dex": 2,
+      "con": 2,
+      "int": 0,
+      "wis": 2,
+      "cha": 0
+    }
+  },
+  {
+    "name": "Horned Devil",
+    "ac": 18,
+    "init": 7,
+    "hp": "19d10+95",
+    "hpAverage": 199,
+    "cr": "11",
+    "stats": {
+      "Str": 22,
+      "Dex": 17,
+      "Con": 21,
+      "Int": 12,
+      "Wis": 16,
+      "Cha": 18
+    },
+    "saves": {
+      "str": 10,
+      "dex": 7,
+      "con": 5,
+      "int": 1,
+      "wis": 7,
+      "cha": 8
+    }
+  },
+  {
+    "name": "Hydra",
+    "ac": 15,
+    "init": 4,
+    "hp": "16d12+80",
+    "hpAverage": 184,
+    "cr": "8",
+    "stats": {
+      "Str": 20,
+      "Dex": 12,
+      "Con": 20,
+      "Int": 2,
+      "Wis": 10,
+      "Cha": 7
+    },
+    "saves": {
+      "str": 5,
+      "dex": 1,
+      "con": 5,
+      "int": -4,
+      "wis": 0,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Ice Devil",
+    "ac": 18,
+    "init": 7,
+    "hp": "24d10+96",
+    "hpAverage": 228,
+    "cr": "14",
+    "stats": {
+      "Str": 21,
+      "Dex": 14,
+      "Con": 18,
+      "Int": 18,
+      "Wis": 15,
+      "Cha": 18
+    },
+    "saves": {
+      "str": 5,
+      "dex": 7,
+      "con": 9,
+      "int": 4,
+      "wis": 7,
+      "cha": 9
+    }
+  },
+  {
+    "name": "Imp",
+    "ac": 13,
+    "init": 3,
+    "hp": "6d4+6",
+    "hpAverage": 21,
+    "cr": "1",
+    "stats": {
+      "Str": 6,
+      "Dex": 17,
+      "Con": 13,
+      "Int": 11,
+      "Wis": 12,
+      "Cha": 14
+    },
+    "saves": {
+      "str": -2,
+      "dex": 3,
+      "con": 1,
+      "int": 0,
+      "wis": 1,
+      "cha": 2
+    }
+  },
+  {
+    "name": "Incubus",
+    "ac": 15,
+    "init": 3,
+    "hp": "12d8+12",
+    "hpAverage": 66,
+    "cr": "4",
+    "stats": {
+      "Str": 8,
+      "Dex": 17,
+      "Con": 13,
+      "Int": 15,
+      "Wis": 12,
+      "Cha": 20
+    },
+    "saves": {
+      "str": -1,
+      "dex": 3,
+      "con": 1,
+      "int": 2,
+      "wis": 1,
+      "cha": 5
+    }
+  },
+  {
+    "name": "Invisible Stalker",
+    "ac": 14,
+    "init": 7,
+    "hp": "13d10+26",
+    "hpAverage": 97,
+    "cr": "6",
+    "stats": {
+      "Str": 16,
+      "Dex": 19,
+      "Con": 14,
+      "Int": 10,
+      "Wis": 15,
+      "Cha": 11
+    },
+    "saves": {
+      "str": 3,
+      "dex": 4,
+      "con": 2,
+      "int": 0,
+      "wis": 2,
+      "cha": 0
+    }
+  },
+  {
+    "name": "Iron Golem",
+    "ac": 20,
+    "init": 9,
+    "hp": "24d10+120",
+    "hpAverage": 252,
+    "cr": "16",
+    "stats": {
+      "Str": 24,
+      "Dex": 9,
+      "Con": 20,
+      "Int": 3,
+      "Wis": 11,
+      "Cha": 1
+    },
+    "saves": {
+      "str": 7,
+      "dex": -1,
+      "con": 5,
+      "int": -4,
+      "wis": 0,
+      "cha": -5
+    }
+  },
+  {
+    "name": "Knight",
+    "ac": 18,
+    "init": 0,
+    "hp": "8d8+16",
+    "hpAverage": 52,
+    "cr": "3",
+    "stats": {
+      "Str": 16,
+      "Dex": 11,
+      "Con": 14,
+      "Int": 11,
+      "Wis": 11,
+      "Cha": 15
+    },
+    "saves": {
+      "str": 3,
+      "dex": 0,
+      "con": 4,
+      "int": 0,
+      "wis": 2,
+      "cha": 2
+    }
+  },
+  {
+    "name": "Kobold Warrior",
+    "ac": 14,
+    "init": 2,
+    "hp": "3d6-3",
+    "hpAverage": 7,
+    "cr": "1/8",
+    "stats": {
+      "Str": 7,
+      "Dex": 15,
+      "Con": 9,
+      "Int": 8,
+      "Wis": 7,
+      "Cha": 8
+    },
+    "saves": {
+      "str": -2,
+      "dex": 2,
+      "con": -1,
+      "int": -1,
+      "wis": -2,
+      "cha": -1
+    }
+  },
+  {
+    "name": "Kraken",
+    "ac": 18,
+    "init": 14,
+    "hp": "26d20+208",
+    "hpAverage": 481,
+    "cr": "23",
+    "stats": {
+      "Str": 30,
+      "Dex": 11,
+      "Con": 26,
+      "Int": 22,
+      "Wis": 18,
+      "Cha": 20
+    },
+    "saves": {
+      "str": 17,
+      "dex": 7,
+      "con": 15,
+      "int": 6,
+      "wis": 11,
+      "cha": 5
+    }
+  },
+  {
+    "name": "Lamia",
+    "ac": 13,
+    "init": 1,
+    "hp": "13d10+26",
+    "hpAverage": 97,
+    "cr": "4",
+    "stats": {
+      "Str": 16,
+      "Dex": 13,
+      "Con": 15,
+      "Int": 14,
+      "Wis": 15,
+      "Cha": 16
+    },
+    "saves": {
+      "str": 3,
+      "dex": 1,
+      "con": 2,
+      "int": 2,
+      "wis": 2,
+      "cha": 3
+    }
+  },
+  {
+    "name": "Lemure",
+    "ac": 9,
+    "init": -3,
+    "hp": "2d8",
+    "hpAverage": 9,
+    "cr": "0",
+    "stats": {
+      "Str": 10,
+      "Dex": 5,
+      "Con": 11,
+      "Int": 1,
+      "Wis": 11,
+      "Cha": 3
+    },
+    "saves": {
+      "str": 0,
+      "dex": -3,
+      "con": 0,
+      "int": -5,
+      "wis": 0,
+      "cha": -4
+    }
+  },
+  {
+    "name": "Lich",
+    "ac": 20,
+    "init": 17,
+    "hp": "42d8+126",
+    "hpAverage": 315,
+    "cr": "21",
+    "stats": {
+      "Str": 11,
+      "Dex": 16,
+      "Con": 16,
+      "Int": 21,
+      "Wis": 14,
+      "Cha": 16
+    },
+    "saves": {
+      "str": 0,
+      "dex": 10,
+      "con": 10,
+      "int": 12,
+      "wis": 9,
+      "cha": 3
+    }
+  },
+  {
+    "name": "Mage",
+    "ac": 15,
+    "init": 2,
+    "hp": "18d8",
+    "hpAverage": 81,
+    "cr": "6",
+    "stats": {
+      "Str": 9,
+      "Dex": 14,
+      "Con": 11,
+      "Int": 17,
+      "Wis": 12,
+      "Cha": 11
+    },
+    "saves": {
+      "str": -1,
+      "dex": 2,
+      "con": 0,
+      "int": 6,
+      "wis": 4,
+      "cha": 0
+    }
+  },
+  {
+    "name": "Archmage",
+    "ac": 17,
+    "init": 7,
+    "hp": "31d8+31",
+    "hpAverage": 170,
+    "cr": "12",
+    "stats": {
+      "Str": 10,
+      "Dex": 14,
+      "Con": 12,
+      "Int": 20,
+      "Wis": 15,
+      "Cha": 16
+    },
+    "saves": {
+      "str": 0,
+      "dex": 2,
+      "con": 1,
+      "int": 9,
+      "wis": 6,
+      "cha": 3
+    }
+  },
+  {
+    "name": "Magmin",
+    "ac": 14,
+    "init": 2,
+    "hp": "3d6+3",
+    "hpAverage": 13,
+    "cr": "1/2",
+    "stats": {
+      "Str": 7,
+      "Dex": 15,
+      "Con": 12,
+      "Int": 8,
+      "Wis": 11,
+      "Cha": 10
+    },
+    "saves": {
+      "str": -2,
+      "dex": 2,
+      "con": 1,
+      "int": -1,
+      "wis": 0,
+      "cha": 0
+    }
+  },
+  {
+    "name": "Manticore",
+    "ac": 14,
+    "init": 3,
+    "hp": "8d10+24",
+    "hpAverage": 68,
+    "cr": "3",
+    "stats": {
+      "Str": 17,
+      "Dex": 16,
+      "Con": 17,
+      "Int": 7,
+      "Wis": 12,
+      "Cha": 8
+    },
+    "saves": {
+      "str": 3,
+      "dex": 3,
+      "con": 3,
+      "int": -2,
+      "wis": 1,
+      "cha": -1
+    }
+  },
+  {
+    "name": "Marilith",
+    "ac": 16,
+    "init": 10,
+    "hp": "21d10+105",
+    "hpAverage": 220,
+    "cr": "16",
+    "stats": {
+      "Str": 18,
+      "Dex": 20,
+      "Con": 20,
+      "Int": 18,
+      "Wis": 16,
+      "Cha": 20
+    },
+    "saves": {
+      "str": 9,
+      "dex": 5,
+      "con": 10,
+      "int": 4,
+      "wis": 8,
+      "cha": 10
+    }
+  },
+  {
+    "name": "Medusa",
+    "ac": 15,
+    "init": 6,
+    "hp": "17d8+51",
+    "hpAverage": 127,
+    "cr": "6",
+    "stats": {
+      "Str": 10,
+      "Dex": 17,
+      "Con": 16,
+      "Int": 12,
+      "Wis": 13,
+      "Cha": 15
+    },
+    "saves": {
+      "str": 0,
+      "dex": 3,
+      "con": 3,
+      "int": 1,
+      "wis": 4,
+      "cha": 2
+    }
+  },
+  {
+    "name": "Dust Mephit",
+    "ac": 12,
+    "init": 2,
+    "hp": "5d6",
+    "hpAverage": 17,
+    "cr": "1/2",
+    "stats": {
+      "Str": 5,
+      "Dex": 14,
+      "Con": 10,
+      "Int": 9,
+      "Wis": 11,
+      "Cha": 10
+    },
+    "saves": {
+      "str": -3,
+      "dex": 2,
+      "con": 0,
+      "int": -1,
+      "wis": 0,
+      "cha": 0
+    }
+  },
+  {
+    "name": "Ice Mephit",
+    "ac": 11,
+    "init": 1,
+    "hp": "6d6",
+    "hpAverage": 21,
+    "cr": "1/2",
+    "stats": {
+      "Str": 7,
+      "Dex": 13,
+      "Con": 10,
+      "Int": 9,
+      "Wis": 11,
+      "Cha": 12
+    },
+    "saves": {
+      "str": -2,
+      "dex": 1,
+      "con": 0,
+      "int": -1,
+      "wis": 0,
+      "cha": 1
+    }
+  },
+  {
+    "name": "Magma Mephit",
+    "ac": 11,
+    "init": 1,
+    "hp": "4d6+4",
+    "hpAverage": 18,
+    "cr": "1/2",
+    "stats": {
+      "Str": 8,
+      "Dex": 12,
+      "Con": 12,
+      "Int": 7,
+      "Wis": 10,
+      "Cha": 10
+    },
+    "saves": {
+      "str": -1,
+      "dex": 1,
+      "con": 1,
+      "int": -2,
+      "wis": 0,
+      "cha": 0
+    }
+  },
+  {
+    "name": "Steam Mephit",
+    "ac": 10,
+    "init": 0,
+    "hp": "5d6",
+    "hpAverage": 17,
+    "cr": "1/4",
+    "stats": {
+      "Str": 5,
+      "Dex": 11,
+      "Con": 10,
+      "Int": 11,
+      "Wis": 10,
+      "Cha": 12
+    },
+    "saves": {
+      "str": -3,
+      "dex": 0,
+      "con": 0,
+      "int": 0,
+      "wis": 0,
+      "cha": 1
+    }
+  },
+  {
+    "name": "Merfolk Skirmisher",
+    "ac": 11,
+    "init": 1,
+    "hp": "2d8+2",
+    "hpAverage": 11,
+    "cr": "1/8",
+    "stats": {
+      "Str": 10,
+      "Dex": 13,
+      "Con": 12,
+      "Int": 11,
+      "Wis": 14,
+      "Cha": 12
+    },
+    "saves": {
+      "str": 0,
+      "dex": 1,
+      "con": 1,
+      "int": 0,
+      "wis": 2,
+      "cha": 1
+    }
+  },
+  {
+    "name": "Merrow",
+    "ac": 13,
+    "init": 2,
+    "hp": "6d10+12",
+    "hpAverage": 45,
+    "cr": "2",
+    "stats": {
+      "Str": 18,
+      "Dex": 15,
+      "Con": 15,
+      "Int": 8,
+      "Wis": 10,
+      "Cha": 9
+    },
+    "saves": {
+      "str": 4,
+      "dex": 2,
+      "con": 2,
+      "int": -1,
+      "wis": 0,
+      "cha": -1
+    }
+  },
+  {
+    "name": "Mimic",
+    "ac": 12,
+    "init": 3,
+    "hp": "9d8+18",
+    "hpAverage": 58,
+    "cr": "2",
+    "stats": {
+      "Str": 17,
+      "Dex": 12,
+      "Con": 15,
+      "Int": 5,
+      "Wis": 13,
+      "Cha": 8
+    },
+    "saves": {
+      "str": 3,
+      "dex": 1,
+      "con": 2,
+      "int": -3,
+      "wis": 1,
+      "cha": -1
+    }
+  },
+  {
+    "name": "Minotaur of Baphomet",
+    "ac": 14,
+    "init": 0,
+    "hp": "10d10+30",
+    "hpAverage": 85,
+    "cr": "3",
+    "stats": {
+      "Str": 18,
+      "Dex": 11,
+      "Con": 16,
+      "Int": 6,
+      "Wis": 16,
+      "Cha": 9
+    },
+    "saves": {
+      "str": 4,
+      "dex": 0,
+      "con": 3,
+      "int": -2,
+      "wis": 3,
+      "cha": -1
+    }
+  },
+  {
+    "name": "Mummy",
+    "ac": 11,
+    "init": -1,
+    "hp": "9d8+18",
+    "hpAverage": 58,
+    "cr": "3",
+    "stats": {
+      "Str": 16,
+      "Dex": 8,
+      "Con": 15,
+      "Int": 6,
+      "Wis": 12,
+      "Cha": 12
+    },
+    "saves": {
+      "str": 3,
+      "dex": -1,
+      "con": 2,
+      "int": -2,
+      "wis": 3,
+      "cha": 1
+    }
+  },
+  {
+    "name": "Mummy Lord",
+    "ac": 17,
+    "init": 10,
+    "hp": "25d8+75",
+    "hpAverage": 187,
+    "cr": "15",
+    "stats": {
+      "Str": 18,
+      "Dex": 10,
+      "Con": 17,
+      "Int": 11,
+      "Wis": 19,
+      "Cha": 16
+    },
+    "saves": {
+      "str": 4,
+      "dex": 0,
+      "con": 3,
+      "int": 5,
+      "wis": 9,
+      "cha": 3
+    }
+  },
+  {
+    "name": "Nalfeshnee",
+    "ac": 18,
+    "init": 5,
+    "hp": "16d10+96",
+    "hpAverage": 184,
+    "cr": "13",
+    "stats": {
+      "Str": 21,
+      "Dex": 10,
+      "Con": 22,
+      "Int": 19,
+      "Wis": 12,
+      "Cha": 15
+    },
+    "saves": {
+      "str": 5,
+      "dex": 0,
+      "con": 11,
+      "int": 9,
+      "wis": 6,
+      "cha": 7
+    }
+  },
+  {
+    "name": "Night Hag",
+    "ac": 17,
+    "init": 5,
+    "hp": "15d8+45",
+    "hpAverage": 112,
+    "cr": "5",
+    "stats": {
+      "Str": 18,
+      "Dex": 15,
+      "Con": 16,
+      "Int": 16,
+      "Wis": 14,
+      "Cha": 16
+    },
+    "saves": {
+      "str": 4,
+      "dex": 2,
+      "con": 3,
+      "int": 3,
+      "wis": 2,
+      "cha": 3
+    }
+  },
+  {
+    "name": "Nightmare",
+    "ac": 13,
+    "init": 2,
+    "hp": "8d10+24",
+    "hpAverage": 68,
+    "cr": "3",
+    "stats": {
+      "Str": 18,
+      "Dex": 15,
+      "Con": 16,
+      "Int": 10,
+      "Wis": 13,
+      "Cha": 15
+    },
+    "saves": {
+      "str": 4,
+      "dex": 2,
+      "con": 3,
+      "int": 0,
+      "wis": 1,
+      "cha": 2
+    }
+  },
+  {
+    "name": "Noble",
+    "ac": 15,
+    "init": 1,
+    "hp": "2d8",
+    "hpAverage": 9,
+    "cr": "1/8",
+    "stats": {
+      "Str": 11,
+      "Dex": 12,
+      "Con": 11,
+      "Int": 12,
+      "Wis": 14,
+      "Cha": 16
+    },
+    "saves": {
+      "str": 0,
+      "dex": 1,
+      "con": 0,
+      "int": 1,
+      "wis": 2,
+      "cha": 3
+    }
+  },
+  {
+    "name": "Ochre Jelly",
+    "ac": 8,
+    "init": -2,
+    "hp": "7d10+14",
+    "hpAverage": 52,
+    "cr": "2",
+    "stats": {
+      "Str": 15,
+      "Dex": 6,
+      "Con": 14,
+      "Int": 2,
+      "Wis": 6,
+      "Cha": 1
+    },
+    "saves": {
+      "str": 2,
+      "dex": -2,
+      "con": 2,
+      "int": -4,
+      "wis": -2,
+      "cha": -5
+    }
+  },
+  {
+    "name": "Ogre",
+    "ac": 11,
+    "init": -1,
+    "hp": "8d10+24",
+    "hpAverage": 68,
+    "cr": "2",
+    "stats": {
+      "Str": 19,
+      "Dex": 8,
+      "Con": 16,
+      "Int": 5,
+      "Wis": 7,
+      "Cha": 7
+    },
+    "saves": {
+      "str": 4,
+      "dex": -1,
+      "con": 3,
+      "int": -3,
+      "wis": -2,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Oni",
+    "ac": 17,
+    "init": 0,
+    "hp": "14d10+42",
+    "hpAverage": 119,
+    "cr": "7",
+    "stats": {
+      "Str": 19,
+      "Dex": 11,
+      "Con": 16,
+      "Int": 14,
+      "Wis": 12,
+      "Cha": 15
+    },
+    "saves": {
+      "str": 4,
+      "dex": 3,
+      "con": 6,
+      "int": 2,
+      "wis": 4,
+      "cha": 5
+    }
+  },
+  {
+    "name": "Otyugh",
+    "ac": 14,
+    "init": 0,
+    "hp": "11d10+44",
+    "hpAverage": 104,
+    "cr": "5",
+    "stats": {
+      "Str": 16,
+      "Dex": 11,
+      "Con": 19,
+      "Int": 6,
+      "Wis": 13,
+      "Cha": 6
+    },
+    "saves": {
+      "str": 3,
+      "dex": 0,
+      "con": 7,
+      "int": -2,
+      "wis": 1,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Owlbear",
+    "ac": 13,
+    "init": 1,
+    "hp": "7d10+21",
+    "hpAverage": 59,
+    "cr": "3",
+    "stats": {
+      "Str": 20,
+      "Dex": 12,
+      "Con": 17,
+      "Int": 3,
+      "Wis": 12,
+      "Cha": 7
+    },
+    "saves": {
+      "str": 5,
+      "dex": 1,
+      "con": 3,
+      "int": -4,
+      "wis": 1,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Pegasus",
+    "ac": 12,
+    "init": 2,
+    "hp": "7d10+21",
+    "hpAverage": 59,
+    "cr": "2",
+    "stats": {
+      "Str": 18,
+      "Dex": 15,
+      "Con": 16,
+      "Int": 10,
+      "Wis": 15,
+      "Cha": 13
+    },
+    "saves": {
+      "str": 4,
+      "dex": 4,
+      "con": 5,
+      "int": 0,
+      "wis": 4,
+      "cha": 3
+    }
+  },
+  {
+    "name": "Phase Spider",
+    "ac": 14,
+    "init": 3,
+    "hp": "7d10+7",
+    "hpAverage": 45,
+    "cr": "3",
+    "stats": {
+      "Str": 15,
+      "Dex": 16,
+      "Con": 12,
+      "Int": 6,
+      "Wis": 10,
+      "Cha": 6
+    },
+    "saves": {
+      "str": 2,
+      "dex": 3,
+      "con": 1,
+      "int": -2,
+      "wis": 0,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Pirate",
+    "ac": 14,
+    "init": 5,
+    "hp": "6d8+6",
+    "hpAverage": 33,
+    "cr": "1",
+    "stats": {
+      "Str": 10,
+      "Dex": 16,
+      "Con": 12,
+      "Int": 8,
+      "Wis": 12,
+      "Cha": 14
+    },
+    "saves": {
+      "str": 0,
+      "dex": 5,
+      "con": 1,
+      "int": -1,
+      "wis": 1,
+      "cha": 4
+    }
+  },
+  {
+    "name": "Pirate Captain",
+    "ac": 17,
+    "init": 7,
+    "hp": "13d8+26",
+    "hpAverage": 84,
+    "cr": "6",
+    "stats": {
+      "Str": 10,
+      "Dex": 18,
+      "Con": 14,
+      "Int": 10,
+      "Wis": 14,
+      "Cha": 17
+    },
+    "saves": {
+      "str": 3,
+      "dex": 7,
+      "con": 2,
+      "int": 0,
+      "wis": 5,
+      "cha": 6
+    }
+  },
+  {
+    "name": "Pit Fiend",
+    "ac": 21,
+    "init": 14,
+    "hp": "27d10+189",
+    "hpAverage": 337,
+    "cr": "20",
+    "stats": {
+      "Str": 26,
+      "Dex": 14,
+      "Con": 24,
+      "Int": 22,
+      "Wis": 18,
+      "Cha": 24
+    },
+    "saves": {
+      "str": 8,
+      "dex": 8,
+      "con": 7,
+      "int": 6,
+      "wis": 10,
+      "cha": 7
+    }
+  },
+  {
+    "name": "Planetar",
+    "ac": 19,
+    "init": 10,
+    "hp": "21d10+147",
+    "hpAverage": 262,
+    "cr": "16",
+    "stats": {
+      "Str": 24,
+      "Dex": 20,
+      "Con": 24,
+      "Int": 19,
+      "Wis": 22,
+      "Cha": 25
+    },
+    "saves": {
+      "str": 12,
+      "dex": 5,
+      "con": 12,
+      "int": 4,
+      "wis": 11,
+      "cha": 12
+    }
+  },
+  {
+    "name": "Priest Acolyte",
+    "ac": 13,
+    "init": 0,
+    "hp": "2d8+2",
+    "hpAverage": 11,
+    "cr": "1/4",
+    "stats": {
+      "Str": 14,
+      "Dex": 10,
+      "Con": 12,
+      "Int": 10,
+      "Wis": 14,
+      "Cha": 11
+    },
+    "saves": {
+      "str": 2,
+      "dex": 0,
+      "con": 1,
+      "int": 0,
+      "wis": 2,
+      "cha": 0
+    }
+  },
+  {
+    "name": "Priest",
+    "ac": 13,
+    "init": 0,
+    "hp": "7d8+7",
+    "hpAverage": 38,
+    "cr": "2",
+    "stats": {
+      "Str": 16,
+      "Dex": 10,
+      "Con": 12,
+      "Int": 13,
+      "Wis": 16,
+      "Cha": 13
+    },
+    "saves": {
+      "str": 3,
+      "dex": 0,
+      "con": 1,
+      "int": 1,
+      "wis": 3,
+      "cha": 1
+    }
+  },
+  {
+    "name": "Pseudodragon",
+    "ac": 14,
+    "init": 2,
+    "hp": "3d4+3",
+    "hpAverage": 10,
+    "cr": "1/4",
+    "stats": {
+      "Str": 6,
+      "Dex": 15,
+      "Con": 13,
+      "Int": 10,
+      "Wis": 12,
+      "Cha": 10
+    },
+    "saves": {
+      "str": -2,
+      "dex": 2,
+      "con": 1,
+      "int": 0,
+      "wis": 1,
+      "cha": 0
+    }
+  },
+  {
+    "name": "Purple Worm",
+    "ac": 18,
+    "init": 3,
+    "hp": "15d20+90",
+    "hpAverage": 247,
+    "cr": "15",
+    "stats": {
+      "Str": 28,
+      "Dex": 7,
+      "Con": 22,
+      "Int": 1,
+      "Wis": 8,
+      "Cha": 4
+    },
+    "saves": {
+      "str": 9,
+      "dex": -2,
+      "con": 11,
+      "int": -5,
+      "wis": 4,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Quasit",
+    "ac": 13,
+    "init": 3,
+    "hp": "10d4",
+    "hpAverage": 25,
+    "cr": "1",
+    "stats": {
+      "Str": 5,
+      "Dex": 17,
+      "Con": 10,
+      "Int": 7,
+      "Wis": 10,
+      "Cha": 10
+    },
+    "saves": {
+      "str": -3,
+      "dex": 3,
+      "con": 0,
+      "int": -2,
+      "wis": 0,
+      "cha": 0
+    }
+  },
+  {
+    "name": "Rakshasa",
+    "ac": 17,
+    "init": 8,
+    "hp": "26d8+104",
+    "hpAverage": 221,
+    "cr": "13",
+    "stats": {
+      "Str": 14,
+      "Dex": 17,
+      "Con": 18,
+      "Int": 13,
+      "Wis": 16,
+      "Cha": 20
+    },
+    "saves": {
+      "str": 2,
+      "dex": 3,
+      "con": 4,
+      "int": 1,
+      "wis": 3,
+      "cha": 5
+    }
+  },
+  {
+    "name": "Red Dragon Wyrmling",
+    "ac": 17,
+    "init": 2,
+    "hp": "10d8+30",
+    "hpAverage": 75,
+    "cr": "4",
+    "stats": {
+      "Str": 19,
+      "Dex": 10,
+      "Con": 17,
+      "Int": 12,
+      "Wis": 11,
+      "Cha": 15
+    },
+    "saves": {
+      "str": 4,
+      "dex": 2,
+      "con": 3,
+      "int": 1,
+      "wis": 2,
+      "cha": 2
+    }
+  },
+  {
+    "name": "Young Red Dragon",
+    "ac": 18,
+    "init": 4,
+    "hp": "17d10+85",
+    "hpAverage": 178,
+    "cr": "10",
+    "stats": {
+      "Str": 23,
+      "Dex": 10,
+      "Con": 21,
+      "Int": 14,
+      "Wis": 11,
+      "Cha": 19
+    },
+    "saves": {
+      "str": 6,
+      "dex": 4,
+      "con": 5,
+      "int": 2,
+      "wis": 4,
+      "cha": 4
+    }
+  },
+  {
+    "name": "Adult Red Dragon",
+    "ac": 19,
+    "init": 12,
+    "hp": "19d12+133",
+    "hpAverage": 256,
+    "cr": "17",
+    "stats": {
+      "Str": 27,
+      "Dex": 10,
+      "Con": 25,
+      "Int": 16,
+      "Wis": 13,
+      "Cha": 23
+    },
+    "saves": {
+      "str": 8,
+      "dex": 6,
+      "con": 7,
+      "int": 3,
+      "wis": 7,
+      "cha": 6
+    }
+  },
+  {
+    "name": "Ancient Red Dragon",
+    "ac": 22,
+    "init": 14,
+    "hp": "26d20+234",
+    "hpAverage": 507,
+    "cr": "24",
+    "stats": {
+      "Str": 30,
+      "Dex": 10,
+      "Con": 29,
+      "Int": 18,
+      "Wis": 15,
+      "Cha": 27
+    },
+    "saves": {
+      "str": 10,
+      "dex": 7,
+      "con": 9,
+      "int": 4,
+      "wis": 9,
+      "cha": 8
+    }
+  },
+  {
+    "name": "Remorhaz",
+    "ac": 17,
+    "init": 5,
+    "hp": "17d12+85",
+    "hpAverage": 195,
+    "cr": "11",
+    "stats": {
+      "Str": 24,
+      "Dex": 13,
+      "Con": 21,
+      "Int": 4,
+      "Wis": 10,
+      "Cha": 5
+    },
+    "saves": {
+      "str": 7,
+      "dex": 1,
+      "con": 5,
+      "int": -3,
+      "wis": 0,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Roc",
+    "ac": 15,
+    "init": 8,
+    "hp": "16d20+80",
+    "hpAverage": 248,
+    "cr": "11",
+    "stats": {
+      "Str": 28,
+      "Dex": 10,
+      "Con": 20,
+      "Int": 3,
+      "Wis": 10,
+      "Cha": 9
+    },
+    "saves": {
+      "str": 9,
+      "dex": 4,
+      "con": 5,
+      "int": -4,
+      "wis": 4,
+      "cha": -1
+    }
+  },
+  {
+    "name": "Roper",
+    "ac": 20,
+    "init": 5,
+    "hp": "11d10+33",
+    "hpAverage": 93,
+    "cr": "5",
+    "stats": {
+      "Str": 18,
+      "Dex": 8,
+      "Con": 17,
+      "Int": 7,
+      "Wis": 16,
+      "Cha": 6
+    },
+    "saves": {
+      "str": 4,
+      "dex": -1,
+      "con": 3,
+      "int": -2,
+      "wis": 3,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Rust Monster",
+    "ac": 14,
+    "init": 1,
+    "hp": "6d8+6",
+    "hpAverage": 33,
+    "cr": "1/2",
+    "stats": {
+      "Str": 13,
+      "Dex": 12,
+      "Con": 13,
+      "Int": 2,
+      "Wis": 13,
+      "Cha": 6
+    },
+    "saves": {
+      "str": 1,
+      "dex": 1,
+      "con": 1,
+      "int": -4,
+      "wis": 1,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Sahuagin Warrior",
+    "ac": 12,
+    "init": 0,
+    "hp": "4d8+4",
+    "hpAverage": 22,
+    "cr": "1/2",
+    "stats": {
+      "Str": 13,
+      "Dex": 11,
+      "Con": 12,
+      "Int": 12,
+      "Wis": 13,
+      "Cha": 9
+    },
+    "saves": {
+      "str": 1,
+      "dex": 0,
+      "con": 1,
+      "int": 1,
+      "wis": 1,
+      "cha": -1
+    }
+  },
+  {
+    "name": "Salamander",
+    "ac": 15,
+    "init": 2,
+    "hp": "12d10+24",
+    "hpAverage": 90,
+    "cr": "5",
+    "stats": {
+      "Str": 18,
+      "Dex": 14,
+      "Con": 15,
+      "Int": 11,
+      "Wis": 10,
+      "Cha": 12
+    },
+    "saves": {
+      "str": 4,
+      "dex": 2,
+      "con": 2,
+      "int": 0,
+      "wis": 0,
+      "cha": 1
+    }
+  },
+  {
+    "name": "Satyr",
+    "ac": 13,
+    "init": 3,
+    "hp": "7d8",
+    "hpAverage": 31,
+    "cr": "1/2",
+    "stats": {
+      "Str": 12,
+      "Dex": 16,
+      "Con": 11,
+      "Int": 12,
+      "Wis": 10,
+      "Cha": 14
+    },
+    "saves": {
+      "str": 1,
+      "dex": 3,
+      "con": 0,
+      "int": 1,
+      "wis": 0,
+      "cha": 2
+    }
+  },
+  {
+    "name": "Scout",
+    "ac": 13,
+    "init": 2,
+    "hp": "3d8+3",
+    "hpAverage": 16,
+    "cr": "1/2",
+    "stats": {
+      "Str": 11,
+      "Dex": 14,
+      "Con": 12,
+      "Int": 11,
+      "Wis": 13,
+      "Cha": 11
+    },
+    "saves": {
+      "str": 0,
+      "dex": 2,
+      "con": 1,
+      "int": 0,
+      "wis": 1,
+      "cha": 0
+    }
+  },
+  {
+    "name": "Sea Hag",
+    "ac": 14,
+    "init": 1,
+    "hp": "7d8+21",
+    "hpAverage": 52,
+    "cr": "2",
+    "stats": {
+      "Str": 16,
+      "Dex": 13,
+      "Con": 16,
+      "Int": 12,
+      "Wis": 12,
+      "Cha": 13
+    },
+    "saves": {
+      "str": 3,
+      "dex": 1,
+      "con": 3,
+      "int": 1,
+      "wis": 1,
+      "cha": 1
+    }
+  },
+  {
+    "name": "Shadow",
+    "ac": 12,
+    "init": 2,
+    "hp": "5d8+5",
+    "hpAverage": 27,
+    "cr": "1/2",
+    "stats": {
+      "Str": 6,
+      "Dex": 14,
+      "Con": 13,
+      "Int": 6,
+      "Wis": 10,
+      "Cha": 8
+    },
+    "saves": {
+      "str": -2,
+      "dex": 2,
+      "con": 1,
+      "int": -2,
+      "wis": 0,
+      "cha": -1
+    }
+  },
+  {
+    "name": "Shambling Mound",
+    "ac": 15,
+    "init": -1,
+    "hp": "13d10+39",
+    "hpAverage": 110,
+    "cr": "5",
+    "stats": {
+      "Str": 18,
+      "Dex": 8,
+      "Con": 16,
+      "Int": 5,
+      "Wis": 10,
+      "Cha": 5
+    },
+    "saves": {
+      "str": 4,
+      "dex": -1,
+      "con": 3,
+      "int": -3,
+      "wis": 0,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Shield Guardian",
+    "ac": 17,
+    "init": -1,
+    "hp": "15d10+60",
+    "hpAverage": 142,
+    "cr": "7",
+    "stats": {
+      "Str": 18,
+      "Dex": 8,
+      "Con": 18,
+      "Int": 7,
+      "Wis": 10,
+      "Cha": 3
+    },
+    "saves": {
+      "str": 4,
+      "dex": -1,
+      "con": 4,
+      "int": -2,
+      "wis": 0,
+      "cha": -4
+    }
+  },
+  {
+    "name": "Silver Dragon Wyrmling",
+    "ac": 17,
+    "init": 2,
+    "hp": "6d8+18",
+    "hpAverage": 45,
+    "cr": "2",
+    "stats": {
+      "Str": 19,
+      "Dex": 10,
+      "Con": 17,
+      "Int": 12,
+      "Wis": 11,
+      "Cha": 15
+    },
+    "saves": {
+      "str": 4,
+      "dex": 2,
+      "con": 3,
+      "int": 1,
+      "wis": 2,
+      "cha": 2
+    }
+  },
+  {
+    "name": "Young Silver Dragon",
+    "ac": 18,
+    "init": 4,
+    "hp": "16d10+80",
+    "hpAverage": 168,
+    "cr": "9",
+    "stats": {
+      "Str": 23,
+      "Dex": 10,
+      "Con": 21,
+      "Int": 14,
+      "Wis": 11,
+      "Cha": 19
+    },
+    "saves": {
+      "str": 6,
+      "dex": 4,
+      "con": 5,
+      "int": 2,
+      "wis": 4,
+      "cha": 4
+    }
+  },
+  {
+    "name": "Adult Silver Dragon",
+    "ac": 19,
+    "init": 10,
+    "hp": "16d12+112",
+    "hpAverage": 216,
+    "cr": "16",
+    "stats": {
+      "Str": 27,
+      "Dex": 10,
+      "Con": 25,
+      "Int": 16,
+      "Wis": 13,
+      "Cha": 22
+    },
+    "saves": {
+      "str": 8,
+      "dex": 5,
+      "con": 7,
+      "int": 3,
+      "wis": 6,
+      "cha": 6
+    }
+  },
+  {
+    "name": "Ancient Silver Dragon",
+    "ac": 22,
+    "init": 14,
+    "hp": "24d20+216",
+    "hpAverage": 468,
+    "cr": "23",
+    "stats": {
+      "Str": 30,
+      "Dex": 10,
+      "Con": 29,
+      "Int": 18,
+      "Wis": 15,
+      "Cha": 26
+    },
+    "saves": {
+      "str": 10,
+      "dex": 7,
+      "con": 9,
+      "int": 4,
+      "wis": 9,
+      "cha": 8
+    }
+  },
+  {
+    "name": "Skeleton",
+    "ac": 14,
+    "init": 3,
+    "hp": "2d8+4",
+    "hpAverage": 13,
+    "cr": "1/4",
+    "stats": {
+      "Str": 10,
+      "Dex": 16,
+      "Con": 15,
+      "Int": 6,
+      "Wis": 8,
+      "Cha": 5
+    },
+    "saves": {
+      "str": 0,
+      "dex": 3,
+      "con": 2,
+      "int": -2,
+      "wis": -1,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Warhorse Skeleton",
+    "ac": 13,
+    "init": 1,
+    "hp": "3d10+6",
+    "hpAverage": 22,
+    "cr": "1/2",
+    "stats": {
+      "Str": 18,
+      "Dex": 12,
+      "Con": 15,
+      "Int": 2,
+      "Wis": 8,
+      "Cha": 5
+    },
+    "saves": {
+      "str": 4,
+      "dex": 1,
+      "con": 2,
+      "int": -4,
+      "wis": -1,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Minotaur Skeleton",
+    "ac": 12,
+    "init": 0,
+    "hp": "6d10+12",
+    "hpAverage": 45,
+    "cr": "2",
+    "stats": {
+      "Str": 18,
+      "Dex": 11,
+      "Con": 15,
+      "Int": 6,
+      "Wis": 8,
+      "Cha": 5
+    },
+    "saves": {
+      "str": 4,
+      "dex": 0,
+      "con": 2,
+      "int": -2,
+      "wis": -1,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Solar",
+    "ac": 21,
+    "init": 20,
+    "hp": "22d10+176",
+    "hpAverage": 297,
+    "cr": "21",
+    "stats": {
+      "Str": 26,
+      "Dex": 22,
+      "Con": 26,
+      "Int": 25,
+      "Wis": 25,
+      "Cha": 30
+    },
+    "saves": {
+      "str": 8,
+      "dex": 6,
+      "con": 8,
+      "int": 7,
+      "wis": 7,
+      "cha": 10
+    }
+  },
+  {
+    "name": "Specter",
+    "ac": 12,
+    "init": 2,
+    "hp": "5d8",
+    "hpAverage": 22,
+    "cr": "1",
+    "stats": {
+      "Str": 1,
+      "Dex": 14,
+      "Con": 11,
+      "Int": 10,
+      "Wis": 10,
+      "Cha": 11
+    },
+    "saves": {
+      "str": -5,
+      "dex": 2,
+      "con": 0,
+      "int": 0,
+      "wis": 0,
+      "cha": 0
+    }
+  },
+  {
+    "name": "Sphinx of Wonder",
+    "ac": 13,
+    "init": 3,
+    "hp": "7d4+7",
+    "hpAverage": 24,
+    "cr": "1",
+    "stats": {
+      "Str": 6,
+      "Dex": 17,
+      "Con": 13,
+      "Int": 15,
+      "Wis": 12,
+      "Cha": 11
+    },
+    "saves": {
+      "str": -2,
+      "dex": 3,
+      "con": 1,
+      "int": 2,
+      "wis": 1,
+      "cha": 0
+    }
+  },
+  {
+    "name": "Sphinx of Lore",
+    "ac": 17,
+    "init": 10,
+    "hp": "20d10+60",
+    "hpAverage": 170,
+    "cr": "11",
+    "stats": {
+      "Str": 18,
+      "Dex": 15,
+      "Con": 16,
+      "Int": 18,
+      "Wis": 18,
+      "Cha": 18
+    },
+    "saves": {
+      "str": 4,
+      "dex": 2,
+      "con": 3,
+      "int": 4,
+      "wis": 4,
+      "cha": 4
+    }
+  },
+  {
+    "name": "Sphinx of Valor",
+    "ac": 17,
+    "init": 12,
+    "hp": "19d10+95",
+    "hpAverage": 199,
+    "cr": "17",
+    "stats": {
+      "Str": 22,
+      "Dex": 10,
+      "Con": 20,
+      "Int": 16,
+      "Wis": 23,
+      "Cha": 18
+    },
+    "saves": {
+      "str": 6,
+      "dex": 6,
+      "con": 11,
+      "int": 9,
+      "wis": 12,
+      "cha": 4
+    }
+  },
+  {
+    "name": "Spirit Naga",
+    "ac": 17,
+    "init": 3,
+    "hp": "18d10+36",
+    "hpAverage": 135,
+    "cr": "8",
+    "stats": {
+      "Str": 18,
+      "Dex": 17,
+      "Con": 14,
+      "Int": 16,
+      "Wis": 15,
+      "Cha": 16
+    },
+    "saves": {
+      "str": 4,
+      "dex": 6,
+      "con": 5,
+      "int": 3,
+      "wis": 5,
+      "cha": 6
+    }
+  },
+  {
+    "name": "Sprite",
+    "ac": 15,
+    "init": 4,
+    "hp": "4d4",
+    "hpAverage": 10,
+    "cr": "1/4",
+    "stats": {
+      "Str": 3,
+      "Dex": 18,
+      "Con": 10,
+      "Int": 14,
+      "Wis": 13,
+      "Cha": 11
+    },
+    "saves": {
+      "str": -4,
+      "dex": 4,
+      "con": 0,
+      "int": 2,
+      "wis": 1,
+      "cha": 0
+    }
+  },
+  {
+    "name": "Spy",
+    "ac": 12,
+    "init": 4,
+    "hp": "6d8",
+    "hpAverage": 27,
+    "cr": "1",
+    "stats": {
+      "Str": 10,
+      "Dex": 15,
+      "Con": 10,
+      "Int": 12,
+      "Wis": 14,
+      "Cha": 16
+    },
+    "saves": {
+      "str": 0,
+      "dex": 2,
+      "con": 0,
+      "int": 1,
+      "wis": 2,
+      "cha": 3
+    }
+  },
+  {
+    "name": "Stirge",
+    "ac": 13,
+    "init": 3,
+    "hp": "2d4",
+    "hpAverage": 5,
+    "cr": "1/8",
+    "stats": {
+      "Str": 4,
+      "Dex": 16,
+      "Con": 11,
+      "Int": 2,
+      "Wis": 8,
+      "Cha": 6
+    },
+    "saves": {
+      "str": -3,
+      "dex": 3,
+      "con": 0,
+      "int": -4,
+      "wis": -1,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Stone Giant",
+    "ac": 17,
+    "init": 5,
+    "hp": "11d12+55",
+    "hpAverage": 126,
+    "cr": "7",
+    "stats": {
+      "Str": 23,
+      "Dex": 15,
+      "Con": 20,
+      "Int": 10,
+      "Wis": 12,
+      "Cha": 9
+    },
+    "saves": {
+      "str": 6,
+      "dex": 5,
+      "con": 8,
+      "int": 0,
+      "wis": 4,
+      "cha": -1
+    }
+  },
+  {
+    "name": "Stone Golem",
+    "ac": 18,
+    "init": 3,
+    "hp": "21d10+105",
+    "hpAverage": 220,
+    "cr": "10",
+    "stats": {
+      "Str": 22,
+      "Dex": 9,
+      "Con": 20,
+      "Int": 3,
+      "Wis": 11,
+      "Cha": 1
+    },
+    "saves": {
+      "str": 6,
+      "dex": -1,
+      "con": 5,
+      "int": -4,
+      "wis": 0,
+      "cha": -5
+    }
+  },
+  {
+    "name": "Storm Giant",
+    "ac": 16,
+    "init": 7,
+    "hp": "20d12+100",
+    "hpAverage": 230,
+    "cr": "13",
+    "stats": {
+      "Str": 29,
+      "Dex": 14,
+      "Con": 20,
+      "Int": 16,
+      "Wis": 20,
+      "Cha": 18
+    },
+    "saves": {
+      "str": 14,
+      "dex": 2,
+      "con": 10,
+      "int": 3,
+      "wis": 10,
+      "cha": 9
+    }
+  },
+  {
+    "name": "Succubus",
+    "ac": 15,
+    "init": 3,
+    "hp": "13d8+13",
+    "hpAverage": 71,
+    "cr": "4",
+    "stats": {
+      "Str": 8,
+      "Dex": 17,
+      "Con": 13,
+      "Int": 15,
+      "Wis": 12,
+      "Cha": 20
+    },
+    "saves": {
+      "str": -1,
+      "dex": 3,
+      "con": 1,
+      "int": 2,
+      "wis": 1,
+      "cha": 5
+    }
+  },
+  {
+    "name": "Tarrasque",
+    "ac": 25,
+    "init": 18,
+    "hp": "34d20+340",
+    "hpAverage": 697,
+    "cr": "30",
+    "stats": {
+      "Str": 30,
+      "Dex": 11,
+      "Con": 30,
+      "Int": 3,
+      "Wis": 11,
+      "Cha": 11
+    },
+    "saves": {
+      "str": 10,
+      "dex": 9,
+      "con": 10,
+      "int": 5,
+      "wis": 9,
+      "cha": 9
+    }
+  },
+  {
+    "name": "Tough",
+    "ac": 12,
+    "init": 1,
+    "hp": "5d8+10",
+    "hpAverage": 32,
+    "cr": "1/2",
+    "stats": {
+      "Str": 15,
+      "Dex": 12,
+      "Con": 14,
+      "Int": 10,
+      "Wis": 10,
+      "Cha": 11
+    },
+    "saves": {
+      "str": 2,
+      "dex": 1,
+      "con": 2,
+      "int": 0,
+      "wis": 0,
+      "cha": 0
+    }
+  },
+  {
+    "name": "Tough Boss",
+    "ac": 16,
+    "init": 2,
+    "hp": "11d8+33",
+    "hpAverage": 82,
+    "cr": "4",
+    "stats": {
+      "Str": 17,
+      "Dex": 14,
+      "Con": 16,
+      "Int": 11,
+      "Wis": 10,
+      "Cha": 11
+    },
+    "saves": {
+      "str": 5,
+      "dex": 2,
+      "con": 5,
+      "int": 0,
+      "wis": 0,
+      "cha": 2
+    }
+  },
+  {
+    "name": "Treant",
+    "ac": 16,
+    "init": 3,
+    "hp": "12d12+60",
+    "hpAverage": 138,
+    "cr": "9",
+    "stats": {
+      "Str": 23,
+      "Dex": 8,
+      "Con": 21,
+      "Int": 12,
+      "Wis": 16,
+      "Cha": 12
+    },
+    "saves": {
+      "str": 6,
+      "dex": -1,
+      "con": 5,
+      "int": 1,
+      "wis": 3,
+      "cha": 1
+    }
+  },
+  {
+    "name": "Troll",
+    "ac": 15,
+    "init": 1,
+    "hp": "9d10+45",
+    "hpAverage": 94,
+    "cr": "5",
+    "stats": {
+      "Str": 18,
+      "Dex": 13,
+      "Con": 20,
+      "Int": 7,
+      "Wis": 9,
+      "Cha": 7
+    },
+    "saves": {
+      "str": 4,
+      "dex": 1,
+      "con": 5,
+      "int": -2,
+      "wis": -1,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Troll Limb",
+    "ac": 13,
+    "init": 1,
+    "hp": "4d6",
+    "hpAverage": 14,
+    "cr": "1/2",
+    "stats": {
+      "Str": 18,
+      "Dex": 12,
+      "Con": 10,
+      "Int": 1,
+      "Wis": 9,
+      "Cha": 1
+    },
+    "saves": {
+      "str": 4,
+      "dex": 1,
+      "con": 0,
+      "int": -5,
+      "wis": -1,
+      "cha": -5
+    }
+  },
+  {
+    "name": "Unicorn",
+    "ac": 12,
+    "init": 8,
+    "hp": "13d10+26",
+    "hpAverage": 97,
+    "cr": "5",
+    "stats": {
+      "Str": 18,
+      "Dex": 14,
+      "Con": 15,
+      "Int": 11,
+      "Wis": 17,
+      "Cha": 16
+    },
+    "saves": {
+      "str": 4,
+      "dex": 2,
+      "con": 2,
+      "int": 0,
+      "wis": 3,
+      "cha": 3
+    }
+  },
+  {
+    "name": "Vampire Familiar",
+    "ac": 15,
+    "init": 5,
+    "hp": "10d8+20",
+    "hpAverage": 65,
+    "cr": "3",
+    "stats": {
+      "Str": 17,
+      "Dex": 16,
+      "Con": 15,
+      "Int": 10,
+      "Wis": 10,
+      "Cha": 14
+    },
+    "saves": {
+      "str": 3,
+      "dex": 5,
+      "con": 2,
+      "int": 0,
+      "wis": 2,
+      "cha": 2
+    }
+  },
+  {
+    "name": "Vampire Spawn",
+    "ac": 16,
+    "init": 3,
+    "hp": "12d8+36",
+    "hpAverage": 90,
+    "cr": "5",
+    "stats": {
+      "Str": 16,
+      "Dex": 16,
+      "Con": 16,
+      "Int": 11,
+      "Wis": 10,
+      "Cha": 12
+    },
+    "saves": {
+      "str": 3,
+      "dex": 6,
+      "con": 3,
+      "int": 0,
+      "wis": 3,
+      "cha": 1
+    }
+  },
+  {
+    "name": "Vampire",
+    "ac": 16,
+    "init": 14,
+    "hp": "23d8+92",
+    "hpAverage": 195,
+    "cr": "13",
+    "stats": {
+      "Str": 18,
+      "Dex": 18,
+      "Con": 18,
+      "Int": 17,
+      "Wis": 15,
+      "Cha": 18
+    },
+    "saves": {
+      "str": 4,
+      "dex": 9,
+      "con": 9,
+      "int": 3,
+      "wis": 7,
+      "cha": 9
+    }
+  },
+  {
+    "name": "Vrock",
+    "ac": 15,
+    "init": 2,
+    "hp": "16d10+64",
+    "hpAverage": 152,
+    "cr": "6",
+    "stats": {
+      "Str": 17,
+      "Dex": 15,
+      "Con": 18,
+      "Int": 8,
+      "Wis": 13,
+      "Cha": 8
+    },
+    "saves": {
+      "str": 3,
+      "dex": 5,
+      "con": 4,
+      "int": -1,
+      "wis": 4,
+      "cha": 2
+    }
+  },
+  {
+    "name": "Warrior Infantry",
+    "ac": 13,
+    "init": 0,
+    "hp": "2d8",
+    "hpAverage": 9,
+    "cr": "1/8",
+    "stats": {
+      "Str": 13,
+      "Dex": 11,
+      "Con": 11,
+      "Int": 8,
+      "Wis": 11,
+      "Cha": 8
+    },
+    "saves": {
+      "str": 1,
+      "dex": 0,
+      "con": 0,
+      "int": -1,
+      "wis": 0,
+      "cha": -1
+    }
+  },
+  {
+    "name": "Warrior Veteran",
+    "ac": 17,
+    "init": 3,
+    "hp": "10d8+20",
+    "hpAverage": 65,
+    "cr": "3",
+    "stats": {
+      "Str": 16,
+      "Dex": 13,
+      "Con": 14,
+      "Int": 10,
+      "Wis": 11,
+      "Cha": 10
+    },
+    "saves": {
+      "str": 3,
+      "dex": 1,
+      "con": 2,
+      "int": 0,
+      "wis": 0,
+      "cha": 0
+    }
+  },
+  {
+    "name": "Water Elemental",
+    "ac": 14,
+    "init": 2,
+    "hp": "12d10+48",
+    "hpAverage": 114,
+    "cr": "5",
+    "stats": {
+      "Str": 18,
+      "Dex": 14,
+      "Con": 18,
+      "Int": 5,
+      "Wis": 10,
+      "Cha": 8
+    },
+    "saves": {
+      "str": 4,
+      "dex": 2,
+      "con": 4,
+      "int": -3,
+      "wis": 0,
+      "cha": -1
+    }
+  },
+  {
+    "name": "Werebear",
+    "ac": 15,
+    "init": 3,
+    "hp": "18d8+54",
+    "hpAverage": 135,
+    "cr": "5",
+    "stats": {
+      "Str": 19,
+      "Dex": 10,
+      "Con": 17,
+      "Int": 11,
+      "Wis": 12,
+      "Cha": 12
+    },
+    "saves": {
+      "str": 4,
+      "dex": 0,
+      "con": 3,
+      "int": 0,
+      "wis": 1,
+      "cha": 1
+    }
+  },
+  {
+    "name": "Wereboar",
+    "ac": 15,
+    "init": 2,
+    "hp": "15d8+30",
+    "hpAverage": 97,
+    "cr": "4",
+    "stats": {
+      "Str": 17,
+      "Dex": 10,
+      "Con": 15,
+      "Int": 10,
+      "Wis": 11,
+      "Cha": 8
+    },
+    "saves": {
+      "str": 3,
+      "dex": 0,
+      "con": 2,
+      "int": 0,
+      "wis": 0,
+      "cha": -1
+    }
+  },
+  {
+    "name": "Wererat",
+    "ac": 13,
+    "init": 3,
+    "hp": "11d8+11",
+    "hpAverage": 60,
+    "cr": "2",
+    "stats": {
+      "Str": 10,
+      "Dex": 16,
+      "Con": 12,
+      "Int": 11,
+      "Wis": 10,
+      "Cha": 8
+    },
+    "saves": {
+      "str": 0,
+      "dex": 3,
+      "con": 1,
+      "int": 0,
+      "wis": 0,
+      "cha": -1
+    }
+  },
+  {
+    "name": "Weretiger",
+    "ac": 12,
+    "init": 2,
+    "hp": "16d8+48",
+    "hpAverage": 120,
+    "cr": "4",
+    "stats": {
+      "Str": 17,
+      "Dex": 15,
+      "Con": 16,
+      "Int": 10,
+      "Wis": 13,
+      "Cha": 11
+    },
+    "saves": {
+      "str": 3,
+      "dex": 2,
+      "con": 3,
+      "int": 0,
+      "wis": 1,
+      "cha": 0
+    }
+  },
+  {
+    "name": "Werewolf",
+    "ac": 15,
+    "init": 4,
+    "hp": "11d8+22",
+    "hpAverage": 71,
+    "cr": "3",
+    "stats": {
+      "Str": 16,
+      "Dex": 14,
+      "Con": 14,
+      "Int": 10,
+      "Wis": 11,
+      "Cha": 10
+    },
+    "saves": {
+      "str": 3,
+      "dex": 2,
+      "con": 2,
+      "int": 0,
+      "wis": 0,
+      "cha": 0
+    }
+  },
+  {
+    "name": "White Dragon Wyrmling",
+    "ac": 16,
+    "init": 2,
+    "hp": "5d8+10",
+    "hpAverage": 32,
+    "cr": "2",
+    "stats": {
+      "Str": 14,
+      "Dex": 10,
+      "Con": 14,
+      "Int": 5,
+      "Wis": 10,
+      "Cha": 11
+    },
+    "saves": {
+      "str": 2,
+      "dex": 2,
+      "con": 2,
+      "int": -3,
+      "wis": 2,
+      "cha": 0
+    }
+  },
+  {
+    "name": "Young White Dragon",
+    "ac": 17,
+    "init": 3,
+    "hp": "13d10+52",
+    "hpAverage": 123,
+    "cr": "6",
+    "stats": {
+      "Str": 18,
+      "Dex": 10,
+      "Con": 18,
+      "Int": 6,
+      "Wis": 11,
+      "Cha": 12
+    },
+    "saves": {
+      "str": 4,
+      "dex": 3,
+      "con": 4,
+      "int": 2,
+      "wis": 3,
+      "cha": 1
+    }
+  },
+  {
+    "name": "Adult White Dragon",
+    "ac": 18,
+    "init": 10,
+    "hp": "16d12+96",
+    "hpAverage": 200,
+    "cr": "13",
+    "stats": {
+      "Str": 22,
+      "Dex": 10,
+      "Con": 22,
+      "Int": 8,
+      "Wis": 12,
+      "Cha": 12
+    },
+    "saves": {
+      "str": 6,
+      "dex": 5,
+      "con": 6,
+      "int": -1,
+      "wis": 6,
+      "cha": 1
+    }
+  },
+  {
+    "name": "Ancient White Dragon",
+    "ac": 20,
+    "init": 12,
+    "hp": "18d20+144",
+    "hpAverage": 333,
+    "cr": "20",
+    "stats": {
+      "Str": 26,
+      "Dex": 10,
+      "Con": 26,
+      "Int": 10,
+      "Wis": 13,
+      "Cha": 18
+    },
+    "saves": {
+      "str": 8,
+      "dex": 6,
+      "con": 8,
+      "int": 0,
+      "wis": 7,
+      "cha": 4
+    }
+  },
+  {
+    "name": "Wight",
+    "ac": 14,
+    "init": 4,
+    "hp": "11d8+33",
+    "hpAverage": 82,
+    "cr": "3",
+    "stats": {
+      "Str": 15,
+      "Dex": 14,
+      "Con": 16,
+      "Int": 10,
+      "Wis": 13,
+      "Cha": 15
+    },
+    "saves": {
+      "str": 2,
+      "dex": 2,
+      "con": 3,
+      "int": 0,
+      "wis": 1,
+      "cha": 2
+    }
+  },
+  {
+    "name": "Will-o'-Wisp",
+    "ac": 19,
+    "init": 9,
+    "hp": "11d4",
+    "hpAverage": 27,
+    "cr": "2",
+    "stats": {
+      "Str": 1,
+      "Dex": 28,
+      "Con": 10,
+      "Int": 13,
+      "Wis": 14,
+      "Cha": 11
+    },
+    "saves": {
+      "str": -5,
+      "dex": 9,
+      "con": 0,
+      "int": 1,
+      "wis": 2,
+      "cha": 0
+    }
+  },
+  {
+    "name": "Winter Wolf",
+    "ac": 13,
+    "init": 1,
+    "hp": "10d10+20",
+    "hpAverage": 75,
+    "cr": "3",
+    "stats": {
+      "Str": 18,
+      "Dex": 13,
+      "Con": 14,
+      "Int": 7,
+      "Wis": 12,
+      "Cha": 8
+    },
+    "saves": {
+      "str": 4,
+      "dex": 1,
+      "con": 2,
+      "int": -2,
+      "wis": 1,
+      "cha": -1
+    }
+  },
+  {
+    "name": "Worg",
+    "ac": 13,
+    "init": 1,
+    "hp": "4d10+4",
+    "hpAverage": 26,
+    "cr": "1/2",
+    "stats": {
+      "Str": 16,
+      "Dex": 13,
+      "Con": 13,
+      "Int": 7,
+      "Wis": 11,
+      "Cha": 8
+    },
+    "saves": {
+      "str": 3,
+      "dex": 1,
+      "con": 1,
+      "int": -2,
+      "wis": 0,
+      "cha": -1
+    }
+  },
+  {
+    "name": "Wraith",
+    "ac": 13,
+    "init": 3,
+    "hp": "9d8+27",
+    "hpAverage": 67,
+    "cr": "5",
+    "stats": {
+      "Str": 6,
+      "Dex": 16,
+      "Con": 16,
+      "Int": 12,
+      "Wis": 14,
+      "Cha": 15
+    },
+    "saves": {
+      "str": -2,
+      "dex": 3,
+      "con": 3,
+      "int": 1,
+      "wis": 2,
+      "cha": 2
+    }
+  },
+  {
+    "name": "Wyvern",
+    "ac": 14,
+    "init": 0,
+    "hp": "15d10+45",
+    "hpAverage": 127,
+    "cr": "6",
+    "stats": {
+      "Str": 19,
+      "Dex": 10,
+      "Con": 16,
+      "Int": 5,
+      "Wis": 12,
+      "Cha": 6
+    },
+    "saves": {
+      "str": 4,
+      "dex": 0,
+      "con": 3,
+      "int": -3,
+      "wis": 1,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Xorn",
+    "ac": 19,
+    "init": 0,
+    "hp": "8d8+48",
+    "hpAverage": 84,
+    "cr": "5",
+    "stats": {
+      "Str": 17,
+      "Dex": 10,
+      "Con": 22,
+      "Int": 11,
+      "Wis": 10,
+      "Cha": 11
+    },
+    "saves": {
+      "str": 3,
+      "dex": 0,
+      "con": 6,
+      "int": 0,
+      "wis": 0,
+      "cha": 0
+    }
+  },
+  {
+    "name": "Zombie",
+    "ac": 8,
+    "init": -2,
+    "hp": "2d8+6",
+    "hpAverage": 15,
+    "cr": "1/4",
+    "stats": {
+      "Str": 13,
+      "Dex": 6,
+      "Con": 16,
+      "Int": 3,
+      "Wis": 6,
+      "Cha": 5
+    },
+    "saves": {
+      "str": 1,
+      "dex": -2,
+      "con": 3,
+      "int": -4,
+      "wis": 0,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Ogre Zombie",
+    "ac": 8,
+    "init": -2,
+    "hp": "9d10+36",
+    "hpAverage": 85,
+    "cr": "2",
+    "stats": {
+      "Str": 19,
+      "Dex": 6,
+      "Con": 18,
+      "Int": 3,
+      "Wis": 6,
+      "Cha": 5
+    },
+    "saves": {
+      "str": 4,
+      "dex": -2,
+      "con": 4,
+      "int": -4,
+      "wis": 0,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Allosaurus",
+    "ac": 13,
+    "init": 1,
+    "hp": "6d10+18",
+    "hpAverage": 51,
+    "cr": "2",
+    "stats": {
+      "Str": 19,
+      "Dex": 13,
+      "Con": 17,
+      "Int": 2,
+      "Wis": 12,
+      "Cha": 5
+    },
+    "saves": {
+      "str": 4,
+      "dex": 1,
+      "con": 3,
+      "int": -4,
+      "wis": 1,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Ankylosaurus",
+    "ac": 15,
+    "init": 0,
+    "hp": "8d12+16",
+    "hpAverage": 68,
+    "cr": "3",
+    "stats": {
+      "Str": 19,
+      "Dex": 11,
+      "Con": 15,
+      "Int": 2,
+      "Wis": 12,
+      "Cha": 5
+    },
+    "saves": {
+      "str": 6,
+      "dex": 0,
+      "con": 2,
+      "int": -4,
+      "wis": 1,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Ape",
+    "ac": 12,
+    "init": 2,
+    "hp": "3d8+6",
+    "hpAverage": 19,
+    "cr": "1/2",
+    "stats": {
+      "Str": 16,
+      "Dex": 14,
+      "Con": 14,
+      "Int": 6,
+      "Wis": 12,
+      "Cha": 7
+    },
+    "saves": {
+      "str": 3,
+      "dex": 2,
+      "con": 2,
+      "int": -2,
+      "wis": 1,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Archelon",
+    "ac": 17,
+    "init": 3,
+    "hp": "12d12+12",
+    "hpAverage": 90,
+    "cr": "4",
+    "stats": {
+      "Str": 18,
+      "Dex": 16,
+      "Con": 13,
+      "Int": 4,
+      "Wis": 14,
+      "Cha": 6
+    },
+    "saves": {
+      "str": 4,
+      "dex": 3,
+      "con": 1,
+      "int": -3,
+      "wis": 2,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Baboon",
+    "ac": 12,
+    "init": 2,
+    "hp": "1d6",
+    "hpAverage": 3,
+    "cr": "0",
+    "stats": {
+      "Str": 8,
+      "Dex": 14,
+      "Con": 11,
+      "Int": 4,
+      "Wis": 12,
+      "Cha": 6
+    },
+    "saves": {
+      "str": -1,
+      "dex": 2,
+      "con": 0,
+      "int": -3,
+      "wis": 1,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Badger",
+    "ac": 11,
+    "init": 0,
+    "hp": "1d4+3",
+    "hpAverage": 5,
+    "cr": "0",
+    "stats": {
+      "Str": 10,
+      "Dex": 11,
+      "Con": 16,
+      "Int": 2,
+      "Wis": 12,
+      "Cha": 5
+    },
+    "saves": {
+      "str": 0,
+      "dex": 0,
+      "con": 3,
+      "int": -4,
+      "wis": 1,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Bat",
+    "ac": 12,
+    "init": 2,
+    "hp": "1d4-1",
+    "hpAverage": 1,
+    "cr": "0",
+    "stats": {
+      "Str": 2,
+      "Dex": 15,
+      "Con": 8,
+      "Int": 2,
+      "Wis": 12,
+      "Cha": 4
+    },
+    "saves": {
+      "str": -4,
+      "dex": 2,
+      "con": -1,
+      "int": -4,
+      "wis": 1,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Black Bear",
+    "ac": 11,
+    "init": 1,
+    "hp": "3d8+6",
+    "hpAverage": 19,
+    "cr": "1/2",
+    "stats": {
+      "Str": 15,
+      "Dex": 12,
+      "Con": 14,
+      "Int": 2,
+      "Wis": 12,
+      "Cha": 7
+    },
+    "saves": {
+      "str": 2,
+      "dex": 1,
+      "con": 2,
+      "int": -4,
+      "wis": 1,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Blood Hawk",
+    "ac": 12,
+    "init": 2,
+    "hp": "2d6",
+    "hpAverage": 7,
+    "cr": "1/8",
+    "stats": {
+      "Str": 6,
+      "Dex": 14,
+      "Con": 10,
+      "Int": 3,
+      "Wis": 14,
+      "Cha": 5
+    },
+    "saves": {
+      "str": -2,
+      "dex": 2,
+      "con": 0,
+      "int": -4,
+      "wis": 2,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Boar",
+    "ac": 11,
+    "init": 0,
+    "hp": "2d8+4",
+    "hpAverage": 13,
+    "cr": "1/4",
+    "stats": {
+      "Str": 13,
+      "Dex": 11,
+      "Con": 14,
+      "Int": 2,
+      "Wis": 9,
+      "Cha": 5
+    },
+    "saves": {
+      "str": 1,
+      "dex": 0,
+      "con": 2,
+      "int": -4,
+      "wis": -1,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Brown Bear",
+    "ac": 11,
+    "init": 1,
+    "hp": "3d10+6",
+    "hpAverage": 22,
+    "cr": "1",
+    "stats": {
+      "Str": 17,
+      "Dex": 12,
+      "Con": 15,
+      "Int": 2,
+      "Wis": 13,
+      "Cha": 7
+    },
+    "saves": {
+      "str": 3,
+      "dex": 1,
+      "con": 2,
+      "int": -4,
+      "wis": 1,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Camel",
+    "ac": 10,
+    "init": -1,
+    "hp": "2d10+6",
+    "hpAverage": 17,
+    "cr": "1/8",
+    "stats": {
+      "Str": 15,
+      "Dex": 8,
+      "Con": 17,
+      "Int": 2,
+      "Wis": 11,
+      "Cha": 5
+    },
+    "saves": {
+      "str": 2,
+      "dex": -1,
+      "con": 5,
+      "int": -4,
+      "wis": 0,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Cat",
+    "ac": 12,
+    "init": 2,
+    "hp": "1d4",
+    "hpAverage": 2,
+    "cr": "0",
+    "stats": {
+      "Str": 3,
+      "Dex": 15,
+      "Con": 10,
+      "Int": 3,
+      "Wis": 12,
+      "Cha": 7
+    },
+    "saves": {
+      "str": -4,
+      "dex": 4,
+      "con": 0,
+      "int": -4,
+      "wis": 1,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Constrictor Snake",
+    "ac": 13,
+    "init": 2,
+    "hp": "2d10+2",
+    "hpAverage": 13,
+    "cr": "1/4",
+    "stats": {
+      "Str": 15,
+      "Dex": 14,
+      "Con": 12,
+      "Int": 1,
+      "Wis": 10,
+      "Cha": 3
+    },
+    "saves": {
+      "str": 2,
+      "dex": 2,
+      "con": 1,
+      "int": -5,
+      "wis": 0,
+      "cha": -4
+    }
+  },
+  {
+    "name": "Crab",
+    "ac": 11,
+    "init": 0,
+    "hp": "1d4+1",
+    "hpAverage": 3,
+    "cr": "0",
+    "stats": {
+      "Str": 6,
+      "Dex": 11,
+      "Con": 12,
+      "Int": 1,
+      "Wis": 8,
+      "Cha": 2
+    },
+    "saves": {
+      "str": -2,
+      "dex": 0,
+      "con": 1,
+      "int": -5,
+      "wis": -1,
+      "cha": -4
+    }
+  },
+  {
+    "name": "Crocodile",
+    "ac": 12,
+    "init": 0,
+    "hp": "2d10+2",
+    "hpAverage": 13,
+    "cr": "1/2",
+    "stats": {
+      "Str": 15,
+      "Dex": 10,
+      "Con": 13,
+      "Int": 2,
+      "Wis": 10,
+      "Cha": 5
+    },
+    "saves": {
+      "str": 2,
+      "dex": 0,
+      "con": 3,
+      "int": -4,
+      "wis": 0,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Deer",
+    "ac": 13,
+    "init": 3,
+    "hp": "1d8",
+    "hpAverage": 4,
+    "cr": "0",
+    "stats": {
+      "Str": 11,
+      "Dex": 16,
+      "Con": 11,
+      "Int": 2,
+      "Wis": 14,
+      "Cha": 5
+    },
+    "saves": {
+      "str": 0,
+      "dex": 3,
+      "con": 0,
+      "int": -4,
+      "wis": 2,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Dire Wolf",
+    "ac": 14,
+    "init": 2,
+    "hp": "3d10+6",
+    "hpAverage": 22,
+    "cr": "1",
+    "stats": {
+      "Str": 17,
+      "Dex": 15,
+      "Con": 15,
+      "Int": 3,
+      "Wis": 12,
+      "Cha": 7
+    },
+    "saves": {
+      "str": 3,
+      "dex": 2,
+      "con": 2,
+      "int": -4,
+      "wis": 1,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Draft Horse",
+    "ac": 10,
+    "init": 0,
+    "hp": "2d10+4",
+    "hpAverage": 15,
+    "cr": "1/4",
+    "stats": {
+      "Str": 18,
+      "Dex": 10,
+      "Con": 15,
+      "Int": 2,
+      "Wis": 11,
+      "Cha": 7
+    },
+    "saves": {
+      "str": 4,
+      "dex": 0,
+      "con": 2,
+      "int": -4,
+      "wis": 0,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Eagle",
+    "ac": 12,
+    "init": 2,
+    "hp": "1d6+1",
+    "hpAverage": 4,
+    "cr": "0",
+    "stats": {
+      "Str": 6,
+      "Dex": 15,
+      "Con": 12,
+      "Int": 2,
+      "Wis": 14,
+      "Cha": 7
+    },
+    "saves": {
+      "str": -2,
+      "dex": 2,
+      "con": 1,
+      "int": -4,
+      "wis": 2,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Elephant",
+    "ac": 12,
+    "init": -1,
+    "hp": "8d12+24",
+    "hpAverage": 76,
+    "cr": "4",
+    "stats": {
+      "Str": 22,
+      "Dex": 9,
+      "Con": 17,
+      "Int": 3,
+      "Wis": 11,
+      "Cha": 6
+    },
+    "saves": {
+      "str": 6,
+      "dex": -1,
+      "con": 3,
+      "int": -4,
+      "wis": 0,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Elk",
+    "ac": 10,
+    "init": 0,
+    "hp": "2d10",
+    "hpAverage": 11,
+    "cr": "1/4",
+    "stats": {
+      "Str": 16,
+      "Dex": 10,
+      "Con": 11,
+      "Int": 2,
+      "Wis": 10,
+      "Cha": 6
+    },
+    "saves": {
+      "str": 3,
+      "dex": 0,
+      "con": 0,
+      "int": -4,
+      "wis": 0,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Flying Snake",
+    "ac": 14,
+    "init": 2,
+    "hp": "2d4",
+    "hpAverage": 5,
+    "cr": "1/8",
+    "stats": {
+      "Str": 4,
+      "Dex": 15,
+      "Con": 11,
+      "Int": 2,
+      "Wis": 12,
+      "Cha": 5
+    },
+    "saves": {
+      "str": -3,
+      "dex": 2,
+      "con": 0,
+      "int": -4,
+      "wis": 1,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Frog",
+    "ac": 11,
+    "init": 1,
+    "hp": "1d4-1",
+    "hpAverage": 1,
+    "cr": "0",
+    "stats": {
+      "Str": 1,
+      "Dex": 13,
+      "Con": 8,
+      "Int": 1,
+      "Wis": 8,
+      "Cha": 3
+    },
+    "saves": {
+      "str": -5,
+      "dex": 1,
+      "con": -1,
+      "int": -5,
+      "wis": -1,
+      "cha": -4
+    }
+  },
+  {
+    "name": "Giant Ape",
+    "ac": 12,
+    "init": 5,
+    "hp": "16d12+64",
+    "hpAverage": 168,
+    "cr": "7",
+    "stats": {
+      "Str": 23,
+      "Dex": 14,
+      "Con": 18,
+      "Int": 5,
+      "Wis": 12,
+      "Cha": 7
+    },
+    "saves": {
+      "str": 6,
+      "dex": 2,
+      "con": 4,
+      "int": -3,
+      "wis": 1,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Giant Badger",
+    "ac": 13,
+    "init": 0,
+    "hp": "2d8+6",
+    "hpAverage": 15,
+    "cr": "1/4",
+    "stats": {
+      "Str": 13,
+      "Dex": 10,
+      "Con": 17,
+      "Int": 2,
+      "Wis": 12,
+      "Cha": 5
+    },
+    "saves": {
+      "str": 1,
+      "dex": 0,
+      "con": 3,
+      "int": -4,
+      "wis": 1,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Giant Bat",
+    "ac": 13,
+    "init": 3,
+    "hp": "4d10",
+    "hpAverage": 22,
+    "cr": "1/4",
+    "stats": {
+      "Str": 15,
+      "Dex": 16,
+      "Con": 11,
+      "Int": 2,
+      "Wis": 12,
+      "Cha": 6
+    },
+    "saves": {
+      "str": 2,
+      "dex": 3,
+      "con": 0,
+      "int": -4,
+      "wis": 1,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Giant Boar",
+    "ac": 13,
+    "init": 0,
+    "hp": "5d10+15",
+    "hpAverage": 42,
+    "cr": "2",
+    "stats": {
+      "Str": 17,
+      "Dex": 10,
+      "Con": 16,
+      "Int": 2,
+      "Wis": 7,
+      "Cha": 5
+    },
+    "saves": {
+      "str": 5,
+      "dex": 0,
+      "con": 3,
+      "int": -4,
+      "wis": -2,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Giant Centipede",
+    "ac": 14,
+    "init": 2,
+    "hp": "2d6+2",
+    "hpAverage": 9,
+    "cr": "1/4",
+    "stats": {
+      "Str": 5,
+      "Dex": 14,
+      "Con": 12,
+      "Int": 1,
+      "Wis": 7,
+      "Cha": 3
+    },
+    "saves": {
+      "str": -3,
+      "dex": 2,
+      "con": 1,
+      "int": -5,
+      "wis": -2,
+      "cha": -4
+    }
+  },
+  {
+    "name": "Giant Constrictor Snake",
+    "ac": 12,
+    "init": 2,
+    "hp": "8d12+8",
+    "hpAverage": 60,
+    "cr": "2",
+    "stats": {
+      "Str": 19,
+      "Dex": 14,
+      "Con": 12,
+      "Int": 1,
+      "Wis": 10,
+      "Cha": 3
+    },
+    "saves": {
+      "str": 4,
+      "dex": 2,
+      "con": 1,
+      "int": -5,
+      "wis": 0,
+      "cha": -4
+    }
+  },
+  {
+    "name": "Giant Crab",
+    "ac": 15,
+    "init": 1,
+    "hp": "3d8",
+    "hpAverage": 13,
+    "cr": "1/8",
+    "stats": {
+      "Str": 13,
+      "Dex": 13,
+      "Con": 11,
+      "Int": 1,
+      "Wis": 9,
+      "Cha": 3
+    },
+    "saves": {
+      "str": 1,
+      "dex": 1,
+      "con": 0,
+      "int": -5,
+      "wis": -1,
+      "cha": -4
+    }
+  },
+  {
+    "name": "Giant Crocodile",
+    "ac": 14,
+    "init": -1,
+    "hp": "9d12+27",
+    "hpAverage": 85,
+    "cr": "5",
+    "stats": {
+      "Str": 21,
+      "Dex": 9,
+      "Con": 17,
+      "Int": 2,
+      "Wis": 10,
+      "Cha": 7
+    },
+    "saves": {
+      "str": 5,
+      "dex": -1,
+      "con": 3,
+      "int": -4,
+      "wis": 0,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Giant Eagle",
+    "ac": 13,
+    "init": 3,
+    "hp": "4d10+4",
+    "hpAverage": 26,
+    "cr": "1",
+    "stats": {
+      "Str": 16,
+      "Dex": 17,
+      "Con": 13,
+      "Int": 8,
+      "Wis": 14,
+      "Cha": 10
+    },
+    "saves": {
+      "str": 3,
+      "dex": 3,
+      "con": 1,
+      "int": -1,
+      "wis": 2,
+      "cha": 0
+    }
+  },
+  {
+    "name": "Giant Elk",
+    "ac": 14,
+    "init": 6,
+    "hp": "5d12+10",
+    "hpAverage": 42,
+    "cr": "2",
+    "stats": {
+      "Str": 19,
+      "Dex": 18,
+      "Con": 14,
+      "Int": 7,
+      "Wis": 14,
+      "Cha": 10
+    },
+    "saves": {
+      "str": 6,
+      "dex": 6,
+      "con": 2,
+      "int": -2,
+      "wis": 2,
+      "cha": 0
+    }
+  },
+  {
+    "name": "Giant Fire Beetle",
+    "ac": 13,
+    "init": 0,
+    "hp": "1d6+1",
+    "hpAverage": 4,
+    "cr": "0",
+    "stats": {
+      "Str": 8,
+      "Dex": 10,
+      "Con": 12,
+      "Int": 1,
+      "Wis": 7,
+      "Cha": 3
+    },
+    "saves": {
+      "str": -1,
+      "dex": 0,
+      "con": 1,
+      "int": -5,
+      "wis": -2,
+      "cha": -4
+    }
+  },
+  {
+    "name": "Giant Frog",
+    "ac": 11,
+    "init": 1,
+    "hp": "4d8",
+    "hpAverage": 18,
+    "cr": "1/4",
+    "stats": {
+      "Str": 12,
+      "Dex": 13,
+      "Con": 11,
+      "Int": 2,
+      "Wis": 10,
+      "Cha": 3
+    },
+    "saves": {
+      "str": 1,
+      "dex": 1,
+      "con": 0,
+      "int": -4,
+      "wis": 0,
+      "cha": -4
+    }
+  },
+  {
+    "name": "Giant Goat",
+    "ac": 11,
+    "init": 1,
+    "hp": "3d10+3",
+    "hpAverage": 19,
+    "cr": "1/2",
+    "stats": {
+      "Str": 17,
+      "Dex": 13,
+      "Con": 12,
+      "Int": 3,
+      "Wis": 12,
+      "Cha": 6
+    },
+    "saves": {
+      "str": 5,
+      "dex": 1,
+      "con": 1,
+      "int": -4,
+      "wis": 1,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Giant Hyena",
+    "ac": 12,
+    "init": 2,
+    "hp": "6d10+12",
+    "hpAverage": 45,
+    "cr": "1",
+    "stats": {
+      "Str": 16,
+      "Dex": 14,
+      "Con": 14,
+      "Int": 2,
+      "Wis": 12,
+      "Cha": 7
+    },
+    "saves": {
+      "str": 3,
+      "dex": 2,
+      "con": 2,
+      "int": -4,
+      "wis": 1,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Giant Lizard",
+    "ac": 12,
+    "init": 1,
+    "hp": "3d10+3",
+    "hpAverage": 19,
+    "cr": "1/4",
+    "stats": {
+      "Str": 15,
+      "Dex": 12,
+      "Con": 13,
+      "Int": 2,
+      "Wis": 10,
+      "Cha": 5
+    },
+    "saves": {
+      "str": 2,
+      "dex": 3,
+      "con": 1,
+      "int": -4,
+      "wis": 0,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Giant Octopus",
+    "ac": 11,
+    "init": 1,
+    "hp": "7d10+7",
+    "hpAverage": 45,
+    "cr": "1",
+    "stats": {
+      "Str": 17,
+      "Dex": 13,
+      "Con": 13,
+      "Int": 5,
+      "Wis": 10,
+      "Cha": 4
+    },
+    "saves": {
+      "str": 3,
+      "dex": 1,
+      "con": 1,
+      "int": -3,
+      "wis": 0,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Giant Owl",
+    "ac": 12,
+    "init": 2,
+    "hp": "3d10+3",
+    "hpAverage": 19,
+    "cr": "1/4",
+    "stats": {
+      "Str": 13,
+      "Dex": 15,
+      "Con": 12,
+      "Int": 10,
+      "Wis": 14,
+      "Cha": 10
+    },
+    "saves": {
+      "str": 1,
+      "dex": 2,
+      "con": 1,
+      "int": 0,
+      "wis": 4,
+      "cha": 0
+    }
+  },
+  {
+    "name": "Giant Rat",
+    "ac": 13,
+    "init": 3,
+    "hp": "2d6",
+    "hpAverage": 7,
+    "cr": "1/8",
+    "stats": {
+      "Str": 7,
+      "Dex": 16,
+      "Con": 11,
+      "Int": 2,
+      "Wis": 10,
+      "Cha": 4
+    },
+    "saves": {
+      "str": -2,
+      "dex": 5,
+      "con": 0,
+      "int": -4,
+      "wis": 0,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Giant Scorpion",
+    "ac": 15,
+    "init": 1,
+    "hp": "7d10+14",
+    "hpAverage": 52,
+    "cr": "3",
+    "stats": {
+      "Str": 16,
+      "Dex": 13,
+      "Con": 15,
+      "Int": 1,
+      "Wis": 9,
+      "Cha": 3
+    },
+    "saves": {
+      "str": 3,
+      "dex": 1,
+      "con": 2,
+      "int": -5,
+      "wis": -1,
+      "cha": -4
+    }
+  },
+  {
+    "name": "Giant Seahorse",
+    "ac": 14,
+    "init": 1,
+    "hp": "3d10",
+    "hpAverage": 16,
+    "cr": "1/2",
+    "stats": {
+      "Str": 15,
+      "Dex": 12,
+      "Con": 11,
+      "Int": 2,
+      "Wis": 12,
+      "Cha": 5
+    },
+    "saves": {
+      "str": 2,
+      "dex": 1,
+      "con": 0,
+      "int": -4,
+      "wis": 1,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Giant Shark",
+    "ac": 13,
+    "init": 3,
+    "hp": "8d12+40",
+    "hpAverage": 92,
+    "cr": "5",
+    "stats": {
+      "Str": 23,
+      "Dex": 11,
+      "Con": 21,
+      "Int": 1,
+      "Wis": 10,
+      "Cha": 5
+    },
+    "saves": {
+      "str": 6,
+      "dex": 0,
+      "con": 5,
+      "int": -5,
+      "wis": 0,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Giant Spider",
+    "ac": 14,
+    "init": 3,
+    "hp": "4d10+4",
+    "hpAverage": 26,
+    "cr": "1",
+    "stats": {
+      "Str": 14,
+      "Dex": 16,
+      "Con": 12,
+      "Int": 2,
+      "Wis": 11,
+      "Cha": 4
+    },
+    "saves": {
+      "str": 2,
+      "dex": 3,
+      "con": 1,
+      "int": -4,
+      "wis": 0,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Giant Toad",
+    "ac": 11,
+    "init": 1,
+    "hp": "6d10+6",
+    "hpAverage": 39,
+    "cr": "1",
+    "stats": {
+      "Str": 15,
+      "Dex": 13,
+      "Con": 13,
+      "Int": 2,
+      "Wis": 10,
+      "Cha": 3
+    },
+    "saves": {
+      "str": 2,
+      "dex": 1,
+      "con": 1,
+      "int": -4,
+      "wis": 0,
+      "cha": -4
+    }
+  },
+  {
+    "name": "Giant Venomous Snake",
+    "ac": 14,
+    "init": 4,
+    "hp": "2d8+2",
+    "hpAverage": 11,
+    "cr": "1/4",
+    "stats": {
+      "Str": 10,
+      "Dex": 18,
+      "Con": 13,
+      "Int": 2,
+      "Wis": 10,
+      "Cha": 3
+    },
+    "saves": {
+      "str": 0,
+      "dex": 4,
+      "con": 1,
+      "int": -4,
+      "wis": 0,
+      "cha": -4
+    }
+  },
+  {
+    "name": "Giant Vulture",
+    "ac": 10,
+    "init": 0,
+    "hp": "3d10+9",
+    "hpAverage": 25,
+    "cr": "1",
+    "stats": {
+      "Str": 15,
+      "Dex": 10,
+      "Con": 16,
+      "Int": 6,
+      "Wis": 12,
+      "Cha": 7
+    },
+    "saves": {
+      "str": 2,
+      "dex": 0,
+      "con": 3,
+      "int": -2,
+      "wis": 1,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Giant Wasp",
+    "ac": 13,
+    "init": 2,
+    "hp": "5d8",
+    "hpAverage": 22,
+    "cr": "1/2",
+    "stats": {
+      "Str": 10,
+      "Dex": 14,
+      "Con": 10,
+      "Int": 1,
+      "Wis": 10,
+      "Cha": 3
+    },
+    "saves": {
+      "str": 0,
+      "dex": 2,
+      "con": 0,
+      "int": -5,
+      "wis": 0,
+      "cha": -4
+    }
+  },
+  {
+    "name": "Giant Weasel",
+    "ac": 13,
+    "init": 3,
+    "hp": "2d8",
+    "hpAverage": 9,
+    "cr": "1/8",
+    "stats": {
+      "Str": 11,
+      "Dex": 17,
+      "Con": 10,
+      "Int": 4,
+      "Wis": 12,
+      "Cha": 5
+    },
+    "saves": {
+      "str": 0,
+      "dex": 3,
+      "con": 0,
+      "int": -3,
+      "wis": 1,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Giant Wolf Spider",
+    "ac": 13,
+    "init": 3,
+    "hp": "2d8+2",
+    "hpAverage": 11,
+    "cr": "1/4",
+    "stats": {
+      "Str": 12,
+      "Dex": 16,
+      "Con": 13,
+      "Int": 3,
+      "Wis": 12,
+      "Cha": 4
+    },
+    "saves": {
+      "str": 1,
+      "dex": 3,
+      "con": 1,
+      "int": -4,
+      "wis": 1,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Goat",
+    "ac": 10,
+    "init": 0,
+    "hp": "1d8",
+    "hpAverage": 4,
+    "cr": "0",
+    "stats": {
+      "Str": 11,
+      "Dex": 10,
+      "Con": 11,
+      "Int": 2,
+      "Wis": 10,
+      "Cha": 5
+    },
+    "saves": {
+      "str": 2,
+      "dex": 0,
+      "con": 0,
+      "int": -4,
+      "wis": 0,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Hawk",
+    "ac": 13,
+    "init": 3,
+    "hp": "1d4-1",
+    "hpAverage": 1,
+    "cr": "0",
+    "stats": {
+      "Str": 5,
+      "Dex": 16,
+      "Con": 8,
+      "Int": 2,
+      "Wis": 14,
+      "Cha": 6
+    },
+    "saves": {
+      "str": -3,
+      "dex": 3,
+      "con": -1,
+      "int": -4,
+      "wis": 2,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Hippopotamus",
+    "ac": 14,
+    "init": -2,
+    "hp": "11d10+22",
+    "hpAverage": 82,
+    "cr": "4",
+    "stats": {
+      "Str": 21,
+      "Dex": 7,
+      "Con": 15,
+      "Int": 2,
+      "Wis": 12,
+      "Cha": 4
+    },
+    "saves": {
+      "str": 7,
+      "dex": -2,
+      "con": 2,
+      "int": -4,
+      "wis": 1,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Hunter Shark",
+    "ac": 12,
+    "init": 2,
+    "hp": "6d10+12",
+    "hpAverage": 45,
+    "cr": "2",
+    "stats": {
+      "Str": 18,
+      "Dex": 14,
+      "Con": 15,
+      "Int": 1,
+      "Wis": 10,
+      "Cha": 4
+    },
+    "saves": {
+      "str": 4,
+      "dex": 2,
+      "con": 2,
+      "int": -5,
+      "wis": 0,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Hyena",
+    "ac": 11,
+    "init": 1,
+    "hp": "1d8+1",
+    "hpAverage": 5,
+    "cr": "0",
+    "stats": {
+      "Str": 11,
+      "Dex": 13,
+      "Con": 12,
+      "Int": 2,
+      "Wis": 12,
+      "Cha": 5
+    },
+    "saves": {
+      "str": 0,
+      "dex": 1,
+      "con": 1,
+      "int": -4,
+      "wis": 1,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Jackal",
+    "ac": 12,
+    "init": 2,
+    "hp": "1d6",
+    "hpAverage": 3,
+    "cr": "0",
+    "stats": {
+      "Str": 8,
+      "Dex": 15,
+      "Con": 11,
+      "Int": 3,
+      "Wis": 12,
+      "Cha": 6
+    },
+    "saves": {
+      "str": -1,
+      "dex": 2,
+      "con": 0,
+      "int": -4,
+      "wis": 1,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Killer Whale",
+    "ac": 12,
+    "init": 2,
+    "hp": "12d12+12",
+    "hpAverage": 90,
+    "cr": "3",
+    "stats": {
+      "Str": 19,
+      "Dex": 14,
+      "Con": 13,
+      "Int": 3,
+      "Wis": 12,
+      "Cha": 7
+    },
+    "saves": {
+      "str": 4,
+      "dex": 2,
+      "con": 1,
+      "int": -4,
+      "wis": 1,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Lion",
+    "ac": 12,
+    "init": 2,
+    "hp": "4d10",
+    "hpAverage": 22,
+    "cr": "1",
+    "stats": {
+      "Str": 17,
+      "Dex": 15,
+      "Con": 11,
+      "Int": 3,
+      "Wis": 12,
+      "Cha": 8
+    },
+    "saves": {
+      "str": 3,
+      "dex": 2,
+      "con": 0,
+      "int": -4,
+      "wis": 1,
+      "cha": -1
+    }
+  },
+  {
+    "name": "Lizard",
+    "ac": 10,
+    "init": 0,
+    "hp": "1d4",
+    "hpAverage": 2,
+    "cr": "0",
+    "stats": {
+      "Str": 2,
+      "Dex": 11,
+      "Con": 10,
+      "Int": 1,
+      "Wis": 8,
+      "Cha": 3
+    },
+    "saves": {
+      "str": -4,
+      "dex": 0,
+      "con": 0,
+      "int": -5,
+      "wis": -1,
+      "cha": -4
+    }
+  },
+  {
+    "name": "Mammoth",
+    "ac": 13,
+    "init": 2,
+    "hp": "11d12+55",
+    "hpAverage": 126,
+    "cr": "6",
+    "stats": {
+      "Str": 24,
+      "Dex": 9,
+      "Con": 21,
+      "Int": 3,
+      "Wis": 11,
+      "Cha": 6
+    },
+    "saves": {
+      "str": 10,
+      "dex": -1,
+      "con": 8,
+      "int": -4,
+      "wis": 0,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Mastiff",
+    "ac": 12,
+    "init": 2,
+    "hp": "1d8+1",
+    "hpAverage": 5,
+    "cr": "1/8",
+    "stats": {
+      "Str": 13,
+      "Dex": 14,
+      "Con": 12,
+      "Int": 3,
+      "Wis": 12,
+      "Cha": 7
+    },
+    "saves": {
+      "str": 1,
+      "dex": 2,
+      "con": 1,
+      "int": -4,
+      "wis": 3,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Mule",
+    "ac": 10,
+    "init": 0,
+    "hp": "2d8+2",
+    "hpAverage": 11,
+    "cr": "1/8",
+    "stats": {
+      "Str": 14,
+      "Dex": 10,
+      "Con": 13,
+      "Int": 2,
+      "Wis": 10,
+      "Cha": 5
+    },
+    "saves": {
+      "str": 4,
+      "dex": 0,
+      "con": 1,
+      "int": -4,
+      "wis": 0,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Octopus",
+    "ac": 12,
+    "init": 2,
+    "hp": "1d6",
+    "hpAverage": 3,
+    "cr": "0",
+    "stats": {
+      "Str": 4,
+      "Dex": 15,
+      "Con": 11,
+      "Int": 3,
+      "Wis": 10,
+      "Cha": 4
+    },
+    "saves": {
+      "str": -3,
+      "dex": 2,
+      "con": 0,
+      "int": -4,
+      "wis": 0,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Owl",
+    "ac": 11,
+    "init": 1,
+    "hp": "1d4-1",
+    "hpAverage": 1,
+    "cr": "0",
+    "stats": {
+      "Str": 3,
+      "Dex": 13,
+      "Con": 8,
+      "Int": 2,
+      "Wis": 12,
+      "Cha": 7
+    },
+    "saves": {
+      "str": -4,
+      "dex": 1,
+      "con": -1,
+      "int": -4,
+      "wis": 1,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Panther",
+    "ac": 13,
+    "init": 3,
+    "hp": "3d8",
+    "hpAverage": 13,
+    "cr": "1/4",
+    "stats": {
+      "Str": 14,
+      "Dex": 16,
+      "Con": 10,
+      "Int": 3,
+      "Wis": 14,
+      "Cha": 7
+    },
+    "saves": {
+      "str": 2,
+      "dex": 3,
+      "con": 0,
+      "int": -4,
+      "wis": 2,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Piranha",
+    "ac": 13,
+    "init": 3,
+    "hp": "1d4-1",
+    "hpAverage": 1,
+    "cr": "0",
+    "stats": {
+      "Str": 2,
+      "Dex": 16,
+      "Con": 9,
+      "Int": 1,
+      "Wis": 7,
+      "Cha": 2
+    },
+    "saves": {
+      "str": -4,
+      "dex": 3,
+      "con": -1,
+      "int": -5,
+      "wis": -2,
+      "cha": -4
+    }
+  },
+  {
+    "name": "Plesiosaurus",
+    "ac": 13,
+    "init": 2,
+    "hp": "8d10+24",
+    "hpAverage": 68,
+    "cr": "2",
+    "stats": {
+      "Str": 18,
+      "Dex": 15,
+      "Con": 16,
+      "Int": 2,
+      "Wis": 12,
+      "Cha": 5
+    },
+    "saves": {
+      "str": 4,
+      "dex": 2,
+      "con": 3,
+      "int": -4,
+      "wis": 1,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Polar Bear",
+    "ac": 12,
+    "init": 2,
+    "hp": "5d10+15",
+    "hpAverage": 42,
+    "cr": "2",
+    "stats": {
+      "Str": 20,
+      "Dex": 14,
+      "Con": 16,
+      "Int": 2,
+      "Wis": 13,
+      "Cha": 7
+    },
+    "saves": {
+      "str": 5,
+      "dex": 2,
+      "con": 3,
+      "int": -4,
+      "wis": 1,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Pony",
+    "ac": 10,
+    "init": 0,
+    "hp": "2d8+2",
+    "hpAverage": 11,
+    "cr": "1/8",
+    "stats": {
+      "Str": 15,
+      "Dex": 10,
+      "Con": 13,
+      "Int": 2,
+      "Wis": 11,
+      "Cha": 7
+    },
+    "saves": {
+      "str": 4,
+      "dex": 0,
+      "con": 1,
+      "int": -4,
+      "wis": 0,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Pteranodon",
+    "ac": 13,
+    "init": 2,
+    "hp": "3d8",
+    "hpAverage": 13,
+    "cr": "1/4",
+    "stats": {
+      "Str": 12,
+      "Dex": 15,
+      "Con": 10,
+      "Int": 2,
+      "Wis": 9,
+      "Cha": 5
+    },
+    "saves": {
+      "str": 1,
+      "dex": 2,
+      "con": 0,
+      "int": -4,
+      "wis": -1,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Rat",
+    "ac": 10,
+    "init": 0,
+    "hp": "1d4-1",
+    "hpAverage": 1,
+    "cr": "0",
+    "stats": {
+      "Str": 2,
+      "Dex": 11,
+      "Con": 9,
+      "Int": 2,
+      "Wis": 10,
+      "Cha": 4
+    },
+    "saves": {
+      "str": -4,
+      "dex": 0,
+      "con": -1,
+      "int": -4,
+      "wis": 0,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Raven",
+    "ac": 12,
+    "init": 2,
+    "hp": "1d4",
+    "hpAverage": 2,
+    "cr": "0",
+    "stats": {
+      "Str": 2,
+      "Dex": 14,
+      "Con": 10,
+      "Int": 5,
+      "Wis": 13,
+      "Cha": 6
+    },
+    "saves": {
+      "str": -4,
+      "dex": 2,
+      "con": 0,
+      "int": -3,
+      "wis": 1,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Reef Shark",
+    "ac": 12,
+    "init": 2,
+    "hp": "4d8+4",
+    "hpAverage": 22,
+    "cr": "1/2",
+    "stats": {
+      "Str": 14,
+      "Dex": 15,
+      "Con": 13,
+      "Int": 1,
+      "Wis": 10,
+      "Cha": 4
+    },
+    "saves": {
+      "str": 2,
+      "dex": 2,
+      "con": 1,
+      "int": -5,
+      "wis": 0,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Rhinoceros",
+    "ac": 13,
+    "init": -1,
+    "hp": "6d10+12",
+    "hpAverage": 45,
+    "cr": "2",
+    "stats": {
+      "Str": 21,
+      "Dex": 8,
+      "Con": 15,
+      "Int": 2,
+      "Wis": 12,
+      "Cha": 6
+    },
+    "saves": {
+      "str": 5,
+      "dex": -1,
+      "con": 2,
+      "int": -4,
+      "wis": 1,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Riding Horse",
+    "ac": 11,
+    "init": 1,
+    "hp": "2d10+2",
+    "hpAverage": 13,
+    "cr": "1/4",
+    "stats": {
+      "Str": 16,
+      "Dex": 13,
+      "Con": 12,
+      "Int": 2,
+      "Wis": 11,
+      "Cha": 7
+    },
+    "saves": {
+      "str": 3,
+      "dex": 1,
+      "con": 1,
+      "int": -4,
+      "wis": 0,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Saber-Toothed Tiger",
+    "ac": 13,
+    "init": 3,
+    "hp": "7d10+14",
+    "hpAverage": 52,
+    "cr": "2",
+    "stats": {
+      "Str": 18,
+      "Dex": 17,
+      "Con": 15,
+      "Int": 3,
+      "Wis": 12,
+      "Cha": 8
+    },
+    "saves": {
+      "str": 6,
+      "dex": 5,
+      "con": 2,
+      "int": -4,
+      "wis": 1,
+      "cha": -1
+    }
+  },
+  {
+    "name": "Scorpion",
+    "ac": 11,
+    "init": 0,
+    "hp": "1d4-1",
+    "hpAverage": 1,
+    "cr": "0",
+    "stats": {
+      "Str": 2,
+      "Dex": 11,
+      "Con": 8,
+      "Int": 1,
+      "Wis": 8,
+      "Cha": 2
+    },
+    "saves": {
+      "str": -4,
+      "dex": 0,
+      "con": -1,
+      "int": -5,
+      "wis": -1,
+      "cha": -4
+    }
+  },
+  {
+    "name": "Seahorse",
+    "ac": 12,
+    "init": 1,
+    "hp": "1d4-1",
+    "hpAverage": 1,
+    "cr": "0",
+    "stats": {
+      "Str": 1,
+      "Dex": 12,
+      "Con": 8,
+      "Int": 1,
+      "Wis": 10,
+      "Cha": 2
+    },
+    "saves": {
+      "str": -5,
+      "dex": 1,
+      "con": -1,
+      "int": -5,
+      "wis": 0,
+      "cha": -4
+    }
+  },
+  {
+    "name": "Spider",
+    "ac": 12,
+    "init": 2,
+    "hp": "1d4-1",
+    "hpAverage": 1,
+    "cr": "0",
+    "stats": {
+      "Str": 2,
+      "Dex": 14,
+      "Con": 8,
+      "Int": 1,
+      "Wis": 10,
+      "Cha": 2
+    },
+    "saves": {
+      "str": -4,
+      "dex": 2,
+      "con": -1,
+      "int": -5,
+      "wis": 0,
+      "cha": -4
+    }
+  },
+  {
+    "name": "Swarm of Bats",
+    "ac": 12,
+    "init": 2,
+    "hp": "2d10",
+    "hpAverage": 11,
+    "cr": "1/4",
+    "stats": {
+      "Str": 5,
+      "Dex": 15,
+      "Con": 10,
+      "Int": 2,
+      "Wis": 12,
+      "Cha": 4
+    },
+    "saves": {
+      "str": -3,
+      "dex": 2,
+      "con": 0,
+      "int": -4,
+      "wis": 1,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Swarm of Insects",
+    "ac": 11,
+    "init": 1,
+    "hp": "3d8+6",
+    "hpAverage": 19,
+    "cr": "1/2",
+    "stats": {
+      "Str": 3,
+      "Dex": 13,
+      "Con": 14,
+      "Int": 1,
+      "Wis": 7,
+      "Cha": 1
+    },
+    "saves": {
+      "str": -4,
+      "dex": 1,
+      "con": 2,
+      "int": -5,
+      "wis": -2,
+      "cha": -5
+    }
+  },
+  {
+    "name": "Swarm of Piranhas",
+    "ac": 13,
+    "init": 3,
+    "hp": "8d8-8",
+    "hpAverage": 28,
+    "cr": "1",
+    "stats": {
+      "Str": 13,
+      "Dex": 16,
+      "Con": 9,
+      "Int": 1,
+      "Wis": 7,
+      "Cha": 2
+    },
+    "saves": {
+      "str": 1,
+      "dex": 3,
+      "con": -1,
+      "int": -5,
+      "wis": -2,
+      "cha": -4
+    }
+  },
+  {
+    "name": "Swarm of Rats",
+    "ac": 10,
+    "init": 0,
+    "hp": "4d8-4",
+    "hpAverage": 14,
+    "cr": "1/4",
+    "stats": {
+      "Str": 9,
+      "Dex": 11,
+      "Con": 9,
+      "Int": 2,
+      "Wis": 10,
+      "Cha": 3
+    },
+    "saves": {
+      "str": -1,
+      "dex": 2,
+      "con": -1,
+      "int": -4,
+      "wis": 0,
+      "cha": -4
+    }
+  },
+  {
+    "name": "Swarm of Ravens",
+    "ac": 12,
+    "init": 2,
+    "hp": "2d8+2",
+    "hpAverage": 11,
+    "cr": "1/4",
+    "stats": {
+      "Str": 6,
+      "Dex": 14,
+      "Con": 12,
+      "Int": 5,
+      "Wis": 12,
+      "Cha": 6
+    },
+    "saves": {
+      "str": -2,
+      "dex": 2,
+      "con": 1,
+      "int": -3,
+      "wis": 1,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Swarm of Venomous Snakes",
+    "ac": 14,
+    "init": 4,
+    "hp": "8d8",
+    "hpAverage": 36,
+    "cr": "2",
+    "stats": {
+      "Str": 8,
+      "Dex": 18,
+      "Con": 11,
+      "Int": 1,
+      "Wis": 10,
+      "Cha": 3
+    },
+    "saves": {
+      "str": -1,
+      "dex": 4,
+      "con": 0,
+      "int": -5,
+      "wis": 0,
+      "cha": -4
+    }
+  },
+  {
+    "name": "Tiger",
+    "ac": 13,
+    "init": 3,
+    "hp": "4d10+8",
+    "hpAverage": 30,
+    "cr": "1",
+    "stats": {
+      "Str": 17,
+      "Dex": 16,
+      "Con": 14,
+      "Int": 3,
+      "Wis": 12,
+      "Cha": 8
+    },
+    "saves": {
+      "str": 3,
+      "dex": 3,
+      "con": 2,
+      "int": -4,
+      "wis": 1,
+      "cha": -1
+    }
+  },
+  {
+    "name": "Triceratops",
+    "ac": 14,
+    "init": -1,
+    "hp": "12d12+36",
+    "hpAverage": 114,
+    "cr": "5",
+    "stats": {
+      "Str": 22,
+      "Dex": 9,
+      "Con": 17,
+      "Int": 2,
+      "Wis": 11,
+      "Cha": 5
+    },
+    "saves": {
+      "str": 6,
+      "dex": -1,
+      "con": 3,
+      "int": -4,
+      "wis": 0,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Tyrannosaurus Rex",
+    "ac": 13,
+    "init": 3,
+    "hp": "13d12+52",
+    "hpAverage": 136,
+    "cr": "8",
+    "stats": {
+      "Str": 25,
+      "Dex": 10,
+      "Con": 19,
+      "Int": 2,
+      "Wis": 12,
+      "Cha": 9
+    },
+    "saves": {
+      "str": 10,
+      "dex": 0,
+      "con": 4,
+      "int": -4,
+      "wis": 4,
+      "cha": -1
+    }
+  },
+  {
+    "name": "Venomous Snake",
+    "ac": 12,
+    "init": 2,
+    "hp": "2d4",
+    "hpAverage": 5,
+    "cr": "1/8",
+    "stats": {
+      "Str": 2,
+      "Dex": 15,
+      "Con": 11,
+      "Int": 1,
+      "Wis": 10,
+      "Cha": 3
+    },
+    "saves": {
+      "str": -4,
+      "dex": 2,
+      "con": 0,
+      "int": -5,
+      "wis": 0,
+      "cha": -4
+    }
+  },
+  {
+    "name": "Vulture",
+    "ac": 10,
+    "init": 0,
+    "hp": "1d8+1",
+    "hpAverage": 5,
+    "cr": "0",
+    "stats": {
+      "Str": 7,
+      "Dex": 10,
+      "Con": 13,
+      "Int": 2,
+      "Wis": 12,
+      "Cha": 4
+    },
+    "saves": {
+      "str": -2,
+      "dex": 0,
+      "con": 1,
+      "int": -4,
+      "wis": 1,
+      "cha": -3
+    }
+  },
+  {
+    "name": "Warhorse",
+    "ac": 11,
+    "init": 1,
+    "hp": "3d10+3",
+    "hpAverage": 19,
+    "cr": "1/2",
+    "stats": {
+      "Str": 18,
+      "Dex": 12,
+      "Con": 13,
+      "Int": 2,
+      "Wis": 12,
+      "Cha": 7
+    },
+    "saves": {
+      "str": 4,
+      "dex": 1,
+      "con": 1,
+      "int": -4,
+      "wis": 3,
+      "cha": -2
+    }
+  },
+  {
+    "name": "Weasel",
+    "ac": 13,
+    "init": 3,
+    "hp": "1d4-1",
+    "hpAverage": 1,
+    "cr": "0",
+    "stats": {
+      "Str": 3,
+      "Dex": 16,
+      "Con": 8,
+      "Int": 2,
+      "Wis": 12,
+      "Cha": 3
+    },
+    "saves": {
+      "str": -4,
+      "dex": 3,
+      "con": -1,
+      "int": -4,
+      "wis": 1,
+      "cha": -4
+    }
+  },
+  {
+    "name": "Wolf",
+    "ac": 12,
+    "init": 2,
+    "hp": "2d8+2",
+    "hpAverage": 11,
+    "cr": "1/4",
+    "stats": {
+      "Str": 14,
+      "Dex": 15,
+      "Con": 12,
+      "Int": 3,
+      "Wis": 12,
+      "Cha": 6
+    },
+    "saves": {
+      "str": 2,
+      "dex": 2,
+      "con": 1,
+      "int": -4,
+      "wis": 1,
+      "cha": -2
+    }
+  }
+]
