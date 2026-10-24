@@ -200,6 +200,7 @@ document.addEventListener('click', e => {
     case 'goRoom': { const r = roomById(state.floors[ui.floor], +id); if (r){ ui.selRoom = r.id; focusTile(ui.floor, r.cx, r.cy); buildFloor(ui.floor); renderPanel(); } } break;
     // graphics, sound, models
     case 'gfxQ': setGfx({ quality:k }); renderPanel(); break;
+    case 'gfxStyle': setGfx({ style:k }); renderPanel(); break;
     case 'gfxT': setGfx({ [k]:!gfx[k] }); renderPanel(); break;
     case 'clearModel': deleteModel(k).then(() => { broadcast({ t:'model', key:k, buf:null }); renderPanel(); }); break;
     // story tab

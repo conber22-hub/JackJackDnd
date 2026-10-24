@@ -5,9 +5,9 @@ import { THEMES } from './data/themes.js';
 import { WHISPERS } from './data/dread.js';
 import { pick, $ } from './util/core.js';
 import { bus } from './util/core.js';
-import { scene, camera, controls, renderer, ambient, hemi, moon, runTweens, fx } from './render/scene.js';
+import { scene, camera, controls, renderer, ambient, hemi, moon, rim, runTweens, fx } from './render/scene.js';
 import { renderFrame } from './render/post.js';
-import { gfx, onGfx, shadowsOn } from './render/gfx.js';
+import { gfx, onGfx, shadowsOn, painted } from './render/gfx.js';
 import { loadStoredModels } from './render/models.js';
 import { setDrone, setAmbience } from './audio/sound.js';
 import { syncTokens } from './render/minis.js';
@@ -43,7 +43,7 @@ function applyQuality(){
 onGfx(applyQuality); applyQuality();
 loadStoredModels();
 
-const clock = new THREE.Clock();
+const clock = new THREE.Clock(), rimDir = new THREE.Vector3();
 let whisperAt = performance.now() + 30000;
 const fogDark = new THREE.Color('#0d0b10'), fogRed = new THREE.Color('#140808'), redMist = new THREE.Color('#7a2a2a');
 function frame(){
@@ -105,6 +105,9 @@ function frame(){
   }
   controls.update();
   if (fx.shake > 0){ fx.shake = Math.max(0, fx.shake - dt * .2); camera.position.x += (Math.random() - .5) * fx.shake; camera.position.y += (Math.random() - .5) * fx.shake; }
+  // painted style: a warm rim light from behind what the camera looks at (the lit edge of an illustrated poster)
+  if (painted()){ rimDir.copy(controls.target).sub(camera.position).setY(0).normalize(); rim.target.position.copy(controls.target); rim.position.copy(controls.target).addScaledVector(rimDir, 18).setY(controls.target.y + 9); rim.intensity = 1.7; }
+  else rim.intensity = 0;
   if (!(ui.cardOnly && ui.role === 'player')) renderFrame(t, state ? (state.dread - 1) / 9 : 0);   // card only: the TV has the map
 }
 

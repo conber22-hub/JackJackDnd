@@ -16,6 +16,18 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.13 — the painted style (prototype)
+
+A second look for the world, after hand-painted 1970s film posters (inspired by, not a copy): **Table tab → Graphics & sound → Style → 🎨 Painted**. Medium or High quality only. Before and after: `docs/screens/painted-*.jpg`.
+- **Oil paint**: a Kuwahara filter turns flat areas (floors, walls, roofs, trees) into brush-stroke patches. Fine detail stays crisp, so minis, faces, weapons and runes keep their shape. Edges darken a little, like a painter's line.
+- **Poster grade**: warm lights glow amber, cool lights and shadows go teal-violet, and the blacks lift to ink rather than a void.
+- **Airbrushed glow**: the bloom is wider and softer.
+- **Rim light**: a warm light behind the scene from the camera's view, so figures stand out from the dark.
+- **Canvas**: a fine weave and a slow mottle over everything.
+- **Name plates** sit on their own layer (`LABELS` in `render/scene.js`), so the paint never smears them. They are drawn on top, so a plate behind a wall stays readable.
+- In `render/post.js` (`PaintShader`), `render/gfx.js` (`gfx.style`, `painted()`) and `main.js` (the rim light).
+- Next, if the direction is right: hand-painted textures for stone, wood and roofs, and "poster moments" on the TV (a framed, painted still with a title when a boss appears or a session starts).
+
 ## v1.12 — the whole SRD at the table
 
 - **Codex's PR #6**: the SRD's equipment: 38 weapons (Lance, Blowgun, Musket and Pistol are new in the creator), armour (with Padded), tools, gear and packs, and **258 magic items** with their full text (`src/data/srd-items.js`).

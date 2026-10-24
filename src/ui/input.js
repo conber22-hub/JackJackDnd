@@ -33,6 +33,7 @@ import { isObject, propSquares } from '../engine/objects.js';
 import { propAt } from '../data/props.js';
 
 const raycaster = new THREE.Raycaster(), ndc = new THREE.Vector2();
+raycaster.layers.enableAll();   // a tap on a name plate (its own layer, render/scene.js) still picks its mini
 function setNdc(cx, cy){ ndc.set(cx / innerWidth * 2 - 1, -(cy / innerHeight) * 2 + 1); raycaster.setFromCamera(ndc, camera); }
 function pickToken(cx, cy){
   setNdc(cx, cy);

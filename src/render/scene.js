@@ -17,6 +17,9 @@ scene.background = new THREE.Color('#07060a');
 scene.fog = new THREE.FogExp2('#0d0b10', .02);
 export const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, .1, 500);
 camera.position.set(0, 18, 16);
+// Name plates live on their own layer so the painted style can draw them after the paint (render/post.js).
+export const LABELS = 2;
+camera.layers.enable(LABELS);
 export const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true; controls.dampingFactor = .08;
 controls.screenSpacePanning = false; controls.maxPolarAngle = Math.PI * .49;
@@ -25,6 +28,8 @@ controls.minDistance = 4; controls.maxDistance = 120;
 export const ambient = new THREE.AmbientLight('#8a7f99', .6); scene.add(ambient);
 export const hemi = new THREE.HemisphereLight('#a092b8', '#140f0c', .45); scene.add(hemi);
 export const moon = new THREE.DirectionalLight('#8a96c0', 1.1); moon.position.set(-20, 40, 14); scene.add(moon);
+// The painted style's rim light: from behind whatever the camera looks at, so minis and walls get a lit edge (main.js moves it).
+export const rim = new THREE.DirectionalLight('#ffcf8f', 0); scene.add(rim); scene.add(rim.target);
 
 export const floorGap = () => ui.view === 'stack' ? 9 : 7;
 export const floorY = L => -L * floorGap();
@@ -89,6 +94,7 @@ export function makeLabel(text, color = '#ece1cf', px = 28, hp = null, pc = fals
   if (conds){ ctx.font = `600 ${Math.round(px * .8)}px system-ui, sans-serif`; ctx.fillStyle = '#ffd3b0'; ctx.fillText(conds, w / 2, y); }
   const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
   const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map:tex, depthWrite:false, transparent:true, fog:false }));
+  sp.layers.set(LABELS);   // drawn on its own layer: the painted style paints the world, then lays the names on crisp (render/post.js)
   const s = .0085; sp.scale.set(w * s, h * s, 1); sp.renderOrder = 10;
   return sp;
 }
