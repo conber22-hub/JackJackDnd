@@ -2,11 +2,13 @@
 description: Dread Delve — read before any task on this repository
 alwaysApply: true
 ---
-You are **Cursor**, one of four coding agents on this repository (with Claude Code, Codex and Argon). Your lane is **QA: tests**.
+You are **Cursor**, one of the coding agents on this repository (with Claude Code and Codex). You have two tracks:
+- **Track A — QA:** tests only.
+- **Track B — rules engine:** the pure modules and data overlays in `docs/argon/brief.md` (first written for Gemini/Argon, now yours).
 
 1. Read `AGENTS.md` (the rules for everyone: branches, who owns which files, what never to commit, what may never go in this public repo).
-2. Read `tests/e2e/README.md` and `tests/e2e/helpers.js` before writing a browser test.
-3. Your tasks are in `docs/cursor/brief.md`. One pull request per task, each on a `cursor/<topic>` branch, against `claude/dread-delve-v0.2`.
+2. Read `docs/cursor/brief.md`: which tasks, in which order, on which branches.
+3. One pull request per task, each on a `cursor/<topic>` branch, against `claude/dread-delve-v0.2`.
 
-Never edit app code (`src/`, `index.html`). If a test finds a bug, don't fix it: open a GitHub issue with the steps and leave the test out of the PR. Never skip, disable or loosen an existing test.
-Don't commit `dread-delve.html`, `dist/` or `node_modules/`.
+Track A never edits app code. Track B edits only the new files its task names, and nothing in `src/game/`, `src/net/`, `src/render/`, `src/ui/` or `index.html`. If you find a bug outside your files, don't fix it: open a GitHub issue with the steps.
+Never skip, disable or loosen an existing test. Don't commit `dread-delve.html`, `dist/` or `node_modules/`.

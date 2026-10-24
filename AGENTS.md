@@ -1,14 +1,14 @@
 # Dread Delve — notes for the coding agents (Codex, Argon, Cursor)
 
-A 3D multi-floor dungeon simulator and virtual tabletop for a Curse of Strahd: Flood Edition table (three.js, PeerJS, Vite). Read `DREAD-DELVE-ROADMAP.md` first: it has the feature list and the code map. Four agents work on this repo: **Claude Code** (integration, UI, game rules, merging), **Codex** (rules data), **Argon** (Gemini: pure engine modules and data overlays) and **Cursor** (QA: tests). These rules keep you from colliding.
+A 3D multi-floor dungeon simulator and virtual tabletop for a Curse of Strahd: Flood Edition table (three.js, PeerJS, Vite). Read `DREAD-DELVE-ROADMAP.md` first: it has the feature list and the code map. Agents on this repo: **Claude Code** (integration, UI, game rules, merging), **Codex** (rules data), **Cursor** (tests, plus the pure engine modules and data overlays first briefed to Argon) and **Argon** (Gemini, paused). If Argon comes back, it takes only a task that has no `cursor/` branch yet. These rules keep you from colliding.
 
 ## Who works where
 | Agent | Branches | Owns | Briefs |
 | --- | --- | --- | --- |
 | Claude Code | `claude/dread-delve-v0.2` (the default) | `src/game/`, `src/net/`, `src/render/`, `src/ui/`, `index.html` (all CSS), `src/main.js`, merging, the built `dread-delve.html` | — |
 | Codex | `codex/<topic>` | the SRD rules data: `src/data/srd-*.js` and `scripts/import-srd-*` (but `src/data/spell-play.js` is Claude's) | `docs/codex/` |
-| Argon (Gemini) | `argon/<topic>` | the new files its brief names: pure modules in `src/engine/` and overlays in `src/data/` | `docs/argon/` |
-| Cursor | `cursor/<topic>` | new test files: `tests/e2e/*.spec.js` it creates, `tests/fixtures/saves/`; never app code | `docs/cursor/` |
+| Argon (Gemini) | `argon/<topic>` | paused (out of credits); its tasks have moved to Cursor's track B | `docs/argon/` |
+| Cursor | `cursor/<topic>` | track A: new test files (`tests/e2e/*.spec.js` it creates, `tests/fixtures/saves/`); track B: the files `docs/argon/brief.md` names (`src/engine/defenses.js`, `src/data/monster-play.js` and its script, `src/engine/inventory.js`, and their tests) | `docs/cursor/` |
 
 Shared files (`src/engine/hero.js`, `src/data/srd.js`, `src/data/bestiary.js`, `src/engine/state.js`): change them only if your task says so, and keep the change small. If your task needs a change in someone else's area, describe it in the PR instead of making it.
 

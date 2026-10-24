@@ -1,6 +1,19 @@
-# Cursor brief: QA for game night
+# Cursor brief
 
-Read `AGENTS.md` first; its rules apply to you. Your lane is **tests only**.
+You have two tracks. They don't touch the same files, so **run them as two background agents at the same time** if you can.
+- **Track A, QA**: this file, tasks A1 and A2 below.
+- **Track B, the rules engine**: the three tasks in `docs/argon/brief.md`, first written for Gemini (Argon), which ran out before it published anything. Do them in its order, using **your** branch names:
+  - B1 damage defenses: `cursor/defenses`
+  - B2 monster actions: `cursor/monster-actions`
+  - B3 inventory engine: `cursor/inventory`
+
+  Everything else in that brief stands: its files, its tests, its "Done means", and describing the hook Claude needs in the PR. Where it says `argon/…`, read `cursor/…`.
+
+If your time runs short, the most valuable order is **B1, A1, B3, B2, A2**.
+
+# Track A: QA for game night
+
+Read `AGENTS.md` first; its rules apply to you. Track A is **tests only**.
 
 - Work on `cursor/<topic>` branches, **one pull request per task, in order**, each against `claude/dread-delve-v0.2`.
 - Never edit app code (`src/`, `index.html`). Never commit `dread-delve.html`.
@@ -28,7 +41,7 @@ Read `tests/e2e/README.md` and `tests/e2e/helpers.js` before writing anything.
 
 ---
 
-## Task 1 — the untested flows (`cursor/e2e-coverage`)
+## A1 — the untested flows (`cursor/e2e-coverage`)
 
 New spec files only, one per area. Each covers the main path of something people do at the table that no test touches yet:
 
@@ -69,7 +82,7 @@ New spec files only, one per area. Each covers the main path of something people
 - The whole suite still passes.
 - The PR lists what each file covers and any issues opened.
 
-## Task 2 — old saves keep loading (`cursor/save-compat`)
+## A2 — old saves keep loading (`cursor/save-compat`)
 
 People's delves live in their browsers and in exported files. A save from any earlier version must load. `deserialize()` in `src/game/session.js` migrates old shapes; this task proves each migration works.
 

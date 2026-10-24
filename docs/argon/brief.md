@@ -1,5 +1,7 @@
 # Argon brief: making the SRD playable
 
+> **Now Cursor's track B** (see `docs/cursor/brief.md`): Argon ran out of credits before publishing anything. Cursor uses `cursor/defenses`, `cursor/monster-actions` and `cursor/inventory` for the branches named below. If Argon returns, it takes only a task with no `cursor/` branch.
+
 Read `AGENTS.md` first; its rules apply to you. Work on `argon/<topic>` branches, **one pull request per task, in this order**, each against `claude/dread-delve-v0.2`. Never commit `dread-delve.html`.
 
 ## The situation
