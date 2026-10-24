@@ -1,12 +1,21 @@
-# Dread Delve — notes for Codex
+# Dread Delve — notes for the coding agents (Codex, Argon)
 
-A 3D multi-floor dungeon simulator and virtual tabletop for a Curse of Strahd: Flood Edition table (three.js, PeerJS, Vite). Read `DREAD-DELVE-ROADMAP.md` first: it has the feature list and the code map. Claude Code works on this repo too, so these rules keep the two of you from colliding.
+A 3D multi-floor dungeon simulator and virtual tabletop for a Curse of Strahd: Flood Edition table (three.js, PeerJS, Vite). Read `DREAD-DELVE-ROADMAP.md` first: it has the feature list and the code map. Three agents work on this repo: **Claude Code** (integration, UI, game rules, merging), **Codex** (rules data) and **Argon** (Gemini: pure engine modules and data overlays). These rules keep you from colliding.
+
+## Who works where
+| Agent | Branches | Owns | Briefs |
+| --- | --- | --- | --- |
+| Claude Code | `claude/dread-delve-v0.2` (the default) | `src/game/`, `src/net/`, `src/render/`, `src/ui/`, `index.html` (all CSS), `src/main.js`, merging, the built `dread-delve.html` | — |
+| Codex | `codex/<topic>` | the SRD rules data: `src/data/srd-*.js` and `scripts/import-srd-*` (but `src/data/spell-play.js` is Claude's) | `docs/codex/` |
+| Argon (Gemini) | `argon/<topic>` | the new files its brief names: pure modules in `src/engine/` and overlays in `src/data/` | `docs/argon/` |
+
+Shared files (`src/engine/hero.js`, `src/data/srd.js`, `src/data/bestiary.js`, `src/engine/state.js`): change them only if your task says so, and keep the change small. If your task needs a change in someone else's area, describe it in the PR instead of making it.
 
 ## Branches and merging
-- Work on your own branch (`codex/<topic>`) and open a pull request. Never push to `claude/dread-delve-v0.2` or `main`: Vercel deploys the app from them.
+- Work on your own branch (`codex/<topic>` or `argon/<topic>`) and open a pull request against `claude/dread-delve-v0.2`. Never push to `claude/dread-delve-v0.2` or `main`: Vercel deploys the app from them. Claude reviews, merges, wires the UI and deploys.
 - **Never commit `dread-delve.html`.** It is the built app; whoever merges runs `npm run build` and commits it. Don't commit `dist/` or `node_modules/` either.
-- Keep each PR to one topic. Unless the task says otherwise, stay out of `src/game/`, `src/net/` and `src/render/`, where Claude is building features. Tests, `src/data/` content and CSS are the safest places to work.
-- If your task needs a change in someone else's area, say so in the PR description instead of widening the PR.
+- Keep each PR to one topic. Don't stack a PR on another agent's unmerged branch.
+- Don't restyle: the look (regal glass, `index.html`) is Claude's.
 
 ## Commands
 - `npm install` once, then `npm test` (engine tests, `node --test tests/*.test.js`) and `npm run build` (bakes the app into `dread-delve.html`; run it to check the build, but don't commit the output).
@@ -21,7 +30,7 @@ A 3D multi-floor dungeon simulator and virtual tabletop for a Curse of Strahd: F
 - Match the surrounding style: compact modern JS, ES modules, a short comment above anything non-obvious, and British-flavoured, plain player-facing text.
 
 ## Content
-- Task briefs for you live in `docs/codex/` (start with `docs/codex/rules-data.md`: the full SRD 5.2.1 and a private content library).
+- Task briefs live in `docs/codex/` (Codex: start with `docs/codex/rules-data.md`) and `docs/argon/` (Argon: start with `docs/argon/brief.md`).
 - This repository and the app are public. Only openly licensed rules (SRD 5.2.1, CC BY 4.0, with its attribution) go in `src/data/`. Text, stat blocks and tables from other books stay out of the repo; they belong in a DM's private library file, which is imported in the browser and never committed.
 - Don't reprint text from the published Curse of Strahd module (boxed text, stat blocks, unique item text). Use original names and descriptions, or SRD 5.2 material.
 - Creatures, tables, themes, props, loot, the Valley's places and road events, and the campaign sessions all live in `src/data/`.
