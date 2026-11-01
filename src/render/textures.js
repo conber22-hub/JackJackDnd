@@ -129,6 +129,34 @@ const PAINT = {
     ctx.strokeStyle = gray(50, .6); ctx.lineWidth = 5; for (let i = 0; i < 3; i++){ const x = rng() * S; ctx.beginPath(); ctx.moveTo(x, S); ctx.lineTo(x + (rng() - .5) * 20, S * .4); ctx.stroke(); }
   },
   rockwall(ctx, rng){ PAINT.rock(ctx, rng); },
+  // meadow grass: a mottled ground with thousands of short blades, light and dark, and a few clover clumps
+  grass(ctx, rng){
+    ctx.fillStyle = gray(150); ctx.fillRect(0, 0, S, S);
+    blotches(ctx, rng, 40, 100, 230, 10, 50, .35);
+    for (let i = 0; i < 2600; i++){
+      const x = rng() * S, y = rng() * S, l = 3 + rng() * 7, a = -Math.PI / 2 + (rng() - .5) * 1.2;
+      ctx.strokeStyle = gray(Math.floor(rng() < .55 ? 190 + rng() * 65 : 70 + rng() * 60), .55); ctx.lineWidth = 1 + rng();
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l); ctx.stroke();
+    }
+    for (let i = 0; i < 12; i++){ const x = rng() * S, y = rng() * S; for (let k = 0; k < 6; k++){ ctx.fillStyle = gray(Math.floor(200 + rng() * 55), .5); ctx.beginPath(); ctx.arc(x + (rng() - .5) * 14, y + (rng() - .5) * 14, 2 + rng() * 2.5, 0, 7); ctx.fill(); } }
+  },
+  // the rock the deep places are cut into, seen from above: broken slabs, fissures, a little grit
+  rockmass(ctx, rng){
+    ctx.fillStyle = gray(150); ctx.fillRect(0, 0, S, S);
+    blotches(ctx, rng, 50, 80, 220, 12, 60, .4);
+    for (let i = 0; i < 14; i++) crack(ctx, rng, rng() * S, rng() * S, 6 + Math.floor(rng() * 14), 1 + rng() * 1.5, 50);
+    grain(ctx, rng, 5000, 60, 230, .1);
+  },
+  // a ploughed field: furrows across the square (the crops stand on top of it)
+  furrow(ctx, rng){
+    ctx.fillStyle = gray(120); ctx.fillRect(0, 0, S, S);
+    const n = 6, h = S / n;
+    for (let r = 0; r < n; r++){
+      const g = ctx.createLinearGradient(0, r * h, 0, r * h + h); g.addColorStop(0, gray(80)); g.addColorStop(.45, gray(200)); g.addColorStop(1, gray(90));
+      ctx.fillStyle = g; ctx.fillRect(0, r * h, S, h);
+    }
+    grain(ctx, rng, 4000, 50, 230, .14); blotches(ctx, rng, 12, 70, 160, 10, 40, .25);
+  },
   hands(ctx, rng){
     PAINT.rock(ctx, rng);
     for (let i = 0; i < 9; i++){
@@ -173,6 +201,16 @@ function wetTex(amount, seed){
   ctx.fillStyle = gray(235); ctx.fillRect(0, 0, 128, 128);                                     // rough
   for (let i = 0; i < 18 * amount; i++){ const x = rng() * 128, y = rng() * 128, r = 6 + rng() * 22; const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, gray(25)); g.addColorStop(1, gray(235, 0)); ctx.fillStyle = g; ctx.fillRect(x - r, y - r, r * 2, r * 2); }
   const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
+}
+// One painted surface (grass, dirt, cobble, rockmass, furrow…) for the outdoor ground and the rock round a dungeon.
+const groundCache = new Map();
+export function groundTexture(kind){
+  if (!groundCache.has(kind)){
+    const map = canvasTex(kind, [...kind].reduce((a, c) => a * 31 + c.charCodeAt(0), 11) >>> 0);
+    const bump = new THREE.CanvasTexture(map.userData.canvas); bump.wrapS = bump.wrapT = THREE.RepeatWrapping;
+    groundCache.set(kind, { map, bump });
+  }
+  return groundCache.get(kind);
 }
 const cache = new Map();
 export function surfaceTextures(themeId){

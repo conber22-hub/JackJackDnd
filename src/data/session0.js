@@ -11,7 +11,7 @@ const tavern = {
     [26, 8, 7, 6, 'chamber', 'Kitchen', 'The stew pot, a second hearth, and Marta\'s list pinned to a beam: SALT (2 sacks). SALT. SALT!!'],
     [26, 15, 7, 4, 'chamber', 'Larder', 'Two salt crocks, both scraped to the glaze. Hams going soft on their hooks. Without salt, the winter meat spoils in a week.'],
     [8, 20, 6, 4, 'chamber', 'The Snug', 'A private booth. A stranger in good grey wool has paid for it all evening and touched nothing but the wine. (See the session notes.)'],
-    [15, 20, 11, 7, 'chamber', 'Stable Yard', 'Pim\'s empty salt cart waits by the trough. The gate to the village is on the south side.', { outdoor:true }],
+    [15, 20, 11, 7, 'chamber', 'Stable Yard', 'Pim\'s empty salt cart waits by the trough. The gate to the village is on the south side.', { outdoor:true, ground:'dirt' }],
     [27, 20, 6, 6, 'chamber', 'Stables', 'Two tired horses and Pim, the stable boy, who saw the carriage leave the coast-house a week ago. He is sure it was not late. He is sure it was taken.'],
   ],
   paths:[
@@ -40,7 +40,7 @@ const village = {
   name:'Hollin\'s Ford',
   exits:{ up:'Into the Lantern & Ladle', down:'Take the Old Salt Road' },
   rooms:[
-    [13, 16, 15, 12, 'chamber', 'Market Square', 'The well, two stalls and too many people standing about. Everyone has a theory about the salt carriage. Use the rumour list.', { outdoor:true }],
+    [13, 16, 15, 12, 'chamber', 'Market Square', 'The well, two stalls and too many people standing about. Everyone has a theory about the salt carriage. Use the rumour list.', { outdoor:true, ground:'cobble' }],
     [15, 1, 11, 5, 'shrine', 'Chapel of the Morning Lord', 'Brother Tamsin blesses the road every season. This season he will bless a pouch of salt for each hero who asks — "salt keeps what is good from going bad."'],
     [2, 25, 6, 5, 'chamber', 'Brask Cottage', 'Ilka Brask, the teamster\'s wife, and their two boys. Aldo has driven the coast road for twenty years and is never late. She has kept his supper warm three nights running.'],
     [30, 24, 7, 6, 'chamber', 'Smithy', 'Old Hendry will lend a crowbar and a lantern. He shod the carriage horses himself and swears they could outrun wolves.'],

@@ -16,7 +16,7 @@ export const THEMES = [
       { where:['lair'], group:[['bellmouth',2]] },
       { where:['chamber'], group:[['husktemplar',1],['husk',1]] },
     ] },
-  { id:'silver', name:'The Silver Vein', floor:'#4e4338', hall:'#3a3129', wall:'#2e271f', trim:'#e3e7ee', mist:'#7a7062',
+  { id:'silver', cave:.5, name:'The Silver Vein', floor:'#4e4338', hall:'#3a3129', wall:'#2e271f', trim:'#e3e7ee', mist:'#7a7062',
     weights:{chamber:4,trap:3,treasure:2,lair:1,safe:1,crypt:1,nest:1},
     prompt:'abandoned dwarven silver mine, timber-braced tunnels, glittering silver seams in black rock, rusted ore carts, dust in lantern light, gothic horror, top-down dungeon battlemap, painterly',
     denizens:[
@@ -26,7 +26,7 @@ export const THEMES = [
       { where:['lair'], group:[['stalker',1],['seepling',2]] },
       { where:['crypt'], group:[['weaver',1]] },
     ] },
-  { id:'hands', name:'The Hand-Warrens', floor:'#55413f', hall:'#40302f', wall:'#2f2325', trim:'#e6d3b8', mist:'#7a5d5a',
+  { id:'hands', cave:.55, name:'The Hand-Warrens', floor:'#55413f', hall:'#40302f', wall:'#2f2325', trim:'#e6d3b8', mist:'#7a5d5a',
     weights:{chamber:3,lair:3,trap:2,crypt:2,nest:1,treasure:1},
     prompt:'claustrophobic burrowed tunnels with thousands of pale hand-prints and finger-gouges on the walls, bones pressed into clay, red-tinged torchlight, horror, top-down dungeon battlemap, painterly',
     denizens:[
@@ -35,7 +35,7 @@ export const THEMES = [
       { where:['crypt'], group:[['weaver',1],['handswarm',1]] },
       { where:['lair','nest'], group:[['quill',1],['husk',2]] },
     ] },
-  { id:'undertow', name:'The Undertow', floor:'#303b2d', hall:'#262f23', wall:'#1c231a', trim:'#a6d13a', mist:'#4f6a3e',
+  { id:'undertow', cave:.65, name:'The Undertow', floor:'#303b2d', hall:'#262f23', wall:'#1c231a', trim:'#a6d13a', mist:'#4f6a3e',
     weights:{nest:4,chamber:2,lair:2,trap:1,treasure:1,crypt:1},
     prompt:'flooded cavern overgrown with grey-green parasitic membrane, glowing pustules, half-absorbed corpses in the walls, black water, sickly green bioluminescence, cosmic horror, top-down dungeon battlemap, painterly',
     denizens:[
@@ -62,7 +62,7 @@ export const THEMES = [
       { where:['shrine'], group:[['unbaptized',2]] },
       { where:['chamber'], group:[['husktemplar',2]] },
     ] },
-  { id:'womb', name:'The Budding Womb', floor:'#3c3a2c', hall:'#2f2d22', wall:'#232218', trim:'#c6ff5a', mist:'#5e6a3a',
+  { id:'womb', cave:.7, name:'The Budding Womb', floor:'#3c3a2c', hall:'#2f2d22', wall:'#232218', trim:'#c6ff5a', mist:'#5e6a3a',
     weights:{nest:5,lair:2,chamber:2,trap:1},
     prompt:'living hive chamber of the parasite, walls of pulsing grey-green flesh and fused bones, glowing egg sacs, a giant brain-like mass at the center, ribbed tunnels like veins, cosmic horror, top-down dungeon battlemap, painterly',
     denizens:[

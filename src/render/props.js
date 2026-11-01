@@ -392,4 +392,18 @@ export function tuftGeometry(){
   return tuftGeo;
 }
 export function pebbleGeometry(){ if (!pebbleGeo) pebbleGeo = painted(new THREE.DodecahedronGeometry(.07, 0), '#6a665e', new THREE.Matrix4().makeScale(1, .55, 1.2)); return pebbleGeo; }
+// A lump of cave rock for the walls of dug floors: a faceted, dented ball, a little taller than wide.
+let boulderGeo = null;
+export function boulderGeometry(){
+  if (boulderGeo) return boulderGeo;
+  const gm = new THREE.IcosahedronGeometry(.62, 1), p = gm.attributes.position, v = new THREE.Vector3();
+  for (let k = 0; k < p.count; k++){
+    v.fromBufferAttribute(p, k);
+    const n = 1 + .16 * Math.sin(v.x * 7.1 + v.y * 3.3) * Math.cos(v.z * 6.2 - v.y * 2.1) + .08 * Math.sin(v.y * 11 + v.x * 5);
+    v.multiplyScalar(n); if (v.y < -.3) v.y = -.3 - (v.y + .3) * .2;   // a flat-ish foot
+    p.setXYZ(k, v.x, v.y, v.z);
+  }
+  boulderGeo = gm.toNonIndexed(); boulderGeo.computeVertexNormals();
+  return boulderGeo;
+}
 export const treeMaterial = (() => { const m = new THREE.MeshStandardMaterial({ vertexColors:true, roughness:.9 }); m.userData.shared = true; return m; })();

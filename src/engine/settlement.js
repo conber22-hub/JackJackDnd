@@ -30,7 +30,8 @@ function line(x0, y0, x1, y1, w = 1){ const off = Math.floor((w - 1) / 2), out =
   brush(); while (x !== x1 || y !== y1){ if (x !== x1) x += Math.sign(x1 - x); else y += Math.sign(y1 - y); brush(); } return out; }
 
 function base(name){ return { name, exits:null, rooms:[], paths:[], doors:[], buildings:[], props:[], water:[], fill:[], masonry:[], clear:[], events:[] }; }
-const room = (lay, r, type, name, notes, outdoor) => lay.rooms.push([r.x, r.y, r.w, r.h, type, name, notes, outdoor ? { outdoor:true } : {}]);
+// ground: what the outdoor floor is (render/floors.js GROUND): grass unless said — cobble, dirt, mud, moor, furrow
+const room = (lay, r, type, name, notes, outdoor, ground) => lay.rooms.push([r.x, r.y, r.w, r.h, type, name, notes, outdoor ? { outdoor:true, ...(ground ? { ground } : {}) } : {}]);
 
 /* An indoor room with a door onto a street: the walls round it are the building. door = { x, y } on the wall line. */
 function hall(lay, pl, r, name, notes, door, furnish){
@@ -96,7 +97,7 @@ function settlement(kind, o, g){
   if (walled){ const ax = wallR.x + wallR.w - 5; lay.paths.push({ w:2, pts:[ax, y0 - 2, ax, 1] }); pl.take(R(ax - 1, 1, 4, y0 - 2), 0); lay.props.push(P('signpost', ax + 2, wallR.y + 2), P('shrine', ax - 2, 2)); }
   // the square
   const sq = R(15 + Math.floor(g() * 4), y0 - 4, town ? 12 : 10, 9);
-  room(lay, sq, 'chamber', town ? 'Town square' : 'Village square', town ? 'Bunting, a stage for the next festival, guards who smile too much.' : 'A dry well, and doors that close as you look at them.', true); pl.take(sq, 1);
+  room(lay, sq, 'chamber', town ? 'Town square' : 'Village square', town ? 'Bunting, a stage for the next festival, guards who smile too much.' : 'A dry well, and doors that close as you look at them.', true, 'cobble'); pl.take(sq, 1);
   const scx = sq.x + Math.floor(sq.w / 2);
   lay.props.push(P('well', scx - 1, y0 - 3), P('lamppost', sq.x, sq.y), P('lamppost', sq.x + sq.w - 1, sq.y + sq.h - 1), P('signpost', sq.x + sq.w - 2, sq.y + 1));
   if (town) lay.props.push(P('stall', sq.x + 1, sq.y + sq.h - 2, 0), P('stall', sq.x + sq.w - 4, sq.y + 1, 0), P('cart', sq.x + 1, sq.y + 1, 0), P('barrel', sq.x + sq.w - 2, sq.y + sq.h - 2));
@@ -157,7 +158,7 @@ function settlement(kind, o, g){
 function swamp(o, g){
   const lay = base(o.name), y0 = 20;
   lay.paths.push({ w:2, pts:[N - 2, y0, 3, y0] });
-  room(lay, R(N - 6, y0 - 2, 4, 5), 'entrance', 'The causeway', 'An old raised road into the marsh. The water on both sides is very still.', true);
+  room(lay, R(N - 6, y0 - 2, 4, 5), 'entrance', 'The causeway', 'An old raised road into the marsh. The water on both sides is very still.', true, 'mud');
   const isles = [];
   for (let i = 0; i < 7; i++){
     const w = 5 + Math.floor(g() * 3), h = 4 + Math.floor(g() * 2), up = i % 2 === 0, x = 4 + i * 4 + Math.floor(g() * 2);
@@ -187,7 +188,7 @@ function camp(o, g){
   lay.paths.push({ w:2, pts:[N - 2, y0, 26, y0] });
   room(lay, R(N - 6, y0 - 2, 4, 5), 'entrance', 'The track in', 'Music before you see the fire. The music stops when they see you.', true);
   const c = R(6, 9, 20, 22), cx = c.x + 10, cy = c.y + 11;
-  room(lay, c, 'safe', 'The camp', 'A ring of painted wagons round a fire that is never allowed to go out. Wine, a fiddle, and a great deal of watching.', true);
+  room(lay, c, 'safe', 'The camp', 'A ring of painted wagons round a fire that is never allowed to go out. Wine, a fiddle, and a great deal of watching.', true, 'dirt');
   for (let k = 0; k < 7; k++){ const a = k / 7 * Math.PI * 2 + .3, x = Math.round(cx + Math.cos(a) * 7.5), y = Math.round(cy + Math.sin(a) * 8); lay.props.push(P('vardo', clamp(x, c.x, c.x + c.w - 2), clamp(y, c.y, c.y + c.h - 2), Math.abs(Math.cos(a)) > .6 ? 0 : 1)); }
   lay.props.push(P('campfire', cx, cy), P('campfire', cx - 1, cy), P('campfire', cx, cy + 1), P('log', cx - 3, cy - 1, 0), P('log', cx + 2, cy - 1, 0), P('stool', cx - 1, cy + 3), P('stool', cx + 1, cy + 3),
     P('tent', c.x + 2, c.y + 2), P('tent', c.x + c.w - 4, c.y + c.h - 4), P('barrel', c.x + 1, c.y + c.h - 2), P('kegs', c.x + c.w - 4, c.y + 1, 0));
@@ -230,7 +231,7 @@ function lake(o, g){
   for (let y = 2; y < N - 2; y++){ const shore = 17 + Math.round(Math.sin(y / 4) * 2); for (let x = 2; x < shore; x++) lay.water.push([x, y]); }
   lay.paths.push({ w:2, pts:[N - 2, 20, 20, 20] });
   room(lay, R(N - 6, 18, 4, 5), 'entrance', 'The lake path', 'The trees open, and the mist sits on the water like a lid.', true);
-  room(lay, R(19, 8, 12, 24), 'chamber', 'The shore', 'Black water, nets drying, and something large moving out past the end of the jetty.', true);
+  room(lay, R(19, 8, 12, 24), 'chamber', 'The shore', 'Black water, nets drying, and something large moving out past the end of the jetty.', true, 'mud');
   lay.paths.push({ w:1, pts:[19, 20, 7, 20] });
   for (let x = 8; x < 19; x++) lay.props.push(P('bridge', x, 20, 0));
   lay.props.push(P('boat', 12, 21, 0), P('boat', 9, 18, 0), P('bush', 19, 9), P('bush', 20, 30), P('mist', 6, 10), P('mist', 10, 26), P('mist', 4, 16), P('barrel', 21, 19), P('sacks', 22, 22));
@@ -244,8 +245,8 @@ function lake(o, g){
 function hill(o, g){
   const lay = base(o.name), c = { x:16, y:18 };
   lay.paths.push({ w:2, pts:[N - 2, 20, 24, 20] });
-  room(lay, R(N - 6, 18, 4, 5), 'entrance', 'The hill path', 'A bare slope. Nothing grows but grass, and the grass leans the wrong way.', true);
-  room(lay, R(6, 8, 20, 22), 'shrine', 'The hilltop', 'A ring of stones, a fire that the singers keep, and in the middle the tree that is not a tree. It is listening.', true);
+  room(lay, R(N - 6, 18, 4, 5), 'entrance', 'The hill path', 'A bare slope. Nothing grows but grass, and the grass leans the wrong way.', true, 'moor');
+  room(lay, R(6, 8, 20, 22), 'shrine', 'The hilltop', 'A ring of stones, a fire that the singers keep, and in the middle the tree that is not a tree. It is listening.', true, 'moor');
   for (let k = 0; k < 9; k++){ const a = k / 9 * Math.PI * 2; lay.props.push(P('stone', Math.round(c.x + Math.cos(a) * 7), Math.round(c.y + Math.sin(a) * 7))); }
   lay.props.push(P('deadtree', c.x, c.y), P('deadtree', c.x + 1, c.y - 1), P('bloomgrowth', c.x - 1, c.y + 1), P('altar', c.x + 3, c.y - 1, 0), P('campfire', 9, 26), P('log', 10, 27, 1), P('stool', 8, 27), P('ravens', 22, 10), P('mist', 7, 9));
   return lay;

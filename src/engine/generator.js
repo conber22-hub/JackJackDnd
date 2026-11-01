@@ -13,6 +13,7 @@ import { ravenloftLayout } from './castle.js';
 import { describeRoom } from '../data/descriptions.js';
 import { journeySpecs, landmarkSpecs } from './overland.js';
 import { genPlace } from './settlement.js';
+import { cavify } from './caves.js';
 import { state, makeMonster } from './state.js';
 
 const DEEP = ['hands', 'undertow', 'womb', 'ossuary'];
@@ -107,7 +108,10 @@ export function genFloor(L, W, H, rng, anchor, isLast, spec = {}){
   }
   rooms.forEach(r => { if (r.type === 'chamber' && r.id !== 0 && !spec.blank) r.type = pickWeighted(th.weights, rng); r.name = pick(ROOM_NAMES[r.type], rng); r.notes = ''; });
   carve(f);
-  if (!spec.blank){ placeDoors(f, rng, spec); placeTraps(f, rng, spec); }
+  // the mines, the warrens and the deep places are dug, not built (engine/caves.js); its own dice, so the floors after it don't change
+  const cave = spec.cave ?? th.cave;
+  if (cave && !spec.blank) cavify(f, mulberry32(hashSeed(`cave|${L}|${rooms.map(r => r.x + ',' + r.y).join('|')}`)), cave);
+  if (!spec.blank){ placeDoors(f, rng, cave ? { ...spec, doors:spec.doors ?? .1 } : spec); placeTraps(f, rng, spec); }
   return f;
 }
 
@@ -115,13 +119,13 @@ export function genFloor(L, W, H, rng, anchor, isLast, spec = {}){
    rooms [x, y, w, h, type, name, notes, { outdoor }] · paths { w, pts:[x0, y0, x1, y1, …] } (straight runs,
    w squares wide) · doors [x, y, state] · buildings { x, y, w, h, name, door } · props [kind, x, y, rot]
    · up / down [x, y] · exits { up, down } (what the stairs are called here) · water [[x, y]…] · fill [[x, y]…]
-   (squares forced solid) · masonry / clear [[x, y]…] (solid squares drawn as stone wall / left bare for a prop) · events [{ label, text, enc, x, y }] (the road's random happenings, see overland.js). */
+   (squares forced solid) · a room's options { outdoor, ground (grass, cobble, dirt, mud, moor, furrow: see render/floors.js), use, dress, read } · masonry / clear [[x, y]…] (solid squares drawn as stone wall / left bare for a prop) · events [{ label, text, enc, x, y }] (the road's random happenings, see overland.js). */
 export function layoutFloor(L, W, H, spec, anchor, isLast = true){
   const lay = spec.layout, theme = themeIndex(spec.theme), th = THEMES[theme];
   const f = { level:L, W, H, theme, name:lay.name || th.name, rooms:[], nextId:0, edges:[], corridors:[], autoLink:false,
               up:null, down:null, grid:null, dug:[], filled:[], doors:[], traps:[], base:null, nextObj:1, props:[], buildings:[], exits:lay.exits || null };
   for (const [x, y, w, h, type = 'chamber', name, notes = '', o = {}] of lay.rooms)
-    f.rooms.push(recalcRoom({ id:f.nextId++, x, y, w, h, type, name:name || pick(ROOM_NAMES[type] || ROOM_NAMES.chamber), notes, free:true, ...(o.outdoor ? { outdoor:true } : {}),
+    f.rooms.push(recalcRoom({ id:f.nextId++, x, y, w, h, type, name:name || pick(ROOM_NAMES[type] || ROOM_NAMES.chamber), notes, free:true, ...(o.outdoor ? { outdoor:true } : {}), ...(o.ground ? { ground:o.ground } : {}),
       ...(o.use ? { use:o.use } : {}), ...(o.dress ? { dress:true } : {}), ...(o.read ? { read:o.read } : {}), ...(name ? { named:true } : {}) }));
   for (const path of lay.paths || []){
     const w = path.w || 1, off = Math.floor((w - 1) / 2), tiles = new Set(), pts = path.pts;

@@ -6,10 +6,10 @@ import { THEMES } from '../data/themes.js';
 import { ROOM_TYPES, TRAP_KINDS } from '../data/rooms.js';
 import { mulberry32 } from '../util/core.js';
 import { scene, G, mat4, col, wx, wz, floorY, WALL_H, makeLabel, tween, ease, fx } from './scene.js';
-import { surfaceTextures } from './textures.js';
+import { surfaceTextures, groundTexture, SURFACES } from './textures.js';
 import { shadowsOn, gfx } from './gfx.js';
 import { kitFor } from './models.js';
-import { buildProp, buildBuilding, inBuilding, treeGeometry, treeMaterial, deadTreeGeometry, tuftGeometry, pebbleGeometry } from './props.js';
+import { buildProp, buildBuilding, inBuilding, treeGeometry, treeMaterial, deadTreeGeometry, tuftGeometry, pebbleGeometry, boulderGeometry } from './props.js';
 import { propSize } from '../data/props.js';
 
 // Paint the floor's stone with its theme's textures (cheap: textures are cached per theme).
@@ -29,6 +29,36 @@ function dressMaterials(fv, th){
 
 export const floorViews = [];   // per floor: { group, tokens, built, mats }
 const shared = m => { m.userData.shared = true; return m; };
+
+/* THE GROUND. The deep places are cut into rock: a rock top covers every solid square (and every square a player
+   hasn't found yet) and runs on past the map's edge. Outdoor floors have grass, dirt roads and cobbled streets
+   (a room can name its own `ground`), and the land and the woods go on past the edge. */
+const UNDER = new Set(['undercroft', 'silver', 'hands', 'undertow', 'ossuary', 'womb', 'cellar', 'dungeon', 'wreck']);
+export const GROUND = {
+  grass: { tex:'grass',  color:'#3c4a2e' }, dirt:  { tex:'dirt',   color:'#4f4334' }, cobble:{ tex:'cobble', color:'#4b4741' },
+  mud:   { tex:'dirt',   color:'#372f25' }, plank: { tex:'plank',  color:'#5a4636' }, flag:  { tex:'flag',   color:'#4e4842' },
+  furrow:{ tex:'furrow', color:'#47382a' }, moor:  { tex:'grass',  color:'#4a4434' },
+};
+const ROAD = { woods:'dirt', village:'cobble', grounds:'cobble', tavern:'dirt' };
+const EDGE = 60;   // how far the rock or the land runs on past the map
+function groundMat(fv, kind){
+  fv.mats.ground ||= {};
+  if (!fv.mats.ground[kind]){ const t = groundTexture(GROUND[kind]?.tex || kind); fv.mats.ground[kind] = shared(new THREE.MeshStandardMaterial({ map:t.map, bumpMap:t.bump, bumpScale:1, roughness:.95, metalness:0 })); }
+  return fv.mats.ground[kind];
+}
+// A flat sheet of one surface over a world-space rectangle, its texture repeating every `rep` units.
+function sheet(mat, x0, z0, x1, z1, y, rep = 2){
+  const w = x1 - x0, h = z1 - z0, geo = new THREE.PlaneGeometry(w, h).rotateX(-Math.PI / 2), uv = geo.attributes.uv; geo.userData.own = true;
+  for (let k = 0; k < uv.count; k++) uv.setXY(k, uv.getX(k) * w / rep, uv.getY(k) * h / rep);
+  const m = new THREE.Mesh(geo, mat); m.position.set((x0 + x1) / 2, y, (z0 + z1) / 2); return m;
+}
+// A frame of four sheets round the map (inner edge on the map's border).
+function frame(mat, W, H, y, rep){
+  const x0 = -W / 2, x1 = W / 2, z0 = -H / 2, z1 = H / 2, g = new THREE.Group();
+  g.add(sheet(mat, x0 - EDGE, z0 - EDGE, x1 + EDGE, z0, y, rep), sheet(mat, x0 - EDGE, z1, x1 + EDGE, z1 + EDGE, y, rep),
+        sheet(mat, x0 - EDGE, z0, x0, z1, y, rep), sheet(mat, x1, z0, x1 + EDGE, z1, y, rep));
+  return g;
+}
 export function ensureFloorViews(){
   while (floorViews.length > state.floors.length){ const fv = floorViews.pop(); scene.remove(fv.group); }
   state.floors.forEach((f, L) => {
@@ -45,8 +75,8 @@ export function ensureFloorViews(){
       silver:shared(new THREE.MeshStandardMaterial({ color:'#c8cbd6', roughness:.3, metalness:.9, emissive:new THREE.Color('#40465a'), emissiveIntensity:.4 })),
       secret:shared(new THREE.MeshBasicMaterial({ color:'#9b77dc', transparent:true, opacity:.35, depthWrite:false })),
     };
-    floorViews[L] = { group, tokens, mats, built:new THREE.Group() };
-    group.add(floorViews[L].built);
+    floorViews[L] = { group, tokens, mats, built:new THREE.Group(), rock:new THREE.Group() };
+    group.add(floorViews[L].built, floorViews[L].rock);
   });
 }
 export function disposeGroup(g){
@@ -54,6 +84,7 @@ export function disposeGroup(g){
     g.remove(c);
     c.traverse(o => {
       if (o.isInstancedMesh) o.dispose();
+      if (o.geometry?.userData?.own) o.geometry.dispose();
       const ms = Array.isArray(o.material) ? o.material : o.material ? [o.material] : [];
       for (const m of ms){ if (m.userData?.shared) continue; m.map?.dispose?.(); m.dispose?.(); }
     });
@@ -80,24 +111,36 @@ export function buildFloor(L, opt = {}){
   // floor tiles
   const tiles = [];
   for (let i = 0; i < g.length; i++) if (walk(g[i]) && g[i] !== T.DOWN && showTile(i)) tiles.push(i);
-  const kitFloor = kitFor('floor');
-  const fm = new THREE.InstancedMesh(kitFloor ? kitFloor.geometry : G.tile, kitFloor ? kitFloor.material : fv.mats.floor, Math.max(1, tiles.length)); fm.count = tiles.length;
+  const kitFloor = kitFor('floor'), kitWall0 = kitFor('wall');
   const rng = mulberry32(L * 999 + 7);
   const base = new THREE.Color(th.floor), hall = new THREE.Color(th.hall);
   const roomOf = new Map(); for (const r of f.rooms) for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++) roomOf.set(y * f.W + x, r);
-  tiles.forEach((i, n) => {
-    const x = i % f.W, y = (i / f.W) | 0;
-    mat4.makeTranslation(wx(x), -.1, wz(y)); fm.setMatrixAt(n, mat4);
-    col.copy(g[i] === T.HALL ? hall : base).multiplyScalar(.82 + rng() * .3);
-    const r = roomOf.get(i);
-    if (r && !pv && r.type !== 'chamber') col.lerp(new THREE.Color(ROOM_TYPES[r.type]?.color || '#888'), r.id === ui.selRoom ? .45 : .22);
-    else if (r && !pv && r.id === ui.selRoom) col.lerp(new THREE.Color('#e9a54a'), .3);
-    if (!pv && ui.previewFog && !exp.has(i)) col.multiplyScalar(.3);
-    fm.setColorAt(n, col);
-  });
-  if (fm.instanceColor) fm.instanceColor.needsUpdate = true;
-  fm.userData.floorTiles = 1; fm.receiveShadow = shadows;
-  fv.built.add(fm);
+  // which surface each square is: '' is the theme's own floor; outdoor floors have grass, roads and streets
+  const outdoorTh = !kitWall0 && (th.walls === 'trees' || th.walls === 'mixed'), under = !kitWall0 && UNDER.has(th.id);
+  const indoorKind = ['plank', 'flag'].includes(SURFACES[th.id]?.floor) ? '' : 'plank', roadKind = ROAD[th.id] || 'dirt';
+  const hallUnder = hall.clone().lerp(base, .55);   // under the rock, a tunnel's floor must stand out from the rock round it
+  const surfaceOf = i => { if (!outdoorTh) return ''; const r = roomOf.get(i);
+    if (r && !r.outdoor) return r.ground || indoorKind; if (r?.ground) return r.ground; if (f.ground?.[i]) return f.ground[i]; return g[i] === T.HALL ? roadKind : 'grass'; };
+  const bySurface = new Map(); for (const i of tiles){ const k = surfaceOf(i); if (!bySurface.has(k)) bySurface.set(k, []); bySurface.get(k).push(i); }
+  for (const [kind, list] of bySurface){
+    const own = kind === '' || !GROUND[kind], fm = new THREE.InstancedMesh(own && kitFloor ? kitFloor.geometry : G.tile, own ? (kitFloor ? kitFloor.material : fv.mats.floor) : groundMat(fv, kind), list.length);
+    const tone = own ? null : new THREE.Color(GROUND[kind].color);
+    list.forEach((i, n) => {
+      const x = i % f.W, y = (i / f.W) | 0;
+      // outdoor squares are turned a random quarter so the grass and the dirt don't repeat in a grid
+      if (own) mat4.makeTranslation(wx(x), -.1, wz(y)); else { mat4.makeRotationY(Math.floor(rng() * 4) * Math.PI / 2); mat4.setPosition(wx(x), -.1, wz(y)); }
+      fm.setMatrixAt(n, mat4);
+      col.copy(tone || (g[i] === T.HALL ? (under ? hallUnder : hall) : base)).multiplyScalar(.82 + rng() * .3);
+      const r = roomOf.get(i);
+      if (r && !pv && r.type !== 'chamber') col.lerp(new THREE.Color(ROOM_TYPES[r.type]?.color || '#888'), r.id === ui.selRoom ? .45 : .22);
+      else if (r && !pv && r.id === ui.selRoom) col.lerp(new THREE.Color('#e9a54a'), .3);
+      if (!pv && ui.previewFog && !exp.has(i)) col.multiplyScalar(.3);
+      fm.setColorAt(n, col);
+    });
+    if (fm.instanceColor) fm.instanceColor.needsUpdate = true;
+    fm.userData.floorTiles = 1; fm.receiveShadow = shadows;
+    fv.built.add(fm);
+  }
   // walls (on outdoor floors the edges are forest, and houses stand on their own footprints)
   const all = opt.walls || wallSet(f, g);
   const seen = i => { if (!pv) return true; const x = i % f.W, y = (i / f.W) | 0;
@@ -127,22 +170,44 @@ export function buildFloor(L, opt = {}){
       return false; };
     for (const [j, dd] of near) if (hr(j, 9) < (dd <= 2 ? .5 : .32) && (!pv || seen2(j))) trees.push(j);
   }
-  const wm = new THREE.InstancedMesh(kitWall ? kitWall.geometry : G.wall, kitWall ? kitWall.material : fv.mats.wall, Math.max(1, wl.length)); wm.count = wl.length;
+  // dug floors (engine/caves.js) have walls of heaped rock, not dressed stone
+  const cave = !kitWall && !!th.cave, rockc = new THREE.Color(th.wall).lerp(new THREE.Color(th.floor), .25);
+  const wm = new THREE.InstancedMesh(kitWall ? kitWall.geometry : cave ? boulderGeometry() : G.wall, kitWall ? kitWall.material : fv.mats.wall, Math.max(1, wl.length)); wm.count = wl.length;
   wm.castShadow = wm.receiveShadow = shadows;
-  const wc = new THREE.Color(th.wall), trim = new THREE.Color(th.trim);
+  const wc = new THREE.Color(th.wall), trim = new THREE.Color(th.trim), bq = new THREE.Quaternion(), bs = new THREE.Vector3(), bp = new THREE.Vector3(), be = new THREE.Euler();
   wl.forEach((i, n) => {
     const x = i % f.W, y = (i / f.W) | 0;
-    mat4.makeTranslation(wx(x), WALL_H / 2, wz(y)); wm.setMatrixAt(n, mat4);
-    col.copy(wc).multiplyScalar(.75 + rng() * .45); if (rng() < .06) col.lerp(trim, .35);
+    if (cave){
+      be.set((hr(i, 140) - .5) * .5, hr(i, 141) * 6.28, (hr(i, 142) - .5) * .5); bq.setFromEuler(be);
+      bs.set(.98 + hr(i, 143) * .22, .95 + hr(i, 144) * .4, .98 + hr(i, 145) * .22); bp.set(wx(x) + (hr(i, 146) - .5) * .16, .5 + hr(i, 147) * .15, wz(y) + (hr(i, 148) - .5) * .16);
+      mat4.compose(bp, bq, bs);
+    } else mat4.makeTranslation(wx(x), WALL_H / 2, wz(y));
+    wm.setMatrixAt(n, mat4);
+    if (cave) col.copy(rockc).lerp(trim, .08).multiplyScalar(1.35 + rng() * .5);   // the boulders are the lip of the cut, lighter than the rock else { col.copy(wc).multiplyScalar(.75 + rng() * .45); if (rng() < .06) col.lerp(trim, .35); }
     wm.setColorAt(n, col);
   });
   if (wm.instanceColor) wm.instanceColor.needsUpdate = true;
   fv.built.add(wm);
-  const cm = new THREE.InstancedMesh(G.cap, fv.mats.cap, Math.max(1, kitWall ? 0 : wl.length)); cm.count = kitWall ? 0 : wl.length;
-  const capc = new THREE.Color(th.wall).lerp(trim, .28).multiplyScalar(1.5);
+  const cm = new THREE.InstancedMesh(G.cap, fv.mats.cap, Math.max(1, kitWall || cave ? 0 : wl.length)); cm.count = kitWall || cave ? 0 : wl.length;
+  // in the deep places the wall tops are the lip of the cut, a shade lighter than the rock round them
+  const capc = under ? rockc.clone().lerp(trim, .1).multiplyScalar(1.3) : new THREE.Color(th.wall).lerp(trim, .28).multiplyScalar(1.5);
   wl.forEach((i, n) => { mat4.makeTranslation(wx(i % f.W), WALL_H + .03, wz((i / f.W) | 0)); cm.setMatrixAt(n, mat4); cm.setColorAt(n, col.copy(capc).multiplyScalar(.85 + rng() * .25)); });
   if (cm.instanceColor) cm.instanceColor.needsUpdate = true;
   fv.built.add(cm);
+  // the rock the deep places are cut into: on every square that isn't open floor or a drawn wall, and on past the edge
+  // (it lives in fv.rock so the stacked view can leave it out and look down through the floors)
+  disposeGroup(fv.rock);
+  if (under){
+    const drawn = new Set(wl), slab = [];
+    for (let i = 0; i < g.length; i++) if (!drawn.has(i) && !(walk(g[i]) && showTile(i))) slab.push(i);
+    const rmat = fv.mats.rock ||= shared(new THREE.MeshStandardMaterial({ map:groundTexture('rockmass').map, bumpMap:groundTexture('rockmass').bump, bumpScale:2, roughness:1, metalness:0 }));
+    const rc = rockc, sm = new THREE.InstancedMesh(G.slab, rmat, Math.max(1, slab.length)); sm.count = slab.length;
+    slab.forEach((i, n) => { mat4.makeRotationY(Math.floor(hr(i, 120) * 4) * Math.PI / 2); mat4.setPosition(wx(i % f.W), WALL_H + .06 - .25 + hr(i, 121) * .07, wz((i / f.W) | 0)); sm.setMatrixAt(n, mat4); sm.setColorAt(n, col.copy(rc).multiplyScalar(.8 + hr(i, 122) * .35)); });
+    if (sm.instanceColor) sm.instanceColor.needsUpdate = true; sm.receiveShadow = shadows; fv.rock.add(sm);
+    const em = fv.mats.rockEdge ||= shared(new THREE.MeshStandardMaterial({ map:groundTexture('rockmass').map, roughness:1, metalness:0 }));
+    em.color.copy(rc).multiplyScalar(.85);
+    fv.rock.add(frame(em, f.W, f.H, WALL_H + .08, 3));
+  }
   // the Svalich woods are not all alive: some of the trees are dead and grey
   const deadShare = th.id === 'woods' ? .12 : th.walls === 'mixed' ? .06 : 0;
   const dead = deadShare ? trees.filter(i => hr(i, 11) < deadShare) : [];
@@ -178,6 +243,29 @@ export function buildFloor(L, opt = {}){
       const cm2 = new THREE.InstancedMesh(geo, treeMaterial, list.length), q = new THREE.Quaternion(), sc = new THREE.Vector3(), ps = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
       list.forEach(([i, k], n) => { const s = .7 + hr(i, 40 + k) * .8; ps.set(wx(i % f.W) + (hr(i, 50 + k) - .5) * .85, -.02, wz((i / f.W) | 0) + (hr(i, 60 + k) - .5) * .85); q.setFromAxisAngle(up, hr(i, 70 + k) * 6.28); sc.set(s, s, s); mat4.compose(ps, q, sc); cm2.setMatrixAt(n, mat4); cm2.setColorAt(n, col.setRGB(1, 1, 1).multiplyScalar(.7 + hr(i, 80 + k) * .5)); });
       if (cm2.instanceColor) cm2.instanceColor.needsUpdate = true; cm2.receiveShadow = shadows; fv.built.add(cm2);
+    }
+  }
+  // past the map's edge the land goes on: dark ground under everything, and the woods thinning into the mist
+  if (outdoor){
+    const gm = fv.mats.edgeGround ||= shared(new THREE.MeshStandardMaterial({ map:groundTexture('grass').map, roughness:1, metalness:0 }));
+    gm.color.set(GROUND.grass.color).multiplyScalar(.7);
+    const ground = sheet(gm, -f.W / 2 - EDGE, -f.H / 2 - EDGE, f.W / 2 + EDGE, f.H / 2 + EDGE, -.09, 3); ground.receiveShadow = shadows; fv.rock.add(ground);
+    if (!opt.walls){
+      const pts = [], B = 16, hx = f.W / 2, hz = f.H / 2;
+      for (let cz = -hz - B; cz < hz + B; cz++) for (let cx = -hx - B; cx < hx + B; cx++){
+        const d = Math.max(-hx - cx, cx - hx + 1, -hz - cz, cz - hz + 1); if (d <= 0) continue;   // inside the map
+        const k = (cz + 200) * 400 + cx + 200;
+        if (hr(k, 130) < (d < 6 ? .62 : .62 - (d - 6) * .045)) pts.push([cx + hr(k, 131), cz + hr(k, 132), .8 + hr(k, 133) * .8, hr(k, 134), d, k]);
+      }
+      const dead = pts.filter(p => hr(p[5], 135) < (th.id === 'woods' ? .1 : .06)), live = pts.filter(p => !dead.includes(p));
+      const q = new THREE.Quaternion(), sc = new THREE.Vector3(), ps = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0), tint = new THREE.Color(th.trim);
+      for (const [list, geo] of [[live, treeGeometry()], [dead, deadTreeGeometry()]]){
+        if (!list.length) continue;
+        const tm = new THREE.InstancedMesh(geo, treeMaterial, list.length);
+        list.forEach(([x, z, s2, a, d], n) => { ps.set(x, 0, z); q.setFromAxisAngle(up, a * 6.28); sc.set(s2, s2 * (.9 + a * .4), s2); mat4.compose(ps, q, sc); tm.setMatrixAt(n, mat4);
+          tm.setColorAt(n, col.setRGB(1, 1, 1).lerp(tint, .15).multiplyScalar((.62 + a * .4) * (d > 8 ? .8 : 1))); });
+        if (tm.instanceColor) tm.instanceColor.needsUpdate = true; tm.receiveShadow = shadows; fv.rock.add(tm);
+      }
     }
   }
   // difficult terrain: a dark wet patch with stones and debris on it
@@ -328,10 +416,10 @@ export function applyFloorLook(){
     if (!fv || !state.floors[L]) return;
     fv.group.position.y = floorY(L);
     const cur = L === ui.floor, stack = ui.view === 'stack';
-    fv.group.visible = stack || cur;
+    fv.group.visible = stack || cur; fv.rock.visible = !stack;
     const op = cur ? 1 : .38, th = THEMES[state.floors[L].theme] || THEMES[0];
     const ghostGlow = new THREE.Color(th.wall).lerp(new THREE.Color(th.trim), .45);
-    for (const m of [fv.mats.floor, fv.mats.wall, fv.mats.cap]){
+    for (const m of [fv.mats.floor, fv.mats.wall, fv.mats.cap, ...Object.values(fv.mats.ground || {})]){
       m.transparent = op < 1; m.opacity = op; m.depthWrite = op === 1;
       if (m !== fv.mats.wall){ m.emissive.copy(cur ? new THREE.Color(0) : ghostGlow); m.emissiveIntensity = cur ? 0 : .55; }
     }
