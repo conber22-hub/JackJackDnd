@@ -14,6 +14,7 @@ import { describeRoom } from '../data/descriptions.js';
 import { journeySpecs, landmarkSpecs } from './overland.js';
 import { genPlace } from './settlement.js';
 import { cavify } from './caves.js';
+import { addFeatures, FEATURE_TEXT } from './features.js';
 import { state, makeMonster } from './state.js';
 
 const DEEP = ['hands', 'undertow', 'womb', 'ossuary'];
@@ -56,8 +57,10 @@ export function genDelve(meta){
       if (sp.castle !== undefined) for (const r of f.rooms) r.read ||= describeRoom(r, tid, drng);
       return;
     }
+    // a few rooms with something of their own (water, a chasm, a fall of rock, pillars) before the furniture goes in
+    addFeatures(f, tid, mulberry32(hashSeed(`${meta.seed}|features|${L}`)));
     furnishFloor(f, tid, drng);
-    for (const r of f.rooms) r.read ||= describeRoom(r, tid, drng);
+    for (const r of f.rooms){ r.read ||= describeRoom(r, tid, drng); if (r.feature) r.read += ' ' + FEATURE_TEXT[r.feature].read; }
     hideSecrets(f, mulberry32(hashSeed(`${meta.seed}|secrets|${L}`)));
   });
   if (state) floors.forEach((f, L) => { if (specs[L].populate) populateFloor(f, L, rng, L === meta.floors - 1 || !!specs[L].boss, specs[L].populate === true ? .4 : specs[L].populate); });
@@ -245,6 +248,10 @@ export function carve(f, keep = []){
   f.doors = (f.doors || []).filter(dr => walk(g[dr.i]) && g[dr.i] !== T.UP && g[dr.i] !== T.DOWN);
   f.traps = (f.traps || []).filter(tr => walk(g[tr.i]));
   if (f.rough?.length) f.rough = f.rough.filter(i => walk(g[i]) && g[i] !== T.UP && g[i] !== T.DOWN);
+  // water to the knee and rope bridges are open ground; a chasm stays a drop (engine/features.js)
+  if (f.shallow?.length) f.shallow = f.shallow.filter(i => walk(g[i]) && g[i] !== T.UP && g[i] !== T.DOWN);
+  if (f.span?.length) f.span = f.span.filter(i => walk(g[i]));
+  if (f.chasm?.length) f.chasm = f.chasm.filter(i => !walk(g[i]));
 }
 export const inRoom = (r, x, y) => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h;
 

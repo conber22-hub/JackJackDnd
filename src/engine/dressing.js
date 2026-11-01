@@ -40,9 +40,9 @@ export function furnishRoom(f, r, themeId, rng, { rename = true, taken = null } 
   const inRoom = (x, y) => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h;
   const doorAt = new Set((f.doors || []).map(d => d.i));
   const stairs = [f.up, f.down].filter(Boolean).map(s => s.y * W + s.x);
-  const free = new Set();
+  const free = new Set(), wet = new Set([...(f.shallow || []), ...(f.span || [])]);   // not in the water, not on a rope bridge
   for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++){
-    const i = y * W + x; if (f.grid[i] !== T.ROOM || doorAt.has(i)) continue;
+    const i = y * W + x; if (f.grid[i] !== T.ROOM || doorAt.has(i) || wet.has(i)) continue;
     if (stairs.some(s => Math.abs((s % W) - x) <= 1 && Math.abs(((s / W) | 0) - y) <= 1)) continue;
     let doorway = false;
     for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]){
@@ -135,7 +135,8 @@ export function hideSecrets(f, rng){
     if (STASHES[p.k] && rng() < .12) p.stash = { dc:12 + Math.floor(rng() * 5), text:pickOne(STASHES[p.k], rng) };
   }
   const W = f.W, open = (x, y) => x >= 0 && y >= 0 && x < W && y < f.H && walk(f.grid[y * W + x]);
-  const taken = (x, y) => f.props.some(p => { const s = sizeOf(p); return x >= p.x && x < p.x + s.w && y >= p.y && y < p.y + s.h; })
+  const wet = new Set([...(f.shallow || []), ...(f.span || [])]);   // no shelf stands in the water or on a rope bridge
+  const taken = (x, y) => wet.has(y * W + x) || f.props.some(p => { const s = sizeOf(p); return x >= p.x && x < p.x + s.w && y >= p.y && y < p.y + s.h; })
     || (f.doors || []).some(d => d.i === y * W + x) || [f.up, f.down].some(s => s && Math.abs(s.x - x) <= 1 && Math.abs(s.y - y) <= 1);
   const inRoom = (x, y) => (f.rooms || []).some(r => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h);
   // never in front of another way in or out (an opening, a corridor mouth), only the hidden door

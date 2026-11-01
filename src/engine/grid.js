@@ -123,7 +123,8 @@ export function canSee(f, x0, y0, x1, y1, pass = passSight){
 export const sightRange = t => t.conds?.some(c => c.n === 'blinded') ? 1 : t.sight || 12;
 export function vision(t){
   const f = state.floors[t.floor], seen = new Set(), R = sightRange(t), R2 = (R + .5) * (R + .5);
-  const wet = f.water?.length ? new Set(f.water) : null, pass = wet ? (ff, i) => wet.has(i) || passSight(ff, i) : passSight;   // you see across water
+  const gaps = f.water?.length || f.chasm?.length ? new Set([...(f.water || []), ...(f.chasm || [])]) : null;
+  const pass = gaps ? (ff, i) => gaps.has(i) || passSight(ff, i) : passSight;   // you see across water and over a chasm
   for (let y = Math.max(0, t.y - R); y <= Math.min(f.H - 1, t.y + R); y++) for (let x = Math.max(0, t.x - R); x <= Math.min(f.W - 1, t.x + R); x++){
     const i = y * f.W + x;
     if (!walk(f.grid[i]) || (x - t.x) ** 2 + (y - t.y) ** 2 > R2) continue;

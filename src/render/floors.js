@@ -110,7 +110,8 @@ export function buildFloor(L, opt = {}){
   const g = opt.grid || viewGrid(f, L);
   // floor tiles
   const tiles = [];
-  for (let i = 0; i < g.length; i++) if (walk(g[i]) && g[i] !== T.DOWN && showTile(i)) tiles.push(i);
+  const spans = new Set(f.span || []);   // a rope bridge has no floor under it (drawn below, over the drop)
+  for (let i = 0; i < g.length; i++) if (walk(g[i]) && g[i] !== T.DOWN && showTile(i) && !spans.has(i)) tiles.push(i);
   const kitFloor = kitFor('floor'), kitWall0 = kitFor('wall');
   const rng = mulberry32(L * 999 + 7);
   const base = new THREE.Color(th.floor), hall = new THREE.Color(th.hall);
@@ -153,7 +154,8 @@ export function buildFloor(L, opt = {}){
   const isBuildingWall = i => { if (th.walls === 'trees') return false; const x = i % f.W, y = (i / f.W) | 0;
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++){ const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < f.W && ny < f.H && walk(g[ny * f.W + nx]) && indoor(ny * f.W + nx)) return true; }
     return false; };
-  const wl = [], trees = [], water = new Set(f.water || []), masonry = new Set(f.masonry || []), bare = new Set(f.clear || []);
+  const wl = [], trees = [], water = new Set([...(f.water || []), ...(f.chasm || [])]), masonry = new Set(f.masonry || []), bare = new Set(f.clear || []);
+  const pond = new Set(f.water || []);   // (water proper; `water` above also holds the chasms, which are no wall and no tree either)
   const hr = (i, k) => { let h = Math.imul(i ^ Math.imul(k + 1, 0x9e3779b1), 2654435761) ^ Math.imul(L + 1, 40503); h ^= h >>> 15; h = Math.imul(h, 2246822519); h ^= h >>> 13; return (h >>> 0) / 4294967296; };
   for (const i of all){
     if (water.has(i) || bare.has(i) || inBuilding(f, i % f.W, (i / f.W) | 0) || !seen(i)) continue;
@@ -200,7 +202,7 @@ export function buildFloor(L, opt = {}){
   disposeGroup(fv.rock);
   if (under){
     const drawn = new Set(wl), slab = [];
-    for (let i = 0; i < g.length; i++) if (!drawn.has(i) && !(walk(g[i]) && showTile(i))) slab.push(i);
+    for (let i = 0; i < g.length; i++) if (!drawn.has(i) && !(walk(g[i]) && showTile(i)) && !(water.has(i) && (!pv || seen(i)))) slab.push(i);
     const rmat = fv.mats.rock ||= shared(new THREE.MeshStandardMaterial({ map:groundTexture('rockmass').map, bumpMap:groundTexture('rockmass').bump, bumpScale:2, roughness:1, metalness:0 }));
     const rc = rockc, sm = new THREE.InstancedMesh(G.slab, rmat, Math.max(1, slab.length)); sm.count = slab.length;
     slab.forEach((i, n) => { mat4.makeRotationY(Math.floor(hr(i, 120) * 4) * Math.PI / 2); mat4.setPosition(wx(i % f.W), WALL_H + .06 - .25 + hr(i, 121) * .07, wz((i / f.W) | 0)); sm.setMatrixAt(n, mat4); sm.setColorAt(n, col.copy(rc).multiplyScalar(.8 + hr(i, 122) * .35)); });
@@ -302,12 +304,42 @@ export function buildFloor(L, opt = {}){
     if (st.instanceColor) st.instanceColor.needsUpdate = true; st.receiveShadow = shadows; fv.built.add(st);
   }
   // water: rivers, ponds and lakes (impassable, and no trees grow in it)
-  const wt = [...water].filter(i => !pv || seen(i) || exp.has(i));
+  const wt = [...pond].filter(i => !pv || seen(i) || exp.has(i));
   if (wt.length){
     const wm2 = new THREE.InstancedMesh(G.tile, fv.mats.water ||= shared(new THREE.MeshStandardMaterial({ color:'#16242c', roughness:.42, metalness:.1, emissive:new THREE.Color('#081014'), transparent:true, opacity:.94 })), wt.length);
     wt.forEach((i, n) => { mat4.makeTranslation(wx(i % f.W), -.16, wz((i / f.W) | 0)); wm2.setMatrixAt(n, mat4); wm2.setColorAt(n, col.setRGB(1, 1, 1).multiplyScalar(.85 + hr(i, 7) * .3)); });
     if (wm2.instanceColor) wm2.instanceColor.needsUpdate = true;
     wm2.receiveShadow = shadows; fv.built.add(wm2);
+  }
+  // water to the knee (a flooded room, a ford): a dark, glassy skin over the floor
+  const sh = (f.shallow || []).filter(i => showTile(i));
+  if (sh.length){
+    const pm = new THREE.InstancedMesh(G.plane, fv.mats.shallow ||= shared(new THREE.MeshStandardMaterial({ color:'#3a5a66', roughness:.04, metalness:.55, emissive:new THREE.Color('#0d1d24'), transparent:true, opacity:.78, depthWrite:false })), sh.length);
+    sh.forEach((i, n) => { mat4.makeTranslation(wx(i % f.W), .035 + hr(i, 170) * .01, wz((i / f.W) | 0)); pm.setMatrixAt(n, mat4); pm.setColorAt(n, col.setRGB(1, 1, 1).multiplyScalar(.8 + hr(i, 171) * .35)); });
+    if (pm.instanceColor) pm.instanceColor.needsUpdate = true; pm.receiveShadow = shadows; fv.built.add(pm);
+  }
+  // a chasm: black all the way down; and the rope bridge across it, planks and two ropes
+  const ch = (f.chasm || []).filter(i => !pv || seen(i)), sp = [...spans].filter(i => showTile(i));
+  if (ch.length || sp.length){
+    const pit = new THREE.InstancedMesh(G.tile, fv.mats.pit ||= shared(new THREE.MeshBasicMaterial({ color:'#020203' })), ch.length + sp.length);
+    [...ch, ...sp].forEach((i, n) => { mat4.makeTranslation(wx(i % f.W), -2.2, wz((i / f.W) | 0)); pit.setMatrixAt(n, mat4); });
+    fv.built.add(pit);
+  }
+  if (sp.length){
+    const chs = new Set(f.chasm || []), bits = [];
+    for (const i of sp){
+      // the bridge runs the way the chasm doesn't: if the drop is above and below, it runs left to right
+      const x = i % f.W, y = (i / f.W) | 0, alongX = chs.has(i - f.W) || chs.has(i + f.W) || !(chs.has(i - 1) || chs.has(i + 1));
+      for (let k = 0; k < 4; k++) bits.push([x, y, alongX, 'plank', -.375 + k * .25]);
+      bits.push([x, y, alongX, 'rope', -.44], [x, y, alongX, 'rope', .44]);
+    }
+    const planks = bits.filter(b => b[3] === 'plank'), ropes = bits.filter(b => b[3] === 'rope');
+    const pk = new THREE.InstancedMesh(G.tile, fv.mats.wood, planks.length), rp = new THREE.InstancedMesh(G.tile, fv.mats.rope ||= shared(new THREE.MeshStandardMaterial({ color:'#8a7450', roughness:.9 })), ropes.length);
+    const sc = new THREE.Vector3(), ps = new THREE.Vector3(), q = new THREE.Quaternion();
+    planks.forEach(([x, y, alongX, , o], n) => { const sag = -.06; ps.set(wx(x) + (alongX ? o : 0), sag - .02, wz(y) + (alongX ? 0 : o)); sc.set(alongX ? .2 : .92, .35, alongX ? .92 : .2); mat4.compose(ps, q, sc); pk.setMatrixAt(n, mat4); pk.setColorAt(n, col.setRGB(1, 1, 1).multiplyScalar(.75 + hr(x * 31 + y + o * 7 | 0, 172) * .4)); });
+    ropes.forEach(([x, y, alongX, , o], n) => { ps.set(wx(x) + (alongX ? 0 : o), .42, wz(y) + (alongX ? o : 0)); sc.set(alongX ? 1 : .04, .15, alongX ? .04 : 1); mat4.compose(ps, q, sc); rp.setMatrixAt(n, mat4); });
+    if (pk.instanceColor) pk.instanceColor.needsUpdate = true; pk.castShadow = pk.receiveShadow = shadows; rp.castShadow = shadows;
+    fv.built.add(pk, rp);
   }
   // the road's happenings (DM only): a violet rune where each one waits
   if (!pv) for (const e of f.events || []){
