@@ -221,6 +221,22 @@ export function genStretch(spec){
       lay.riverNote = 'The road crosses the river on an old timber bridge.';
     }
   }
+  // no river: sometimes a brook winds across instead, and the road fords it (its own dice, so the road's shape stays)
+  const gb = mulberry32(hashSeed(spec.seed + '|brook'));
+  if (!lay.riverNote && !arrive && gb() < .4){
+    const runs = center.filter(([x], i) => i > 6 && i < center.length - 6 && Math.abs(x - entry.x) > 6 && Math.abs(x - exit.x) > 6);
+    const horiz = runs.filter(([x, yy]) => center.some(([x2, y2]) => y2 === yy && Math.abs(x2 - x) === 1));
+    const at = horiz.length ? horiz[Math.floor(gb() * horiz.length)] : null;
+    if (at){
+      const phase = gb() * 6; lay.shallow = [];
+      for (let yy = 1; yy < N - 1; yy++){
+        const x = clamp(at[0] + Math.round(Math.sin((yy - at[1]) / 4 + phase) * 2 - Math.sin(phase) * 2), 1, N - 2);
+        const onRoad = center.some(([rx, ry]) => Math.abs(rx - x) <= 1 && Math.abs(ry - yy) <= Math.floor(width / 2));
+        if (onRoad) lay.shallow.push([x, yy]); else { lay.water.push([x, yy]); taken.add(yy * N + x); }
+      }
+      lay.riverNote = 'A brook crosses the road at a ford: knee-deep, cold and quick over the stones.';
+    }
+  }
   // what is on the road this time, and the set pieces around it
   const events = spec.events || [], wanted = events.map(e => e.module || null);
   const extra = 1 + Math.floor(g() * 2); for (let i = 0; i < extra; i++) wanted.push(pick(AMBIENT, g));
@@ -252,9 +268,11 @@ export function genStretch(spec){
   if (road.mist || spec.arrive?.kind === 'mists') for (let i = 0; i < 6; i++) lay.props.push(P('mist', 2 + Math.floor(g() * (N - 6)), 2 + Math.floor(g() * (N - 6))));
   if (spec.passing) lay.props.push(P('signpost', clamp(exit.x + (side === 'e' ? 2 : -2), 2, N - 3), clamp(exit.y + 2, 2, N - 3)));
   if (!arrive) lay.down = [exit.x, exit.y];
+  if (lay.riverNote && lay.rooms[0]) lay.rooms[0][6] = [lay.rooms[0][6], lay.riverNote].filter(Boolean).join(' ');   // the DM hears about the water at the start
   // keep props off water and inside the map
   lay.props = lay.props.filter(p => p[1] >= 1 && p[2] >= 1 && p[1] < N - 1 && p[2] < N - 1);
   lay.water = lay.water.filter(([x, yy]) => x >= 1 && yy >= 1 && x < N - 1 && yy < N - 1);
+  if (lay.shallow) lay.props = lay.props.filter(p => !lay.shallow.some(([x, yy]) => x === p[1] && yy === p[2]));   // nothing stands in the ford
   return { layout:lay, exit };
 }
 

@@ -50,3 +50,20 @@ test('the drystone wall is a prop you can climb over, like a fence', async () =>
   const { PROP_HOP } = await import('../src/data/props.js');
   assert.ok(PROPS.drystone && PROP_HOP.has('drystone') && PROP_HOP.has('fence'));
 });
+
+test('brooks cross some roads at a ford: knee-deep, walkable, slow going', () => {
+  let fords = 0;
+  for (let seed = 1; seed <= 20; seed++){
+    const n = planJourney('village', 'vallaki').stretches.length;
+    const s = newState({ name:'J', seed:`ford-${seed}`, floors:n, size:40, template:'journey', journey:{ from:'village', to:'vallaki', seed:`ford-${seed}`, n:1, gaze:2, bloom:false }, party:false });
+    for (const f of s.floors){
+      if (!f.shallow?.length) continue;
+      fords++;
+      assert.ok(joined(f), 'the road still goes through');
+      for (const i of f.shallow){ assert.ok(walk(f.grid[i]), 'you can wade the ford'); assert.ok(f.rough.includes(i), 'and it is slow going'); }
+      assert.ok(f.water.length > 10, 'the brook runs on either side of the road');
+      assert.ok(f.rooms[0].notes.includes('ford'), 'the DM is told');
+    }
+  }
+  assert.ok(fords >= 5, `fords turn up (${fords})`);
+});

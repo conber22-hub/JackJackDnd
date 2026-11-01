@@ -9,7 +9,7 @@ import { scene, G, mat4, col, wx, wz, floorY, WALL_H, makeLabel, tween, ease, fx
 import { surfaceTextures, groundTexture, SURFACES } from './textures.js';
 import { shadowsOn, gfx } from './gfx.js';
 import { kitFor } from './models.js';
-import { buildProp, buildBuilding, inBuilding, treeGeometry, treeMaterial, deadTreeGeometry, tuftGeometry, pebbleGeometry, boulderGeometry, cropGeometry } from './props.js';
+import { buildProp, buildBuilding, inBuilding, treeGeometry, treeMaterial, deadTreeGeometry, tuftGeometry, pebbleGeometry, boulderGeometry, cropGeometry, snowCapGeometry } from './props.js';
 import { propSize, propAt } from '../data/props.js';
 
 // Paint the floor's stone with its theme's textures (cheap: textures are cached per theme).
@@ -41,6 +41,18 @@ export const GROUND = {
 };
 const ROAD = { woods:'dirt', village:'cobble', grounds:'cobble', tavern:'dirt' };
 const EDGE = 60;   // how far the rock or the land runs on past the map
+/* The day's weather on the ground (outdoors): { snow: 0–1 how white, wet: 0–1 how soaked }, from the weather line
+   (the DM's desk, or what the players were sent). Snow and frost whiten it; rain darkens it and leaves puddles. */
+export function groundWeather(){
+  const w = String(state?.campaign?.weather || state?.weather || '').toLowerCase();
+  if (/snow|blizzard/.test(w)) return { snow:/deep|heavy|blizzard|drift/.test(w) ? .85 : .5 };
+  if (/frost|rime|hoar|freez/.test(w)) return { snow:.25 };
+  if (/rain|drizzle|downpour|storm|shower|sleet/.test(w) && !/no rain/.test(w)) return { wet:/heavy|downpour|storm/.test(w) ? 1 : .55 };
+  return {};
+}
+const SNOW = new THREE.Color('#d4d9e0');
+// the same trees again in white, a little inside and above their tiers: snow lying on the branches
+function capWithSnow(tm){ const caps = new THREE.InstancedMesh(snowCapGeometry(), treeMaterial, tm.count); caps.instanceMatrix.array.set(tm.instanceMatrix.array); caps.receiveShadow = tm.receiveShadow; return caps; }
 function groundMat(fv, kind){
   fv.mats.ground ||= {};
   if (!fv.mats.ground[kind]){ const t = groundTexture(GROUND[kind]?.tex || kind); fv.mats.ground[kind] = shared(new THREE.MeshStandardMaterial({ map:t.map, bumpMap:t.bump, bumpScale:1, roughness:.95, metalness:0 })); }
@@ -119,13 +131,15 @@ export function buildFloor(L, opt = {}){
   // which surface each square is: '' is the theme's own floor; outdoor floors have grass, roads and streets
   const outdoorTh = !kitWall0 && (th.walls === 'trees' || th.walls === 'mixed'), under = !kitWall0 && UNDER.has(th.id);
   const indoorKind = ['plank', 'flag'].includes(SURFACES[th.id]?.floor) ? '' : 'plank', roadKind = ROAD[th.id] || 'dirt';
-  const hallUnder = hall.clone().lerp(base, .55);   // under the rock, a tunnel's floor must stand out from the rock round it
+  const hallUnder = hall.clone().lerp(base, .55);
+  const wx_ = outdoorTh ? groundWeather() : {}, snow = wx_.snow || 0, wet = wx_.wet || 0;   // under the rock, a tunnel's floor must stand out from the rock round it
   const surfaceOf = i => { if (!outdoorTh) return ''; const r = roomOf.get(i);
     if (r && !r.outdoor) return r.ground || indoorKind; if (r?.ground) return r.ground; if (r?.crop) return 'furrow'; if (f.ground?.[i]) return f.ground[i]; return g[i] === T.HALL ? roadKind : 'grass'; };
   const bySurface = new Map(); for (const i of tiles){ const k = surfaceOf(i); if (!bySurface.has(k)) bySurface.set(k, []); bySurface.get(k).push(i); }
   for (const [kind, list] of bySurface){
     const own = kind === '' || !GROUND[kind], fm = new THREE.InstancedMesh(own && kitFloor ? kitFloor.geometry : G.tile, own ? (kitFloor ? kitFloor.material : fv.mats.floor) : groundMat(fv, kind), list.length);
     const tone = own ? null : new THREE.Color(GROUND[kind].color);
+    if (!own){ const m = groundMat(fv, kind); m.roughness = .95 - wet * .55; m.metalness = wet * .12; }
     list.forEach((i, n) => {
       const x = i % f.W, y = (i / f.W) | 0;
       // outdoor squares are turned a random quarter so the grass and the dirt don't repeat in a grid
@@ -133,6 +147,7 @@ export function buildFloor(L, opt = {}){
       if (own) mat4.makeTranslation(wx(x), -.1, wz(y)); else { mat4.makeRotationY(Math.floor(rng() * 4) * (kind === 'furrow' ? Math.PI : Math.PI / 2)); mat4.setPosition(wx(x), -.1, wz(y)); }
       fm.setMatrixAt(n, mat4);
       col.copy(tone || (g[i] === T.HALL ? (under ? hallUnder : hall) : base)).multiplyScalar(.82 + rng() * .3);
+      if (!own && kind !== 'plank' && kind !== 'flag'){ if (snow) col.lerp(SNOW, snow * (.7 + rng() * .25)); if (wet) col.multiplyScalar(1 - wet * .22); }
       const r = roomOf.get(i);
       if (r && !pv && r.type !== 'chamber') col.lerp(new THREE.Color(ROOM_TYPES[r.type]?.color || '#888'), r.id === ui.selRoom ? .45 : .22);
       else if (r && !pv && r.id === ui.selRoom) col.lerp(new THREE.Color('#e9a54a'), .3);
@@ -232,6 +247,7 @@ export function buildFloor(L, opt = {}){
     if (tm.instanceColor) tm.instanceColor.needsUpdate = true;
     tm.castShadow = tm.receiveShadow = shadows; tm.userData.trees = 1;
     fv.built.add(tm);
+    if (snow >= .4) fv.built.add(capWithSnow(tm));
   }
   // ground clutter on outdoor floors: grass tufts in the clearings, stones on the roads
   if (outdoor){
@@ -265,14 +281,14 @@ export function buildFloor(L, opt = {}){
     list.forEach(([x, y, i, k, per], n) => {
       const ox = per === 4 ? (k % 2 ? .23 : -.23) : (hr(i, 151 + k) - .5) * .6, oz = per === 4 ? (k < 2 ? -.23 : .23) : (hr(i, 153 + k) - .5) * .6, s2 = .85 + hr(i, 155 + k) * .35;
       ps.set(wx(x) + ox + (hr(i, 157 + k) - .5) * .08, 0, wz(y) + oz); q.setFromAxisAngle(up, hr(i, 159 + k) * 6.28); sc.set(s2, s2 * (.9 + hr(i, 161 + k) * .25), s2);
-      mat4.compose(ps, q, sc); cm2.setMatrixAt(n, mat4); cm2.setColorAt(n, col.setRGB(1, 1, 1).multiplyScalar(.72 + hr(i, 163 + k) * .4));
+      mat4.compose(ps, q, sc); cm2.setMatrixAt(n, mat4); cm2.setColorAt(n, col.setRGB(1, 1, 1).multiplyScalar(.72 + hr(i, 163 + k) * .4).lerp(SNOW, snow * .45));
     });
     if (cm2.instanceColor) cm2.instanceColor.needsUpdate = true; cm2.receiveShadow = shadows; cm2.castShadow = shadows && kind !== 'fallow'; fv.built.add(cm2);
   }
   // past the map's edge the land goes on: dark ground under everything, and the woods thinning into the mist
   if (outdoor){
     const gm = fv.mats.edgeGround ||= shared(new THREE.MeshStandardMaterial({ map:groundTexture('grass').map, roughness:1, metalness:0 }));
-    gm.color.set(GROUND.grass.color).multiplyScalar(.7);
+    gm.color.set(GROUND.grass.color).multiplyScalar(.7).lerp(SNOW, snow * .75).multiplyScalar(1 - wet * .2);
     const ground = sheet(gm, -f.W / 2 - EDGE, -f.H / 2 - EDGE, f.W / 2 + EDGE, f.H / 2 + EDGE, -.09, 3); ground.receiveShadow = shadows; fv.rock.add(ground);
     if (!opt.walls){
       const pts = [], B = 16, hx = f.W / 2, hz = f.H / 2;
@@ -289,6 +305,19 @@ export function buildFloor(L, opt = {}){
         list.forEach(([x, z, s2, a, d], n) => { ps.set(x, 0, z); q.setFromAxisAngle(up, a * 6.28); sc.set(s2, s2 * (.9 + a * .4), s2); mat4.compose(ps, q, sc); tm.setMatrixAt(n, mat4);
           tm.setColorAt(n, col.setRGB(1, 1, 1).lerp(tint, .15).multiplyScalar((.62 + a * .4) * (d > 8 ? .8 : 1))); });
         if (tm.instanceColor) tm.instanceColor.needsUpdate = true; tm.receiveShadow = shadows; fv.rock.add(tm);
+        if (snow >= .4 && geo === treeGeometry()) fv.rock.add(capWithSnow(tm));
+      }
+    }
+    // rain leaves puddles: on the roads most, a few in the grass (never under a prop, never in the ford)
+    if (wet){
+      const wetSet = new Set(f.shallow || []), pts = [];
+      for (const i of tiles){ const r = roomOf.get(i); if ((r && !r.outdoor) || wetSet.has(i) || propAt(f, i % f.W, (i / f.W) | 0)) continue;
+        if (hr(i, 180) < (g[i] === T.HALL ? .14 + wet * .16 : .04 + wet * .06)) pts.push(i); }
+      if (pts.length){
+        const pm = new THREE.InstancedMesh(G.puddle, fv.mats.puddle ||= shared(new THREE.MeshStandardMaterial({ color:'#4a5c68', roughness:.02, metalness:.7, emissive:new THREE.Color('#122230'), transparent:true, opacity:.85, depthWrite:false })), pts.length);
+        const q = new THREE.Quaternion(), sc = new THREE.Vector3(), ps = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+        pts.forEach((i, n) => { const s2 = .55 + hr(i, 181) * .6; ps.set(wx(i % f.W) + (hr(i, 182) - .5) * .4, .012, wz((i / f.W) | 0) + (hr(i, 183) - .5) * .4); q.setFromAxisAngle(up, hr(i, 184) * 6.28); sc.set(s2, 1, s2 * (.6 + hr(i, 185) * .4)); mat4.compose(ps, q, sc); pm.setMatrixAt(n, mat4); });
+        fv.built.add(pm);
       }
     }
   }

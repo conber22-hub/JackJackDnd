@@ -11,7 +11,7 @@ import { gfx, onGfx, shadowsOn, painted } from './render/gfx.js';
 import { loadStoredModels } from './render/models.js';
 import { setDrone, setAmbience } from './audio/sound.js';
 import { syncTokens } from './render/minis.js';
-import { buildAllFloors } from './render/floors.js';
+import { buildAllFloors, buildFloor, groundWeather } from './render/floors.js';
 import { walk } from './engine/tiles.js';
 import { floorViews, mist } from './render/floors.js';
 import { tokenViews } from './render/minis.js';
@@ -64,7 +64,11 @@ function frame(){
     const dayK = !outdoor || hour == null ? 1 : hour >= 8 && hour < 17 ? 1.25 : (hour >= 5 && hour < 8) || (hour >= 17 && hour < 20) ? .95 : .72;
     const lit = (th.light || 1) * dayK;
     if (t - (frame.ambAt || 0) > 1){ frame.ambAt = t;   // the room's own sound
-      const w = weatherKind(); setAmbience(outdoor ? (w && w !== 'snow' ? 'rain' : 'wind') : th.id === 'tavern' ? 'fire' : ['undertow', 'cellar', 'womb'].includes(th.id) ? 'water' : 'drips'); }
+      const w = weatherKind(); setAmbience(outdoor ? (w && w !== 'snow' ? 'rain' : 'wind') : th.id === 'tavern' ? 'fire' : ['undertow', 'cellar', 'womb'].includes(th.id) ? 'water' : 'drips');
+      // the weather changed (a new day, the DM's desk): snow, frost or rain on the outdoor maps' ground
+      const gw = JSON.stringify(groundWeather());
+      if (frame.gw !== undefined && frame.gw !== gw) state.floors.forEach((f, L) => { const t2 = THEMES[f.theme]; if (t2 && (t2.walls === 'trees' || t2.walls === 'mixed')) buildFloor(L); });
+      frame.gw = gw; }
     ambient.intensity += (D.amb * 1.5 * lit * (ui.role === 'dm' && !ui.tableView ? 1.35 : 1) - ambient.intensity) * ease;
     const k = ambient.intensity / .93; hemi.intensity = .45 * k; moon.intensity = 1.1 * k;
     const hue = new THREE.Color(D.hue);

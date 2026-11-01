@@ -42,6 +42,7 @@ export const G = {
   wall: new THREE.BoxGeometry(1, WALL_H, 1),
   cap: new THREE.BoxGeometry(1.02, .06, 1.02),
   slab: new THREE.BoxGeometry(1, .5, 1),
+  puddle: new THREE.CircleGeometry(.45, 14).rotateX(-Math.PI / 2),
   plane: new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2),
   step: new THREE.BoxGeometry(.9, .22, .3),
   rune: new THREE.RingGeometry(.32, .44, 32).rotateX(-Math.PI / 2),

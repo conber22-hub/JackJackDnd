@@ -366,6 +366,14 @@ export function treeGeometry(){
   }
   treeGeo = out; return out;
 }
+// Snow on a pine: white cones just inside and above each tier of treeGeometry(), so the tops of the tiers show white.
+let snowCapGeo = null;
+export function snowCapGeometry(){
+  if (snowCapGeo) return snowCapGeo;
+  const m = y => new THREE.Matrix4().makeTranslation(0, y, 0);
+  snowCapGeo = merged([painted(new THREE.ConeGeometry(.5, .74, 7), '#e4e8ec', m(1.06)), painted(new THREE.ConeGeometry(.39, .62, 7), '#e8ecf0', m(1.5)), painted(new THREE.ConeGeometry(.25, .56, 7), '#eef1f4', m(1.9))]);
+  return snowCapGeo;
+}
 // A dead tree for the woods (grey trunk, bare branches), and small ground clutter: grass tufts and stones.
 function merged(parts){
   const out = new THREE.BufferGeometry();
