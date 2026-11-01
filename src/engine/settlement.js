@@ -293,7 +293,7 @@ function hill(o, g){
   const lay = base(o.name), c = { x:16, y:18 };
   lay.paths.push({ w:2, pts:[N - 2, 20, 24, 20] });
   room(lay, R(N - 6, 18, 4, 5), 'entrance', 'The hill path', 'A bare slope. Nothing grows but grass, and the grass leans the wrong way.', true, 'moor');
-  room(lay, R(6, 8, 20, 22), 'shrine', 'The hilltop', 'A ring of stones, a fire that the singers keep, and in the middle the tree that is not a tree. It is listening.', true, 'moor');
+  room(lay, R(6, 8, 20, 22), 'shrine', 'The hilltop', 'A ring of stones, a fire that the singers keep, and in the middle the tree that is not a tree. It is listening.', true, 'moor', { rise:3 });
   for (let k = 0; k < 9; k++){ const a = k / 9 * Math.PI * 2; lay.props.push(P('stone', Math.round(c.x + Math.cos(a) * 7), Math.round(c.y + Math.sin(a) * 7))); }
   lay.props.push(P('deadtree', c.x, c.y), P('deadtree', c.x + 1, c.y - 1), P('bloomgrowth', c.x - 1, c.y + 1), P('altar', c.x + 3, c.y - 1, 0), P('campfire', 9, 26), P('log', 10, 27, 1), P('stool', 8, 27), P('ravens', 22, 10), P('mist', 7, 9));
   return lay;

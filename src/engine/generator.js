@@ -122,13 +122,13 @@ export function genFloor(L, W, H, rng, anchor, isLast, spec = {}){
    rooms [x, y, w, h, type, name, notes, { outdoor }] · paths { w, pts:[x0, y0, x1, y1, …] } (straight runs,
    w squares wide) · doors [x, y, state] · buildings { x, y, w, h, name, door } · props [kind, x, y, rot]
    · up / down [x, y] · exits { up, down } (what the stairs are called here) · water [[x, y]…] · fill [[x, y]…]
-   (squares forced solid) · a room's options { outdoor, ground (grass, cobble, dirt, mud, moor, furrow: see render/floors.js), crop (data/props.js CROPS), use, dress, read } · masonry / clear [[x, y]…] (solid squares drawn as stone wall / left bare for a prop) · shallow [[x, y]…] (a ford: walkable water, difficult) · events [{ label, text, enc, x, y }] (the road's random happenings, see overland.js). */
+   (squares forced solid) · a room's options { outdoor, ground (grass, cobble, dirt, mud, moor, furrow: see render/floors.js), crop (data/props.js CROPS), rise (1–3: a low hill, see riseHeights), use, dress, read } · masonry / clear [[x, y]…] (solid squares drawn as stone wall / left bare for a prop) · shallow [[x, y]…] (a ford: walkable water, difficult) · events [{ label, text, enc, x, y }] (the road's random happenings, see overland.js). */
 export function layoutFloor(L, W, H, spec, anchor, isLast = true){
   const lay = spec.layout, theme = themeIndex(spec.theme), th = THEMES[theme];
   const f = { level:L, W, H, theme, name:lay.name || th.name, rooms:[], nextId:0, edges:[], corridors:[], autoLink:false,
               up:null, down:null, grid:null, dug:[], filled:[], doors:[], traps:[], base:null, nextObj:1, props:[], buildings:[], exits:lay.exits || null };
   for (const [x, y, w, h, type = 'chamber', name, notes = '', o = {}] of lay.rooms)
-    f.rooms.push(recalcRoom({ id:f.nextId++, x, y, w, h, type, name:name || pick(ROOM_NAMES[type] || ROOM_NAMES.chamber), notes, free:true, ...(o.outdoor ? { outdoor:true } : {}), ...(o.ground ? { ground:o.ground } : {}), ...(o.crop ? { crop:o.crop } : {}),
+    f.rooms.push(recalcRoom({ id:f.nextId++, x, y, w, h, type, name:name || pick(ROOM_NAMES[type] || ROOM_NAMES.chamber), notes, free:true, ...(o.outdoor ? { outdoor:true } : {}), ...(o.ground ? { ground:o.ground } : {}), ...(o.crop ? { crop:o.crop } : {}), ...(o.rise ? { rise:o.rise } : {}),
       ...(o.use ? { use:o.use } : {}), ...(o.dress ? { dress:true } : {}), ...(o.read ? { read:o.read } : {}), ...(name ? { named:true } : {}) }));
   for (const path of lay.paths || []){
     const w = path.w || 1, off = Math.floor((w - 1) / 2), tiles = new Set(), pts = path.pts;
@@ -248,6 +248,7 @@ export function carve(f, keep = []){
   }
   for (const r of f.rooms){ r.stairsUp = !!(f.up && inRoom(r, f.up.x, f.up.y)); r.stairsDown = !!(f.down && inRoom(r, f.down.x, f.down.y)); }
   f.grid = g;
+  riseHeights(f);
   f.doors = (f.doors || []).filter(dr => walk(g[dr.i]) && g[dr.i] !== T.UP && g[dr.i] !== T.DOWN);
   f.traps = (f.traps || []).filter(tr => walk(g[tr.i]));
   if (f.rough?.length) f.rough = f.rough.filter(i => walk(g[i]) && g[i] !== T.UP && g[i] !== T.DOWN);
@@ -257,6 +258,30 @@ export function carve(f, keep = []){
   if (f.chasm?.length) f.chasm = f.chasm.filter(i => !walk(g[i]));
 }
 export const inRoom = (r, x, y) => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h;
+
+/* Raised ground. An open-air room with `rise` (1–3) is a low hill: a dome of ground, highest in the middle, falling
+   to the room's edge. f.height { square: level } is worked out from the rooms (each level is STEP_H high), and
+   f.slope lists the squares where the ground climbs from a lower neighbour: those are difficult terrain going either
+   way. A floor whose rooms say nothing about rising (a player's copy, sent the heights) keeps what it was given. */
+export function riseHeights(f){
+  if (!f.rooms?.some(r => 'rise' in r)) return;
+  const W = f.W, h = {};
+  for (const r of f.rooms){
+    const n = Math.min(3, Math.max(0, +r.rise || 0)); if (!n) continue;
+    const cx = r.x + (r.w - 1) / 2, cy = r.y + (r.h - 1) / 2;
+    for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++){
+      const i = y * W + x; if (!walk(f.grid[i]) || f.grid[i] === T.UP || f.grid[i] === T.DOWN) continue;
+      const d = Math.max(Math.abs(x - cx) / (r.w / 2), Math.abs(y - cy) / (r.h / 2)), lv = Math.min(n, Math.round(n * (1 - d) * 1.3));
+      if (lv > 0) h[i] = Math.max(h[i] || 0, lv);
+    }
+  }
+  f.height = Object.keys(h).length ? h : undefined; if (!f.height) delete f.height;
+  f.slope = [];
+  if (f.height) for (const [k, lv] of Object.entries(f.height)){
+    const i = +k, x = i % W;
+    if ([x + 1 < W ? i + 1 : -1, x > 0 ? i - 1 : -1, i + W, i - W].some(j => j >= 0 && j < f.grid.length && walk(f.grid[j]) && (f.height[j] || 0) < lv)) f.slope.push(i);
+  }
+}
 
 export function wallSet(f, g = f.grid){
   const out = new Set(), W = f.W, H = f.H;

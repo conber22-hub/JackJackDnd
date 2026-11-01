@@ -1,7 +1,7 @@
 /* MOVEMENT, SIGHT & DISCOVERY on a floor grid. Doors matter here:
    open = walk & see through · closed = walk (it opens) but blocks sight · locked / secret = wall.
    Pure: reads `state`, no DOM. */
-import { T, walk } from './tiles.js';
+import { T, walk, STEP_H } from './tiles.js';
 import { doorAt } from './generator.js';
 import { TRAP_KINDS } from '../data/rooms.js';
 import { PROP_TOP, PROP_HOP, PROP_BLOCK, propSize } from '../data/props.js';
@@ -33,7 +33,15 @@ export function propTerrain(f){
   propCache.set(props, c); return c;
 }
 // How high a creature stands on its square(s): on top of a table, a crate, an altar… (0 on the floor)
-export function standHeight(f, x, y, size = 1){ if (!f?.props?.length) return 0; const T = propTerrain(f).top; let h = 0; for (let dy = 0; dy < size; dy++) for (let dx = 0; dx < size; dx++) h = Math.max(h, T.get((y + dy) * f.W + x + dx) || 0); return h; }
+// How high the ground is under a square (a rise outdoors), in world units.
+export const groundY = (f, x, y) => (f?.height?.[y * f.W + x] || 0) * STEP_H;
+// How high a mini stands: the ground under it, and on top of whatever furniture it has climbed.
+export function standHeight(f, x, y, size = 1){
+  let g = 0; if (f?.height) for (let dy = 0; dy < size; dy++) for (let dx = 0; dx < size; dx++) g = Math.max(g, groundY(f, x + dx, y + dy));
+  if (!f?.props?.length) return g;
+  const T = propTerrain(f).top; let h = 0; for (let dy = 0; dy < size; dy++) for (let dx = 0; dx < size; dx++) h = Math.max(h, T.get((y + dy) * f.W + x + dx) || 0);
+  return g + h;
+}
 export function passMove(f, i){ if (!walk(f.grid[i])) return false; if (f.props?.length && propTerrain(f).block.has(i)) return false; const s = doorState(f, i); return s !== 'locked' && s !== 'secret'; }
 export function passSight(f, i){ if (!walk(f.grid[i])) return false; const s = doorState(f, i); return !s || s === 'open'; }
 
@@ -49,7 +57,7 @@ export function canStep(f, x, y, dx, dy, pass = passMove){
 
 /* Difficult terrain (f.rough: square indexes — mud, rubble, black water to the knee) costs 2 squares to enter.
    reach: every square reachable within `limit` squares of movement → { par: index -> parent, dist: index -> cost } */
-export const roughSet = f => { const r = new Set(f.rough || []); if (f.props?.length) for (const i of propTerrain(f).rough) r.add(i); return r; };   // mud, rubble, water — and climbing over furniture
+export const roughSet = f => { const r = new Set([...(f.rough || []), ...(f.slope || [])]); if (f.props?.length) for (const i of propTerrain(f).rough) r.add(i); return r; };   // mud, rubble, water, a slope — and climbing over furniture
 export function reach(L, sx, sy, limit, moverId){
   const f = state.floors[L], start = sy * f.W + sx, par = new Map([[start, -1]]), dist = new Map([[start, 0]]);
   const mover = tokById(moverId) || {}, rough = roughSet(f), buckets = [[start]], sz = mover.size || 1;

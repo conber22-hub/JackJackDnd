@@ -1,7 +1,7 @@
 /* EFFECTS — selection ring, reachable-tile glow, pings, blood/seep bursts, and the Build-mode overlays. */
 import * as THREE from 'three';
 import { state, ui, tokById, tokenAt, isDM } from '../engine/state.js';
-import { reach } from '../engine/grid.js';
+import { reach, groundY, roughSet } from '../engine/grid.js';
 import { fits } from '../engine/movement.js';
 import { scene, G, mat4, wx, wz, tween } from './scene.js';
 import { floorViews } from './floors.js';
@@ -38,7 +38,7 @@ export function showReach(t){
   const near = tiles.filter(i => data.dist.get(i) <= base), far = tiles.filter(i => data.dist.get(i) > base);
   const meshes = [[near, floorViews[t.floor].mats.fx], [far, dashMat]].filter(([l]) => l.length).map(([list, mat]) => {
     const mesh = new THREE.InstancedMesh(G.plane, mat, list.length);
-    list.forEach((i, n) => { mat4.makeTranslation(wx(i % f.W), .025, wz((i / f.W) | 0)); mat4.scale(new THREE.Vector3(.9, 1, .9)); mesh.setMatrixAt(n, mat4); });
+    list.forEach((i, n) => { mat4.makeTranslation(wx(i % f.W), .025 + groundY(f, i % f.W, (i / f.W) | 0), wz((i / f.W) | 0)); mat4.scale(new THREE.Vector3(.9, 1, .9)); mesh.setMatrixAt(n, mat4); });
     floorViews[t.floor].group.add(mesh); return mesh;
   });
   reachState.mesh = meshes; reachState.data = data;
@@ -56,21 +56,21 @@ export function clearMovePath(){ for (const m of pathMeshes.splice(0)){ m.parent
 export function showMovePath(t, path, { base = Infinity, oa = [] } = {}){
   clearMovePath();
   const fv = floorViews[t.floor]; if (!fv || !path.length) return;
-  const f = state.floors[t.floor], rough = new Set(f.rough || []), s = ((t.size || 1) - 1) / 2;
-  const pts = [new THREE.Vector3(wx(t.x + s), .07, wz(t.y + s))];
+  const f = state.floors[t.floor], rough = roughSet(f), s = ((t.size || 1) - 1) / 2;
+  const pts = [new THREE.Vector3(wx(t.x + s), .07 + groundY(f, t.x, t.y), wz(t.y + s))];
   const dots = new THREE.InstancedMesh(G.plane, dotMat, path.length), col = new THREE.Color();
   let cost = 0;
   path.forEach((p, n) => {
     cost += rough.has(p.y * f.W + p.x) ? 2 : 1;
-    mat4.makeTranslation(wx(p.x + s), .06, wz(p.y + s)); mat4.scale(new THREE.Vector3(.26, 1, .26)); dots.setMatrixAt(n, mat4);
+    mat4.makeTranslation(wx(p.x + s), .06 + groundY(f, p.x, p.y), wz(p.y + s)); mat4.scale(new THREE.Vector3(.26, 1, .26)); dots.setMatrixAt(n, mat4);
     dots.setColorAt(n, col.copy(oa.includes(n) ? C_OA : cost > base ? C_DASH : C_OK));
-    pts.push(new THREE.Vector3(wx(p.x + s), .07, wz(p.y + s)));
+    pts.push(new THREE.Vector3(wx(p.x + s), .07 + groundY(f, p.x, p.y), wz(p.y + s)));
   });
   if (dots.instanceColor) dots.instanceColor.needsUpdate = true;
   const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), lineMat);
   const e = path[path.length - 1], r = .42 * (t.size || 1);
   const ring = new THREE.Mesh(new THREE.RingGeometry(r - .07, r, 32).rotateX(-Math.PI / 2), endMat);
-  ring.position.set(wx(e.x + s), .065, wz(e.y + s));
+  ring.position.set(wx(e.x + s), .065 + groundY(f, e.x, e.y), wz(e.y + s));
   endMat.color.copy(oa.length ? C_OA : cost > base ? C_DASH : C_OK); lineMat.color.copy(endMat.color);
   for (const m of [dots, line, ring]){ fv.group.add(m); pathMeshes.push(m); }
   return cost;
@@ -92,7 +92,7 @@ export const pings = [];
 export function spawnPing(L, x, y, color = '#e9a54a'){
   sfx('ping', false);
   const m = new THREE.Mesh(new THREE.RingGeometry(.3, .42, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color, transparent:true, depthWrite:false }));
-  m.position.set(wx(x), .05, wz(y)); floorViews[L]?.group.add(m);
+  m.position.set(wx(x), .05 + groundY(state.floors[L], x, y), wz(y)); floorViews[L]?.group.add(m);
   const beam = new THREE.Mesh(new THREE.CylinderGeometry(.05, .05, 4, 8), new THREE.MeshBasicMaterial({ color, transparent:true, opacity:.5, depthWrite:false }));
   beam.position.set(wx(x), 2, wz(y)); floorViews[L]?.group.add(beam);
   pings.push({ m, beam, t0:performance.now() });
@@ -141,13 +141,13 @@ export function showRoomHandles(L){
 export function showPathPreview(L, tiles){
   clearOverlay(); placeOverlay(L);
   const f = state.floors[L], m = new THREE.InstancedMesh(G.plane, pathMat, Math.max(1, tiles.length)); m.count = tiles.length;
-  tiles.forEach((i, n) => { mat4.makeTranslation(wx(i % f.W), .04, wz((i / f.W) | 0)); m.setMatrixAt(n, mat4); });
+  tiles.forEach((i, n) => { mat4.makeTranslation(wx(i % f.W), .04 + groundY(f, i % f.W, (i / f.W) | 0), wz((i / f.W) | 0)); m.setMatrixAt(n, mat4); });
   overlay.add(m);
 }
 const hover = new THREE.Mesh(G.plane, hoverMat); hover.visible = false; scene.add(hover);
 export function showHover(L, x, y){
   const fv = floorViews[L]; if (x === null || !fv){ hover.visible = false; return; }
-  hover.visible = true; hover.position.set(wx(x), fv.group.position.y + .03, wz(y));
+  hover.visible = true; hover.position.set(wx(x), fv.group.position.y + .03 + groundY(state.floors[L], x, y), wz(y));
 }
 
 /* ---------- targeting: ranges, cover, areas ---------- */
@@ -159,7 +159,7 @@ export function clearTargeting(){ for (const m of tgMeshes.splice(0)){ m.parent?
 function squaresMesh(L, list, color, opacity, scale = .94, y = .03){
   const f = state.floors[L], mat = new THREE.MeshBasicMaterial({ color, transparent:true, opacity, depthWrite:false });
   const m = new THREE.InstancedMesh(G.plane, mat, Math.max(1, list.length)); m.count = list.length; m.userData.ownMat = true;
-  list.forEach((i, n) => { mat4.makeTranslation(wx(i % f.W), y, wz((i / f.W) | 0)); mat4.scale(new THREE.Vector3(scale, 1, scale)); m.setMatrixAt(n, mat4); });
+  list.forEach((i, n) => { mat4.makeTranslation(wx(i % f.W), y + groundY(f, i % f.W, (i / f.W) | 0), wz((i / f.W) | 0)); mat4.scale(new THREE.Vector3(scale, 1, scale)); m.setMatrixAt(n, mat4); });
   return m;
 }
 /* How far the chosen attack or spell reaches from its user: normal range bright, long range dim. */
@@ -193,7 +193,7 @@ export function showAreaPreview(L, squares, ty, ok, caught = []){
   tgAdd(L, squaresMesh(L, squares, ok ? typeColor(ty) : '#a04848', ok ? .5 : .3, .96, .035));
   for (const t of caught){
     const r = .5 * (t.size || 1), ring = new THREE.Mesh(new THREE.RingGeometry(r - .08, r, 28).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color:t.kind === 'monster' ? '#ff5040' : '#ffd060', transparent:true, opacity:.95, depthWrite:false }));
-    ring.userData.ownMat = true; const s = ((t.size || 1) - 1) / 2; ring.position.set(wx(t.x + s), .07, wz(t.y + s)); tgAdd(L, ring);
+    ring.userData.ownMat = true; const s = ((t.size || 1) - 1) / 2; ring.position.set(wx(t.x + s), .07 + groundY(state.floors[L], t.x, t.y), wz(t.y + s)); tgAdd(L, ring);
   }
 }
 /* A spell going off: its squares flare in its colour and fade. */

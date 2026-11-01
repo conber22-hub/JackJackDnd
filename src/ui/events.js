@@ -1,7 +1,7 @@
 /* UI EVENT WIRING — every [data-act] button, [data-edit] field, and keyboard shortcut. */
 import { state, setState, ui, tokById, isDM, makePC, makeNPC, dreadLevel } from '../engine/state.js';
 import { updateVision, freeTilesNear, seenNow } from '../engine/grid.js';
-import { roomById } from '../engine/generator.js';
+import { roomById, carve } from '../engine/generator.js';
 import { floorToAscii, floorToJSON } from '../engine/importer.js';
 import { parseTable } from '../engine/tables.js';
 import { BEST, bestList, rebuildBestiary } from '../data/bestiary.js';
@@ -377,7 +377,8 @@ document.addEventListener('change', e => {
   else if (kind === 'encFam'){ ui.encFam = el.value; rollEncounter(); renderPanel(); }
   else if (kind === 'charOwner'){ setCharacterOwner(el.dataset.id, el.value); renderPanel(); }
   else if (kind === 'atk' && t){ t.attacks = parseAttacks(el.value); changed(); }
-  else if (kind === 'room'){ const r = roomById(state.floors[ui.floor], +el.dataset.id); if (!r) return; r[el.dataset.f] = el.value; if (el.dataset.f === 'name') r.named = true; if (!['notes', 'read'].includes(el.dataset.f)) buildFloor(ui.floor); renderPanel(); changed(); }
+  else if (kind === 'room'){ const r = roomById(state.floors[ui.floor], +el.dataset.id); if (!r) return; r[el.dataset.f] = el.dataset.f === 'rise' ? +el.value : el.value;
+    if (el.dataset.f === 'rise'){ snapshot('raise ground'); carve(state.floors[ui.floor], state.tokens.filter(t => t.floor === ui.floor)); syncTokens(); } if (el.dataset.f === 'name') r.named = true; if (!['notes', 'read'].includes(el.dataset.f)) buildFloor(ui.floor); renderPanel(); changed(); }
   else if (kind === 'floorName'){ state.floors[ui.floor].name = el.value; renderTop(); changed(); }
   else if (kind === 'floorTheme'){ state.floors[ui.floor].theme = +el.value; buildFloor(ui.floor); renderPanel(); changed(); }
   else if (kind === 'seat'){ seatPlayer(el.dataset.k, el.value || null); renderPanel(); pushState(); }

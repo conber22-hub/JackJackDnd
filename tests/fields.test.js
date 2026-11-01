@@ -36,10 +36,11 @@ test('a village has fields at its edges, walled or fenced, with a way in from th
 
 test('the roads run past fields and pastures, and every one can be walked into', () => {
   const kinds = new Set();
-  for (let seed = 1; seed <= 30; seed++){
-    const s = newState({ name:'J', seed:`farm-${seed}`, floors:planJourney('village', 'vallaki').stretches.length, size:40, template:'journey', journey:{ from:'village', to:'vallaki', seed:`farm-${seed}`, n:1, gaze:2, bloom:false }, party:false });
+  // (a road's set pieces are the road's own, the same every trip: so travel all the roads, not one road many times)
+  for (const to of ['vallaki', 'krezk', 'tser', 'winery', 'argyn', 'berez', 'lake', 'yester', 'tower', 'bonegrinder', 'coffin', 'castle']){
+    const s = newState({ name:'J', seed:`farm-${to}`, floors:planJourney('village', to).stretches.length, size:40, template:'journey', journey:{ from:'village', to, seed:`farm-${to}`, n:1, gaze:2, bloom:false }, party:false });
     for (const f of s.floors){
-      assert.ok(joined(f), `farm-${seed}: the stretch joins up`);
+      assert.ok(joined(f), `to ${to}: the stretch joins up`);
       for (const r of f.rooms){ if (r.crop) kinds.add(r.crop); if (r.ground) assert.ok(GROUNDS[r.ground], `${r.ground} is a known ground`); }
     }
   }

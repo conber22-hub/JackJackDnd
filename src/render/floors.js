@@ -1,6 +1,7 @@
 /* FLOORS — stone, walls, stairs, doors, traps, room glyphs, mist, and the Shift animation. */
 import * as THREE from 'three';
 import { state, ui, viewAsPlayer, T, walk } from '../engine/state.js';
+import { groundY } from '../engine/grid.js';
 import { wallSet, doorOrientation } from '../engine/generator.js';
 import { THEMES } from '../data/themes.js';
 import { ROOM_TYPES, TRAP_KINDS } from '../data/rooms.js';
@@ -135,6 +136,7 @@ export function buildFloor(L, opt = {}){
   const wx_ = outdoorTh ? groundWeather() : {}, snow = wx_.snow || 0, wet = wx_.wet || 0;   // under the rock, a tunnel's floor must stand out from the rock round it
   const surfaceOf = i => { if (!outdoorTh) return ''; const r = roomOf.get(i);
     if (r && !r.outdoor) return r.ground || indoorKind; if (r?.ground) return r.ground; if (r?.crop) return 'furrow'; if (f.ground?.[i]) return f.ground[i]; return g[i] === T.HALL ? roadKind : 'grass'; };
+  const tq = new THREE.Quaternion(), tp = new THREE.Vector3(), ts = new THREE.Vector3(), yAxis = new THREE.Vector3(0, 1, 0), slopes = new Set(f.slope || []);
   const bySurface = new Map(); for (const i of tiles){ const k = surfaceOf(i); if (!bySurface.has(k)) bySurface.set(k, []); bySurface.get(k).push(i); }
   for (const [kind, list] of bySurface){
     const own = kind === '' || !GROUND[kind], fm = new THREE.InstancedMesh(own && kitFloor ? kitFloor.geometry : G.tile, own ? (kitFloor ? kitFloor.material : fv.mats.floor) : groundMat(fv, kind), list.length);
@@ -143,11 +145,14 @@ export function buildFloor(L, opt = {}){
     list.forEach((i, n) => {
       const x = i % f.W, y = (i / f.W) | 0;
       // outdoor squares are turned a random quarter so the grass and the dirt don't repeat in a grid
-      // (furrows all run one way: only a half turn for them)
-      if (own) mat4.makeTranslation(wx(x), -.1, wz(y)); else { mat4.makeRotationY(Math.floor(rng() * 4) * (kind === 'furrow' ? Math.PI : Math.PI / 2)); mat4.setPosition(wx(x), -.1, wz(y)); }
+      // (furrows all run one way: only a half turn for them) · a square on a rise is a taller block, its top on the rise
+      const hh = groundY(f, x, y), turn = own ? 0 : Math.floor(rng() * 4) * (kind === 'furrow' ? Math.PI : Math.PI / 2);
+      tq.setFromAxisAngle(yAxis, turn); tp.set(wx(x), (hh - .2) / 2, wz(y)); ts.set(1, (.2 + hh) / .2, 1); mat4.compose(tp, tq, ts);
       fm.setMatrixAt(n, mat4);
       col.copy(tone || (g[i] === T.HALL ? (under ? hallUnder : hall) : base)).multiplyScalar(.82 + rng() * .3);
       if (!own && kind !== 'plank' && kind !== 'flag'){ if (snow) col.lerp(SNOW, snow * (.7 + rng() * .25)); if (wet) col.multiplyScalar(1 - wet * .22); }
+      // raised ground catches more light the higher it is, and its slopes are a shade darker, so a rise reads like contours
+      if (f.height?.[i]) col.multiplyScalar((1 + f.height[i] * .2) * (slopes.has(i) ? .72 : 1));
       const r = roomOf.get(i);
       if (r && !pv && r.type !== 'chamber') col.lerp(new THREE.Color(ROOM_TYPES[r.type]?.color || '#888'), r.id === ui.selRoom ? .45 : .22);
       else if (r && !pv && r.id === ui.selRoom) col.lerp(new THREE.Color('#e9a54a'), .3);
@@ -260,7 +265,7 @@ export function buildFloor(L, opt = {}){
     for (const [list, geo] of [[tufts, tuftGeometry()], [pebbles, pebbleGeometry()]]){
       if (!list.length) continue;
       const cm2 = new THREE.InstancedMesh(geo, treeMaterial, list.length), q = new THREE.Quaternion(), sc = new THREE.Vector3(), ps = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
-      list.forEach(([i, k], n) => { const s = .7 + hr(i, 40 + k) * .8; ps.set(wx(i % f.W) + (hr(i, 50 + k) - .5) * .85, -.02, wz((i / f.W) | 0) + (hr(i, 60 + k) - .5) * .85); q.setFromAxisAngle(up, hr(i, 70 + k) * 6.28); sc.set(s, s, s); mat4.compose(ps, q, sc); cm2.setMatrixAt(n, mat4); cm2.setColorAt(n, col.setRGB(1, 1, 1).multiplyScalar(.7 + hr(i, 80 + k) * .5)); });
+      list.forEach(([i, k], n) => { const s = .7 + hr(i, 40 + k) * .8; ps.set(wx(i % f.W) + (hr(i, 50 + k) - .5) * .85, -.02 + groundY(f, i % f.W, (i / f.W) | 0), wz((i / f.W) | 0) + (hr(i, 60 + k) - .5) * .85); q.setFromAxisAngle(up, hr(i, 70 + k) * 6.28); sc.set(s, s, s); mat4.compose(ps, q, sc); cm2.setMatrixAt(n, mat4); cm2.setColorAt(n, col.setRGB(1, 1, 1).multiplyScalar(.7 + hr(i, 80 + k) * .5)); });
       if (cm2.instanceColor) cm2.instanceColor.needsUpdate = true; cm2.receiveShadow = shadows; fv.built.add(cm2);
     }
   }
@@ -280,7 +285,7 @@ export function buildFloor(L, opt = {}){
     const cm2 = new THREE.InstancedMesh(cropGeometry(kind), treeMaterial, list.length), q = new THREE.Quaternion(), sc = new THREE.Vector3(), ps = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
     list.forEach(([x, y, i, k, per], n) => {
       const ox = per === 4 ? (k % 2 ? .23 : -.23) : (hr(i, 151 + k) - .5) * .6, oz = per === 4 ? (k < 2 ? -.23 : .23) : (hr(i, 153 + k) - .5) * .6, s2 = .85 + hr(i, 155 + k) * .35;
-      ps.set(wx(x) + ox + (hr(i, 157 + k) - .5) * .08, 0, wz(y) + oz); q.setFromAxisAngle(up, hr(i, 159 + k) * 6.28); sc.set(s2, s2 * (.9 + hr(i, 161 + k) * .25), s2);
+      ps.set(wx(x) + ox + (hr(i, 157 + k) - .5) * .08, groundY(f, x, y), wz(y) + oz); q.setFromAxisAngle(up, hr(i, 159 + k) * 6.28); sc.set(s2, s2 * (.9 + hr(i, 161 + k) * .25), s2);
       mat4.compose(ps, q, sc); cm2.setMatrixAt(n, mat4); cm2.setColorAt(n, col.setRGB(1, 1, 1).multiplyScalar(.72 + hr(i, 163 + k) * .4).lerp(SNOW, snow * .45));
     });
     if (cm2.instanceColor) cm2.instanceColor.needsUpdate = true; cm2.receiveShadow = shadows; cm2.castShadow = shadows && kind !== 'fallow'; fv.built.add(cm2);
@@ -316,20 +321,20 @@ export function buildFloor(L, opt = {}){
       if (pts.length){
         const pm = new THREE.InstancedMesh(G.puddle, fv.mats.puddle ||= shared(new THREE.MeshStandardMaterial({ color:'#4a5c68', roughness:.02, metalness:.7, emissive:new THREE.Color('#122230'), transparent:true, opacity:.85, depthWrite:false })), pts.length);
         const q = new THREE.Quaternion(), sc = new THREE.Vector3(), ps = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
-        pts.forEach((i, n) => { const s2 = .55 + hr(i, 181) * .6; ps.set(wx(i % f.W) + (hr(i, 182) - .5) * .4, .012, wz((i / f.W) | 0) + (hr(i, 183) - .5) * .4); q.setFromAxisAngle(up, hr(i, 184) * 6.28); sc.set(s2, 1, s2 * (.6 + hr(i, 185) * .4)); mat4.compose(ps, q, sc); pm.setMatrixAt(n, mat4); });
+        pts.forEach((i, n) => { const s2 = .55 + hr(i, 181) * .6; ps.set(wx(i % f.W) + (hr(i, 182) - .5) * .4, .012 + groundY(f, i % f.W, (i / f.W) | 0), wz((i / f.W) | 0) + (hr(i, 183) - .5) * .4); q.setFromAxisAngle(up, hr(i, 184) * 6.28); sc.set(s2, 1, s2 * (.6 + hr(i, 185) * .4)); mat4.compose(ps, q, sc); pm.setMatrixAt(n, mat4); });
         fv.built.add(pm);
       }
     }
   }
   // difficult terrain: a dark wet patch with stones and debris on it
-  const rt = (f.rough || []).filter(i => !pv || exp.has(i));
+  const knee = new Set(f.shallow || []), rt = (f.rough || []).filter(i => (!pv || exp.has(i)) && !knee.has(i));   // (water to the knee is drawn as water)
   if (rt.length){
     const mud = new THREE.InstancedMesh(G.tile, fv.mats.mud ||= shared(new THREE.MeshStandardMaterial({ color:'#3d3122', roughness:.3, metalness:.08, transparent:true, opacity:.85, depthWrite:false })), rt.length);
-    rt.forEach((i, n) => { mat4.compose(new THREE.Vector3(wx(i % f.W), .012, wz((i / f.W) | 0)), new THREE.Quaternion(), new THREE.Vector3(.94, .05, .94)); mud.setMatrixAt(n, mat4); mud.setColorAt(n, col.setRGB(1, 1, 1).multiplyScalar(.8 + hr(i, 90) * .4)); });
+    rt.forEach((i, n) => { mat4.compose(new THREE.Vector3(wx(i % f.W), .012 + groundY(f, i % f.W, (i / f.W) | 0), wz((i / f.W) | 0)), new THREE.Quaternion(), new THREE.Vector3(.94, .05, .94)); mud.setMatrixAt(n, mat4); mud.setColorAt(n, col.setRGB(1, 1, 1).multiplyScalar(.8 + hr(i, 90) * .4)); });
     if (mud.instanceColor) mud.instanceColor.needsUpdate = true; mud.receiveShadow = shadows; fv.built.add(mud);
     const bits = []; for (const i of rt) for (let k = 0; k < 3; k++) bits.push([i, k]);
     const st = new THREE.InstancedMesh(pebbleGeometry(), treeMaterial, bits.length), q = new THREE.Quaternion(), sc = new THREE.Vector3(), ps = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
-    bits.forEach(([i, k], n) => { const s2 = .9 + hr(i, 91 + k) * 1.1; ps.set(wx(i % f.W) + (hr(i, 94 + k) - .5) * .75, .0, wz((i / f.W) | 0) + (hr(i, 97 + k) - .5) * .75); q.setFromAxisAngle(up, hr(i, 100 + k) * 6.28); sc.set(s2, s2 * .8, s2); mat4.compose(ps, q, sc); st.setMatrixAt(n, mat4); st.setColorAt(n, col.setRGB(.55, .5, .42).multiplyScalar(.7 + hr(i, 103 + k) * .5)); });
+    bits.forEach(([i, k], n) => { const s2 = .9 + hr(i, 91 + k) * 1.1; ps.set(wx(i % f.W) + (hr(i, 94 + k) - .5) * .75, groundY(f, i % f.W, (i / f.W) | 0), wz((i / f.W) | 0) + (hr(i, 97 + k) - .5) * .75); q.setFromAxisAngle(up, hr(i, 100 + k) * 6.28); sc.set(s2, s2 * .8, s2); mat4.compose(ps, q, sc); st.setMatrixAt(n, mat4); st.setColorAt(n, col.setRGB(.55, .5, .42).multiplyScalar(.7 + hr(i, 103 + k) * .5)); });
     if (st.instanceColor) st.instanceColor.needsUpdate = true; st.receiveShadow = shadows; fv.built.add(st);
   }
   // water: rivers, ponds and lakes (impassable, and no trees grow in it)
@@ -344,7 +349,7 @@ export function buildFloor(L, opt = {}){
   const sh = (f.shallow || []).filter(i => showTile(i));
   if (sh.length){
     const pm = new THREE.InstancedMesh(G.plane, fv.mats.shallow ||= shared(new THREE.MeshStandardMaterial({ color:'#3a5a66', roughness:.04, metalness:.55, emissive:new THREE.Color('#0d1d24'), transparent:true, opacity:.78, depthWrite:false })), sh.length);
-    sh.forEach((i, n) => { mat4.makeTranslation(wx(i % f.W), .035 + hr(i, 170) * .01, wz((i / f.W) | 0)); pm.setMatrixAt(n, mat4); pm.setColorAt(n, col.setRGB(1, 1, 1).multiplyScalar(.8 + hr(i, 171) * .35)); });
+    sh.forEach((i, n) => { mat4.makeTranslation(wx(i % f.W), .035 + hr(i, 170) * .01 + groundY(f, i % f.W, (i / f.W) | 0), wz((i / f.W) | 0)); pm.setMatrixAt(n, mat4); pm.setColorAt(n, col.setRGB(1, 1, 1).multiplyScalar(.8 + hr(i, 171) * .35)); });
     if (pm.instanceColor) pm.instanceColor.needsUpdate = true; pm.receiveShadow = shadows; fv.built.add(pm);
   }
   // a chasm: black all the way down; and the rope bridge across it, planks and two ropes
@@ -387,6 +392,7 @@ export function buildFloor(L, opt = {}){
   for (const p of f.props || []){
     if (pv){ const s = propSize(p); let any = false; for (let y = p.y; y < p.y + s.h && !any; y++) for (let x = p.x; x < p.x + s.w && !any; x++) if (exp.has(y * f.W + x) || seen(y * f.W + x)) any = true; if (!any) continue; }
     const m = buildProp(p); if (shadows) m.traverse(o => { if (o.isMesh){ o.castShadow = true; o.receiveShadow = true; } });
+    if (f.height) m.position.y += groundY(f, p.x, p.y);   // standing on a rise
     fv.built.add(m);
   }
   // stairs

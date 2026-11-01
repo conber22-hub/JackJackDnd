@@ -97,10 +97,13 @@ const MODULES = {
               water:rectTiles({ x:r.x + 1, y:up ? r.y : r.y + 4, w:r.w - 2, h:2 }), props:[P('bush', r.x, room.y), P('stone', r.x + r.w - 1, room.y + 1)] }; } },
   farm:     { w:9, h:7, make:(r, g, up) => { const room = { x:r.x, y:up ? r.y + 3 : r.y, w:r.w, h:4 }; return { name:'A lonely farmstead', notes:'Shutters nailed closed from the inside. Smoke from the chimney. Nobody answers.', room, ground:'dirt',
               buildings:[{ x:r.x + 1, y:up ? r.y : r.y + 4, w:5, h:3, name:'Farmhouse', door:up ? 's' : 'n', dark:true }], props:[P('fence', r.x + 7, room.y + 1), P('fence', r.x + 7, room.y + 2), P('hay', r.x + 6, room.y), P('trough', r.x + 1, room.y + 2, 1)] }; } },
-  stones:   { w:6, h:6, make:(r) => ({ name:'Standing stones', notes:'Three stones older than the road. Moss grows on every side but one.',
+  // a knoll above the road: from the top you see the next mile of it
+  lookout:  { w:7, h:7, make:(r, g) => ({ name:'A bare knoll', notes:'A rise above the road with one twisted tree on top. From up there you can see the next mile of road, and whatever is on it.', ground:'moor', rise:2,
+              props:[P('deadtree', r.x + 3, r.y + 3), P('boulder', r.x + 1, r.y + r.h - 2), ...(g() < .5 ? [P('ravens', r.x + 4, r.y + 2)] : [])] }) },
+  stones:   { w:6, h:6, make:(r) => ({ name:'Standing stones', notes:'Three stones older than the road, on a low mound. Moss grows on every side but one.', rise:1, ground:'moor',
               props:[P('stone', r.x + 1, r.y + 1), P('stone', r.x + 4, r.y + 1), P('stone', r.x + 2, r.y + 4), P('rubble', r.x + 4, r.y + 4)] }) },
 };
-const AMBIENT = ['shrine', 'ravens', 'graves', 'milestone', 'pond', 'farm', 'stones', 'mistbank', 'cart', 'ploughland', 'pasture', 'ploughland'];
+const AMBIENT = ['shrine', 'ravens', 'graves', 'milestone', 'pond', 'farm', 'stones', 'mistbank', 'cart', 'ploughland', 'pasture', 'ploughland', 'lookout'];
 function rectTiles(r){ const out = []; for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++) out.push([x, y]); return out; }
 
 /* ---------- the landmark at the end of the road ---------- */
@@ -251,7 +254,7 @@ export function genStretch(spec){
         const gap = 2 + Math.floor(g() * 3), rect = { x:clamp(ax - Math.floor(m.w / 2), 2, N - 2 - m.w), y:up ? ay - gap - m.h : ay + gap + 1, w:m.w, h:m.h };
         if (!free(rect, 1)) continue;
         const made = m.make(rect, g, up), room = made.room || rect;
-        lay.rooms.push([room.x, room.y, room.w, room.h, 'chamber', made.name, (ev ? `${ev.label}. ` : '') + made.notes, { outdoor:true, ...(made.ground ? { ground:made.ground } : {}), ...(made.crop ? { crop:made.crop } : {}) }]);
+        lay.rooms.push([room.x, room.y, room.w, room.h, 'chamber', made.name, (ev ? `${ev.label}. ` : '') + made.notes, { outdoor:true, ...(made.ground ? { ground:made.ground } : {}), ...(made.crop ? { crop:made.crop } : {}), ...(made.rise ? { rise:made.rise } : {}) }]);
         lay.props.push(...made.props); if (made.buildings) lay.buildings.push(...made.buildings); if (made.water) lay.water.push(...made.water);
         // a short track from the road to the clearing
         const tx = clamp(ax, room.x, room.x + room.w - 1), ty = up ? room.y + room.h - 1 : room.y;
@@ -272,7 +275,9 @@ export function genStretch(spec){
   // keep props off water and inside the map
   lay.props = lay.props.filter(p => p[1] >= 1 && p[2] >= 1 && p[1] < N - 1 && p[2] < N - 1);
   lay.water = lay.water.filter(([x, yy]) => x >= 1 && yy >= 1 && x < N - 1 && yy < N - 1);
-  if (lay.shallow) lay.props = lay.props.filter(p => !lay.shallow.some(([x, yy]) => x === p[1] && yy === p[2]));   // nothing stands in the ford
+  // nothing stands in the water or the ford (a prop set down before the brook ran through)
+  const wet = new Set([...lay.water, ...(lay.shallow || [])].map(([x, yy]) => yy * N + x));
+  lay.props = lay.props.filter(p => !wet.has(p[2] * N + p[1]));
   return { layout:lay, exit };
 }
 

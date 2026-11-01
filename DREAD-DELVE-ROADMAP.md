@@ -16,6 +16,29 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.15 — water, chasms, weather and hills
+
+More to the places the party explores. Pictures: `docs/screens/places-*.jpg`.
+- **Rooms with something of their own** (`src/engine/features.js`), rolled by the floor's theme. There's at most one a room, never in a stair room, and nothing that could be walked to is ever cut off.
+  - **Flooded**: black water to the knee across most of the floor; difficult terrain.
+  - **A chasm**: a crack across the room, one or two squares wide, with a rope bridge over it. It's the only way across, you can see over it, and the DM's notes carry the fall.
+  - **A ceiling fall**: rock come down against a wall, with rubble spilling out.
+  - **Pillared**: two rows of pillars down a big hall, giving cover.
+  - Each adds a line to the room's read-aloud and the DM's notes. Furniture keeps out of the water and off the bridge.
+  - Floor data: `shallow` (walkable water, also in `rough`), `chasm` (a drop, kept solid), `span` (the bridge).
+- **Brooks and fords.** About a third of the road stretches that have no river get a winding brook, which the road wades at a ford: knee-deep, difficult, with nothing standing in it. The DM's notes for the stretch say so. Layouts can list `shallow` squares too.
+- **Weather on the ground** (outdoors), from the day's weather line:
+  - snow whitens the ground, the fields and the land past the edge, and lies on the pines
+  - frost gives a pale rime
+  - rain darkens and wets the ground and leaves puddles, most on the roads
+  - The maps redraw when the weather changes (a new day, or the DM's desk).
+- **Hills.** An open-air room can be a rise (`rise` 1–3): a dome of ground in levels, highest in the middle.
+  - Its slopes are difficult terrain, so climbing costs extra.
+  - Minis, furniture, crops and every overlay stand on the raised ground, and tapping a square allows for its height.
+  - Yester Hill's top is a three-level rise; the roads have bare knolls with a view, and standing stones on a mound.
+  - The DM can raise or flatten any open-air room in the Maps tab.
+  - Floor data: `height` { square: level } and `slope`, worked out from the rooms by `riseHeights()` in `src/engine/generator.js`. Players get the heights of what they've seen.
+
 ## v1.14 — places to explore
 
 The ground the party walks on, under and over. Before and after: `docs/screens/land-*.jpg`.
@@ -441,6 +464,7 @@ src/engine/             pure logic: no DOM, no Three.js, unit-tested
   state.js              state + ui, token factories, newState
   generator.js          floors, rooms, corridors, carve(), doors, traps, stairs, populate
   caves.js              dug floors: ragged rooms and wandering tunnels, always joined up (cavify)
+  features.js           a room's own thing: flooded, a chasm with a rope bridge, a ceiling fall, pillars
   grid.js               movement (difficult terrain), line of sight, passive Perception
   importer.js           Battle Table / grid JSON / ASCII import, ASCII & JSON export
   tables.js             roll-table parser

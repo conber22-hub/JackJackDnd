@@ -37,3 +37,23 @@ test('the mine under the chapel is a cave, and the floor switch shows it', async
   await page.locator('#floorUp').click();
   await expect.poll(() => page.evaluate(() => window.DreadDelve.ui.floor)).toBe(0);
 });
+
+test('an open-air room can be raised into a hill from the Maps tab, and a hero standing on it stands higher', async ({ page }) => {
+  await page.evaluate(() => {
+    const D = window.DreadDelve; D.ui.roomPrompts = false; document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
+    D.newDelve({ name:'Hill', seed:'e2e-hill', floors:1, size:40, template:'barovia', party:true }, false);
+    document.querySelectorAll('#cardLayer .pop').forEach(el => el.remove());
+  });
+  await idle(page);
+  const sq = await page.evaluate(() => window.DreadDelve.get().floors[0].rooms.find(r => r.outdoor && r.w >= 6 && r.h >= 6));
+  if (!await page.evaluate(() => window.DreadDelve.ui.panelOpen)) await page.locator('#btnPanel').click();
+  await page.locator('[data-act="tab"][data-k="dungeon"]').click();
+  await page.locator(`select[data-edit="room"][data-id="${sq.id}"][data-f="rise"]`).selectOption('2');
+  await expect.poll(() => page.evaluate(({ x, y }) => window.DreadDelve.get().floors[0].height?.[y * 40 + x], { x:sq.cx, y:sq.cy })).toBe(2);
+  // a hero walks up to the top: the mini ends up standing on the rise
+  await page.evaluate(({ x, y }) => { const D = window.DreadDelve; D.ui.freeMove = true; const t = D.get().tokens.find(t => t.kind === 'pc'); D.doMove(t, x, y); }, { x:sq.cx, y:sq.cy });
+  await idle(page);
+  await expect.poll(() => page.evaluate(({ x, y }) => { const D = window.DreadDelve, t = D.get().tokens.find(t => t.kind === 'pc' && t.x === x && t.y === y); return t ? D.tokenViews.get(t.id)?.group.position.y : null; }, { x:sq.cx, y:sq.cy })).toBeGreaterThan(.6);
+  await page.locator(`select[data-edit="room"][data-id="${sq.id}"][data-f="rise"]`).selectOption('0');
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.get().floors[0].height)).toBeUndefined();
+});

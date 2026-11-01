@@ -13,7 +13,7 @@ import { reachState, showGhostRect, showRoomHandles, showPathPreview, clearOverl
 import { extendPath, provokers, tokGap } from '../engine/movement.js';
 import { rangeCheck, coverOf, coverLabel, attackProfile, areaOf, areaSquares, caughtIn, spellReach } from '../engine/targeting.js';
 import { showRange, showCoverLines, showAreaPreview, clearTargeting } from '../render/effects.js';
-import { pathTo, pathCost } from '../engine/grid.js';
+import { pathTo, pathCost, groundY } from '../engine/grid.js';
 import { moveAllowance } from '../game/rules.js';
 import { mayMove, toggleGroup, pausedMover } from '../game/moves.js';
 import { rectProblem } from '../engine/generator.js';
@@ -59,7 +59,14 @@ export function pickTile(cx, cy){
   setNdc(cx, cy);
   const p = new THREE.Vector3();
   if (!raycaster.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), -floorY(ui.floor)), p)) return null;
-  const n = state.meta.size, x = Math.floor(p.x + n / 2), y = Math.floor(p.z + n / 2);
+  const n = state.meta.size; let x = Math.floor(p.x + n / 2), y = Math.floor(p.z + n / 2);
+  // on raised ground the square under the pointer sits higher: look again at the height of the square first found
+  const f = state.floors[ui.floor];
+  if (f?.height) for (let k = 0; k < 2; k++){
+    const h = x >= 0 && y >= 0 && x < n && y < n ? groundY(f, x, y) : 0; if (!h) break;
+    if (!raycaster.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), -(floorY(ui.floor) + h)), p)) break;
+    x = Math.floor(p.x + n / 2); y = Math.floor(p.z + n / 2);
+  }
   if (x < 0 || y < 0 || x >= n || y >= n) return null;
   return { floor:ui.floor, x, y };
 }
