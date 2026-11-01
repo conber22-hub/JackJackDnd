@@ -16,6 +16,27 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.14 — places to explore
+
+The ground the party walks on, under and over. Before and after: `docs/screens/land-*.jpg`.
+- **Dungeons cut into rock.** On the deep floors (the Undercroft, the Silver Vein, the Hand-Warrens, the Undertow, the Ossuary, the Womb, the cellars, the castle dungeons, the Iron Coffin), a rock top covers every solid square and runs on past the map's edge. The wall tops become a pale lip round each room and tunnel, so corridors read as cuts in the earth, not strips in a void.
+  - For players, every square they haven't found yet is rock too, so the map opens up as they explore.
+  - The stacked view leaves the rock out so you can still look down through the floors.
+- **Natural caves** (`src/engine/caves.js`). The mine, the warrens, the Undertow and the Womb are dug, not built:
+  - Room edges are eaten away and bulge into the rock. Tunnels wander wider and narrower. Walls are heaped boulders, and there are fewer doors.
+  - Every square can still be reached, the stairs stay put, and the room rectangles don't move, so furnishing, labels, read-alouds and the Build tools all work.
+  - It only uses the floor's own `dug` and `filled` lists, and has its own dice, so the other floors of a seed don't change.
+  - A theme turns it on with `cave:` (0–1, how ragged) in `src/data/themes.js`.
+- **Outdoor ground.** Grass in the clearings, dirt on the roads, and cobbles in the streets of villages and towns. Boards go inside open-sided buildings. The land and the woods go on past the edge of the map, thinning into the mist.
+  - An open-air room can name its own `ground`: grass, moor, bare earth, mud, cobbles, furrows, flagstones or boards. Village squares, Hollin's Ford's market and the Vistani camp already do.
+  - The DM can change it in the Maps tab, on any open-air room.
+- **Fields and farmland.**
+  - An open-air room can grow a `crop`: wheat, barley, cabbages, pumpkins, ploughed earth, or a blighted field of grey stalks (`CROPS` in `src/data/props.js`). It's drawn as rows of plants on furrowed ground.
+  - Villages get one to three fields at their edges, walled with drystone or fenced, with a track to the street, a scarecrow and hay.
+  - The roads pass wheat, cabbage and pumpkin fields behind fieldstone walls, empty pastures, and the scarecrow field (now barley).
+  - The new **drystone wall** prop can be climbed over like a fence.
+  - The DM can plant or change a field in the Maps tab.
+
 ## v1.13 — the painted style (prototype)
 
 A second look for the world, after hand-painted 1970s film posters (inspired by, not a copy): **Table tab → Graphics & sound → Style → 🎨 Painted**. Medium or High quality only. Before and after: `docs/screens/painted-*.jpg`.
@@ -419,6 +440,7 @@ src/data/               ← the content. Edit freely.
 src/engine/             pure logic: no DOM, no Three.js, unit-tested
   state.js              state + ui, token factories, newState
   generator.js          floors, rooms, corridors, carve(), doors, traps, stairs, populate
+  caves.js              dug floors: ragged rooms and wandering tunnels, always joined up (cavify)
   grid.js               movement (difficult terrain), line of sight, passive Perception
   importer.js           Battle Table / grid JSON / ASCII import, ASCII & JSON export
   tables.js             roll-table parser
@@ -458,7 +480,7 @@ src/game/               rules that touch the scene and UI
   session.js            save / load / export, v1 save migration, undo, changed()
 src/render/             Three.js
   scene.js              renderer, camera, lights, tweens, labels
-  floors.js             stone, walls (or forest), stairs / exits, doors, traps, houses, props, mist, the Shift animation
+  floors.js             the ground (rock round the deep places, grass/roads/cobbles outdoors, crops, the land past the edge), walls (stone, boulders or forest), stairs / exits, doors, traps, houses, props, mist, the Shift animation
   props.js              the 3D props, houses with roofs, the instanced pine
   minis.js              procedural 3D minis (SHAPES) + syncing tokens
   effects.js            selection ring, reach glow, pings, bursts, Build overlays

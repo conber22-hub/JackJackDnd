@@ -87,6 +87,11 @@ const BUILD = {
   },
   cart(g){ box(g, .8, .12, 1.3, WOOD, 0, .45, 0); for (const sx of [-1, 1]) box(g, .05, .3, 1.3, WOOD, sx * .4, .62, 0); for (const sx of [-1, 1]) wheel(g, .32, sx * .48, .32, .1); for (const sx of [-1, 1]) box(g, .05, .05, .9, DARK, sx * .25, .45, -1.05); box(g, .4, .3, .5, STRAW, 0, .66, .1); },
   hay(g){ for (const [x, y, z] of [[-.18, .18, 0], [.2, .18, .05], [0, .5, 0]]) box(g, .45, .32, .62, STRAW, x, y, z); },
+  drystone(g){   // a field wall of stones laid without mortar, three courses, a little uneven
+    const r = mulberry32(7), greys = ['#6e6a62', '#5f5b54', '#7a756c', '#68645a'];
+    for (let row = 0; row < 3; row++) for (let k = 0; k < (row === 2 ? 3 : 4); k++)
+      box(g, .23 + Math.round(r() * 4) * .02, .15, .34 - row * .05, greys[Math.floor(r() * 4)], -.375 + k * .25 + (row % 2) * .12, .075 + row * .145, (r() - .5) * .05);
+  },
   fence(g){ for (const x of [-.45, .45]) box(g, .08, .7, .08, DARK, x, .35, 0); for (const y of [.3, .58]) box(g, 1, .06, .05, WOOD, 0, y, 0); },
   lamppost(g){ cyl(g, .04, .06, 1.7, IRON, 0, .85, 0, METAL); box(g, .3, .04, .04, IRON, .12, 1.65, 0, METAL); box(g, .14, .2, .14, '#ffcf7a', .24, 1.5, 0, GLOW); },
   signpost(g){ box(g, .08, 1.4, .08, DARK, 0, .7, 0); const a = box(g, .7, .14, .04, LIGHT, .25, 1.2, 0); a.rotation.z = .05; const b = box(g, .6, .14, .04, LIGHT, -.2, .95, 0); b.rotation.y = .5; },
@@ -392,6 +397,30 @@ export function tuftGeometry(){
   return tuftGeo;
 }
 export function pebbleGeometry(){ if (!pebbleGeo) pebbleGeo = painted(new THREE.DodecahedronGeometry(.07, 0), '#6a665e', new THREE.Matrix4().makeScale(1, .55, 1.2)); return pebbleGeo; }
+/* Crops for fields (an outdoor room's crop): one merged plant or clump each, for an InstancedMesh. */
+const cropGeos = {};
+export function cropGeometry(kind){
+  if (cropGeos[kind]) return cropGeos[kind];
+  const m = (x, y, z, rx = 0, rz = 0, s = 1) => new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(rx, 0, rz)), new THREE.Vector3(s, s, s));
+  const r = mulberry32(kind.length * 977), parts = [];
+  if (kind === 'wheat' || kind === 'barley' || kind === 'blight'){
+    // a clump of stalks, each with an ear (blight: bare, grey and bent)
+    const stalk = kind === 'blight' ? '#6f6a5c' : kind === 'barley' ? '#a89a62' : '#b8954a', ear = kind === 'blight' ? '#57534a' : kind === 'barley' ? '#c8b878' : '#d0a850';
+    for (let k = 0; k < 9; k++){
+      const x = (r() - .5) * .34, z = (r() - .5) * .34, h = .42 + r() * .2, lean = (r() - .5) * (kind === 'blight' ? .9 : .3), lean2 = (r() - .5) * .3;
+      parts.push(painted(new THREE.CylinderGeometry(.008, .012, h, 3), stalk, m(x, h / 2, z, lean2, lean)));
+      if (kind !== 'blight') parts.push(painted(new THREE.ConeGeometry(.024, .13, 4), ear, m(x - Math.sin(lean) * h, h + .03, z + Math.sin(lean2) * h, lean2, lean)));
+    }
+  } else if (kind === 'cabbage'){
+    parts.push(painted(new THREE.IcosahedronGeometry(.11, 1), '#7d9a5a', m(0, .09, 0, 0, 0, 1)));
+    for (let k = 0; k < 5; k++){ const a = k / 5 * 6.28; parts.push(painted(new THREE.SphereGeometry(.1, 6, 3, 0, 6.28, 0, 1.2), '#4f6b3a', m(Math.cos(a) * .08, .04, Math.sin(a) * .08, Math.sin(a) * .9, -Math.cos(a) * .9))); }
+  } else if (kind === 'pumpkin'){
+    const pm = new THREE.SphereGeometry(.15, 10, 7); pm.scale(1, .72, 1);
+    parts.push(painted(pm, '#b85e22', m(0, .1, 0)), painted(new THREE.CylinderGeometry(.015, .02, .08, 5), '#4a3a22', m(0, .22, 0, .3, 0)));
+    for (let k = 0; k < 3; k++){ const a = r() * 6.28; parts.push(painted(new THREE.CircleGeometry(.1, 6).rotateX(-Math.PI / 2), '#3e5a30', m(Math.cos(a) * .2, .02, Math.sin(a) * .2))); }
+  } else return (cropGeos[kind] = tuftGeometry());   // fallow: a few weeds
+  return (cropGeos[kind] = merged(parts));
+}
 // A lump of cave rock for the walls of dug floors: a faceted, dented ball, a little taller than wide.
 let boulderGeo = null;
 export function boulderGeometry(){

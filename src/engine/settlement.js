@@ -11,6 +11,7 @@
      tower     a tower on an island in a tarn; part 0 is the island and the ground floor, 1 the upper room, 2 the roof
    Each takes { seed, name, last (no floor below), part }. Pure: no DOM, no Three.js. */
 import { mulberry32, hashSeed, clamp } from '../util/core.js';
+import { CROPS } from '../data/props.js';
 
 const N = 40;
 const P = (k, x, y, r = 0) => [k, x, y, r];
@@ -30,8 +31,52 @@ function line(x0, y0, x1, y1, w = 1){ const off = Math.floor((w - 1) / 2), out =
   brush(); while (x !== x1 || y !== y1){ if (x !== x1) x += Math.sign(x1 - x); else y += Math.sign(y1 - y); brush(); } return out; }
 
 function base(name){ return { name, exits:null, rooms:[], paths:[], doors:[], buildings:[], props:[], water:[], fill:[], masonry:[], clear:[], events:[] }; }
-// ground: what the outdoor floor is (render/floors.js GROUND): grass unless said — cobble, dirt, mud, moor, furrow
-const room = (lay, r, type, name, notes, outdoor, ground) => lay.rooms.push([r.x, r.y, r.w, r.h, type, name, notes, outdoor ? { outdoor:true, ...(ground ? { ground } : {}) } : {}]);
+// ground: what the outdoor floor is (render/floors.js GROUND): grass unless said — cobble, dirt, mud, moor, furrow.
+// more: other room options (crop).
+const room = (lay, r, type, name, notes, outdoor, ground, more = {}) => lay.rooms.push([r.x, r.y, r.w, r.h, type, name, notes, outdoor ? { outdoor:true, ...(ground ? { ground } : {}), ...more } : {}]);
+
+/* Fields at the edge of a village: a walled or fenced plot of crops, with a track straight to the nearest street.
+   n: how many to try for. Fields go in before the houses, at the edges, so they get the open ground. */
+const FIELD_CROPS = ['wheat', 'barley', 'cabbage', 'pumpkin', 'fallow', 'blight', 'wheat', 'blight'];
+export function plantFields(lay, pl, g, n, streets){
+  let made = 0;
+  for (let t = 0; t < 400 && made < n; t++){
+    const w = 6 + Math.floor(g() * 4), h = 4 + Math.floor(g() * 3);
+    const r = R(3 + Math.floor(g() * (N - w - 6)), 3 + Math.floor(g() * (N - h - 6)), w, h);
+    const edge = r.x <= 5 || r.y <= 5 || r.x + r.w >= N - 5 || r.y + r.h >= N - 5;
+    if (!edge || !pl.free(r, 1)) continue;
+    // the track: from the middle of one side, straight out to a street or an open square (the first side that gets there)
+    const sides = [[0, -1], [0, 1], [-1, 0], [1, 0]].sort(() => g() - .5);
+    let track = null, dx = 0, dy = 0;
+    for (const [sx, sy] of sides){
+      let x = sx ? (sx < 0 ? r.x - 1 : r.x + r.w) : r.x + Math.floor(w / 2), y = sy ? (sy < 0 ? r.y - 1 : r.y + r.h) : r.y + Math.floor(h / 2); const t = [];
+      for (; x > 0 && y > 0 && x < N - 1 && y < N - 1; x += sx, y += sy){ if (streets.has(y * N + x)){ if (t.length >= 2){ track = t; dx = sx; dy = sy; } break; } if (pl.has(x, y) && t.length > 1) break; t.push([x, y]); }
+      if (track) break;
+    }
+    if (!track) continue;
+    const crop = FIELD_CROPS[Math.floor(g() * FIELD_CROPS.length)], c = CROPS[crop];
+    room(lay, r, 'chamber', c.field, c.notes, true, 'furrow', { crop });
+    const [gx, gy] = track[0], [ex, ey] = track[track.length - 1];
+    lay.paths.push({ w:1, pts:[gx, gy, ex + dx, ey + dy] });
+    pl.take(r, 1); for (const [x, y] of track) pl.take(R(x, y, 1, 1), 0);
+    // its boundary: a drystone wall or a fence on the ring of squares round it, open where the track comes in
+    const kind = g() < .6 ? 'drystone' : 'fence';
+    for (let x = r.x - 1; x <= r.x + r.w; x++) for (const yy of [r.y - 1, r.y + r.h]){ if (x === gx && yy === gy) continue; lay.props.push(P(kind, x, yy, 0)); lay.clear.push([x, yy]); }
+    for (let yy = r.y; yy < r.y + r.h; yy++) for (const x of [r.x - 1, r.x + r.w]){ if (x === gx && yy === gy) continue; lay.props.push(P(kind, x, yy, 1)); lay.clear.push([x, yy]); }
+    // and what stands in it
+    if (crop !== 'fallow' && g() < .7) lay.props.push(P('scarecrow', r.x + 1 + Math.floor(g() * (w - 2)), r.y + 1 + Math.floor(g() * (h - 2))));
+    if (g() < .5) lay.props.push(P('hay', r.x + (g() < .5 ? 0 : w - 1), r.y + (g() < .5 ? 0 : h - 1)));
+    made++;
+  }
+  return made;
+}
+// Every square the layout's paths and open-air rooms cover so far (where a field's track can join).
+function streetSquares(lay){
+  const s = new Set();
+  for (const p of lay.paths) for (let k = 0; k + 3 < p.pts.length; k += 2) for (const [x, y] of line(p.pts[k], p.pts[k + 1], p.pts[k + 2], p.pts[k + 3], p.w || 1)) s.add(y * N + x);
+  for (const [x0, y0, w, h, , , , o] of lay.rooms) if (o?.outdoor) for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) s.add(y * N + x);
+  return s;
+}
 
 /* An indoor room with a door onto a street: the walls round it are the building. door = { x, y } on the wall line. */
 function hall(lay, pl, r, name, notes, door, furnish){
@@ -124,6 +169,8 @@ function settlement(kind, o, g){
   // a back lane on the west side
   const lx = Math.max(wallR ? wallR.x + 4 : 5, sq.x - 12);
   lay.paths.push({ w:1, pts:[lx, y0 + 2, lx, bot - 2] }); pl.take(R(lx, y0 + 2, 1, bot - y0 - 3), 0);
+  // a village (not a walled town) has its fields out at the edges, before the houses take the ground
+  if (!wallR) plantFields(lay, pl, g, 3, streetSquares(lay));
   // houses everywhere else along the streets
   const dark = town ? .25 : .65, names = ['House', 'House', 'Cottage', town ? 'Townhouse' : 'Shuttered house'];
   const lo = wallR ? wallR.x + 2 : 2, hi = wallR ? wallR.x + wallR.w - 2 : N - 7;

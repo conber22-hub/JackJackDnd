@@ -1,6 +1,7 @@
 /* FLOOR THEMES — colours, room mix, Grok prompt, and who lives there.
    The first four are the default descent (cycled by depth). Floors store the theme's index, so add new
    themes at the END of the list to keep old saves pointing at the right look.
+   cave: 0–1: the floor is dug, not built (engine/caves.js), and this ragged; its walls are drawn as heaped rock.
    denizens: encounter groups the "Populate" button and templates drop into matching rooms.
      where = room types it likes · group = [[creature id, count or dice], ...] */
 import { SALT_ROAD } from './session0.js';

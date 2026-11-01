@@ -57,8 +57,19 @@ const P = (k, x, y, r = 0) => [k, x, y, r];
 const MODULES = {
   den:      { w:7, h:6, make:(r, g) => ({ name:'A wolf den', notes:'Gnawed bones and a hollow under the roots. It smells of wet dog and old blood.',
               props:[P('boulder', r.x + 1, r.y + 1), P('deadtree', r.x + r.w - 2, r.y + 1), P('bones', r.x + 2, r.y + r.h - 2), P('bones', r.x + 4, r.y + 2), P('boulder', r.x + r.w - 2, r.y + r.h - 2)] }) },
-  field:    { w:8, h:6, make:(r, g) => ({ name:'The scarecrow field', notes:'Rows of scarecrows, all facing the road. No birds. Not one.',
+  field:    { w:8, h:6, make:(r, g) => ({ name:'The scarecrow field', notes:'Rows of scarecrows in the barley, all facing the road. No birds. Not one.', crop:'barley', ground:'furrow',
               props:[...[1, 3, 5].flatMap(dx => [P('scarecrow', r.x + dx, r.y + 1), P('scarecrow', r.x + dx + 1, r.y + 3)]), P('fence', r.x, r.y + r.h - 1), P('fence', r.x + 1, r.y + r.h - 1), P('hay', r.x + r.w - 1, r.y + r.h - 2)] }) },
+  // open country: a field beside the road, walled with fieldstone
+  ploughland:{ w:9, h:6, make:(r, g) => { const crop = pick(['wheat', 'cabbage', 'pumpkin', 'fallow', 'blight'], g), walls = [];
+              for (let x = r.x; x < r.x + r.w; x++) if (x !== r.x + 4) walls.push(P('drystone', x, r.y, 0), P('drystone', x, r.y + r.h - 1, 0));
+              return { name:{ wheat:'A wheat field', cabbage:'A cabbage field', pumpkin:'A pumpkin field', fallow:'A ploughed field', blight:'A field gone grey' }[crop],
+                notes:{ wheat:'Wheat nobody has come to cut. Something has been lying in it: a flattened shape, too long for a man.', cabbage:'Cabbages, and a basket half filled and dropped.',
+                  pumpkin:'Pumpkins rotting on the vine. One has a face cut in it, fresh.', fallow:'Ploughed and left. A plough stands in the last furrow with no horse.', blight:'Grey stalks that crumble at a touch. The soil smells of a cellar.' }[crop],
+                crop, ground:'furrow', props:[...walls, ...(crop === 'fallow' ? [P('cart', r.x + r.w - 2, r.y + 2, 0)] : [P('scarecrow', r.x + 2 + Math.floor(g() * 5), r.y + 2)])] }; } },
+  // a pasture: rough grass inside a rail fence, a trough, and no animals
+  pasture:  { w:8, h:6, make:(r) => { const rails = []; for (let x = r.x; x < r.x + r.w; x++) if (x !== r.x + 3) rails.push(P('fence', x, r.y, 0), P('fence', x, r.y + r.h - 1, 0));
+              return { name:'An empty pasture', notes:'A fenced pasture, the gate swinging. Hoof-prints going in. None coming out.', ground:'moor',
+                props:[...rails, P('trough', r.x + 5, r.y + 2, 1), P('hay', r.x + 1, r.y + 2)] }; } },
   mistbank: { w:6, h:6, make:(r) => ({ name:'A bank of mist', notes:'The mist here is thick enough to lean on. It is colder inside than out.',
               props:[P('mist', r.x, r.y), P('mist', r.x + 3, r.y + 1), P('mist', r.x + 1, r.y + 3), P('mist', r.x + 4, r.y + 4)] }) },
   graves:   { w:6, h:5, make:(r) => ({ name:'Roadside graves', notes:'Wooden markers, most of them without names. One grave is fresh.',
@@ -84,12 +95,12 @@ const MODULES = {
   // (up = the clearing is above the road: its open side faces down, toward the road)
   pond:     { w:7, h:6, make:(r, g, up) => { const room = { x:r.x, y:up ? r.y + 3 : r.y, w:r.w, h:3 }; return { name:'A black pond', notes:'Still water that reflects a sky with more stars than this one has.', room,
               water:rectTiles({ x:r.x + 1, y:up ? r.y : r.y + 4, w:r.w - 2, h:2 }), props:[P('bush', r.x, room.y), P('stone', r.x + r.w - 1, room.y + 1)] }; } },
-  farm:     { w:9, h:7, make:(r, g, up) => { const room = { x:r.x, y:up ? r.y + 3 : r.y, w:r.w, h:4 }; return { name:'A lonely farmstead', notes:'Shutters nailed closed from the inside. Smoke from the chimney. Nobody answers.', room,
+  farm:     { w:9, h:7, make:(r, g, up) => { const room = { x:r.x, y:up ? r.y + 3 : r.y, w:r.w, h:4 }; return { name:'A lonely farmstead', notes:'Shutters nailed closed from the inside. Smoke from the chimney. Nobody answers.', room, ground:'dirt',
               buildings:[{ x:r.x + 1, y:up ? r.y : r.y + 4, w:5, h:3, name:'Farmhouse', door:up ? 's' : 'n', dark:true }], props:[P('fence', r.x + 7, room.y + 1), P('fence', r.x + 7, room.y + 2), P('hay', r.x + 6, room.y), P('trough', r.x + 1, room.y + 2, 1)] }; } },
   stones:   { w:6, h:6, make:(r) => ({ name:'Standing stones', notes:'Three stones older than the road. Moss grows on every side but one.',
               props:[P('stone', r.x + 1, r.y + 1), P('stone', r.x + 4, r.y + 1), P('stone', r.x + 2, r.y + 4), P('rubble', r.x + 4, r.y + 4)] }) },
 };
-const AMBIENT = ['shrine', 'ravens', 'graves', 'milestone', 'pond', 'farm', 'stones', 'mistbank', 'cart'];
+const AMBIENT = ['shrine', 'ravens', 'graves', 'milestone', 'pond', 'farm', 'stones', 'mistbank', 'cart', 'ploughland', 'pasture', 'ploughland'];
 function rectTiles(r){ const out = []; for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++) out.push([x, y]); return out; }
 
 /* ---------- the landmark at the end of the road ---------- */
@@ -224,7 +235,7 @@ export function genStretch(spec){
         const gap = 2 + Math.floor(g() * 3), rect = { x:clamp(ax - Math.floor(m.w / 2), 2, N - 2 - m.w), y:up ? ay - gap - m.h : ay + gap + 1, w:m.w, h:m.h };
         if (!free(rect, 1)) continue;
         const made = m.make(rect, g, up), room = made.room || rect;
-        lay.rooms.push([room.x, room.y, room.w, room.h, 'chamber', made.name, (ev ? `${ev.label}. ` : '') + made.notes, { outdoor:true }]);
+        lay.rooms.push([room.x, room.y, room.w, room.h, 'chamber', made.name, (ev ? `${ev.label}. ` : '') + made.notes, { outdoor:true, ...(made.ground ? { ground:made.ground } : {}), ...(made.crop ? { crop:made.crop } : {}) }]);
         lay.props.push(...made.props); if (made.buildings) lay.buildings.push(...made.buildings); if (made.water) lay.water.push(...made.water);
         // a short track from the road to the clearing
         const tx = clamp(ax, room.x, room.x + room.w - 1), ty = up ? room.y + room.h - 1 : room.y;

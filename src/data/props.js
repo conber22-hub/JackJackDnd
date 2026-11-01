@@ -61,6 +61,7 @@ export const PROPS = {
   bridge:     { n:'Bridge planks',   cat:'barovia', w:1, h:1 },
   ravens:     { n:'Ravens',          cat:'barovia', w:1, h:1 },
   palisade:   { n:'Palisade',        cat:'barovia', w:1, h:1 },
+  drystone:   { n:'Drystone wall',   cat:'village', w:1, h:1 },
   rubble:     { n:'Rubble',          cat:'barovia', w:1, h:1 },
   hull:       { n:'Iron hull plate', cat:'barovia', w:2, h:2 },
   boat:       { n:'Rowing boat',     cat:'barovia', w:1, h:2 },
@@ -99,6 +100,17 @@ export const PROPS = {
   fungus:     { n:'Pale fungus',     cat:'mine',    w:1, h:1 },
   puddle:     { n:'Black puddle',    cat:'mine',    w:1, h:1 },
 };
+// What an open-air room's ground can be (its `ground`; render/floors.js paints it). Unset: grass, or the road.
+export const GROUNDS = { grass:'Grass', moor:'Rough moor', dirt:'Bare earth', mud:'Mud', cobble:'Cobbles', furrow:'Ploughed furrows', flag:'Flagstones', plank:'Boards' };
+// What a field can be growing (an outdoor room's `crop`; render/floors.js plants it). blight: the Barovian kind.
+export const CROPS = {
+  wheat:  { n:'Wheat',            field:'The wheat field',    notes:'Standing wheat, chest high and gone to seed. Nobody has come to cut it.' },
+  barley: { n:'Barley',           field:'The barley field',   notes:'Barley, bowed and whispering. The rows are crooked, as if the plough had flinched.' },
+  cabbage:{ n:'Cabbages',         field:'A cabbage patch',    notes:'Cabbages in muddy rows, some of them split open from the inside.' },
+  pumpkin:{ n:'Pumpkins',         field:'Pumpkin rows',       notes:'Pumpkins rotting on the vine, faces cut in a few of them. Nobody admits to cutting them.' },
+  fallow: { n:'Ploughed earth',   field:'A ploughed field',   notes:'Ploughed and left. The furrows are deep enough to lie down in.' },
+  blight: { n:'Blighted stalks',  field:'The blighted field', notes:'Grey stalks that crumble at a touch. The soil smells of a cellar.' },
+};
 // Props that give off light (candles, fire): the renderer puts a real flickering light on the nearest few.
 export const LIT = { candelabra:1, brazier:1.3, hearth:1.6, lantern:.8, lamppost:1, campfire:1.6, altar:.7, cauldron:.8, anvil:.9, longtable:.5, organ:.4 };
 
@@ -120,7 +132,7 @@ export const HOUSES = {
 export const PROP_TOP = { table:.51, longtable:.51, chair:.29, bench:.29, stool:.33, bar:.64, bed:.45, barrel:.62, kegs:.6, crate:.56, sacks:.25, cart:.51, hay:.66,
   trough:.35, anvil:.7, stump:.3, boulder:.42, log:.37, rubble:.12, chest:.55, altar:.86, coffin:.46, desk:.72, cradle:.5, throne:.5, pew:.45, sarcophagus:.8,
   rack:.5, minecart:.64, cauldron:.5, saltcrock:.4, stall:.5, wreck:.3, wheel:.12, ore:.2, boat:.25 };
-export const PROP_HOP = new Set(['fence']);
+export const PROP_HOP = new Set(['fence', 'drystone']);
 export const PROP_BLOCK = new Set(['shelf', 'hearth', 'bookshelf', 'wardrobe', 'statue', 'pillar', 'organ', 'armor', 'banner', 'lamppost', 'signpost', 'candelabra',
   'gravestone', 'shrine', 'cage', 'pine', 'deadtree', 'scarecrow', 'well', 'carriage', 'horse', 'vardo', 'tent', 'hull', 'beam', 'brazier', 'lantern', 'milestone',
   'dollhouse', 'gallows', 'palisade', 'stone']);

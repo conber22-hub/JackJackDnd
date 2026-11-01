@@ -21,7 +21,7 @@ import { gfx } from '../render/gfx.js';
 import { heroStats } from '../engine/hero.js';
 import { sheetHTML } from './creator.js';
 import { myHero } from '../game/heroes.js';
-import { PROPS, PROP_CATS, HOUSES } from '../data/props.js';
+import { PROPS, PROP_CATS, HOUSES, GROUNDS, CROPS } from '../data/props.js';
 import { valleyTab, placesForSession, playerMapTab } from './valley.js';
 import { modelInfo } from '../render/models.js';
 import { CAMPAIGN, SESSIONS, CLOCKS, PLACES, PLACE_STATES, CAST, FORTUNE } from '../data/campaign.js';
@@ -183,6 +183,8 @@ function dungeonTab(){
   for (const r of f.rooms) h += `<div class="card ${ui.selRoom === r.id ? 'sel' : ''}"><div class="hd"><span class="dot" style="color:${ROOM_TYPES[r.type]?.color};background:${ROOM_TYPES[r.type]?.color}"></span>
       <input class="txt" style="flex:1" value="${esc(r.name)}" data-edit="room" data-id="${r.id}" data-f="name"><button class="btn small" data-act="goRoom" data-id="${r.id}">Go</button></div>
       <div class="row"><select class="txt" data-edit="room" data-id="${r.id}" data-f="type">${Object.entries(ROOM_TYPES).map(([k, v]) => opt(k, v.label, r.type === k)).join('')}</select></div>
+      ${r.outdoor ? `<div class="row"><select class="txt" title="The ground underfoot" data-edit="room" data-id="${r.id}" data-f="ground">${opt('', 'Ground: as the map', !r.ground)}${Object.entries(GROUNDS).map(([k, v]) => opt(k, v, r.ground === k)).join('')}</select>
+        <select class="txt" title="A field: what grows here" data-edit="room" data-id="${r.id}" data-f="crop">${opt('', 'No crop', !r.crop)}${Object.entries(CROPS).map(([k, v]) => opt(k, v.n, r.crop === k)).join('')}</select></div>` : ''}
       <textarea class="txt" style="min-height:44px" placeholder="Read-aloud — what the party sees, hears and smells…" data-edit="room" data-id="${r.id}" data-f="read">${esc(r.read || '')}</textarea>
       <textarea class="txt" style="min-height:44px" placeholder="DM notes — what could happen here…" data-edit="room" data-id="${r.id}" data-f="notes">${esc(r.notes || '')}</textarea>
       <div class="row"><button class="btn small" data-act="readRoom" data-id="${r.id}">📜 Read aloud</button><button class="btn small" data-act="furnishRoom" data-id="${r.id}">🪑 Furnish</button><button class="btn small" data-act="clearRoom" data-id="${r.id}">✕ Clear furniture</button></div></div>`;
