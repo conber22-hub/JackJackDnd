@@ -68,3 +68,13 @@ test('furniture keeps its secrets: contents, unfound stashes and the shelf that 
   assert.equal(out[1].hides, 950, 'once the door is found, players can swing the shelf');
   assert.equal(f.props[0].contents, 'a cursed ring', 'the DM\'s copy is untouched');
 });
+
+test("the DM's notebook never reaches the players", () => {
+  const s = newState({ seed:'redact-notebook', floors:1, template:'andral' }); setState(s);
+  updateVision();
+  s.campaign.notebook = [{ id:'n1', at:Date.now(), session:3, text:'Strahd promised the miller a darker harvest', tags:['hook'], pin:false, done:false }];
+  const out = redactForPlayers(ser(s), { seen:seenNow, explored:s.explored });
+  assert.ok(!('campaign' in out), 'the whole campaign, notebook included, stays home');
+  assert.ok(!JSON.stringify(out).includes('darker harvest'), 'no note text leaks anywhere in the redacted delve');
+  assert.equal(s.campaign.notebook.length, 1, "the DM's own notebook is untouched");
+});

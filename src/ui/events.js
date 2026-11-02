@@ -1,6 +1,7 @@
 /* UI EVENT WIRING — every [data-act] button, [data-edit] field, and keyboard shortcut. */
 import { state, setState, ui, tokById, isDM, makePC, makeNPC, dreadLevel } from '../engine/state.js';
 import { ensureTourButton } from './tour.js';
+import { toggleNotebook } from './notebook.js';
 import { updateVision, freeTilesNear, seenNow } from '../engine/grid.js';
 import { roomById, carve } from '../engine/generator.js';
 import { floorToAscii, floorToJSON } from '../engine/importer.js';
@@ -478,7 +479,7 @@ addEventListener('keydown', e => {
   else if (e.key === 'PageDown') goFloor(ui.floor + 1);
   else if (e.key === '1') setView('tilt'); else if (e.key === '2') setView('top'); else if (e.key === '3') setView('stack');
   else if (e.key.toLowerCase() === 'f'){ const t = ui.selected && tokById(ui.selected); if (t) focusTile(t.floor, t.x, t.y); }
-  else if (e.key.toLowerCase() === 'n' && dm) nextTurn();
+  else if (e.key.toLowerCase() === 'n' && dm){ if (state.combat.active) nextTurn(); else toggleNotebook(); }   // N is next turn in a fight (and the help text says so); out of one it opens the notebook
   else if (e.key.toLowerCase() === 'w' && dm) whimRoll(ui.floor);
   else if (e.key.toLowerCase() === 'b' && dm){ ui.tab = ui.tab === 'build' ? 'tokens' : 'build'; ui.panelOpen = true; if (ui.tab !== 'build') setMode('select'); renderTabs(); renderPanel(); renderDock(); }
   else if ((e.key === 'Delete' || e.key === 'Backspace') && dm && ui.selected) removeToken(ui.selected);
