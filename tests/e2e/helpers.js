@@ -9,11 +9,14 @@ export const test = base.extend({
   },
 });
 
-export async function preparePage(page){
+// tour: false (the default) marks the first-night walkthrough as seen, so it doesn't cover the buttons a test taps;
+// the tour's own test passes { tour:true }.
+export async function preparePage(page, { tour = false } = {}){
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   // Fonts are cosmetic; keep functional tests independent of Google's CDN.
   await page.route(/^https:\/\/fonts\.(googleapis|gstatic)\.com\//, route => route.abort());
+  if (!tour) await page.addInitScript(() => localStorage.setItem('dreaddelve.tour.v1', '1'));
   await page.addInitScript(() => {
     localStorage.setItem('dreaddelve.gfx.v1', JSON.stringify({ quality:'low', music:false, sfx:false }));
     localStorage.setItem('dreaddelve.peerserver.v1', JSON.stringify({

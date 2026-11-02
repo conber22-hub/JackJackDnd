@@ -26,7 +26,7 @@ test('the player tour shows once, not again after a reload, and taps work after 
   const context = await browser.newContext({ baseURL, viewport:{ width:390, height:844 } });
   try {
     const player = await context.newPage();
-    const errors = await preparePage(player);
+    const errors = await preparePage(player, { tour:true });
     await player.locator('[data-act="thRole"][data-k="player"]').click();
     await player.locator('#pName').fill('Ada');
     await player.locator('#pWord').fill('e2e-secret');

@@ -12,7 +12,6 @@ test('a round at the table: the player acts, waits on the DM, and gets the resul
   const context = await browser.newContext({ baseURL, viewport:{ width:390, height:844 }, isMobile:true, hasTouch:true });
   try {
     const player = await context.newPage(), errors = await preparePage(player);
-    await player.evaluate(() => localStorage.setItem('dreaddelve.tour.v1', '1'));   // (seen the walkthrough)
     await player.locator('[data-act="thRole"][data-k="player"]').click();
     await player.locator('#pName').fill('Ada'); await player.locator('#pWord').fill('e2e-secret'); await player.locator('#joinCode').fill(code);
     await player.getByRole('button', { name:'Join the table', exact:true }).click();
