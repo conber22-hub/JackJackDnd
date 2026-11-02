@@ -9,13 +9,15 @@ test('helpless foes are crit up close, saves fail outright, holds are shaken off
     const D = window.DreadDelve, out = {}, tok = n => D.get().tokens.find(t => t.name === n);
     const ada = tok('Ada'), sk = D.placeMonster('skeleton', { floor:0, x:7, y:10 });   // the Barovian skeleton: linked to the SRD's
     out.skDefs = D.defencesOf(sk);
+    sk.hp = sk.maxHp = 500;   // (so a critical doesn't end it, and the test, early)
     // paralysed and right beside Ada: a hit is a critical; a miss is still a miss
     D.addCond(sk, 'paralyzed', -1);
     const i = 0; out.atk = ada.attacks[0]?.n;
     D.doAttack(ada.id, sk.id, i, 'normal', { d20:15 });
-    out.hitCard = D.get().log.at(-1)?.m || '';
+    const atkLine = () => D.get().log.slice(-6).map(e => e.m).reverse().find(m => m.startsWith('Ada ')) || '';
+    out.hitCard = atkLine();
     D.doAttack(ada.id, sk.id, i, 'normal', { d20:1 });
-    out.missCard = D.get().log.at(-1)?.m || '';
+    out.missCard = atkLine();
     // a paralysed creature fails a Dexterity save outright; restrained has disadvantage on it
     out.auto = D.saveRoll(sk, 'dex');
     D.get().tokens.filter(t => t.id === sk.id).forEach(t => t.hp = t.maxHp);
