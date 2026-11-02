@@ -156,7 +156,10 @@ export function renderSel(){
     const lg = dm && legendOf(t);
     if (lg?.legendary) acts += `<span class="chip on" title="Back at the start of its turn">⚜ ${legendLeft(t)}/${lg.legendary.n}</span>` + lg.legendary.acts.map((a, i) => `<button class="btn small ${legendLeft(t) < (a.cost || 1) ? 'off' : ''}" data-act="legend" data-i="${i}" title="${esc(a.f || '')}">⚜ ${esc(a.n)}${a.cost > 1 ? ` <span class="muted">(${a.cost})</span>` : ''}</button>`).join('');
     if (lg?.resist) acts += `<button class="btn small ${resistLeft(t) ? '' : 'off'}" data-act="lres">🛡 Legendary Resistance ${resistLeft(t)}/${lg.resist}</button>`;
-    if (t.casts?.length) acts += t.casts.map((s, i) => `<button class="btn small ${!canCast(t, s.l, s.n, s.again) ? 'off' : ''}" data-act="cast" data-i="${i}" title="${s.k === 'heal' ? 'Heal' : s.d ? `${esc(s.d)} ${esc(s.ty || '')}` : esc(s.cond || s.note || s.k)}${s.sv ? ` · DC ${s.dc} ${s.sv.toUpperCase()}` : ''}${s.rad ? ` · ${s.rad * 5} ft.` : ''}">✨ ${esc(s.n)}${s.l ? ` <span class="muted">L${s.l}</span>` : ''}</button>`).join('');
+    // a monster's save actions (breath weapons and the like, data/monster-play.js): ⟳ while it can, greyed once spent;
+    // the stat block's own words in the tip, for the parts the app leaves to the DM
+    const spent = s => s.mon && s.recharge && t.spent?.[s.n];
+    if (t.casts?.length) acts += t.casts.map((s, i) => `<button class="btn small ${spent(s) || !canCast(t, s.l, s.n, s.again) ? 'off' : ''}" data-act="cast" data-i="${i}" title="${s.k === 'heal' ? 'Heal' : s.d ? `${esc(s.d)} ${esc(s.ty || '')}` : esc(s.cond || s.k)}${s.sv ? ` · DC ${s.dc} ${s.sv.toUpperCase()}` : ''}${s.rad ? ` · ${s.rad * 5} ft.` : ''}${s.note ? ` — ${esc(s.note)}` : ''}">${s.mon ? '🐉' : '✨'} ${esc(s.n)}${s.l ? ` <span class="muted">L${s.l}</span>` : ''}${s.recharge ? ` <span class="muted">${spent(s) ? 'spent' : `⟳${s.recharge}–6`}</span>` : ''}</button>`).join('');
     acts += (t.resources || []).filter(r => !r.slot).map(r => `<button class="btn small ${left(t, r.id) ? '' : 'off'}" data-act="feat" data-k="${r.id}" title="${esc(r.text || '')}">${r.use === 'hitdie' ? '🎲' : '✦'} ${esc(r.id === 'hd' ? 'Hit Die' : r.n)} <span class="muted">${left(t, r.id)}/${r.max}</span></button>`).join('');
   }
   if (dm){

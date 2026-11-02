@@ -108,3 +108,17 @@ test('areas from the caster: a cone widens, a line runs straight, a cube sits in
   const o = coverFromOrigin(0, { x:6.5, y:7.5 }, tok('t', 'monster', 10, 6));
   assert.ok(['half', 'three'].includes(o.cover));
 });
+
+test('a Large creature\'s line and cone start at the edge of its space, not its middle', () => {
+  arena([]);
+  const drake = { id:'drake', floor:0, x:10, y:10, size:2 }, man = { id:'man', floor:0, x:10, y:10, size:1 };
+  const xs = r => [...r.squares].map(i => i % 16).sort((a, b) => a - b);
+  // 30-ft. line west: six squares past its space either way
+  const big = areaSquares(drake, { shape:'line', size:6, range:0 }, { x:2, y:10 });
+  assert.deepEqual([...new Set(xs(big))], [4, 5, 6, 7, 8, 9]);
+  const small = areaSquares(man, { shape:'line', size:6, range:0 }, { x:2, y:10 });
+  assert.deepEqual(xs(small), [4, 5, 6, 7, 8, 9]);
+  // a 15-ft. cone reaches three squares past the snout
+  const cone = areaSquares(drake, { shape:'cone', size:3, range:0 }, { x:2, y:10 });
+  assert.equal(Math.min(...xs(cone)), 7);
+});

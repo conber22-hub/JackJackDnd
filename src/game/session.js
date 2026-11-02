@@ -5,7 +5,7 @@ import { fillResources } from './resources.js';
 import { clearRequests } from './requests.js';
 import { clearPrompts } from './rooms.js';
 import * as THREE from 'three';
-import { state, setState, ui, newCampaign } from '../engine/state.js';
+import { state, setState, ui, newCampaign, monsterCasts } from '../engine/state.js';
 import { updateVision } from '../engine/grid.js';
 import { $ } from '../util/core.js';
 import { camTo, viewOffset, wx, wz, floorY } from '../render/scene.js';
@@ -56,6 +56,8 @@ export function deserialize(s){
   // heroes saved before slots and features: give them their resources (full) from the sheet
   // saves from before checks and saves at the table: heroes get their skill bonuses and ability modifiers
   for (const t of st.tokens) if (t.charId && !t.skills && st.characters[t.charId]){ const f = heroToken(st.characters[t.charId]); t.skills = f.skills; t.mods = f.mods; }
+  // creatures placed before monster actions existed get their breath weapons and the like (data/monster-play.js)
+  for (const t of st.tokens) if (t.kind === 'monster' && !t.casts && t.bid){ const c = monsterCasts(t.bid); if (c.length) t.casts = c; }
   for (const t of st.tokens) if (t.charId && !t.resources && st.characters[t.charId]){ const f = heroToken(st.characters[t.charId]); Object.assign(t, { resources:f.resources, casts:f.casts, attacks:f.attacks, ...(f.rageDmg ? { rageDmg:f.rageDmg } : {}) }); fillResources(t); }
   // saves from before ranges and areas (targeting): weapons get their range and reach, spells their range and shape
   for (const t of st.tokens) if (t.kind !== 'monster') addRanges(t);

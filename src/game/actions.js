@@ -18,7 +18,7 @@ import { syncTokens, tokenViews, faceStep } from '../render/minis.js';
 import { showReach, clearReach, refreshSelectionRing, spawnPing, burst, clearMovePath } from '../render/effects.js';
 import { showCard, toast, sendWhisper, renderTop, renderSel } from '../ui/hud.js';
 import { renderPanel } from '../ui/panels.js';
-import { canAct, moveAllowance, addCond, saveBonus, turnKey } from './rules.js';
+import { canAct, moveAllowance, addCond, saveBonus, turnKey, defend, defNote, immuneTo } from './rules.js';
 import { checkPath, fits, provokers } from '../engine/movement.js';
 import { moveGroup, takeDash, offerOpportunity, pausedMover } from './moves.js';
 import { applyDamage, runFx, zoneSource } from './combat.js';
@@ -250,12 +250,14 @@ export function triggerTrap(t, tr){
   const targets = state.tokens.filter(o => o.floor === t.floor && !o.dead && !o.flags.gone && cheb(o.x, o.y, x, y) <= (k.rad || 0));
   const base = k.dice && k.dice !== '0' ? rollDice(k.dice).total : 0, lines = [], fallers = [];
   for (const o of targets){
-    let dmg = base, ok = false;
-    if (k.save !== 'none'){ const r = d(20) + saveBonus(o, k.save); ok = r >= k.dc; if (ok) dmg = Math.floor(dmg / 2);
-      lines.push(`${esc(o.name)} — ${k.save.toUpperCase()} ${r} vs ${k.dc}: <b>${ok ? 'saved' : 'failed'}</b>${dmg ? ` → ${dmg} ${k.type}` : ''}${!ok && k.cond ? ` + ${k.cond}` : ''}`); }
-    else if (dmg) lines.push(`${esc(o.name)} → <b>${dmg}</b> ${k.type}`);
+    let raw = base, ok = false;
+    if (k.save !== 'none'){ const r = d(20) + saveBonus(o, k.save); ok = r >= k.dc; if (ok) raw = Math.floor(raw / 2);
+      var df = defend(o, raw, k.type);
+      lines.push(`${esc(o.name)} — ${k.save.toUpperCase()} ${r} vs ${k.dc}: <b>${ok ? 'saved' : 'failed'}</b>${raw ? ` → ${df.n} ${k.type}${defNote(df, raw)}` : ''}${!ok && k.cond ? (immuneTo(o, k.cond) ? ` · immune to ${k.cond}` : ` + ${k.cond}`) : ''}`); }
+    else { var df = defend(o, raw, k.type); if (raw) lines.push(`${esc(o.name)} → <b>${df.n}</b> ${k.type}${defNote(df, raw)}`); }
+    const dmg = df.n;
     if (!ok && k.cond && CONDITIONS[k.cond]) addCond(o, k.cond, 1);
-    if (dmg) applyDamage(o, dmg, k.type);
+    if (dmg) applyDamage(o, dmg, k.type, null, true);
     if (!ok && k.fx?.includes('pit') && !o.dead) fallers.push(o);
   }
   showCard({ kind:'crit', title:`${k.icon} ${k.n}!`, sub:`${t.name} sets it off`, flair:k.f, lines });

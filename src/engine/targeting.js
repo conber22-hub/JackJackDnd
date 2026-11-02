@@ -157,8 +157,9 @@ export function areaSquares(caster, area, aim){
       }
       box(Math.floor(c.x - R - 1), Math.floor(c.y - R - 1), Math.ceil(c.x + R + 1), Math.ceil(c.y + R + 1), (x, y) => {
         if (inCaster(x, y)) return;
-        const px = x + .5 - c.x, py = y + .5 - c.y, along = px * vx + py * vy, perp = Math.abs(px * vy - py * vx);
-        if (along <= 0 || along > R + .01) return;
+        // measured from the edge of its space, not its middle: a Large dragon's breath reaches as far past its snout as a man's
+        const px = x + .5 - c.x, py = y + .5 - c.y, along = px * vx + py * vy - (s - 1) / 2, perp = Math.abs(px * vy - py * vx);
+        if (along <= 0 || along > R + .25) return;   // (a quarter-square of grace, so aiming a little off the row still reaches)
         if (area.shape === 'cone' ? perp <= along / 2 + .25 : perp <= .55) add(x, y);
       });
       break;

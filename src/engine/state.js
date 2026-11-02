@@ -8,6 +8,7 @@ import { parseTable } from './tables.js';
 import { genDelve } from './generator.js';
 import { TEMPLATES } from '../data/themes.js';
 import { CLOCKS, PLACES } from '../data/campaign.js';
+import { MONSTER_PLAY } from '../data/monster-play.js';
 
 export { T, walk } from './tiles.js';
 
@@ -52,6 +53,9 @@ export function makePC(p){
            speed:p.speed || 30, init:p.init || 0, saveMod:3, check:p.check ?? 4, passive:p.passive ?? 13,
            attacks:parseAttacks(p.attacks || DEFAULT_PC_ATTACKS), floor:0, x:0, y:0, dead:false, flags:{}, conds:[], size:1, moved:0 };
 }
+// A creature's breath weapons and other save actions (data/monster-play.js, from its SRD stat block), shaped like
+// spells so the DM can aim them. A bestiary entry can carry its own (acts), which win.
+export const monsterCasts = bid => (BEST[bid]?.acts || MONSTER_PLAY[bid]?.actions || []).map(a => ({ ...a, l:0, mon:true }));
 export function makeMonster(bid, floor, x, y){
   const b = BEST[bid]; const hp = avgDice(b.hp);
   // a creature from the DM's books (game/library.js) joins the delve's own creatures: players' screens and the save need it
@@ -59,7 +63,8 @@ export function makeMonster(bid, floor, x, y){
   const n = state ? state.tokens.filter(t => t.bid === bid).length : 0;
   return { id:uid(), kind:'monster', bid, name:n ? `${b.name} ${n + 1}` : b.name, color:b.color, ac:b.ac, hp, maxHp:hp, speed:b.speed, init:b.init, saveMod:1,
            ...(b.saves ? { saves:{ ...b.saves } } : {}),   // a full stat block's saving throws (the SRD's), else the generic +1
-           check:2, passive:b.passive || 12, attacks:b.attacks.map(a => ({ ...a })), floor, x, y, dead:false, flags:{}, conds:[], size:b.size || 1, moved:0 };
+           check:2, passive:b.passive || 12, attacks:b.attacks.map(a => ({ ...a })), floor, x, y, dead:false, flags:{}, conds:[], size:b.size || 1, moved:0,
+           ...(monsterCasts(bid).length ? { casts:monsterCasts(bid) } : {}) };
 }
 export function makeNPC(name){
   return { id:uid(), kind:'npc', name, color:'#b9a7e0', ac:12, hp:20, maxHp:20, speed:30, init:1, saveMod:1, check:2, passive:12,

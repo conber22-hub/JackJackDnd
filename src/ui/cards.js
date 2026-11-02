@@ -70,7 +70,9 @@ export function cardHTML(t){
   let h = `<div class="cbig">${fight ? `<div class="cturn ${turn ? 'on' : ''}">${turn ? 'Your turn' : `${esc(currentTurn()?.name || '…')}'s turn`}</div>` : ''}`;
   h += `<h4>Attack <button class="btn small ${ui.atkMode !== 'normal' ? 'on' : ''}" data-act="atkMode">${ui.atkMode === 'adv' ? '▲ Advantage' : ui.atkMode === 'dis' ? '▼ Disadvantage' : '◆ Normal'}</button></h4><div class="cgrid">`
     + t.attacks.map((a, i) => btn('atk', i, a.n, `${a.b >= 0 ? '+' : ''}${a.b} · ${a.d}`, a.l && !canCast(t, a.l, a.sn || a.n, a.again))).join('') + `</div>`;
-  if (t.casts?.length) h += `<h4>Spells</h4><div class="cgrid">` + t.casts.map((s, i) => btn('cast', i, s.n, s.l ? `level ${s.l}` : 'cantrip', !canCast(t, s.l, s.n, s.again))).join('') + `</div>`;
+  // a monster's save actions (breath weapons and the like): what they do, and whether they've come back
+  const tag = s => s.mon ? `${String(s.sv).toUpperCase()} ${s.dc} · ${s.d} ${s.ty}${s.recharge ? (t.spent?.[s.n] ? ' · spent' : ` · ⟳${s.recharge}–6`) : ''}` : s.l ? `level ${s.l}` : 'cantrip';
+  if (t.casts?.length) h += `<h4>${t.casts.every(s => s.mon) ? 'Breath & other actions' : 'Spells'}</h4><div class="cgrid">` + t.casts.map((s, i) => btn('cast', i, s.n, tag(s), (s.mon && s.recharge && t.spent?.[s.n]) || !canCast(t, s.l, s.n, s.again))).join('') + `</div>`;
   const feats = (t.resources || []).filter(r => !r.slot);
   if (feats.length) h += `<h4>Features</h4><div class="cgrid">` + feats.map(r => btn('feat', 0, r.id === 'hd' ? 'Hit Die' : r.n, `${left(t, r.id)}/${r.max}`, !left(t, r.id), `data-res="${r.id}"`)).join('') + `</div>`;
   h += `<h4>Move <span class="muted" style="font-weight:400">one square a tap · north is up, as on the TV</span></h4><div class="dpad">${[[-1, -1, '↖'], [0, -1, '↑'], [1, -1, '↗'], [-1, 0, '←'], [0, 0, '·'], [1, 0, '→'], [-1, 1, '↙'], [0, 1, '↓'], [1, 1, '↘']].map(([dx, dy, a]) => dx || dy ? `<button class="btn" data-act="cardStep" data-k="${dx},${dy}">${a}</button>` : '<span></span>').join('')}</div>`;

@@ -16,6 +16,30 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.20 — the rules bite: defences, breath weapons, the pack
+
+Codex's three rules-engine PRs (#11, #12, #13) are merged and wired in. Pictures: `docs/screens/breath-weapon.jpg`, `docs/screens/pack-dm.jpg`.
+- **Resistances, immunities and vulnerabilities** (`src/engine/defenses.js`, read from each SRD creature's stat block).
+  - Every hit, spell, breath, trap and area applies them: a skeleton takes nothing from poison and double from a hammer.
+  - The card says why: "is resistant to fire: 18 → 9".
+  - Rage now goes through the same path.
+  - A creature immune to a condition doesn't take it ("immune to poisoned" on the card). The DM can still add one by hand, with a warning.
+  - `rules.js`: `defencesOf(t)` (its kind's, its own `t.def`, Rage), `defend()`, `immuneTo()`.
+- **Breath weapons and other save actions** (`src/data/monster-play.js`) for 75 SRD creatures.
+  - They appear on the DM's action bar as 🐉 buttons. Aim them like a spell: a cone or a line, with the save, the DC, half on a success, and any condition.
+  - **Recharge 5–6:** once used it shows *spent*, and a d6 at the start of the creature's turn brings it back (logged for the DM only). A new fight starts with every breath ready.
+  - The stat block's own words are in the button's tip, for the parts the app leaves to the DM.
+  - Legendary Action and Legendary Resistance counts for 30 and 32 more creatures.
+  - Creatures already on a map in an old save get their actions when it loads.
+- **The pack** (🎒, `src/ui/pack.js`; Codex's `src/engine/inventory.js`; `src/engine/gear.js`).
+  - Every hero sheet has a pack: on the player's hero tab, and under each character in the DM's Tokens tab.
+  - **Wear, wield, attune** (three at most; a shield and a two-handed weapon can't go together), one more, one fewer, add anything by name (the box suggests every item in the rules, and +1/+2/+3 armour and weapons).
+  - Coins, weight against Strength × 15, what it's all worth.
+  - **Magic that's a number counts on the token:** +N armour, weapons and shields, a Cloak or Ring of Protection (attuned), Bracers of Archery, spell DC and attack items. Worn items it can't put a number on are listed for the DM to rule on.
+  - An old sheet gets its pack from its armour, shield and weapons the first time it's opened. The creator's armour and weapon menus still work and update the pack (keeping a +1 longsword as "Longsword").
+  - The DM's changes go back to the player's copy; a player's go to the DM, like any edited sheet.
+- **Fix:** a Large or bigger creature's cone or line now starts at the edge of its space; it was a square short.
+
 ## v1.19 — polish for every session
 
 - **Muse's two features are in.**
@@ -527,6 +551,7 @@ src/data/               ← the content. Edit freely.
   session0.js           Session 0's hand-built maps: tavern, village, the Old Salt Road
   barovia-map.js        the Valley: places, roads, and what the road throws at travellers
   bestiary.js           FAMILIES, BESTIARY, default party
+  monster-play.js       (Codex, generated) SRD creatures' breath weapons and save actions, Legendary counts
   looks.js              forged minis' parts, palettes, class styles and creature presets
   npc-starter.js        names, quirks and wants for Roll an NPC
   themes.js             floor themes (+ denizens, Grok prompts) and TEMPLATES
@@ -538,6 +563,9 @@ src/engine/             pure logic: no DOM, no Three.js, unit-tested
   caves.js              dug floors: ragged rooms and wandering tunnels, always joined up (cavify)
   features.js           a room's own thing: flooded, a chasm with a rope bridge, a ceiling fall, pillars
   nemesis.js            the Count's Court: named servants with ranks, strengths, weaknesses, memory; the court's moves
+  defenses.js           (Codex) resistances, immunities, vulnerabilities from a stat block, applied part by part
+  inventory.js          (Codex) the pack: items, +N variants, equipping and attunement rules, magic bonuses, coins, load
+  gear.js               what a hero wears and wields, from the pack; keeps the creator's fields in step
   grid.js               movement (difficult terrain), line of sight, passive Perception
   importer.js           Battle Table / grid JSON / ASCII import, ASCII & JSON export
   tables.js             roll-table parser
@@ -607,6 +635,7 @@ src/game/heroes.js      players' heroes (their browser) and the DM's character r
 src/ui/creator.js       the character creator
 src/ui/valley.js        the Valley tab and its map (SVG)
 src/ui/screen.js        the table screen for the TV (?screen): ribbon, party, follow camera, read-alouds, faces, handouts, lights out
+src/ui/pack.js          🎒 the pack: wear, wield, attune, add, coins (player's hero tab, DM's Tokens tab)
 src/ui/cards.js         card only: a player's phone at an in-person game (big buttons, target list, move pad)
 src/net/screen.js       the table screen's local wire (BroadcastChannel) between the DM's window and the TV's
 src/render/textures.js · post.js · models.js · gfx.js   Phase 4: textures, post-processing, GLB models, quality settings

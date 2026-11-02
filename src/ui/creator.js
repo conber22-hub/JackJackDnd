@@ -8,6 +8,7 @@ import { newHero, heroStats, heroAttacks, heroSpells, spellPool, spellLimits, as
 import { $, esc, clamp, d } from '../util/core.js';
 import { toast } from './hud.js';
 import { heroLook, sheetLook } from '../engine/look.js';
+import { creatorGear } from '../engine/gear.js';
 import { BODIES, SKINS, SKINS_FANTASY, HAIR_COLS, CLOTHS, HAIR, BEARDS, HORNS, OUTFITS, CLOAKS, HELMS, WEAPON_MODELS, OFFHANDS, POSES } from '../data/looks.js';
 import { setStage, frame, portrait, act, studioCanvas, stageKey } from '../render/forge/studio.js';
 
@@ -252,6 +253,8 @@ function set(path, v){
   else if (path.startsWith('asi.')){ (h.asi ||= {})[path.slice(4)] = v || undefined; }
   else if (path.startsWith('w.')){ const ws = [0, 1, 2].map(i => (h.weapons || [])[i] || null); ws[+path.slice(2)] = v === '—' ? null : v; h.weapons = ws.filter(Boolean); }
   else h[path] = v;
+  // a hero with a pack (🎒, engine/gear.js): what's chosen here is what they now wear and wield; the rest stays carried
+  if (Array.isArray(h.inv) && (path === 'armor' || path === 'shield' || path === 'cls' || path.startsWith('w.'))) edit = creatorGear(h);
 }
 document.addEventListener('change', e => {
   if (!edit || !$('#charBox')?.contains(e.target)) return;

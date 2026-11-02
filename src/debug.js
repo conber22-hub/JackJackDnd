@@ -45,3 +45,7 @@ import * as srd from './data/srd.js';
 import * as library from './game/library.js';
 export { srd, library };
 export { outbox } from './game/outbox.js';
+export { addCond, defencesOf, defend } from './game/rules.js';
+export { legendOf, resistLeft } from './game/combat.js';
+export { applyCharacter } from './game/heroes.js';
+export { newHero, heroStats } from './engine/hero.js';

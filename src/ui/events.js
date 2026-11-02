@@ -15,13 +15,14 @@ import { syncTokens } from '../render/minis.js';
 import { clearReach, showReach } from '../render/effects.js';
 import { toast, renderAll, renderTop, renderSel, renderDock, renderTabs, openFightSetup, renderFightSetup, pickSlot, readCard } from './hud.js';
 import { renderPanel, libHits } from './panels.js';
+import { packAction, setCoin } from './pack.js';
 import { importLibrary, setLibraryKinds, removeLibrary, libraryState } from '../game/library.js';
 import { setMode } from './input.js';
 import { select, takeStairs, goFloor, setView, setDread, rebuildFog, doorAction, search, disarmTrap, triggerTrap, selectedDoor, selectedTrap, nearestHero } from '../game/actions.js';
 import { rollInitiative, nextTurn, endCombat, addToInit, applyDamage, heal, infest, useSpecial, removeToken, restoreTaken, leaveFight, delayTurn, autoTurn } from '../game/combat.js';
 import { fightCandidates } from '../engine/fight.js';
 import { currentTurn } from '../game/rules.js';
-import { addCond, removeCond, endConc } from '../game/rules.js';
+import { addCond, removeCond, endConc, immuneTo } from '../game/rules.js';
 import { shiftFloor } from '../game/shift.js';
 import { whimRoll, whimStep } from '../game/whim.js';
 import { changed, exportDelve, importDelve, loadLocal, loadState, deserialize, saveSoon, undo, download, snapshot } from '../game/session.js';
@@ -324,6 +325,8 @@ document.addEventListener('click', e => {
     case 'delHero': if (confirm('Delete this hero from this browser?')){ deleteMyHero(id); renderHeroList(); } break;
     case 'exportHero': { const h = myHero(id); if (h) download(`${h.name.replace(/[^\w]+/g, '-').toLowerCase()}.json`, JSON.stringify(h, null, 1)); } break;
     case 'dmNewChar': openCreator(null, { title:'New character (DM)', saveLabel:'Add to the party', onSave:h => { applyCharacter(h, { owner:'DM' }); renderPanel(); } }); break;
+    // 🎒 the pack (ui/pack.js): wear, wield, attune, one more, one fewer, add
+    case 'pack': { const v = k === 'add' ? $(`#packAdd-${CSS.escape(id)}`)?.value : null; if (packAction(id, k, el.dataset.i, v)) renderPanel(); } break;
     case 'dmSheet': { const h = state.characters[id]; if (h) openCreator(h, { title:`${h.name}'s sheet`, saveLabel:'Save sheet', onSave:h2 => { applyCharacter(h2, { owner:h.owner }); sendSheetToOwner(h2.id); renderPanel(); } }); } break;
     case 'placeChar': placeCharacter(id); break;
     case 'unlockChar': if (confirm('Clear this character\'s secret word? The next player to sign in with the owner\'s name gets it.')){ unlockCharacter(id); toast('Unlocked.'); renderPanel(); } break;
@@ -392,6 +395,7 @@ document.addEventListener('change', e => {
   if (kind === 'tok' && t){ const fld = el.dataset.f; t[fld] = el.type === 'number' ? (+el.value || 0) : el.value; if (fld === 'maxHp') t.hp = Math.min(t.hp, t.maxHp); if (t.hp > 0 && t.dead && t.kind !== 'monster') t.dead = false; changed(); }
   else if (kind === 'encFam'){ ui.encFam = el.value; rollEncounter(); renderPanel(); }
   else if (kind === 'charOwner'){ setCharacterOwner(el.dataset.id, el.value); renderPanel(); }
+  else if (kind === 'packCoin'){ if (setCoin(el.dataset.id, el.dataset.k, el.value)) renderPanel(); }
   else if (kind === 'atk' && t){ t.attacks = parseAttacks(el.value); changed(); }
   else if (kind === 'room'){ const r = roomById(state.floors[ui.floor], +el.dataset.id); if (!r) return; r[el.dataset.f] = el.dataset.f === 'rise' ? +el.value : el.value;
     if (el.dataset.f === 'rise'){ snapshot('raise ground'); carve(state.floors[ui.floor], state.tokens.filter(t => t.floor === ui.floor)); syncTokens(); } if (el.dataset.f === 'name') r.named = true; if (!['notes', 'read'].includes(el.dataset.f)) buildFloor(ui.floor); renderPanel(); changed(); }
@@ -406,7 +410,7 @@ document.addEventListener('change', e => {
   }
   else if (kind === 'importMap' && el.files[0]){ const r = new FileReader(); r.onload = () => { $('#importText').value = r.result; toast('File loaded — choose how to import it.'); }; r.readAsText(el.files[0]); }
   else if (kind === 'art' && el.files[0]) loadArt(el.dataset.k, el.files[0]);
-  else if (kind === 'addCond' && sel && el.value){ addCond(sel, el.value, -1); changed(); }
+  else if (kind === 'addCond' && sel && el.value){ if (immuneTo(sel, el.value)) toast(`${sel.name} is immune to ${el.value} by its stat block — added anyway, your call.`); addCond(sel, el.value, -1, null, true); changed(); }
   else if (['propLock', 'propContents', 'propStash', 'propStashDc'].includes(kind)){ const p = selectedProp(); if (p) editProp(ui.selProp.floor, p.id, { propLock:'lock', propContents:'contents', propStash:'stash', propStashDc:'stashDc' }[kind], el.value); }
   else if (kind === 'fightPick' && ui.fight){ if (el.checked) ui.fight.ids.add(el.dataset.id); else ui.fight.ids.delete(el.dataset.id); renderFightSetup(); }
   else if (kind === 'fightGroup' && ui.fight){ ui.fight.group = el.checked; }

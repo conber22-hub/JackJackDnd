@@ -20,6 +20,7 @@ import { SHAPE_NAMES } from '../render/minis.js';
 import { gfx } from '../render/gfx.js';
 import { heroStats } from '../engine/hero.js';
 import { sheetHTML } from './creator.js';
+import { packHTML } from './pack.js';
 import { myHero } from '../game/heroes.js';
 import { PROPS, PROP_CATS, HOUSES, GROUNDS, CROPS } from '../data/props.js';
 import { RANKS, KINDS, STRENGTHS, WEAKNESSES } from '../data/court.js';
@@ -102,7 +103,7 @@ function tokensTab(){
     h += `<div class="card"><div class="hd"><span class="dot" style="color:${c.color};background:${c.color}"></span><span class="nm">${esc(c.name)} <span class="muted">${esc(c.sp)} ${esc(c.cls)} ${st.L}</span></span>
       <button class="btn small" data-act="dmSheet" data-id="${c.id}">Sheet</button>${tok ? '' : `<button class="btn small" data-act="placeChar" data-id="${c.id}">Place</button>`}<button class="btn small danger" data-act="removeChar" data-id="${c.id}">✕</button></div>
       <div class="row"><label class="muted" style="flex:1">🎮 Player <input class="txt" style="width:auto" data-edit="charOwner" data-id="${c.id}" value="${esc(c.owner || '')}" placeholder="their sign-in name"></label>${c.key ? `<span title="Locked to the player's secret word">🔒</span><button class="btn small" data-act="unlockChar" data-id="${c.id}" title="They forgot their word? Clear it.">Unlock</button>` : ''}</div>
-      <div class="stat">AC ${st.ac} · HP ${st.hp} · Speed ${st.spd} · PP ${st.passive}${st.dc ? ` · Spell DC ${st.dc}` : ''}${c.goBackFor ? ` · would go back for <i>${esc(c.goBackFor)}</i>` : ''}${c.homeSmell ? ` · home smells of <i>${esc(c.homeSmell)}</i>` : ''}</div></div>`;
+      <div class="stat">AC ${st.ac} · HP ${st.hp} · Speed ${st.spd} · PP ${st.passive}${st.dc ? ` · Spell DC ${st.dc}` : ''}${c.goBackFor ? ` · would go back for <i>${esc(c.goBackFor)}</i>` : ''}${c.homeSmell ? ` · home smells of <i>${esc(c.homeSmell)}</i>` : ''}</div>${packHTML(c)}</div>`;
   }
   h += `<div class="row"><button class="btn small primary" data-act="dmNewChar">✚ Create a character</button></div>`;
   const foes = state.tokens.filter(t => t.kind === 'monster' && t.floor === ui.floor);
@@ -474,7 +475,7 @@ function heroTab(){
     h += `<div class="row"><button class="btn small ${ui.cardOnly ? 'on' : ''}" data-act="cardOnly" title="At an in-person game, when the TV shows the map: no map on this phone, just your hero as a big card">📇 Card only${ui.cardOnly ? ': ON' : ' (we\'re at the table)'}</button></div>`;
     if (ui.cardOnly) h += cardHTML(me);
     if (ui.notes?.length) h += `<details class="card"><summary>🤫 Notes for you (${ui.notes.length})</summary>${ui.notes.map(n => `<div class="look" ${n.strahd ? 'style="color:#f0b0b0"' : ''}>${esc(n.text)}</div>`).join('')}</details>`;
-    if (sheet) h += sheetHTML(sheet) + `<div class="row"><button class="btn small" data-act="editHero" data-id="${sheet.id}">✎ Edit / level up</button></div>`;
+    if (sheet) h += sheetHTML(sheet) + packHTML(sheet) + `<div class="row"><button class="btn small" data-act="editHero" data-id="${sheet.id}">✎ Edit / level up</button></div>`;
     h += picker + newAtTable();
     if (!ui.cardOnly) h += `<div class="muted">${state.combat.active ? (turn ? '<b style="color:var(--candle)">It is your turn.</b> Tap a glowing tile to move.' : 'Combat — wait for your turn to move.') : 'Exploring — tap your hero, then a glowing tile.'}<br>Tap a door next to you to open it. Long-press or use ◎ to ping a spot for everyone.</div>`;
   }

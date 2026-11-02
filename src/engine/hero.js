@@ -1,5 +1,7 @@
 /* HEROES — a character sheet (what the creator saves) and everything derived from it: ability scores, AC, HP,
    saves, skills, passive Perception, attacks, spells and the token that goes on the map. Pure: no DOM. */
+import { gearOf, baseOf } from './gear.js';
+import { itemEffects } from './inventory.js';
 import { ABILITIES, CLASSES, SPECIES, BACKGROUNDS, WEAPONS, ARMOR, SPELLS, SUBSPELLS, SUBCLASSES, SKILLS, SLOTS_FULL, SLOTS_HALF, PACT, FEATS, mod, profBonus, MAX_LEVEL } from '../data/srd.js';
 import { clamp, uid } from '../util/core.js';
 import { heroLook } from './look.js';
@@ -61,16 +63,18 @@ export function heroStats(h){
   // which comes at its first feature's level (3 in the 2024 rules; 1 or 2 for some older ones)
   const libSub = SUBCLASSES[h.cls]?.[h.sub], subAt = libSub ? Math.min(3, ...Object.keys(libSub.features).map(Number)) : 3;
   const sub = L >= subAt ? (libSub ? h.sub : C.sub) : null;
-  // armour class
-  const armorName = ARMOR[h.armor] ? h.armor : 'None', arm = ARMOR[armorName];
+  // armour class: what's worn (from the pack, engine/gear.js), plus magic armour, shields and rings (engine/inventory.js)
+  const g = gearOf(h), fx = Array.isArray(h.inv) ? itemEffects(h) : null;
+  const armorName = g.armor, arm = ARMOR[armorName];
   let ac = arm.ac + Math.min(M('Dex'), arm.dex);
   if (armorName === 'None'){
     if (h.cls === 'Barbarian') ac = 10 + M('Dex') + M('Con');
-    if (h.cls === 'Monk' && !h.shield) ac = 10 + M('Dex') + M('Wis');
+    if (h.cls === 'Monk' && !g.shield) ac = 10 + M('Dex') + M('Wis');
     if (sub === 'Draconic Sorcery') ac = Math.max(ac, 10 + M('Dex') + M('Cha'));
     if (h.cls === 'Warlock' && h.invoc === 'Armor of Shadows') ac = Math.max(ac, 13 + M('Dex'));
   }
-  if (h.shield && h.cls !== 'Monk') ac += 2;
+  if (g.shield && h.cls !== 'Monk') ac += 2;
+  if (fx) ac += fx.ac;
   const style = C.style && L >= C.style ? h.style : null;
   const styles = new Set([style, ...picks.filter(p => FEATS[p.feat]?.style).map(p => p.feat)].filter(Boolean));
   if (styles.has('Defense') && armorName !== 'None') ac += 1;
@@ -84,13 +88,13 @@ export function heroStats(h){
   const spSub = spc.subs?.[h.spOpt];   // a subrace from the DM's books
   let spd = spSub?.spd || spc.spd;
   if (h.cls === 'Barbarian' && L >= 5 && arm.t !== 'heavy') spd += 10;
-  if (h.cls === 'Monk' && L >= 2 && armorName === 'None' && !h.shield) spd += L >= 18 ? 30 : L >= 14 ? 25 : L >= 10 ? 20 : L >= 6 ? 15 : 10;
+  if (h.cls === 'Monk' && L >= 2 && armorName === 'None' && !g.shield) spd += L >= 18 ? 30 : L >= 14 ? 25 : L >= 10 ? 20 : L >= 6 ? 15 : 10;
   if (h.cls === 'Ranger' && L >= 6) spd += 10;
   // spellcasting
   const mi0 = miLists(h)[0], castAb = C.cast || (mi0 ? (mi0 === 'W' ? 'Int' : 'Wis') : null);
-  const dc = castAb ? 8 + pb + M(castAb) : null, spAtk = castAb ? pb + M(castAb) : null;
+  const dc = castAb ? 8 + pb + M(castAb) + (fx?.spellDc || 0) : null, spAtk = castAb ? pb + M(castAb) + (fx?.spellAttack || 0) : null;
   // saves & skills
-  const saves = {}; for (const a of ABILITIES) saves[a] = M(a) + (C.sv.includes(a) || (h.cls === 'Monk' && L >= 14) || (h.cls === 'Rogue' && L >= 15 && ['Wis', 'Cha'].includes(a)) ? pb : 0);
+  const saves = {}; for (const a of ABILITIES) saves[a] = M(a) + (C.sv.includes(a) || (h.cls === 'Monk' && L >= 14) || (h.cls === 'Rogue' && L >= 15 && ['Wis', 'Cha'].includes(a)) ? pb : 0) + (fx?.saves || 0);   // (a Cloak of Protection: all of them)
   const prof = new Set([...(h.skills || []), ...(bg?.skills || [])]);
   if (h.sp === 'Elf') prof.add('Perception');
   for (const sk of [...(spc.skills || []), ...(spSub?.skills || [])]) prof.add(sk);   // species from the DM's books
@@ -111,7 +115,7 @@ export function heroStats(h){
     for (const f of libSub?.features[l] || []) features.push(`${f} (${l})`);
   }
   for (const p of picks) if (p.feat !== 'Ability Score Improvement') features.push(`${p.feat === 'Other' ? (p.name || 'A feat') : p.feat}${p.feat === 'Magic Initiate' && p.list ? ` (${FEATS['Magic Initiate'].lists[p.list]})` : ''} — feat (${p.l})`);
-  return { sc, M, pb, ac, hp, spd, dc, spAtk, castAb, init, saves, skills, prof, expert, passive, check, slots, pact, features, sub, L, C, style, styles, picks };
+  return { sc, M, pb, ac, hp, spd, dc, spAtk, castAb, init, saves, skills, prof, expert, passive, check, slots, pact, features, sub, L, C, style, styles, picks, gear:g, fx };
 }
 
 const dieMul = (d, n) => d.replace(/^(\d*)d(\d+)/, (_, c, f) => `${(+c || 1) * n}d${f}`);
@@ -120,15 +124,16 @@ const sgn = n => n >= 0 ? `+${n}` : `${n}`;
 
 export function heroAttacks(h, st = heroStats(h)){
   const out = [], L = st.L;
-  for (const name of (h.weapons || []).filter(Boolean)){
-    const w = W(name); if (!w) continue;
+  const g = st.gear || gearOf(h), fx = st.fx;
+  for (const name of g.weapons){
+    const w = W(baseOf(name)); if (!w) continue;   // a +1 longsword fights as a longsword, plus its bonus
     const ranged = /r/.test(w.cat) || /A/.test(w.p), finesse = /F/.test(w.p);
     const ab = ranged ? 'Dex' : finesse ? (st.M('Dex') > st.M('Str') ? 'Dex' : 'Str') : 'Str';
     const m = st.M(ab);
-    const two = !h.shield && /V:/.test(w.p) && (h.weapons || []).filter(Boolean).length === 1;
+    const two = !g.shield && /V:/.test(w.p) && g.weapons.length === 1;
     const die = two ? w.p.match(/V:(\d*d\d+)/)[1] : w.d;
-    const hit = st.pb + m + (ranged && st.styles.has('Archery') ? 2 : 0);
-    const dmgBonus = m + (!ranged && st.styles.has('Dueling') && !/2/.test(w.p) && !two ? 2 : 0);
+    const hit = st.pb + m + (ranged && st.styles.has('Archery') ? 2 : 0) + (fx?.attack[name] || 0);
+    const dmgBonus = m + (!ranged && st.styles.has('Dueling') && !/2/.test(w.p) && !two ? 2 : 0) + (fx?.damage[name] || 0);
     // range [normal, long] in feet for bows and thrown weapons (a thrown dagger is melee too); reach weapons hit 10 ft. away
     out.push({ n:name, b:hit, d:`${die}${dmgBonus ? sgn(dmgBonus) : ''}`, t:w.ty, f:`{A} attacks {T} with a ${name.toLowerCase()}.`, ...(ranged ? {} : { m:1 }),
       ...(Array.isArray(w.rng) ? { rng:[...w.rng] } : {}), ...(/R/.test(w.p) ? { reach:2 } : {}) });
