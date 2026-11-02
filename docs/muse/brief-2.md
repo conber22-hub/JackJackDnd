@@ -25,8 +25,8 @@ The same rules apply:
    - Filter by tag, search the text, pin a note to the top, tick off a To do, delete with undo.
 3. **📋 Tonight's notes**: copies this session's notes as plain text, grouped by tag, for a recap or a group chat.
 4. **Storage.**
-   - Notes live in `state.campaign.notes = [{ id, at, session, text, tags:[], pin, done }]`, so they travel with the save and with Export.
-   - Add the default (`notes:[]`) in `deserialize()` in `src/game/session.js` (one line), so old saves load.
+   - Notes live in `state.campaign.notebook = [{ id, at, session, text, tags:[], pin, done }]` (not `notes`: that name is already taken, by the campaign's per-session notes), so they travel with the save and with Export.
+   - Add the default (`notebook:[]`) in `deserialize()` in `src/game/session.js` (one line), so old saves load.
    - `state.campaign` never reaches the players: `src/engine/redact.js` deletes it. Add a test to `tests/redact.test.js` that proves notes stay hidden.
    - Call `changed()` (from `src/game/session.js`) after each edit, so it autosaves.
 5. **Files:**
