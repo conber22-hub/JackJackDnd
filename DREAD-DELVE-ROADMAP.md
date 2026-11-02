@@ -16,6 +16,20 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.16 — the valley answers his Gaze
+
+On the outdoor maps of Barovia the land itself shows how closely Strahd is watching (`src/render/omens.js`). Every screen (the DM's, the TV, a player's phone) works it out from the Gaze, so nothing new is sent. Pictures: `docs/screens/omens-*.jpg`.
+- **Always:** the valley's walls. Two rings of jagged mountains stand black against a faint, bruised glow on the horizon, under a dark sky, and the Mists stand in slow banks beyond the woods, thicker as the Gaze rises.
+- **Gaze 2+, "A Raven Lingers":** ravens circle over the party, one more a level. Now and then one drops low.
+- **Gaze 3+, "The Wolves Know Your Scent":** pairs of eyes open in the treeline, blink, and are gone; two more pairs a level. They're amber, and red from Gaze 8.
+- **Gaze 5+, "The Land Rearranges":** the land withers.
+  - More of the trees die, on the map and past its edge.
+  - The grass and the earth go grey.
+  - From Gaze 7 the fields blight, square by square.
+  - The outdoor maps redraw when it changes.
+- **Gaze 9+:** the horizon goes red behind the clouds, and the Mists close in.
+- A device can turn the moving omens (ravens and eyes) off: Table tab → Graphics & sound → Omens.
+
 ## v1.15 — water, chasms, weather and hills
 
 More to the places the party explores. Pictures: `docs/screens/places-*.jpg`.
@@ -504,6 +518,7 @@ src/game/               rules that touch the scene and UI
   session.js            save / load / export, v1 save migration, undo, changed()
 src/render/             Three.js
   scene.js              renderer, camera, lights, tweens, labels
+  omens.js              the valley answers the Gaze: mountains, sky, the Mists, ravens, eyes in the trees (and witherLevel)
   floors.js             the ground (rock round the deep places, grass/roads/cobbles outdoors, crops, the land past the edge), walls (stone, boulders or forest), stairs / exits, doors, traps, houses, props, mist, the Shift animation
   props.js              the 3D props, houses with roofs, the instanced pine
   minis.js              procedural 3D minis (SHAPES) + syncing tokens

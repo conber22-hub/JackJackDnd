@@ -1,9 +1,10 @@
 /* GRAPHICS & SOUND SETTINGS — per device (kept in this browser, never sent to the table).
    quality: low (fast, phones) · medium (bloom + film grain) · high (adds torch shadows).
-   style: classic · painted (an illustrated-poster look: render/post.js; needs medium or high). */
+   style: classic · painted (an illustrated-poster look: render/post.js; needs medium or high).
+   omens: the moving signs of Strahd's Gaze on outdoor maps (ravens, eyes in the trees: render/omens.js). */
 const KEY = 'dreaddelve.gfx.v1';
 const phone = typeof matchMedia !== 'undefined' && (matchMedia('(pointer:coarse)').matches || innerWidth < 760);
-export const gfx = { quality:phone ? 'low' : 'medium', style:'classic', volume:.7, music:true, sfx:true };
+export const gfx = { quality:phone ? 'low' : 'medium', style:'classic', omens:true, volume:.7, music:true, sfx:true };
 try { Object.assign(gfx, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch {}
 const listeners = [];
 export function onGfx(fn){ listeners.push(fn); }

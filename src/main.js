@@ -12,6 +12,7 @@ import { loadStoredModels } from './render/models.js';
 import { setDrone, setAmbience } from './audio/sound.js';
 import { syncTokens } from './render/minis.js';
 import { buildAllFloors, buildFloor, groundWeather } from './render/floors.js';
+import { updateOmens, witherLevel } from './render/omens.js';
 import { walk } from './engine/tiles.js';
 import { floorViews, mist } from './render/floors.js';
 import { tokenViews } from './render/minis.js';
@@ -65,8 +66,8 @@ function frame(){
     const lit = (th.light || 1) * dayK;
     if (t - (frame.ambAt || 0) > 1){ frame.ambAt = t;   // the room's own sound
       const w = weatherKind(); setAmbience(outdoor ? (w && w !== 'snow' ? 'rain' : 'wind') : th.id === 'tavern' ? 'fire' : ['undertow', 'cellar', 'womb'].includes(th.id) ? 'water' : 'drips');
-      // the weather changed (a new day, the DM's desk): snow, frost or rain on the outdoor maps' ground
-      const gw = JSON.stringify(groundWeather());
+      // the weather changed (a new day, the DM's desk), or his Gaze withered the land: redraw the outdoor maps' ground
+      const gw = JSON.stringify(groundWeather()) + '|' + witherLevel();   // (and the land withering under his Gaze)
       if (frame.gw !== undefined && frame.gw !== gw) state.floors.forEach((f, L) => { const t2 = THEMES[f.theme]; if (t2 && (t2.walls === 'trees' || t2.walls === 'mixed')) buildFloor(L); });
       frame.gw = gw; }
     ambient.intensity += (D.amb * 1.5 * lit * (ui.role === 'dm' && !ui.tableView ? 1.35 : 1) - ambient.intensity) * ease;
@@ -92,6 +93,7 @@ function frame(){
     floorViews.forEach(fv => fv?.group.visible && fv.built.traverse(o => { if (o.userData.spin) o.rotation.y += dt * o.userData.spin; if (o.userData.spinZ) o.rotation.z += dt * o.userData.spinZ; if (o.userData.trapId && o.userData.pulse) o.children[0].scale.setScalar(1.05 + Math.sin(t * 3) * .08); }));
     updateAmbience(t, dt);   // candle and fire light, rain and snow
     updateSkyline(t);        // the castle on the horizon
+    updateOmens(t, dt);      // the valley answers his Gaze: ravens, eyes in the trees, the Mists, a red sky
     // walls breathe red when his Gaze is high
     floorViews.forEach(fv => { if (!fv) return; const m = fv.mats.wall; m.emissive.set('#5a0a10'); m.emissiveIntensity = state.dread >= 7 ? (state.dread - 6) * .06 * (1 + Math.sin(t * 1.3)) : 0; });
     // selection ring

@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { state, ui, viewAsPlayer, T, walk } from '../engine/state.js';
 import { groundY } from '../engine/grid.js';
+import { witherLevel } from './omens.js';
 import { wallSet, doorOrientation } from '../engine/generator.js';
 import { THEMES } from '../data/themes.js';
 import { ROOM_TYPES, TRAP_KINDS } from '../data/rooms.js';
@@ -51,7 +52,7 @@ export function groundWeather(){
   if (/rain|drizzle|downpour|storm|shower|sleet/.test(w) && !/no rain/.test(w)) return { wet:/heavy|downpour|storm/.test(w) ? 1 : .55 };
   return {};
 }
-const SNOW = new THREE.Color('#d4d9e0');
+const SNOW = new THREE.Color('#d4d9e0'), WITHERED = new THREE.Color('#4a4438');
 // the same trees again in white, a little inside and above their tiers: snow lying on the branches
 function capWithSnow(tm){ const caps = new THREE.InstancedMesh(snowCapGeometry(), treeMaterial, tm.count); caps.instanceMatrix.array.set(tm.instanceMatrix.array); caps.receiveShadow = tm.receiveShadow; return caps; }
 function groundMat(fv, kind){
@@ -133,7 +134,8 @@ export function buildFloor(L, opt = {}){
   const outdoorTh = !kitWall0 && (th.walls === 'trees' || th.walls === 'mixed'), under = !kitWall0 && UNDER.has(th.id);
   const indoorKind = ['plank', 'flag'].includes(SURFACES[th.id]?.floor) ? '' : 'plank', roadKind = ROAD[th.id] || 'dirt';
   const hallUnder = hall.clone().lerp(base, .55);
-  const wx_ = outdoorTh ? groundWeather() : {}, snow = wx_.snow || 0, wet = wx_.wet || 0;   // under the rock, a tunnel's floor must stand out from the rock round it
+  const wx_ = outdoorTh ? groundWeather() : {}, snow = wx_.snow || 0, wet = wx_.wet || 0;
+  const wither = outdoorTh ? witherLevel() : 0;   // his Gaze at 5 and up: the trees die, the grass greys, the crops blight (render/omens.js)   // under the rock, a tunnel's floor must stand out from the rock round it
   const surfaceOf = i => { if (!outdoorTh) return ''; const r = roomOf.get(i);
     if (r && !r.outdoor) return r.ground || indoorKind; if (r?.ground) return r.ground; if (r?.crop) return 'furrow'; if (f.ground?.[i]) return f.ground[i]; return g[i] === T.HALL ? roadKind : 'grass'; };
   const tq = new THREE.Quaternion(), tp = new THREE.Vector3(), ts = new THREE.Vector3(), yAxis = new THREE.Vector3(0, 1, 0), slopes = new Set(f.slope || []);
@@ -150,7 +152,7 @@ export function buildFloor(L, opt = {}){
       tq.setFromAxisAngle(yAxis, turn); tp.set(wx(x), (hh - .2) / 2, wz(y)); ts.set(1, (.2 + hh) / .2, 1); mat4.compose(tp, tq, ts);
       fm.setMatrixAt(n, mat4);
       col.copy(tone || (g[i] === T.HALL ? (under ? hallUnder : hall) : base)).multiplyScalar(.82 + rng() * .3);
-      if (!own && kind !== 'plank' && kind !== 'flag'){ if (snow) col.lerp(SNOW, snow * (.7 + rng() * .25)); if (wet) col.multiplyScalar(1 - wet * .22); }
+      if (!own && kind !== 'plank' && kind !== 'flag'){ if (wither && kind !== 'cobble') col.lerp(WITHERED, Math.min(.6, wither * .1)); if (snow) col.lerp(SNOW, snow * (.7 + rng() * .25)); if (wet) col.multiplyScalar(1 - wet * .22); }
       // raised ground catches more light the higher it is, and its slopes are a shade darker, so a rise reads like contours
       if (f.height?.[i]) col.multiplyScalar((1 + f.height[i] * .2) * (slopes.has(i) ? .72 : 1));
       const r = roomOf.get(i);
@@ -231,8 +233,9 @@ export function buildFloor(L, opt = {}){
     em.color.copy(rc).multiplyScalar(.85);
     fv.rock.add(frame(em, f.W, f.H, WALL_H + .08, 3));
   }
-  // the Svalich woods are not all alive: some of the trees are dead and grey
-  const deadShare = th.id === 'woods' ? .12 : th.walls === 'mixed' ? .06 : 0;
+  // the Svalich woods are not all alive: some of the trees are dead and grey (more of them the harder he looks)
+  const deadOK = th.walls === 'trees' || th.walls === 'mixed';
+  const deadShare = (th.id === 'woods' ? .12 : th.walls === 'mixed' ? .06 : 0) + (deadOK ? Math.min(.45, wither * .07) : 0);
   const dead = deadShare ? trees.filter(i => hr(i, 11) < deadShare) : [];
   if (dead.length){
     const dm = new THREE.InstancedMesh(deadTreeGeometry(), treeMaterial, dead.length), q = new THREE.Quaternion(), sc = new THREE.Vector3(), ps = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
@@ -275,10 +278,12 @@ export function buildFloor(L, opt = {}){
     if (!r.crop || !outdoor) continue;
     for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++){
       const i = y * f.W + x; if (g[i] !== T.ROOM || !showTile(i) || propAt(f, x, y)) continue;
-      if (!crops.has(r.crop)) crops.set(r.crop, []);
+      // from Gaze 7 the fields blight, square by square
+      const crop = wither >= 3 && r.crop !== 'fallow' && hr(i, 190) < (wither - 2) * .18 ? 'blight' : r.crop;
+      if (!crops.has(crop)) crops.set(crop, []);
       // wheat and barley: four clumps a square in two rows; cabbages four; pumpkins one or two; fallow a weed or two
-      const per = r.crop === 'pumpkin' ? 1 + (hr(i, 150) < .4 ? 1 : 0) : r.crop === 'fallow' ? (hr(i, 150) < .5 ? 1 : 0) : 4;
-      for (let k = 0; k < per; k++) crops.get(r.crop).push([x, y, i, k, per]);
+      const per = crop === 'pumpkin' ? 1 + (hr(i, 150) < .4 ? 1 : 0) : crop === 'fallow' ? (hr(i, 150) < .5 ? 1 : 0) : 4;
+      for (let k = 0; k < per; k++) crops.get(crop).push([x, y, i, k, per]);
     }
   }
   for (const [kind, list] of crops){
@@ -302,7 +307,7 @@ export function buildFloor(L, opt = {}){
         const k = (cz + 200) * 400 + cx + 200;
         if (hr(k, 130) < (d < 6 ? .62 : .62 - (d - 6) * .045)) pts.push([cx + hr(k, 131), cz + hr(k, 132), .8 + hr(k, 133) * .8, hr(k, 134), d, k]);
       }
-      const dead = pts.filter(p => hr(p[5], 135) < (th.id === 'woods' ? .1 : .06)), live = pts.filter(p => !dead.includes(p));
+      const dead = pts.filter(p => hr(p[5], 135) < (th.id === 'woods' ? .1 : .06) + Math.min(.45, wither * .07)), live = pts.filter(p => !dead.includes(p));
       const q = new THREE.Quaternion(), sc = new THREE.Vector3(), ps = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0), tint = new THREE.Color(th.trim);
       for (const [list, geo] of [[live, treeGeometry()], [dead, deadTreeGeometry()]]){
         if (!list.length) continue;

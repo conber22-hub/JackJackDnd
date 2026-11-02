@@ -57,3 +57,24 @@ test('an open-air room can be raised into a hill from the Maps tab, and a hero s
   await page.locator(`select[data-edit="room"][data-id="${sq.id}"][data-f="rise"]`).selectOption('0');
   await expect.poll(() => page.evaluate(() => window.DreadDelve.get().floors[0].height)).toBeUndefined();
 });
+
+test('the valley answers his Gaze: omens on an outdoor map, and a device can turn them off', async ({ page }) => {
+  await page.evaluate(() => {
+    const D = window.DreadDelve; D.ui.roomPrompts = false; document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
+    D.newDelve({ name:'Omens', seed:'e2e-omens', floors:1, size:40, template:'barovia', party:true }, false);
+    document.querySelectorAll('#cardLayer .pop').forEach(el => el.remove());
+  });
+  await idle(page);
+  // his full attention: the land withers and redraws, ravens and eyes come and go (no errors while they do)
+  await page.evaluate(() => window.DreadDelve.setDread(10));
+  await page.waitForTimeout(2500);
+  if (!await page.evaluate(() => window.DreadDelve.ui.panelOpen)) await page.locator('#btnPanel').click();
+  await page.locator('[data-act="tab"][data-k="table"]').click();
+  const omens = page.locator('[data-act="gfxOmens"]');
+  await expect(omens).toContainText('on');
+  await omens.click();
+  await expect(page.locator('[data-act="gfxOmens"]')).toContainText('off');
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('dreaddelve.gfx.v1')).omens)).toBe(false);
+  await page.evaluate(() => window.DreadDelve.setDread(1));
+  await page.waitForTimeout(1500);
+});

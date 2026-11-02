@@ -201,6 +201,7 @@ document.addEventListener('click', e => {
     // graphics, sound, models
     case 'gfxQ': setGfx({ quality:k }); renderPanel(); break;
     case 'gfxStyle': setGfx({ style:k }); renderPanel(); break;
+    case 'gfxOmens': setGfx({ omens:gfx.omens === false }); renderPanel(); break;
     case 'gfxT': setGfx({ [k]:!gfx[k] }); renderPanel(); break;
     case 'clearModel': deleteModel(k).then(() => { broadcast({ t:'model', key:k, buf:null }); renderPanel(); }); break;
     // story tab
