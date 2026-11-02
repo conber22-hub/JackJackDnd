@@ -1,3 +1,4 @@
+import { SRD_MONSTERS } from '../data/srd-monsters.js';
 // Only unconditional entries fit this shape. Qualified defences stay in the DM's traits.
 export const DAMAGE_TYPES = 'acid bludgeoning cold fire force lightning necrotic piercing poison psychic radiant slashing thunder'.split(' ');
 export const CONDITIONS = 'blinded charmed deafened exhaustion frightened grappled incapacitated invisible paralyzed petrified poisoned prone restrained stunned unconscious'.split(' ');
@@ -28,3 +29,12 @@ export function applyDefenses(parts, defenses = {}){
   return { total:lines.reduce((sum, l) => sum + l.n, 0), lines };
 }
 export const conditionImmune = (defenses, cond) => !!defenses?.condImmune?.includes(cond.toLowerCase());
+
+const srdById = new Map(SRD_MONSTERS.map(m => [m.id, m]));
+// A valid SRD link takes precedence; copies prevent callers mutating shared catalogue data.
+export function defensesFor(entry){
+  const linked = srdById.get(entry?.srd);
+  if (linked) return parseDefenses(linked.traits);
+  if (entry?.def) return {resist:[],immune:[],vuln:[],condImmune:[],...structuredClone(entry.def)};
+  return parseDefenses(entry?.traits);
+}
