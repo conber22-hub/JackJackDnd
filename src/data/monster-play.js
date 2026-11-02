@@ -297,7 +297,7 @@ export const MONSTER_PLAY = {
         "ty": "bludgeoning",
         "half": false,
         "r": 5,
-        "cond": "grappled",
+        "conditionManual": true,
         "note": "Strength Saving Throw: DC 18, one Large or smaller creature the behir can see within 5 feet. Failure: 28 (5d8 + 6) Bludgeoning damage. The target has the Grappled condition (escape DC 16), and it has the Restrained condition until the grapple ends."
       },
       {
@@ -858,6 +858,17 @@ export const MONSTER_PLAY = {
         "half": false,
         "r": 90,
         "cond": "deafened",
+        "repeat": null,
+        "endsOn": [],
+        "dur": {
+          "n": 1,
+          "unit": "round"
+        },
+        "expires": {
+          "phase": "end",
+          "who": "target",
+          "next": true
+        },
         "note": "Constitution Saving Throw: DC 17, each creature in a 20-foot-radius Sphere centered on a point the dragon can see within 90 feet. Failure: 10 (3d6) Thunder damage, and the target has the Deafened condition until the end of its next turn."
       }
     ],
@@ -900,6 +911,17 @@ export const MONSTER_PLAY = {
         "half": false,
         "r": 120,
         "cond": "deafened",
+        "repeat": null,
+        "endsOn": [],
+        "dur": {
+          "n": 1,
+          "unit": "round"
+        },
+        "expires": {
+          "phase": "end",
+          "who": "target",
+          "next": true
+        },
         "note": "Constitution Saving Throw: DC 22, each creature in a 20-foot-radius Sphere centered on a point the dragon can see within 120 feet. Failure: 13 (3d8) Thunder damage, and the target has the Deafened condition until the end of its next turn."
       }
     ],
@@ -1226,7 +1248,7 @@ export const MONSTER_PLAY = {
         "ty": "bludgeoning",
         "half": false,
         "r": 5,
-        "cond": "grappled",
+        "conditionManual": true,
         "note": "Strength Saving Throw: DC 15, one Medium or smaller creature the couatl can see within 5 feet. Failure: 8 (1d6 + 5) Bludgeoning damage. The target has the Grappled condition (escape DC 13), and it has the Restrained condition until the grapple ends."
       }
     ]
@@ -1466,7 +1488,7 @@ export const MONSTER_PLAY = {
         "ty": "force",
         "half": false,
         "r": 120,
-        "cond": "restrained",
+        "conditionManual": true,
         "note": "Strength Saving Throw: DC 16, one creature the erinyes can see within 120 feet. Failure: 14 (4d6) Force damage, and the target has the Restrained condition until the rope is destroyed, the erinyes uses a Bonus Action to release the target, or the erinyes uses Entangling Rope again."
       }
     ]
@@ -1684,6 +1706,17 @@ export const MONSTER_PLAY = {
         ],
         "r": 0,
         "cond": "frightened",
+        "repeat": null,
+        "endsOn": [],
+        "dur": {
+          "n": 1,
+          "unit": "round"
+        },
+        "expires": {
+          "phase": "start",
+          "who": "source",
+          "next": true
+        },
         "note": "Wisdom Saving Throw: DC 13, each creature in a 60-foot Cone that can see the ghost and isn't an Undead. Failure: 10 (2d6 + 3) Psychic damage, and the target has the Frightened condition until the start of the ghost's next turn. Success: The target is immune to this ghost's Horrific Visage for 24 hours."
       }
     ]
@@ -1724,6 +1757,17 @@ export const MONSTER_PLAY = {
         "r": 30,
         "recharge": 5,
         "cond": "blinded",
+        "repeat": null,
+        "endsOn": [],
+        "dur": {
+          "n": 1,
+          "unit": "round"
+        },
+        "expires": {
+          "phase": "end",
+          "who": "source",
+          "next": true
+        },
         "note": "Dexterity Saving Throw: DC 10, each creature in a 10-foot-radius Sphere centered on a point within 30 feet. Failure: 7 (2d6) Radiant damage, and the target has the Blinded condition until the end of the mouther's next turn."
       }
     ]
@@ -1894,6 +1938,17 @@ export const MONSTER_PLAY = {
         "half": false,
         "r": 120,
         "cond": "incapacitated",
+        "repeat": null,
+        "endsOn": [],
+        "dur": {
+          "n": 1,
+          "unit": "round"
+        },
+        "expires": {
+          "phase": "start",
+          "who": "source",
+          "next": true
+        },
         "note": "Charisma Saving Throw: DC 21, one creature the dragon can see within 120 feet. Failure: 10 (3d6) Force damage, and the target has the Incapacitated condition and is transported to a harmless demiplane until the start of the dragon's next turn, at which point it reappears in an unoccupied space of the dragon's choice within 120 feet of the dragon. Failure or Success: The dragon can't take this action again until the start of its next turn."
       }
     ],
@@ -1936,6 +1991,17 @@ export const MONSTER_PLAY = {
         "half": false,
         "r": 120,
         "cond": "incapacitated",
+        "repeat": null,
+        "endsOn": [],
+        "dur": {
+          "n": 1,
+          "unit": "round"
+        },
+        "expires": {
+          "phase": "start",
+          "who": "source",
+          "next": true
+        },
         "note": "Charisma Saving Throw: DC 24, one creature the dragon can see within 120 feet. Failure: 24 (7d6) Force damage, and the target has the Incapacitated condition and is transported to a harmless demiplane until the start of the dragon's next turn, at which point it reappears in an unoccupied space of the dragon's choice within 120 feet of the dragon. Failure or Success: The dragon can't take this action again until the start of its next turn."
       }
     ],
@@ -2195,6 +2261,17 @@ export const MONSTER_PLAY = {
         "half": true,
         "r": 60,
         "cond": "blinded",
+        "repeat": null,
+        "endsOn": [],
+        "dur": {
+          "n": 1,
+          "unit": "round"
+        },
+        "expires": {
+          "phase": "start",
+          "who": "source",
+          "next": true
+        },
         "note": "Constitution Saving Throw: DC 16, one creature the naga can see within 60 feet. Failure: 31 (7d8) Poison damage, and the target has the Blinded condition until the start of the naga's next turn. Success: Half damage only."
       }
     ]
@@ -2536,7 +2613,7 @@ export const MONSTER_PLAY = {
         "ty": "piercing",
         "half": false,
         "r": 10,
-        "cond": "restrained",
+        "conditionManual": true,
         "note": "Dexterity Saving Throw: DC 25, one creature Grappled by the kraken (it can have up to four creatures swallowed at a time). Failure: 23 (3d8 + 10) Piercing damage. If the target is Large or smaller, it is swallowed and no longer Grappled. A swallowed creature has the Restrained condition, has Total Cover against attacks and other effects outside the kraken, and takes 24 (7d6) Acid damage at the start of each of its turns. If the kraken takes 50 damage or more on a single turn from a creature inside it, the kraken must succeed on a DC 25 Constitution saving throw at the end of that turn or regurgitate all swallowed creatures, each of which falls in a space within 10 feet of the kraken with the Prone condition. If the kraken dies, any swallowed creature no longer has the Restrained condition and can escape from the corpse using 15 feet of movement, exiting Prone."
       }
     ],
@@ -2670,7 +2747,7 @@ export const MONSTER_PLAY = {
         "ty": "bludgeoning",
         "half": false,
         "r": 5,
-        "cond": "grappled",
+        "conditionManual": true,
         "note": "Strength Saving Throw: DC 17, one Medium or smaller creature the marilith can see within 5 feet. Failure: 15 (2d10 + 4) Bludgeoning damage. The target has the Grappled condition (escape DC 14), and it has the Restrained condition until the grapple ends."
       }
     ]
@@ -2889,6 +2966,17 @@ export const MONSTER_PLAY = {
         "half": false,
         "r": 60,
         "cond": "paralyzed",
+        "repeat": null,
+        "endsOn": [],
+        "dur": {
+          "n": 1,
+          "unit": "round"
+        },
+        "expires": {
+          "phase": "end",
+          "who": "source",
+          "next": true
+        },
         "note": "Wisdom Saving Throw: DC 17, one creature the mummy can see within 60 feet. Failure: 25 (6d6 + 4) Psychic damage, and the target has the Paralyzed condition until the end of the mummy's next turn."
       }
     ],
@@ -3123,6 +3211,12 @@ export const MONSTER_PLAY = {
         "half": false,
         "r": 5,
         "cond": "poisoned",
+        "repeat": null,
+        "endsOn": [],
+        "dur": {
+          "n": 1,
+          "unit": "hour"
+        },
         "note": "Constitution Saving Throw: DC 12, one creature the pseudodragon can see within 5 feet. Failure: 5 (2d4) Poison damage, and the target has the Poisoned condition for 1 hour. Failure by 5 or More: While Poisoned, the target also has the Unconscious condition, which ends early if the target takes damage or a creature within 5 feet of it takes an action to wake it."
       }
     ]
@@ -4076,7 +4170,7 @@ export const MONSTER_PLAY = {
         "half": true,
         "r": 5,
         "recharge": 4,
-        "cond": "restrained",
+        "conditionManual": true,
         "note": "Strength Saving Throw: DC 15, each creature in the elemental's space. Failure: 22 (4d8 + 4) Bludgeoning damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 14). Until the grapple ends, the target has the Restrained condition, is suffocating unless it can breathe water, and takes 9 (2d8) Bludgeoning damage at the start of each of the elemental's turns. The elemental can grapple one Large creature or up to two Medium or smaller creatures at a time with Whelm. As an action, a creature within 5 feet of the elemental can pull a creature out of it by succeeding on a DC 14 Strength (Athletics) check. Success: Half damage only."
       }
     ]
@@ -4575,7 +4669,7 @@ export const MONSTER_PLAY = {
         "ty": "bludgeoning",
         "half": false,
         "r": 5,
-        "cond": "grappled",
+        "conditionManual": true,
         "note": "Strength Saving Throw: DC 12, one Medium or smaller creature the snake can see within 5 feet. Failure: 7 (3d4) Bludgeoning damage, and the target has the Grappled condition (escape DC 12)."
       }
     ]
@@ -4746,7 +4840,7 @@ export const MONSTER_PLAY = {
         "ty": "bludgeoning",
         "half": false,
         "r": 10,
-        "cond": "grappled",
+        "conditionManual": true,
         "note": "Strength Saving Throw: DC 14, one Large or smaller creature the snake can see within 10 feet. Failure: 13 (2d8 + 4) Bludgeoning damage, and the target has the Grappled condition (escape DC 14)."
       }
     ]
