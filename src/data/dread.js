@@ -58,4 +58,9 @@ export const CONDITIONS = {
   charmed:     { icon:'♥', color:'#d97aa6' },
   incapacitated:{ icon:'⊘', color:'#8a8f99', stop:true },
   raging:      { icon:'🔥', color:'#d0603a' },
+  unconscious: { icon:'💤', color:'#6f7480', stop:true },
+  invisible:   { icon:'◍', color:'#b8c8e8' },
+  petrified:   { icon:'🗿', color:'#9a958a', stop:true },
+  deafened:    { icon:'🔇', color:'#8a8f99' },
+  exhaustion:  { icon:'😩', color:'#b07a4a' },   // a level more each time it's added (t.exhaustion; game/combat.js exhaust)
 };

@@ -18,7 +18,7 @@ import { syncTokens, tokenViews, faceStep } from '../render/minis.js';
 import { showReach, clearReach, refreshSelectionRing, spawnPing, burst, clearMovePath } from '../render/effects.js';
 import { showCard, toast, sendWhisper, renderTop, renderSel } from '../ui/hud.js';
 import { renderPanel } from '../ui/panels.js';
-import { canAct, moveAllowance, addCond, saveBonus, turnKey, defend, defNote, immuneTo } from './rules.js';
+import { canAct, moveAllowance, addCond, saveBonus, turnKey, defend, defNote, immuneTo, saveRoll, saveTxt } from './rules.js';
 import { checkPath, fits, provokers } from '../engine/movement.js';
 import { moveGroup, takeDash, offerOpportunity, pausedMover } from './moves.js';
 import { applyDamage, runFx, zoneSource } from './combat.js';
@@ -251,7 +251,7 @@ export function triggerTrap(t, tr){
   const base = k.dice && k.dice !== '0' ? rollDice(k.dice).total : 0, lines = [], fallers = [];
   for (const o of targets){
     let raw = base, ok = false;
-    if (k.save !== 'none'){ const r = d(20) + saveBonus(o, k.save); ok = r >= k.dc; if (ok) raw = Math.floor(raw / 2);
+    if (k.save !== 'none'){ const S = saveRoll(o, k.save), r = saveTxt(S); ok = S.tot >= k.dc; if (ok) raw = Math.floor(raw / 2);
       var df = defend(o, raw, k.type);
       lines.push(`${esc(o.name)} — ${k.save.toUpperCase()} ${r} vs ${k.dc}: <b>${ok ? 'saved' : 'failed'}</b>${raw ? ` → ${df.n} ${k.type}${defNote(df, raw)}` : ''}${!ok && k.cond ? (immuneTo(o, k.cond) ? ` · immune to ${k.cond}` : ` + ${k.cond}`) : ''}`); }
     else { var df = defend(o, raw, k.type); if (raw) lines.push(`${esc(o.name)} → <b>${df.n}</b> ${k.type}${defNote(df, raw)}`); }

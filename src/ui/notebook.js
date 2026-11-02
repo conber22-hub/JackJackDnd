@@ -107,7 +107,7 @@ function ensureNotebookUI(){
   if (!$('#nbStyle')){
     const st = document.createElement('style'); st.id = 'nbStyle'; st.textContent = `
     body.player #btnNotebook, body.screen #btnNotebook{display:none !important}
-    #nbDrawer{position:fixed;top:68px;right:12px;bottom:12px;width:372px;max-width:calc(100vw - 24px);z-index:20;background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:1px solid var(--line);border-radius:var(--r-xl);box-shadow:var(--spec),var(--lift);display:flex;flex-direction:column;overflow:hidden;transform:translateX(calc(100% + 24px));transition:transform .45s var(--ease)}
+    #nbDrawer{position:fixed;top:68px;right:12px;bottom:12px;width:372px;max-width:calc(100vw - 24px);z-index:20;background:var(--glass-strong);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:1px solid var(--line);border-radius:var(--r-xl);box-shadow:var(--spec),var(--lift);display:flex;flex-direction:column;overflow:hidden;transform:translateX(calc(100% + 24px));transition:transform .45s var(--ease)}
     #nbDrawer.open{transform:none}
     #nbDrawer .nb-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line);color:var(--ink);font-size:16px}
     #nbDrawer .nb-head-tools{display:flex;gap:6px}

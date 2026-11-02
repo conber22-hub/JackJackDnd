@@ -10,7 +10,9 @@ import { burst, showReach, clearReach, flashArea } from '../render/effects.js';
 import { showCard, toast, banner, sendWhisper } from '../ui/hud.js';
 import { WHISPERS } from '../data/dread.js';
 import { sfx } from '../audio/sound.js';
-import { currentTurn, addCond, tickConds, hasCond, saveBonus, stopped, startConc, endConc, defend, defNote, immuneTo } from './rules.js';
+import { currentTurn, addCond, removeCond, tickConds, hasCond, saveBonus, stopped, startConc, endConc, defend, defNote, immuneTo, saveRoll, saveTxt, timingFor, condPhase, endOn } from './rules.js';
+import { SPELL_EFFECTS } from '../data/spell-effects.js';
+import { attackMods } from '../engine/conditions.js';
 import { diceAt, upRays, concDC } from '../engine/spellcast.js';
 import { SPELLS } from '../data/srd.js';
 import { freshTurn, clearOpportunities, closeInMove, pausedMover } from './moves.js';
@@ -119,6 +121,7 @@ export function autoTurn(t){
 export function nextTurn(){
   if (!state.combat.active) return;
   clearOpportunities();
+  turnCard(currentTurn(), 'end');   // saves repeated to shake off Hold Person and the like; holds that run out now
   tickConds(currentTurn());
   if (!state.combat.order.some(id => { const t = tokById(id); return t && !t.flags.gone && (!t.dead || t.flags.rising); })){ toast('Everyone in this fight is down.'); return; }
   for (let guard = 0; guard < 300; guard++){
@@ -129,9 +132,15 @@ export function nextTurn(){
   }
   startTurn(); changed();
 }
+// The saves and run-outs of a turn's start or end (rules.js condPhase), on one card.
+function turnCard(t, phase){
+  const lines = condPhase(t, phase);
+  if (lines.length) showCard({ kind:'', title:`${phase === 'end' ? 'End' : 'Start'} of ${t.name}'s turn`, lines });
+}
 export function startTurn(){
   const t = currentTurn(); if (!t) return;
   freshTurn(t);
+  turnCard(t, 'start');
   const lg = legendOf(t); if (lg?.legendary) t.legend = lg.legendary.n;   // legendary actions come back
   // a spent breath weapon (and the like) comes back on a d6 roll of its Recharge number or more
   for (const n of Object.keys(t.spent || {})){
@@ -205,20 +214,23 @@ export function doAttack(aId, tId, i, mode = 'normal', { d20 = null, at = null }
   if (cov.cover === 'total') why.push('behind total cover — the DM\'s call');
   if (rc.long){ dis = true; why.push('long range'); }
   if (rc.kind === 'ranged' && rc.close){ dis = true; why.push(`a foe beside ${a.name}`); }
-  // prone: easy to hit up close, hard from afar
-  if (hasCond(tg, 'prone')){ if (rc.d <= 1){ adv = true; why.push(`${tg.name} prone`); } else { dis = true; why.push(`${tg.name} prone, far off`); } }
-  if (hasCond(tg, 'restrained') || hasCond(tg, 'paralyzed') || hasCond(tg, 'stunned') || hasCond(tg, 'blinded')){ adv = true; why.push(tg.conds.find(c => ['restrained','paralyzed','stunned','blinded'].includes(c.n)).n); }
+  // what their conditions do (engine/conditions.js, the 2024 rules): prone, restrained, blinded, invisible, unconscious…
+  // on either side; a paralysed or unconscious target hit from 5 ft. is a critical; exhaustion takes 2 a level
+  const cm = a.id === tg.id ? { adv:[], dis:[], autoCrit:false, penalty:0 } : attackMods({ attacker:a, target:tg, melee:rc.kind !== 'ranged', within5:rc.d <= 1,
+    attackerSeen:!hasCond(a, 'invisible'), targetSeen:!hasCond(tg, 'invisible') });
+  if (cm.adv.length){ adv = true; why.push(...cm.adv); }
+  if (cm.dis.length){ dis = true; why.push(...cm.dis); }
+  if (cm.penalty) why.push(`exhaustion −${cm.penalty}`);
   if (tg.dodge && !stopped(tg) && a.id !== tg.id){ dis = true; why.push(`${tg.name} is dodging`); }
   a.lastMove = null;   // after an attack there's no taking the move back
-  if (hasCond(a, 'blinded') || hasCond(a, 'frightened') || hasCond(a, 'poisoned') || hasCond(a, 'prone')){ dis = true; why.push(`${a.name} ${a.conds.find(c => ['blinded','frightened','poisoned','prone'].includes(c.n)).n}`); }
-  const bonus = atk.b + (isHis(a) ? D.hit : 0), useBoth = adv !== dis, ac = tg.ac + cov.ac;
+  const bonus = atk.b + (isHis(a) ? D.hit : 0) - cm.penalty, useBoth = adv !== dis, ac = tg.ac + cov.ac;
   const rage = atk.m && hasCond(a, 'raging') ? a.rageDmg || 2 : 0;
   // one roll per ray / beam (Scorching Ray, Eldritch Blast); everything else is one roll
   const rolls = [], lines = [];
   for (let k = 0; k < (atk.rays || 1); k++){
     const real = k === 0 && d20 >= 1 && d20 <= 20 ? Math.round(d20) : null;
     const r1 = d(20), r2 = d(20), r = real ?? (useBoth ? (adv ? Math.max(r1, r2) : Math.min(r1, r2)) : r1);
-    const tot = r + bonus, crit = r === 20 || (r !== 1 && hasCond(tg, 'paralyzed') && cheb(a.x, a.y, tg.x, tg.y) <= 1), hit = crit || (r !== 1 && tot >= ac);
+    const tot = r + bonus, hit = r === 20 || (r !== 1 && tot >= ac), crit = r === 20 || (hit && cm.autoCrit);   // (a hit first: helpless isn't unmissable)
     const raw = hit ? rollDice(atk.d, crit).total + rage : 0, df = defend(tg, raw, atk.t), dmg = df.n;   // its resistances, immunities, Rage
     rolls.push({ hit, crit, dmg, raw, why:df.why, r });
     lines.push(`${atk.rays > 1 ? `#${k + 1} · ` : ''}${real ? '🎲 at the table ' : `d20 ${useBoth ? `(${r1}, ${r2} → ${adv ? 'adv' : 'dis'}) ` : ''}`}<b>${r}</b> ${signed(bonus)} = <b>${tot}</b> vs AC ${ac}${cov.ac ? ` <span class="muted">(${cov.cover === 'half' ? 'half' : '¾'} cover)</span>` : ''} — <b>${crit ? 'CRITICAL' : hit ? 'HIT' : r === 1 ? 'FUMBLE' : 'MISS'}</b>${atk.rays > 1 && hit ? ` → ${dmg}` : ''}`);
@@ -234,10 +246,14 @@ export function doAttack(aId, tId, i, mode = 'normal', { d20 = null, at = null }
   if (df) lines.push(`<span class="muted">${esc(tg.name)} is ${df.why} to ${esc(atk.t)}${hits.length === 1 && df.raw !== df.dmg ? `: ${df.raw} → ${df.dmg}` : ''}</span>`);
   if (isHis(a) && D.hit) lines.push(`<span class="muted">+${D.hit} to hit under his Gaze (${state.dread})</span>`);
   if (hits.length && atk.on && !tg.dead){
-    const sv = d(20) + saveBonus(tg, atk.on.save), ok = sv >= atk.on.dc;
-    lines.push(`${esc(tg.name)} — ${atk.on.save.toUpperCase()} save ${sv} vs ${atk.on.dc}: <b>${ok ? 'resists' : immuneTo(tg, atk.on.cond) ? `immune to ${atk.on.cond}` : atk.on.cond}</b>`);
+    const S = saveRoll(tg, atk.on.save), ok = S.tot >= atk.on.dc;
+    lines.push(`${esc(tg.name)} — ${atk.on.save.toUpperCase()} save ${saveTxt(S)} vs ${atk.on.dc}: <b>${ok ? 'resists' : immuneTo(tg, atk.on.cond) ? `immune to ${atk.on.cond}` : atk.on.cond}</b>`);
     if (!ok && (atk.on.cond !== 'seeded' || isHost(tg))) addCond(tg, atk.on.cond, atk.on.rounds || 1, a.bid);
   }
+  // a spell attack that leaves a condition on a hit, no save (Ray of Sickness: poisoned until the end of your next turn)
+  const ef = lib && SPELL_EFFECTS[lib.n];
+  if (hits.length && ef?.cond && !ef.save && !tg.dead){ const tm = timingFor(ef, { src:a.id }); if (addCond(tg, ef.cond, tm.rounds, null, false, tm.extra)) lines.push(`${esc(tg.name)} is <b>${ef.cond}</b>`); else lines.push(`<span class="muted">${esc(tg.name)} is immune to ${ef.cond}</span>`); }
+  endOn(a, 'attack');   // Invisibility: it ends when you attack
   if (hits.length && atk.latch && !tg.dead && tg.kind !== 'monster'){ tg.flags.latchedBy = a.id; lines.push(`<span class="fam-seep">${esc(a.name)} is latched on.</span>`); }
   sfx(crit ? 'crit' : hits.length ? 'hit' : 'miss');
   animate(a.id, 'attack', tg.id); if (hits.length) setTimeout(() => animate(tg.id, 'hit', a.id), 330);
@@ -246,6 +262,7 @@ export function doAttack(aId, tId, i, mode = 'normal', { d20 = null, at = null }
   for (const x of hits) applyDamage(tg, x.dmg, atk.t, a, true);   // already through its defences (above)
   changed(); return true;
 }
+const GIVES = new Set(['Invisibility', 'Greater Invisibility']);
 // ' + poisoned', or that it shrugs it off (a skeleton can't be poisoned)
 const condTxt = (t, cond) => immuneTo(t, cond) ? ` · <span class="muted">immune to ${cond}</span>` : ` + ${cond}`;
 /* Damage to one creature, after its resistances, immunities and vulnerabilities (rules.js defend: its stat block, plus Rage).
@@ -265,15 +282,31 @@ export function applyDamage(t, n, type = '', by = null, defended = false){
   }
   if (t.hp <= 0 && !(t.nem && nemesisHolds(t))){ kill(t, type, by); setTimeout(checkVictory, 600); }
   const dealt = n;
+  // being hurt ends some holds (Charm Person: hurt by the caster or their friends); hurting someone ends Invisibility
+  const byTok = typeof by === 'string' ? tokById(by) : by;
+  for (const c of [...(t.conds || [])]){
+    const src = c.by && tokById(c.by);
+    if (c.ends?.includes('damage') || (c.ends?.includes('damageByCasterOrAlly') && byTok && src && side(byTok) === side(src))){ removeCond(t, c.n); log(`${t.name} is no longer ${c.n}.`); }
+  }
+  if (byTok?.id) endOn(byTok, 'dealDamage');
   if (t.conc){
     if (t.dead) endConc(t, 'goes down');
     else {   // a Constitution save to keep hold of it: DC 10 or half the damage (2024 rules)
-      const dc = concDC(n), r = d(20), tot = r + saveBonus(t, 'con'), held = tot >= dc;
+      const dc = concDC(n), S = saveRoll(t, 'con'), r = S.r, tot = S.tot, held = tot >= dc;
       showCard({ kind:held ? '' : 'miss', title:`${t.name} ${held ? 'holds on' : 'loses concentration'}`, sub:`${t.conc.n} · Constitution save DC ${dc}`, lines:[`d20 <b>${r}</b> ${signed(tot - r)} = <b>${tot}</b>`] });
       if (!held) endConc(t, 'loses concentration');
     }
   }
   return dealt;
+}
+/* Exhaustion (2024): a level at a time, up to 6, which kills. Each level is -2 on every d20 test and 5 ft. less speed
+   (engine/conditions.js); a long rest takes one away. */
+export function exhaust(t, by = 1){
+  const was = t.exhaustion || 0, now = Math.max(0, Math.min(6, was + by));
+  if (now === was) return;
+  if (now) t.exhaustion = now; else delete t.exhaustion;
+  log(`${t.name}: exhaustion ${now}${now === 6 ? ' — it kills' : ''}.`);
+  if (now === 6 && !t.dead){ t.hp = 0; kill(t, 'exhaustion'); setTimeout(checkVictory, 600); }
 }
 export function heal(t, n){
   t.hp = Math.min(t.maxHp, t.hp + n);
@@ -394,7 +427,7 @@ export function runFx(src, fx, quiet){
     const base = rollDice(dice).total, lines = [];
     for (const t of targets){
       let dmg = base, ok = false, r = 0;
-      if (save !== 'none'){ r = d(20) + saveBonus(t, save); ok = r >= +dc; if (ok) dmg = Math.floor(dmg / 2); }
+      if (save !== 'none'){ const S = saveRoll(t, save); r = saveTxt(S); ok = S.tot >= +dc; if (ok) dmg = Math.floor(dmg / 2); }
       const df = defend(t, dmg, type);
       lines.push(`${esc(t.name)}${save !== 'none' ? ` — ${save.toUpperCase()} save ${r} vs ${dc}: <b>${ok ? 'saved' : 'failed'}</b> →` : ' →'} <b>${df.n}</b>${defNote(df, dmg)}${!ok && cond ? condTxt(t, cond) : ''}`);
       if (cond && !ok && CONDITIONS[cond]) addCond(t, cond, 1);
@@ -410,7 +443,7 @@ export function runFx(src, fx, quiet){
     let targets = partyOn(L); if (who === 'random' && targets.length) targets = [pick(targets)];
     const base = dice && dice !== '0' ? rollDice(dice).total : 0, lines = [];
     for (const t of targets){
-      const r = d(20) + saveBonus(t, save), ok = r >= +dc, raw = ok ? Math.floor(base / 2) : base, df = defend(t, raw, type), dmg = df.n;
+      const S = saveRoll(t, save), r = saveTxt(S), ok = S.tot >= +dc, raw = ok ? Math.floor(base / 2) : base, df = defend(t, raw, type), dmg = df.n;
       lines.push(`${esc(t.name)} — ${String(save).toUpperCase()} ${r} vs ${dc}: <b>${ok ? 'saved' : 'failed'}</b>${raw ? ` → ${dmg} ${type}${defNote(df, raw)}` : ''}${!ok && cond && cond !== '-' ? (cond === 'pit' ? ' + dragged down' : condTxt(t, cond)) : ''}`);
       if (dmg) applyDamage(t, dmg, type, src, true);
       if (!ok && cond === 'pit' && !t.dead) setTimeout(() => fall(t), 500);
@@ -469,6 +502,7 @@ export function castSpell(casterId, targetId, i, aim = null, { at = null } = {})
   const slot = spendSpell(c, base0.l, base0.n, !!base0.again, at);
   if (slot !== null) c.lastMove = null;
   if (slot === null){ toast(`${c.name} has no spell slot left for ${base0.n}.`); return false; }
+  endOn(c, 'castSpell');   // Invisibility: it ends when you cast
   // a breath weapon and its like: spent until a d6 at the start of its turn comes up (combat.js startTurn)
   if (base0.recharge) (c.spent ||= {})[base0.n] = true;
   const lib = base0.mon ? null : spellInfo(base0.n), level = !base0.l ? 0 : slot === '' ? Math.max(base0.l, at || 0) : (c.castAt || base0.l);
@@ -491,6 +525,10 @@ export function castSpell(casterId, targetId, i, aim = null, { at = null } = {})
     log(`${c.name} casts ${sp.n} on ${tg.name}: ${n} ${sp.ty}.`); applyDamage(tg, n, sp.ty, c, true); changed(); return true;
   }
   if (sp.k === 'buff' || sp.k === 'util'){
+    // a spell that simply gives its target a condition (Invisibility): no roll at all. (Ray of Sickness needs a hit and
+    // Color Spray a failed save, so they're left to the DM here, where the app doesn't roll them.)
+    const ef = GIVES.has(sp.n) && SPELL_EFFECTS[sp.n];
+    if (ef?.cond){ const tm = timingFor(ef, { src:c.id }); addCond(tg, ef.cond, conc ? -1 : tm.rounds, conc ? `conc:${c.id}` : null, false, tm.extra); }
     showCard({ kind:'', title:`${c.name}: ${sp.n}`, sub:tg.id === c.id ? 'on themself' : `on ${tg.name}`, lines:[...(sp.note ? [esc(sp.note)] : []), ...paid, '<span class="muted">The DM rules how it plays out.</span>'] });
     // Lesser Restoration: blinded, paralyzed, poisoned · Greater: charmed, petrified · both burn out the Seep's seed
     const cures = sp.n === 'Lesser Restoration' ? ['blinded', 'paralyzed', 'poisoned', 'seeded'] : sp.n === 'Greater Restoration' ? ['charmed', 'petrified', 'seeded'] : null;
@@ -508,11 +546,16 @@ export function castSpell(casterId, targetId, i, aim = null, { at = null } = {})
   } else if (sp.rad) targets = state.tokens.filter(t => t.floor === tg.floor && !t.dead && !t.flags.gone && t.id !== c.id && cheb(t.x, t.y, tg.x, tg.y) <= sp.rad);   // hand-made spells with a radius
   else if (gapTo(c, tg) > Math.max(1, spellReach(sp))) where += ` (out of range — the DM's call)`;
   const base = sp.d ? rollDice(sp.d).total : 0, lines = [];
+  // the timing of the condition it leaves (data/spell-effects.js for a spell; a creature's action carries its own)
+  const hold = base0.mon ? (base0.cond ? base0 : null) : (SPELL_EFFECTS[base0.n]?.cond === sp.cond ? SPELL_EFFECTS[base0.n] : null);
+  if (base0.conditionManual) lines.push('<span class="muted">Its grip, swallow or other hold is the DM\'s call (see its stat block).</span>');
   for (const t of targets){
     const cv = area && sp.sv === 'dex' ? coverFromOrigin(c.floor, origin, t) : null, cb = cv && cv.cover !== 'total' ? cv.ac : 0;
-    const r = d(20) + saveBonus(t, sp.sv) + cb, ok = r >= sp.dc, raw = base ? (ok ? (sp.half ? Math.floor(base / 2) : 0) : base) : 0, df = defend(t, raw, sp.ty), dmg = df.n;
+    const S = saveRoll(t, sp.sv, cb), r = saveTxt(S), ok = S.tot >= sp.dc, raw = base ? (ok ? (sp.half ? Math.floor(base / 2) : 0) : base) : 0, df = defend(t, raw, sp.ty), dmg = df.n;
     lines.push(`${esc(t.name)} — ${String(sp.sv).toUpperCase()} ${r}${cb ? ` <span class="muted">(+${cb} cover)</span>` : ''} vs ${sp.dc}: <b>${ok ? 'saved' : 'failed'}</b>${raw ? ` → ${dmg} ${sp.ty}${defNote(df, raw)}` : ''}${!ok && sp.cond ? condTxt(t, sp.cond) : ''}`);
-    if (!ok && sp.cond && CONDITIONS[sp.cond]) addCond(t, sp.cond, conc ? -1 : 1, conc ? `conc:${c.id}` : null);   // a concentration spell's hold lasts until it ends
+    // its hold: a concentration spell's lasts until that ends; the rest as the rules say (timingFor): Hold Person's
+    // repeated Wisdom save, Color Spray's "until the end of your next turn"
+    if (!ok && sp.cond && CONDITIONS[sp.cond]){ const tm = timingFor(hold, { src:c.id, save:sp.sv, dc:sp.dc }); addCond(t, sp.cond, conc ? -1 : tm.rounds, conc ? `conc:${c.id}` : null, false, tm.extra); }
     if (dmg) applyDamage(t, dmg, sp.ty, c, true);
   }
   if (!targets.length) lines.push('<span class="muted">No one is caught in it.</span>');

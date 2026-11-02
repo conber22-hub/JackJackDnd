@@ -107,6 +107,7 @@ export function longRest(list = party(), quiet = false){
     if (t.dead) continue;                      // the fallen don't rest; they need raising first
     t.hp = t.maxHp; t.flags.bloodied = false; delete t.sustain;
     t.conds = (t.conds || []).filter(c => c.n === 'seeded');
+    if (t.exhaustion) t.exhaustion > 1 ? t.exhaustion-- : delete t.exhaustion;   // a long rest: one level of exhaustion less
     for (const r of t.resources || []) t.res[r.id] = r.max;
   }
   for (const t of state.tokens) delete t.lres;   // a new day: Legendary Resistance comes back too

@@ -103,7 +103,7 @@ export function renderDock(){
   $('#dock').classList.toggle('twocol', dm && ui.tab === 'build');
 }
 export const hpBar = (t, pc) => `<div class="hpbar ${pc ? 'pc' : ''}"><i style="width:${Math.round(100 * clamp(t.hp / t.maxHp, 0, 1))}%"></i></div>`;
-export const condChips = (t, removable) => (t.conds || []).map(c => `<span class="chip on" style="border-color:${CONDITIONS[c.n]?.color || '#888'}" ${removable ? `data-act="rmCond" data-k="${esc(c.n)}" title="Remove"` : ''}>${CONDITIONS[c.n]?.icon || '•'} ${esc(c.n)}${c.r > 0 ? ` ${c.r}r` : ''}${removable ? ' ✕' : ''}</span>`).join('');
+export const condChips = (t, removable) => (t.exhaustion ? `<span class="chip on" style="border-color:${CONDITIONS.exhaustion.color}" ${removable ? 'data-act="rmCond" data-k="exhaustion" title="One level less"' : ''}>😩 exhaustion ${t.exhaustion}</span>` : '') + (t.conds || []).map(c => `<span class="chip on" style="border-color:${CONDITIONS[c.n]?.color || '#888'}" ${removable ? `data-act="rmCond" data-k="${esc(c.n)}" title="Remove"` : ''}>${CONDITIONS[c.n]?.icon || '•'} ${esc(c.n)}${c.r > 0 ? ` ${c.r}r` : ''}${removable ? ' ✕' : ''}</span>`).join('');
 
 // Can the party see any square of this creature's space?
 const seesAny = t => { const W = state.floors[t.floor].W, s = t.size || 1; for (let dy = 0; dy < s; dy++) for (let dx = 0; dx < s; dx++) if (seenNow[t.floor]?.has((t.y + dy) * W + t.x + dx)) return true; return false; };

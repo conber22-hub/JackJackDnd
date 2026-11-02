@@ -16,6 +16,35 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.21 — conditions that matter, holds that end, the DM's notebook
+
+Codex's round 4 (#14 conditions, #15 condition timing, #16 Barovian defences) and Muse's notebook (#17). Picture: `docs/screens/notebook.jpg`.
+- **What conditions do** (`src/engine/conditions.js`, the 2024 rules), on every attack and save:
+  - Invisible attackers and targets, unconscious, petrified, restrained, blinded, prone near and far, frightened.
+  - A paralysed or unconscious creature hit from 5 ft. takes a **critical**. It used to be hit automatically; now it has to be hit first.
+  - Paralysed, stunned, petrified and unconscious creatures **fail Strength and Dexterity saves** outright; restrained ones save Dexterity at disadvantage. Every save path uses `rules.js saveRoll`.
+  - **Exhaustion** (😩 in the condition menu, a level each time; tap the chip for one less): −2 on every d20 test and 5 ft. less speed a level, the sixth kills, a long rest takes one away (`combat.js exhaust`).
+  - Petrified gives resistance to all damage.
+  - New in the menu: unconscious, invisible, petrified, deafened.
+  - Stunned and incapacitated creatures can move again, as in the 2024 rules; grappled, restrained, paralysed, petrified and unconscious ones can't.
+- **How holds end** (`src/data/spell-effects.js`, and the creatures' actions in `monster-play.js`):
+  - **Hold Person / Hold Monster:** the save again at the end of each of the target's turns, on a card: "shakes off paralyzed".
+  - **Charm Person / Charm Monster / Animal Friendship:** end when the caster's side hurts the target.
+  - **Invisibility:** ends when the invisible creature attacks, casts or deals damage. Casting Invisibility now actually makes the target invisible (attacks against them at disadvantage, theirs at advantage).
+  - **Color Spray, Sunbeam, a Thunderclap, a Horrific Visage:** last "until the end of your next turn", tied to the right creature's turn.
+  - Grabs and swallows a creature's action can't resolve on its own say so on the card: the DM's call.
+  - `rules.js`: `timingFor`, `condPhase` (start and end of a turn), `endOn`.
+- **The Barovian creatures' defences** (`src/data/bestiary-barovia.js`, `bestiary.js`):
+  - 26 are linked to their SRD stat blocks (`srd:`), so the Barovian skeleton is immune to poison.
+  - 10 homebrew ones have their own (`def:`).
+  - Codex's PR #16 lists the rest, with suggestions for the DM to decide.
+- **📓 The DM's notebook** (Muse, `src/ui/notebook.js`). A slide-out drawer on the DM's screen only:
+  - Open it with the 📓 button, or **N** outside a fight (in a fight N is still next turn).
+  - Notes are tagged 👤 NPC, 💰 Loot, 🪝 Hook, ⚔ Fight, 📍 Place, ❗ To do, by tapping or typing `#npc`; filter, search, pin, tick off; delete with undo.
+  - **📋 Tonight's notes** gives this session's notes grouped by tag, for a recap.
+  - Notes are saved with the campaign (`state.campaign.notebook`) and never sent to players.
+  - Claude's follow-ups: the N that opens it no longer lands in the note box; a more solid drawer.
+
 ## v1.20 — the rules bite: defences, breath weapons, the pack
 
 Codex's three rules-engine PRs (#11, #12, #13) are merged and wired in. Pictures: `docs/screens/breath-weapon.jpg`, `docs/screens/pack-dm.jpg`.
@@ -551,7 +580,8 @@ src/data/               ← the content. Edit freely.
   session0.js           Session 0's hand-built maps: tavern, village, the Old Salt Road
   barovia-map.js        the Valley: places, roads, and what the road throws at travellers
   bestiary.js           FAMILIES, BESTIARY, default party
-  monster-play.js       (Codex, generated) SRD creatures' breath weapons and save actions, Legendary counts
+  monster-play.js       (Codex, generated) SRD creatures' breath weapons and save actions, Legendary counts, condition timing
+  spell-effects.js      (Codex, generated) how a spell's condition ends: repeated saves, what breaks it, how long
   looks.js              forged minis' parts, palettes, class styles and creature presets
   npc-starter.js        names, quirks and wants for Roll an NPC
   themes.js             floor themes (+ denizens, Grok prompts) and TEMPLATES
@@ -566,6 +596,7 @@ src/engine/             pure logic: no DOM, no Three.js, unit-tested
   defenses.js           (Codex) resistances, immunities, vulnerabilities from a stat block, applied part by part
   inventory.js          (Codex) the pack: items, +N variants, equipping and attunement rules, magic bonuses, coins, load
   gear.js               what a hero wears and wields, from the pack; keeps the creator's fields in step
+  conditions.js         (Codex) what conditions do: attack and save modifiers, auto-crits, speed, actions, exhaustion
   grid.js               movement (difficult terrain), line of sight, passive Perception
   importer.js           Battle Table / grid JSON / ASCII import, ASCII & JSON export
   tables.js             roll-table parser
@@ -635,6 +666,7 @@ src/game/heroes.js      players' heroes (their browser) and the DM's character r
 src/ui/creator.js       the character creator
 src/ui/valley.js        the Valley tab and its map (SVG)
 src/ui/screen.js        the table screen for the TV (?screen): ribbon, party, follow camera, read-alouds, faces, handouts, lights out
+src/ui/notebook.js      (Muse) 📓 the DM's notebook: tagged notes, search, Tonight's notes
 src/ui/pack.js          🎒 the pack: wear, wield, attune, add, coins (player's hero tab, DM's Tokens tab)
 src/ui/cards.js         card only: a player's phone at an in-person game (big buttons, target list, move pad)
 src/net/screen.js       the table screen's local wire (BroadcastChannel) between the DM's window and the TV's

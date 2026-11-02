@@ -20,7 +20,7 @@ import { packAction, setCoin } from './pack.js';
 import { importLibrary, setLibraryKinds, removeLibrary, libraryState } from '../game/library.js';
 import { setMode } from './input.js';
 import { select, takeStairs, goFloor, setView, setDread, rebuildFog, doorAction, search, disarmTrap, triggerTrap, selectedDoor, selectedTrap, nearestHero } from '../game/actions.js';
-import { rollInitiative, nextTurn, endCombat, addToInit, applyDamage, heal, infest, useSpecial, removeToken, restoreTaken, leaveFight, delayTurn, autoTurn } from '../game/combat.js';
+import { rollInitiative, nextTurn, endCombat, addToInit, applyDamage, heal, exhaust, infest, useSpecial, removeToken, restoreTaken, leaveFight, delayTurn, autoTurn } from '../game/combat.js';
 import { fightCandidates } from '../engine/fight.js';
 import { currentTurn } from '../game/rules.js';
 import { addCond, removeCond, endConc, immuneTo } from '../game/rules.js';
@@ -114,7 +114,7 @@ document.addEventListener('click', e => {
       pickSlot(who, sp.l, sp.n, at => setMode('cast', { caster:who.id, i, at }, `${who.name}: ${sp.n}${at ? ` (level ${at})` : ''} — ${how}`)); } break;
     case 'dmg': if (sel){ const n = +$('#hpAmt').value || 0; applyDamage(sel, n, 'manual'); changed(); } break;
     case 'heal': if (sel){ heal(sel, +$('#hpAmt').value || 0); changed(); } break;
-    case 'rmCond': if (sel){ removeCond(sel, k); changed(); } break;
+    case 'rmCond': if (sel){ if (k === 'exhaustion') exhaust(sel, -1); else removeCond(sel, k); changed(); } break;
     case 'infest': if (sel) infest(sel); break;
     case 'restore': { const t = tokById(id); if (t) restoreTaken(t); } break;
     case 'joinInit': if (sel){ addToInit(sel); changed(); } break;
@@ -411,6 +411,7 @@ document.addEventListener('change', e => {
   }
   else if (kind === 'importMap' && el.files[0]){ const r = new FileReader(); r.onload = () => { $('#importText').value = r.result; toast('File loaded — choose how to import it.'); }; r.readAsText(el.files[0]); }
   else if (kind === 'art' && el.files[0]) loadArt(el.dataset.k, el.files[0]);
+  else if (kind === 'addCond' && sel && el.value === 'exhaustion'){ exhaust(sel, 1); changed(); }
   else if (kind === 'addCond' && sel && el.value){ if (immuneTo(sel, el.value)) toast(`${sel.name} is immune to ${el.value} by its stat block — added anyway, your call.`); addCond(sel, el.value, -1, null, true); changed(); }
   else if (['propLock', 'propContents', 'propStash', 'propStashDc'].includes(kind)){ const p = selectedProp(); if (p) editProp(ui.selProp.floor, p.id, { propLock:'lock', propContents:'contents', propStash:'stash', propStashDc:'stashDc' }[kind], el.value); }
   else if (kind === 'fightPick' && ui.fight){ if (el.checked) ui.fight.ids.add(el.dataset.id); else ui.fight.ids.delete(el.dataset.id); renderFightSetup(); }
@@ -479,7 +480,7 @@ addEventListener('keydown', e => {
   else if (e.key === 'PageDown') goFloor(ui.floor + 1);
   else if (e.key === '1') setView('tilt'); else if (e.key === '2') setView('top'); else if (e.key === '3') setView('stack');
   else if (e.key.toLowerCase() === 'f'){ const t = ui.selected && tokById(ui.selected); if (t) focusTile(t.floor, t.x, t.y); }
-  else if (e.key.toLowerCase() === 'n' && dm){ if (state.combat.active) nextTurn(); else toggleNotebook(); }   // N is next turn in a fight (and the help text says so); out of one it opens the notebook
+  else if (e.key.toLowerCase() === 'n' && dm){ if (state.combat.active) nextTurn(); else { e.preventDefault(); toggleNotebook(); } }   // (preventDefault: the N mustn't land in the note box the notebook focuses)   // N is next turn in a fight (and the help text says so); out of one it opens the notebook
   else if (e.key.toLowerCase() === 'w' && dm) whimRoll(ui.floor);
   else if (e.key.toLowerCase() === 'b' && dm){ ui.tab = ui.tab === 'build' ? 'tokens' : 'build'; ui.panelOpen = true; if (ui.tab !== 'build') setMode('select'); renderTabs(); renderPanel(); renderDock(); }
   else if ((e.key === 'Delete' || e.key === 'Backspace') && dm && ui.selected) removeToken(ui.selected);
