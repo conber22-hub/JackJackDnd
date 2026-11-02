@@ -20,6 +20,7 @@ import { answerAsk, askPrompt, askClosed, notePrompt } from '../game/asks.js';
 import { currentTurn, canAct, endConc } from '../game/rules.js';
 import { nextTurn } from '../game/combat.js';
 import { applyCharacter, charactersOf, ownsCharacter, sheetForPlayer, saveMyHero, myHero } from '../game/heroes.js';
+import { maybePlayerTour } from '../ui/tour.js';
 import { cheb } from '../util/core.js';
 import { sfx, onSfx } from '../audio/sound.js';
 import { putModel, allModels, deleteModel } from '../render/models.js';
@@ -437,6 +438,7 @@ export function onClientMsg(m){
     ui.tableChars = (m.chars || []).map(c => { const local = myHero(c.id); const h = { ...c, portrait:c.portrait || local?.portrait }; if (!h.portrait) delete h.portrait; saveMyHero(h); return h; });
     if (ui.tableChars.length && !m.quiet) toast(`Welcome back — ${ui.tableChars.map(c => c.name).join(', ')} ${ui.tableChars.length > 1 ? 'are' : 'is'} at this table.`);
     renderPanel();
+    maybePlayerTour();   // first seating on a hero: the walkthrough, once per device
   }
   else if (m.t === 'oa' && m.q?.id) askOpportunity(m.q);
   else if (m.t === 'area' && state && Array.isArray(m.sq)){ const ex = state.explored?.[m.floor]; flashArea(m.floor, m.sq.filter(i => ex?.has(i)), m.ty); }   // only where they've been
