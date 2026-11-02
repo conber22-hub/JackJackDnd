@@ -1,6 +1,8 @@
 import { test, expect, preparePage, arena, expectPositions, frameMap, selectHero, clickTile } from './helpers.js';
 
 test('DM opens a PeerJS table and a player joins, is seated and moves on both screens', async ({ page:dm, browser, baseURL }) => {
+  // two 3D windows on a software renderer, like the other two-window tests: ~1 min on a quiet machine
+  test.setTimeout(150_000);
   await arena(dm);
   await dm.locator('[data-act="tab"][data-k="table"]').click();
   await dm.locator('[data-act="host"]').click();
