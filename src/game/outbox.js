@@ -38,6 +38,8 @@ export function toPlayers(msg, cat = 'world'){
   const how = shareOf()[cat] || 'hold';
   if (how === 'auto'){ broadcast(msg); return 'sent'; }
   if (how === 'never') return 'kept';
+  // (whose turn it is: only the latest matters, so a new one replaces any still waiting)
+  if (cat === 'turns') for (let i = outbox.length - 1; i >= 0; i--) if (outbox[i].cat === 'turns') outbox.splice(i, 1);
   outbox.push({ id:uid(), cat, msg, at:Date.now() });
   while (outbox.length > 40) outbox.shift();
   renderOutbox();

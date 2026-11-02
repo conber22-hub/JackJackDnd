@@ -10,7 +10,7 @@ import { ensureFloorViews, buildAllFloors, buildFloor, animateGridChange, animat
 import { syncTokens, tokenViews, actOn } from '../render/minis.js';
 import { turnAction, undoMove, answerOpportunity, askOpportunity, dropAsk } from '../game/moves.js';
 import { showReach, spawnPing, flashArea } from '../render/effects.js';
-import { toast, banner, showCard, showWhisper, renderAll, renderTop } from '../ui/hud.js';
+import { toast, banner, showCard, showWhisper, renderAll, renderTop, waiting } from '../ui/hud.js';
 import { renderPanel } from '../ui/panels.js';
 import { serialize, deserialize, resetScene, changed } from '../game/session.js';
 import { doMove, takeStairs, doPing, goFloor, select, animatePath, doorAction, search, disarmTrap } from '../game/actions.js';
@@ -105,7 +105,7 @@ export function hostTable({ code = savedTable()?.code || newCode(), tries = 0 } 
       clearTimeout(stuck); if (net.knocks.get(c.peer)?.conn === c) net.knocks.delete(c.peer);
       if (net.peer !== peer) return c.close();
       const old = net.conns.get(c.peer); if (old && old.conn !== c) try { old.conn.close(); } catch {}
-      net.conns.set(c.peer, { conn:c, name:'(joining)', seen:Date.now() }); renderPanel();
+      net.conns.set(c.peer, { conn:c, name:'(joining)', seen:Date.now() }); renderPanel(); renderTop();   // (the top bar counts who has joined)
     });
     c.on('data', m => {
       const s = net.conns.get(c.peer); if (!s || s.conn !== c) return;
@@ -116,7 +116,7 @@ export function hostTable({ code = savedTable()?.code || newCode(), tries = 0 } 
     c.on('close', () => {
       const s = net.conns.get(c.peer); if (!s || s.conn !== c) return;      // an older connection of a player who already came back
       net.conns.delete(c.peer); dropRequestsFrom(c.peer); delete state.seats[c.peer];
-      toast(`${s.name || 'A player'} left`); renderPanel(); pushState();
+      toast(`${s.name || 'A player'} left`); renderPanel(); renderTop(); pushState();
     });
     c.on('error', () => {});
   });
@@ -445,8 +445,9 @@ export function onClientMsg(m){
   else if (m.t === 'oaDone') dropAsk(m.id);
   else if (m.t === 'act' && state && ['attack', 'cast', 'hit'].includes(m.kind)) actOn(m.id, m.kind, m.target);
   else if (m.t === 'bye'){ net.status = 'closed'; clearTimeout(net.retryTimer); toast('The DM closed the table.'); renderNetStatus(); }
-  else if (m.t === 'denied'){ toast(m.text); if (ui.myHeroId && !tokById(ui.myToken)) ui.myHeroId = null; const me = tokById(ui.myToken); if (me && ui.selected === me.id) showReach(me); renderPanel(); }
-  else if (m.t === 'card'){ if (ui.screen && m.c?.ask) return; if (ui.screen && m.c?.die?.n) screenDie(m.c, () => showCard(m.c, false)); else showCard(m.c, false); }
+  else if (m.t === 'denied'){ waiting(null); toast(m.text); if (ui.myHeroId && !tokById(ui.myToken)) ui.myHeroId = null; const me = tokById(ui.myToken); if (me && ui.selected === me.id) showReach(me); renderPanel(); }
+  // (waiting(null): something came back, so the player's 'with the DM' sign goes)
+  else if (m.t === 'card'){ if (ui.screen && m.c?.ask) return; waiting(null); if (ui.screen && m.c?.die?.n) screenDie(m.c, () => showCard(m.c, false)); else showCard(m.c, false); }
   else if (m.t === 'ping'){ spawnPing(m.floor, m.x, m.y, m.color); toast(`${m.who} pings the map`); }
   else if (m.t === 'whisper') showWhisper(m.text);
   else if (m.t === 'banner') banner(m.text);
@@ -474,6 +475,7 @@ function applyRemoteState(s){
   syncTokens();
   const me = tokById(ui.myToken);
   if (me && (me.floor !== ui.floor || myPrev !== ui.myToken || !sameDelve)){ goFloor(me.floor, false); focusTile(me.floor, me.x, me.y); if (!ui.selected) select(me.id); }
+  if (me && myPrev !== ui.myToken) setTimeout(maybePlayerTour, 400);   // just seated on a hero: the first-night walkthrough (once per device)
   if (ui.selected && !tokById(ui.selected)) ui.selected = null;
   const cur = currentTurn(), key = `${state.combat.round}:${state.combat.idx}`;
   if (cur && cur.id === ui.myToken && key !== lastTurnSeen){ banner('Your turn'); select(me.id); buzz([180, 90, 180]); sfx('turn', false); }

@@ -73,6 +73,7 @@ export function pickTile(cx, cy){
 
 export function setMode(mode, data = null, text = ''){
   ui.mode = mode; ui.modeData = data;
+  document.body.classList.toggle('aiming', ['attack', 'cast', 'aim', 'feat'].includes(mode));
   const tool = BUILD_TOOLS.find(t => t[0] === mode);
   $('#modeHint').classList.toggle('show', mode !== 'select');
   $('#modeText').textContent = text || tool?.[3] || '';
@@ -265,7 +266,10 @@ function handleTap(cx, cy, shift = false){
 let tdrag = null, hoverKey = '';
 const tip = () => $('#moveTip');
 function hideTip(){ tip()?.classList.remove('show'); }
-function showTip(cx, cy, html){ const el = tip(); if (!el) return; el.innerHTML = html; el.style.left = `${cx + 16}px`; el.style.top = `${cy - 10}px`; el.classList.add('show'); }
+// (kept on screen: near the right edge it flips to the left of the finger, as a phone's edge would cut it off)
+function showTip(cx, cy, html){ const el = tip(); if (!el) return; el.innerHTML = html; el.classList.add('show');
+  const w = el.offsetWidth || 160, h = el.offsetHeight || 30, x = cx + 16 + w > innerWidth - 6 ? cx - 16 - w : cx + 16;
+  el.style.left = `${Math.max(6, x)}px`; el.style.top = `${Math.min(innerHeight - h - 6, Math.max(6, cy - 10))}px`; }
 // What a route costs and what it risks, for the tip beside the finger / cursor.
 function describeRoute(t, path){
   const f = state.floors[t.floor], base = moveAllowance(t), cost = pathCost(f, path);

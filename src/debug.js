@@ -44,3 +44,4 @@ export { ui, tokById, BEST, reach, shiftFloor, whimRoll, whimStep, rollInitiativ
 import * as srd from './data/srd.js';
 import * as library from './game/library.js';
 export { srd, library };
+export { outbox } from './game/outbox.js';

@@ -3,7 +3,7 @@
    player tour to once per device, and dresses the popover in regal glass. */
 import { driver } from 'driver.js';
 import 'driver.js/dist/driver.css';
-import { ui, tokById } from '../engine/state.js';
+import { state, ui, tokById } from '../engine/state.js';
 import { select } from '../game/actions.js';
 import { $ } from '../util/core.js';
 
@@ -57,7 +57,7 @@ export function startPlayerTour(){
   return drive([
     { element:card, popover:{ title:'Your hero', description:'This is you at the table. Your armour, your health, and everything you can do are on this card.' } },
     { element:atk, popover:{ title:'Strike', description:'Pick an attack or a spell here. The map shades how far it reaches.' } },
-    { element:'#stage canvas', popover:{ title:'Then tap a target', description:'Tap the creature you mean to hit. The app adds the bonuses, checks the armour, and rolls the damage.' } },
+    { element:'#stage canvas', popover:{ title:'Then tap a target', description:'Tap the creature you mean to hit. The app adds the bonuses, checks the armour and rolls the damage, and the DM tells you how it went.' } },
     { element:move, popover:{ title:ui.cardOnly ? 'Step by step' : 'To move', description:ui.cardOnly ? 'These keys step you one square at a time. North is up, as on the TV.' : 'Tap a glowing tile and your mini walks there. The bright glow is the move you have left.' } },
     { element:'[data-act="cardOnly"]', popover:{ title:'Card only', description:'At the table, with the map on the TV, turn this on: no map on your phone, just your hero, big buttons, and a list of targets.' } },
     { element:'#libQ', popover:{ title:'Look it up', description:'A spell, a magic item, a feat, a feature — look it up here without bothering the DM.' } },
@@ -67,7 +67,7 @@ export function startPlayerTour(){
 // Runs once per device, the first time a player is seated on a hero.
 export function maybePlayerTour(){
   if (localStorage.getItem(TOUR_KEY)) return;
-  if (ui.role !== 'player' || !tokById(ui.myToken)) return;
+  if (ui.role !== 'player' || !state || !tokById(ui.myToken)) return;   // (the table's welcome can come before its map)
   localStorage.setItem(TOUR_KEY, '1');
   startPlayerTour();
 }
@@ -93,7 +93,7 @@ export function ensureTourButton(){
   btn.textContent = '🧭 Show me around';
   btn.onclick = () => {
     // A player with no hero yet has nothing to walk through; leave the help open.
-    if (ui.role === 'player' && !tokById(ui.myToken)) return;
+    if (ui.role === 'player' && (!state || !tokById(ui.myToken))) return;
     $('#helpModal').classList.add('hidden');
     if (ui.role === 'player') startPlayerTour(); else startDMTour();
   };

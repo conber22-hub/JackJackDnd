@@ -45,7 +45,9 @@ test('the player tour shows once, not again after a reload, and taps work after 
     // Reload and rejoin: the player comes back seated, and the tour stays away.
     await player.reload();
     await player.waitForFunction(() => !!window.DreadDelve);
-    await player.locator('[data-act="thRole"][data-k="player"]').click();
+    // (this phone is remembered as a player's: the start screen may open straight on the invitation)
+    const role = player.locator('[data-act="thRole"][data-k="player"]');
+    if (await role.isVisible()) await role.click();
     await player.locator('#pName').fill('Ada');
     await player.locator('#pWord').fill('e2e-secret');
     await player.locator('#joinCode').fill(code);

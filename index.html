@@ -285,6 +285,10 @@ body.cardonly.player #panel{left:0;right:0;top:78px;bottom:0;width:auto;height:a
 #topPanels #oaPanel .req{border-color:#c0303a;box-shadow:0 0 0 1px #c0303a55,0 10px 30px #000a}
 #moveTip{position:fixed;z-index:30;pointer-events:none;border-radius:12px;padding:5px 11px;font-size:13px;font-weight:500;color:#f6ead4;white-space:nowrap;opacity:0;transition:opacity .12s}
 #moveTip.show{opacity:1}
+#waitPill{position:fixed;left:50%;top:70px;transform:translateX(-50%) translateY(-8px);z-index:8;pointer-events:none;opacity:0;transition:opacity .2s,transform .2s var(--spring);background:var(--glass-strong);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:1px solid var(--gold-line);border-radius:999px;padding:7px 16px;font-size:14px;color:var(--gold-hi);box-shadow:var(--spec),var(--lift);white-space:nowrap}
+#waitPill.show{opacity:1;transform:translateX(-50%)}
+#waitPill .spin{display:inline-block;animation:waitspin 2.4s linear infinite}
+@keyframes waitspin{to{transform:rotate(360deg)}}
 #moveTip .dash{color:#f08a4a}
 #moveTip .warn{color:#ff6a5a;font-size:12px;margin-top:2px}
 .acts .grp{display:inline-flex;gap:4px;align-items:center;padding:3px 6px;border:1px solid var(--line);border-radius:999px;background:rgba(0,0,0,.18)}
@@ -430,6 +434,7 @@ body.screen #turnBanner{font-size:52px;top:46%}
   #panel.closed{transform:translateY(100%)}
   .tabs button{font-size:13px;padding:7px 12px}
   #initBar{top:62px;right:8px;width:170px;max-height:26vh;font-size:13px;border-radius:var(--r-md)}
+  body.aiming #initBar{display:none}   /* aiming at a target: the map is what you need, the list comes back after */
   #initBar.idle{width:auto;background:transparent;border:0;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}#initBar.idle .ih,#initBar.idle #initList{display:none}#initBar.idle .ib{border:0;padding:5px}#initBar.idle .ib .btn{min-height:32px;padding:4px 12px;border-radius:999px;font-size:13px}
   #initBar .ih{padding:9px 12px 4px}#initBar .ih b{font-size:11px} .ini{padding:5px 8px} .ini .n{font-size:13px}
   #dock{left:8px!important;bottom:calc(46vh + 8px);flex-direction:row;flex-wrap:wrap;max-width:calc(100vw - 16px);max-height:none}
@@ -612,6 +617,7 @@ body.screen #turnBanner{font-size:52px;top:46%}
 </aside>
 
 <div id="selCard"></div>
+<div id="waitPill"></div>
 <div id="modeHint"><span id="modeText"></span><button class="btn small" data-act="cancelMode">Done</button></div>
 <div id="skyline" class="hidden" aria-hidden="true"><svg class="sky-castle" viewBox="0 0 200 130" preserveAspectRatio="xMidYMax meet">
   <defs><radialGradient id="skyg" cx="50%" cy="45%" r="55%"><stop offset="0%" stop-color="#7a1c26" stop-opacity=".75"/><stop offset="55%" stop-color="#3a1418" stop-opacity=".35"/><stop offset="100%" stop-color="#000" stop-opacity="0"/></radialGradient></defs>

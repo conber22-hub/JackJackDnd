@@ -103,7 +103,7 @@ document.addEventListener('click', e => {
     case 'encRoll': rollEncounter(); renderPanel(); break;
     case 'encPlace': placeEncounter(); break;
     case 'resAdj': if (sel) adjustRes(sel, k, +el.dataset.n); break;
-    case 'reqAns': answerRequest(id, k); break;
+    case 'reqAns': answerRequest(id, k, { show:el.dataset.show === '1' }); break;
     case 'shortRest': shortRest(); break;
     case 'longRest': longRest(); break;
     case 'freeRolls': state.campaign.freeRolls = !state.campaign.freeRolls; changed(); renderPanel(); break;

@@ -28,6 +28,16 @@ export function toast(msg){ const el = document.createElement('div'); el.classNa
 export function banner(text){ const b = $('#turnBanner'); b.textContent = text; b.style.opacity = 1; clearTimeout(banner._t); banner._t = setTimeout(() => b.style.opacity = 0, 1800); }
 export function showWhisper(text){ const w = $('#whisper'); w.textContent = text; w.style.opacity = .9; clearTimeout(showWhisper._t); showWhisper._t = setTimeout(() => w.style.opacity = 0, 3800); }
 export function sendWhisper(text){ showWhisper(text); toPlayers({ t:'whisper', text }, 'whispers'); sfx('whisper'); }
+/* A player's sign that what they did is with the DM: it stays until something comes back (a card, a no) or a minute
+   passes, so under the Curtain (game/outbox.js) a quiet screen never looks like a lost tap. waiting(null) clears it. */
+let waitTimer = null;
+export function waiting(text){
+  const el = $('#waitPill'); if (!el) return;
+  clearTimeout(waitTimer);
+  if (!text){ el.classList.remove('show'); return; }
+  el.innerHTML = `<span class="spin">⏳</span> ${esc(text)}`; el.classList.add('show');
+  waitTimer = setTimeout(() => el.classList.remove('show'), 60000);
+}
 export function showCard(c, share = true){
   const layer = $('#cardLayer'), el = document.createElement('div');
   el.className = 'pop ' + (c.kind || '');

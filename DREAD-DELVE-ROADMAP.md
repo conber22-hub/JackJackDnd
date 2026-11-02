@@ -16,6 +16,25 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.19 — polish for every session
+
+- **Muse's two features are in.**
+  - **Saves in IndexedDB** (PR #9): the autosave keeps its portraits and handouts, with no 5 MB ceiling. An old save moves across once, and if IndexedDB fails it falls back to the old storage.
+  - **A first-night walkthrough** (PR #10, driver.js): a player's first seating shows a short tour (your hero, strike, tap a target, moving, Card only, Look it up), once per device. The help modal's **🧭 Show me around** gives the DM a tour of the Night, Table, Beasts and Story tabs.
+  - Claude's follow-ups:
+    - The tour now starts when the player is seated, whichever of the table's messages comes last.
+    - It no longer looks for a hero before the map has arrived (that was a crash after a reload).
+    - Its "tap a target" step says the DM tells you how it went.
+- **At the table, under the Curtain:**
+  - A player who acts sees **⏳ With the DM…** until a result or a no comes back, so a quiet screen never looks like a lost tap.
+  - The DM's request card has **✓📤 & show**: approve, roll, and send the result in one tap.
+  - Only the latest turn banner waits in the outbox; whose turn it is doesn't pile up.
+- **Fixes:**
+  - The DM's top bar counts who has joined as they join and leave (it said "0 joined" until something else redrew it).
+  - On a phone, the initiative list steps aside while a player aims, so the "tap the target" bar no longer sits on it.
+  - The tip beside the finger (reach, cost, out of range) flips to the left near the screen's edge instead of being cut off.
+- **Codex has the rules-engine tasks** (`docs/codex/rules-engine.md`): damage defenses, monster actions such as breath weapons, and inventory.
+
 ## v1.18 — the Curtain: players see only what the DM sends
 
 Nothing pops up on a player's phone or on the TV unless the DM sends it (`src/game/outbox.js`). Pictures: `docs/screens/curtain-*.jpg`.

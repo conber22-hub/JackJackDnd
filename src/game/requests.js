@@ -4,7 +4,8 @@
    so every result is the same card on every screen. */
 import { state, ui, tokById } from '../engine/state.js';
 import { $, esc, uid } from '../util/core.js';
-import { toast } from '../ui/hud.js';
+import { toast, waiting } from '../ui/hud.js';
+import { outbox, sendHeld } from './outbox.js';
 import { canAct } from './rules.js';
 import { doAttack, castSpell, partySees } from './combat.js';
 import { useFeature } from './resources.js';
@@ -17,7 +18,7 @@ let send = null;                 // set by net/table.js (avoids an import cycle)
 export function setSender(fn){ send = fn; }
 export function requestAct(m){
   if (!send) return;
-  if (send({ t:'act', ...m })) toast(state.freeRolls ? 'Rolling…' : 'Sent to the DM…');
+  if (send({ t:'act', ...m })) waiting(state.freeRolls ? 'Rolled — the DM will tell you how it went' : 'With the DM…');
 }
 
 /* ---------- the DM's side ---------- */
@@ -63,7 +64,9 @@ export function runAct(m, mode = m.mode){
   if (m.kind === 'feat') return useFeature(a, m.res, tokById(m.target) || a);
   return false;
 }
-export function answerRequest(rid, verdict){
+// show: send its result to the table at once (the DM approved it and wants them to see it), past the outbox
+export function answerRequest(rid, verdict, { show = false } = {}){
+  const before = new Set(outbox.map(o => o.id));
   const i = queue.findIndex(q => q.rid === rid); if (i < 0) return;
   const [q] = queue.splice(i, 1);
   const typed = +$(`#rq-${rid}`)?.value; if (typed >= 1 && typed <= 20) q.d20 = Math.round(typed);   // the DM typed the die they rolled
@@ -72,6 +75,7 @@ export function answerRequest(rid, verdict){
   if (!ok){ q.deny?.('That can no longer be done — try again.'); renderRequests(); return; }
   if (verdict === 'no') q.deny?.('The DM says no to that one.');
   else if (!runAct(q, verdict === 'ok' ? q.mode : verdict)) q.deny?.('That could not be done (no slot or charge left?).');
+  else if (show) for (const o of outbox.filter(o => !before.has(o.id))) sendHeld(o.id);
   renderRequests();
 }
 // A new scene (a new delve, a loaded save): requests about the old one are void.
@@ -81,5 +85,5 @@ export function renderRequests(){
   const el = $('#reqPanel'); if (!el) return;
   if (ui.role !== 'dm' || ui.tableView){ el.innerHTML = ''; return; }
   el.innerHTML = queue.map(q => `<div class="req"><div class="w">🎲 ${label(q)} <span class="muted">(${esc(q.who)})</span></div>
-    <div class="b">${q.kind === 'attack' && !q.d20 && state.campaign?.realDice ? `<input class="txt num" id="rq-${q.rid}" type="number" min="1" max="20" placeholder="d20" title="The d20 they rolled at the table (blank: the app rolls)">` : ''}<button class="btn small primary" data-act="reqAns" data-id="${q.rid}" data-k="ok">${q.d20 ? '✓ Use their roll' : '✓ Roll it'}</button><button class="btn small" data-act="reqAns" data-id="${q.rid}" data-k="adv" title="Approve with advantage">▲ Adv</button><button class="btn small" data-act="reqAns" data-id="${q.rid}" data-k="dis" title="Approve with disadvantage">▼ Dis</button><button class="btn small danger" data-act="reqAns" data-id="${q.rid}" data-k="no">✕ No</button></div></div>`).join('');
+    <div class="b">${q.kind === 'attack' && !q.d20 && state.campaign?.realDice ? `<input class="txt num" id="rq-${q.rid}" type="number" min="1" max="20" placeholder="d20" title="The d20 they rolled at the table (blank: the app rolls)">` : ''}<button class="btn small primary" data-act="reqAns" data-id="${q.rid}" data-k="ok">${q.d20 ? '✓ Use their roll' : '✓ Roll it'}</button><button class="btn small" data-act="reqAns" data-id="${q.rid}" data-k="ok" data-show="1" title="Roll it and send the result to the table straight away">✓📤 & show</button><button class="btn small" data-act="reqAns" data-id="${q.rid}" data-k="adv" title="Approve with advantage">▲ Adv</button><button class="btn small" data-act="reqAns" data-id="${q.rid}" data-k="dis" title="Approve with disadvantage">▼ Dis</button><button class="btn small danger" data-act="reqAns" data-id="${q.rid}" data-k="no">✕ No</button></div></div>`).join('');
 }

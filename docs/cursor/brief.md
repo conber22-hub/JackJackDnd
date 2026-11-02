@@ -2,7 +2,8 @@
 
 You have two tracks. They don't touch the same files, so **run them as two background agents at the same time** if you can.
 - **Track A, QA**: this file, tasks A1 and A2 below.
-- **Track B, the rules engine**: the three tasks in `docs/argon/brief.md`, first written for Gemini (Argon), which ran out before it published anything. Do them in its order, using **your** branch names:
+- **Track B has moved to Codex** (`docs/codex/rules-engine.md`); if Cursor comes back, it takes track A only.
+- *(was)* **Track B, the rules engine**: the three tasks in `docs/argon/brief.md`, first written for Gemini (Argon), which ran out before it published anything. Do them in its order, using **your** branch names:
   - B1 damage defenses: `cursor/defenses`
   - B2 monster actions: `cursor/monster-actions`
   - B3 inventory engine: `cursor/inventory`
