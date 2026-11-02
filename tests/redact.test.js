@@ -35,7 +35,14 @@ test('players get no secrets: unexplored map, secret doors, unfound traps, unsee
   assert.ok(m1 && !m1.unseen && m1.attacks.length === 0 && m1.ac === undefined && m1.maxHp === 1 && !m1.flags.seeded && !m1.flags.alert);
   assert.ok(m2.unseen && m2.flags.gone && m2.x < 0 && m2.name === 'something unseen');
   assert.ok(out.tokens.find(t => t.id === pc.id).attacks.length > 0, 'the party keeps its own numbers');
-  assert.ok(out.log.some(e => e.m === 'public'));
+  // the Curtain: their log is what the DM sent them, unless the DM opens the log to them
+  assert.ok(!out.log.some(e => e.m === 'public'), 'the log is closed to them by default');
+  assert.deepEqual(out.share, { gaze:false, omens:false }, 'and so are his Gaze and its omens');
+  s.log.push({ t:1, m:'what the DM sent', sent:true });
+  assert.ok(redactForPlayers(ser(s), { seen:seenNow, explored:s.explored }).log.some(e => e.m === 'what the DM sent'));
+  s.campaign.share = { log:true, gaze:true };
+  const open = redactForPlayers(ser(s), { seen:seenNow, explored:s.explored });
+  assert.ok(open.log.some(e => e.m === 'public') && open.share.gaze, 'opened, they read it and see the Gaze');
   assert.ok(!out.log.some(e => e.dm));
   assert.equal(out.content.shift, null); assert.equal(out.content.grasp, null); assert.deepEqual(out.content.bestiary, {});
   assert.notEqual(out.meta.seed, s.meta.seed); assert.ok(!('campaign' in out) && !('characters' in out));

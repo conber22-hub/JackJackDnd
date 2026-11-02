@@ -24,6 +24,7 @@ import { myHero } from '../game/heroes.js';
 import { PROPS, PROP_CATS, HOUSES, GROUNDS, CROPS } from '../data/props.js';
 import { RANKS, KINDS, STRENGTHS, WEAKNESSES } from '../data/court.js';
 import { court, title as courtTitle } from '../game/court.js';
+import { SHARE_KINDS, shareOf } from '../game/outbox.js';
 import { valleyTab, placesForSession, playerMapTab } from './valley.js';
 import { modelInfo } from '../render/models.js';
 import { CAMPAIGN, SESSIONS, CLOCKS, PLACES, PLACE_STATES, CAST, FORTUNE } from '../data/campaign.js';
@@ -313,6 +314,19 @@ function courtPanel(){
   return h;
 }
 
+/* What the players see (game/outbox.js): for each kind of thing the app would show them, whether it waits for the
+   DM to send it, goes at once, or never goes; and whether their screens show his Gaze, its omens, and the log. */
+function sharePanel(){
+  const S = shareOf(), seg = (k, v, label) => `<button class="btn small ${S[k] === v ? 'on' : ''}" data-act="share" data-k="${k}" data-v="${v}">${label}</button>`;
+  let h = `<h3>🎭 What the players see</h3>
+    <div class="muted">Nothing pops up on their screens unless you send it. Held things wait in 📤 at the top of your screen (and on your own card) to be sent as they are, edited first, or dropped. The map is theirs as ever: what their heroes can see.</div>`;
+  for (const [k, d] of Object.entries(SHARE_KINDS)) h += `<div class="row" title="${esc(d.hint)}"><label style="min-width:70px">${esc(d.n)}</label>${seg(k, 'hold', '✋ I send')}${seg(k, 'auto', '⚡ Auto')}${seg(k, 'never', '🙈 Never')}</div>`;
+  h += `<div class="row"><label style="min-width:70px">His Gaze</label>${seg('gaze', true, '👁 They see it')}${seg('gaze', false, 'Hidden')}</div>
+    <div class="row" title="Ravens, eyes in the trees, the land withering"><label style="min-width:70px">Omens</label>${seg('omens', true, '🐦‍⬛ Theirs too')}${seg('omens', false, 'Mine only')}</div>
+    <div class="row" title="Off: their log holds only what you sent them"><label style="min-width:70px">The log</label>${seg('log', true, '📜 All of it')}${seg('log', false, 'What I sent')}</div>`;
+  return h;
+}
+
 function tableTab(){
   let h = `<h3>Play together</h3>`;
   const saved = savedTable();
@@ -347,6 +361,7 @@ function tableTab(){
     <div class="muted">Players tap an attack, spell or feature on their own hero, then a target. ${state.campaign.freeRolls ? 'It rolls at once.' : 'You get a request at the top of the screen: roll it as asked, with advantage or disadvantage, or say no.'} Your app does the rolling, so everyone sees the same card.</div>`;
   h += `<div class="row"><button class="btn ${ui.tableView ? 'on' : ''}" data-act="tableView">📺 Table view ${ui.tableView ? 'ON' : 'off'}</button></div>
     <div class="muted">Table view shows what players see — fog, no room secrets, no hidden traps or secret doors, no monster HP. Use it when the screen is cast to a TV.</div>
+    ${sharePanel()}
     ${gfxPanel()}
     ${readerPanel()}
     ${booksPanel()}

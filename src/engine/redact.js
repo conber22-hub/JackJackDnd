@@ -46,7 +46,11 @@ export function redactForPlayers(s, { seen = {}, explored = {} } = {}){
   const shown = new Set(out.tokens.map(t => t.bid).filter(Boolean));
   out.content = { dread:s.content?.dread || {}, shift:null, grasp:null,
     bestiary:Object.fromEntries(Object.entries(s.content?.bestiary || {}).filter(([id]) => shown.has(id))) };
-  out.log = (s.log || []).filter(e => !e.dm);
+  // the Curtain (game/outbox.js): their screens know whether to show the Gaze and its omens; their log is what was
+  // sent to them, unless the DM opens it
+  const share = { gaze:false, omens:false, log:false, ...(s.campaign?.share || {}) };
+  out.share = { gaze:!!share.gaze, omens:!!share.omens };
+  out.log = (s.log || []).filter(e => share.log ? !e.dm : e.sent);
   out.explored = Object.fromEntries(Object.entries(explored).map(([L, v]) => [L, [...v]]));
   return out;
 }

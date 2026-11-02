@@ -61,6 +61,9 @@ test('the table screen: a window for the TV that follows the table, with read-al
   await expect(page.locator('#dieModal')).toBeVisible();
   await page.locator('#dieBox [data-die="17"]').click();
   await expect(page.locator('#cardLayer')).toContainText('at the table');
+  // the Curtain: the TV sees nothing until the DM sends it
+  await expect(screen.locator('#scDie')).toBeHidden();
+  await page.locator('#cardLayer .held [data-act="outSend"]').first().click();
   await expect(screen.locator('#scDie')).toBeVisible();   // the d20 tumbles across the TV
   await expect(screen.locator('#cardLayer')).toContainText('at the table');
   if (SP) await screen.screenshot({ path:SP + '/n-die.png' });
@@ -125,6 +128,9 @@ test('a player\'s phone as a hero card: no map, big buttons, a target list, a re
     await player.locator('#pickBox [data-pick="0"]').click();
     await player.locator('#dieBox [data-die="12"]').click();
     await expect(dm.locator('#cardLayer')).toContainText('at the table');
+    await expect(dm.locator('#outPanel')).toContainText('waiting for you to send');   // held: her phone shows nothing yet
+    await expect(player.locator('#cardLayer')).not.toContainText('at the table');
+    await dm.locator('#outPanel [data-act="outSendAll"]').click();
     await expect(player.locator('#cardLayer')).toContainText('at the table');
     // the DM asks for a Wisdom save: it comes up on her phone, she taps her die, the DM reveals
     await dm.evaluate(() => { document.querySelectorAll('#cardLayer .pop').forEach(el => el.remove()); });

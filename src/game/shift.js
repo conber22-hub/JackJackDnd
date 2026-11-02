@@ -14,6 +14,7 @@ import { showCard } from '../ui/hud.js';
 import { sfx } from '../audio/sound.js';
 import { runFx, zoneSource } from './combat.js';
 import { changed, broadcast } from './session.js';
+import { toPlayers } from './outbox.js';
 import { tokById } from '../engine/state.js';
 
 const SHIFT_ONLY = new Set(['rewire', 'swap', 'forget', 'scatter', 'stairs', 'nest', 'trap', 'doors']);
@@ -95,7 +96,7 @@ export function shiftFloor(L, why, forced){
   if (belowChanged){ if (below.grid.join('') !== oldBelow.join('')) animateGridChange(L + 1, oldBelow, below.grid); else buildFloor(L + 1); }
   updateVision(); clearReach(); syncTokens();
   const sc = { kind:'', title:row.name, sub:`Shift d100 = ${roll === 100 ? '00' : roll} · ${f.name}`, flair:row.text || why || 'Stone grinds against stone. The way you came is not the way back.' };
-  showCard({ ...sc, lines:dm.map(l => `<span class="muted">DM:</span> ${esc(l)}`) }, false); broadcast({ t:'card', c:sc });
+  showCard({ ...sc, lines:dm.map(l => `<span class="muted">DM:</span> ${esc(l)}`) }, false); toPlayers({ t:'card', c:sc }, 'world');
   log(`⟲ ${why || 'The halls shift'} — ${f.name}: ${row.name} (${roll === 100 ? '00' : roll}).`);
   const zs = zoneSource(L);
   later.forEach((fx, k) => setTimeout(() => { runFx(zs, fx); changed(); }, 1900 + k * 250));

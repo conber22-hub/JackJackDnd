@@ -40,7 +40,7 @@ export function revealAsk(){
   A.revealed = true;
   const c = checkById(A.check), rows = A.who.map(id => ({ id, name:tokById(id)?.name || '?', ...A.res[id] }));
   const group = A.dc != null && rows.length > 1 ? groupOk(rows) : null;
-  showCard({ kind:rows.some(r => r.nat20) ? 'crit' : '', title:c.label, sub:A.dc != null ? `DC ${A.dc}` : '', ask:true,   // the TV has its own reveal
+  showCard({ kind:rows.some(r => r.nat20) ? 'crit' : '', title:c.label, sub:A.dc != null ? `DC ${A.dc}` : '', ask:true, cat:'dm',   // the TV has its own reveal
     lines:rows.map(r => `${esc(r.name)} — ${r.how === 'phone' || r.how === 'dm' ? '🎲 ' : 'd20 '}<b>${r.d20}</b> ${r.bonus >= 0 ? '+' : '−'} ${Math.abs(r.bonus)} = <b>${r.total}</b>${r.ok == null ? '' : r.ok ? ' — <b>success</b>' : ' — <b>fails</b>'}`)
       .concat(group == null ? [] : [`<b>As a group: ${group ? 'they make it' : 'they fail'}</b>`]) });
   toScreens({ t:'askReveal', label:c.label, dc:A.dc, group, rows:rows.map(r => ({ id:r.id, name:r.name, d20:r.d20, bonus:r.bonus, total:r.total, ok:r.ok })) });

@@ -18,7 +18,9 @@ import { gfx } from './gfx.js';
 
 const outdoors = () => { const th = THEMES[state?.floors[ui.floor]?.theme] || {}; return (th.walls === 'trees' || th.walls === 'mixed') && th.id !== 'tavern'; };
 // How far the land has withered under his Gaze: 0 below Gaze 5, then a step a level (render/floors.js reads it).
-export const witherLevel = () => Math.max(0, (state?.dread || 1) - 4);
+export const witherLevel = () => omensShown() ? Math.max(0, (state?.dread || 1) - 4) : 0;
+// A player's screen (or the TV) shows the omens only when the DM has opened them to the table (game/outbox.js).
+const omensShown = () => ui.role === 'dm' || !!(state?.share || state?.campaign?.share)?.omens;
 
 function softDot(size, inner, outer){
   const c = document.createElement('canvas'); c.width = c.height = size; const x = c.getContext('2d');
@@ -130,7 +132,7 @@ function showHim(t, f, cx, cy, secs, seed, outside){
 let center = new THREE.Vector3(), lastWorld = '';
 export function updateOmens(t, dt){
   if (!state) return;
-  const out = outdoors() && ui.view !== 'stack', G = state.dread || 1, f = state.floors[ui.floor], live = out && gfx.omens !== false;
+  const out = outdoors() && ui.view !== 'stack', G = state.dread || 1, f = state.floors[ui.floor], live = out && gfx.omens !== false && omensShown();
   const baseY = floorY(ui.floor);
   // the valley's walls
   world.visible = out;
@@ -149,7 +151,8 @@ export function updateOmens(t, dt){
   if (f){
     const W = state.watcher, cxw = controls.target.x + state.meta.size / 2 - .5, cyw = controls.target.z + state.meta.size / 2 - .5, outside = outdoors();
     if (W && W.n !== H.key && W.floor === ui.floor && Date.now() < W.until){ H.key = W.n; showHim(t, f, cxw, cyw, Math.max(2, (W.until - Date.now()) / 1000), W.at % 2147483647 || 7, outside); }
-    else if (live && G >= 4 && t > H.next && !him.visible){ H.next = t + 120 + Math.random() * (300 - G * 22); if (H.next > 0 && t > 20 && Math.random() < .5) showHim(t, f, cxw, cyw, 3 + Math.random() * 3, Math.floor(Math.random() * 1e9), outside); }
+    // (on his own: the DM's screen only; the players see him when the DM lets them)
+    else if (live && ui.role === 'dm' && G >= 4 && t > H.next && !him.visible){ H.next = t + 120 + Math.random() * (300 - G * 22); if (H.next > 0 && t > 20 && Math.random() < .5) showHim(t, f, cxw, cyw, 3 + Math.random() * 3, Math.floor(Math.random() * 1e9), outside); }
     if (!H.next) H.next = t + 60;
     if (him.visible){
       // looked at, he is gone: the camera comes near, or his time is up

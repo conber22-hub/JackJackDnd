@@ -30,6 +30,7 @@ import { newDelve, importMap, setAutoLink, removeRoom, populate, clearMonsters, 
 import { populateFloor } from '../engine/generator.js';
 import { setGfx, gfx } from '../render/gfx.js';
 import { courtDay, placeNemesis, member, introduceNemesis, letHimBeSeen } from '../game/court.js';
+import { sendHeld, dropHeld, sendAllHeld, dropAllHeld, setShare, editsFor, renderOutbox } from '../game/outbox.js';
 import { openCreator, sheetHTML } from './creator.js';
 import { PROPS } from '../data/props.js';
 import { propAction, selectProp, selectedProp, actorFor, editProp } from '../game/objects.js';
@@ -162,6 +163,13 @@ document.addEventListener('click', e => {
     case 'whimAuto': state.grasp.auto = !state.grasp.auto; changed(); break;
     case 'setDread': setDread(+k); break;
     case 'courtDay': courtDay('The DM'); renderPanel(); break;
+    case 'outSend': sendHeld(id, editsFor(id)); ui.outEdit = null; el.closest('.pop')?.querySelector('.held')?.remove(); renderOutbox(); break;
+    case 'outDrop': dropHeld(id); break;
+    case 'outEdit': ui.outEdit = id; ui.outOpen = true; renderOutbox(); break;
+    case 'outSendAll': sendAllHeld(); document.querySelectorAll('#cardLayer .held').forEach(e => e.remove()); break;
+    case 'outDropAll': dropAllHeld(); document.querySelectorAll('#cardLayer .held').forEach(e => e.remove()); break;
+    case 'outToggle': ui.outOpen = !ui.outOpen; renderOutbox(); break;
+    case 'share': setShare(k, el.dataset.v === 'true' ? true : el.dataset.v === 'false' ? false : el.dataset.v); renderPanel(); renderOutbox(); break;
     case 'nemPlace': { const placed = placeNemesis(id); toast(placed.length ? `${placed[0].name} is on the map.` : 'No room for it near the party.'); renderPanel(); } break;
     case 'nemIntro': introduceNemesis(id); break;
     case 'nemHunt': { const m = member(id); if (m){ m.hunting = !m.hunting; changed(); renderPanel(); } } break;

@@ -25,6 +25,7 @@ import { spendSpell } from './resources.js';
 import { LEGENDARY } from '../data/legendary.js';
 import { makeNoise } from './noise.js';
 import { nemesisDamage, nemesisHolds, nemesisRegen, nemesisFalls, nemesisSurvives } from './court.js';
+import { toPlayers } from './outbox.js';
 
 export { currentTurn };
 
@@ -143,7 +144,7 @@ export function startTurn(){
   if (isDM()){ ui.selected = t.id; if (t.floor !== ui.floor) goFloor(t.floor, false); focusTile(t.floor, t.x, t.y); showReach(t); }
   const extra = t.conds?.length ? ` (${t.conds.map(c => c.n).join(', ')})` : '';
   banner(`${t.name}'s turn${extra}`); sfx('turn');
-  broadcast({ t:'banner', text:t.kind === 'monster' && !partySees(t) ? 'Something unseen acts…' : `${t.name}'s turn` });
+  toPlayers({ t:'banner', text:t.kind === 'monster' && !partySees(t) ? 'Something unseen acts…' : `${t.name}'s turn` }, 'turns');
 }
 
 // A spell from the library by name (the hero's cast or attack carries the name).

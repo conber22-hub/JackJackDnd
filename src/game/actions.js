@@ -23,6 +23,7 @@ import { checkPath, fits, provokers } from '../engine/movement.js';
 import { moveGroup, takeDash, offerOpportunity, pausedMover } from './moves.js';
 import { applyDamage, runFx, zoneSource } from './combat.js';
 import { changed, broadcast, sendHost } from './session.js';
+import { toPlayers } from './outbox.js';
 import { sfx } from '../audio/sound.js';
 
 /* ---------- selection ---------- */
@@ -156,7 +157,7 @@ function turnedBack(t){
     t.x = from.x; t.y = from.y; syncTokens(); updateVision();
     showCard({ kind:'seep', title:`The Mists turn ${t.name} around`, flair:'You walk into the white, and keep walking, and walk out of it again: here, facing the way you came. Your boots are wet to the knee. It has been longer than it felt.',
       lines:['Constitution save <b>DC 20</b> or gain one level of exhaustion.', 'Nobody leaves Barovia this way. Not while he wants you here.'] });
-    broadcast({ t:'banner', text:`The Mists turn ${t.name} around` });
+    toPlayers({ t:'banner', text:`The Mists turn ${t.name} around` }, 'world');
     log(`🌫 The Mists turn ${t.name} back.`); changed();
   }, 700);
 }

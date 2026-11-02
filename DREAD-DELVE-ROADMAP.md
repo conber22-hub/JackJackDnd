@@ -16,6 +16,20 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.18 — the Curtain: players see only what the DM sends
+
+Nothing pops up on a player's phone or on the TV unless the DM sends it (`src/game/outbox.js`). Pictures: `docs/screens/curtain-*.jpg`.
+- **The outbox.** Every card the app would have shown the players (a roll, a death, a trap found, the Mists turning someone round, a servant of the court falling), every turn banner, and every whisper of the Count waits in **📤** at the top of the DM's screen. A held card also says so on the DM's own copy, with a **📤 Send** button on it.
+  - From the outbox: **Send** it as it is, **✎ Edit** the title and text first (say less than the app would), **✕ Drop** it, or **Send all**.
+  - What was sent is what the players' log shows.
+- **Table tab → What the players see.**
+  - For each kind (Rolls, Turns, The world, Whispers): ✋ I send (the default), ⚡ Auto (straight out, as before), or 🙈 Never (the DM's screen only).
+  - And for what their screens work out for themselves: **His Gaze** (their top bar shows it, or not), **Omens** (ravens, eyes and the withering land on their maps, or the DM's only), **The log** (all of it, or only what was sent). All three start hidden.
+  - The settings are kept in the campaign, so they travel with the save.
+- What the DM does on purpose for the table still goes at once: **Reveal** on a table roll, read-alouds and introductions on the TV, notes passed, the questions of "Ask the table", **👁 Let him be seen**.
+- Strahd showing himself on his own (Gaze 4+) now happens on the DM's screen only. The players see him when the DM lets them.
+- The map itself is unchanged: players see what their heroes can see.
+
 ## v1.17 — the Count's Court, his face, and the Mists
 
 Pictures: `docs/screens/court-panel.jpg`, `strahd-glimpsed.jpg`, `mists-wall.jpg`.
@@ -534,6 +548,7 @@ src/game/               rules that touch the scene and UI
   npcgen.js             🎲 Roll an NPC: name, look, line, quirk, want; place as ally or foe
   rooms.js              read a room aloud, furnish by hand, the DM's prompt when the party enters a room
   overworld.js          travelling: set out, the road's events, arrive, enter a place
+  outbox.js             the Curtain: what reaches the players' screens waits for the DM (send, edit, drop; per kind)
   court.js              the Count's Court at the table: bringing them on, fights, ambushes on the roads, haunts, a new day
   actions.js            select, move (doors / traps), stairs, falling, doors, search, disarm, floors, dread
   objects.js            open / pick / force / push / topple / smash / swing furniture, stashes, the DM's prop edits

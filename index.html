@@ -276,7 +276,12 @@ body.cardonly.player #panel{left:0;right:0;top:78px;bottom:0;width:auto;height:a
 #skyline.flash .sky-bolt{opacity:1}#skyline.flash .sky-glow{opacity:1}#skyline.flash .sky-sil{fill:#2a2630}
 #skyline .sky-bat{animation:skybat 9s linear infinite}#skyline .sky-bat.b{animation-duration:12s;animation-delay:-4s}#skyline .sky-bat.c{animation-duration:15s;animation-delay:-8s}
 @keyframes skybat{from{transform:rotate(0deg) translateX(26px) rotate(0deg)}to{transform:rotate(360deg) translateX(26px) rotate(-360deg)}}
-#reqPanel,#roomPrompts,#oaPanel,#askBar{display:flex;flex-direction:column;gap:6px}
+#reqPanel,#roomPrompts,#oaPanel,#askBar,#outPanel{display:flex;flex-direction:column;gap:6px}
+#outPanel .req{background:var(--glass-strong);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:1px solid var(--gold-line);border-radius:var(--r-lg);padding:10px 14px;box-shadow:var(--spec),var(--lift);animation:popin .35s var(--spring)}
+#outPanel .outItem{border-top:1px solid var(--line);margin-top:8px;padding-top:8px}
+#outPanel .outItem .txt{width:100%;margin-top:4px}
+#topPanels #outPanel .req .b{display:flex;gap:6px;margin-top:6px}
+.pop .held{display:flex;gap:8px;align-items:center;justify-content:space-between;border-top:1px dashed var(--gold-line);margin-top:6px;padding-top:6px}
 #topPanels #oaPanel .req{border-color:#c0303a;box-shadow:0 0 0 1px #c0303a55,0 10px 30px #000a}
 #moveTip{position:fixed;z-index:30;pointer-events:none;border-radius:12px;padding:5px 11px;font-size:13px;font-weight:500;color:#f6ead4;white-space:nowrap;opacity:0;transition:opacity .12s}
 #moveTip.show{opacity:1}
@@ -626,7 +631,7 @@ body.screen #turnBanner{font-size:52px;top:46%}
     <path class="sky-bat c" d="M104 30 l-2 -1 l1 1 l-1 .3 z M104 30 l2 -1 l-1 1 l1 .3 z" style="transform-origin:104px 30px"/></g>
   <g fill="#c8ccd8" opacity=".18"><ellipse cx="70" cy="118" rx="40" ry="7"/><ellipse cx="135" cy="122" rx="46" ry="8"/><ellipse cx="100" cy="128" rx="70" ry="6"/></g>
 </svg></div>
-<div id="topPanels"><div id="oaPanel"></div><div id="askBar"></div><div id="reqPanel"></div><div id="roomPrompts"></div></div>
+<div id="topPanels"><div id="oaPanel"></div><div id="askBar"></div><div id="reqPanel"></div><div id="outPanel"></div><div id="roomPrompts"></div></div>
 <div id="moveTip"></div>
 <div id="cardLayer"></div>
 <div id="screenHud" class="hidden">

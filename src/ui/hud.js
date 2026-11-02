@@ -14,6 +14,7 @@ import { undoCount } from '../game/session.js';
 import { renderPanel } from './panels.js';
 import { canCast, left, slotLevels } from '../game/resources.js';
 import { renderRequests } from '../game/requests.js';
+import { toPlayers, cardCat, heldFor, renderOutbox } from '../game/outbox.js';
 import { renderPrompts } from '../game/rooms.js';
 import { legendOf, legendLeft, resistLeft, lairCreature } from '../game/combat.js';
 import { selectedProp, hiddenDoor, actorFor, objectsBeside } from '../game/objects.js';
@@ -26,7 +27,7 @@ import { sfx } from '../audio/sound.js';
 export function toast(msg){ const el = document.createElement('div'); el.className = 'toast'; el.textContent = msg; $('#toasts').appendChild(el); setTimeout(() => el.remove(), 3800); while ($('#toasts').children.length > 5) $('#toasts').firstChild.remove(); }
 export function banner(text){ const b = $('#turnBanner'); b.textContent = text; b.style.opacity = 1; clearTimeout(banner._t); banner._t = setTimeout(() => b.style.opacity = 0, 1800); }
 export function showWhisper(text){ const w = $('#whisper'); w.textContent = text; w.style.opacity = .9; clearTimeout(showWhisper._t); showWhisper._t = setTimeout(() => w.style.opacity = 0, 3800); }
-export function sendWhisper(text){ showWhisper(text); broadcast({ t:'whisper', text }); sfx('whisper'); }
+export function sendWhisper(text){ showWhisper(text); toPlayers({ t:'whisper', text }, 'whispers'); sfx('whisper'); }
 export function showCard(c, share = true){
   const layer = $('#cardLayer'), el = document.createElement('div');
   el.className = 'pop ' + (c.kind || '');
@@ -35,7 +36,12 @@ export function showCard(c, share = true){
   el.onclick = () => { if (performance.now() - born > 400) el.remove(); };   // the tap that made it (a cast on a phone) mustn't also dismiss it
   layer.appendChild(el); while (layer.children.length > 3) layer.firstChild.remove();
   setTimeout(() => el.remove(), 8000);
-  if (share && ui.role === 'dm') broadcast({ t:'card', c });
+  // the players see it only if the DM sends it (game/outbox.js): a held card says so, with a Send button on it
+  if (share && ui.role === 'dm' && toPlayers({ t:'card', c }, cardCat(c)) === 'held'){
+    const o = heldFor(c), row = document.createElement('div'); row.className = 'r held';
+    row.innerHTML = `<span class="muted">The players haven't seen this.</span> <button class="btn small primary" data-act="outSend" data-id="${o.id}">📤 Send</button>`;
+    el.insertBefore(row, el.querySelector('.tap'));
+  }
 }
 
 export function renderTop(){
@@ -44,7 +50,8 @@ export function renderTop(){
   $('#floorLabel').innerHTML = `${esc(f.name)}<small>Floor ${ui.floor + 1} of ${state.floors.length}</small>`;
   $('#dreadNum').textContent = state.dread; $('#dreadName').textContent = D.n; $('#dread').value = state.dread;
   const pv = ui.role === 'player';
-  $('#dreadBox').classList.toggle('hide', pv); $('#dreadRO').classList.toggle('hide', !pv);
+  // players see his Gaze only if the DM shows it to them (Table tab → What the players see)
+  $('#dreadBox').classList.toggle('hide', pv); $('#dreadRO').classList.toggle('hide', !pv || !(state.share || state.campaign?.share)?.gaze);
   $('#dreadRO').innerHTML = `👁 Gaze <b style="color:var(--blood)">${state.dread}</b> · <i>${esc(D.n)}</i>`;
   $('#whimBadge').classList.toggle('hide', viewAsPlayer());
   $('#whimBadge').innerHTML = `🦇 d${state.grasp.die}`;
@@ -296,4 +303,4 @@ export function pickSlot(t, lvl, name, cb){
   $('#pickBox').onclick = e => { const b = e.target.closest('[data-slot]'); if (!b) return; $('#pickModal').classList.add('hidden'); $('#pickBox').onclick = null;
     if (b.dataset.slot !== 'cancel') cb(+b.dataset.slot === lvl ? null : +b.dataset.slot); };
 }
-export function renderAll(){ document.body.classList.toggle('player', ui.role === 'player' && !ui.screen); renderTop(); renderTabs(); renderPanel(); renderInit(); renderSel(); renderDock(); renderRequests(); renderAskBar(); renderPrompts(); renderOA(); }
+export function renderAll(){ document.body.classList.toggle('player', ui.role === 'player' && !ui.screen); renderTop(); renderTabs(); renderPanel(); renderInit(); renderSel(); renderDock(); renderRequests(); renderOutbox(); renderAskBar(); renderPrompts(); renderOA(); }
