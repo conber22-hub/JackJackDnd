@@ -63,7 +63,7 @@ test('the table screen: a window for the TV that follows the table, with read-al
   await expect(page.locator('#cardLayer')).toContainText('at the table');
   // the Curtain: the TV sees nothing until the DM sends it
   await expect(screen.locator('#scDie')).toBeHidden();
-  await page.locator('#cardLayer .held [data-act="outSend"]').first().click();
+  await page.locator('#outPanel [data-act="outSendAll"]').click();   // (from the outbox: a held card's own Send button may be under a newer card)
   await expect(screen.locator('#scDie')).toBeVisible();   // the d20 tumbles across the TV
   await expect(screen.locator('#cardLayer')).toContainText('at the table');
   if (SP) await screen.screenshot({ path:SP + '/n-die.png' });
