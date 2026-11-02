@@ -2,6 +2,7 @@
 import { state, setState, ui, tokById, isDM, makePC, makeNPC, dreadLevel } from '../engine/state.js';
 import { ensureTourButton } from './tour.js';
 import { toggleNotebook } from './notebook.js';
+import { togglePalette, closePalette, closeShortcuts, showShortcuts } from './palette.js';
 import { updateVision, freeTilesNear, seenNow } from '../engine/grid.js';
 import { roomById, carve } from '../engine/generator.js';
 import { floorToAscii, floorToJSON } from '../engine/importer.js';
@@ -468,6 +469,7 @@ $('#floorDown').onclick = () => state && goFloor(ui.floor + 1);
 $('#whimBadge').onclick = () => { if (state && isDM()){ ui.tab = 'gaze'; ui.panelOpen = true; renderTabs(); renderPanel(); renderDock(); } };
 document.querySelectorAll('#viewSeg button').forEach(b => b.onclick = () => state && setView(b.dataset.view));
 addEventListener('keydown', e => {
+  if (state && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k'){ e.preventDefault(); togglePalette(); return; }   // Ctrl+K / ⌘K works even in a text box
   if (!state || /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName)) return;
   const dm = ui.role === 'dm';
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && dm){ e.preventDefault(); undo(); renderDock(); return; }
@@ -475,7 +477,7 @@ addEventListener('keydown', e => {
   const STEP = { ArrowUp:[0, -1], ArrowDown:[0, 1], ArrowLeft:[-1, 0], ArrowRight:[1, 0], Numpad8:[0, -1], Numpad2:[0, 1], Numpad4:[-1, 0], Numpad6:[1, 0], Numpad7:[-1, -1], Numpad9:[1, -1], Numpad1:[-1, 1], Numpad3:[1, 1] };
   const st = STEP[e.code] || STEP[e.key];
   if (st && ui.selected && ui.mode === 'select'){ e.preventDefault(); stepSelected(st[0], st[1]); return; }
-  if (e.key === 'Escape'){ $('#fightModal').classList.add('hidden'); setMode('select'); ui.selDoor = null; ui.selTrap = null; ui.selProp = null; select(null); }
+  if (e.key === 'Escape'){ $('#fightModal').classList.add('hidden'); setMode('select'); ui.selDoor = null; ui.selTrap = null; ui.selProp = null; select(null); closePalette(); closeShortcuts(); }
   else if (e.key === 'PageUp') goFloor(ui.floor - 1);
   else if (e.key === 'PageDown') goFloor(ui.floor + 1);
   else if (e.key === '1') setView('tilt'); else if (e.key === '2') setView('top'); else if (e.key === '3') setView('stack');
@@ -483,6 +485,8 @@ addEventListener('keydown', e => {
   else if (e.key.toLowerCase() === 'n' && dm){ if (state.combat.active) nextTurn(); else { e.preventDefault(); toggleNotebook(); } }   // (preventDefault: the N mustn't land in the note box the notebook focuses)   // N is next turn in a fight (and the help text says so); out of one it opens the notebook
   else if (e.key.toLowerCase() === 'w' && dm) whimRoll(ui.floor);
   else if (e.key.toLowerCase() === 'b' && dm){ ui.tab = ui.tab === 'build' ? 'tokens' : 'build'; ui.panelOpen = true; if (ui.tab !== 'build') setMode('select'); renderTabs(); renderPanel(); renderDock(); }
+  else if (e.key === '/'){ e.preventDefault(); togglePalette(); }   // the command palette (Firefox would open quick-find)
+  else if (e.key === '?') showShortcuts();
   else if ((e.key === 'Delete' || e.key === 'Backspace') && dm && ui.selected) removeToken(ui.selected);
 });
 
