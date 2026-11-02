@@ -29,6 +29,7 @@ import { Peer } from 'peerjs';
 import { newDelve, importMap, setAutoLink, removeRoom, populate, clearMonsters, addFloorBelow, removeBottomFloor, randomSeed } from '../game/build.js';
 import { populateFloor } from '../engine/generator.js';
 import { setGfx, gfx } from '../render/gfx.js';
+import { courtDay, placeNemesis, member, introduceNemesis, letHimBeSeen } from '../game/court.js';
 import { openCreator, sheetHTML } from './creator.js';
 import { PROPS } from '../data/props.js';
 import { propAction, selectProp, selectedProp, actorFor, editProp } from '../game/objects.js';
@@ -160,6 +161,11 @@ document.addEventListener('click', e => {
     case 'whimStep': whimStep(+k, 'the DM'); renderPanel(); renderTop(); renderDock(); break;
     case 'whimAuto': state.grasp.auto = !state.grasp.auto; changed(); break;
     case 'setDread': setDread(+k); break;
+    case 'courtDay': courtDay('The DM'); renderPanel(); break;
+    case 'nemPlace': { const placed = placeNemesis(id); toast(placed.length ? `${placed[0].name} is on the map.` : 'No room for it near the party.'); renderPanel(); } break;
+    case 'nemIntro': introduceNemesis(id); break;
+    case 'nemHunt': { const m = member(id); if (m){ m.hunting = !m.hunting; changed(); renderPanel(); } } break;
+    case 'watcher': letHimBeSeen(); break;
     case 'saveShift': case 'saveWhim': {
       const box = a === 'saveShift' ? '#shiftText' : '#whimText', key = a === 'saveShift' ? 'shift' : 'grasp', txt = $(box).value.trim();
       if (!txt){ state.content[key] = null; toast('Back to the default table.'); }

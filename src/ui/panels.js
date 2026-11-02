@@ -22,6 +22,8 @@ import { heroStats } from '../engine/hero.js';
 import { sheetHTML } from './creator.js';
 import { myHero } from '../game/heroes.js';
 import { PROPS, PROP_CATS, HOUSES, GROUNDS, CROPS } from '../data/props.js';
+import { RANKS, KINDS, STRENGTHS, WEAKNESSES } from '../data/court.js';
+import { court, title as courtTitle } from '../game/court.js';
 import { valleyTab, placesForSession, playerMapTab } from './valley.js';
 import { modelInfo } from '../render/models.js';
 import { CAMPAIGN, SESSIONS, CLOCKS, PLACES, PLACE_STATES, CAST, FORTUNE } from '../data/campaign.js';
@@ -261,6 +263,7 @@ function gazeTab(){
     <div class="row"><button class="btn primary" data-act="whimRoll">Roll the Whim Die</button><button class="btn small ${state.grasp.auto ? 'on' : ''}" data-act="whimAuto">${state.grasp.auto ? 'Auto: each round' : 'Auto: off'}</button></div>
     ${state.grasp.last ? `<div class="muted">Last: d${state.grasp.last.die} = <b>${state.grasp.last.r}</b> — ${esc(state.grasp.last.name)}</div>` : ''}
     <div class="muted">How he toys with them. Grows when one of his creatures falls (once a round) and when you press + (they refused a gift, insulted him, were brave where he could see). Shrinks when they bow, accept his hospitality or rest somewhere holy. Roll it when the night is too quiet.</div>
+    ${courtPanel()}
     <h3>Gaze levels</h3>
     <div class="muted">Rename the levels and rewrite what you read out. Effects run on their own in combat.</div>`;
   for (let n = 1; n <= 10; n++){
@@ -279,6 +282,34 @@ function gazeTab(){
     <textarea class="txt" id="whimText" style="min-height:200px;font-family:ui-monospace,monospace;font-size:12px">${esc(state.content.grasp ?? DEFAULT_WHIM_TABLE)}</textarea>
     ${gr.errors.length ? `<div class="bad">${gr.errors.map(esc).join('<br>')}</div>` : ''}${gapsG.length ? `<div class="bad">No row for: ${gapsG.join(', ')}</div>` : ''}
     <div class="row"><button class="btn small primary" data-act="saveWhim">Save table</button></div>`;
+  return h;
+}
+
+/* The Count's Court (the nemesis system): his named servants, rank by rank, what they are good at, what kills them
+   for good, whom they hate, and what they have done; the court's news; the buttons that move it. DM only. */
+function courtPanel(){
+  const c = court(); if (!c) return '';
+  const chip = (txt, cls = '') => `<span class="chip ${cls}">${esc(txt)}</span>`;
+  const onMap = new Set(state.tokens.filter(t => t.nem && !t.dead).map(t => t.nem));
+  let h = `<h3>👑 The Count's Court</h3>
+    <div class="muted">His named servants. They remember the party, carry their scars, rise in rank, fight each other for his favour, and come back from the dead unless killed by what they fear. A new day in the valley moves the court; those hunting the party wait on the roads as ambushes (a violet rune you spring).</div>
+    <div class="row"><button class="btn small" data-act="courtDay">☾ The court moves</button><button class="btn small" data-act="watcher" title="On every screen: a tall figure at the edge of the trees, gone when you look again">👁 Let him be seen</button></div>`;
+  for (const rank of [4, 3, 2, 1]){
+    const list = c.members.filter(m => m.rank === rank && (m.alive || m.returning)); if (!list.length) continue;
+    h += `<h4>${esc(RANKS[rank].n)}${list.length > 1 ? 's' : ''}</h4>`;
+    for (const m of list){
+      const K = KINDS[m.kind];
+      h += `<div class="card ${m.returning ? 'dim' : ''}"><div class="hd"><b>${esc(courtTitle(m))}</b>${m.returning ? ' <span class="muted">— in the mist, coming back</span>' : ''}${onMap.has(m.id) ? ' <span class="muted">— on the map</span>' : ''}</div>
+        <div class="muted">${esc(K.n)} · haunts ${esc(m.haunt)}${m.hunting ? ' · <b>hunting the party</b>' : ''}${m.grudge ? ` · hates <b>${esc(m.grudge.hero)}</b>` : ''}${m.deaths ? ` · died ${m.deaths}×` : ''}</div>
+        <div class="row" style="flex-wrap:wrap;gap:4px">${m.strengths.map(k => chip(STRENGTHS[k]?.n || k)).join('')}${m.weaknesses.map(k => chip('Weak: ' + (WEAKNESSES[k]?.n || k), 'bad')).join('')}${m.scars.map(s => chip('Scar: ' + s.text, 'dim')).join('')}</div>
+        ${m.history.length ? `<div class="muted" style="font-size:12px">${m.history.slice(-3).map(esc).join('<br>')}</div>` : ''}
+        ${m.alive ? `<div class="row"><button class="btn small" data-act="nemPlace" data-id="${m.id}" title="On this map near the party, with its followers">⚔ Bring it here</button><button class="btn small" data-act="nemIntro" data-id="${m.id}" title="Its name and a line it says, on the TV">📣 Introduce</button><button class="btn small ${m.hunting ? 'on' : ''}" data-act="nemHunt" data-id="${m.id}" title="It waits on the party's next road">🏹 ${m.hunting ? 'Hunting' : 'Hunt them'}</button></div>` : ''}</div>`;
+    }
+  }
+  const fallen = c.members.filter(m => !m.alive && !m.returning);
+  if (fallen.length) h += `<div class="muted">Gone for good: ${fallen.map(m => esc(courtTitle(m))).join(' · ')}</div>`;
+  if (c.news.length) h += `<h4>News of the court</h4><div class="log">${c.news.slice(-8).reverse().map(n => `<div>${n.rumour ? '🗣 ' : '🤫 '}${esc(n.text)}</div>`).join('')}</div>
+    <div class="muted">🗣 the taverns are talking about it · 🤫 only you know</div>`;
   return h;
 }
 

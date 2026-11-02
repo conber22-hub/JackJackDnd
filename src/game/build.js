@@ -26,6 +26,11 @@ const keepTokens = L => state.tokens.filter(t => t.floor === L && !t.dead && !t.
 export function editTile(tile, mode){
   const f = state.floors[tile.floor], i = tile.y * f.W + tile.x, v = f.grid[i];
   if (v === T.DOWN || v === T.UP) return false;
+  if (mode === 'mist' || mode === 'clearmist'){
+    const has = (f.mists ||= []).includes(i);
+    if (mode === 'mist' && !has && walk(v)) f.mists = [...f.mists, i]; else if (mode === 'clearmist' && has){ f.mists = f.mists.filter(k => k !== i); f.mistWall = (f.mistWall || []).filter(k => k !== i); } else return false;
+    return true;
+  }
   if (mode === 'rough' || mode === 'smooth'){
     const has = (f.rough ||= []).includes(i);
     if (mode === 'rough' && !has && walk(v)) f.rough.push(i); else if (mode === 'smooth' && has) f.rough = f.rough.filter(k => k !== i); else return false;

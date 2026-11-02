@@ -122,7 +122,7 @@ export function genFloor(L, W, H, rng, anchor, isLast, spec = {}){
    rooms [x, y, w, h, type, name, notes, { outdoor }] · paths { w, pts:[x0, y0, x1, y1, …] } (straight runs,
    w squares wide) · doors [x, y, state] · buildings { x, y, w, h, name, door } · props [kind, x, y, rot]
    · up / down [x, y] · exits { up, down } (what the stairs are called here) · water [[x, y]…] · fill [[x, y]…]
-   (squares forced solid) · a room's options { outdoor, ground (grass, cobble, dirt, mud, moor, furrow: see render/floors.js), crop (data/props.js CROPS), rise (1–3: a low hill, see riseHeights), use, dress, read } · masonry / clear [[x, y]…] (solid squares drawn as stone wall / left bare for a prop) · shallow [[x, y]…] (a ford: walkable water, difficult) · events [{ label, text, enc, x, y }] (the road's random happenings, see overland.js). */
+   (squares forced solid) · a room's options { outdoor, ground (grass, cobble, dirt, mud, moor, furrow: see render/floors.js), crop (data/props.js CROPS), rise (1–3: a low hill, see riseHeights), use, dress, read } · masonry / clear [[x, y]…] (solid squares drawn as stone wall / left bare for a prop) · shallow [[x, y]…] (a ford: walkable water, difficult) · mists / mistWall [[x, y]…] (deep mist that hides; the Mist Wall turns travellers back) · events [{ label, text, enc, x, y }] (the road's random happenings, see overland.js). */
 export function layoutFloor(L, W, H, spec, anchor, isLast = true){
   const lay = spec.layout, theme = themeIndex(spec.theme), th = THEMES[theme];
   const f = { level:L, W, H, theme, name:lay.name || th.name, rooms:[], nextId:0, edges:[], corridors:[], autoLink:false,
@@ -161,6 +161,9 @@ export function layoutFloor(L, W, H, spec, anchor, isLast = true){
   f.props = (lay.props || []).map(([k, x, y, rot = 0]) => ({ id:f.nextObj++, k, x, y, rot }));
   // difficult terrain: listed squares, and with `mud` every open square beside the water (a marsh)
   const rough = new Set((lay.rough || []).map(([x, y]) => y * W + x));
+  // the Mists: deep mist (heavily obscured) and the Mist Wall itself (it turns travellers back: game/actions.js)
+  f.mists = [...new Set([...(lay.mists || []), ...(lay.mistWall || [])].map(([x, y]) => y * W + x))].filter(i => walk(f.grid[i]) && f.grid[i] !== T.UP && f.grid[i] !== T.DOWN);
+  f.mistWall = [...new Set((lay.mistWall || []).map(([x, y]) => y * W + x))].filter(i => f.mists.includes(i));
   // fords and flooded floors: walkable water to the knee, difficult terrain
   f.shallow = [...new Set((lay.shallow || []).map(([x, y]) => y * W + x))].filter(i => walk(f.grid[i]));
   for (const i of f.shallow) rough.add(i);
@@ -256,6 +259,7 @@ export function carve(f, keep = []){
   if (f.shallow?.length) f.shallow = f.shallow.filter(i => walk(g[i]) && g[i] !== T.UP && g[i] !== T.DOWN);
   if (f.span?.length) f.span = f.span.filter(i => walk(g[i]));
   if (f.chasm?.length) f.chasm = f.chasm.filter(i => !walk(g[i]));
+  if (f.mists?.length){ f.mists = f.mists.filter(i => walk(g[i])); if (f.mistWall?.length) f.mistWall = f.mistWall.filter(i => walk(g[i])); }
 }
 export const inRoom = (r, x, y) => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h;
 

@@ -5,13 +5,15 @@
      Gaze 3+    "The Wolves Know Your Scent": eyes in the treeline, opening, blinking, gone; red from Gaze 8
      Gaze 5+    the land withers (render/floors.js: dead trees, grey grass, blighted fields; see witherLevel())
      Gaze 9+    the sky goes red behind the clouds, and the Mists close in
+   and him: a tall figure glimpsed at the edge of the trees (or of the light underground) when the DM lets him be seen
+   (state.watcher, on every screen), or on his own from Gaze 4 now and then; look straight at him and he is gone
    Nothing here is game state: every screen (the DM's, the TV, a player's phone) works it out from the Gaze.
    gfx.omens = false turns the moving omens off on a device (the valley's walls stay). */
 import * as THREE from 'three';
 import { state, ui } from '../engine/state.js';
 import { walk } from '../engine/tiles.js';
 import { THEMES } from '../data/themes.js';
-import { scene, controls, floorY } from './scene.js';
+import { scene, controls, camera, floorY } from './scene.js';
 import { gfx } from './gfx.js';
 
 const outdoors = () => { const th = THEMES[state?.floors[ui.floor]?.theme] || {}; return (th.walls === 'trees' || th.walls === 'mixed') && th.id !== 'tavern'; };
@@ -91,6 +93,40 @@ function lair(f, cx, cy){
   return null;
 }
 
+/* ---------- him ---------- */
+// a tall figure: high-collared cloak, a pale face, two red points of light
+function watcherTexture(){
+  const c = document.createElement('canvas'); c.width = 128; c.height = 256; const x = c.getContext('2d');
+  const glow = x.createRadialGradient(64, 60, 4, 64, 60, 60); glow.addColorStop(0, 'rgba(120,10,20,.35)'); glow.addColorStop(1, 'rgba(120,10,20,0)'); x.fillStyle = glow; x.fillRect(0, 0, 128, 140);
+  x.fillStyle = '#050307';
+  x.beginPath(); x.moveTo(64, 34); x.bezierCurveTo(30, 60, 26, 70, 22, 110); x.lineTo(8, 252); x.lineTo(120, 252); x.lineTo(106, 110); x.bezierCurveTo(102, 70, 98, 60, 64, 34); x.fill();   // the cloak
+  x.beginPath(); x.moveTo(40, 64); x.lineTo(30, 30); x.lineTo(54, 52); x.fill(); x.beginPath(); x.moveTo(88, 64); x.lineTo(98, 30); x.lineTo(74, 52); x.fill();                   // the collar
+  x.fillStyle = '#cfc6c0'; x.beginPath(); x.ellipse(64, 50, 11, 15, 0, 0, 7); x.fill();                                                                                         // the face
+  x.fillStyle = '#0a0608'; x.beginPath(); x.moveTo(52, 42); x.quadraticCurveTo(64, 26, 76, 42); x.lineTo(76, 36); x.quadraticCurveTo(64, 24, 52, 36); x.fill();                  // the hair
+  x.fillStyle = '#ff2a2a'; x.shadowColor = '#ff0000'; x.shadowBlur = 8; x.beginPath(); x.arc(59, 49, 2.1, 0, 7); x.arc(69, 49, 2.1, 0, 7); x.fill();
+  return new THREE.CanvasTexture(c);
+}
+const him = new THREE.Sprite(new THREE.SpriteMaterial({ map:watcherTexture(), transparent:true, opacity:0, depthWrite:false, fog:false }));
+him.scale.set(1.3, 2.6, 1); him.center.set(.5, 0); him.visible = false; scene.add(him);
+const H = { from:0, until:0, key:0, next:0 };
+// where he stands: at the edge of the trees outdoors; underground, out on the edge of the light
+function standingPlace(f, cx, cy, rng, outside){
+  // somewhere ahead of the camera, never behind it
+  const ahead = Math.atan2(controls.target.z - camera.position.z, controls.target.x - camera.position.x);
+  for (let k = 0; k < 60; k++){ const a = ahead + (rng() - .5) * 2.2, d = 4 + rng() * 5, x = Math.round(cx + Math.cos(a) * d), y = Math.round(cy + Math.sin(a) * d), i = y * f.W + x;
+    if (x <= 0 || y <= 0 || x >= f.W - 1 || y >= f.H - 1 || !walk(f.grid[i])) continue;
+    // outdoors, on the edge of a clearing with the trees at his back (inside them, nobody would see him)
+    if (outside && ![1, -1, f.W, -f.W].some(o => !walk(f.grid[i + o])) && k < 50) continue;
+    return { x, y }; }
+  return null;
+}
+function showHim(t, f, cx, cy, secs, seed, outside){
+  let s = seed; const rng = () => (s = (s * 16807 + 11) % 2147483647) / 2147483647;
+  const at = standingPlace(f, cx, cy, rng, outside); if (!at) return;
+  him.position.set(at.x - state.meta.size / 2 + .5, floorY(ui.floor) + (outside ? -.05 : 0), at.y - state.meta.size / 2 + .5);
+  H.from = t; H.until = t + secs; him.visible = true;
+}
+
 let center = new THREE.Vector3(), lastWorld = '';
 export function updateOmens(t, dt){
   if (!state) return;
@@ -108,6 +144,21 @@ export function updateOmens(t, dt){
       sp.scale.set(u.s, u.s * .45, 1); sp.material.opacity = wall * (.75 + .25 * Math.sin(t * .3 + u.ph));
     }
     const key = `${ui.floor}|${G >= 8}`; if (key !== lastWorld){ lastWorld = key; for (const sp of banks) sp.material.color.set(G >= 9 ? '#8a6a72' : '#9890a6'); }
+  }
+  // him: when the DM lets him be seen (on every screen), or on his own when his Gaze is high (this screen only)
+  if (f){
+    const W = state.watcher, cxw = controls.target.x + state.meta.size / 2 - .5, cyw = controls.target.z + state.meta.size / 2 - .5, outside = outdoors();
+    if (W && W.n !== H.key && W.floor === ui.floor && Date.now() < W.until){ H.key = W.n; showHim(t, f, cxw, cyw, Math.max(2, (W.until - Date.now()) / 1000), W.at % 2147483647 || 7, outside); }
+    else if (live && G >= 4 && t > H.next && !him.visible){ H.next = t + 120 + Math.random() * (300 - G * 22); if (H.next > 0 && t > 20 && Math.random() < .5) showHim(t, f, cxw, cyw, 3 + Math.random() * 3, Math.floor(Math.random() * 1e9), outside); }
+    if (!H.next) H.next = t + 60;
+    if (him.visible){
+      // looked at, he is gone: the camera comes near, or his time is up
+      const near = Math.hypot(him.position.x - controls.target.x, him.position.z - controls.target.z) < 3;
+      if (near && H.until > t + .8) H.until = t + .8;
+      const k = Math.min(1, (t - H.from) / 1.4, Math.max(0, H.until - t) / .8);
+      him.material.opacity = Math.max(0, k);
+      if (t > H.until){ him.visible = false; him.material.opacity = 0; }
+    }
   }
   // ravens: two at Gaze 2, one more a level, ten at most
   const nR = live && G >= 2 ? Math.min(10, G) : 0;

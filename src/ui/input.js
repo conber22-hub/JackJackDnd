@@ -82,14 +82,14 @@ export function setMode(mode, data = null, text = ''){
 export function refreshBuildOverlay(){
   if (!state) return;
   if (isDM() && ui.mode === 'room') showRoomHandles(ui.floor); else clearOverlay();
-  if (!['room', 'corridor', 'door', 'trap', 'stairs', 'erase', 'dig', 'fill', 'rough', 'paint', 'prop', 'house', 'noise', 'placeParty'].includes(ui.mode)) showHover(null, null);
+  if (!['room', 'corridor', 'door', 'trap', 'stairs', 'erase', 'dig', 'fill', 'rough', 'mist', 'paint', 'prop', 'house', 'noise', 'placeParty'].includes(ui.mode)) showHover(null, null);
 }
 
 /* ---------- pointer handling ---------- */
 const cv = renderer.domElement;
 let press = null, pressTimer = null, drag = null;
 const pointers = new Set();
-const DRAG_MODES = ['room', 'corridor', 'dig', 'fill', 'rough'];
+const DRAG_MODES = ['room', 'corridor', 'dig', 'fill', 'rough', 'mist'];
 cv.addEventListener('pointerdown', e => {
   pointers.add(e.pointerId);
   if (!state) return;
@@ -148,7 +148,7 @@ function startDrag(tile){
     showPathPreview(tile.floor, drag.tiles);
   } else {
     snapshot(ui.mode);
-    const mode = ui.mode === 'rough' && (f.rough || []).includes(i) ? 'smooth' : ui.mode;   // a stroke that starts on rough ground clears it
+    const mode = ui.mode === 'rough' && (f.rough || []).includes(i) ? 'smooth' : ui.mode === 'mist' && (f.mists || []).includes(i) ? 'clearmist' : ui.mode;   // a stroke that starts on rough ground (or mist) clears it
     drag = { mode, L:tile.floor, last:i, start:tile, moved:false, changed:editTile(tile, mode) };
     if (drag.changed) buildFloor(tile.floor);
   }

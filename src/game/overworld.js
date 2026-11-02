@@ -9,6 +9,7 @@ import { VALLEY_ROADS, WAY_HOURS, WEATHER, timeOfDay } from '../data/barovia-map
 import { NIGHT } from '../data/campaign.js';
 import { TEMPLATES } from '../data/themes.js';
 import { BEST } from '../data/bestiary.js';
+import { plantAmbushes, courtDay, springNemesis, markHaunts } from './court.js';
 import { rollDice, pick, uid } from '../util/core.js';
 import { syncTokens } from '../render/minis.js';
 import { buildFloor } from '../render/floors.js';
@@ -39,6 +40,7 @@ export function travel(to){
   V.journey = { from:V.at, to, path:plan.path, hours, left:{ day:V.day, hour:V.hour } };
   const journey = { from:V.at, to, seed:V.seed, n:V.journeys, gaze:state.dread, bloom:bloomLoose() };
   newDelve({ name:`The road to ${dest.name}`, seed:`${V.seed}|road|${V.journeys}`, floors:plan.stretches.length, size:40, template:'journey', journey }, true, { kind:'road', key:`road:${V.journeys}` });
+  if (plantAmbushes(plan.path).length) state.floors.forEach((_, L) => buildFloor(L));   // the Count's court waits on the road
   ui.tab = 'valley';
   log(`🧭 The party sets out for ${dest.name} (${plan.path.map(id => placeById(id).name).join(' → ')}).`);
   toast(`${plan.stretches.length} stretch${plan.stretches.length === 1 ? '' : 'es'} of road to ${dest.name}.`);
@@ -65,13 +67,15 @@ export function enterPlace(id, mapId, fresh = false){
   const opts = { kind:'place', key:`place:${p.id}:${which}`, fresh };
   if (which === 'landmark'){ newDelve({ name:p.name, seed, floors:1, size:40, template:'landmark', place:p.id }, true, opts); }
   else { const tpl = TEMPLATES.find(t => t.id === which); if (!tpl) return; newDelve({ name:p.name, seed, floors:tpl.floors.length, size:40, template:tpl.id }, true, opts); }
+  markHaunts(p.id);   // whoever of the Count's court haunts the place has its mark on the map
   ui.tab = 'valley'; log(`🧭 ${p.name} is on the table.`); changed();
 }
 // The maps a place offers: [{ id, name }]
 export const placeMaps = p => (p.maps || (p.map ? [p.map] : [])).map(id => ({ id, name:id === 'landmark' ? p.name : TEMPLATES.find(t => t.id === id)?.name || id }));
 
 /* ---------- the clock ---------- */
-export function passTime(h){ const V = valley(); V.hour += h; while (V.hour >= 24){ V.hour -= 24; V.day++; } state.campaign.day = `Day ${V.day}, ${timeOfDay(V.hour)}`; }
+export function passTime(h){ const V = valley(), d0 = V.day; V.hour += h; while (V.hour >= 24){ V.hour -= 24; V.day++; } state.campaign.day = `Day ${V.day}, ${timeOfDay(V.hour)}`;
+  if (V.day > d0) courtDay(`Day ${V.day}`); }   // a new day: the Count's court moves
 export const clockText = () => { const V = valley(); return `Day ${V.day} · ${timeOfDay(V.hour)}`; };
 // Make camp on the road: the night passes, an omen, and maybe something comes to the fire.
 export function makeCamp(L = ui.floor){
@@ -87,7 +91,9 @@ export function makeCamp(L = ui.floor){
 const eventOn = (L, id) => state.floors[L]?.events?.find(e => e.id === id);
 export function readEvent(L, id){ const e = eventOn(L, id); if (e) showCard({ kind:'', title:e.label, flair:e.text }); }
 export function springEvent(L, id){
-  const e = eventOn(L, id); if (!e?.enc) return;
+  const e = eventOn(L, id);
+  if (e?.nem){ springNemesis(L, e); e.sprung = true; buildFloor(L); changed(); return; }   // one of the Count's court
+  if (!e?.enc) return;
   const placed = [];
   for (const [bid, cnt] of e.enc){
     if (!BEST[bid]) continue;

@@ -24,6 +24,7 @@ import { goFloor, setDread, fall, rebuildFog } from './actions.js';
 import { spendSpell } from './resources.js';
 import { LEGENDARY } from '../data/legendary.js';
 import { makeNoise } from './noise.js';
+import { nemesisDamage, nemesisHolds, nemesisRegen, nemesisFalls, nemesisSurvives } from './court.js';
 
 export { currentTurn };
 
@@ -137,6 +138,7 @@ export function startTurn(){
   }
   const b = BEST[t.bid], D = dreadLevel();
   if (!t.dead && isHis(t) && D.regen && t.hp < t.maxHp){ t.hp = Math.min(t.maxHp, t.hp + D.regen); }
+  if (!t.dead && t.nem && t.hp < t.maxHp){ const r = nemesisRegen(t); if (r) t.hp = Math.min(t.maxHp, t.hp + r); }   // His favour
   if (b?.hooks?.onTurnStart && !t.dead) for (const fx of b.hooks.onTurnStart) runFx(t, fx, true);
   if (isDM()){ ui.selected = t.id; if (t.floor !== ui.floor) goFloor(t.floor, false); focusTile(t.floor, t.x, t.y); showReach(t); }
   const extra = t.conds?.length ? ` (${t.conds.map(c => c.n).join(', ')})` : '';
@@ -166,7 +168,8 @@ function endOfRound(){
   // The land rearranges
   if (D.shift > 0 && Math.random() < D.shift) setTimeout(() => shiftFloor(L, 'Barovia rearranges itself as the round ends'), 400);
 }
-export function endCombat(){ clearOpportunities(); state.tokens.forEach(freshTurn); state.combat = { active:false, order:[], idx:0, round:1, floor:ui.floor }; log('Combat ends.'); clearReach(); const t = ui.selected && tokById(ui.selected); if (t) showReach(t); changed(); }
+export function endCombat(){ for (const t of state.combat.order.map(tokById)) if (t?.nem && !t.dead) nemesisSurvives(t);   // it beat them, or got away
+  clearOpportunities(); state.tokens.forEach(freshTurn); state.combat = { active:false, order:[], idx:0, round:1, floor:ui.floor }; log('Combat ends.'); clearReach(); const t = ui.selected && tokById(ui.selected); if (t) showReach(t); changed(); }
 
 // A figure's swing, spell or flinch, on every screen (only forged figures move; the rest ignore it).
 function animate(id, kind, target){ actOn(id, kind, target); broadcast({ t:'act', id, kind, target }); }
@@ -241,6 +244,7 @@ const PHYS = /bludgeoning|piercing|slashing/;
 export function applyDamage(t, n, type = '', by = null, halvedAlready = false){
   if (t.dead || n <= 0) return;
   if (!halvedAlready && hasCond(t, 'raging') && PHYS.test(String(type))) n = Math.floor(n / 2);   // Rage: resistance
+  if (t.nem) n = nemesisDamage(t, n, type);   // one of the Count's court: its weakness, its scars (game/court.js)
   t.hp = Math.max(0, t.hp - n);
   burst(t.floor, t.x, t.y, '#c0303a');
   if (t.bid === 'seepling' && n >= 5) t.hp = 0;     // Burst Sac
@@ -249,7 +253,7 @@ export function applyDamage(t, n, type = '', by = null, halvedAlready = false){
     const hooks = BEST[t.bid]?.hooks?.onBloodied;
     if (hooks){ showCard({ kind:'seep', title:`${t.name} is bloodied`, flair:'Something changes in the way it holds itself.' }); for (const fx of hooks) runFx(t, fx); }
   }
-  if (t.hp <= 0){ kill(t, type, by); setTimeout(checkVictory, 600); }
+  if (t.hp <= 0 && !(t.nem && nemesisHolds(t))){ kill(t, type, by); setTimeout(checkVictory, 600); }
   if (t.conc){
     if (t.dead) endConc(t, 'goes down');
     else {   // a Constitution save to keep hold of it: DC 10 or half the damage (2024 rules)
@@ -290,6 +294,7 @@ export function kill(t, type, by){
   }
   t.flags.rising = false;
   log(`${t.name} is destroyed.`);
+  if (t.nem) nemesisFalls(t, type, by);
   if (hasTag(t, 'seep')) sfx('burst');
   // killing his creatures catches his interest (once a round)
   if (isHis(t) && state.grasp.stepRound !== `${state.combat.active}:${state.combat.round}`){ state.grasp.stepRound = `${state.combat.active}:${state.combat.round}`; whimStep(1, `${t.name} falls — he noticed`); }

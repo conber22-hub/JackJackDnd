@@ -120,6 +120,7 @@ export function doMove(t, x, y, opts = {}){
   if ((trapHit || oa) && t.lastMove) t.lastMove.clean = false;
   if (ui.selected === t.id) clearReach();
   const finish = () => {
+    if (t.kind === 'pc' && f.mistWall?.includes(t.y * f.W + t.x) && t.lastMove) turnedBack(t);
     if (trapHit) triggerTrap(t, trapHit);
     if (oa) offerOpportunity(t, oa.by, rest, [...(opts.skip || []), oa.by]);
     if (ui.selected === t.id && !oa) showReach(t);
@@ -145,6 +146,19 @@ export function doMove(t, x, y, opts = {}){
   };
   if (opts.delay) setTimeout(go, opts.delay); else go();
   return true;
+}
+/* The Mist Wall: whoever walks into it walks out again where they went in, facing the way they came, and it has been
+   longer than it felt (Constitution save DC 20 or a level of exhaustion; the DM rolls or asks the table). */
+function turnedBack(t){
+  const from = t.lastMove, f = state.floors[t.floor];
+  setTimeout(() => {
+    if (t.dead || !f.mistWall?.includes(t.y * f.W + t.x)) return;
+    t.x = from.x; t.y = from.y; syncTokens(); updateVision();
+    showCard({ kind:'seep', title:`The Mists turn ${t.name} around`, flair:'You walk into the white, and keep walking, and walk out of it again: here, facing the way you came. Your boots are wet to the knee. It has been longer than it felt.',
+      lines:['Constitution save <b>DC 20</b> or gain one level of exhaustion.', 'Nobody leaves Barovia this way. Not while he wants you here.'] });
+    broadcast({ t:'banner', text:`The Mists turn ${t.name} around` });
+    log(`🌫 The Mists turn ${t.name} back.`); changed();
+  }, 700);
 }
 export function animatePath(id, path, onStep, onDone, follow){
   const tv = tokenViews.get(id), t = tokById(id);

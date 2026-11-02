@@ -47,8 +47,10 @@ export function faceOf(t){
 // Introduce someone: their face, their name, and a line.
 export function introduce(id, line = ''){
   const t = tokById(id); if (!t) return;
-  over({ t:'intro', name:t.name, line:String(line || '').trim(), img:faceOf(t) });
+  introduceAs(t, line);
 }
+// Introduce a figure that needn't be on the map (one of the Count's court): its face, its name, a line.
+export function introduceAs(t, line = ''){ over({ t:'intro', name:t.name, line:String(line || '').trim(), img:faceOf(t) }); }
 
 /* A note for one player's eyes (passed across the table): it buzzes their phone and waits there to be read.
    strahd: it's his voice, not the DM's. tell: the TV shows that a note was passed (not what it says). */

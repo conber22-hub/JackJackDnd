@@ -114,7 +114,10 @@ function landmark(kind, place, r, g, side){
   const mists = n => { for (let i = 0; i < n; i++) out.props.push(P('mist', clamp(r.x + Math.floor(g() * r.w), 1, N - 3), clamp(r.y + Math.floor(g() * r.h), 1, N - 3))); };
   const beyond = (w, h, yy) => ({ x:side === 'e' ? r.x - w : r.x + r.w, y:yy, w, h });   // a building right behind the clearing's far edge
   switch (kind){
-    case 'mists': mists(9); out.props.push(P('deadtree', r.x + 2, r.y + 2), P('deadtree', r.x + r.w - 3, r.y + r.h - 3)); break;
+    case 'mists': mists(9); out.props.push(P('deadtree', r.x + 2, r.y + 2), P('deadtree', r.x + r.w - 3, r.y + r.h - 3));
+      // the Mist Wall: the far third of the clearing is the Mists themselves, and they do not let anyone through
+      out.mistWall = []; for (let y = r.y; y < r.y + r.h; y++) for (let k = 0; k < 4 + (y % 3 === 0 ? 1 : 0); k++) out.mistWall.push([far - dir * k, y]);
+      break;
     case 'gates':
       out.props.push(P('gates', far - (dir < 0 ? 0 : 1), mid - 2, 0)); mists(6);
       out.props.push(P('stone', r.x + 3, r.y + 1), P('stone', r.x + 3, r.y + r.h - 2), P('ravens', r.x + r.w - 3, r.y + 1)); break;
@@ -203,6 +206,7 @@ export function genStretch(spec){
     const lm = landmark(spec.arrive.kind, spec.arrive, arrive, g, side);
     lay.rooms.push([arrive.x, arrive.y, arrive.w, arrive.h, 'entrance', lm.name, lm.notes, { outdoor:true }]); take(arrive, 2);
     lay.props.push(...lm.props); lay.buildings.push(...lm.buildings); lay.water.push(...lm.water); lay.paths.push(...lm.paths); lay.fill = lm.fill;
+    if (lm.mistWall) lay.mistWall = lm.mistWall;
     for (const b of lm.buildings) take(b, 0);
     for (const [x, yy] of lm.water) taken.add(yy * N + x);
   }
@@ -269,6 +273,10 @@ export function genStretch(spec){
     }
   });
   if (road.mist || spec.arrive?.kind === 'mists') for (let i = 0; i < 6; i++) lay.props.push(P('mist', 2 + Math.floor(g() * (N - 6)), 2 + Math.floor(g() * (N - 6))));
+  // on a misty road, banks of deep mist lie across it here and there (its own dice, so the road keeps its shape)
+  if (road.mist){ const gm = mulberry32(hashSeed(spec.seed + '|mists')); lay.mists = [];
+    for (let b = 0; b < 3; b++){ const [cx, cy] = center[Math.floor(center.length * (.25 + gm() * .5))] || [N / 2, N / 2];
+      for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (dx * dx + dy * dy <= 5 && gm() < .85) lay.mists.push([cx + dx, cy + dy]); } }
   if (spec.passing) lay.props.push(P('signpost', clamp(exit.x + (side === 'e' ? 2 : -2), 2, N - 3), clamp(exit.y + 2, 2, N - 3)));
   if (!arrive) lay.down = [exit.x, exit.y];
   if (lay.riverNote && lay.rooms[0]) lay.rooms[0][6] = [lay.rooms[0][6], lay.riverNote].filter(Boolean).join(' ');   // the DM hears about the water at the start

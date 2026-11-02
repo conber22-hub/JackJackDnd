@@ -30,6 +30,13 @@ function dressMaterials(fv, th){
 }
 
 export const floorViews = [];   // per floor: { group, tokens, built, mats }
+let mistTex = null;
+function mistSprite(){
+  if (mistTex) return mistTex;
+  const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d');
+  const gr = x.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,.9)'); gr.addColorStop(.5, 'rgba(255,255,255,.35)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+  x.fillStyle = gr; x.fillRect(0, 0, 64, 64); return (mistTex = new THREE.CanvasTexture(c));
+}
 const shared = m => { m.userData.shared = true; return m; };
 
 /* THE GROUND. The deep places are cut into rock: a rock top covers every solid square (and every square a player
@@ -379,6 +386,15 @@ export function buildFloor(L, opt = {}){
     ropes.forEach(([x, y, alongX, , o], n) => { ps.set(wx(x) + (alongX ? 0 : o), .42, wz(y) + (alongX ? o : 0)); sc.set(alongX ? 1 : .04, .15, alongX ? .04 : 1); mat4.compose(ps, q, sc); rp.setMatrixAt(n, mat4); });
     if (pk.instanceColor) pk.instanceColor.needsUpdate = true; pk.castShadow = pk.receiveShadow = shadows; rp.castShadow = shadows;
     fv.built.add(pk, rp);
+  }
+  // the Mists: deep banks of it, churning, waist to head high (they hide what is in them: engine/grid.js passSight)
+  const deep = (f.mists || []).filter(i => !pv || seen(i));
+  if (deep.length){
+    const wall = new Set(f.mistWall || []), pos = new Float32Array(deep.length * 5 * 3);
+    deep.forEach((i, n) => { for (let k = 0; k < 5; k++){ const o = (n * 5 + k) * 3; pos[o] = wx(i % f.W) + (hr(i, 200 + k) - .5) * .9; pos[o + 1] = .25 + hr(i, 210 + k) * (wall.has(i) ? 2.2 : 1.3) + groundY(f, i % f.W, (i / f.W) | 0); pos[o + 2] = wz((i / f.W) | 0) + (hr(i, 220 + k) - .5) * .9; } });
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.userData.own = true;
+    const pts = new THREE.Points(geo, fv.mats.deepMist ||= shared(new THREE.PointsMaterial({ map:mistSprite(), size:2.6, transparent:true, opacity:.5, depthWrite:false, color:'#b8b2c4' })));
+    pts.userData.mistBank = 1; fv.built.add(pts);
   }
   // the road's happenings (DM only): a violet rune where each one waits
   if (!pv) for (const e of f.events || []){

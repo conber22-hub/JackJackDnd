@@ -16,6 +16,31 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.17 — the Count's Court, his face, and the Mists
+
+Pictures: `docs/screens/court-panel.jpg`, `strahd-glimpsed.jpg`, `mists-wall.jpg`.
+- **The Count's Court: a nemesis system** (`src/engine/nemesis.js` for the rules, `src/game/court.js` for the table, `src/data/court.js` for the names, kinds, strengths, weaknesses and lines).
+  - Strahd keeps a court of named servants: three hunters, two captains, a warlord, and at Gaze 7+ one of his Chosen.
+  - Each is built on a real creature (a werewolf, vampire spawn, a ghoul, a hag, a revenant, a brigand, a wight, a mist thing) with followers of its kind. Rank makes it tougher (HP, AC, to hit, damage, more followers).
+  - **Strengths** play at the table: Thick hide, Brutal, Pack-master, Relentless (stays up at 1 HP once a fight), His favour (heals 5 a turn). Ambusher, Cunning and Mist-walker are for the DM.
+  - **A weakness:** fire or radiant doubles that damage; silver, holy water, vanity, a true name or running water are for the DM.
+  - **Memory:** it remembers who hurt it and where, and says so.
+    - When it falls, the mist takes the body, and on a later day it **comes back**, scarred and resisting what killed it, hunting the one who did it.
+    - Only a death by its weakness, or the third death, keeps it down.
+    - Surviving the party (it got away, or a hero fell) makes it stronger, and it rises in rank.
+  - **The court moves on its own** each new day in the valley (or on the DM's ☾ button). They hunt the party, raid villages (news the taverns hear), fight each other for his favour (one wins, one is never seen again), and new names rise to fill the gaps.
+  - **In the world:** those hunting the party wait on the next journey's road as an ambush (a violet rune the DM springs). A place one haunts has its mark on the map when the party enters it.
+  - **The Gaze tab → The Count's Court:** every servant with its rank, kind, haunt, strengths, weakness, scars, grudge and last deeds. Buttons bring it to the map (in the party's sight, five to eight squares off), introduce it on the TV with what it says to them now, or set it hunting. The court's news is marked 🗣 when the taverns know it and 🤫 when only the DM does.
+- **Strahd, glimpsed.** A tall cloaked figure with a pale face and red eyes stands at the edge of the trees (or of the light underground) for a few seconds, and is gone if the camera comes close.
+  - **👁 Let him be seen** (Gaze tab) shows him on every screen.
+  - From Gaze 4 he also shows himself now and then, on his own.
+- **The Mists.**
+  - Deep mist is heavily obscured: you can see into the edge of a bank, not into it or through it, so it hides what waits there.
+  - The **Mist Wall** stands across the far side of the place where the road ends at the valley's edge. Walk into it and it turns you round: you come out where you went in, with a Constitution save (DC 20) against exhaustion.
+  - Banks of it lie across the road from the Mists to the Gates.
+  - The DM can lay or clear it with the new **🌫 Mist** brush in the Build tab.
+  - Floor data: `mists` and `mistWall`; layouts can list both.
+
 ## v1.16 — the valley answers his Gaze
 
 On the outdoor maps of Barovia the land itself shows how closely Strahd is watching (`src/render/omens.js`). Every screen (the DM's, the TV, a player's phone) works it out from the Gaze, so nothing new is sent. Pictures: `docs/screens/omens-*.jpg`.
@@ -479,6 +504,7 @@ src/engine/             pure logic: no DOM, no Three.js, unit-tested
   generator.js          floors, rooms, corridors, carve(), doors, traps, stairs, populate
   caves.js              dug floors: ragged rooms and wandering tunnels, always joined up (cavify)
   features.js           a room's own thing: flooded, a chasm with a rope bridge, a ceiling fall, pillars
+  nemesis.js            the Count's Court: named servants with ranks, strengths, weaknesses, memory; the court's moves
   grid.js               movement (difficult terrain), line of sight, passive Perception
   importer.js           Battle Table / grid JSON / ASCII import, ASCII & JSON export
   tables.js             roll-table parser
@@ -508,6 +534,7 @@ src/game/               rules that touch the scene and UI
   npcgen.js             🎲 Roll an NPC: name, look, line, quirk, want; place as ally or foe
   rooms.js              read a room aloud, furnish by hand, the DM's prompt when the party enters a room
   overworld.js          travelling: set out, the road's events, arrive, enter a place
+  court.js              the Count's Court at the table: bringing them on, fights, ambushes on the roads, haunts, a new day
   actions.js            select, move (doors / traps), stairs, falling, doors, search, disarm, floors, dread
   objects.js            open / pick / force / push / topple / smash / swing furniture, stashes, the DM's prop edits
   asks.js               ask the table for a roll: the DM's bar, the phones' prompt, the reveal; notes passed to one player

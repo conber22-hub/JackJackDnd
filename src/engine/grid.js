@@ -43,7 +43,10 @@ export function standHeight(f, x, y, size = 1){
   return g + h;
 }
 export function passMove(f, i){ if (!walk(f.grid[i])) return false; if (f.props?.length && propTerrain(f).block.has(i)) return false; const s = doorState(f, i); return s !== 'locked' && s !== 'secret'; }
-export function passSight(f, i){ if (!walk(f.grid[i])) return false; const s = doorState(f, i); return !s || s === 'open'; }
+// Deep mist (f.mists) is heavily obscured: you can see into the first square of it, not through.
+const mistCache = new WeakMap();
+export const mistSet = f => { if (!f.mists?.length) return null; let c = mistCache.get(f); if (!c || c.arr !== f.mists){ c = { arr:f.mists, set:new Set(f.mists) }; mistCache.set(f, c); } return c.set; };
+export function passSight(f, i){ if (!walk(f.grid[i])) return false; if (f.mists?.length && mistSet(f).has(i)) return false; const s = doorState(f, i); return !s || s === 'open'; }
 
 export function canStep(f, x, y, dx, dy, pass = passMove){
   const nx = x + dx, ny = y + dy;

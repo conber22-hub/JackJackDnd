@@ -73,6 +73,7 @@ export const BUILD_TOOLS = [
   ['dig', '⛏', 'Dig', 'Tap or drag across rock to dig'],
   ['fill', '▦', 'Fill', 'Tap or drag across floor to fill it with stone'],
   ['rough', '≋', 'Rough', 'Tap or drag to make difficult terrain (mud, rubble, deep water: 2 squares to cross) · start on rough ground to clear it'],
+  ['mist', '🌫', 'Mist', 'Tap or drag to lay deep mist (it hides what is in it and beyond it) · start on mist to clear it'],
 ];
 export function renderDock(){
   const dm = isDM();
