@@ -2,6 +2,7 @@
 import { writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { SRD_MONSTERS } from '../src/data/srd-monsters.js';
+import { timing } from './import-spell-conditions.mjs';
 const abilities = { Strength:'str', Dexterity:'dex', Constitution:'con', Intelligence:'int', Wisdom:'wis', Charisma:'cha' };
 const plain = s => s.replace(/<[^>]*>/g, '').replace(/&#x27;/g, "'").replace(/&amp;/g, '&');
 export function parseAction(trait){
@@ -25,7 +26,14 @@ export function parseAction(trait){
   if (recharge) action.recharge = +recharge[1];
   const failure = text.split(/\bFailure: /)[1]?.split(/\bSuccess:|Failure or Success:/)[0] || '';
   const cond = /(?:target|creature) has the (\w+) condition/.exec(failure);
-  if (cond) action.cond = cond[1].toLowerCase();
+  if (cond){
+    action.cond = cond[1].toLowerCase();
+    // Only the primary condition's failure clause can supply its timing.
+    const primary = failure.split('Failure by')[0];
+    const tm = timing(primary);
+    if (tm.dur && !/until the grapple ends|until the rope|swallowed|While Poisoned/.test(primary)) Object.assign(action, tm);
+    else { delete action.cond; action.conditionManual = true; }
+  }
   // Keep the full adjudication context, including width, prerequisites, durations and later saves.
   action.note = text;
   return action;
