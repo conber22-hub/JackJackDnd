@@ -7,6 +7,10 @@ const quantity = i => Number.isFinite(i.qty) ? Math.max(0, i.qty) : 1;
 const coinsOf = c => Object.fromEntries(['cp','sp','ep','gp','pp'].map(k => [k, Number.isFinite(c?.[k]) ? Math.max(0, c[k]) : 0]));
 // ac is the catalogue value; acBonus is only the increment to heroStats' existing armour/shield AC.
 export function itemInfo(name){
+  if (name && typeof name === 'object'){
+    if (name.custom && typeof name.custom === 'object') return { ...structuredClone(name.custom), n:name.n || name.custom.n };
+    name = name.n;
+  }
   const weapon = SRD_WEAPONS.find(i => same(i.n, name)), arm = armour(name);
   if (weapon) return { ...structuredClone(weapon), kind:'weapon', baseName:weapon.n };
   if (arm) return { ...structuredClone(arm), kind:arm.t === 'shield' ? 'shield' : 'armor', baseName:arm.n, acBonus:0 };
@@ -42,7 +46,7 @@ export function canEquip(h, id){
   if (!candidate) return no('Item not found.');
   if (!quantity(candidate)) return no('No items remaining.');
   if (inv.filter(i => i.attuned && quantity(i)).length > 3) return no('At most three items can be attuned.');
-  const info = itemInfo(candidate.n), others = inv.filter(i => i.id !== id && i.equipped && quantity(i)).map(i => itemInfo(i.n));
+  const info = itemInfo(candidate), others = inv.filter(i => i.id !== id && i.equipped && quantity(i)).map(i => itemInfo(i));
   if (['armor','shield'].includes(info?.kind) && others.some(i => i?.kind === info.kind)) return no(info.kind === 'armor' ? 'Remove the other body armour first.' : 'Remove the other shield first.');
   const twoHanded = i => i?.kind === 'weapon' && /2/.test(i.p || '');
   if ((info?.kind === 'shield' && others.some(twoHanded)) || (twoHanded(info) && others.some(i => i?.kind === 'shield'))) return no('A two-handed weapon needs both hands free of a shield.');
@@ -51,10 +55,10 @@ export function canEquip(h, id){
 export function itemEffects(h){
   const out = { ac:0, attack:{}, damage:{}, saves:0, spellAttack:0, spellDc:0, notes:[] };
   const active = (h.inv || []).filter(i => i.equipped && quantity(i));
-  const weapons = [...new Map(active.map(i => [normal(i.n), [i, itemInfo(i.n)]])).values()].filter(([,info]) => info?.kind === 'weapon');
+  const weapons = [...new Map(active.map(i => [normal(i.n), [i, itemInfo(i)]])).values()].filter(([,info]) => info?.kind === 'weapon');
   const seen = new Set();
   for (const item of active){
-    const info = itemInfo(item.n);
+    const info = itemInfo(item);
     if (!info){ out.notes.push(item.n); continue; }
     if (info.attune && !item.attuned) continue;
     // Multiple copies of the same magic item do not stack; quantity is only for load.
@@ -83,7 +87,7 @@ export function coinValueGp(coins){
 }
 export function load(h, strength){
   // Fifty coins weigh one pound; unknown catalogue weights contribute zero.
-  const weight = (h.inv || []).reduce((sum, i) => sum + (itemInfo(i.n)?.weight || 0) * quantity(i), 0) + Object.values(coinsOf(h.coins)).reduce((a,b) => a+b, 0) / 50;
+  const weight = (h.inv || []).reduce((sum, i) => sum + (itemInfo(i)?.weight || 0) * quantity(i), 0) + Object.values(coinsOf(h.coins)).reduce((a,b) => a+b, 0) / 50;
   const capacity = strength * 15;
   return {weight,capacity,over:weight > capacity};
 }
