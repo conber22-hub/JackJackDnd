@@ -3,12 +3,12 @@
 You have two tracks. They don't touch the same files, so **run them as two background agents at the same time** if you can.
 - **Track A, QA**: this file, tasks A1 and A2 below.
 - **Track B has moved to Codex** (`docs/codex/rules-engine.md`); if Cursor comes back, it takes track A only.
-- *(was)* **Track B, the rules engine**: the three tasks in `docs/argon/brief.md`, first written for Gemini (Argon), which ran out before it published anything. Do them in its order, using **your** branch names:
+- *(was)* **Track B, the rules engine**: the three tasks in `docs/codex/rules-engine-brief.md` (Codex did them). Do them in its order, using **your** branch names:
   - B1 damage defenses: `cursor/defenses`
   - B2 monster actions: `cursor/monster-actions`
   - B3 inventory engine: `cursor/inventory`
 
-  Everything else in that brief stands: its files, its tests, its "Done means", and describing the hook Claude needs in the PR. Where it says `argon/…`, read `cursor/…`.
+  Everything else in that brief stands: its files, its tests, its "Done means", and describing the hook Claude needs in the PR.
 
 If your time runs short, the most valuable order is **B1, A1, B3, B2, A2**.
 

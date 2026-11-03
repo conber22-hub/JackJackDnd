@@ -1,7 +1,7 @@
 # Codex: the rules engine (three tasks)
 
-These three tasks were first written for Argon, then given to Cursor; neither published anything, so they are yours now.
-The full brief is **`docs/argon/brief.md`**: its files, its rules, its tests, and its "Done means" all stand. Where it says `argon/…`, use **`codex/…`**.
+These three tasks were first written for other agents, who published nothing, so they are yours now.
+The full brief is **`docs/codex/rules-engine-brief.md`**: its files, its rules, its tests, and its "Done means" all stand.
 
 Do them **in this order**, one pull request each, against `claude/dread-delve-v0.2`:
 

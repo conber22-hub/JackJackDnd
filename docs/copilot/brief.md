@@ -1,6 +1,6 @@
-# Argon, round 2: days off, and the people who work for the party
+# Copilot: days off, and the people who work for the party
 
-Welcome back. The party can now build a place of their own in Barovia (a camp, a house, a fort, a keep: `src/engine/holdings.js`) and craft their own gear (`src/engine/crafting.js`). Two things are missing:
+The party can now build a place of their own in Barovia (a camp, a house, a fort, a keep: `src/engine/holdings.js`) and craft their own gear (`src/engine/crafting.js`). Two things are missing:
 - what heroes do with the days between adventures
 - the people they hire, who can be loyal, or frightened, or one of the Count's eyes
 
@@ -12,7 +12,7 @@ Read `AGENTS.md` first. Its rules all stand:
 - Never commit `dread-delve.html`.
 - `npm test` and `npm run build` must pass.
 
-Two pull requests, each based on `claude/dread-delve-v0.2` (not on each other), on `argon/downtime` and `argon/hirelings`. In each PR:
+Two tasks, each its own GitHub issue ("Copilot: days off" and "Copilot: hired hands"), and one pull request per issue against `claude/dread-delve-v0.2` (not stacked on each other). In each PR:
 - say what's covered, what you skipped and why
 - give the exact functions Claude should call, and when
 
@@ -32,7 +32,7 @@ Your files are the ones named below. Don't edit anything else; if you need a cha
 
 ---
 
-## Task 1: days off (`argon/downtime`)
+## Task 1: days off
 
 **Do:** write `src/engine/downtime.js`, `src/data/downtime.js` and `tests/downtime.test.js`.
 
@@ -78,7 +78,7 @@ Your files are the ones named below. Don't edit anything else; if you need a cha
 
 ---
 
-## Task 2: hired hands (`argon/hirelings`)
+## Task 2: hired hands
 
 **Do:** write `src/engine/hirelings.js`, `src/data/hirelings.js` and `tests/hirelings.test.js`.
 
