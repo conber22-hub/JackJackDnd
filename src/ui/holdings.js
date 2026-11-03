@@ -83,7 +83,7 @@ export function holdModeOff(){ showFootprint(ui.floor, []); }
 
 /* ---------- its buttons ---------- */
 document.addEventListener('click', e => {
-  const b = e.target.closest('[data-hd]'); if (!b) return;
+  const b = e.target.closest?.('[data-hd]'); if (!b || !state) return;
   const a = b.dataset.hd, k = b.dataset.k, h = holdingHere();
   if (a === 'found'){ const n = $('#holdName')?.value || ''; if (found(k, n)){ ui.holdModule = null; setMode('holding', null, 'Pick a piece in the Build tab, then tap the map'); holdHover(null); } }
   else if (!h) return;
@@ -102,6 +102,6 @@ document.addEventListener('click', e => {
   else if (a === 'abandon'){ if (confirm(`Abandon ${h.name}? What was built comes down.`)) abandon(h.id); }
   renderPanel(); if (ui.mode === 'holding') holdHover(null);
 });
-document.addEventListener('change', e => { const el = e.target.closest('[data-hdf]'); const h = holdingHere(); if (el && h){ h[el.dataset.hdf] = el.checked; renderPanel(); } });
+document.addEventListener('change', e => { const el = e.target.closest?.('[data-hdf]'); if (!el || !state) return; const h = holdingHere(); if (h){ h[el.dataset.hdf] = el.checked; renderPanel(); } });
 document.addEventListener('toggle', e => { if (e.target?.dataset?.holdopen) ui.holdOpen = e.target.open; }, true);
 addEventListener('keydown', e => { if (ui.mode === 'holding' && (e.key === 'r' || e.key === 'R') && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName)){ holdTurn(); holdHover(null); } });

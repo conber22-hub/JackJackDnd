@@ -17,7 +17,7 @@ import { court, dayHooks } from './court.js';
 
 export { KINDS, MODULES };
 export const KIND_NAMES = { camp:'⛺ Camp', house:'🏠 House', homestead:'🌾 Homestead', outpost:'🗼 Outpost', fort:'🏯 Fort', keep:'🏰 Keep' };
-export const holdings = () => (state.campaign.holdings ||= []);
+export const holdings = () => state?.campaign ? (state.campaign.holdings ||= []) : [];
 export const holdingHere = (L = ui.floor) => holdings().find(h => h.map === state.meta.mapId && h.floor === L) || null;
 export const holdingById = id => holdings().find(h => h.id === id) || null;
 let tick = 1;
