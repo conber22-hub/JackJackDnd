@@ -1,6 +1,8 @@
 # Prompt for ChatGPT: days off (downtime)
 
-Copy everything below the line into ChatGPT. Paste its reply (three files) back to Claude Code, which adds them, runs the tests and wires them into the app.
+Copy everything below the line into ChatGPT, or tell ChatGPT to read this file in the repository and do it.
+- **If ChatGPT can write to the repository:** it opens a pull request from a `chatgpt/<topic>` branch against `claude/dread-delve-v0.2`.
+- **If it can't:** paste its reply (three files) back to Claude Code, which adds them, runs the tests and wires them into the app.
 
 ---
 
@@ -157,4 +159,9 @@ Export these:
 - lodging is free at a holding with beds
 - the same seed gives the same result
 
-Reply with the three files, each complete, in its own code block headed by its path.
+If you can write to the GitHub repository `conber22-hub/JackJackDnd`:
+- put the three files on a new branch named after this task (`chatgpt/downtime` or `chatgpt/hirelings`)
+- open a pull request against `claude/dread-delve-v0.2`
+- don't touch any other file, and never commit `dread-delve.html`
+
+Otherwise, reply with the three files, each complete, in its own code block headed by its path.
