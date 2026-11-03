@@ -88,3 +88,12 @@ test('the folk: players see only those where they have been, and never who spies
   const out = redactForPlayers(ser(s), { seen:seenNow, explored:s.explored });
   assert.deepEqual(out.floors[0].folk, [{ id:'a', role:'farmer', name:'Ilya', x:here % f.W, y:(here / f.W) | 0, mood:'easy' }]);
 });
+
+test('players get the valley\'s hour (for their sky and light), and nothing else of the campaign', () => {
+  const s = newState({ seed:'hour', floors:1, template:'andral' }); setState(s);
+  updateVision();
+  s.campaign.valley = { day:3, hour:19, at:'village', visited:['village'] };
+  const out = redactForPlayers(ser(s), { seen:seenNow, explored:s.explored });
+  assert.equal(out.hour, 19);
+  assert.equal(out.campaign, undefined);
+});

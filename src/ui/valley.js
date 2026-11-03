@@ -126,6 +126,7 @@ export function playerMapTab(){
   const here = placeById(V.at), to = V.journey && placeById(V.journey.to);
   return `<h3>The valley</h3><div class="muted">${to ? `On the road to <b>${esc(to.name)}</b>.` : `You are at <b>${esc(here.name)}</b>.`} The mist hides the rest.</div>
     ${V.day ? `<div class="trait">🕯 <b>Day ${V.day} · ${timeOfDay(V.hour)}</b>${V.weather ? ` · ${esc(V.weather)}` : ''}</div>` : ''}
+    ${V.day && ui.role === 'dm' ? `<div class="row" title="Set the hour: the sky, the light, the windows and the valley's folk follow">${[['6', '🌅 Dawn'], ['12', '☀ Midday'], ['18', '🌇 Dusk'], ['0', '🌙 Midnight'], ['+1', '+1 hour']].map(([k, n]) => `<button class="btn small" data-act="clock" data-k="${k}">${n}</button>`).join('')}</div>` : ''}
     ${mapSVG(V, null, new Set((V.journey?.path || []).slice(1).map((id, i) => roadBetween(V.journey.path[i], id)?.id)), true)}
     ${V.visited.map(id => placeById(id)).map(p => `<div class="trait"><b>${esc(p.name)}.</b> ${esc(p.blurb)}</div>`).join('')}`;
 }

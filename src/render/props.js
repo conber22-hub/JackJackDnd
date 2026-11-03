@@ -276,6 +276,13 @@ export function buildProp(p){
   return outer;
 }
 
+/* Lit windows: dark glass by day, candlelight once it's dark (main.js, from engine/daylight.js). k: 0..1 */
+const WINDOWS = new Set(), WIN_DAY = new THREE.Color('#3a332c'), WIN_NIGHT = new THREE.Color('#ffc46a');
+let windowK = -1;
+export function windowGlow(k){
+  if (Math.abs(k - windowK) < .01) return; windowK = k;
+  for (const m of WINDOWS){ m.color.copy(WIN_DAY).lerp(WIN_NIGHT, k); m.emissiveIntensity = .05 + 1.15 * k; }
+}
 /* Buildings: solid houses on outdoor floors (the squares under them stay rock). Lit windows at night. */
 const ROOFS = ['#6a3a32', '#585a62', '#7a6440', '#4e5258'], WALLS = ['#b0a088', '#9a8c74', '#c0b094', '#8e8070'];
 /* A castle keep (Ravenloft): a tall dark block with battlements, round corner towers with slate cones, a spire,
@@ -334,7 +341,8 @@ export function buildBuilding(b, k = 0){
   dm.userData.door = 1;
   for (const t of [-along / 3, along / 3]) if (Math.abs(t) > .5){
     const lit = b.dark ? '#141210' : '#ffc46a';
-    box(g, out[0] ? .04 : .32, .3, out[0] ? .32 : .04, lit, ...facePos(t, H * .55), b.dark ? {} : { e:'#ffaa50', ei:1.2, r:1 });
+    const w = box(g, out[0] ? .04 : .32, .3, out[0] ? .32 : .04, lit, ...facePos(t, H * .55), b.dark ? {} : { e:'#ffaa50', ei:1.2, r:1 });
+    if (!b.dark && !WINDOWS.has(w.material)){ WINDOWS.add(w.material); windowK = -1; }   // they light up at dusk (windowGlow, from the valley's clock)
   }
   // a windmill's sails, on the street side
   if (b.mill){

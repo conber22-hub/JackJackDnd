@@ -45,7 +45,7 @@ import { askTable, answerAsk, revealAsk, cancelAsk, clearAsk, currentAsk } from 
 import { passNote, recapText } from '../game/night.js';
 import { openScreenWindow, setMode as nightMode, setFollow, sendLook, narrate, clearScreen, showJoin, toggleQr, partyRoom, introduce, reshowHandout, setTimer, showHandout } from '../game/night.js';
 import { valleyMapHTML } from './valley.js';
-import { makeCamp } from '../game/overworld.js';
+import { makeCamp, setHour } from '../game/overworld.js';
 import { valley, travel, arrive, enterPlace, readEvent, springEvent, doneEvent, newRoadEvent, goToEvent } from '../game/overworld.js';
 import { myHeroes, saveMyHero, deleteMyHero, myHero, applyCharacter, placeCharacter, removeCharacter, myProfile, saveProfile, playerKey, unlockCharacter, setCharacterOwner } from '../game/heroes.js';
 import { putModel, deleteModel } from '../render/models.js';
@@ -328,6 +328,7 @@ document.addEventListener('click', e => {
     case 'delHero': if (confirm('Delete this hero from this browser?')){ deleteMyHero(id); renderHeroList(); } break;
     case 'exportHero': { const h = myHero(id); if (h) download(`${h.name.replace(/[^\w]+/g, '-').toLowerCase()}.json`, JSON.stringify(h, null, 1)); } break;
     case 'dmNewChar': openCreator(null, { title:'New character (DM)', saveLabel:'Add to the party', onSave:h => { applyCharacter(h, { owner:'DM' }); renderPanel(); } }); break;
+    case 'clock': setHour(k); renderPanel(); break;   // the DM sets the hour (Valley tab)
     // 🎒 the pack (ui/pack.js): wear, wield, attune, one more, one fewer, add
     case 'pack': { const v = k === 'add' ? $(`#packAdd-${CSS.escape(id)}`)?.value : null; if (packAction(id, k, el.dataset.i, v)) renderPanel(); } break;
     case 'dmSheet': { const h = state.characters[id]; if (h) openCreator(h, { title:`${h.name}'s sheet`, saveLabel:'Save sheet', onSave:h2 => { applyCharacter(h2, { owner:h.owner }); sendSheetToOwner(h2.id); renderPanel(); } }); } break;
@@ -472,6 +473,7 @@ $('#whimBadge').onclick = () => { if (state && isDM()){ ui.tab = 'gaze'; ui.pane
 document.querySelectorAll('#viewSeg button').forEach(b => b.onclick = () => state && setView(b.dataset.view));
 // what the palette (ui/palette.js) can't know about on its own: the notebook (ui/notebook.js), and the selected creature's exhaustion
 registerCommands([
+  ...[['6', 'Dawn', '🌅'], ['12', 'Midday', '☀'], ['18', 'Dusk', '🌇'], ['0', 'Midnight', '🌙']].map(([h, n, icon]) => ({ id:`hour-${h}`, n:`Time: ${n}`, hint:'The sky, the light, the windows and the folk follow', icon, role:'dm', run:() => { setHour(h); renderPanel(); } })),
   { id:'notebook', n:'Open the notebook', hint:'N outside a fight · notes for you alone', icon:'📓', role:'dm', run:toggleNotebook },
   { id:'exhaust', n:'Exhaustion: one more level on the selected creature', hint:'−2 on d20 tests, 5 ft. slower; the sixth kills', icon:'😩', role:'dm',
     run:() => { const t = ui.selected && tokById(ui.selected); if (!t) { toast('Select a creature first.'); return; } exhaust(t, 1); changed(); } },

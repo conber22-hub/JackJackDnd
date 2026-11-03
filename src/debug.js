@@ -47,6 +47,7 @@ export { srd, library };
 export { outbox } from './game/outbox.js';
 export { addCond, defencesOf, defend, saveRoll, timingFor, currentTurn } from './game/rules.js';
 export { exhaust } from './game/combat.js';
+export { setHour, valley } from './game/overworld.js';
 export { legendOf, resistLeft } from './game/combat.js';
 export { applyCharacter } from './game/heroes.js';
 export { newHero, heroStats } from './engine/hero.js';

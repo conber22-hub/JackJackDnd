@@ -16,6 +16,21 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.24 — day and night in the valley
+
+Picture: `docs/screens/hours.jpg` (dawn, midday, dusk, midnight).
+- **The light follows the valley's clock outdoors** (`src/engine/daylight.js`, applied in `main.js`):
+  - a pale grey day under the clouds; amber-and-rose dawns and dusks; a moonlit blue night
+  - the light's colour and strength change, and the sun crosses the sky low from east to west, so the shadows turn
+  - Under a roof and underground, nothing changes.
+- **The sky** (`render/omens.js`) takes the hour's colours, with a warm band at dusk.
+- **Windows** are dark glass by day and candlelit after dark (`render/props.js windowGlow`).
+- **The Mists creep closer and thicker at night.**
+- **The folk go home at dusk** and come out at dawn (game/folk.js notices the change).
+- **The DM sets the hour:** the Valley tab's 🌅 Dawn · ☀ Midday · 🌇 Dusk · 🌙 Midnight · +1 hour, or the palette ("Time: Dusk").
+  - Always forward, so a new day comes round properly, and the Count's court moves with it.
+- **Players' screens get the hour** (`state.hour`, engine/redact.js), so their sky and light match the DM's; nothing else of the campaign.
+
 ## v1.23 — Wick, the ghost who shows the DM what's next
 
 Muse's guide (#20, `src/ui/ghost.js`). Pictures: `docs/screens/wick-start.jpg`, `docs/screens/wick-dm.jpg`.

@@ -15,6 +15,7 @@ import { walk } from '../engine/tiles.js';
 import { THEMES } from '../data/themes.js';
 import { scene, controls, camera, floorY } from './scene.js';
 import { gfx } from './gfx.js';
+import { daylight } from '../engine/daylight.js';
 
 const outdoors = () => { const th = THEMES[state?.floors[ui.floor]?.theme] || {}; return (th.walls === 'trees' || th.walls === 'mixed') && th.id !== 'tavern'; };
 // How far the land has withered under his Gaze: 0 below Gaze 5, then a step a level (render/floors.js reads it).
@@ -32,16 +33,19 @@ function softDot(size, inner, outer){
 const world = new THREE.Group(); scene.add(world);
 const skyMat = new THREE.ShaderMaterial({
   side:THREE.BackSide, depthWrite:false, fog:false,
-  uniforms:{ red:{ value:0 } },
+  uniforms:{ red:{ value:0 }, top:{ value:new THREE.Color('#0b0d18') }, band:{ value:new THREE.Color('#1a1424') } },
   vertexShader:`varying vec3 vP; void main(){ vP = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-  // dark above, a faint bruised glow along the horizon (red when he looks hardest), black below
-  fragmentShader:`uniform float red; varying vec3 vP;
-    void main(){ float h = vP.y; float band = exp(-pow((h - .02) * 7.0, 2.0));
-      vec3 glow = mix(vec3(.10, .08, .14), vec3(.32, .05, .06), red);
-      vec3 c = mix(vec3(.012, .01, .02), glow, band) * step(-.15, h);
+  // the hour's sky above (engine/daylight.js: pale grey by day, amber at dusk, near black at night), a glow along the
+  // horizon (red when he looks hardest), black below
+  fragmentShader:`uniform float red; uniform vec3 top; uniform vec3 band; varying vec3 vP;
+    void main(){ float h = vP.y; float b = exp(-pow((h - .02) * 7.0, 2.0));
+      vec3 up = top * (1.0 - .45 * clamp(h, 0.0, 1.0));
+      vec3 glow = mix(band, vec3(.32, .05, .06), red);
+      vec3 c = mix(up, glow, b) * step(-.15, h);
       gl_FragColor = vec4(c, 1.0); }`,
 });
 const sky = new THREE.Mesh(new THREE.SphereGeometry(160, 32, 16), skyMat); world.add(sky);
+const skyTop = new THREE.Color(), skyBand = new THREE.Color(), skyGlow = new THREE.Color('#b58a74');
 // mountains: two jagged rings of peaks, the far one paler, black against the glow
 function ridge(radius, lo, hi, seed, color){
   const n = 160, pos = [], idx = []; let s = seed;
@@ -139,7 +143,12 @@ export function updateOmens(t, dt){
   if (out){
     world.position.set(controls.target.x * .9, baseY, controls.target.z * .9);
     skyMat.uniforms.red.value += ((G >= 9 ? (G - 8) * .45 : 0) - skyMat.uniforms.red.value) * Math.min(1, dt * .8);
-    const ring = (f?.W || 40) / 2 + 12, wall = .1 + G * .028;
+    // the hour (players get it as state.hour)
+    const hour = state.campaign?.valley?.hour ?? state.hour, DL = hour != null ? daylight(hour) : null, k = Math.min(1, dt * .6);
+    skyMat.uniforms.top.value.lerp(skyTop.set(DL ? DL.sky : '#0b0d18'), k);
+    skyMat.uniforms.band.value.lerp(skyBand.set(DL ? DL.sky : '#1a1424').lerp(skyGlow, DL ? .35 + DL.warm * .3 : .5), k);
+    // the Mists creep closer and thicker after dark
+    const ring = (f?.W || 40) / 2 + 12 - (DL ? DL.night * 3 : 0), wall = (.1 + G * .028) * (1 + (DL ? DL.night * .6 : 0));
     for (const sp of banks){
       const u = sp.userData, a = u.a + t * .004 * (u.k % 2 ? 1 : -1), r = ring + u.r * 8 - (G >= 9 ? 5 : 0);
       sp.position.set(Math.cos(a) * r - controls.target.x * .9, u.y + Math.sin(t * .2 + u.ph) * .3, Math.sin(a) * r - controls.target.z * .9);

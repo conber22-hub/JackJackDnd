@@ -14,6 +14,8 @@ import { syncTokens } from './render/minis.js';
 import { buildAllFloors, buildFloor, groundWeather } from './render/floors.js';
 import { updateOmens, witherLevel } from './render/omens.js';
 import { updateFolk } from './render/folk.js';
+import { daylight } from './engine/daylight.js';
+import { windowGlow } from './render/props.js';
 import { walk } from './engine/tiles.js';
 import { floorViews, mist } from './render/floors.js';
 import { tokenViews } from './render/minis.js';
@@ -49,6 +51,14 @@ loadStoredModels();
 const clock = new THREE.Clock(), rimDir = new THREE.Vector3();
 let whisperAt = performance.now() + 30000;
 const fogDark = new THREE.Color('#0d0b10'), fogRed = new THREE.Color('#140808'), redMist = new THREE.Color('#7a2a2a');
+// the lights as scene.js made them (under a roof and underground), and the hour's, outdoors
+const AMB0 = ambient.color.clone(), HEMI0 = hemi.color.clone(), MOON0 = moon.color.clone(), MOONP0 = moon.position.clone();
+const dlCol = new THREE.Color(), dlPos = new THREE.Vector3(), dlFog = new THREE.Color();
+function outdoorFog(){
+  const th = THEMES[state.floors[ui.floor]?.theme] || THEMES[0], out = (th.walls === 'trees' || th.walls === 'mixed') && th.id !== 'tavern';
+  const hour = state.campaign?.valley?.hour ?? state.hour;
+  return out && hour != null ? dlFog.set(daylight(hour).fog) : fogDark;
+}
 function frame(){
   requestAnimationFrame(frame);
   const raw = clock.getDelta(), dt = Math.min(raw, .05), now = performance.now(), t = now / 1000;
@@ -59,13 +69,20 @@ function frame(){
     const D = dreadLevel();
     const fogTarget = D.fog * (ui.view === 'stack' ? .3 : ui.view === 'top' ? .35 : 1) * (ui.tab === 'build' && ui.role === 'dm' && !ui.tableView ? .5 : 1);
     scene.fog.density += (fogTarget - scene.fog.density) * Math.min(1, ease * 1.7);
-    scene.fog.color.lerp(state.dread >= 8 ? fogRed : fogDark, .02);
+    scene.fog.color.lerp(state.dread >= 8 ? fogRed : outdoorFog(), .02);
     // the DM gets a little work-light; taverns and villages are lit, dungeons are not
     const th = THEMES[state.floors[ui.floor]?.theme] || THEMES[0], outdoor = (th.walls === 'trees' || th.walls === 'mixed') && th.id !== 'tavern';
-    // outdoors the valley's clock matters: grey day, dim dawn and dusk, dark night
+    // outdoors the valley's clock matters (engine/daylight.js): a pale grey day, amber dawn and dusk, moonlit night;
+    // the light's colour and the way it falls follow the hour, and windows glow once it's dark. (Players get the hour
+    // as state.hour: engine/redact.js.)
     const hour = state.campaign?.valley?.hour ?? state.hour;
-    const dayK = !outdoor || hour == null ? 1 : hour >= 8 && hour < 17 ? 1.25 : (hour >= 5 && hour < 8) || (hour >= 17 && hour < 20) ? .95 : .72;
-    const lit = (th.light || 1) * dayK;
+    const DL = outdoor && hour != null ? daylight(hour) : null;
+    const lit = (th.light || 1) * (DL ? DL.lightK : 1);
+    const k2 = Math.min(1, ease * .6);
+    ambient.color.lerp(DL ? dlCol.set(DL.amb) : AMB0, k2); hemi.color.lerp(DL ? dlCol.set(DL.amb).lerp(HEMI0, .35) : HEMI0, k2);
+    moon.color.lerp(DL ? dlCol.set(DL.sun > 0 ? (DL.warm > .3 ? '#e0a27a' : '#d6d2cc') : '#7f8cc0') : MOON0, k2);
+    moon.position.lerp(DL ? dlPos.set(DL.dir.x, DL.dir.y, DL.dir.z) : MOONP0, k2);
+    windowGlow(DL ? DL.windows : 1);
     if (t - (frame.ambAt || 0) > 1){ frame.ambAt = t;   // the room's own sound
       const w = weatherKind(); setAmbience(outdoor ? (w && w !== 'snow' ? 'rain' : 'wind') : th.id === 'tavern' ? 'fire' : ['undertow', 'cellar', 'womb'].includes(th.id) ? 'water' : 'drips');
       // the weather changed (a new day, the DM's desk), or his Gaze withered the land: redraw the outdoor maps' ground

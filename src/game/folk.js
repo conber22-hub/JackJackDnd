@@ -118,8 +118,11 @@ export function talkTo(p, { by = null } = {}){
 
 /* The DM's browser keeps them going: a step a second when nobody's fighting, and folk for a floor the party has
    just come to. */
+let wasNight = null;
 setInterval(() => {
   if (!state || ui.role !== 'dm' || document.hidden) return;
   ensureFolk(ui.floor);
+  // dusk or dawn came (the DM set the hour, or the party travelled): who's out in the street now
+  const n = night(); if (wasNight !== null && n !== wasNight) refreshFolk(ui.floor); wasNight = n;
   if (!state.combat?.active) stepFolkNow(ui.floor, { fight:false });
 }, 1000);

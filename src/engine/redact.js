@@ -14,6 +14,7 @@ const MON_FIELDS = ['id', 'kind', 'bid', 'name', 'color', 'size', 'floor', 'x', 
 
 export function redactForPlayers(s, { seen = {}, explored = {} } = {}){
   const out = { ...s, meta:{ ...s.meta } };
+  out.hour = s.campaign?.valley?.hour ?? null;   // the valley's clock, for their sky and light (render/, main.js)
   delete out.campaign; delete out.characters;
   // the seed would let someone regenerate the whole delve: send a stand-in that still tells delves apart
   out.meta.seed = 'h' + hash(String(s.meta.seed));

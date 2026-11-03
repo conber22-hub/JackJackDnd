@@ -76,6 +76,14 @@ export const placeMaps = p => (p.maps || (p.map ? [p.map] : [])).map(id => ({ id
 /* ---------- the clock ---------- */
 export function passTime(h){ const V = valley(), d0 = V.day; V.hour += h; while (V.hour >= 24){ V.hour -= 24; V.day++; } state.campaign.day = `Day ${V.day}, ${timeOfDay(V.hour)}`;
   if (V.day > d0) courtDay(`Day ${V.day}`); }   // a new day: the Count's court moves
+// The DM sets the hour (dawn, midday, dusk, midnight, or an hour on): always forward, so a new day comes round
+// properly (and the Count's court moves with it). The sky, the light, the windows and the folk follow (engine/daylight.js).
+export function setHour(to){
+  const V = valley(); if (!V) return;
+  const step = to === '+1' ? 1 : ((+to - V.hour) % 24 + 24) % 24;
+  if (!step) return;
+  passTime(step); log(`🕯 ${clockText()}.`); changed();
+}
 export const clockText = () => { const V = valley(); return `Day ${V.day} · ${timeOfDay(V.hour)}`; };
 // Make camp on the road: the night passes, an omen, and maybe something comes to the fire.
 export function makeCamp(L = ui.floor){
