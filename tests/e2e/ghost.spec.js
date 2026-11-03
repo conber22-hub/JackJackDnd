@@ -23,7 +23,7 @@ test('a fresh DM is pointed at the right thing at three stages: start screen, no
     // Stage 2: descended with no heroes, so the next thing is the table.
     await startDM(page);
     await expect.poll(() => wickStep(page)).toBe('host');
-    await expect.poll(() => wickSay(page)).toBe('Open Table.');
+    await expect.poll(() => wickSay(page)).toBe('Open the Table tab.');
     await page.locator('[data-act="tab"][data-k="table"]').click();
     await expect.poll(() => wickSay(page)).toBe('Open the table so players can join.');
     // Stage 3: a fight's turn banner waits in the outbox.

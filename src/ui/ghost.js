@@ -83,7 +83,7 @@ const visible = el => { if (!el) return false; const r = el.getBoundingClientRec
 function resolve(step){
   if (step.tab){
     if (!ui.panelOpen) return { el:$('#btnPanel'), say:'Open the panel.' };
-    if (ui.tab !== step.tab){ const b = document.querySelector(`[data-act="tab"][data-k="${step.tab}"]`); return b ? { el:b, say:`Open ${TAB_NAMES[step.tab]}.` } : null; }
+    if (ui.tab !== step.tab){ const b = document.querySelector(`[data-act="tab"][data-k="${step.tab}"]`); return b ? { el:b, say:`Open the ${TAB_NAMES[step.tab]} tab.` } : null; }
   }
   const sel = typeof step.target === 'function' ? step.target(state, ui) : step.target;
   const el = sel ? document.querySelector(sel) : null;
@@ -100,13 +100,31 @@ function pick(){
   }
   return null;
 }
+/* Where he floats: beside his target, but never over the DM's other buttons. Try the spots around it (and, for a
+   target inside the side panel, just outside the panel at its height) and take the one that covers the least of
+   anything tappable, staying on screen. (Claude: he used to sit over the panel's other tabs, and the player's door.) */
 function place(el){
   if (matchMedia('(max-width: 760px)').matches || el.id === 'stage'){ wrap.classList.add('corner'); return; }   // a corner, with the bubble and an arrow, rather than over the button
   wrap.classList.remove('corner');
-  const r = el.getBoundingClientRect(), w = wrap.offsetWidth, h = wrap.offsetHeight, vw = innerWidth, vh = innerHeight;
-  let x = r.right + 10, y = Math.min(Math.max(r.top + r.height / 2 - h / 2, 8), Math.max(8, vh - h - 8));
-  if (x + w > vw - 8){ x = r.left - w - 10; if (x < 8){ x = Math.min(Math.max(r.left, 8), Math.max(8, vw - w - 8)); y = r.bottom + 10; if (y + h > vh - 8) y = Math.max(8, r.top - h - 10); } }
-  wrap.style.left = x + 'px'; wrap.style.top = y + 'px';
+  const r = el.getBoundingClientRect(), w = wrap.offsetWidth, h = wrap.offsetHeight, vw = innerWidth, vh = innerHeight, mid = r.top + r.height / 2 - h / 2;
+  const panel = el.closest('#panel, .modal .box, .th-doors');
+  const P = panel?.getBoundingClientRect();
+  const spots = [
+    ...(P && !el.closest('.modal') ? [[P.right + 12, mid]] : []),     // outside the side panel, level with it
+    [r.right + 10, mid], [r.left + r.width / 2 - w / 2, r.bottom + 10], [r.left - w - 10, mid], [r.left + r.width / 2 - w / 2, r.top - h - 10],
+    ...(P ? [[P.left + P.width / 2 - w / 2, P.bottom + 10]] : []),    // below the whole group (the start screen's doors)
+  ];
+  const others = [...document.querySelectorAll('button, a[href], input, select, textarea, [data-act], .th-door')]
+    .filter(o => o !== el && !el.contains(o) && !o.contains(el) && !wrap.contains(o) && visible(o)).map(o => o.getBoundingClientRect());
+  const overlap = (x, y) => others.reduce((a, o) => a + Math.max(0, Math.min(x + w, o.right) - Math.max(x, o.left)) * Math.max(0, Math.min(y + h, o.bottom) - Math.max(y, o.top)), 0);
+  let best = null;
+  for (const [x0, y0] of spots){
+    const x = Math.min(Math.max(x0, 8), Math.max(8, vw - w - 8)), y = Math.min(Math.max(y0, 8), Math.max(8, vh - h - 8));
+    const onTarget = Math.max(0, Math.min(x + w, r.right) - Math.max(x, r.left)) * Math.max(0, Math.min(y + h, r.bottom) - Math.max(y, r.top));
+    const cost = overlap(x, y) + onTarget * 4 + Math.hypot(x - x0, y - y0) * 2;   // never over his target; little nudging to fit the screen
+    if (!best || cost < best.cost) best = { x, y, cost };
+  }
+  wrap.style.left = best.x + 'px'; wrap.style.top = best.y + 'px';
 }
 function show(step, disp){
   wrap.dataset.step = step.id; sayEl.textContent = disp.say;

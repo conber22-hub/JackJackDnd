@@ -16,6 +16,25 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.23 — Wick, the ghost who shows the DM what's next
+
+Muse's guide (#20, `src/ui/ghost.js`). Pictures: `docs/screens/wick-start.jpg`, `docs/screens/wick-dm.jpg`.
+- A little ghost with a candle floats beside whatever the DM most likely wants to press next, with one line:
+  - take the Count's seat; Session Zero, or Continue
+  - tonight's session, read the Hook
+  - open the table, show the players the code, seat whoever joined
+  - send what's in the outbox, approve a player's request ✓📤
+  - creatures in sight: start a fight; a monster's turn: its actions, or Next turn
+  - the fight's won: rest, or the Gaze tab
+  - on the road, travel on; a road planned, set out
+  - and when it's quiet: the notebook, or Ctrl+K for anything
+  - If the button's in a tab that isn't open, he points at the tab first.
+- Tap him: **Got it** (that step won't come back) or **Show me** (opens the tab, scrolls to it, makes it glow).
+- **🕯 Wick** in the help window turns him on and off; Ctrl+K "What next?" brings him back for one step.
+- Players get four steps of their own: tap your hero; the glowing tiles; your turn; your request is with the DM. None in Card only.
+- He keeps quiet in the first-night tour, over any window but the start screen, and on the TV. On a phone he sits in a corner. He respects reduced motion.
+- Claude's follow-ups: he finds a spot that covers none of the DM's other buttons (he sat over the panel's other tabs, and the player's door); "Open the Table tab", not "Open Table".
+
 ## v1.22 — the folk of Barovia, and the Count's eyes among them
 
 Codex's folk engine (#19, `src/engine/folk.js`, `src/data/folk.js`) and Claude's figures (`src/render/folk.js`), joined in `src/game/folk.js`. Pictures: `docs/screens/folk-roles.jpg`, `docs/screens/folk-village.jpg`.
@@ -712,6 +731,7 @@ src/ui/screen.js        the table screen for the TV (?screen): ribbon, party, fo
 src/render/folk.js      the folk drawn: a hand-painted billboard per role, walking, the spies' glint (DM only); pickFolk for taps
 src/game/folk.js        the folk at the table: which floors get them, the step timer, witnesses → the court, talking, the players' copy
 src/ui/palette.js       (Muse) 🔎 the command palette (Ctrl+K, /) and the shortcuts sheet (?); registerCommands
+src/ui/ghost.js         (Muse) 🕯 Wick, the guide: STEPS (what the DM most likely wants next), placement, Got it / Show me
 src/ui/notebook.js      (Muse) 📓 the DM's notebook: tagged notes, search, Tonight's notes
 src/ui/pack.js          🎒 the pack: wear, wield, attune, add, coins (player's hero tab, DM's Tokens tab)
 src/ui/cards.js         card only: a player's phone at an in-person game (big buttons, target list, move pad)
