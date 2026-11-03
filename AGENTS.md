@@ -34,7 +34,8 @@ Shared files (`src/engine/hero.js`, `src/data/srd.js`, `src/data/bestiary.js`, `
 ## Content
 - Task briefs live in `docs/codex/` (Codex: start with `docs/codex/rules-data.md`), `docs/argon/` (Argon: `docs/argon/brief.md`), `docs/cursor/` (Cursor: `docs/cursor/brief.md`) and `docs/muse/` (Muse: `docs/muse/brief.md`).
 - This repository and the app are public. Only openly licensed rules (SRD 5.2.1, CC BY 4.0, with its attribution) go in `src/data/`. Text, stat blocks and tables from other books stay out of the repo; they belong in a DM's private library file, which is imported in the browser and never committed.
-- Don't reprint text from the published Curse of Strahd module (boxed text, stat blocks, unique item text). Use original names and descriptions, or SRD 5.2 material.
+- This is the DM's own Curse of Strahd campaign, for their table only. **The module's names are welcome**: Strahd, Barovia, Vallaki, Krezk, the Vistani, Ireena, Ismark, Madam Eva, the Abbot and the rest. Use them as the campaign does; don't invent stand-ins.
+- But don't copy the book's own words or numbers into the repository: no boxed text, no stat blocks, no unique item or spell text from it. Write your own descriptions, and use SRD 5.2 numbers. The DM's private library (`.prism`, imported in the browser, never committed) is where the book's text lives.
 - Creatures, tables, themes, props, loot, the Valley's places and road events, and the campaign sessions all live in `src/data/`.
 
 ## Before opening a PR
