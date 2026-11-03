@@ -48,7 +48,7 @@ export function deserialize(s){
   if (/Grasp Die/.test(st.content.grasp || '')){ st.content.grasp = null; st.grasp.auto = false; }
   if (/Hands Reach/.test(st.content.shift || '')) st.content.shift = null;
   const nc = newCampaign();
-  st.campaign = { ...nc, ...(s.campaign || {}), clocks:{ ...nc.clocks, ...(s.campaign?.clocks || {}) }, places:{ ...nc.places, ...(s.campaign?.places || {}) }, notebook:[...(s.campaign?.notebook || [])] };   // the DM's notebook: old saves get an empty one
+  st.campaign = { ...nc, ...(s.campaign || {}), clocks:{ ...nc.clocks, ...(s.campaign?.clocks || {}) }, places:{ ...nc.places, ...(s.campaign?.places || {}) }, notebook:[...(s.campaign?.notebook || [])], letters:[...(s.campaign?.letters || [])] };   // the DM's notebook: old saves get an empty one; the Count's letters likewise
   st.characters = s.characters || {};
   st.march = Array.isArray(s.march) ? s.march : [];   // marching order (older saves: as the party was added)
   st.meta.template ||= 'andral';
