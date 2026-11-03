@@ -2,6 +2,7 @@
 import { state, setState, ui, tokById, isDM, makePC, makeNPC, dreadLevel } from '../engine/state.js';
 import { ensureTourButton } from './tour.js';
 import { ensureGhost } from './ghost.js';
+import { ensureLettersButton } from './letters.js';
 import { toggleNotebook } from './notebook.js';
 import { togglePalette, closePalette, closeShortcuts, showShortcuts, registerCommands } from './palette.js';
 import { updateVision, freeTilesNear, seenNow } from '../engine/grid.js';
@@ -474,6 +475,7 @@ $('#btnPanel').onclick = () => { ui.panelOpen = !ui.panelOpen; renderPanel(); re
 $('#btnHelp').onclick = () => $('#helpModal').classList.remove('hidden');
 ensureTourButton();   // the help modal's "Show me around" button (idempotent)
 ensureGhost();   // Wick, the guide: the help modal's 🕯 toggle, and his watch on the app's redraws (idempotent)
+ensureLettersButton();   // the Count's letters: the ✉ desk button, the palette command, the receiver and the hero-tab list (idempotent)
 $('#floorUp').onclick = () => state && goFloor(ui.floor - 1);
 $('#floorDown').onclick = () => state && goFloor(ui.floor + 1);
 $('#whimBadge').onclick = () => { if (state && isDM()){ ui.tab = 'gaze'; ui.panelOpen = true; renderTabs(); renderPanel(); renderDock(); } };
