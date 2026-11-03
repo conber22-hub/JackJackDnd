@@ -78,3 +78,13 @@ test("the DM's notebook never reaches the players", () => {
   assert.ok(!JSON.stringify(out).includes('darker harvest'), 'no note text leaks anywhere in the redacted delve');
   assert.equal(s.campaign.notebook.length, 1, "the DM's own notebook is untouched");
 });
+
+test('the folk: players see only those where they have been, and never who spies for the Count', () => {
+  const s = newState({ seed:'folk', floors:1, template:'andral' }); setState(s);
+  updateVision();
+  const f = s.floors[0], here = [...s.explored[0]][0], far = f.grid.findIndex((v, i) => v === T.ROOM && !s.explored[0].has(i));
+  f.folk = [{ id:'a', role:'farmer', name:'Ilya', x:here % f.W, y:(here / f.W) | 0, mood:'easy', spy:{ for:'n1' }, seen:[{ kind:'kill', x:1, y:1 }], home:{ x:0, y:0 } },
+            { id:'b', role:'child', name:'Mara', x:far % f.W, y:(far / f.W) | 0, mood:'wary', spy:null, seen:[] }];
+  const out = redactForPlayers(ser(s), { seen:seenNow, explored:s.explored });
+  assert.deepEqual(out.floors[0].folk, [{ id:'a', role:'farmer', name:'Ilya', x:here % f.W, y:(here / f.W) | 0, mood:'easy' }]);
+});

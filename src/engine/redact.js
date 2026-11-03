@@ -83,6 +83,8 @@ function redactFloor(f, exp){
     buildings:(f.buildings || []).filter(b => rectKept(b.x, b.y, b.w, b.h, 1)).map(b => { const c = { ...b }; delete c.name; return c; }),
     water:(f.water || []).filter(kept), masonry:(f.masonry || []).filter(kept), clear:(f.clear || []).filter(kept), rough:(f.rough || []).filter(kept),
     shallow:(f.shallow || []).filter(kept), slope:(f.slope || []).filter(kept), mists:(f.mists || []).filter(kept), mistWall:(f.mistWall || []).filter(kept), chasm:(f.chasm || []).filter(kept), span:(f.span || []).filter(kept), ...(f.height ? { height:Object.fromEntries(Object.entries(f.height).filter(([i]) => kept(+i))) } : {}),
+    // the folk (engine/folk.js): only those standing where the party has been, and never who is the Count's eye
+    folk:(f.folk || []).filter(p => exp.has(p.y * W + p.x)).map(p => ({ id:p.id, role:p.role, name:p.name, x:p.x, y:p.y, mood:p.mood })),
     up:f.up && kept(f.up.y * W + f.up.x) ? f.up : null,
     down:f.down && kept(f.down.y * W + f.down.x) ? f.down : null,
   };

@@ -31,6 +31,8 @@ import { away, bringPartyHere, moveParty } from '../game/maps.js';
 import { askD20, realDice } from '../game/night.js';
 import { isObject, propSquares } from '../engine/objects.js';
 import { propAt } from '../data/props.js';
+import { pickFolk } from '../render/folk.js';
+import { talkTo, folkAt } from '../game/folk.js';
 
 const raycaster = new THREE.Raycaster(), ndc = new THREE.Vector2();
 raycaster.layers.enableAll();   // a tap on a name plate (its own layer, render/scene.js) still picks its mini
@@ -247,6 +249,9 @@ function handleTap(cx, cy, shift = false){
     case 'house':  if (tile) placeHouseAt(tile); return;
   }
   if (tokId){ if (shift && isDM() && ui.selected && toggleGroup(tokId)) return; select(tokId); return; }
+  // one of the valley's people (render/folk.js): what they say
+  setNdc(cx, cy); const folkId = pickFolk(raycaster);
+  if (folkId){ talkTo(folkAt(ui.floor, folkId)); return; }
   const sel = ui.selected && tokById(ui.selected);
   if (tile && sel && reachState.data?.tiles?.has(ti)){ clearMovePath(); hideTip(); requestMove(sel, tile.x, tile.y); return; }
   // doors and traps

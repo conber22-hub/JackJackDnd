@@ -13,6 +13,7 @@ import { setDrone, setAmbience } from './audio/sound.js';
 import { syncTokens } from './render/minis.js';
 import { buildAllFloors, buildFloor, groundWeather } from './render/floors.js';
 import { updateOmens, witherLevel } from './render/omens.js';
+import { updateFolk } from './render/folk.js';
 import { walk } from './engine/tiles.js';
 import { floorViews, mist } from './render/floors.js';
 import { tokenViews } from './render/minis.js';
@@ -95,6 +96,7 @@ function frame(){
     updateAmbience(t, dt);   // candle and fire light, rain and snow
     updateSkyline(t);        // the castle on the horizon
     updateOmens(t, dt);      // the valley answers his Gaze: ravens, eyes in the trees, the Mists, a red sky
+    updateFolk(t, dt);       // the valley's people going about their day (render/folk.js)
     // walls breathe red when his Gaze is high
     floorViews.forEach(fv => { if (!fv) return; const m = fv.mats.wall; m.emissive.set('#5a0a10'); m.emissiveIntensity = state.dread >= 7 ? (state.dread - 6) * .06 * (1 + Math.sin(t * 1.3)) : 0; });
     // selection ring
