@@ -31,8 +31,9 @@ test('forged minis on the map: heroes and humanoid foes are jointed figures that
   await idle(page);
   const kinds = await page.evaluate(() => Object.fromEntries(window.DreadDelve.get().tokens.map(t => [t.bid || t.name, !!window.DreadDelve.tokenViews.get(t.id).group.userData.fig.userData.rig])));
   expect(kinds).toEqual({ Ada:true, zombie:true, wolf:false });
-  await page.evaluate(() => { const D = window.DreadDelve, s = D.get(); const a = s.tokens.find(t => t.name === 'Ada'), z = s.tokens.find(t => t.bid === 'zombie'); z.hp = z.maxHp = 500; D.doAttack(a.id, z.id, 0); });
-  expect(await page.evaluate(() => { const a = window.DreadDelve.get().tokens.find(t => t.name === 'Ada'); return window.DreadDelve.tokenViews.get(a.id).group.userData.fig.userData.rig.action?.k; })).toMatch(/slash|smash|thrust|claw|shoot/);
+  // the swing, read as it starts (a second round trip can come after it has finished, on a busy software renderer)
+  expect(await page.evaluate(() => { const D = window.DreadDelve, s = D.get(); const a = s.tokens.find(t => t.name === 'Ada'), z = s.tokens.find(t => t.bid === 'zombie'); z.hp = z.maxHp = 500; D.doAttack(a.id, z.id, 0);
+    return D.tokenViews.get(a.id).group.userData.fig.userData.rig.action?.k; })).toMatch(/slash|smash|thrust|claw|shoot/);
 });
 
 test('🎲 Roll an NPC: a named NPC with a look, placed as an ally or a foe', async ({ page }) => {
