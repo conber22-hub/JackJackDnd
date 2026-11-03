@@ -109,6 +109,7 @@ test('Dash extends movement and Undo move restores position and movement spent',
 });
 
 test('Castle Ravenloft loads and displays all five floors', async ({ page }) => {
+  test.setTimeout(150_000);   // five 56×56 floors drawn one after another on a software renderer: ~60 s here, at the default limit
   const names = ['The Approach', 'The Great Halls', 'The Upper Keep', 'The Dungeons', 'The Catacombs'];
   await startDM(page, 'ravenloft', null); // Keep the template's own floor count.
   expect(await page.evaluate(() => {
