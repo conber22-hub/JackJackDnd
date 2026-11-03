@@ -47,7 +47,7 @@ test('a hero builds a blade from parts at a forge, works it to the end, and wiel
   // the smith: a commission, worked eight hours as each day passes
   const job = await page.evaluate(() => {
     const D = window.DreadDelve, f = D.get().floors[0];
-    f.folk = [{ id:'smith-1', role:'smith', name:'Tavrek Strezhov', x:10, y:12, mood:'easy', seen:[] }];
+    f.folk = [{ id:'smith-1', role:'smith', name:'Tavrek Strezhov', x:10, y:12, home:{ x:10, y:12 }, haunts:[], mood:'easy', seen:[] }];   // (a whole person: the folk step walks them home)
     const ref = D.crafters().find(c => c.smith).ref, t = D.get().tokens.find(t => t.charId === 'ilse');
     const rec = D.startJob({ kind:'weapon', parts:{ frame:'weapon-dagger', material:'steel' } }, ref, t.id);
     D.courtDay('A day'); D.courtDay('A day'); D.courtDay('A day');
