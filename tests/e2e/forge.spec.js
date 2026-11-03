@@ -36,6 +36,7 @@ test('forged minis on the map: heroes and humanoid foes are jointed figures that
 });
 
 test('🎲 Roll an NPC: a named NPC with a look, placed as an ally or a foe', async ({ page }) => {
+  test.setTimeout(150_000);   // sixteen taps and two camera framings on a software renderer: ~58 s alone here, at the 60 s default
   await arena(page, [{ name:'Ada', x:6, y:10 }]);
   await openPanelTab(page, 'tokens');
   await page.locator('#npcKind').selectOption('priest');
