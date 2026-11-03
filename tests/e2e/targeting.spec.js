@@ -62,7 +62,8 @@ test('on a touch screen an area is placed with the first tap and cast with the s
     await expect(page.locator('#modeText')).toContainText('tap again to cast it there');
     expect(await page.evaluate(() => window.DreadDelve.get().tokens.filter(t => t.kind === 'monster').every(t => t.hp === t.maxHp))).toBe(true);
     await page.touchscreen.tap(p.x, p.y);
-    await expect(page.locator('#cardLayer .pop').last()).toContainText('Ada: Fireball');
+    // cast: the log says so (a card can be pushed off by the ones after it, a zombie falling, or fade, on a slow run)
+    await expect.poll(() => page.evaluate(() => window.DreadDelve.get().log.some(e => /Ada casts Fireball/.test(e.m)))).toBe(true);
     expect(errors).toEqual([]);
   } finally { await context.close(); }
 });
