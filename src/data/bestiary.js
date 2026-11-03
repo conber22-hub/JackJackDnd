@@ -30,7 +30,7 @@ export const FAMILIES = {
 
 export const BESTIARY = [
   // ----------------------------- THE SEEP -----------------------------
-  { id:'seepling', def:{"resist":[],"immune":[],"vuln":[],"condImmune":[]}, fam:'seep', name:'Seepling', cr:'1/2', ac:12, hp:'2d4+1', speed:30, spd:'30 ft., climb 30 ft.', init:2, size:1,
+  { id:'seepling', def:{"resist":[],"immune":["poison"],"vuln":[],"condImmune":["poisoned"]}, fam:'seep', name:'Seepling', cr:'1/2', ac:12, hp:'2d4+1', speed:30, spd:'30 ft., climb 30 ft.', init:2, size:1,
     shape:'seepling', color:'#7d8a46', eye:'#c6ff5a', tags:['seep'], pack:true,
     attacks:[{n:'Latch', b:4, d:'1d4+2', t:'piercing', latch:true, f:'{A} skitters up {T} and finds bare skin.'}],
     traits:['<b>Host Seed.</b> A creature reduced to 0 HP while a Seepling is latched to it rises as a Seep-Husk at the start of the next round unless it gets magical healing first. <i>(Automatic.)</i>',
@@ -39,7 +39,7 @@ export const BESTIARY = [
     look:'A palm-sized sac of grey-green membrane on six hooked filaments, pulsing with a wet inner glow. It smells of old church water and copper pennies.',
     prompt:'grimdark fantasy creature, palm-sized parasitic sac of translucent grey-green membrane on six hooked filament legs, sickly inner glow, crawling on wet stone in a silver mine, gothic horror, torchlight, highly detailed' },
 
-  { id:'husk', def:{"resist":[],"immune":[],"vuln":[],"condImmune":[]}, fam:'seep', name:'Seep-Husk', cr:'2', ac:13, hp:'5d8+10', speed:30, spd:'30 ft.', init:1, size:1,
+  { id:'husk', def:{"resist":[],"immune":["poison"],"vuln":[],"condImmune":["poisoned"]}, fam:'seep', name:'Seep-Husk', cr:'2', ac:13, hp:'5d8+10', speed:30, spd:'30 ft.', init:1, size:1,
     shape:'husk', color:'#5d6b4a', eye:'#c6ff5a', tags:['seep'],
     attacks:[{n:'Lash', b:5, d:'1d8+3', t:'bludgeoning', f:'A ropy limb bursts from {A}\'s sleeve and whips across {T}.'},
              {n:'Host\'s Weapon', b:5, d:'1d10+3', t:'slashing', f:'{A} still remembers the swing. The arm doing it does not.'}],
@@ -51,7 +51,7 @@ export const BESTIARY = [
     look:'A dead miner or pilgrim split open at the ribs, grey-green tendrils knitting through the wound and out of the fingertips. The head lolls, the jaw hangs — but the eyes still track you.',
     prompt:'grimdark horror, reanimated dead silver miner split open at the chest, grey-green parasitic tendrils threading out of the wound and fingertips, lolling head, still holding a rusted pick, dark mine tunnel, Ravenloft, painterly concept art' },
 
-  { id:'husktemplar', def:{"resist":[],"immune":[],"vuln":[],"condImmune":[]}, fam:'seep', name:'Husk-Templar', cr:'4', ac:18, hp:'8d8+24', speed:30, spd:'30 ft.', init:0, size:1,
+  { id:'husktemplar', def:{"resist":[],"immune":["poison"],"vuln":[],"condImmune":["poisoned"]}, fam:'seep', name:'Husk-Templar', cr:'4', ac:18, hp:'8d8+24', speed:30, spd:'30 ft.', init:0, size:1,
     shape:'templar', color:'#6d7560', eye:'#c6ff5a', tags:['seep'],
     attacks:[{n:'Taken Longsword', b:6, d:'2d8+3', t:'slashing', f:'{A} brings the blade down in a perfect templar\'s cut. The tendrils in its wrists did that, not the knight.'},
              {n:'Shield Bash', b:6, d:'1d6+3', t:'bludgeoning', on:{ save:'str', dc:14, cond:'prone', rounds:1 }, f:'{A} drives its shield of St. Andral into {T}.'}],
@@ -63,7 +63,7 @@ export const BESTIARY = [
     look:'A knight of the church still in tarnished plate stamped with Andral\'s silver sunburst. Grey-green growth has burst the visor open from inside, and tendrils grip the sword hilt where the gauntlet has rotted through.',
     prompt:'grimdark horror, undead church knight in tarnished silver-stamped plate armor, visor burst open by grey-green parasitic growth, tendrils gripping a longsword, cracked kite shield with a silver sunburst, flooded crypt, Ravenloft, painterly concept art' },
 
-  { id:'bloat', def:{"resist":[],"immune":[],"vuln":[],"condImmune":[]}, fam:'seep', name:'Bloat-Mourner', cr:'1', ac:9, hp:'4d10+4', speed:15, spd:'15 ft.', init:-2, size:1,
+  { id:'bloat', def:{"resist":[],"immune":["poison"],"vuln":[],"condImmune":["poisoned"]}, fam:'seep', name:'Bloat-Mourner', cr:'1', ac:9, hp:'4d10+4', speed:15, spd:'15 ft.', init:-2, size:1,
     shape:'bloat', color:'#8b8a5a', eye:'#c6ff5a', tags:['seep'],
     attacks:[{n:'Smother', b:3, d:'1d6+1', t:'bludgeoning', on:{ save:'con', dc:11, cond:'poisoned', rounds:1 }, f:'{A} leans its swollen weight onto {T}, humming a funeral hymn.'}],
     traits:['<b>Gravid.</b> When it dies it bursts: each creature within 10 ft. makes a DC 12 Con save (2d6 poison, half on success), and 1d4+1 Seeplings spill out. <i>(Automatic.)</i>',
@@ -73,7 +73,7 @@ export const BESTIARY = [
     look:'A swollen mourner in a sodden funeral shawl, belly distended to bursting with sloshing, glowing ichor. Its mouth is sealed with membrane, but it still hums the hymn.',
     prompt:'horror creature, bloated corpse of a village mourner in a soaked black funeral shawl, grotesquely swollen glowing green belly, mouth sealed by membrane, shuffling through a flooded crypt, gothic horror, painterly' },
 
-  { id:'stalker', def:{"resist":[],"immune":[],"vuln":[],"condImmune":[]}, fam:'seep', name:'Hollowstalker', cr:'5', ac:15, hp:'9d8+27', speed:40, spd:'40 ft., climb 40 ft.', init:4, size:1,
+  { id:'stalker', def:{"resist":[],"immune":["poison"],"vuln":[],"condImmune":["poisoned"]}, fam:'seep', name:'Hollowstalker', cr:'5', ac:15, hp:'9d8+27', speed:40, spd:'40 ft., climb 40 ft.', init:4, size:1,
     shape:'stalker', color:'#6f7a52', eye:'#d8ff7a', tags:['seep'],
     attacks:[{n:'Claw', b:7, d:'2d6+4', t:'slashing', f:'{A} comes off the wall at {T} like something thrown.'}],
     traits:['<b>Multiattack.</b> Three Claws.', '<b>Wall-Runner.</b> Moves along walls and ceilings without slowing.',
@@ -83,7 +83,7 @@ export const BESTIARY = [
     look:'A long, low thing of stretched membrane over borrowed bones, too many joints in each limb, a head that is mostly jaw. It moves on the ceiling by preference.',
     prompt:'grimdark creature, long low predator of stretched grey-green membrane over mismatched human bones, too many joints in each limb, eyeless head that is mostly jaw, clinging to a mine ceiling, horror concept art' },
 
-  { id:'quill', def:{"resist":[],"immune":[],"vuln":[],"condImmune":[]}, fam:'seep', name:'Quill-Choir', cr:'4', ac:14, hp:'8d8+16', speed:10, spd:'10 ft.', init:0, size:1,
+  { id:'quill', def:{"resist":[],"immune":["poison"],"vuln":[],"condImmune":["poisoned"]}, fam:'seep', name:'Quill-Choir', cr:'4', ac:14, hp:'8d8+16', speed:10, spd:'10 ft.', init:0, size:1,
     shape:'quill', color:'#7a7f4e', eye:'#e3ff8a', tags:['seep'],
     attacks:[{n:'Spine Volley (120 ft.)', b:6, d:'2d8+3', t:'piercing', f:'The choir sings one note and {A} empties a volley of bone quills into {T}.'}],
     traits:['<b>Multiattack.</b> Two Spine Volleys.', '<b>Rooted.</b> While rooted, it can\'t be moved against its will.',
@@ -92,7 +92,7 @@ export const BESTIARY = [
     look:'A pulsing bulb on a fleshy stalk, bristling with bone quills, each quill hole a tiny mouth singing a different hymn.',
     prompt:'horror creature, pulsing membrane bulb on a fleshy stalk rooted to cave floor, bristling with long bone quills, small singing mouths between the quills, sickly green glow, gothic horror concept art' },
 
-  { id:'bulwark', def:{"resist":[],"immune":[],"vuln":[],"condImmune":[]}, fam:'seep', name:'Ossuary Bulwark', cr:'7', ac:17, hp:'12d10+48', speed:25, spd:'25 ft.', init:-1, size:2,
+  { id:'bulwark', def:{"resist":[],"immune":["poison"],"vuln":[],"condImmune":["poisoned"]}, fam:'seep', name:'Ossuary Bulwark', cr:'7', ac:17, hp:'12d10+48', speed:25, spd:'25 ft.', init:-1, size:2,
     shape:'bulwark', color:'#6a6a4c', eye:'#c6ff5a', tags:['seep'],
     attacks:[{n:'Slam', b:9, d:'3d10+5', t:'bludgeoning', on:{ save:'str', dc:16, cond:'prone', rounds:1 }, f:'{A} brings down an arm made of six arms. {T} is underneath it.'}],
     traits:['<b>Bone Wall (Reaction).</b> +4 AC to an ally within 5 ft. against one attack.', '<b>Siege Mass.</b> Double damage to objects and structures.'],
@@ -100,7 +100,7 @@ export const BESTIARY = [
     look:'A hulking mound of many bodies fused and armored with ribcages and skull-plates, two enormous arms built from bundled limbs.',
     prompt:'massive horror brute fused from many corpses, armored with ribcages and skull plates, two enormous arms made of bundled limbs, grey-green membrane binding it, mine cavern, grimdark concept art' },
 
-  { id:'colossus', def:{"resist":[],"immune":[],"vuln":[],"condImmune":[]}, fam:'seep', name:'Reliquary Colossus', cr:'12', ac:18, hp:'16d12+80', speed:30, spd:'30 ft.', init:0, size:3,
+  { id:'colossus', def:{"resist":[],"immune":["poison"],"vuln":[],"condImmune":["charmed","frightened","poisoned"]}, fam:'seep', name:'Reliquary Colossus', cr:'12', ac:18, hp:'16d12+80', speed:30, spd:'30 ft.', init:0, size:3,
     shape:'colossus', color:'#5e624a', eye:'#ff6a3a', tags:['seep','boss'],
     attacks:[{n:'Reliquary Fist', b:11, d:'4d10+6', t:'bludgeoning', on:{ save:'str', dc:19, cond:'prone', rounds:1 }, f:'{A} swings a fist with a whole reliquary fused into the knuckles. {T} is in the way.'},
              {n:'Bone Lance (60 ft.)', b:11, d:'3d12+6', t:'piercing', f:'{A} tears a fused spine out of its own back and throws it at {T}.'}],
@@ -114,7 +114,7 @@ export const BESTIARY = [
     look:'Three times a man\'s height and built out of the Seep\'s whole harvest — dozens of bodies braided into a war-shape, silver reliquaries and church bells grown into its shoulders like armor plates, a single furnace-orange eye in a chest of fused ribs.',
     prompt:'colossal parasite juggernaut built from dozens of fused corpses, silver reliquaries and church bells grown into its shoulders as armor, single glowing orange eye in a ribcage chest, grey-green membrane, flooded cavern, grimdark epic concept art' },
 
-  { id:'mind', def:{"resist":[],"immune":[],"vuln":[],"condImmune":[]}, fam:'seep', name:'The Budding Mind', cr:'10', ac:14, hp:'15d10+45', speed:0, spd:'0 ft. (rooted)', init:3, size:2,
+  { id:'mind', def:{"resist":["psychic"],"immune":["poison"],"vuln":[],"condImmune":["charmed","frightened","poisoned"]}, fam:'seep', name:'The Budding Mind', cr:'10', ac:14, hp:'15d10+45', speed:0, spd:'0 ft. (rooted)', init:3, size:2,
     shape:'mind', color:'#6b6a48', eye:'#ffcf5a', tags:['seep','boss'],
     attacks:[{n:'Tendril Lash (reach 15 ft.)', b:9, d:'3d8+5', t:'bludgeoning', on:{ save:'str', dc:17, cond:'grappled', rounds:1 }, f:'A tendril as thick as a man unspools from {A} and wraps {T}.'}],
     specials:[{n:'Psychic Hymn', fx:'aoe:6:wis:17:5d8:psychic:frightened', f:'"We were afraid too. Then we were together."'},
@@ -128,7 +128,7 @@ export const BESTIARY = [
     look:'A wet, wrinkled mound the size of a cart, folded like a brain and sheathed in translucent membrane. Faces press outward from inside it, mouths moving. Feeding tendrils run from it into every wall of the chamber.',
     prompt:'grotesque proto-hivemind, cart-sized wrinkled brain-like mass sheathed in translucent grey-green membrane, human faces pressing outward from inside, feeding tendrils running into the walls of a flesh-covered cavern, bioluminescent glow, cosmic horror concept art' },
 
-  { id:'undertow', def:{"resist":[],"immune":[],"vuln":[],"condImmune":[]}, fam:'seep', name:'The Undertow', cr:'16', ac:16, hp:'20d12+120', speed:0, spd:'0 ft. (rooted)', init:2, size:3,
+  { id:'undertow', def:{"resist":["psychic"],"immune":["poison"],"vuln":[],"condImmune":["charmed","frightened","poisoned"]}, fam:'seep', name:'The Undertow', cr:'16', ac:16, hp:'20d12+120', speed:0, spd:'0 ft. (rooted)', init:2, size:3,
     shape:'undertow', color:'#4f5a3a', eye:'#ff5a5a', tags:['seep','boss'],
     attacks:[{n:'Tide Lash (reach 30 ft.)', b:12, d:'4d10+6', t:'bludgeoning', on:{ save:'str', dc:20, cond:'restrained', rounds:1 }, f:'A rope of fused bodies uncoils from {A} and drags {T} across the floor.'}],
     specials:[{n:'Mind-Flood', fx:'aoe:12:wis:20:4d10:psychic:stunned', f:'Every voice it has ever stolen speaks at once.'},
@@ -144,7 +144,7 @@ export const BESTIARY = [
     prompt:'colossal cosmic horror hive-mind, cathedral-sized mass of fused corpses and grey-green membrane rooted in a flooded cavern, dozens of mouths along a central trunk, tendrils of bodies, sickly green and blood-red glow, Ravenloft, epic dark fantasy painting' },
 
   // --------------------------- ANDRAL'S LABYRINTH ---------------------------
-  { id:'handswarm', def:{"resist":[],"immune":[],"vuln":[],"condImmune":[]}, fam:'andral', name:'Hand-Swarm', cr:'1', ac:12, hp:'4d8', speed:30, spd:'30 ft., climb 30 ft.', init:3, size:1,
+  { id:'handswarm', def:{"resist":["bludgeoning","piercing","slashing"],"immune":[],"vuln":[],"condImmune":["charmed","frightened","grappled","paralyzed","petrified","prone","restrained","stunned"]}, fam:'andral', name:'Hand-Swarm', cr:'1', ac:12, hp:'4d8', speed:30, spd:'30 ft., climb 30 ft.', init:3, size:1,
     shape:'hand', color:'#d9cdb8', eye:'#ffffff', tags:['hands'],
     attacks:[{n:'Grasp', b:4, d:'2d4+2', t:'bludgeoning', on:{ save:'str', dc:12, cond:'grappled', rounds:1 }, f:'Fingers close around {T}\'s ankle. Then the wrist. Then the throat.'}],
     traits:['<b>Endless Division.</b> When it dies, roll a d6: on 5–6, two more Hand-Swarms crawl up out of the earth nearby. <i>(Automatic.)</i>'],
@@ -166,7 +166,7 @@ export const BESTIARY = [
     look:'A rolling mound of hundreds of hands gripping one another, fingers constantly reaching outward.',
     prompt:'gigantic horror mound made of hundreds of pale human hands gripping each other, fingers reaching outward, rolling through a crypt corridor, silver mine, Ravenloft, dark fantasy concept art' },
 
-  { id:'andral', def:{"resist":[],"immune":[],"vuln":[],"condImmune":[]}, fam:'andral', name:'Saint Andral, the Silver Lich', cr:'21', ac:18, hp:'24d8+120', speed:30, spd:'30 ft.', init:5, size:1,
+  { id:'andral', def:{"resist":["cold","lightning"],"immune":["poison"],"vuln":[],"condImmune":["charmed","exhaustion","frightened","paralyzed","poisoned"]}, fam:'andral', name:'Saint Andral, the Silver Lich', cr:'21', ac:18, hp:'24d8+120', speed:30, spd:'30 ft.', init:5, size:1,
     shape:'lich', color:'#9aa0b4', eye:'#cfe8ff', tags:['boss','undead'],
     attacks:[{n:'Sacred Rot', b:12, d:'4d8+4', t:'necrotic', on:{ save:'con', dc:20, cond:'no healing', rounds:1 }, f:'{A} lays a saint\'s blessing on {T}. It rots.'},
              {n:'Hallowed Ray (120 ft.)', b:12, d:'4d10+5', t:'radiant', f:'Light the colour of tarnished silver pours from {A}\'s eye sockets into {T}.'}],
@@ -186,7 +186,7 @@ export const BESTIARY = [
     look:'A gaunt saint in tarnished silver vestments, skin like old candle wax, a halo of floating silver nails.',
     prompt:'lich saint in tarnished silver priestly vestments, gaunt waxen face, eyes of pale silver light, halo of floating silver nails, ruined silver mine cathedral, Ravenloft, dark fantasy portrait, painterly' },
 
-  { id:'andral2', def:{"resist":[],"immune":[],"vuln":[],"condImmune":[]}, fam:'andral', name:'Saint Andral, Half-Taken', cr:'22', ac:16, hp:'24d8+120', speed:40, spd:'40 ft., climb 40 ft.', init:5, size:1,
+  { id:'andral2', def:{"resist":["cold","lightning"],"immune":["poison"],"vuln":[],"condImmune":["charmed","exhaustion","frightened","paralyzed","poisoned"]}, fam:'andral', name:'Saint Andral, Half-Taken', cr:'22', ac:16, hp:'24d8+120', speed:40, spd:'40 ft., climb 40 ft.', init:5, size:1,
     shape:'lich', color:'#7e8c6a', eye:'#c6ff5a', tags:['boss','undead','seep'],
     attacks:[{n:'Rot-Silver Claw', b:13, d:'4d10+6', t:'necrotic', latch:true, on:{ save:'con', dc:21, cond:'poisoned', rounds:1 }, f:'Something that used to be {A}\'s hand opens into tendrils around {T}.'},
              {n:'Corrupted Ray (120 ft.)', b:13, d:'5d10', t:'radiant', f:'The silver light has gone green at the edges. It still burns {T}.'}],
@@ -202,7 +202,7 @@ export const BESTIARY = [
     prompt:'lich saint half-consumed by grey-green parasitic growth, tarnished silver vestments torn open by tendrils, half the face bloomed into membrane with a glowing green eye, the other eye silver and weeping, rusted halo of floating nails, ruined mine cathedral, Ravenloft, painterly horror portrait' },
 
   // ----------------------------- BAROVIAN UNDEAD -----------------------------
-  { id:'candlewight', def:{"resist":[],"immune":[],"vuln":[],"condImmune":[]}, fam:'dread', name:'Candlewight', cr:'3', ac:13, hp:'8d8+8', speed:30, spd:'30 ft.', init:1, size:1,
+  { id:'candlewight', def:{"resist":[],"immune":["poison"],"vuln":[],"condImmune":["exhaustion","poisoned"]}, fam:'dread', name:'Candlewight', cr:'3', ac:13, hp:'8d8+8', speed:30, spd:'30 ft.', init:1, size:1,
     shape:'candle', color:'#d9c690', eye:'#ffb347', tags:['undead','host'],
     attacks:[{n:'Molten Grasp', b:5, d:'2d6+3', t:'fire', f:'{A}\'s wax hand closes on {T}. It is still hot.'}],
     specials:[{n:'Wick-Drain', fx:'aoe:2:none:0:1d6:necrotic:no healing', f:'The wick gutters and pulls the warmth out of everything nearby.'}],
@@ -212,7 +212,7 @@ export const BESTIARY = [
     look:'A corpse dipped layer on layer in tallow until it is a man-shaped candle, a thick wick driven through the crown of the skull and burning low and blue.',
     prompt:'horror undead, corpse dipped repeatedly in tallow until it is a man-shaped candle, dripping wax, thick wick through the skull burning with a low blue flame, dark crypt, gothic horror, painterly' },
 
-  { id:'silverlung', def:{"resist":[],"immune":[],"vuln":[],"condImmune":[]}, fam:'dread', name:'Silver-Lung Miner', cr:'2', ac:14, hp:'6d8+12', speed:25, spd:'25 ft.', init:0, size:1,
+  { id:'silverlung', def:{"resist":[],"immune":["poison"],"vuln":[],"condImmune":["exhaustion","poisoned"]}, fam:'dread', name:'Silver-Lung Miner', cr:'2', ac:14, hp:'6d8+12', speed:25, spd:'25 ft.', init:0, size:1,
     shape:'dwarf', color:'#8a8f99', eye:'#e8f0ff', tags:['undead','host'],
     attacks:[{n:'Pick', b:5, d:'1d8+3', t:'piercing', f:'{A} swings the pick it died holding.'}],
     specials:[{n:'Silver Cough', fx:'aoe:1:con:12:2d4:poison:blinded', f:'A cloud of glittering silver dust bursts from its lungs.'}],
@@ -229,7 +229,7 @@ export const BESTIARY = [
     look:'A translucent figure of moving water in the shape of a child in a christening gown, dripping constantly, leaving wet footprints where it doesn\'t walk.',
     prompt:'ghostly translucent figure made of moving water shaped like a child in a christening gown, constantly dripping, pale blue glow, flooded church crypt, eerie gothic horror, painterly' },
 
-  { id:'bellmouth', def:{"resist":[],"immune":[],"vuln":[],"condImmune":[]}, fam:'dread', name:'Bellmouth Ghoul', cr:'3', ac:13, hp:'7d8+14', speed:30, spd:'30 ft.', init:2, size:1,
+  { id:'bellmouth', def:{"resist":[],"immune":["poison"],"vuln":[],"condImmune":["charmed","exhaustion","poisoned"]}, fam:'dread', name:'Bellmouth Ghoul', cr:'3', ac:13, hp:'7d8+14', speed:30, spd:'30 ft.', init:2, size:1,
     shape:'bellghoul', color:'#6b5f55', eye:'#ffcc66', tags:['undead','host'],
     attacks:[{n:'Bite', b:5, d:'2d6+3', t:'piercing', on:{ save:'con', dc:12, cond:'paralyzed', rounds:1 }, f:'{A}\'s bell-jaw clangs shut on {T}.'}],
     specials:[{n:'Toll', fx:'dread+1', f:'It rings itself. Every creature within 30 ft. makes a DC 13 Wis save or is frightened — and the Dread deepens.'}],
@@ -237,7 +237,7 @@ export const BESTIARY = [
     look:'A starved ghoul whose lower jaw has been replaced with a cracked bronze church bell. It rings when it runs.',
     prompt:'emaciated ghoul whose lower jaw is a cracked bronze church bell, ragged bell-ringer robes, running on all fours through a ruined belfry crypt, gothic horror, painterly' },
 
-  { id:'weaver', def:{"resist":[],"immune":[],"vuln":[],"condImmune":[]}, fam:'dread', name:'Ossuary Weaver', cr:'6', ac:15, hp:'11d10+33', speed:40, spd:'40 ft., climb 40 ft.', init:3, size:2,
+  { id:'weaver', def:{"resist":[],"immune":["poison"],"vuln":[],"condImmune":["exhaustion","poisoned"]}, fam:'dread', name:'Ossuary Weaver', cr:'6', ac:15, hp:'11d10+33', speed:40, spd:'40 ft., climb 40 ft.', init:3, size:2,
     shape:'weaver', color:'#d7cbb3', eye:'#ff4a4a', tags:['undead'],
     attacks:[{n:'Rib-Sickle', b:8, d:'2d10+4', t:'slashing', f:'{A} folds a ribcage shut around {T}.'},
              {n:'Sinew Line (60 ft.)', b:8, d:'1d8', t:'bludgeoning', on:{ save:'str', dc:15, cond:'restrained', rounds:2 }, f:'A wet cord of sinew snaps around {T} and pulls.'}],
@@ -245,7 +245,7 @@ export const BESTIARY = [
     look:'A spider assembled from ribcages and finger bones, its body a reliquary, eight legs of stacked femurs.',
     prompt:'giant spider assembled from human ribcages and finger bones, body like a silver reliquary, legs of stacked femurs, sinew webs strung across an ossuary, gothic horror concept art' },
 
-  { id:'spawn', def:{"resist":[],"immune":[],"vuln":[],"condImmune":[]}, fam:'dread', name:'Vampire Spawn', cr:'5', ac:15, hp:'11d8+33', speed:30, spd:'30 ft., climb 30 ft.', init:3, size:1,
+  { id:'spawn', def:{"resist":["necrotic"],"immune":[],"vuln":[],"condImmune":[]}, fam:'dread', name:'Vampire Spawn', cr:'5', ac:15, hp:'11d8+33', speed:30, spd:'30 ft., climb 30 ft.', init:3, size:1,
     shape:'vampire', color:'#6a5a66', eye:'#ff2b3a', tags:['undead','host'],
     attacks:[{n:'Claw', b:6, d:'2d4+3', t:'slashing', on:{ save:'str', dc:13, cond:'grappled', rounds:1 }, f:'{A} rakes {T} with nails like knives.'},
              {n:'Bite', b:6, d:'1d6+3+2d6', t:'piercing + necrotic', f:'{A} finds {T}\'s neck.'}],

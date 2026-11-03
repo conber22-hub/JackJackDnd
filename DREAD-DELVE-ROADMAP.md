@@ -37,7 +37,16 @@ Codex's round 4 (#14 conditions, #15 condition timing, #16 Barovian defences) an
 - **The Barovian creatures' defences** (`src/data/bestiary-barovia.js`, `bestiary.js`):
   - 26 are linked to their SRD stat blocks (`srd:`), so the Barovian skeleton is immune to poison.
   - 10 homebrew ones have their own (`def:`).
-  - Codex's PR #16 lists the rest, with suggestions for the DM to decide.
+  - The DM's rulings for the rest (the note at the top of `bestiary-barovia.js`; `tests/homebrew-defenses.test.js`):
+    - Swarms resist blades and shrug off grabs.
+    - The undead don't feel poison or tire; ghouls can't be charmed.
+    - Vampire kin (Night Spawn, the Dinner Guest) resist necrotic.
+    - The Mist Thing lets blades, cold and grabs pass through.
+    - The Scarecrow Watcher burns.
+    - Saint Andral stands like a lich, but not immune to necrotic: his duality answers it.
+    - The Seep can't be poisoned, and its minds can't be charmed or frightened.
+    - The Bloom burns.
+    - Folk and wolves are only folk and wolves.
 - **📓 The DM's notebook** (Muse, `src/ui/notebook.js`). A slide-out drawer on the DM's screen only:
   - Open it with the 📓 button, or **N** outside a fight (in a fight N is still next turn).
   - Notes are tagged 👤 NPC, 💰 Loot, 🪝 Hook, ⚔ Fight, 📍 Place, ❗ To do, by tapping or typing `#npc`; filter, search, pin, tick off; delete with undo.
