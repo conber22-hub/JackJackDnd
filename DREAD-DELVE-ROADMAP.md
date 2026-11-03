@@ -16,6 +16,27 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.26 — the workshop, and a place of their own
+
+Codex's round 7 (#23 crafting, #24 holdings). Pictures: `docs/screens/workshop.jpg`, `docs/screens/holding.jpg`, `docs/screens/keep-props.jpg`.
+- **🔨 The Workshop** (`src/ui/workshop.js`; Tokens tab → 🔨 Workshop, Ctrl+K "workshop", or 🔨 Commission on a smith's card). A builder like a shipyard's:
+  - pick what to make (⚔ weapon, 🛡 armour, 🛡 shield, ✦ trinket, 🛞 wagon), then a part for each slot (frame, head, grip, material, finish, rune; or wheels, axle, team, cover, armour and fittings for a wagon)
+  - the picture (a figure holding or wearing it in its metal, or the wagon itself, `src/render/workshop.js`), the numbers and the generated name change as you go; give it a name of its own
+  - who makes it: a hero with the tools in their pack and proficiency (a tick the DM sets), at a forge or carpenter's bench on the map or at their holding; or a smith of the valley's folk, on commission (their forge, their iron, a 25% fee; they work 8 hours each new day). "DM's ruling" lets anything through.
+  - the work: hours of it, each stretch a tool check; a miss loses the hours, a 1 ruins material that must be replaced. The party's stock and rune dust are kept here (`state.campaign.materials`), and the jobs (`.jobs`).
+  - finished pieces go into the hero's pack with their own numbers: a crafted battleaxe attacks as itself, a +1 rune counts like any +1 weapon (`engine/gear.js`, `engine/hero.js`). Wagons join the party's wagons (`.transport`), and "Bring it here" puts one on the map.
+  - smiths also sell pieces they've made this week, 🔨 in the trade window; crafted things sell back at half what went into them.
+- **Coins** are paid the way people do (`src/engine/coins.js`): small coins first, the change in gold and silver, never turned into platinum.
+- **🏰 A place of their own** (Build tab → 🏰 A place of their own; `src/ui/holdings.js`, `src/game/holdings.js`):
+  - found a camp, house or outpost around the party (its bounds are the gold line); pick a piece and tap the map: green where it can go, red and why where it can't; R turns it
+  - walls and gates on the edge, shelter and grounds inside, workshops inside a finished cottage, hall or bunkhouse; drawn with the Camp & keep props (a woodpile marks work under way, debris what a raid broke)
+  - days of work: the party (when there) and hired folk (1 gp a day from the stores; one of them may be the Count's eyes); building costs come from the stores (timber, stone, salt, gold). The work goes on by itself as days pass, with the week's income and upkeep.
+  - what it gives: defence, a ward, beds, storage, comfort, workshops (for the Workshop); grow it into the next kind once it has what that needs (a camp into an outpost, a fort into a keep)
+  - the Count notices a rich, lightly held place: a raid by one of his court waits for the DM, met by the defenders there or not; damage, loot and the raider's fate go into the court's memory. 🔧 repairs.
+  - state: `state.campaign.holdings` (never sent to players; they see what's built on the map).
+
+---
+
 ## v1.25 — monsters that think; the folk's trade and troubles
 
 Codex's round 6 (#22 tactics, #21 trade and troubles). Picture: `docs/screens/trade.jpg`.
@@ -771,6 +792,9 @@ src/ui/palette.js       (Muse) 🔎 the command palette (Ctrl+K, /) and the shor
 src/ui/ghost.js         (Muse) 🕯 Wick, the guide: STEPS (what the DM most likely wants next), placement, Got it / Show me
 src/ui/notebook.js      (Muse) 📓 the DM's notebook: tagged notes, search, Tonight's notes
 src/ui/trade.js         🛒 the trade window (buy, haggle, sell); src/game/trade.js: stock kept per day, troubles, settling them
+src/ui/workshop.js      🔨 the workshop window (parts, preview, crafter, jobs, materials, wagons); src/game/workshop.js: quotes, payment, work, finishing; src/render/workshop.js: the preview
+src/ui/holdings.js      🏰 the holding builder in the Build tab + map placement; src/game/holdings.js: founding, placing, drawing modules as props, days of work, raids
+src/engine/coins.js     paying and being paid in sensible coins
 src/ui/pack.js          🎒 the pack: wear, wield, attune, add, coins (player's hero tab, DM's Tokens tab)
 src/ui/cards.js         card only: a player's phone at an in-person game (big buttons, target list, move pad)
 src/net/screen.js       the table screen's local wire (BroadcastChannel) between the DM's window and the TV's

@@ -126,7 +126,9 @@ export function heroAttacks(h, st = heroStats(h)){
   const out = [], L = st.L;
   const g = st.gear || gearOf(h), fx = st.fx;
   for (const name of g.weapons){
-    const w = W(baseOf(name)); if (!w) continue;   // a +1 longsword fights as a longsword, plus its bonus
+    const c = g.info?.[name];   // a crafted weapon: its own dice, type, properties and range (engine/crafting.js)
+    const w = c ? { n:name, d:c.d, ty:c.ty, p:(c.p || '') + (c.versatile && !/V:/.test(c.p || '') ? `V:${c.versatile}` : ''), cat:c.cat || '', rng:c.rng } : W(baseOf(name));
+    if (!w) continue;   // a +1 longsword fights as a longsword, plus its bonus
     const ranged = /r/.test(w.cat) || /A/.test(w.p), finesse = /F/.test(w.p);
     const ab = ranged ? 'Dex' : finesse ? (st.M('Dex') > st.M('Str') ? 'Dex' : 'Str') : 'Str';
     const m = st.M(ab);

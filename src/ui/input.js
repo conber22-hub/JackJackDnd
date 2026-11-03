@@ -23,6 +23,7 @@ import { renderPanel } from './panels.js';
 import { select, selectDoor, selectTrap, requestMove, doPing } from '../game/actions.js';
 import { doAttack, placeMonster, castSpell } from '../game/combat.js';
 import { editTile, paintRoom, commitRoom, traceStep, commitCorridor, eraseAt, placeDoorAt, placeTrapAt, placeStairsAt, placePropAt, placeHouseAt } from '../game/build.js';
+import { holdTap, holdHover, holdModeOff } from './holdings.js';
 import { changed, snapshot } from '../game/session.js';
 import { updateVision } from '../engine/grid.js';
 import { rebuildFog } from '../game/actions.js';
@@ -74,6 +75,7 @@ export function pickTile(cx, cy){
 }
 
 export function setMode(mode, data = null, text = ''){
+  if (ui.mode === 'holding' && mode !== 'holding') holdModeOff();   // the holding builder's footprint comes off the map
   ui.mode = mode; ui.modeData = data;
   document.body.classList.toggle('aiming', ['attack', 'cast', 'aim', 'feat'].includes(mode));
   const tool = BUILD_TOOLS.find(t => t[0] === mode);
@@ -116,6 +118,7 @@ cv.addEventListener('pointermove', e => {
   if (press && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 8){ press.moved = true; clearTimeout(pressTimer); }
   if (press?.tok && press.moved){ if (!tdrag) startTokenDrag(press.tok); if (tdrag){ dragToken(e.clientX, e.clientY); return; } }
   if (e.pointerType === 'mouse' && isDM() && ui.mode !== 'select' && !press){ const t = pickTile(e.clientX, e.clientY); showHover(ui.floor, t ? t.x : null, t?.y); }
+  if (e.pointerType === 'mouse' && ui.mode === 'holding' && !press) holdHover(pickTile(e.clientX, e.clientY));
   if (e.pointerType === 'mouse' && ui.mode === 'select' && !press) hoverMove(e.clientX, e.clientY);
   if (e.pointerType === 'mouse' && (ui.mode === 'attack' || ui.mode === 'cast') && !press) hoverAim(e.clientX, e.clientY);
 });
@@ -247,6 +250,7 @@ function handleTap(cx, cy, shift = false){
     case 'erase':  if (tile) eraseAt(tile); return;
     case 'prop':   if (tile) placePropAt(tile); return;
     case 'house':  if (tile) placeHouseAt(tile); return;
+    case 'holding': if (tile) holdTap(tile); return;   // 🏰 a module of the party's holding (ui/holdings.js)
   }
   if (tokId){ if (shift && isDM() && ui.selected && toggleGroup(tokId)) return; select(tokId); return; }
   // one of the valley's people (render/folk.js): what they say

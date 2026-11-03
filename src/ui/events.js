@@ -20,6 +20,7 @@ import { toast, renderAll, renderTop, renderSel, renderDock, renderTabs, openFig
 import { renderPanel, libHits } from './panels.js';
 import { packAction, setCoin } from './pack.js';
 import { openTrade, tradeAct, tradeHero } from './trade.js';
+import { openWorkshop } from './workshop.js';
 import { settleTrouble } from '../game/trade.js';
 import { importLibrary, setLibraryKinds, removeLibrary, libraryState } from '../game/library.js';
 import { setMode } from './input.js';
@@ -335,6 +336,7 @@ document.addEventListener('click', e => {
     case 'tradeOpen': openTrade(+k, id); break;
     case 'tradeHaggle': case 'tradeBuy': case 'tradeSell': case 'tradeClose': tradeAct(a, el); break;
     case 'trouble': settleTrouble(id, k); break;
+    case 'workshop': openWorkshop(undefined, id || null); break;   // 🔨 the workshop (ui/workshop.js); from a smith's card, commissioning them
     // 🎒 the pack (ui/pack.js): wear, wield, attune, one more, one fewer, add
     case 'pack': { const v = k === 'add' ? $(`#packAdd-${CSS.escape(id)}`)?.value : null; if (packAction(id, k, el.dataset.i, v)) renderPanel(); } break;
     case 'dmSheet': { const h = state.characters[id]; if (h) openCreator(h, { title:`${h.name}'s sheet`, saveLabel:'Save sheet', onSave:h2 => { applyCharacter(h2, { owner:h.owner }); sendSheetToOwner(h2.id); renderPanel(); } }); } break;
@@ -481,6 +483,7 @@ document.querySelectorAll('#viewSeg button').forEach(b => b.onclick = () => stat
 // what the palette (ui/palette.js) can't know about on its own: the notebook (ui/notebook.js), and the selected creature's exhaustion
 registerCommands([
   ...[['6', 'Dawn', '🌅'], ['12', 'Midday', '☀'], ['18', 'Dusk', '🌇'], ['0', 'Midnight', '🌙']].map(([h, n, icon]) => ({ id:`hour-${h}`, n:`Time: ${n}`, hint:'The sky, the light, the windows and the folk follow', icon, role:'dm', run:() => { setHour(h); renderPanel(); } })),
+  { id:'workshop', n:'Open the workshop', hint:'Build weapons, armour, trinkets and wagons from parts · commission the smith', icon:'🔨', role:'dm', run:() => openWorkshop() },
   { id:'notebook', n:'Open the notebook', hint:'N outside a fight · notes for you alone', icon:'📓', role:'dm', run:toggleNotebook },
   { id:'exhaust', n:'Exhaustion: one more level on the selected creature', hint:'−2 on d20 tests, 5 ft. slower; the sixth kills', icon:'😩', role:'dm',
     run:() => { const t = ui.selected && tokById(ui.selected); if (!t) { toast('Select a creature first.'); return; } exhaust(t, 1); changed(); } },

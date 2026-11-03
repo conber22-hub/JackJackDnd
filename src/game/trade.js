@@ -6,6 +6,10 @@
    which never reaches the players (engine/redact.js); a person with a trouble shows ❗ to everyone. */
 import { state, ui, tokById } from '../engine/state.js';
 import { stockFor, haggle, buy, sell, troublesFor, resolve } from '../engine/trade.js';
+import { wares } from '../engine/crafting.js';
+import { migrateSheet } from '../engine/inventory.js';
+import { spendCoins, addCoins } from '../engine/coins.js';
+export { spendCoins, addCoins };
 import { heroStats } from '../engine/hero.js';
 import { mulberry32, hashSeed, d } from '../util/core.js';
 import { log } from '../engine/state.js';
@@ -26,7 +30,9 @@ export function stockOf(p, place){
   C.stock ||= {};
   if (!C.stock[key]){
     for (const k of Object.keys(C.stock)) if (!k.endsWith(`|${day()}`)) delete C.stock[k];   // yesterday's shelves are gone
-    C.stock[key] = stockFor(p, { place, gaze:state.dread || 1, day:day(), seed:state.meta.seed });
+    // the catalogue's goods, and (a smith) the pieces they made themselves this week (engine/crafting.js wares)
+    C.stock[key] = [...stockFor(p, { place, gaze:state.dread || 1, day:day(), seed:state.meta.seed }),
+      ...wares(p, { place, gaze:state.dread || 1, day:day(), seed:state.meta.seed }).map(w => ({ n:w.n, qty:w.qty, gp:w.gp, custom:w.custom, made:true }))];
   }
   return C.stock[key];
 }
@@ -45,20 +51,38 @@ export function haggleFor(heroTok, row){
 export function buyFrom(heroTok, row, gp, seller){
   const sheet = state.characters[heroTok.charId];
   if (!row.qty){ toast('Sold out.'); return false; }
-  const r = buy(sheet, row, gp);
+  const r = row.custom ? buyMade(sheet, row, gp) : buy(sheet, row, gp);
   if (!r.ok){ toast(r.why); return false; }
+  r.sheet.coins = spendCoins(migrateSheet(sheet).coins, r.gp) || r.sheet.coins;   // the change in gold and silver, not platinum
   row.qty--;
   applyCharacter(r.sheet, { place:false }); sendSheetToOwner(r.sheet.id);
   log(`${heroTok.name} buys ${row.n} from ${seller.name} for ${r.gp} gp.`);
   changed(); return true;
 }
+// A piece the smith made: it goes into the pack with its own numbers (engine/inventory.js reads entry.custom).
+function buyMade(sheet, row, gp){
+  const out = migrateSheet(sheet), coins = spendCoins(out.coins, gp);
+  if (!coins) return { ok:false, why:'There is not enough coin.' };
+  out.coins = coins;
+  out.inv.push({ id:`made-${Date.now().toString(36)}`, n:row.n, custom:structuredClone(row.custom), qty:1, equipped:false, attuned:false });
+  return { ok:true, sheet:out, gp };
+}
 export function sellTo(heroTok, itemId, seller, place){
   const sheet = state.characters[heroTok.charId], it = sheet.inv?.find(i => i.id === itemId);
-  const r = sell(sheet, itemId, { person:{ ...seller, place } });
+  const r = it?.custom ? sellMade(sheet, it) : sell(sheet, itemId, { person:{ ...seller, place } });
   if (!r.ok){ toast(r.why); return false; }
+  r.sheet.coins = addCoins(migrateSheet(sheet).coins, r.gp);
   applyCharacter(r.sheet, { place:false }); sendSheetToOwner(r.sheet.id);
   log(`${heroTok.name} sells ${it?.n || 'something'} to ${seller.name} for ${r.gp} gp.`);
   changed(); return true;
+}
+
+// A crafted piece sells at half what went into it (the catalogue doesn't know it by name).
+function sellMade(sheet, it){
+  if (it.equipped || it.attuned) return { ok:false, why:'Put it away and end attunement before selling it.' };
+  const out = migrateSheet(sheet), gp = Math.floor((it.custom.cost || 0) * 50) / 100;
+  out.inv = out.inv.filter(i => i.id !== it.id);
+  return { ok:true, sheet:out, gp };
 }
 
 /* ---------- troubles ---------- */

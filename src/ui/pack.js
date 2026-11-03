@@ -77,7 +77,7 @@ export function packHTML(sheet){
   const h = Array.isArray(sheet.inv) ? sheet : migrateSheet(sheet);
   const st = heroStats(h), fx = itemEffects(h), ld = load(h, st.sc.Str);
   const rows = h.inv.map(i => {
-    const x = itemInfo(i.n), wearable = x && (['armor', 'shield', 'weapon'].includes(x.kind) || x.magic);
+    const x = itemInfo(i), wearable = x && (['armor', 'shield', 'weapon'].includes(x.kind) || x.magic);
     const wt = x?.weight ? `${+(x.weight * qty(i)).toFixed(2)} lb` : '';
     const b = (k, label, on = false, title = '') => `<button class="btn small ${on ? 'on' : ''}" data-act="pack" data-k="${k}" data-id="${esc(h.id)}" data-i="${esc(i.id)}"${title ? ` title="${esc(title)}"` : ''}>${label}</button>`;
     return `<div class="packRow ${i.equipped ? 'on' : ''}"><span class="packN">${icon(x)} ${esc(i.n)}${qty(i) > 1 ? ` <span class="muted">×${qty(i)}</span>` : ''}${x?.attune ? ` <span class="muted" title="${esc(x.attune)}">${i.attuned ? '✦ attuned' : 'needs attuning'}</span>` : ''}${x ? '' : ' <span class="muted">(the DM\'s call)</span>'}</span>

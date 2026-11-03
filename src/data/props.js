@@ -82,6 +82,7 @@ export const PROPS = {
   garden:     { n:'Garden beds',     cat:'keep',    w:2, h:2 },
   stable:     { n:'Stable',          cat:'keep',    w:2, h:2 },
   woodpile:   { n:'Woodpile',        cat:'keep',    w:1, h:1 },
+  saltline:   { n:'Salt line',       cat:'keep',    w:1, h:1 },
   // manor & castle
   bookshelf:  { n:'Bookshelf',       cat:'manor',   w:1, h:2 },
   wardrobe:   { n:'Wardrobe',        cat:'manor',   w:1, h:1 },
@@ -145,7 +146,7 @@ export const HOUSES = {
 export const PROP_TOP = { wagon:.62, workbench:.8, alchemy:.8, table:.51, longtable:.51, chair:.29, bench:.29, stool:.33, bar:.64, bed:.45, barrel:.62, kegs:.6, crate:.56, sacks:.25, cart:.51, hay:.66,
   trough:.35, anvil:.7, stump:.3, boulder:.42, log:.37, rubble:.12, chest:.55, altar:.86, coffin:.46, desk:.72, cradle:.5, throne:.5, pew:.45, sarcophagus:.8,
   rack:.5, minecart:.64, cauldron:.5, saltcrock:.4, stall:.5, wreck:.3, wheel:.12, ore:.2, boat:.25 };
-export const PROP_HOP = new Set(['fence', 'drystone', 'bedroll', 'garden', 'woodpile']);
+export const PROP_HOP = new Set(['fence', 'drystone', 'bedroll', 'garden', 'woodpile', 'saltline']);
 export const PROP_BLOCK = new Set(['shelf', 'hearth', 'bookshelf', 'wardrobe', 'statue', 'pillar', 'organ', 'armor', 'banner', 'lamppost', 'signpost', 'candelabra',
   'gravestone', 'shrine', 'cage', 'pine', 'deadtree', 'scarecrow', 'well', 'carriage', 'horse', 'vardo', 'tent', 'hull', 'beam', 'brazier', 'lantern', 'milestone',
   'dollhouse', 'gallows', 'palisade', 'stone', 'watchtower', 'stonewall', 'palgate', 'forge', 'stable', 'coveredwagon']);

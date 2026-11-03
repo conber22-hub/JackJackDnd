@@ -150,6 +150,16 @@ export function showHover(L, x, y){
   hover.visible = true; hover.position.set(wx(x), fv.group.position.y + .03 + groundY(state.floors[L], x, y), wz(y));
 }
 
+/* ---------- the holding builder: where a module would go (green, or red if it can't), and the holding's bounds ---------- */
+const fpMeshes = [];
+export function showFootprint(L, squares = [], ok = true, bounds = null){
+  for (const m of fpMeshes.splice(0)){ m.parent?.remove(m); m.geometry !== G.plane && m.geometry.dispose(); m.dispose?.(); m.material.dispose(); }
+  const f = state.floors[L], fv = floorViews[L]; if (!f || !fv) return;
+  const add = (list, color, op, sc) => { if (!list.length) return; const m = squaresMesh(L, list, color, op, sc, .045); fv.group.add(m); fpMeshes.push(m); };
+  if (bounds){ const edge = []; for (let y = bounds.y; y < bounds.y + bounds.h; y++) for (let x = bounds.x; x < bounds.x + bounds.w; x++) if (x === bounds.x || y === bounds.y || x === bounds.x + bounds.w - 1 || y === bounds.y + bounds.h - 1) edge.push(y * f.W + x); add(edge, '#e9c46a', .16, .9); }
+  add(squares.filter(([x, y]) => x >= 0 && y >= 0 && x < f.W && y < f.H).map(([x, y]) => y * f.W + x), ok ? '#6adf8a' : '#e0504a', .42, .9);
+}
+
 /* ---------- targeting: ranges, cover, areas ---------- */
 const TYPE_COL = { fire:'#ff6a2a', cold:'#8fd8ff', lightning:'#cfe0ff', radiant:'#ffe9a0', necrotic:'#8a4aa0', thunder:'#9fa8ff', psychic:'#e070c0', poison:'#9cc23c', acid:'#b6d63c', force:'#b49aff' };
 export const typeColor = ty => TYPE_COL[Object.keys(TYPE_COL).find(k => String(ty || '').includes(k))] || '#e9a54a';

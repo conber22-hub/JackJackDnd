@@ -215,6 +215,8 @@ const BUILD = {
     for (const sx of [-1, 1]) cyl(g, .05, .05, 1.5, DARK, sx * .9, .75, .85, {}, 6);
     const roof = box(g, 2.1, .06, 1.2, '#4a3626', 0, 1.5, -.35); roof.rotation.x = -.22;
     box(g, .55, .45, .55, STRAW, -.5, .22, -.5); box(g, .5, .3, .5, STRAW, .55, .15, -.55); box(g, .7, .25, .2, '#5e4632', .5, .4, .2); },
+  // a line of poured salt across the square (the Bloom won't cross it): a low white ridge, grains scattered
+  saltline(g){ box(g, .96, .03, .16, '#e8e4dc', 0, .015, 0, { r:.95 }); for (const [x, z] of [[-.3, .12], [.1, -.13], [.35, .1], [-.1, -.11]]) box(g, .05, .015, .05, '#f2efe8', x, .008, z); },
   woodpile(g){ for (let r = 0; r < 3; r++) for (let i = 0; i < 4 - r; i++){ const l = cyl(g, .09, .09, .8, i % 2 ? '#6a4a2c' : '#5a3e24', -.3 + i * .2 + r * .1, .09 + r * .17, 0, {}, 7); l.rotation.z = Math.PI / 2; l.rotation.y = Math.PI / 2; } },
   tent(g){ const t = cone(g, 1.0, 1.3, '#7a3a2a', 0, .65, 0, { r:.9 }, 4); t.rotation.y = Math.PI / 4; t.scale.set(1, 1, .8);
     box(g, .3, .7, .02, '#2a1410', 0, .35, .78); cyl(g, .03, .03, .3, '#4a3626', 0, 1.4, 0); box(g, .5, .25, .02, '#c9a246', 0, 1.5, 0, { r:.5 }); },

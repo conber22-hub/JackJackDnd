@@ -48,6 +48,8 @@ function settle(s, party, at){
 /* Go to a map. id: one on the shelf. key: a map built from `meta` (reused from the shelf if one has that key,
    unless fresh). party: 'bring' (they travel and arrive), 'stay' (prep: they wait where they are), 'drop' (a
    new start: the old party is left out). → the new state */
+// Others who redraw what's theirs when a map opens (game/holdings.js: the party's holding as it stands now)
+export const mapHooks = [];
 export function goToMap({ id = null, key = null, meta = null, kind = 'delve', party = 'bring', fresh = false, at = null } = {}){
   const fromId = ensureMapId(), fromName = state.meta.name, here = shelve(), lib = library();
   if (fresh && key) for (const e of Object.values(lib)) if (e.key === key) delete lib[e.id];
@@ -80,6 +82,7 @@ export function goToMap({ id = null, key = null, meta = null, kind = 'delve', pa
   s.seats = Object.fromEntries(Object.entries(state.seats || {}).filter(([, tid]) => s.tokens.some(t => t.id === tid) || s.campaign.away?.tokens.some(t => t.id === tid)));
   const gone = trimRoads(s.campaign.maps || {});
   loadState(s);
+  for (const fn of mapHooks) try { fn(); } catch (e){ console.warn(e); }
   if (gone.length) log(`Old road maps cleared from the shelf (${gone.length}).`, true);
   if (msg) toast(msg);
   log(`🗺 ${away() ? 'Setting up' : 'The table moves to'} ${s.meta.name}.`, true);

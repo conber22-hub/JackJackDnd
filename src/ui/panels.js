@@ -21,6 +21,7 @@ import { gfx } from '../render/gfx.js';
 import { heroStats } from '../engine/hero.js';
 import { sheetHTML } from './creator.js';
 import { packHTML } from './pack.js';
+import { holdingsHTML } from './holdings.js';
 import { myHero } from '../game/heroes.js';
 import { PROPS, PROP_CATS, HOUSES, GROUNDS, CROPS } from '../data/props.js';
 import { RANKS, KINDS, STRENGTHS, WEAKNESSES } from '../data/court.js';
@@ -105,7 +106,7 @@ function tokensTab(){
       <div class="row"><label class="muted" style="flex:1">🎮 Player <input class="txt" style="width:auto" data-edit="charOwner" data-id="${c.id}" value="${esc(c.owner || '')}" placeholder="their sign-in name"></label>${c.key ? `<span title="Locked to the player's secret word">🔒</span><button class="btn small" data-act="unlockChar" data-id="${c.id}" title="They forgot their word? Clear it.">Unlock</button>` : ''}</div>
       <div class="stat">AC ${st.ac} · HP ${st.hp} · Speed ${st.spd} · PP ${st.passive}${st.dc ? ` · Spell DC ${st.dc}` : ''}${c.goBackFor ? ` · would go back for <i>${esc(c.goBackFor)}</i>` : ''}${c.homeSmell ? ` · home smells of <i>${esc(c.homeSmell)}</i>` : ''}</div>${packHTML(c)}</div>`;
   }
-  h += `<div class="row"><button class="btn small primary" data-act="dmNewChar">✚ Create a character</button></div>`;
+  h += `<div class="row"><button class="btn small primary" data-act="dmNewChar">✚ Create a character</button><button class="btn small" data-act="workshop" title="Build weapons, armour, trinkets and wagons from parts; commission the smith">🔨 Workshop</button></div>`;
   const foes = state.tokens.filter(t => t.kind === 'monster' && t.floor === ui.floor);
   h += `<h3>Horrors on this floor (${foes.filter(t => !t.dead).length})</h3>`;
   if (!foes.length) h += `<div class="muted">Nothing — yet. Use the Bestiary tab to place creatures, or Populate in the Build tab.</div>`;
@@ -213,6 +214,7 @@ function buildTab(){
   let h = `<h3>Build this floor</h3>
     <div class="muted">${tool ? `<b style="color:var(--candle)">${tool[2]}:</b> ${esc(tool[3])}.` : 'Pick a tool from the dock (bottom left) or here. Every change can be undone (Ctrl+Z).'} While a tool is on, right-drag (or two fingers) moves the camera. Top view (2) is easiest.</div>
     <div class="toolgrid">${BUILD_TOOLS.map(([k, i, l]) => `<button class="btn small ${ui.mode === k ? 'on' : ''}" data-act="mode:${k}">${i} ${l}</button>`).join('')}<button class="btn small" data-act="undo">↶ Undo${undoCount() ? ` (${undoCount()})` : ''}</button></div>`;
+  h += holdingsHTML();   // 🏰 a place of the party's own (ui/holdings.js)
   if (ui.mode === 'door') h += `<h4>Door to place</h4><div>${Object.entries(DOOR_STATES).map(([k, v]) => `<span class="chip ${ui.doorState === k ? 'on' : ''}" data-act="doorKind" data-k="${k}">${v.label}</span>`).join('')}</div>`;
   if (ui.mode === 'trap') h += `<h4>Trap to hide</h4><div>${Object.entries(TRAP_KINDS).map(([k, v]) => `<span class="chip ${ui.trapKind === k ? 'on' : ''}" data-act="trapKindSel" data-k="${k}">${v.icon} ${v.n}</span>`).join('')}</div><div class="look">${esc(TRAP_KINDS[ui.trapKind].f)}</div>`;
   if (ui.mode === 'prop') h += `<h4>Prop to place</h4><div>${Object.entries(PROP_CATS).map(([k, l]) => `<span class="chip ${ui.propCat === k ? 'on' : ''}" data-act="propCat" data-k="${k}">${l}</span>`).join('')}</div>

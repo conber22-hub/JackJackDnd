@@ -121,6 +121,7 @@ export function talkTo(p, { by = null } = {}){
     ...(trouble ? [troubleNote(trouble), `<span class="row"><button class="btn small primary" data-act="trouble" data-k="done" data-id="${trouble.id}">✓ Put right</button><button class="btn small" data-act="trouble" data-k="failed" data-id="${trouble.id}">✗ Failed</button><button class="btn small" data-act="trouble" data-k="ignored" data-id="${trouble.id}">Left alone</button></span>`] : []),
     // a seller: the trade window (ui/trade.js)
     ...(SELLERS.includes(p.role) ? [`<button class="btn small primary" data-act="tradeOpen" data-id="${p.id}" data-k="${ui.floor}">🛒 Trade with ${p.name || roleName(p)}</button>`] : []),
+    ...(p.role === 'smith' ? [`<button class="btn small" data-act="workshop" data-id="folk:${ui.floor}:${p.id}">🔨 Commission ${p.name || 'the smith'}</button>`] : []),
   ];
   if (notes.length) showCard({ kind:m ? 'seep' : '', title:'For your eyes', lines:notes }, false);
 }

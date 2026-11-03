@@ -16,14 +16,16 @@ export function armorKey(n){
 }
 // a magic weapon's plain one: 'Longsword, +1' → 'Longsword'
 export const baseOf = n => itemInfo(n)?.baseName || n;
-const kindOf = i => itemInfo(i.n)?.kind;
+const kindOf = i => itemInfo(i)?.kind;   // (the whole entry: a crafted thing carries its own numbers)
 
 /* → { armor:'Chain Mail'|'None', shield:bool, weapons:[names as carried, 'Longsword, +1' included] } */
 export function gearOf(h){
   if (!Array.isArray(h?.inv)) return { armor:ARMOR[h?.armor] ? h.armor : 'None', shield:!!h?.shield, weapons:(h?.weapons || []).filter(Boolean) };
-  const on = h.inv.filter(i => i.equipped && qty(i) > 0).map(i => ({ i, x:itemInfo(i.n) }));
-  const arm = on.find(o => o.x?.kind === 'armor');
-  return { armor:arm ? armorKey(arm.x.baseName) : 'None', shield:on.some(o => o.x?.kind === 'shield'), weapons:on.filter(o => o.x?.kind === 'weapon').map(o => o.i.n) };
+  const on = h.inv.filter(i => i.equipped && qty(i) > 0).map(i => ({ i, x:itemInfo(i) }));
+  const arm = on.find(o => o.x?.kind === 'armor'), wpn = on.filter(o => o.x?.kind === 'weapon');
+  // crafted weapons (engine/crafting.js) fight with their own dice, type and properties: info by the name they're carried under
+  const info = Object.fromEntries(wpn.filter(o => o.x.custom).map(o => [o.i.n, o.x]));
+  return { armor:arm ? armorKey(arm.x.baseName) : 'None', shield:on.some(o => o.x?.kind === 'shield'), weapons:wpn.map(o => o.i.n), ...(Object.keys(info).length ? { info } : {}) };
 }
 
 // The creator's three fields, set from the pack. → a new sheet

@@ -90,7 +90,10 @@ export function nemesisSurvives(t){
 
 /* ---------- between sessions ---------- */
 // A new day in the valley (or the DM's button): the court moves. Its news goes in the DM's log.
+// Others who act each new day (the smiths at their commissions, game/workshop.js; the holdings' builders, game/holdings.js)
+export const dayHooks = [];
 export function courtDay(why = 'A new day'){
+  for (const fn of dayHooks) try { fn(why); } catch (e){ console.warn(e); }
   const c = court(); if (!c) return [];
   const V = state.campaign.valley, news = advanceCourt(c, { gaze:state.dread, day:V?.day ?? null, at:V?.at }, Math.random);
   for (const n of news) log(`👑 ${n.text}`, true);
