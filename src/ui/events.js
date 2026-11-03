@@ -2,7 +2,7 @@
 import { state, setState, ui, tokById, isDM, makePC, makeNPC, dreadLevel } from '../engine/state.js';
 import { ensureTourButton } from './tour.js';
 import { toggleNotebook } from './notebook.js';
-import { togglePalette, closePalette, closeShortcuts, showShortcuts } from './palette.js';
+import { togglePalette, closePalette, closeShortcuts, showShortcuts, registerCommands } from './palette.js';
 import { updateVision, freeTilesNear, seenNow } from '../engine/grid.js';
 import { roomById, carve } from '../engine/generator.js';
 import { floorToAscii, floorToJSON } from '../engine/importer.js';
@@ -468,6 +468,12 @@ $('#floorUp').onclick = () => state && goFloor(ui.floor - 1);
 $('#floorDown').onclick = () => state && goFloor(ui.floor + 1);
 $('#whimBadge').onclick = () => { if (state && isDM()){ ui.tab = 'gaze'; ui.panelOpen = true; renderTabs(); renderPanel(); renderDock(); } };
 document.querySelectorAll('#viewSeg button').forEach(b => b.onclick = () => state && setView(b.dataset.view));
+// what the palette (ui/palette.js) can't know about on its own: the notebook (ui/notebook.js), and the selected creature's exhaustion
+registerCommands([
+  { id:'notebook', n:'Open the notebook', hint:'N outside a fight · notes for you alone', icon:'📓', role:'dm', run:toggleNotebook },
+  { id:'exhaust', n:'Exhaustion: one more level on the selected creature', hint:'−2 on d20 tests, 5 ft. slower; the sixth kills', icon:'😩', role:'dm',
+    run:() => { const t = ui.selected && tokById(ui.selected); if (!t) { toast('Select a creature first.'); return; } exhaust(t, 1); changed(); } },
+]);
 addEventListener('keydown', e => {
   if (state && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k'){ e.preventDefault(); togglePalette(); return; }   // Ctrl+K / ⌘K works even in a text box
   if (!state || /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName)) return;

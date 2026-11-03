@@ -44,6 +44,20 @@ function fuzzy(q, text){
   return score;
 }
 
+// The name counts far more than the hint; letters together at a word start ("gh" in Ghoul) most of all.
+// (Without that, "gh" found a Berserker Axe first, through "Greataxe, or Halberd" in its hint.)
+function rank(q, c){
+  const ql = q.toLowerCase().trim(), n = c.n.toLowerCase();
+  let s = fuzzy(ql, n);
+  if (s >= 0){
+    s *= 2;
+    const at = n.indexOf(ql);
+    if (at >= 0) s += 20 + (at === 0 || /[\s\-']/.test(n[at - 1]) ? 20 : 0);
+    return s;
+  }
+  return fuzzy(ql, c.hint || '');
+}
+
 const MRU_KEY = 'dreaddelve.palette.mru.v1';
 const mru = () => { try { return JSON.parse(localStorage.getItem(MRU_KEY) || '[]'); } catch { return []; } };
 function noteMru(id){ try { localStorage.setItem(MRU_KEY, JSON.stringify([id, ...mru().filter(x => x !== id)].slice(0, 10))); } catch {} }
@@ -88,7 +102,7 @@ function buildCommands(){
     if (state.combat.active) list.push({ id:'next', n:'Next turn', hint:'Advance the fight', icon:'⏭', role:'dm', run:nextTurn });
     if (outbox.length) list.push({ id:'sendAll', n:'Send everything in the outbox', hint:`${outbox.length} held`, icon:'📤', role:'dm',
       run(){ sendAllHeld(); document.querySelectorAll('#cardLayer .held').forEach(e => e.remove()); renderOutbox(); } });
-    for (const b of bestList()) list.push({ id:`creature:${b.id}`, n:`Place ${b.name}`, hint:`CR ${b.cr ?? '?'}`, icon:'🐾', role:'dm', run(){ placeAtSelection(b.id); } });
+    for (const b of bestList()) list.push({ id:`creature:${b.id}`, n:`Place ${b.name}`, hint:`CR ${b.cr ?? '?'} · ${b.id.startsWith('srd-') ? 'SRD' : b.lib ? 'your books' : 'Barovia'}`, icon:'🐾', role:'dm', run(){ placeAtSelection(b.id); } });
     for (const s of SPELLS) list.push({ id:`spell:${s.n}`, n:s.n, hint:`${s.l ? `Level ${s.l}` : 'Cantrip'} spell`, icon:'✨', role:'dm', run(){ openLookUp(s.n); } });
     for (const i of MAGIC_ITEMS) list.push({ id:`item:${i.n}`, n:i.n, hint:[i.rarity, i.type].filter(Boolean).join(' ') || 'Magic item', icon:'💎', role:'dm', run(){ openLookUp(i.n); } });
     for (const n of Object.keys(FEATS)) if (n !== 'Other') list.push({ id:`feat:${n}`, n, hint:'Feat', icon:'🎖', role:'dm', run(){ openLookUp(n); } });
@@ -124,7 +138,7 @@ function openPalette(){
 }
 function renderPal(q){
   const m = mru();
-  const scored = buildCommands().map(c => ({ c, s:q ? fuzzy(q, `${c.n} ${c.hint || ''}`) : 0 })).filter(x => !q || x.s >= 0);
+  const scored = buildCommands().map(c => ({ c, s:q ? rank(q, c) : 0 })).filter(x => !q || x.s >= 0);
   scored.sort((a, b) => {
     const ma = m.indexOf(a.c.id), mb = m.indexOf(b.c.id);
     if ((ma < 0) !== (mb < 0)) return ma < 0 ? 1 : -1;

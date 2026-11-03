@@ -18,7 +18,7 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ## v1.21 — conditions that matter, holds that end, the DM's notebook
 
-Codex's round 4 (#14 conditions, #15 condition timing, #16 Barovian defences) and Muse's notebook (#17). Picture: `docs/screens/notebook.jpg`.
+Codex's round 4 (#14 conditions, #15 condition timing, #16 Barovian defences) and Muse's notebook (#17). Pictures: `docs/screens/notebook.jpg`, `docs/screens/palette.jpg`.
 - **What conditions do** (`src/engine/conditions.js`, the 2024 rules), on every attack and save:
   - Invisible attackers and targets, unconscious, petrified, restrained, blinded, prone near and far, frightened.
   - A paralysed or unconscious creature hit from 5 ft. takes a **critical**. It used to be hit automatically; now it has to be hit first.
@@ -44,6 +44,16 @@ Codex's round 4 (#14 conditions, #15 condition timing, #16 Barovian defences) an
   - **📋 Tonight's notes** gives this session's notes grouped by tag, for a recap.
   - Notes are saved with the campaign (`state.campaign.notebook`) and never sent to players.
   - Claude's follow-ups: the N that opens it no longer lands in the note box; a more solid drawer.
+- **🔎 The command palette** (Muse, `src/ui/palette.js`):
+  - **Ctrl+K** (⌘K), or **/**, opens it; on a phone, the 🔎 button.
+  - Type a few letters ("lng rst") and Enter: any command (tabs, start a fight, next turn, rests, send the outbox), place a creature at the selected square, open a spell, item or feat in Look it up, switch maps, select and frame a hero.
+  - Players get their own short list: their attacks, spells and features, Look it up, Ping, Card only.
+  - **?** shows every keyboard shortcut.
+  - Other modules add commands with `registerCommands([...])`.
+  - Claude's follow-ups:
+    - The notebook and "Exhaustion: one more level" are in it.
+    - It ranks matches in a command's name above its description, so "gh" finds the ghouls, not a Berserker Axe.
+    - Creatures say whether they're the SRD's or Barovia's.
 
 ## v1.20 — the rules bite: defences, breath weapons, the pack
 
@@ -666,6 +676,7 @@ src/game/heroes.js      players' heroes (their browser) and the DM's character r
 src/ui/creator.js       the character creator
 src/ui/valley.js        the Valley tab and its map (SVG)
 src/ui/screen.js        the table screen for the TV (?screen): ribbon, party, follow camera, read-alouds, faces, handouts, lights out
+src/ui/palette.js       (Muse) 🔎 the command palette (Ctrl+K, /) and the shortcuts sheet (?); registerCommands
 src/ui/notebook.js      (Muse) 📓 the DM's notebook: tagged notes, search, Tonight's notes
 src/ui/pack.js          🎒 the pack: wear, wield, attune, add, coins (player's hero tab, DM's Tokens tab)
 src/ui/cards.js         card only: a player's phone at an in-person game (big buttons, target list, move pad)
