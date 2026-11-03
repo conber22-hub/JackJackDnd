@@ -18,7 +18,7 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ## v1.22 — the folk of Barovia, and the Count's eyes among them
 
-Codex's folk engine (#19, `src/engine/folk.js`, `src/data/folk.js`) and Claude's figures (`src/render/folk.js`), joined in `src/game/folk.js`. Picture: `docs/screens/folk-roles.jpg`.
+Codex's folk engine (#19, `src/engine/folk.js`, `src/data/folk.js`) and Claude's figures (`src/render/folk.js`), joined in `src/game/folk.js`. Pictures: `docs/screens/folk-roles.jpg`, `docs/screens/folk-village.jpg`.
 - **Who lives here.**
   - A Valley place's map, a village-themed floor or the open road fills with people the first time the party comes: farmers, the smith, children, elders, the watch, the priest and beggars in villages and towns; peddlers, pilgrims and lost children on the road; the travelling Reedwheel folk and their dogs at camp.
   - Fewer as his Gaze rises, fewer at night, and the faces turn wary, then afraid.
