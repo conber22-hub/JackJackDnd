@@ -1,6 +1,7 @@
 /* UI EVENT WIRING — every [data-act] button, [data-edit] field, and keyboard shortcut. */
 import { state, setState, ui, tokById, isDM, makePC, makeNPC, dreadLevel } from '../engine/state.js';
 import { ensureTourButton } from './tour.js';
+import { ensureGhost } from './ghost.js';
 import { toggleNotebook } from './notebook.js';
 import { togglePalette, closePalette, closeShortcuts, showShortcuts, registerCommands } from './palette.js';
 import { updateVision, freeTilesNear, seenNow } from '../engine/grid.js';
@@ -464,6 +465,7 @@ function loadArt(key, file){
 $('#btnPanel').onclick = () => { ui.panelOpen = !ui.panelOpen; renderPanel(); renderDock(); };
 $('#btnHelp').onclick = () => $('#helpModal').classList.remove('hidden');
 ensureTourButton();   // the help modal's "Show me around" button (idempotent)
+ensureGhost();   // Wick, the guide: the help modal's 🕯 toggle, and his watch on the app's redraws (idempotent)
 $('#floorUp').onclick = () => state && goFloor(ui.floor - 1);
 $('#floorDown').onclick = () => state && goFloor(ui.floor + 1);
 $('#whimBadge').onclick = () => { if (state && isDM()){ ui.tab = 'gaze'; ui.panelOpen = true; renderTabs(); renderPanel(); renderDock(); } };
