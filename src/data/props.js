@@ -4,7 +4,7 @@
    A prop sits at x, y (its top-left square), covers w × h squares, and turns
    in quarter turns (rot 0–3). The 3D pieces are built in render/props.js.
    cat groups the palette in the Build tab. */
-export const PROP_CATS = { tavern:'Tavern & house', manor:'Manor & castle', village:'Village', road:'Road & wild', barovia:'Barovia', dungeon:'Dungeon', mine:'Mine & cave' };
+export const PROP_CATS = { tavern:'Tavern & house', manor:'Manor & castle', village:'Village', road:'Road & wild', barovia:'Barovia', keep:'Camp & keep', dungeon:'Dungeon', mine:'Mine & cave' };
 
 export const PROPS = {
   // tavern & house
@@ -69,6 +69,19 @@ export const PROPS = {
   bloomgrowth:{ n:'Bloom growth',    cat:'barovia', w:1, h:1 },
   vines:      { n:'Vine row',        cat:'barovia', w:1, h:3 },
   tent:       { n:'Tent',            cat:'barovia', w:2, h:2 },
+  // a place of the party's own: wagons, walls and workshops (the holding builder places these too)
+  wagon:      { n:'Wagon',           cat:'keep',    w:1, h:2 },
+  coveredwagon:{ n:'Covered wagon',  cat:'keep',    w:1, h:2 },
+  watchtower: { n:'Watchtower',      cat:'keep',    w:1, h:1 },
+  stonewall:  { n:'Stone wall',      cat:'keep',    w:1, h:1 },
+  palgate:    { n:'Palisade gate',   cat:'keep',    w:2, h:1 },
+  bedroll:    { n:'Bedrolls',        cat:'keep',    w:1, h:1 },
+  forge:      { n:'Forge',           cat:'keep',    w:2, h:1 },
+  workbench:  { n:'Carpenter\'s bench', cat:'keep', w:2, h:1 },
+  alchemy:    { n:'Alchemist\'s bench', cat:'keep', w:1, h:1 },
+  garden:     { n:'Garden beds',     cat:'keep',    w:2, h:2 },
+  stable:     { n:'Stable',          cat:'keep',    w:2, h:2 },
+  woodpile:   { n:'Woodpile',        cat:'keep',    w:1, h:1 },
   // manor & castle
   bookshelf:  { n:'Bookshelf',       cat:'manor',   w:1, h:2 },
   wardrobe:   { n:'Wardrobe',        cat:'manor',   w:1, h:1 },
@@ -112,7 +125,7 @@ export const CROPS = {
   blight: { n:'Blighted stalks',  field:'The blighted field', notes:'Grey stalks that crumble at a touch. The soil smells of a cellar.' },
 };
 // Props that give off light (candles, fire): the renderer puts a real flickering light on the nearest few.
-export const LIT = { candelabra:1, brazier:1.3, hearth:1.6, lantern:.8, lamppost:1, campfire:1.6, altar:.7, cauldron:.8, anvil:.9, longtable:.5, organ:.4 };
+export const LIT = { forge:1.1, alchemy:.5,  candelabra:1, brazier:1.3, hearth:1.6, lantern:.8, lamppost:1, campfire:1.6, altar:.7, cauldron:.8, anvil:.9, longtable:.5, organ:.4 };
 
 // Houses for the Build tab's House tool (solid buildings with roofs, on rock). w × h squares.
 export const HOUSES = {
@@ -129,13 +142,13 @@ export const HOUSES = {
 /* How minis meet each piece. PROP_TOP: they climb up and stand on it (its top, in units; getting onto it is
    difficult terrain). PROP_HOP: they hop over it (difficult terrain, feet stay on the floor). PROP_BLOCK: they go
    round it (it blocks movement but not sight). Anything else (rugs, mist, rails, puddles, bridges, gates): walk over. */
-export const PROP_TOP = { table:.51, longtable:.51, chair:.29, bench:.29, stool:.33, bar:.64, bed:.45, barrel:.62, kegs:.6, crate:.56, sacks:.25, cart:.51, hay:.66,
+export const PROP_TOP = { wagon:.62, workbench:.8, alchemy:.8, table:.51, longtable:.51, chair:.29, bench:.29, stool:.33, bar:.64, bed:.45, barrel:.62, kegs:.6, crate:.56, sacks:.25, cart:.51, hay:.66,
   trough:.35, anvil:.7, stump:.3, boulder:.42, log:.37, rubble:.12, chest:.55, altar:.86, coffin:.46, desk:.72, cradle:.5, throne:.5, pew:.45, sarcophagus:.8,
   rack:.5, minecart:.64, cauldron:.5, saltcrock:.4, stall:.5, wreck:.3, wheel:.12, ore:.2, boat:.25 };
-export const PROP_HOP = new Set(['fence', 'drystone']);
+export const PROP_HOP = new Set(['fence', 'drystone', 'bedroll', 'garden', 'woodpile']);
 export const PROP_BLOCK = new Set(['shelf', 'hearth', 'bookshelf', 'wardrobe', 'statue', 'pillar', 'organ', 'armor', 'banner', 'lamppost', 'signpost', 'candelabra',
   'gravestone', 'shrine', 'cage', 'pine', 'deadtree', 'scarecrow', 'well', 'carriage', 'horse', 'vardo', 'tent', 'hull', 'beam', 'brazier', 'lantern', 'milestone',
-  'dollhouse', 'gallows', 'palisade', 'stone']);
+  'dollhouse', 'gallows', 'palisade', 'stone', 'watchtower', 'stonewall', 'palgate', 'forge', 'stable', 'coveredwagon']);
 // The squares a prop covers, after turning (a toppled one lies across fw × fh squares).
 export function propSize(p){ if (p.fw) return { w:p.fw, h:p.fh }; const d = PROPS[p.k] || { w:1, h:1 }; return (p.rot || 0) % 2 ? { w:d.h, h:d.w } : { w:d.w, h:d.h }; }
 export function propAt(f, x, y){

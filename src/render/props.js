@@ -177,6 +177,45 @@ const BUILD = {
   bloomgrowth(g){ for (const [x, z, r] of [[0, 0, .22], [.2, .15, .14], [-.18, .12, .12], [.05, -.22, .1]]){ const m = ball(g, r, '#5e7a3a', x, r * .6, z, { e:'#9cc23c', ei:.55, r:.4 }); m.scale.y = .7; } },
   vines(g){ for (const z of [-1.4, 1.4]) box(g, .08, .9, .08, '#4a3626', 0, .45, z); box(g, .02, .02, 2.8, '#6a6a60', 0, .8, 0);
     for (let k = 0; k < 7; k++) ball(g, .2, k % 2 ? '#2f4a26' : '#3a5a2c', 0, .62, -1.2 + k * .4); for (let k = 0; k < 4; k++) ball(g, .06, '#3a1a3a', .12, .5, -1 + k * .65); },
+  /* ---------- camp & keep ---------- */
+  // a four-wheeled farm wagon: a bed with plank sides, the shafts out front
+  wagon(g){ box(g, .82, .1, 1.7, WOOD, 0, .5, 0); for (const sx of [-1, 1]) box(g, .05, .32, 1.7, LIGHT, sx * .41, .7, 0); for (const sz of [-1, 1]) box(g, .82, .32, .05, LIGHT, 0, .7, sz * .85);
+    for (const sx of [-1, 1]) for (const sz of [-.55, .6]) wheel(g, .3, sx * .47, .3, sz, true);
+    for (const sx of [-1, 1]) box(g, .04, .04, .95, DARK, sx * .22, .42, -1.3); box(g, .5, .32, .55, STRAW, 0, .78, .3); box(g, .35, .3, .35, '#5e4632', -.15, .78, -.4); },
+  // the same under a canvas hood on hoops
+  coveredwagon(g){ BUILD.wagon(g);
+    for (const z of [-.7, -.2, .3, .75]){ const hoop = mesh(g, geo('hoop', () => new THREE.TorusGeometry(.42, .025, 4, 12, Math.PI)), DARK, 0, .86, z); hoop.rotation.y = 0; }
+    // the hood: half a cylinder laid along the bed, arching over it (theta π/2..3π/2 comes out on top once turned)
+    const cover = mesh(g, geo('canvas', () => new THREE.CylinderGeometry(.44, .44, 1.6, 12, 1, true, Math.PI / 2, Math.PI)), '#d8ccb0', 0, .86, 0, { ds:true, r:.95 }); cover.rotation.x = Math.PI / 2; },
+  // four posts, a railed platform, a ladder and a little roof
+  watchtower(g){ for (const sx of [-1, 1]) for (const sz of [-1, 1]) cyl(g, .06, .07, 2.6, '#5a4430', sx * .36, 1.3, sz * .36, {}, 6);
+    box(g, .9, .08, .9, WOOD, 0, 2.2, 0); for (const sx of [-1, 1]) box(g, .9, .3, .04, LIGHT, 0, 2.4, sx * .44); for (const sx of [-1, 1]) box(g, .04, .3, .9, LIGHT, sx * .44, 2.4, 0);
+    const roof = cone(g, .75, .55, '#4a3626', 0, 3.0, 0, { r:.9 }, 4); roof.rotation.y = Math.PI / 4;
+    for (const y of [.3, .7, 1.1, 1.5, 1.9]) box(g, .34, .04, .04, DARK, 0, y, .44); for (const sx of [-1, 1]) box(g, .04, 2.2, .04, DARK, sx * .17, 1.1, .44); },
+  // dressed stone, with a walk on top and crenels
+  stonewall(g){ box(g, 1, 1.3, .55, STONE, 0, .65, 0, { r:.95 }); for (const x of [-.33, .33]) box(g, .28, .25, .55, STONE, x, 1.42, 0, { r:.95 }); box(g, 1.02, .05, .57, '#5f5a54', 0, .5, 0); },
+  // two stout posts and a pair of plank doors (they open like any door prop would: closed by default)
+  palgate(g, p){ for (const sx of [-1, 1]){ cyl(g, .16, .17, 2, '#5a4430', sx * .9, 1, 0, {}, 7); cone(g, .16, .3, '#4a3626', sx * .9, 2.15, 0, {}, 7); }
+    box(g, 2, .12, .12, '#3a2a1c', 0, 1.85, 0);
+    for (const sx of [-1, 1]){ const leaf = opener(g, p, 'rotation.y', 0, sx * -1.3, sx * .8, 0, 0); box(leaf, .78, 1.5, .08, WOOD, -sx * .39, .8, 0); box(leaf, .78, .08, .1, DARK, -sx * .39, .5, 0); box(leaf, .78, .08, .1, DARK, -sx * .39, 1.2, 0); } },
+  bedroll(g){ for (const [x, z, c] of [[-.22, -.15, '#6e5a48'], [.22, .18, '#5a5a6a']]){ const r = cyl(g, .1, .1, .7, c, x, .1, z, { r:.95 }); r.rotation.z = Math.PI / 2; box(g, .7, .03, .35, c, x, .02, z + .25); } },
+  // a stone hearth with a hood and chimney, coals, an anvil on a stump, a quench tub
+  forge(g){ box(g, .9, .7, .8, STONE, -.45, .35, 0, { r:.95 }); box(g, .55, .12, .5, '#1a0c08', -.45, .72, 0); flame(g, -.45, .82, 0, 1.4); flame(g, -.32, .8, .1, 1);
+    box(g, .7, .5, .6, '#5f5a55', -.45, 1.35, 0); box(g, .28, 1.1, .28, '#5f5a55', -.45, 2.1, 0);
+    cyl(g, .14, .16, .4, DARK, .35, .2, 0, {}, 8); box(g, .42, .14, .18, IRON, .35, .47, 0, METAL); cyl(g, .18, .2, .3, '#4a3626', .75, .15, .25, {}, 10); },
+  workbench(g){ box(g, 1.7, .08, .6, LIGHT, 0, .78, 0); legs(g, 1.6, .55, .74); box(g, 1.5, .04, .5, WOOD, 0, .25, 0);
+    box(g, .45, .03, .12, '#9a9a9a', -.4, .83, 0, METAL); box(g, .12, .14, .08, DARK, -.62, .83, 0); box(g, .3, .12, .12, '#7a5a3a', .45, .88, -.1); for (const x of [.15, .3]) box(g, .5, .05, .1, LIGHT, x, .84, .18); },
+  alchemy(g){ box(g, .8, .08, .6, '#4a3626', 0, .78, 0); legs(g, .72, .52, .74);
+    for (const [x, z, c] of [[-.25, -.1, '#5aa06a'], [0, .12, '#a05ab0'], [.22, -.08, '#c0a040']]){ cyl(g, .05, .08, .2, c, x, .92, z, { e:c, ei:.5, op:.85, r:.2 }); cyl(g, .02, .02, .08, '#d8d8d8', x, 1.05, z); }
+    ball(g, .1, '#6aa0c0', .2, .9, .18, { e:'#6aa0c0', ei:.4, op:.8, r:.2 }); },
+  garden(g){ for (const z of [-.55, 0, .55]){ box(g, 1.8, .14, .38, '#3a2a1c', 0, .07, z, { r:1 }); for (let x = -.75; x <= .75; x += .3) ball(g, .1, z ? '#4a6a34' : '#6a7a3a', x, .2, z); } },
+  // an open-fronted lean-to: three walls, a sloped roof, two stalls, hay
+  stable(g){ box(g, 1.9, 1.3, .08, WOOD, 0, .65, -.9); for (const sx of [-1, 1]) box(g, .08, 1.3, 1.8, WOOD, sx * .95, .65, 0); box(g, .06, .9, 1.4, DARK, 0, .45, -.15);
+    // a short roof sloping back from posts at the open front, so you can see into the stalls
+    for (const sx of [-1, 1]) cyl(g, .05, .05, 1.5, DARK, sx * .9, .75, .85, {}, 6);
+    const roof = box(g, 2.1, .06, 1.2, '#4a3626', 0, 1.5, -.35); roof.rotation.x = -.22;
+    box(g, .55, .45, .55, STRAW, -.5, .22, -.5); box(g, .5, .3, .5, STRAW, .55, .15, -.55); box(g, .7, .25, .2, '#5e4632', .5, .4, .2); },
+  woodpile(g){ for (let r = 0; r < 3; r++) for (let i = 0; i < 4 - r; i++){ const l = cyl(g, .09, .09, .8, i % 2 ? '#6a4a2c' : '#5a3e24', -.3 + i * .2 + r * .1, .09 + r * .17, 0, {}, 7); l.rotation.z = Math.PI / 2; l.rotation.y = Math.PI / 2; } },
   tent(g){ const t = cone(g, 1.0, 1.3, '#7a3a2a', 0, .65, 0, { r:.9 }, 4); t.rotation.y = Math.PI / 4; t.scale.set(1, 1, .8);
     box(g, .3, .7, .02, '#2a1410', 0, .35, .78); cyl(g, .03, .03, .3, '#4a3626', 0, 1.4, 0); box(g, .5, .25, .02, '#c9a246', 0, 1.5, 0, { r:.5 }); },
   chest(g, p){ box(g, .7, .4, .45, WOOD, 0, .2, 0); for (const x of [-.25, .25]) box(g, .05, .42, .47, IRON, x, .21, 0, METAL);
