@@ -70,6 +70,7 @@ const LOOKS = {
   captive:  { coat:'#83776b', prop:chains, skin:SKIN[0] },
   dog:      'dog',
 };
+LOOKS.lostChild = LOOKS.child;
 const SIZE = { child:[.38, .62], dog:[.56, .46] };   // (an adult stands about as tall as a hero's mini)
 // a candle-coloured edge on the side towards the light, so a figure reads against the dark (as the minis' rim light does)
 function rim(x, c){

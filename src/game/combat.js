@@ -12,6 +12,7 @@ import { WHISPERS } from '../data/dread.js';
 import { sfx } from '../audio/sound.js';
 import { currentTurn, addCond, removeCond, tickConds, hasCond, saveBonus, stopped, startConc, endConc, defend, defNote, immuneTo, saveRoll, saveTxt, timingFor, condPhase, endOn } from './rules.js';
 import { SPELL_EFFECTS } from '../data/spell-effects.js';
+import { witnessed, stepFolkNow } from './folk.js';
 import { attackMods } from '../engine/conditions.js';
 import { diceAt, upRays, concDC } from '../engine/spellcast.js';
 import { SPELLS } from '../data/srd.js';
@@ -64,6 +65,7 @@ export function rollInitiative({ ids = null, group = true, surprise = 'none', fi
   const order = rollOrder(list, { group, surprise, fixed, d20:() => d(20) });
   for (const o of order){ const t = tokById(o.id); t.initRoll = o.roll; freshTurn(t); delete t.legend; delete t.spent; }   // a new fight: legendary actions full, breath weapons ready
   state.combat = { active:true, order:order.map(o => o.id), idx:0, round:1, floor:L, group, surprise };
+  { const h = state.tokens.find(t => t.floor === L && t.kind !== 'monster' && !t.dead); if (h) witnessed(L, { kind:'fight', x:h.x, y:h.y }); }   // a fight breaks out: the folk see it
   log(`⚔ Initiative on ${f.name}: ${list.map(t => `${t.name} ${t.initRoll}`).join(', ')}`, true);
   log(`⚔ Roll for initiative!${surprise === 'party' ? ' The party is caught by surprise.' : surprise === 'foes' ? ' The party has the drop on them.' : ''}`);
   const pts = list.filter(t => t.kind !== 'monster').length ? list.filter(t => t.kind !== 'monster') : list;   // the noise is where the party is
@@ -122,6 +124,7 @@ export function nextTurn(){
   if (!state.combat.active) return;
   clearOpportunities();
   turnCard(currentTurn(), 'end');   // saves repeated to shake off Hold Person and the like; holds that run out now
+  stepFolkNow(state.combat.floor ?? ui.floor, { fight:true });   // the valley's folk run for home, a step a turn
   tickConds(currentTurn());
   if (!state.combat.order.some(id => { const t = tokById(id); return t && !t.flags.gone && (!t.dead || t.flags.rising); })){ toast('Everyone in this fight is down.'); return; }
   for (let guard = 0; guard < 300; guard++){
@@ -315,6 +318,9 @@ export function heal(t, n){
   if (t.hp > t.maxHp / 2) t.flags.bloodied = false;
 }
 export function kill(t, type, by){
+  // the folk see a death; the Count's eyes among them tell his court who did it, and with what (game/folk.js)
+  const killer = typeof by === 'string' ? tokById(by) : by;
+  if (killer && killer.kind !== 'monster') witnessed(t.floor, { kind:'kill', x:t.x, y:t.y, by:killer.name, type:String(type || '').split(/[ ,]/)[0] });
   t.dead = true;
   t.conds = (t.conds || []).filter(c => c.n !== 'raging'); delete t.sustain;   // rage and sustained spells end when you drop
   const radiant = /radiant|fire/.test(String(type));
@@ -503,6 +509,7 @@ export function castSpell(casterId, targetId, i, aim = null, { at = null } = {})
   if (slot !== null) c.lastMove = null;
   if (slot === null){ toast(`${c.name} has no spell slot left for ${base0.n}.`); return false; }
   endOn(c, 'castSpell');   // Invisibility: it ends when you cast
+  if (c.kind !== 'monster') witnessed(c.floor, { kind:'spell', x:c.x, y:c.y, by:c.name, type:base0.ty || '' });   // magic in the street: someone saw
   // a breath weapon and its like: spent until a d6 at the start of its turn comes up (combat.js startTurn)
   if (base0.recharge) (c.spent ||= {})[base0.n] = true;
   const lib = base0.mon ? null : spellInfo(base0.n), level = !base0.l ? 0 : slot === '' ? Math.max(base0.l, at || 0) : (c.castAt || base0.l);

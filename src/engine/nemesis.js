@@ -147,7 +147,7 @@ export function advanceCourt(c, { gaze = 1, day = null, at = null } = {}, rng = 
 }
 const RAIDS = ['A barn burned with the cattle still in it.', 'Two children are missing. The parents say they heard singing.', 'The well is fouled; nobody says with what.',
   'Doors were marked in chalk. Tonight, the marked houses will not open to anyone.', 'The graves are open, and they are empty.', 'A family was found sitting at their table, waiting.'];
-const PLACE_NAMES = { village:'the Village of Barovia', vallaki:'Vallaki', krezk:'Krezk', tser:'Tser Pool', berez:'Berez', bonegrinder:'Old Bonegrinder',
+export const PLACE_NAMES = { village:'the Village of Barovia', vallaki:'Vallaki', krezk:'Krezk', tser:'Tser Pool', berez:'Berez', bonegrinder:'Old Bonegrinder',
   yester:'Yester Hill', lake:'Lake Zarovich', argyn:'Argynvostholt', castle:'the castle road', crossroads:'the crossroads', winery:'the Wizard of Wines',
   tower:'the Lonely Tower', coffin:'the Iron Coffin', mists:'the edge of the Mists', gates:'the Gates of Barovia' };
 

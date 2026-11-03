@@ -5,6 +5,7 @@ import { DIRS, passMove, canStep, canSee } from './grid.js';
 import { hashSeed, mulberry32 } from '../util/core.js';
 import { WEAKNESSES } from '../data/court.js';
 import { DAMAGE_TYPES } from './defenses.js';
+import { PLACE_NAMES } from './nemesis.js';
 import { FOLK_ROLES, FOLK_NAMES, FOLK_SURNAMES, DOG_NAMES, ROLE_LINES, MOOD_LINES, RUMOUR_LINES } from '../data/folk.js';
 const pick = (a, rng) => a[Math.floor(rng() * a.length)];
 const point = p => ({x:p.x,y:p.y});
@@ -16,6 +17,8 @@ const living = court => (court?.members || []).filter(m=>m.alive);
 const title = m => [m.name,m.epithet].filter(Boolean).join(' ');
 const fill = (s, values) => s.replace(/\{(\w+)\}/g, (_,k)=>String(values[k] ?? ''));
 const placeId = place => typeof place === 'string' ? place : place?.id || place?.name || place?.kind || 'the road';
+// what folk call a place: its name in the valley ('vallaki' → 'Vallaki'), for the lines they say
+const placeName = id => PLACE_NAMES[id] || id;
 function kindOf(f,place){
   const kind = (typeof place === 'object' ? place?.kind : null) || f.place?.kind || place;
   if (['village','walled','vineyard','vallaki','krezk'].includes(kind)) return kind==='vallaki' ? 'town' : 'village';
@@ -122,9 +125,9 @@ export function tellTheCourt(court, folk, ids, event, {place,day}, rng){
     m.knows={...m.knows,party:placeId(place),day,heroes:[...new Set([...(m.knows?.heroes || []),...(event.by?[event.by]:[])])]};
     if(['kill','spell'].includes(event.kind)&&event.by&&DAMAGE_TYPES.includes(event.type))m.knows.tactic=event.type;
     m.hunting=true;
-    news.push({who:m.id,text:fill(pick(RUMOUR_LINES.report,rng),{place:placeId(place),hero:event.by || 'unknown travellers',kind:event.kind}),rumour:false});
+    news.push({who:m.id,text:fill(pick(RUMOUR_LINES.report,rng),{place:placeName(placeId(place)),hero:event.by || 'unknown travellers',kind:event.kind}),rumour:false});
   }
-  if(event.kind==='kill'&&witnesses.some(p=>!p.spy && p.role!=='dog'))news.push({who:null,text:fill(pick(RUMOUR_LINES.kill,rng),{place:placeId(place)}),rumour:true});
+  if(event.kind==='kill'&&witnesses.some(p=>!p.spy && p.role!=='dog'))news.push({who:null,text:fill(pick(RUMOUR_LINES.kill,rng),{place:placeName(placeId(place))}),rumour:true});
   court.news=[...(court.news || []),...news].slice(-30);
   return news;
 }
@@ -137,11 +140,11 @@ export function greet(person, {gaze = 0,night = false} = {}, rng){
 }
 export function rumourFor(person, court, {gaze = 0} = {}, rng){
   const members=living(court), master=person.spy&&members.find(m=>m.id===person.spy.for);
-  if(master)return {text:fill(pick(RUMOUR_LINES.lure,rng),{name:title(master),place:master.haunt}),about:master.id,true:false};
+  if(master)return {text:fill(pick(RUMOUR_LINES.lure,rng),{name:title(master),place:placeName(master.haunt)}),about:master.id,true:false};
   const localNews=(court.news || []).filter(n=>n.rumour===true && n.who==null).slice(-5);
   if(person.role!=='dog' && localNews.length && rng()<.25)return {text:pick(localNews,rng).text,about:null,true:true};
   if(person.role!=='dog' && members.length && rng()<.7){
-    const m=pick(members,rng), choice=rng(), values={name:title(m),place:m.haunt};
+    const m=pick(members,rng), choice=rng(), values={name:title(m),place:placeName(m.haunt)};
     if(choice<.35){
       const actual=(m.weaknesses || []).filter(k=>WEAKNESSES[k]), wrong=Object.keys(WEAKNESSES).filter(k=>!actual.includes(k));
       const lie=rng()<Math.min(.8,.1+Math.max(0,gaze)*.075);

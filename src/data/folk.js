@@ -8,7 +8,8 @@ export const FOLK_ROLES = {
   dungeon:['hermit','captive'],
 };
 export const FOLK_NAMES = ['Orvella','Tavrek','Merrin','Zeldra','Osvik','Pellena','Brevka','Nerrek','Istrin','Velda','Torska','Yevren'];
-export const FOLK_SURNAMES = ['Reedstitch','Ashbutton','Fenwickle','Tinwell','Mossgate','Rookthread','Hearthmender','Raincoat'];
+// (darker, for a valley under his Gaze: invented, like the given names)
+export const FOLK_SURNAMES = ['Ashvarek','Dravnik','Morrowen','Kolvasz','Belinka','Strezhov','Grimsel','Tamorin','Vukhran','Oszel'];
 export const DOG_NAMES = ['Thimble','Turnip','Soot','Copper'];
 export const ROLE_LINES = {
   farmer:['Mind the seedlings. They are all we have left.', 'The crows left half a row today. A generous bargain.'],

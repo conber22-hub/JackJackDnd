@@ -26,6 +26,7 @@ import { sfx, onSfx } from '../audio/sound.js';
 import { putModel, allModels, deleteModel } from '../render/models.js';
 import { setSender, validAct, receiveAct, dropRequestsFrom } from '../game/requests.js';
 import { tableHash, packForTable, haveTableLibrary, receiveTableLibrary } from '../game/library.js';
+import { folkAt, talkTo, receiveFolk } from '../game/folk.js';
 
 export const net = { peer:null, conns:new Map(), knocks:new Map(), host:null, code:null, online:false, hostTries:0, hostTimer:null,
   join:null, status:'idle', tries:0, gen:0, myId:null, everOpen:false, lastSeen:0, retryTimer:null };
@@ -278,6 +279,8 @@ function onHostMsg(c, m){
     receiveAct(ok, c.peer, seat.name, deny);
   }
   else if (m.t === 'search'){ if (me && canAct(me)) search(me); }
+  // a player taps one of the folk: the DM hears what they'd say, to send on (game/folk.js)
+  else if (m.t === 'talk'){ const p = folkAt(m.L, m.id); if (p && me && me.floor === m.L && Math.max(Math.abs(me.x - p.x), Math.abs(me.y - p.y)) <= 6) talkTo(p, { by:me.name }); }
   else if (m.t === 'dropConc'){ if (me?.conc){ endConc(me, 'lets go'); changed(); } }
   else if (m.t === 'askAns'){ if (mine(m.tok)) answerAsk(m.id, m.tok, Number.isInteger(m.d20) ? m.d20 : null, 'phone'); }   // their own hero only
   else if (m.t === 'prop'){
@@ -441,6 +444,7 @@ export function onClientMsg(m){
     maybePlayerTour();   // first seating on a hero: the walkthrough, once per device
   }
   else if (m.t === 'oa' && m.q?.id) askOpportunity(m.q);
+  else if (m.t === 'folk' && state) receiveFolk(m);   // the valley's people, moving (game/folk.js)
   else if (m.t === 'area' && state && Array.isArray(m.sq)){ const ex = state.explored?.[m.floor]; flashArea(m.floor, m.sq.filter(i => ex?.has(i)), m.ty); }   // only where they've been
   else if (m.t === 'oaDone') dropAsk(m.id);
   else if (m.t === 'act' && state && ['attack', 'cast', 'hit'].includes(m.kind)) actOn(m.id, m.kind, m.target);

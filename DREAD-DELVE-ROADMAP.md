@@ -16,6 +16,29 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.22 — the folk of Barovia, and the Count's eyes among them
+
+Codex's folk engine (#19, `src/engine/folk.js`, `src/data/folk.js`) and Claude's figures (`src/render/folk.js`), joined in `src/game/folk.js`. Picture: `docs/screens/folk-roles.jpg`.
+- **Who lives here.**
+  - A Valley place's map, a village-themed floor or the open road fills with people the first time the party comes: farmers, the smith, children, elders, the watch, the priest and beggars in villages and towns; peddlers, pilgrims and lost children on the road; the travelling Reedwheel folk and their dogs at camp.
+  - Fewer as his Gaze rises, fewer at night, and the faces turn wary, then afraid.
+  - Dungeons and cellars stay empty.
+- **Their day.** A step a second on the DM's browser: from home to the well, the market and the church door; home at dusk; running for their doors when a fight starts (a step a turn). At dawn and dusk, those still out keep their place.
+  - The players' screens get the moves as a small message, and only where the party has been (`receiveFolk`).
+- **The figures.** A hand-painted figure for each role, with its tell: the farmer's pitchfork, the watchman's helm and spear, the priest's holy symbol, the peddler's pack, the beggar's bowl, the dog.
+  - They walk from square to square, turn to face the way they go, and look paler when afraid. An adult stands as tall as a hero's mini.
+- **Talking to them.** Tap one.
+  - The DM hears what they say, and often a rumour about the Count's court: where one of them haunts, recent news, a hint at a weakness (sometimes wrong, more often as his Gaze rises). It goes to the outbox to send on, like any card.
+  - A card for the DM's eyes says whether the rumour is true.
+  - A player who taps one asks the DM, who hears what they'd say.
+- **The Count's eyes.** With his Gaze at 1, one in twenty is a spy; at 5, one in five. Each reports to a living member of his court, a hunter by preference.
+  - The DM sees a faint red glint over each one, and the card says whom they serve.
+  - When one sees the party arrive, start a fight, cast a spell or kill, word goes to its master (a card: "👁 The Count's eyes saw that"). The master learns where the party is, who they are and, from a kill or a spell, how they fight. It starts hunting, and on the next road out it's more likely to be waiting (`pickAmbushers`).
+  - A spy's rumour lies, and steers the party towards its master's haunt.
+  - A killing seen by ordinary folk becomes a rumour in the valley.
+- **Players never see who spies, or what anyone has seen** (`engine/redact.js`).
+- Claude's follow-ups to the engine: darker surnames for the valley; rumours name places as the valley does ("Vallaki", not "vallaki").
+
 ## v1.21 — conditions that matter, holds that end, the DM's notebook
 
 Codex's round 4 (#14 conditions, #15 condition timing, #16 Barovian defences) and Muse's notebook (#17). Pictures: `docs/screens/notebook.jpg`, `docs/screens/palette.jpg`.
@@ -616,6 +639,7 @@ src/engine/             pure logic: no DOM, no Three.js, unit-tested
   inventory.js          (Codex) the pack: items, +N variants, equipping and attunement rules, magic bonuses, coins, load
   gear.js               what a hero wears and wields, from the pack; keeps the creator's fields in step
   conditions.js         (Codex) what conditions do: attack and save modifiers, auto-crits, speed, actions, exhaustion
+  folk.js               (Codex) the valley's people: populate a place, a step of their day, witnesses, the Count's eyes reporting, rumours
   grid.js               movement (difficult terrain), line of sight, passive Perception
   importer.js           Battle Table / grid JSON / ASCII import, ASCII & JSON export
   tables.js             roll-table parser
@@ -685,6 +709,8 @@ src/game/heroes.js      players' heroes (their browser) and the DM's character r
 src/ui/creator.js       the character creator
 src/ui/valley.js        the Valley tab and its map (SVG)
 src/ui/screen.js        the table screen for the TV (?screen): ribbon, party, follow camera, read-alouds, faces, handouts, lights out
+src/render/folk.js      the folk drawn: a hand-painted billboard per role, walking, the spies' glint (DM only); pickFolk for taps
+src/game/folk.js        the folk at the table: which floors get them, the step timer, witnesses → the court, talking, the players' copy
 src/ui/palette.js       (Muse) 🔎 the command palette (Ctrl+K, /) and the shortcuts sheet (?); registerCommands
 src/ui/notebook.js      (Muse) 📓 the DM's notebook: tagged notes, search, Tonight's notes
 src/ui/pack.js          🎒 the pack: wear, wield, attune, add, coins (player's hero tab, DM's Tokens tab)

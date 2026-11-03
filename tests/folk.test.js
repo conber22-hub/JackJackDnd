@@ -1,3 +1,4 @@
+import { PLACE_NAMES } from '../src/engine/nemesis.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { populate, stepFolk, witnesses, tellTheCourt, rumourFor, greet } from '../src/engine/folk.js';
@@ -135,7 +136,7 @@ test('rumours use living names, never private news, and false weakness hints are
     assert.ok(r.about===null||r.about==='a');assert.ok(!r.text.includes('PRIVATE REPORT'));
   }
   const lure=rumourFor(person({spy:{for:'a'}}),c,{},()=>0);
-  assert.equal(lure.true,false);assert.ok(lure.text.includes('tower'));assert.equal(lure.about,'a');
+  assert.equal(lure.true,false);assert.ok(lure.text.includes(PLACE_NAMES.tower || 'tower'))   // (by its name in the valley);assert.equal(lure.about,'a');
   assert.ok(greet(person({mood:'afraid'}),{},()=>0).length<30);
   assert.equal(rumourFor(person(),{members:[],news:[]},{},()=>0).about,null);
 });

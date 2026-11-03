@@ -17,6 +17,7 @@ import { buildFloor } from '../render/floors.js';
 import { showCard, toast } from '../ui/hud.js';
 import { changed } from './session.js';
 import { introduceAs } from './night.js';
+import { refreshFolk } from './folk.js';
 
 export function court(){
   const C = state.campaign; if (!C) return null;
@@ -93,6 +94,7 @@ export function courtDay(why = 'A new day'){
   const c = court(); if (!c) return [];
   const V = state.campaign.valley, news = advanceCourt(c, { gaze:state.dread, day:V?.day ?? null, at:V?.at }, Math.random);
   for (const n of news) log(`👑 ${n.text}`, true);
+  refreshFolk();   // a new day: who is out in the street now (game/folk.js)
   if (news.length) toast(`${why}: the court moved (${news.length}). Gaze tab → The Count's Court.`);
   changed();
   return news;
