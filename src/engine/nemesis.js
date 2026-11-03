@@ -155,7 +155,8 @@ const PLACE_NAMES = { village:'the Village of Barovia', vallaki:'Vallaki', krezk
    path: the place ids the road passes. → members (at most two; one more when he is watching hard). */
 export function pickAmbushers(c, { gaze = 1, path = [] } = {}, rng = Math.random){
   const out = [], max = gaze >= 7 ? 3 : 2;
-  for (const m of alive(c)) if (out.length < max && m.hunting && rng() < .45 + gaze * .04) out.push(m);
+  // A witnessed location on this route gives a hunting member a 20-point ambush bonus.
+  for (const m of alive(c)) if (out.length < max && m.hunting && rng() < Math.min(.95, .45 + gaze * .04 + (path.includes(m.knows?.party) ? .2 : 0))) out.push(m);
   for (const m of alive(c)) if (out.length < max && !out.includes(m) && path.includes(m.haunt) && rng() < .15 + gaze * .03) out.push(m);
   return out;
 }
