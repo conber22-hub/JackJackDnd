@@ -13,6 +13,7 @@
 import { state, ui } from '../engine/state.js';
 import { uid, esc } from '../util/core.js';
 import { broadcast, changed } from './session.js';
+import { sendToSeat } from '../net/table.js';
 
 export const SHARE_KINDS = {
   rolls:   { n:'Rolls',    hint:'Attacks, spells, saves and checks: who hit, how hard, who saved' },
@@ -32,11 +33,13 @@ export function cardCat(c){
 }
 
 /* Something for the players' screens. → 'sent' | 'held' | 'kept' (the DM's eyes only) */
+// A letter to one hero goes to that player alone (ui/letters.js); everything else to the whole table.
+const deliver = msg => msg.t === 'letter' && msg.letter?.to ? sendToSeat(msg.letter.to, msg) : broadcast(msg);
 export function toPlayers(msg, cat = 'world'){
   if (ui.role !== 'dm') return 'kept';
-  if (cat === 'dm'){ broadcast(msg); return 'sent'; }   // the DM's own doing (a reveal they pressed): that press was the send
+  if (cat === 'dm'){ deliver(msg); return 'sent'; }   // the DM's own doing (a reveal they pressed): that press was the send
   const how = shareOf()[cat] || 'hold';
-  if (how === 'auto'){ broadcast(msg); return 'sent'; }
+  if (how === 'auto'){ deliver(msg); return 'sent'; }
   if (how === 'never') return 'kept';
   // (whose turn it is: only the latest matters, so a new one replaces any still waiting)
   if (cat === 'turns') for (let i = outbox.length - 1; i >= 0; i--) if (outbox[i].cat === 'turns') outbox.splice(i, 1);
@@ -53,7 +56,7 @@ export function sendHeld(id, edit = null){
     if (msg.t === 'card'){ if (edit.title != null) msg.c.title = edit.title; if (edit.flair != null) msg.c.flair = edit.flair; }
     else if (edit.text != null) msg.text = edit.text;
   }
-  broadcast(msg);
+  deliver(msg);
   // what they were sent is what their log shows (when the log is otherwise closed to them)
   const line = msg.t === 'card' ? msg.c.title : msg.text; if (line){ state.log.push({ t:Date.now(), m:line, sent:true }); if (state.log.length > 120) state.log.shift(); }
   renderOutbox(); changed();
@@ -74,7 +77,7 @@ export function renderOutbox(){
     <div class="b"><button class="btn small" data-act="outToggle">${ui.outOpen ? 'Hide' : 'Show'}</button><button class="btn small primary" data-act="outSendAll">Send all</button><button class="btn small" data-act="outDropAll">Drop all</button></div>`;
   if (ui.outOpen) h += outbox.slice(-6).reverse().map(o => `<div class="outItem"><div class="w">${ICON[o.cat] || '•'} ${esc(what(o) || '')}${more(o) ? ` <span class="muted">— ${esc(String(more(o)).slice(0, 90))}</span>` : ''}</div>
       ${ui.outEdit === o.id ? `<input class="txt" id="oe-t-${o.id}" value="${esc(what(o) || '')}">${o.msg.t === 'card' ? `<textarea class="txt" id="oe-f-${o.id}" style="min-height:40px">${esc(o.msg.c.flair || '')}</textarea>` : ''}` : ''}
-      <div class="b"><button class="btn small primary" data-act="outSend" data-id="${o.id}">📤 Send</button>${ui.outEdit === o.id ? '' : `<button class="btn small" data-act="outEdit" data-id="${o.id}">✎ Edit</button>`}<button class="btn small" data-act="outDrop" data-id="${o.id}">✕ Drop</button></div></div>`).join('') + (outbox.length > 6 ? `<div class="muted">and ${outbox.length - 6} older</div>` : '');
+      <div class="b"><button class="btn small primary" data-act="outSend" data-id="${o.id}">📤 Send</button>${ui.outEdit === o.id || o.msg.t === 'letter' ? '' : `<button class="btn small" data-act="outEdit" data-id="${o.id}">✎ Edit</button>`}<button class="btn small" data-act="outDrop" data-id="${o.id}">✕ Drop</button></div></div>`).join('') + (outbox.length > 6 ? `<div class="muted">and ${outbox.length - 6} older</div>` : '');
   el.innerHTML = h + '</div>';
 }
 // The DM's edits for one, read from the open editor (or null).

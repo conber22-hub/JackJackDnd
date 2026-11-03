@@ -454,6 +454,7 @@ export function onClientMsg(m){
   else if (m.t === 'card'){ if (ui.screen && m.c?.ask) return; waiting(null); if (ui.screen && m.c?.die?.n) screenDie(m.c, () => showCard(m.c, false)); else showCard(m.c, false); }
   else if (m.t === 'ping'){ spawnPing(m.floor, m.x, m.y, m.color); toast(`${m.who} pings the map`); }
   else if (m.t === 'whisper') showWhisper(m.text);
+  else if (m.t === 'letter') net.onLetter?.(m.letter);   // the Count's letters (ui/letters.js sets the receiver)
   else if (m.t === 'banner') banner(m.text);
   else if (m.t === 'ask') askPrompt(m);
   else if (m.t === 'note') notePrompt(m);
