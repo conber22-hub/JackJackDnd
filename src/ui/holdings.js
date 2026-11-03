@@ -55,6 +55,7 @@ export function holdingsHTML(){
     <div class="muted">Timber is cut or bought, stone quarried or carted in, salt bought dear; the stores' gold pays for building and wages (the party puts it in).</div>
     ${grows ? `<h4>Grow</h4><div class="row">${grows}</div>` : ''}
     ${h.log?.length ? `<h4>Lately</h4><div class="muted">${h.log.slice(-5).map(esc).join('<br>')}</div>` : ''}
+    <div class="row"><button class="btn small" data-act="downtime" title="Recuperate, keep watch, research in the library, craft">🌙 Days off here</button></div>
     <div class="row">${h.modules.length ? '' : '<button class="btn small" data-hd="bounds" title="Then tap the map: the holding centres there">⌖ Move its bounds</button>'}<button class="btn small danger" data-hd="abandon">Abandon it</button></div>
   </details>`;
 }

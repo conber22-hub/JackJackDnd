@@ -102,7 +102,7 @@ function tokensTab(){
   for (const c of chars){
     const tok = state.tokens.find(t => t.charId === c.id), st = heroStats(c);
     h += `<div class="card"><div class="hd"><span class="dot" style="color:${c.color};background:${c.color}"></span><span class="nm">${esc(c.name)} <span class="muted">${esc(c.sp)} ${esc(c.cls)} ${st.L}</span></span>
-      <button class="btn small" data-act="dmSheet" data-id="${c.id}">Sheet</button>${tok ? '' : `<button class="btn small" data-act="placeChar" data-id="${c.id}">Place</button>`}<button class="btn small danger" data-act="removeChar" data-id="${c.id}">✕</button></div>
+      <button class="btn small" data-act="dmSheet" data-id="${c.id}">Sheet</button>${tok ? `<button class="btn small" data-act="downtime" data-id="${tok.id}" title="Days off: recuperate, work, train, research, carouse">🌙</button>` : ''}${tok ? '' : `<button class="btn small" data-act="placeChar" data-id="${c.id}">Place</button>`}<button class="btn small danger" data-act="removeChar" data-id="${c.id}">✕</button></div>
       <div class="row"><label class="muted" style="flex:1">🎮 Player <input class="txt" style="width:auto" data-edit="charOwner" data-id="${c.id}" value="${esc(c.owner || '')}" placeholder="their sign-in name"></label>${c.key ? `<span title="Locked to the player's secret word">🔒</span><button class="btn small" data-act="unlockChar" data-id="${c.id}" title="They forgot their word? Clear it.">Unlock</button>` : ''}</div>
       <div class="stat">AC ${st.ac} · HP ${st.hp} · Speed ${st.spd} · PP ${st.passive}${st.dc ? ` · Spell DC ${st.dc}` : ''}${c.goBackFor ? ` · would go back for <i>${esc(c.goBackFor)}</i>` : ''}${c.homeSmell ? ` · home smells of <i>${esc(c.homeSmell)}</i>` : ''}</div>${packHTML(c)}</div>`;
   }

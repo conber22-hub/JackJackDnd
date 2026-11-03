@@ -238,5 +238,6 @@ export function meetRaid(id, defenders){
   showCard({ kind:'', title:`⚔ The raid on ${h.name}`, lines });
   draw(h); changed();
 }
-export const defendersAt = h => crew(h).length;
+// the crew, and a hero keeping watch there (game/downtime.js) counts once more
+export const defendersAt = h => crew(h).length + (h.watch && h.watch.until >= day() ? (h.watch.defence || 1) : 0);
 export { stats };

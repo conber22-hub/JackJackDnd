@@ -59,3 +59,5 @@ export { legendOf, resistLeft } from './game/combat.js';
 export { applyCharacter } from './game/heroes.js';
 export { newHero, heroStats } from './engine/hero.js';
 export { courtDay } from './game/court.js';
+export { openDowntime } from './ui/downtime.js';
+export { planFor, takeDaysOff } from './game/downtime.js';

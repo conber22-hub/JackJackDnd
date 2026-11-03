@@ -12,6 +12,7 @@ const abilityFor = {
   History:'Int', Insight:'Wis', Intimidation:'Cha', Investigation:'Int', Medicine:'Wis',
   Nature:'Int', Perception:'Wis', Performance:'Cha', Persuasion:'Cha', Religion:'Int',
   SleightOfHand:'Dex', Stealth:'Dex', Survival:'Wis',
+  'Animal Handling':'Wis', 'Sleight of Hand':'Dex',   // (the app's own spelling of the two-word skills)
 };
 const teachers = {
   "Smith's Tools":['smith'], "Carpenter's Tools":['farmer'], 'Herbalism Kit':['hermit'],

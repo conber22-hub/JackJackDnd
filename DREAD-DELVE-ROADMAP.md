@@ -27,6 +27,12 @@ Codex's round 7 (#23 crafting, #24 holdings). Pictures: `docs/screens/workshop.j
   - finished pieces go into the hero's pack with their own numbers: a crafted battleaxe attacks as itself, a +1 rune counts like any +1 weapon (`engine/gear.js`, `engine/hero.js`). Wagons join the party's wagons (`.transport`), and "Bring it here" puts one on the map.
   - smiths also sell pieces they've made this week, 🔨 in the trade window; crafted things sell back at half what went into them.
 - **Coins** are paid the way people do (`src/engine/coins.js`): small coins first, the change in gold and silver, never turned into platinum.
+- **🌙 Days off** (ChatGPT's #28, `src/engine/downtime.js`; `src/ui/downtime.js`, `src/game/downtime.js`; the 🌙 on a hero's card in the Tokens tab, 🌙 Days off here in the holding section, or Ctrl+K "days off"):
+  - pick a hero, where they are (a village, a town, the party's holding, the road), the activity and the days
+  - activities: recuperate, work for pay, train (a teacher among the folk), research, carouse, keep watch, craft
+  - the window shows the cost and the check before anything happens; a real d20 can be entered
+  - the result lands on the sheet: coins, a level of exhaustion gone, a tool or language learned, a villager made a friend, a watch kept at the holding (an extra defender in a raid), hours given to their work in the 🔨 Workshop
+  - the days can pass for everyone
 - **✉ The Count's letters** (Muse's #25, `src/ui/letters.js`; the ✉ button by the help button, or Ctrl+K "letter"): the DM writes a letter (six openings in his voice to start from, or anything), seals it with his crest, plain wax or none, and sends it through the Curtain. It arrives on the players' phones and the TV as parchment with a seal to break, and stays in each player's 📜 Letters list. A letter to one hero goes to that player alone (`src/game/outbox.js` `deliver`, through `sendToSeat`); the DM keeps copies in `state.campaign.letters`.
 - **🏰 A place of their own** (Build tab → 🏰 A place of their own; `src/ui/holdings.js`, `src/game/holdings.js`):
   - found a camp, house or outpost around the party (its bounds are the gold line); pick a piece and tap the map: green where it can go, red and why where it can't; R turns it
