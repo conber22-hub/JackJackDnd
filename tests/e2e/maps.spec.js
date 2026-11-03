@@ -5,6 +5,7 @@ const shelf = page => page.evaluate(() => Object.values(window.DreadDelve.get().
 const openMaps = async page => { if (!await page.evaluate(() => window.DreadDelve.ui.panelOpen)) await page.locator('#btnPanel').click(); await page.locator('[data-act="tab"][data-k="dungeon"]').click(); };
 
 test('maps go on the shelf and come back as the party left them; set one up without the party', async ({ page }) => {
+  test.setTimeout(150_000);   // three maps built and framed in turn: 52–57 s alone here, on this build and the one before
   await arena(page, [{ name:'Ada', x:6, y:10 }, { name:'Bram', x:5, y:10 }]);
   await page.evaluate(() => { const D = window.DreadDelve; D.placeMonster('zombie', { floor:0, x:16, y:13 }); D.get().meta.name = 'Training hall'; });
   // a new map: the hall goes on the shelf, the party (not the zombie) travels

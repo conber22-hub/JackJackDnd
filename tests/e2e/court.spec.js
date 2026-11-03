@@ -39,6 +39,7 @@ test('the DM lays deep mist with the Build tab', async ({ page }) => {
 });
 
 test('the Mist Wall turns a hero around', async ({ page }) => {
+  test.setTimeout(150_000);   // a 26-square walk to the wall: ~29 s alone here, longer under the full suite
   await page.evaluate(() => {
     const D = window.DreadDelve; D.ui.roomPrompts = false; document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
     D.newDelve({ name:'The Mist Wall', seed:'e2e-mists', floors:1, size:40, template:'landmark', place:'mists', party:true }, false);
@@ -48,6 +49,6 @@ test('the Mist Wall turns a hero around', async ({ page }) => {
   const go = await page.evaluate(() => { const D = window.DreadDelve, s = D.get(), f = s.floors[0], t = s.tokens.find(t => t.kind === 'pc');
     const i = f.mistWall[Math.floor(f.mistWall.length / 2)]; D.ui.freeMove = true; return { from:{ x:t.x, y:t.y }, to:{ x:i % f.W, y:(i / f.W) | 0 }, id:t.id }; });
   await page.evaluate(go => { const D = window.DreadDelve, t = D.get().tokens.find(t => t.id === go.id); D.doMove(t, go.to.x, go.to.y); }, go);
-  await expect(page.locator('#cardLayer')).toContainText('The Mists turn', { timeout:30_000 });
+  await expect(page.locator('#cardLayer')).toContainText('The Mists turn', { timeout:75_000 });
   await expect.poll(() => page.evaluate(id => { const t = window.DreadDelve.get().tokens.find(t => t.id === id); return { x:t.x, y:t.y }; }, go.id)).toEqual(go.from);
 });
