@@ -17,6 +17,8 @@ import { showCard } from '../ui/hud.js';
 import { broadcast } from './session.js';
 import { sendHost } from '../net/table.js';
 import { court as getCourt } from './court.js';
+import { SELLERS, openTroubleBy, freshTroubles, markAsking } from './trade.js';
+import { PLACE_NAMES } from '../engine/nemesis.js';
 
 const ROLE_NAMES = { villager:'a villager', farmer:'a farmer', smith:'the smith', child:'a child', lostChild:'a lost child', elder:'an elder', watch:'one of the watch',
   priest:'the priest', beggar:'a beggar', traveller:'a traveller', peddler:'a peddler', pilgrim:'a pilgrim', hermit:'a hermit', captive:'a captive', dog:'a dog' };
@@ -46,6 +48,7 @@ export function ensureFolk(L = ui.floor){
   const place = folkPlace(L); if (!place) return false;
   const taken = new Set(partyOn(L).map(t => `${t.x},${t.y}`));
   f.folk = populate(f, { place, seed:`${state.meta.seed}|${L}`, gaze:state.dread || 1, night:night(), court:court() }).filter(p => !taken.has(`${p.x},${p.y}`));
+  freshTroubles(f, place);   // what they need help with (game/trade.js)
   const hero = partyOn(L)[0];
   if (hero) witnessed(L, { kind:'arrival', x:hero.x, y:hero.y });
   sendFolk(L);
@@ -57,7 +60,8 @@ export function refreshFolk(L = ui.floor){
   const place = folkPlace(L); if (!place) return;
   const old = new Map(f.folk.map(p => [p.id, p]));
   f.folk = populate(f, { place, seed:`${state.meta.seed}|${L}`, gaze:state.dread || 1, night:night(), court:court() })
-    .map(p => old.has(p.id) ? { ...p, x:old.get(p.id).x, y:old.get(p.id).y, seen:old.get(p.id).seen || [] } : p);
+    .map(p => old.has(p.id) ? { ...p, x:old.get(p.id).x, y:old.get(p.id).y, seen:old.get(p.id).seen || [], mood:old.get(p.id).mood } : p);
+  freshTroubles(f, place);
   sendFolk(L);
 }
 
@@ -75,7 +79,7 @@ export function stepFolkNow(L = ui.floor, { fight = !!state?.combat?.active } = 
 function sendFolk(L){
   const f = state.floors[L], ex = state.explored?.[L];
   if (!f?.folk || !ex) return;
-  broadcast({ t:'folk', L, folk:f.folk.filter(p => ex.has(p.y * f.W + p.x)).map(p => ({ id:p.id, role:p.role, name:p.name, x:p.x, y:p.y, mood:p.mood })) });
+  broadcast({ t:'folk', L, folk:f.folk.filter(p => ex.has(p.y * f.W + p.x)).map(p => ({ id:p.id, role:p.role, name:p.name, x:p.x, y:p.y, mood:p.mood, ...(p.ask ? { ask:true } : {}) })) });
 }
 // A player's screen: the folk the DM sent.
 export function receiveFolk(m){
@@ -106,14 +110,28 @@ export function talkTo(p, { by = null } = {}){
   if (ui.role !== 'dm'){ sendHost({ t:'talk', L:ui.floor, id:p.id }); showCard({ kind:'', title:p.name || roleName(p), sub:p.name ? roleName(p) : '', flair:'You go over to them. (The DM tells you what they say.)' }, false); return; }
   const r = rng(), said = greet(p, { gaze:state.dread || 1, night:night() }, r), heard = p.role === 'dog' ? null : rumourFor(p, court(), { gaze:state.dread || 1 }, r);
   const rumour = heard && heard.text !== said ? heard : null;
-  showCard({ kind:'', title:p.name || roleName(p), sub:`${p.name ? roleName(p) : ''}${by ? `${p.name ? ' · ' : ''}${by} talks to them` : ''}`, flair:said, lines:rumour ? [`“${rumour.text}”`] : [], cat:'world' });
+  const trouble = openTroubleBy(p.id);
+  showCard({ kind:'', title:p.name || roleName(p), sub:`${p.name ? roleName(p) : ''}${by ? `${p.name ? ' · ' : ''}${by} talks to them` : ''}`, flair:trouble ? trouble.text : said, lines:rumour && !trouble ? [`“${rumour.text}”`] : [], cat:'world' });
   const m = p.spy && court().members.find(x => x.id === p.spy.for), about = rumour?.about && court().members.find(x => x.id === rumour.about);
   const notes = [
     ...(m ? [`👁 One of the Count's eyes: reports to ${m.name} ${m.epithet}${p.seen?.length ? ` (has seen: ${p.seen.map(s => s.kind).join(', ')})` : ''}`] : []),
     ...(rumour && !rumour.true ? [`✗ That rumour is false${m ? ': a lure towards its master\'s haunt' : ''}`] : []),
-    ...(rumour?.true && about ? [`✓ True, about ${about.name} ${about.epithet}`] : []),
+    ...(rumour?.true && about && !trouble ? [`✓ True, about ${about.name} ${about.epithet}`] : []),
+    // a trouble: what it leads to, and the DM's say on how it went
+    ...(trouble ? [troubleNote(trouble), `<span class="row"><button class="btn small primary" data-act="trouble" data-k="done" data-id="${trouble.id}">✓ Put right</button><button class="btn small" data-act="trouble" data-k="failed" data-id="${trouble.id}">✗ Failed</button><button class="btn small" data-act="trouble" data-k="ignored" data-id="${trouble.id}">Left alone</button></span>`] : []),
+    // a seller: the trade window (ui/trade.js)
+    ...(SELLERS.includes(p.role) ? [`<button class="btn small primary" data-act="tradeOpen" data-id="${p.id}" data-k="${ui.floor}">🛒 Trade with ${p.name || roleName(p)}</button>`] : []),
   ];
   if (notes.length) showCard({ kind:m ? 'seep' : '', title:'For your eyes', lines:notes }, false);
+}
+
+// What a trouble leads to, for the DM: the goal, the court member behind a raid, the reward.
+function troubleNote(t){
+  const m = t.links?.member && court().members.find(x => x.id === t.links.member);
+  const goal = t.goal?.action === 'stopRaid' ? `Stop the raids: ${m ? `${m.name} ${m.epithet}` : 'one of his court'}${t.goal.place ? `, who haunts ${PLACE_NAMES[t.goal.place] || t.goal.place}` : ''}`
+    : t.goal?.action === 'bringHome' ? 'Bring the lost child home (they are out on a road)' : t.goal?.action === 'free' ? 'Free the captive (somewhere below ground)' : t.goal?.action === 'return' ? 'Find them (they will come back on their own, with questions: one of his eyes)' : '';
+  const r = t.reward, reward = !r ? '' : r.kind === 'coins' ? `${r.gp} gp` : r.kind === 'favour' ? 'a favour' : 'a true word about the court';
+  return `❗ ${goal}${reward ? ` · reward: ${reward}` : ''}`;
 }
 
 /* The DM's browser keeps them going: a step a second when nobody's fighting, and folk for a floor the party has

@@ -10,15 +10,18 @@ import { burst, showReach, clearReach, flashArea } from '../render/effects.js';
 import { showCard, toast, banner, sendWhisper } from '../ui/hud.js';
 import { WHISPERS } from '../data/dread.js';
 import { sfx } from '../audio/sound.js';
-import { currentTurn, addCond, removeCond, tickConds, hasCond, saveBonus, stopped, startConc, endConc, defend, defNote, immuneTo, saveRoll, saveTxt, timingFor, condPhase, endOn } from './rules.js';
+import { currentTurn, addCond, removeCond, tickConds, hasCond, saveBonus, stopped, startConc, endConc, defend, defNote, immuneTo, saveRoll, saveTxt, timingFor, condPhase, endOn, moveAllowance } from './rules.js';
 import { SPELL_EFFECTS } from '../data/spell-effects.js';
 import { witnessed, stepFolkNow } from './folk.js';
 import { attackMods } from '../engine/conditions.js';
 import { diceAt, upRays, concDC } from '../engine/spellcast.js';
 import { SPELLS } from '../data/srd.js';
-import { freshTurn, clearOpportunities, closeInMove, pausedMover } from './moves.js';
+import { freshTurn, clearOpportunities, closeInMove, pausedMover, turnAction } from './moves.js';
+import { planTurn, resistWorthIt } from '../engine/tactics.js';
+import { court as getCourt } from './court.js';
+import { doMove, nearestOpen } from './actions.js';
 import { rangeCheck, coverOf, areaOf, areaSquares, caughtIn, coverFromOrigin, spellReach } from '../engine/targeting.js';
-import { tokGap as gapTo, bestMelee } from '../engine/movement.js';
+import { tokGap as gapTo, bestMelee, planToward } from '../engine/movement.js';
 import { fightCandidates, rollOrder, fightWon, fightXp } from '../engine/fight.js';
 import { shiftFloor } from './shift.js';
 import { whimRoll, whimStep, whimReset } from './whim.js';
@@ -102,23 +105,61 @@ export function checkVictory(){
 }
 /* A monster takes its turn (the DM's 🤖): hits whoever it can reach — the most hurt first; else shoots one in
    range; else closes in and, if that brings a hero within reach, hits them. Specials stay the DM's to use. */
+/* A monster's turn on its own (the DM's ⚡ Auto): it thinks first (engine/tactics.js, Codex's planTurn: breathe on
+   three, not one beside a friend; go for the wounded and the concentrating; a court servant keeps away from what
+   burned it; cowards run; archers keep their distance; the Count's wolves carry the fallen off), the DM sees why,
+   and then it does it through the app's own actions (walks with opportunity attacks, spells with their saves).
+   Anything it can't carry out falls back to the old way: close in, and swing at the most hurt. */
 export function autoTurn(t){
   if (!t || t.dead || stopped(t)) return;
-  const foes = state.tokens.filter(o => o.floor === t.floor && o.kind !== 'monster' && !o.dead && !o.flags.gone);
-  const pickIn = (list, i) => list.filter(o => rangeCheck(t, o, t.attacks[i]).ok && coverOf(t, o).cover !== 'total').sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
-  const strike = () => {
-    const mi = bestMelee(t), mt = mi !== null && pickIn(foes.filter(o => !o.dead), mi);
-    if (mt){ doAttack(t.id, mt.id, mi); return true; }
-    const ri = t.attacks.findIndex(a => !a.m && /bow|sling|crossbow|throw|spit|bolt|ray|dart|javelin/i.test(a.n));
-    const rt = ri >= 0 && pickIn(foes.filter(o => !o.dead), ri);
-    if (rt){ doAttack(t.id, rt.id, ri); return true; }
-    return false;
+  const sameFloor = o => o.floor === t.floor && !o.flags.gone;
+  const think = () => planTurn(t, { allies:state.tokens.filter(o => sameFloor(o) && o.id !== t.id && side(o) === side(t)), foes:state.tokens.filter(o => sameFloor(o) && side(o) !== side(t)),
+    floor:state.floors[t.floor], round:state.combat.round, court:getCourt() }, Math.random);
+  // after a walk (and any opportunity attack it provoked): then
+  const afterWalk = then => { const until = Date.now() + 20000; const wait = () => { if (tokenViews.get(t.id)?.anim || pausedMover(t.id)){ if (Date.now() < until) setTimeout(wait, 150); return; } if (!t.dead && currentTurn()?.id === t.id) then(); }; setTimeout(wait, 200); };
+  const act = (p, second = false) => {
+    if (!second) toast(`🧠 ${t.name}: ${p.why}`);
+    if (p.kind === 'cast') return castSpell(t.id, null, p.i, p.aim) !== false || legacy(second);
+    if (p.kind === 'attack'){ const tg = tokById(p.target); if (!tg || tg.dead || tg.hp <= 0) return legacy(second); doAttack(t.id, p.target, p.i); return true; }
+    if (p.kind === 'dodge'){ turnAction(t, 'dodge'); return true; }
+    if (p.kind === 'hold') return true;
+    if (second) return false;   // after its move it may still strike, never walk again
+    if (['move', 'flee', 'drag'].includes(p.kind) && p.to){
+      const path = planToward(t, p.to.x, p.to.y, moveAllowance(t)), end = path?.at(-1);
+      if (!end || end.x !== p.to.x || end.y !== p.to.y || !doMove(t, p.to.x, p.to.y, { path })) return legacy();
+      const body = p.kind === 'drag' && tokById(p.target);
+      afterWalk(() => { if (body) dragBody(t, body); else if (p.kind === 'move'){ const q = think(); if (q.kind === 'attack' || q.kind === 'cast') act(q, true); } });
+      return true;
+    }
+    return legacy();
   };
-  if (strike()) return;
-  if (!closeInMove(t)) return;
-  const until = Date.now() + 20000;   // after the walk (and any opportunity attack it provoked), swing if it got there
-  const wait = () => { if (tokenViews.get(t.id)?.anim || pausedMover(t.id)){ if (Date.now() < until) setTimeout(wait, 150); return; } if (!t.dead && currentTurn()?.id === t.id && !strike()) toast(`${t.name} closes in, but can't reach anyone yet.`); };
-  setTimeout(wait, 200);
+  // the old way: the best melee or ranged attack at the most hurt in reach, else close in and try again
+  const legacy = (second = false) => {
+    const foes = state.tokens.filter(o => o.floor === t.floor && o.kind !== 'monster' && !o.dead && !o.flags.gone);
+    const pickIn = (list, i) => list.filter(o => rangeCheck(t, o, t.attacks[i]).ok && coverOf(t, o).cover !== 'total').sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
+    const strike = () => {
+      const mi = bestMelee(t), mt = mi !== null && pickIn(foes, mi);
+      if (mt){ doAttack(t.id, mt.id, mi); return true; }
+      const ri = t.attacks.findIndex(a => !a.m && /bow|sling|crossbow|throw|spit|bolt|ray|dart|javelin/i.test(a.n));
+      const rt = ri >= 0 && pickIn(foes, ri);
+      if (rt){ doAttack(t.id, rt.id, ri); return true; }
+      return false;
+    };
+    if (strike() || second) return true;
+    if (!closeInMove(t)) return false;
+    afterWalk(() => { if (!strike()) toast(`${t.name} closes in, but can't reach anyone yet.`); });
+    return true;
+  };
+  act(think());
+}
+// The Count's wolves carry a fallen hero off: the body comes along to a square beside the wolf.
+function dragBody(w, body){
+  if (body.floor !== w.floor || !(body.dead || body.hp <= 0)) return;
+  const at = nearestOpen(w.floor, w.x, w.y);   // (an open square, nobody on it)
+  if (!at) return;
+  body.x = at.x; body.y = at.y; syncTokens();
+  showCard({ kind:'seep', title:`${w.name} drags ${body.name} away`, flair:'Jaws closed on a collar, and the body slides over the stones after it.' });
+  log(`${w.name} drags ${body.name} away.`); changed();
 }
 export function nextTurn(){
   if (!state.combat.active) return;
@@ -558,7 +599,11 @@ export function castSpell(casterId, targetId, i, aim = null, { at = null } = {})
   if (base0.conditionManual) lines.push('<span class="muted">Its grip, swallow or other hold is the DM\'s call (see its stat block).</span>');
   for (const t of targets){
     const cv = area && sp.sv === 'dex' ? coverFromOrigin(c.floor, origin, t) : null, cb = cv && cv.cover !== 'total' ? cv.ac : 0;
-    const S = saveRoll(t, sp.sv, cb), r = saveTxt(S), ok = S.tot >= sp.dc, raw = base ? (ok ? (sp.half ? Math.floor(base / 2) : 0) : base) : 0, df = defend(t, raw, sp.ty), dmg = df.n;
+    const S = saveRoll(t, sp.sv, cb), r = saveTxt(S);
+    let ok = S.tot >= sp.dc;
+    // a legendary creature refuses to fail, when it matters (engine/tactics.js resistWorthIt: a hold, or a heavy blow)
+    if (!ok && t.kind === 'monster' && resistLeft(t) > 0 && resistWorthIt(t, false, { cond:sp.cond, dmg:base })){ useResistance(t); ok = true; }
+    const raw = base ? (ok ? (sp.half ? Math.floor(base / 2) : 0) : base) : 0, df = defend(t, raw, sp.ty), dmg = df.n;
     lines.push(`${esc(t.name)} — ${String(sp.sv).toUpperCase()} ${r}${cb ? ` <span class="muted">(+${cb} cover)</span>` : ''} vs ${sp.dc}: <b>${ok ? 'saved' : 'failed'}</b>${raw ? ` → ${dmg} ${sp.ty}${defNote(df, raw)}` : ''}${!ok && sp.cond ? condTxt(t, sp.cond) : ''}`);
     // its hold: a concentration spell's lasts until that ends; the rest as the rules say (timingFor): Hold Person's
     // repeated Wisdom save, Color Spray's "until the end of your next turn"

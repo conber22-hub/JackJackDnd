@@ -19,6 +19,8 @@ import { clearReach, showReach } from '../render/effects.js';
 import { toast, renderAll, renderTop, renderSel, renderDock, renderTabs, openFightSetup, renderFightSetup, pickSlot, readCard } from './hud.js';
 import { renderPanel, libHits } from './panels.js';
 import { packAction, setCoin } from './pack.js';
+import { openTrade, tradeAct, tradeHero } from './trade.js';
+import { settleTrouble } from '../game/trade.js';
 import { importLibrary, setLibraryKinds, removeLibrary, libraryState } from '../game/library.js';
 import { setMode } from './input.js';
 import { select, takeStairs, goFloor, setView, setDread, rebuildFog, doorAction, search, disarmTrap, triggerTrap, selectedDoor, selectedTrap, nearestHero } from '../game/actions.js';
@@ -329,6 +331,10 @@ document.addEventListener('click', e => {
     case 'exportHero': { const h = myHero(id); if (h) download(`${h.name.replace(/[^\w]+/g, '-').toLowerCase()}.json`, JSON.stringify(h, null, 1)); } break;
     case 'dmNewChar': openCreator(null, { title:'New character (DM)', saveLabel:'Add to the party', onSave:h => { applyCharacter(h, { owner:'DM' }); renderPanel(); } }); break;
     case 'clock': setHour(k); renderPanel(); break;   // the DM sets the hour (Valley tab)
+    // 🛒 trading with the valley's smith, peddler or priest (ui/trade.js); ❗ how a trouble went (game/trade.js)
+    case 'tradeOpen': openTrade(+k, id); break;
+    case 'tradeHaggle': case 'tradeBuy': case 'tradeSell': case 'tradeClose': tradeAct(a, el); break;
+    case 'trouble': settleTrouble(id, k); break;
     // 🎒 the pack (ui/pack.js): wear, wield, attune, one more, one fewer, add
     case 'pack': { const v = k === 'add' ? $(`#packAdd-${CSS.escape(id)}`)?.value : null; if (packAction(id, k, el.dataset.i, v)) renderPanel(); } break;
     case 'dmSheet': { const h = state.characters[id]; if (h) openCreator(h, { title:`${h.name}'s sheet`, saveLabel:'Save sheet', onSave:h2 => { applyCharacter(h2, { owner:h.owner }); sendSheetToOwner(h2.id); renderPanel(); } }); } break;
@@ -399,6 +405,7 @@ document.addEventListener('change', e => {
   if (kind === 'tok' && t){ const fld = el.dataset.f; t[fld] = el.type === 'number' ? (+el.value || 0) : el.value; if (fld === 'maxHp') t.hp = Math.min(t.hp, t.maxHp); if (t.hp > 0 && t.dead && t.kind !== 'monster') t.dead = false; changed(); }
   else if (kind === 'encFam'){ ui.encFam = el.value; rollEncounter(); renderPanel(); }
   else if (kind === 'charOwner'){ setCharacterOwner(el.dataset.id, el.value); renderPanel(); }
+  else if (kind === 'tradeHero') tradeHero(el.value);
   else if (kind === 'packCoin'){ if (setCoin(el.dataset.id, el.dataset.k, el.value)) renderPanel(); }
   else if (kind === 'atk' && t){ t.attacks = parseAttacks(el.value); changed(); }
   else if (kind === 'room'){ const r = roomById(state.floors[ui.floor], +el.dataset.id); if (!r) return; r[el.dataset.f] = el.dataset.f === 'rise' ? +el.value : el.value;

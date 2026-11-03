@@ -98,7 +98,15 @@ export const FOLK_ROLES = Object.keys(LOOKS);
 /* ---------- on the map ---------- */
 const group = new THREE.Group(); group.name = 'folk'; scene.add(group);
 const views = new Map();   // person id → { sprite, eye, x, y, tx, ty, flip }
-let eyeTex = null;
+let eyeTex = null, askTex = null;
+function askTexture(){
+  if (askTex) return askTex;
+  const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d');
+  x.fillStyle = '#e8b938'; x.strokeStyle = '#2a2026'; x.lineWidth = 4;
+  x.beginPath(); x.arc(32, 32, 26, 0, 7); x.fill(); x.stroke();
+  x.fillStyle = '#2a2026'; x.font = 'bold 40px Georgia, serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('!', 32, 34);
+  return (askTex = new THREE.CanvasTexture(c));
+}
 function eyeTexture(){
   if (eyeTex) return eyeTex;
   const c = document.createElement('canvas'); c.width = c.height = 32; const x = c.getContext('2d');
@@ -133,12 +141,15 @@ export function updateFolk(t, dt){
     const bob = moving ? Math.abs(Math.sin(t * 9 + p.id.length)) * .05 : Math.sin(t * 1.5 + p.x) * .006;
     v.sprite.position.set(v.x - W0(), floorY(ui.floor) + groundY(f, gx, gy) + bob, v.y - W0());
     v.sprite.material.color.set(p.mood === 'afraid' ? '#b8b4c0' : '#ffffff');
+    // ❗ over someone who needs help (game/trade.js troubles; everyone sees it)
+    if (p.ask && !v.ask){ v.ask = new THREE.Sprite(new THREE.SpriteMaterial({ map:askTexture(), transparent:true, depthWrite:false, toneMapped:false })); v.ask.scale.set(.32, .32, 1); group.add(v.ask); }
+    if (v.ask){ v.ask.visible = !!p.ask; if (p.ask){ v.ask.position.copy(v.sprite.position); v.ask.position.y += v.sprite.userData.size[1] + .28 + Math.sin(t * 3 + p.x) * .04; } }
     // the Count's eyes: a red glint the DM can see, now and then
     const spy = ui.role === 'dm' && p.spy;
     if (spy && !v.eye){ v.eye = new THREE.Sprite(new THREE.SpriteMaterial({ map:eyeTexture(), transparent:true, depthWrite:false, blending:THREE.AdditiveBlending })); v.eye.scale.set(.22, .22, 1); group.add(v.eye); }
     if (v.eye){ v.eye.visible = !!spy; if (spy){ v.eye.position.copy(v.sprite.position); v.eye.position.y += v.sprite.userData.size[1] + .12; v.eye.material.opacity = .35 + .35 * Math.max(0, Math.sin(t * 2 + p.x)); } }
   }
-  for (const [id, v] of views) if (!live.has(id)){ group.remove(v.sprite); if (v.eye) group.remove(v.eye); v.sprite.material.dispose(); views.delete(id); }
+  for (const [id, v] of views) if (!live.has(id)){ group.remove(v.sprite); if (v.eye) group.remove(v.eye); if (v.ask) group.remove(v.ask); v.sprite.material.dispose(); views.delete(id); }
 }
 /* The person under a tap (the raycaster already aimed by ui/input.js), or null. */
 export function pickFolk(raycaster){

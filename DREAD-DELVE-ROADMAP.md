@@ -16,6 +16,26 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.25 — monsters that think; the folk's trade and troubles
+
+Codex's round 6 (#22 tactics, #21 trade and troubles). Picture: `docs/screens/trade.jpg`.
+- **A monster's turn on its own** (⚡ Auto, `autoTurn` in `src/game/combat.js`) now thinks first (`src/engine/tactics.js` `planTurn`), and the DM sees why ("🧠 Young Black Dragon: its save action catches 3 foes and no ally"):
+  - a ready breath weapon aimed where it catches the most heroes and none of its friends
+  - focus on the wounded, the concentrating and the easy to hit
+  - the court's servants keep away from the hero who deals what they've learned to fear
+  - cowards run when badly hurt; archers step back from a blade; it Dodges rather than walk into free strikes
+  - the Count's wolves drag a fallen hero away
+  - It acts through the app's own moves and attacks (opportunity attacks and all), and falls back to the old close-in-and-swing if a plan can't be carried out.
+- **Legendary Resistance** is spent on a failed save against a spell when it matters: a hold, or a heavy blow (`resistWorthIt`).
+- **🛒 Trade.** Tap the smith, the peddler or the priest; the DM's card has 🛒 Trade.
+  - The window (`src/ui/trade.js`) shows the day's goods at the catalogue's price, dearer as his Gaze rises. Pick the hero who's buying, 🗣 Haggle (their Persuasion against the seller), then Buy; or sell from their pack at half price.
+  - Coins and pack change on the hero's sheet and go back to the player. What's sold stays sold that day (`state.campaign.stock`).
+- **❗ Troubles.** Folk ask for help (`src/game/trade.js`): a lost child, a captive, a farm raided by one of the Count's court (from the court's own raid news), someone gone missing (who may be one of his eyes, and comes back asking questions).
+  - A ❗ hangs over the asker, on every screen.
+  - Tapping them puts the trouble on the card for the outbox. The DM's card says what it leads to and the reward, with ✓ Put right / ✗ Failed / Left alone.
+  - Settling moves the asker's mood and names the reward; a raid left unanswered makes its court member bolder.
+  - Troubles live in the campaign (`state.campaign.troubles`), never sent to players.
+
 ## v1.24 — day and night in the valley
 
 Picture: `docs/screens/hours.jpg` (dawn, midday, dusk, midnight).
@@ -673,6 +693,8 @@ src/engine/             pure logic: no DOM, no Three.js, unit-tested
   inventory.js          (Codex) the pack: items, +N variants, equipping and attunement rules, magic bonuses, coins, load
   gear.js               what a hero wears and wields, from the pack; keeps the creator's fields in step
   conditions.js         (Codex) what conditions do: attack and save modifiers, auto-crits, speed, actions, exhaustion
+  tactics.js            (Codex) a monster's turn, thought through: planTurn (breathe, focus, flee, keep distance, drag), resistWorthIt
+  trade.js              (Codex) a seller's day of stock, haggling, buying and selling; the folk's troubles and how they're settled
   folk.js               (Codex) the valley's people: populate a place, a step of their day, witnesses, the Count's eyes reporting, rumours
   grid.js               movement (difficult terrain), line of sight, passive Perception
   importer.js           Battle Table / grid JSON / ASCII import, ASCII & JSON export
@@ -748,6 +770,7 @@ src/game/folk.js        the folk at the table: which floors get them, the step t
 src/ui/palette.js       (Muse) 🔎 the command palette (Ctrl+K, /) and the shortcuts sheet (?); registerCommands
 src/ui/ghost.js         (Muse) 🕯 Wick, the guide: STEPS (what the DM most likely wants next), placement, Got it / Show me
 src/ui/notebook.js      (Muse) 📓 the DM's notebook: tagged notes, search, Tonight's notes
+src/ui/trade.js         🛒 the trade window (buy, haggle, sell); src/game/trade.js: stock kept per day, troubles, settling them
 src/ui/pack.js          🎒 the pack: wear, wield, attune, add, coins (player's hero tab, DM's Tokens tab)
 src/ui/cards.js         card only: a player's phone at an in-person game (big buttons, target list, move pad)
 src/net/screen.js       the table screen's local wire (BroadcastChannel) between the DM's window and the TV's
