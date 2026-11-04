@@ -43,6 +43,11 @@ Codex's round 7 (#23 crafting, #24 holdings). Pictures: `docs/screens/workshop.j
   - when the party sets out, 🛞 Take picks one of their wagons; the road's hours become the wagon's (the road, the weather, the load, the damage), with the reasons shown
   - on the road, the wagon's card has a button for each kind of trouble (the Bloom, the Mists, an ambush, a theft, a breakdown, a search, a storm): its fittings answer it (salt barrels, a spare wheel, a lockbox, a hidden compartment, ward-runes), with damage to the wagon and delays added to the journey
   - ⛺ Make camp says who sleeps in a bunk, and the smithy box mends the wagon overnight
+- **🏰 Our place, on the players' phones** (Muse's #31, `src/ui/estate.js`): the DM sends it with 📤 Show the players in the holding section, or Ctrl+K "Show the players our place". Each player gets a 🏰 Our place section on their Your hero tab:
+  - the holding's name, kind, beds, comfort and defence; what stands, and what's being built (with how far along)
+  - the crew (⭐ for the devoted), the wagons and their fittings, the party's gold, and their own hero's Workshop jobs
+  - never the spies, the raids, the watch, the DM's log or another hero's jobs: the summary copies only what a player may see
+  - each player's own version goes to them alone (`deliver` in `src/game/outbox.js`); the TV gets the party's
 - **✉ The Count's letters** (Muse's #25, `src/ui/letters.js`; the ✉ button by the help button, or Ctrl+K "letter"): the DM writes a letter (six openings in his voice to start from, or anything), seals it with his crest, plain wax or none, and sends it through the Curtain. It arrives on the players' phones and the TV as parchment with a seal to break, and stays in each player's 📜 Letters list. A letter to one hero goes to that player alone (`src/game/outbox.js` `deliver`, through `sendToSeat`); the DM keeps copies in `state.campaign.letters`.
 - **🏰 A place of their own** (Build tab → 🏰 A place of their own; `src/ui/holdings.js`, `src/game/holdings.js`):
   - found a camp, house or outpost around the party (its bounds are the gold line); pick a piece and tap the map: green where it can go, red and why where it can't; R turns it

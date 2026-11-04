@@ -13,6 +13,7 @@ import { toast } from './hud.js';
 import { setMode } from './input.js';
 import { renderPanel } from './panels.js';
 import { roleName } from '../game/folk.js';
+import { sendEstate } from './estate.js';
 
 const GROUPS = { 'Walls and ways':['palisade', 'stone-wall', 'gate', 'watchtower', 'ditch', 'salt-line'], 'Shelter':['bedroll-ring', 'tent', 'cottage', 'hall', 'bunkhouse', 'stable', 'wagon-shed', 'storehouse'],
   'Inside a building':['kitchen', 'cellar', 'forge', 'carpenter', 'alchemist', 'library'], 'Grounds':['shrine', 'garden', 'well'] };
@@ -57,7 +58,7 @@ export function holdingsHTML(){
     <div class="muted">Timber is cut or bought, stone quarried or carted in, salt bought dear; the stores' gold pays for building and wages (the party puts it in).</div>
     ${grows ? `<h4>Grow</h4><div class="row">${grows}</div>` : ''}
     ${h.log?.length ? `<h4>Lately</h4><div class="muted">${h.log.slice(-5).map(esc).join('<br>')}</div>` : ''}
-    <div class="row"><button class="btn small" data-act="downtime" title="Recuperate, keep watch, research in the library, craft">🌙 Days off here</button></div>
+    <div class="row"><button class="btn small" data-act="downtime" title="Recuperate, keep watch, research in the library, craft">🌙 Days off here</button><button class="btn small" data-hd="estate" title="Send the players 🏰 Our place: what's built, the crew, the wagons, their own work (never the spies, raids or your notes)">📤 Show the players</button></div>
     <div class="row">${h.modules.length ? '' : '<button class="btn small" data-hd="bounds" title="Then tap the map: the holding centres there">⌖ Move its bounds</button>'}<button class="btn small danger" data-hd="abandon">Abandon it</button></div>
   </details>`;
 }
@@ -101,6 +102,7 @@ document.addEventListener('click', e => {
   else if (a === 'store') adjustStore(h.id, k, +b.dataset.by);
   else if (a === 'grow') growTo(h.id, k);
   else if (a === 'raid') meetRaid(h.id, k === 'meet' ? defendersAt(h) : 0);
+  else if (a === 'estate') sendEstate();   // 🏰 Our place, through the Curtain (ui/estate.js)
   else if (a === 'bounds') setMode('holding', { bounds:true }, 'Tap where the holding should centre');
   else if (a === 'abandon'){ if (confirm(`Abandon ${h.name}? What was built comes down.`)) abandon(h.id); }
   renderPanel(); if (ui.mode === 'holding') holdHover(null);
