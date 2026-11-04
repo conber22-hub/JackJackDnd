@@ -6,6 +6,7 @@ import { freeTilesNear } from '../engine/grid.js';
 import { walk } from '../engine/tiles.js';
 import { planJourney, placeById, rollEvents } from '../engine/overland.js';
 import { VALLEY_ROADS, WAY_HOURS, WEATHER, timeOfDay } from '../data/barovia-map.js';
+import { wagonHours, wagonOut, wagonNight } from './wagons.js';
 import { NIGHT } from '../data/campaign.js';
 import { TEMPLATES } from '../data/themes.js';
 import { BEST } from '../data/bestiary.js';
@@ -35,8 +36,12 @@ export function travel(to){
   const V = valley(), dest = placeById(to), plan = planJourney(V.at, to);
   if (!dest || !plan){ toast('No road goes there from here.'); return; }
   V.journeys++;
-  const hours = plan.stretches.reduce((h, st) => h + (WAY_HOURS[VALLEY_ROADS.find(r => r.id === st.road).way] || 2), 0);
   V.weather = pick(WEATHER); state.campaign.weather = V.weather;
+  // on foot, or at the wagon's pace (game/wagons.js): the road, the weather, the load
+  const legs = plan.stretches.map(st => { const way = VALLEY_ROADS.find(r => r.id === st.road).way; return { way, walk:WAY_HOURS[way] || 2 }; });
+  const byWagon = wagonHours(legs, V.weather);
+  if (byWagon && !Number.isFinite(byWagon.hours)){ toast(`${wagonOut().n} can't move: ${byWagon.why.join(' ')}`); return; }
+  const hours = byWagon ? byWagon.hours : legs.reduce((h, l) => h + l.walk, 0);
   V.journey = { from:V.at, to, path:plan.path, hours, left:{ day:V.day, hour:V.hour } };
   const journey = { from:V.at, to, seed:V.seed, n:V.journeys, gaze:state.dread, bloom:bloomLoose() };
   newDelve({ name:`The road to ${dest.name}`, seed:`${V.seed}|road|${V.journeys}`, floors:plan.stretches.length, size:40, template:'journey', journey }, true, { kind:'road', key:`road:${V.journeys}` });
@@ -89,7 +94,7 @@ export const clockText = () => { const V = valley(); return `Day ${V.day} · ${t
 export function makeCamp(L = ui.floor){
   passTime(8); longRest(undefined, true);
   const omen = pick(NIGHT.omen);
-  showCard({ kind:'', title:'The night on the road', sub:clockText(), flair:omen, lines:['A long rest: full HP, every slot and feature back.', 'Roll for watches as you like. If the Gaze is 3 or more, something comes to the fire (added to this stretch).'] });
+  showCard({ kind:'', title:'The night on the road', sub:clockText(), flair:omen, lines:['A long rest: full HP, every slot and feature back.', 'Roll for watches as you like. If the Gaze is 3 or more, something comes to the fire (added to this stretch).', ...wagonNight()] });
   log(`🧭 They make camp. ${clockText()}.`);
   if (state.dread >= 3) newRoadEvent(L);
   changed(); renderPanel();

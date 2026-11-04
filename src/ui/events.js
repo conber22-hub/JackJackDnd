@@ -23,6 +23,7 @@ import { packAction, setCoin } from './pack.js';
 import { openTrade, tradeAct, tradeHero } from './trade.js';
 import { openWorkshop } from './workshop.js';
 import { openDowntime } from './downtime.js';
+import { setWagon, wagonMeets } from '../game/wagons.js';
 import { settleTrouble } from '../game/trade.js';
 import { importLibrary, setLibraryKinds, removeLibrary, libraryState } from '../game/library.js';
 import { setMode } from './input.js';
@@ -238,6 +239,7 @@ document.addEventListener('click', e => {
     case 'valleyTravel': $('#valleyModal').classList.add('hidden'); if (!valley().journey || confirm('The party is already on a road. Set out somewhere else from where they started?')) travel(k); break;
     case 'valleyArrive': arrive(); break;
     case 'valleyCamp': makeCamp(ui.floor); break;
+    case 'wagonMeets': wagonMeets(k); renderPanel(); break;   // 🛞 trouble on the road, met with the wagon's fittings (game/wagons.js)
     case 'valleyShare': valley().shared = !valley().shared; changed(); renderPanel(); toast(valley().shared ? 'The table can see the map (what they have reached).' : 'The map is hidden from the table.'); break;
     case 'goFloor': goFloor(+k); renderPanel(); break;
     case 'valleyEnter': enterPlace(k, id); break;   // the map being left goes on the shelf (Maps tab)
@@ -411,6 +413,7 @@ document.addEventListener('change', e => {
   else if (kind === 'encFam'){ ui.encFam = el.value; rollEncounter(); renderPanel(); }
   else if (kind === 'charOwner'){ setCharacterOwner(el.dataset.id, el.value); renderPanel(); }
   else if (kind === 'tradeHero') tradeHero(el.value);
+  else if (kind === 'valleyWagon'){ setWagon(el.value); renderPanel(); }
   else if (kind === 'packCoin'){ if (setCoin(el.dataset.id, el.dataset.k, el.value)) renderPanel(); }
   else if (kind === 'atk' && t){ t.attacks = parseAttacks(el.value); changed(); }
   else if (kind === 'room'){ const r = roomById(state.floors[ui.floor], +el.dataset.id); if (!r) return; r[el.dataset.f] = el.dataset.f === 'rise' ? +el.value : el.value;

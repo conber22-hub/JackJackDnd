@@ -8,6 +8,8 @@ import { route, planJourney, placeById, roadBetween } from '../engine/overland.j
 import { valley, onJourney, placeMaps, clockText } from '../game/overworld.js';
 import { BEST } from '../data/bestiary.js';
 import { mapStatus } from '../game/maps.js';
+import { transport } from '../game/workshop.js';
+import { wagonOut, wagonHours, describeWagon, EVENT_KINDS } from '../game/wagons.js';
 
 const GLYPH = { mists:'🌫', gates:'🚪', village:'🏠', crossroads:'⚖', castle:'🏰', coffin:'☄', camp:'🔥', mill:'⚙', town:'🏘', lake:'🌊', ruin:'🏚', swamp:'🛖', vineyard:'🍇', hill:'🗿', tower:'🗼' };
 const opt = (v, l, on) => `<option value="${esc(v)}" ${on ? 'selected' : ''}>${esc(l)}</option>`;
@@ -92,6 +94,7 @@ export function valleyTab(){
       ${p.sessions.length ? `<div class="trait"><b>Sessions here.</b> ${p.sessions.map(n => `<span class="chip" data-act="session" data-k="${n}">${n}</span>`).join('')}</div>` : ''}
       ${p.state ? `<div class="row"><label>Mood</label><select class="txt" style="width:auto" data-edit="place" data-k="${p.state}">${PLACE_STATES.map(st => opt(st, st, (state.campaign.places[p.state] || 'quiet') === st)).join('')}</select></div>` : ''}`;
   if (plan && !V.journey) h += `<div class="trait"><b>The way.</b> ${plan.path.map(id => esc(placeById(id).name)).join(' → ')} · ${plan.stretches.length} stretch${plan.stretches.length === 1 ? '' : 'es'} of road · about ${plan.stretches.reduce((h, st) => h + (WAY_HOURS[VALLEY_ROADS.find(r => r.id === st.road).way] || 2), 0)} hours on foot</div>
+      ${transport().length ? `<div class="row"><label class="muted">🛞 Take <select class="txt" style="width:auto" data-edit="valleyWagon"><option value="">no wagon (on foot)</option>${transport().map(w => `<option value="${esc(w.id)}" ${V.wagon === w.id ? 'selected' : ''}>${esc(w.n)}${w.damage ? ` (${w.hp - w.damage}/${w.hp} HP)` : ''}</option>`).join('')}</select></label>${wagonOut() ? (() => { const legs = plan.stretches.map(st => { const way = VALLEY_ROADS.find(r => r.id === st.road).way; return { way, walk:WAY_HOURS[way] || 2 }; }), wh = wagonHours(legs, V.weather || ''); return wh ? `<span class="muted">${Number.isFinite(wh.hours) ? `about ${wh.hours} hours by wagon` : 'too heavy to move'}${wh.why.length ? ` (${esc(wh.why.join(' '))})` : ''}</span>` : ''; })() : ''}</div>` : ''}
       <div class="row"><button class="btn primary" data-act="valleyTravel" data-k="${p.id}">🧭 Set out for ${esc(p.name)}</button></div>
       <div class="muted">Builds the road as maps — one per stretch — and puts the party at the start. The road's shape stays the same each time; what is on it does not.</div>`;
   else if (path === null && sel !== V.at) h += `<div class="bad">No road reaches ${esc(p.name)} from here.</div>`;
@@ -112,6 +115,10 @@ export function valleyTab(){
     if (!ev.length) h += `<div class="muted">Nothing waiting on this stretch. Quiet roads are the worst kind.</div>`;
     h += `<div class="row"><button class="btn small" data-act="roadNew">✦ Something on the road</button><button class="btn small" data-act="night" data-k="road">Roll a road encounter (desk)</button></div>
       ${/^Road:/.test(state.campaign.lastNight || '') ? `<div class="look">${esc(state.campaign.lastNight)}</div>` : ''}
+      ${wagonOut() ? (() => { const w = wagonOut(); return `<div class="card"><div class="hd"><span class="nm">🛞 ${esc(w.n)}</span><span class="muted">${w.hp - (w.damage || 0)}/${w.hp} HP · AC ${w.ac}</span></div>
+        <div class="muted">${esc(describeWagon(w).replace(/^[^:]+: /, ''))}</div>
+        <div class="muted" style="margin-top:4px">Trouble on the road? What the wagon's fittings do about it:</div>
+        <div class="row" style="flex-wrap:wrap">${Object.entries(EVENT_KINDS).map(([k, n]) => `<button class="btn small" data-act="wagonMeets" data-k="${k}">${n}</button>`).join('')}</div></div>`; })() : ''}
       <div class="row"><button class="btn small" data-act="valleyCamp">⛺ Make camp (8 hours)</button></div>
       <div class="row"><button class="btn ${last ? 'primary' : ''}" data-act="valleyArrive">Arrive at ${esc(placeById(V.journey.to).name)} (+${V.journey.hours || 0}h)</button></div>`;
   }
