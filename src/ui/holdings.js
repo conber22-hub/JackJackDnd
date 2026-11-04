@@ -5,7 +5,7 @@
 import { state, ui, tokById } from '../engine/state.js';
 import { esc, $ } from '../util/core.js';
 import { KINDS, MODULES, KIND_NAMES, holdingHere, holdingById, found, moveBounds, abandon, check, footprint, place, repair, cancel, workDays, hire,
-  dismiss, adjustStore, growTo, meetRaid, defendersAt, stats } from '../game/holdings.js';
+  dismiss, adjustStore, growTo, meetRaid, defendersAt, stats, hands } from '../game/holdings.js';
 import { MODULE_BY_ID as MOD } from '../data/holdings.js';
 import { court } from '../game/court.js';
 import { showFootprint } from '../render/effects.js';
@@ -34,7 +34,7 @@ export function holdingsHTML(){
   const folkHere = (state.floors[ui.floor]?.folk || []).filter(p => !['dog', 'child', 'lostChild', 'captive'].includes(p.role) && !(h.hired || []).some(w => w.id === p.id));
   return `<details class="card hold" open data-holdopen="1"><summary>${KIND_NAMES[h.kind]} <b>${esc(h.name)}</b> <span class="muted">· ${h.bounds.w}×${h.bounds.h} squares</span></summary>
     ${raid ? `<div class="card" style="border-color:var(--blood)"><b>⚔ ${esc(raid.name)} comes for ${esc(h.name)}</b> <span class="muted">(strength ${h.raid.power})</span>
-      <div class="row"><button class="btn small primary" data-hd="raid" data-k="meet">Meet it (${defendersAt(h)} defender${tall(defendersAt(h))} here)</button><button class="btn small" data-hd="raid" data-k="fall">Nobody's there</button></div></div>` : ''}
+      <div class="row"><button class="btn small primary" data-hd="raid" data-k="meet">Meet it (${defendersAt(h)} defender${defendersAt(h) === 1 ? '' : 's'} here)</button><button class="btn small" data-hd="raid" data-k="fall">Nobody's there</button></div></div>` : ''}
     <div class="stat">🛡 Defence ${s.defence} · ✦ Ward ${s.ward} · 🛏 ${s.beds} bed${tall(s.beds)} · 📦 ${s.storage} lb · ☺ Comfort ${s.comfort} · ${s.income} gp in, ${s.upkeep} gp upkeep a week${s.workshops.length ? ` · 🔨 ${s.workshops.join(', ')}` : ''}</div>
     <h4>Build</h4>
     ${Object.entries(GROUPS).map(([g, ids]) => `<div class="muted" style="margin-top:4px">${g}</div><div class="propgrid">${ids.map(id => MOD[id]).filter(m => m && m.kinds.includes(h.kind)).map(m => `<span class="chip ${ui.holdModule === m.id ? 'on' : ''}" data-hd="pick" data-k="${m.id}" title="${esc(m.flavour)} ${esc(gives(m))}">${esc(m.n)}<small> ${m.footprint.w}×${m.footprint.h}</small></span>`).join('')}</div>`).join('')}
@@ -48,8 +48,10 @@ export function holdingsHTML(){
       <div class="muted">The work also goes on by itself as days pass (travel, a long rest): the hired hands keep at it.</div>` : '<div class="muted">Nothing being built.</div>'}
     ${h.modules.some(p => p.built && p.hp < MOD[p.module].hp) ? `<div class="muted">Damaged: ${h.modules.filter(p => p.built && p.hp < MOD[p.module].hp && !h.projects.some(x => x.target === p.id)).map(p => `<button class="btn small" data-hd="repair" data-id="${p.id}">🔧 ${esc(MOD[p.module].n)} (${p.hp}/${MOD[p.module].hp})</button>`).join(' ')}</div>` : ''}
     <h4>Crew</h4>
-    <div>${(h.hired || []).map(w => `<span class="chip">${esc(w.name)} <span class="muted">${esc(roleName(w))}</span> <a data-hd="dismiss" data-id="${esc(w.id)}" title="Let them go">✕</a></span>`).join('') || '<span class="muted">No hired hands.</span>'}</div>
-    ${folkHere.length ? `<div class="row"><select class="txt" style="width:auto" id="holdHire">${folkHere.map(p => `<option value="${esc(p.id)}">${esc(p.name)} (${esc(roleName(p))})</option>`).join('')}</select><button class="btn small" data-hd="hire">Hire (1 gp a day)</button></div>` : '<div class="muted">The folk of this map can be hired when there are any (a village, a camp).</div>'}
+    ${hands(h).map(w => `<div class="packRow"><span class="packN">${w.devoted ? '⭐ ' : ''}${w.exposed ? '👁 ' : ''}${esc(w.name)} <span class="muted">${esc(roleName(w))} · ${esc(w.skill)} · ${w.wage} gp a day</span>${w.exposed ? `<div class="muted" style="color:var(--blood)">The Count's eyes: ${esc(w.exposed.tell)}</div>` : ''}${w.turned ? '<div class="muted">Turned: once his eyes, theirs now.</div>' : ''}</span>
+      <span class="muted" title="Loyalty (0–20): 18 or more is devoted">♥ ${w.loyalty}</span><span class="packB"><button class="btn small" data-hd="dismiss" data-id="${esc(w.id)}" title="Let them go">✕</button></span></div>`).join('') || '<div class="muted">No hired hands.</div>'}
+    ${(h.hired || []).length ? `<div class="muted">Wages come from the stores each day; the unpaid lose heart and may leave. Guards defend in a raid, the devoted twice over. ${defendersAt(h)} defender${defendersAt(h) === 1 ? '' : 's'} here now.</div>` : ''}
+    ${folkHere.length ? `<div class="row"><select class="txt" style="width:auto" id="holdHire">${folkHere.map(p => `<option value="${esc(p.id)}">${esc(p.name)} (${esc(roleName(p))})</option>`).join('')}</select><button class="btn small" data-hd="hire">Hire</button></div>` : '<div class="muted">The folk of this map can be hired when there are any (a village, a camp).</div>'}
     <h4>Stores</h4>
     <div class="row">${['timber', 'stone', 'salt', 'gp'].map(k2 => `<span class="wsMat">${k2}: <b>${h.stores[k2] || 0}</b> <button class="btn small" data-hd="store" data-k="${k2}" data-by="${k2 === 'gp' ? -10 : -5}">−</button><button class="btn small" data-hd="store" data-k="${k2}" data-by="${k2 === 'gp' ? 10 : 5}">+</button></span>`).join('')}</div>
     <div class="muted">Timber is cut or bought, stone quarried or carted in, salt bought dear; the stores' gold pays for building and wages (the party puts it in).</div>

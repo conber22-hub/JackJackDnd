@@ -14,6 +14,8 @@ import { changed } from './session.js';
 import { ensureMapId, mapHooks } from './maps.js';
 import { buildFloor } from '../render/floors.js';
 import { court, dayHooks } from './court.js';
+import { canHire, hire as hireHand, payDay, moraleCheck, watchForEyes, week, defenders as handDefenders } from '../engine/hirelings.js';
+import { RATES, SKILL_OF } from '../data/hirelings.js';
 
 export { KINDS, MODULES };
 export const KIND_NAMES = { camp:'⛺ Camp', house:'🏠 House', homestead:'🌾 Homestead', outpost:'🗼 Outpost', fort:'🏯 Fort', keep:'🏰 Keep' };
@@ -150,45 +152,74 @@ export function drawHere(){ for (const h of holdings()) if (h.map === state.meta
 mapHooks.push(drawHere);
 
 /* ---------- days: building, upkeep, raids ---------- */
-// Who works today: the party (if they're here and the DM says so) and the hired folk.
-function crew(h){
-  const party = h.partyWorks && h.map === state.meta.mapId ? state.tokens.filter(t => t.kind === 'pc' && t.floor === h.floor && !t.dead && !t.flags?.gone).map(t => ({ id:t.id, role:'hero' })) : [];
-  return [...party, ...(h.hired || [])];
+/* The hired hands (engine/hirelings.js, ChatGPT's): a wage, loyalty, a skill; devoted ones defend; spies may slip.
+   A hand hired before they had numbers gets the usual ones. */
+export function hands(h){
+  h.hired = (h.hired || []).map(w => ({ wage:RATES[w.role] ?? .2, loyalty:9, skill:SKILL_OF[w.role] || 'labour', devoted:false, ...w }));
+  return h.hired;
 }
+const party = h => h.partyWorks && h.map === state.meta.mapId ? state.tokens.filter(t => t.kind === 'pc' && t.floor === h.floor && !t.dead && !t.flags?.gone).map(t => ({ id:t.id, role:'hero' })) : [];
+const watchOn = h => h.watch && h.watch.until >= day();
+// Some leave: their morale failed (a raid, unpaid wages, a horror). → the lines saying so
+function moraleAll(h, cause){
+  const s = stats(h), lines = [], stay = [];
+  for (const w of hands(h)){
+    const r = moraleCheck(w, { cause, ward:s.ward, gaze:state.dread || 1 }, rng());
+    if (r.stays) stay.push(w); else lines.push(r.line);
+  }
+  h.hired = stay;
+  return lines;
+}
+/* Days of work: each day the hands are paid from the stores (the unpaid lose heart, and may go), then the party
+   (if they're here) and the paid hands build. */
 export function workDays(id, days = 1){
   const h = holdingById(id); if (!h) return null;
-  // hired hands are paid first: 1 gp a day each, from the stores
-  const wages = (h.hired?.length || 0) * days;
-  if (wages && (h.stores.gp || 0) < wages){ toast(`The hired hands want ${wages} gp and the stores have ${h.stores.gp || 0}: they won't work.`); }
-  const paid = wages && (h.stores.gp || 0) >= wages;
-  if (paid) h.stores.gp -= wages;
-  const workers = paid ? crew(h) : crew(h).filter(w => w.role === 'hero');
-  const r = advance(h, { days, workers, gold:h.stores.gp || 0 }, rng());
-  if (!r.ok){ toast(r.why); return null; }
-  Object.assign(h, r.holding); h.stores.gp = Math.max(0, (h.stores.gp || 0) - r.spentGold);
-  const lines = [];
-  for (const id2 of r.finished){ const p = h.modules.find(x => x.id === id2); lines.push(`The ${MOD[p.module].n.toLowerCase()} is finished.`); }
-  for (const e of r.events){
-    if (e.kind === 'eyes'){
-      const spy = e.worker && (h.hired || []).find(w => w.id === e.worker), m = e.member && court()?.members.find(x => x.id === e.member);
-      lines.push(`A worker saw a figure in the trees.${spy && m ? ` (DM: ${spy.name} is ${m.name}'s eyes.)` : ''}`);
-    } else lines.push(e.text);
+  const lines = [], finishedAll = [];
+  let spentAll = 0, anyone = false;
+  for (let d = 0; d < days; d++){
+    const pay = payDay(hands(h), { gold:h.stores.gp || 0 });
+    h.hired = pay.hirelings; h.stores.gp = Math.max(0, Math.round(((h.stores.gp || 0) - pay.spent) * 100) / 100);
+    if (pay.unpaid.length){
+      h.unpaidWeek = true;
+      lines.push(`${pay.unpaid.length} hand${pay.unpaid.length === 1 ? '' : 's'} went unpaid (the stores are short).`);
+      const s2 = stats(h), gone = new Set();
+      for (const w of h.hired.filter(x => pay.unpaid.includes(x.id))){
+        const r = moraleCheck(w, { cause:'unpaid', ward:s2.ward, gaze:state.dread || 1 }, rng());
+        if (!r.stays){ gone.add(w.id); lines.push(r.line); }
+      }
+      h.hired = h.hired.filter(w => !gone.has(w.id));
+    }
+    const workers = [...party(h), ...h.hired.filter(w => pay.paid.includes(w.id))];
+    if (workers.length) anyone = true;
+    if (!h.projects?.length) continue;
+    const r = advance(h, { days:1, workers, gold:h.stores.gp || 0 }, rng());
+    if (!r.ok){ toast(r.why); return null; }
+    Object.assign(h, r.holding); h.stores.gp = Math.max(0, (h.stores.gp || 0) - r.spentGold); spentAll += r.spentGold;
+    for (const id2 of r.finished){ const p = h.modules.find(x => x.id === id2); finishedAll.push(id2); lines.push(`The ${MOD[p.module].n.toLowerCase()} is finished.`); }
+    for (const e of r.events){
+      if (e.kind === 'eyes'){
+        const spy = e.worker && h.hired.find(w => w.id === e.worker), m = e.member && court()?.members.find(x => x.id === e.member);
+        lines.push(`A worker saw a figure in the trees.${spy && m ? ` (DM: ${spy.name} is ${m.name}'s eyes.)` : ''}`);
+      } else lines.push(e.text);
+    }
   }
-  if (r.spentGold) lines.push(`${r.spentGold} gp paid from the stores for materials and labour.`);
-  if (!workers.length) lines.push('Nobody worked: bring the party here, or hire hands (and keep gold in the stores for their wages).');
+  if (spentAll) lines.push(`${spentAll} gp paid from the stores for materials and labour.`);
+  if (!anyone) lines.push('Nobody worked: bring the party here, or hire hands (and keep gold in the stores for their wages).');
   h.log = [...(h.log || []), ...lines.map(t => `Day ${day() + 1}: ${t}`)].slice(-30);
   if (lines.length) showCard({ kind:'', title:`🏰 ${h.name}`, lines }, false);
   draw(h); changed();
-  return r;
+  return { finished:finishedAll };
 }
 // Hire one of the folk on this floor (a person of the valley, who may be one of the Count's eyes).
 export function hire(id, person){
   const h = holdingById(id); if (!h || !person) return;
-  if ((h.hired || []).some(w => w.id === person.id)) return;
-  (h.hired ||= []).push({ id:person.id, name:person.name, role:person.role, ...(person.spy ? { spy:person.spy } : {}) });
-  log(`🏰 ${person.name} is hired to work at ${h.name} (1 gp a day).`, true); changed();
+  if (hands(h).some(w => w.id === person.id)) return;
+  const ok = canHire(person); if (!ok.ok){ toast(ok.why); return; }
+  const w = hireHand(person, {}, rng()); if (w.ok === false){ toast(w.why); return; }
+  h.hired.push(w);
+  log(`🏰 ${person.name} is hired to work at ${h.name} (${w.wage} gp a day).`, true); changed();
 }
-export function dismiss(id, wid){ const h = holdingById(id); if (h){ h.hired = (h.hired || []).filter(w => w.id !== wid); changed(); } }
+export function dismiss(id, wid){ const h = holdingById(id); if (h){ h.hired = hands(h).filter(w => w.id !== wid); changed(); } }
 export function adjustStore(id, k, by){ const h = holdingById(id); if (h){ h.stores[k] = Math.max(0, (h.stores[k] || 0) + by); changed(); } }
 export function growTo(id, kind){
   const h = holdingById(id); if (!h) return;
@@ -203,11 +234,28 @@ export function growTo(id, kind){
    Count may send someone. A raid waits for the DM: met (defenders) or let fall. */
 function holdingsDay(){
   for (const h of holdings()){
-    if (h.projects?.length && (h.hired?.length || (h.partyWorks && h.map === state.meta.mapId))) workDays(h.id, 1);
+    // wages are owed every day they're hired, building or not; the party builds when they're there
+    if (h.hired?.length || (h.projects?.length && party(h).length)) workDays(h.id, 1);
+    // one of the Count's eyes among the hands may slip (likelier with a hero keeping watch)
+    const found = watchForEyes(hands(h), { watchBonus:watchOn(h) ? h.watch.bonus : 0, days:1 }, rng());
+    for (const f of found){
+      const w = h.hired.find(x => x.id === f.id), m = court()?.members.find(x => x.id === f.member);
+      if (!w || w.exposed) continue;
+      w.exposed = { member:f.member, tell:f.tell };
+      showCard({ kind:'', title:`👁 ${w.name} is one of the Count's eyes`, lines:[f.tell, `They watch for ${m ? `${m.name} ${m.epithet}` : 'his court'}.`, 'Dismiss them, or keep them and feed them lies (the 🏰 crew list).'] }, false);
+      log(`👁 ${w.name} at ${h.name} is found out: ${f.tell}`, true);
+    }
     if ((day() - (h.founded || 0)) % 7 === 6){
       const s = stats(h), net = s.income - s.upkeep;
       h.stores.gp = Math.max(0, (h.stores.gp || 0) + net);
-      h.log = [...(h.log || []), `Week's end: ${s.income} gp in, ${s.upkeep} gp upkeep.`].slice(-30);
+      // the week's loyalty: paid in full, comfortable, raids beaten off together
+      const before = new Map(hands(h).map(w => [w.id, w]));
+      h.hired = week(h.hired, { comfort:s.comfort, paidInFull:!h.unpaidWeek, raidsWon:h.raidsWonWeek || 0 });
+      const news = [`Week's end: ${s.income} gp in, ${s.upkeep} gp upkeep.`];
+      for (const w of h.hired){ const b = before.get(w.id); if (w.devoted && !b?.devoted) news.push(`${w.name} is devoted to the place now.`); if (w.turned && !b?.turned) news.push(`${w.name} has turned: they were the Count's eyes, and aren't any longer.`); }
+      h.unpaidWeek = false; h.raidsWonWeek = 0;
+      h.log = [...(h.log || []), ...news].slice(-30);
+      if (news.length > 1) showCard({ kind:'', title:`🏰 ${h.name}: the week`, lines:news }, false);
     }
     if (!h.raid){
       const raid = raidCheck(h, court(), { gaze:state.dread || 1, day:day() }, rng());
@@ -224,6 +272,9 @@ dayHooks.push(holdingsDay);
 // The raid comes: defenders (heroes there, hired hands) against the raider. Damage, loot, and the court remembers.
 export function meetRaid(id, defenders){
   const h = holdingById(id); if (!h?.raid) return;
+  // the hands face it too: some run (morale), and those who stay defend (guards, the devoted twice over)
+  const fled = defenders ? moraleAll(h, 'raid') : [];
+  if (defenders) defenders = defendersAt(h);
   const r = resolveRaid(h, h.raid, { defenders }, rng());
   if (!r.ok){ toast(r.why); h.raid = null; changed(); return; }
   const raid = h.raid;
@@ -231,7 +282,8 @@ export function meetRaid(id, defenders){
   // the court's own copy follows (the raider's fate, their memory of the place)
   const C = court(), m = r.court.members.find(x => x.id === raid.member), mine = C.members.find(x => x.id === raid.member);
   if (m && mine) Object.assign(mine, m);
-  const lines = [r.fate === 'fled' ? `${mine?.name || 'The raider'} is driven off.` : `${mine?.name || 'The raider'} has their way.`];
+  const lines = [r.fate === 'fled' ? `${mine?.name || 'The raider'} is driven off.` : `${mine?.name || 'The raider'} has their way.`, ...fled];
+  if (r.fate === 'fled') h.raidsWonWeek = (h.raidsWonWeek || 0) + 1;
   for (const d of r.damage){ const p = h.modules.find(x => x.id === d.id); lines.push(`The ${MOD[p.module].n.toLowerCase()} is damaged (${d.amount})${p.hp <= 0 ? ' and falls' : ''}.`); }
   if (r.loot) lines.push(`${r.loot} gp taken from the stores.`);
   h.log = [...(h.log || []), ...lines.map(t => `Day ${day() + 1}: ${t}`)].slice(-30);
@@ -239,5 +291,5 @@ export function meetRaid(id, defenders){
   draw(h); changed();
 }
 // the crew, and a hero keeping watch there (game/downtime.js) counts once more
-export const defendersAt = h => crew(h).length + (h.watch && h.watch.until >= day() ? (h.watch.defence || 1) : 0);
+export const defendersAt = h => party(h).length + handDefenders(hands(h)) + (watchOn(h) ? (h.watch.defence || 1) : 0);
 export { stats };

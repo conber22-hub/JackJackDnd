@@ -33,6 +33,12 @@ Codex's round 7 (#23 crafting, #24 holdings). Pictures: `docs/screens/workshop.j
   - the window shows the cost and the check before anything happens; a real d20 can be entered
   - the result lands on the sheet: coins, a level of exhaustion gone, a tool or language learned, a villager made a friend, a watch kept at the holding (an extra defender in a raid), hours given to their work in the 🔨 Workshop
   - the days can pass for everyone
+- **🏰 Hired hands** (ChatGPT's #29, `src/engine/hirelings.js`; the Crew list in the holding section, `src/game/holdings.js`):
+  - hired from the folk on the map: a wage by role, a skill (labour, guard, craft, cook, scout), loyalty from their mood and the pay
+  - wages come from the stores every day; the unpaid lose loyalty and may walk off
+  - in a raid each hand faces it (morale, harder as his Gaze rises, easier behind a ward); those who stay defend, guards fully, the devoted twice
+  - each week: loyalty grows if paid in full, comfortable and raids beaten off together; at 18 they're devoted ⭐, and a devoted spy turns
+  - a spy among them may slip each day (likelier with a hero keeping watch, 🌙 Days off): the DM gets a 👁 card and the crew list marks them; dismiss them, or keep them and feed them lies
 - **✉ The Count's letters** (Muse's #25, `src/ui/letters.js`; the ✉ button by the help button, or Ctrl+K "letter"): the DM writes a letter (six openings in his voice to start from, or anything), seals it with his crest, plain wax or none, and sends it through the Curtain. It arrives on the players' phones and the TV as parchment with a seal to break, and stays in each player's 📜 Letters list. A letter to one hero goes to that player alone (`src/game/outbox.js` `deliver`, through `sendToSeat`); the DM keeps copies in `state.campaign.letters`.
 - **🏰 A place of their own** (Build tab → 🏰 A place of their own; `src/ui/holdings.js`, `src/game/holdings.js`):
   - found a camp, house or outpost around the party (its bounds are the gold line); pick a piece and tap the map: green where it can go, red and why where it can't; R turns it
