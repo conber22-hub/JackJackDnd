@@ -8,7 +8,7 @@ import { THEMES } from '../data/themes.js';
 import { ROOM_TYPES, TRAP_KINDS } from '../data/rooms.js';
 import { mulberry32 } from '../util/core.js';
 import { scene, G, mat4, col, wx, wz, floorY, WALL_H, makeLabel, tween, ease, fx } from './scene.js';
-import { surfaceTextures, groundTexture, SURFACES } from './textures.js';
+import { surfaceTextures, groundTexture, groundMaps, SURFACES } from './textures.js';
 import { shadowsOn, gfx } from './gfx.js';
 import { kitFor } from './models.js';
 import { buildProp, buildBuilding, inBuilding, treeGeometry, treeMaterial, deadTreeGeometry, tuftGeometry, pebbleGeometry, boulderGeometry, cropGeometry, snowCapGeometry } from './props.js';
@@ -17,14 +17,28 @@ import { propSize, propAt } from '../data/props.js';
 // Paint the floor's stone with its theme's textures (cheap: textures are cached per theme).
 function dressMaterials(fv, th){
   const tx = surfaceTextures(th.id), fm = fv.mats.floor, wm = fv.mats.wall;
-  if (fm.map !== tx.floor){
-    fm.map = tx.floor; fm.bumpMap = tx.bumpF; fm.bumpScale = 1.2;
-    fm.roughnessMap = tx.wet; fm.roughness = tx.wet ? .35 + (1 - tx.wetAmount) * .5 : .95; fm.metalness = th.id === 'wreck' ? .35 : .02;
+  // PBR (render/textures.js): real normals, roughness and occlusion; otherwise the painted canvas and its bump
+  const fMap = tx.pbrF?.map || tx.floor, wMap = tx.pbrW?.map || tx.wall;
+  if (fm.map !== fMap){
+    if (tx.pbrF){
+      Object.assign(fm, { map:tx.pbrF.map, normalMap:tx.pbrF.normal, roughnessMap:tx.pbrF.rough, aoMap:tx.pbrF.ao, aoMapIntensity:.7, bumpMap:null });
+      fm.normalScale.set(1.1, 1.1); fm.roughness = tx.wet ? 1 - tx.wetAmount * .55 : 1;   // wet stone is glossier
+    } else {
+      Object.assign(fm, { map:tx.floor, bumpMap:tx.bumpF, bumpScale:1.2, normalMap:null, aoMap:null, roughnessMap:tx.wet });
+      fm.roughness = tx.wet ? .35 + (1 - tx.wetAmount) * .5 : .95;
+    }
+    fm.metalness = th.id === 'wreck' ? .35 : .02;
     fm.needsUpdate = true;
   }
-  if (wm.map !== tx.wall){
-    wm.map = tx.wall; wm.bumpMap = tx.bumpW; wm.bumpScale = 1.6;
-    wm.roughness = th.id === 'wreck' ? .55 : .88; wm.metalness = th.id === 'wreck' ? .45 : .05;
+  if (wm.map !== wMap){
+    if (tx.pbrW){
+      Object.assign(wm, { map:tx.pbrW.map, normalMap:tx.pbrW.normal, roughnessMap:tx.pbrW.rough, aoMap:tx.pbrW.ao, aoMapIntensity:.75, bumpMap:null });
+      wm.normalScale.set(1.4, 1.4); wm.roughness = 1;
+    } else {
+      Object.assign(wm, { map:tx.wall, bumpMap:tx.bumpW, bumpScale:1.6, normalMap:null, aoMap:null, roughnessMap:null });
+      wm.roughness = th.id === 'wreck' ? .55 : .88;
+    }
+    wm.metalness = th.id === 'wreck' ? .45 : .05;
     wm.needsUpdate = true;
   }
 }
@@ -64,7 +78,7 @@ const SNOW = new THREE.Color('#d4d9e0'), WITHERED = new THREE.Color('#4a4438');
 function capWithSnow(tm){ const caps = new THREE.InstancedMesh(snowCapGeometry(), treeMaterial, tm.count); caps.instanceMatrix.array.set(tm.instanceMatrix.array); caps.receiveShadow = tm.receiveShadow; return caps; }
 function groundMat(fv, kind){
   fv.mats.ground ||= {};
-  if (!fv.mats.ground[kind]){ const t = groundTexture(GROUND[kind]?.tex || kind); fv.mats.ground[kind] = shared(new THREE.MeshStandardMaterial({ map:t.map, bumpMap:t.bump, bumpScale:1, roughness:.95, metalness:0 })); }
+  if (!fv.mats.ground[kind]) fv.mats.ground[kind] = shared(new THREE.MeshStandardMaterial({ ...groundMaps(GROUND[kind]?.tex || kind, 1), roughness:.95, metalness:0 }));
   return fv.mats.ground[kind];
 }
 // A flat sheet of one surface over a world-space rectangle, its texture repeating every `rep` units.
@@ -232,7 +246,7 @@ export function buildFloor(L, opt = {}){
   if (under){
     const drawn = new Set(wl), slab = [];
     for (let i = 0; i < g.length; i++) if (!drawn.has(i) && !(walk(g[i]) && showTile(i)) && !(water.has(i) && (!pv || seen(i)))) slab.push(i);
-    const rmat = fv.mats.rock ||= shared(new THREE.MeshStandardMaterial({ map:groundTexture('rockmass').map, bumpMap:groundTexture('rockmass').bump, bumpScale:2, roughness:1, metalness:0 }));
+    const rmat = fv.mats.rock ||= shared(new THREE.MeshStandardMaterial({ ...groundMaps('rockmass', 2), roughness:1, metalness:0 }));
     const rc = rockc, sm = new THREE.InstancedMesh(G.slab, rmat, Math.max(1, slab.length)); sm.count = slab.length;
     slab.forEach((i, n) => { mat4.makeRotationY(Math.floor(hr(i, 120) * 4) * Math.PI / 2); mat4.setPosition(wx(i % f.W), WALL_H + .06 - .25 + hr(i, 121) * .07, wz((i / f.W) | 0)); sm.setMatrixAt(n, mat4); sm.setColorAt(n, col.copy(rc).multiplyScalar(.8 + hr(i, 122) * .35)); });
     if (sm.instanceColor) sm.instanceColor.needsUpdate = true; sm.receiveShadow = shadows; fv.rock.add(sm);

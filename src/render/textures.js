@@ -3,6 +3,8 @@
    theme colours (and the per-tile colour variation) still tint them. */
 import * as THREE from 'three';
 import { mulberry32 } from '../util/core.js';
+import { makeMaterial, KINDS as PBR_KINDS } from '../engine/texgen.js';
+import { gfx } from './gfx.js';
 
 export const SURFACES = {
   undercroft:{ floor:'flag',     wall:'ashlar', wet:.25 },
@@ -205,21 +207,55 @@ function wetTex(amount, seed){
 // One painted surface (grass, dirt, cobble, rockmass, furrow…) for the outdoor ground and the rock round a dungeon.
 const groundCache = new Map();
 export function groundTexture(kind){
-  if (!groundCache.has(kind)){
-    const map = canvasTex(kind, [...kind].reduce((a, c) => a * 31 + c.charCodeAt(0), 11) >>> 0);
+  const ck = `${kind}|${pbrOn() ? 'pbr' : 'paint'}`;
+  if (!groundCache.has(ck)){
+    const seed = [...kind].reduce((a, c) => a * 31 + c.charCodeAt(0), 11) >>> 0;
+    const map = canvasTex(kind, seed);
     const bump = new THREE.CanvasTexture(map.userData.canvas); bump.wrapS = bump.wrapT = THREE.RepeatWrapping;
-    groundCache.set(kind, { map, bump });
+    groundCache.set(ck, { map, bump, pbr:pbrOn() ? pbrTextures(kind, seed) : null });   // (cobbles, dirt, the rock round a dungeon)
   }
-  return groundCache.get(kind);
+  return groundCache.get(ck);
+}
+// A material's maps for ground made of `kind`: PBR when there's a twin, the painted canvas and its bump otherwise.
+export function groundMaps(kind, bumpScale = 1){
+  const t = groundTexture(kind);
+  return t.pbr ? { map:t.pbr.map, normalMap:t.pbr.normal, roughnessMap:t.pbr.rough, aoMap:t.pbr.ao, aoMapIntensity:.75 } : { map:t.map, bumpMap:t.bump, bumpScale };
+}
+/* PBR MATERIALS (engine/texgen.js, ChatGPT's): the same surfaces as real stone, wood and earth, with a normal map,
+   roughness and ambient occlusion, generated in code and tiling seamlessly. On medium quality and above; a phone on
+   low keeps the painted canvases. A painted pattern with no PBR match (flesh, hands, hedge, a ship's hull) stays
+   painted. The albedo is greyscale, so the theme colours still tint it, as before. */
+const PBR_OF = { flag:'flag', cobble:'cobble', plank:'plank', rock:'rock', rockwall:'rock', rockmass:'rock', dirt:'dirt', ashlar:'ashlar', brick:'brick', bones:'bone', panel:'plank', mud:'mud', snow:'snow', plaster:'plaster' };
+export const pbrOn = () => gfx.quality !== 'low';
+const pbrCache = new Map();
+function dataTex(bytes, size, srgb){
+  const t = new THREE.DataTexture(bytes, size, size, THREE.RGBAFormat);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4;
+  t.generateMipmaps = true; t.minFilter = THREE.LinearMipmapLinearFilter; t.magFilter = THREE.LinearFilter;
+  t.colorSpace = srgb ? THREE.NoColorSpace : THREE.NoColorSpace;   // (a tint map, like the painted ones: kept bright)
+  t.needsUpdate = true;
+  return t;
+}
+// → { map, normal, rough, ao } for a painted pattern's PBR twin, or null if it has none
+export function pbrTextures(paint, seed){
+  const kind = PBR_OF[paint]; if (!kind || !PBR_KINDS.includes(kind)) return null;
+  const key = `${kind}|${seed}`;
+  if (!pbrCache.has(key)){
+    const m = makeMaterial(kind, { size:256, seed:seed >>> 0 || 1 });
+    pbrCache.set(key, { map:dataTex(m.albedo, m.size, true), normal:dataTex(m.normal, m.size), rough:dataTex(m.roughness, m.size), ao:dataTex(m.ao, m.size), kind });
+  }
+  return pbrCache.get(key);
 }
 const cache = new Map();
 export function surfaceTextures(themeId){
-  if (cache.has(themeId)) return cache.get(themeId);
+  const ck = `${themeId}|${pbrOn() ? 'pbr' : 'paint'}`;
+  if (cache.has(ck)) return cache.get(ck);
   const sf = SURFACES[themeId] || SURFACES.undercroft, seed = [...themeId].reduce((a, c) => a * 31 + c.charCodeAt(0), 7) >>> 0;
   const floor = canvasTex(sf.floor, seed), wall = canvasTex(sf.wall === 'rock' ? 'rockwall' : sf.wall, seed + 1);
   const bumpF = new THREE.CanvasTexture(floor.userData.canvas); bumpF.wrapS = bumpF.wrapT = THREE.RepeatWrapping;
   const bumpW = new THREE.CanvasTexture(wall.userData.canvas); bumpW.wrapS = bumpW.wrapT = THREE.RepeatWrapping;
   const out = { floor, wall, bumpF, bumpW, wet:sf.wet > 0 ? wetTex(sf.wet, seed + 2) : null, wetAmount:sf.wet };
-  cache.set(themeId, out);
+  if (pbrOn()){ out.pbrF = pbrTextures(sf.floor, seed); out.pbrW = pbrTextures(sf.wall === 'rock' ? 'rockwall' : sf.wall, seed + 1); }
+  cache.set(ck, out);
   return out;
 }
