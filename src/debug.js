@@ -62,3 +62,5 @@ export { courtDay } from './game/court.js';
 export { openDowntime } from './ui/downtime.js';
 export { planFor, takeDaysOff } from './game/downtime.js';
 export { wagonOut, setWagon, wagonMeets, wagonHours } from './game/wagons.js';
+export { openRest } from './ui/rest.js';
+export { sleep, preview } from './game/rest.js';

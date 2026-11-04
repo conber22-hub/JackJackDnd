@@ -24,6 +24,7 @@ import { packAction, setCoin } from './pack.js';
 import { openTrade, tradeAct, tradeHero } from './trade.js';
 import { openWorkshop } from './workshop.js';
 import { openDowntime } from './downtime.js';
+import { openRest } from './rest.js';
 import { setWagon, wagonMeets } from '../game/wagons.js';
 import { settleTrouble } from '../game/trade.js';
 import { importLibrary, setLibraryKinds, removeLibrary, libraryState } from '../game/library.js';
@@ -116,7 +117,7 @@ document.addEventListener('click', e => {
     case 'resAdj': if (sel) adjustRes(sel, k, +el.dataset.n); break;
     case 'reqAns': answerRequest(id, k, { show:el.dataset.show === '1' }); break;
     case 'shortRest': shortRest(); break;
-    case 'longRest': longRest(); break;
+    case 'longRest': openRest(); break;   // 🌙 where they sleep and who keeps watch (ui/rest.js); its Just rest is the old one
     case 'freeRolls': state.campaign.freeRolls = !state.campaign.freeRolls; changed(); renderPanel(); break;
     case 'cast': if (sel){ const sp = sel.casts[+el.dataset.i], ar = sp.area?.[0], i = +el.dataset.i, who = sel;
       const how = sp.k === 'heal' ? 'tap who to heal' : ar === 'aura' ? 'tap anywhere to cast it around them' : ar && !sp.r ? 'point it, then tap (tap twice on a phone)' : ar ? 'tap where it lands (twice on a phone)' : 'tap the target';
@@ -492,6 +493,7 @@ document.querySelectorAll('#viewSeg button').forEach(b => b.onclick = () => stat
 // what the palette (ui/palette.js) can't know about on its own: the notebook (ui/notebook.js), and the selected creature's exhaustion
 registerCommands([
   ...[['6', 'Dawn', '🌅'], ['12', 'Midday', '☀'], ['18', 'Dusk', '🌇'], ['0', 'Midnight', '🌙']].map(([h, n, icon]) => ({ id:`hour-${h}`, n:`Time: ${n}`, hint:'The sky, the light, the windows and the folk follow', icon, role:'dm', run:() => { setHour(h); renderPanel(); } })),
+  { id:'nightRest', n:'A night\'s rest: where they sleep, who keeps watch', hint:'The odds of a disturbance, the comfort, then the night', icon:'🌙', role:'dm', run:() => openRest() },
   { id:'downtime', n:'Days off: recuperate, work, train, research, carouse, keep watch', hint:'What a hero does between adventures', icon:'🌙', role:'dm', run:() => openDowntime() },
   { id:'workshop', n:'Open the workshop', hint:'Build weapons, armour, trinkets and wagons from parts · commission the smith', icon:'🔨', role:'dm', run:() => openWorkshop() },
   { id:'notebook', n:'Open the notebook', hint:'N outside a fight · notes for you alone', icon:'📓', role:'dm', run:toggleNotebook },

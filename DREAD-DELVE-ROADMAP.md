@@ -48,6 +48,11 @@ Codex's round 7 (#23 crafting, #24 holdings). Pictures: `docs/screens/workshop.j
   - the crew (⭐ for the devoted), the wagons and their fittings, the party's gold, and their own hero's Workshop jobs
   - never the spies, the raids, the watch, the DM's log or another hero's jobs: the summary copies only what a player may see
   - each player's own version goes to them alone (`deliver` in `src/game/outbox.js`); the TV gets the party's
+- **🌙 A night's rest** (ChatGPT's #32, `src/engine/rest.js`; `src/ui/rest.js`, `src/game/rest.js`): 🌙 Long rest (the party panel, or Ctrl+K "A night's rest") asks where they sleep (their holding, an inn, a village, a camp, the road in the wagon, a dungeon) and who keeps watch, and shows the odds and the comfort first.
+  - the holding's walls, a shrine's ward and a salt line make it safer; his Gaze and rain or snow in the open make it worse; nobody on watch means a surprise
+  - the night: quiet, a noise, a scare, or a fight (which breaks the rest: nobody recovers); at Gaze 6 or more, someone dreams
+  - poor shelter gives back full HP but only half the Hit Dice and no exhaustion; a fine room gives one hero Heroic Inspiration
+  - ⛺ Make camp on the road uses it too (a camp, or the road in the wagon's bunks); "Just rest" keeps the old, no-questions long rest
 - **✉ The Count's letters** (Muse's #25, `src/ui/letters.js`; the ✉ button by the help button, or Ctrl+K "letter"): the DM writes a letter (six openings in his voice to start from, or anything), seals it with his crest, plain wax or none, and sends it through the Curtain. It arrives on the players' phones and the TV as parchment with a seal to break, and stays in each player's 📜 Letters list. A letter to one hero goes to that player alone (`src/game/outbox.js` `deliver`, through `sendToSeat`); the DM keeps copies in `state.campaign.letters`.
 - **🏰 A place of their own** (Build tab → 🏰 A place of their own; `src/ui/holdings.js`, `src/game/holdings.js`):
   - found a camp, house or outpost around the party (its bounds are the gold line); pick a piece and tap the map: green where it can go, red and why where it can't; R turns it

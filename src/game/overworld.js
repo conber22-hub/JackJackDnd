@@ -7,6 +7,7 @@ import { walk } from '../engine/tiles.js';
 import { planJourney, placeById, rollEvents } from '../engine/overland.js';
 import { VALLEY_ROADS, WAY_HOURS, WEATHER, timeOfDay } from '../data/barovia-map.js';
 import { wagonHours, wagonOut, wagonNight } from './wagons.js';
+import { sleep, sleepers } from './rest.js';
 import { NIGHT } from '../data/campaign.js';
 import { TEMPLATES } from '../data/themes.js';
 import { BEST } from '../data/bestiary.js';
@@ -92,9 +93,10 @@ export function setHour(to){
 export const clockText = () => { const V = valley(); return `Day ${V.day} · ${timeOfDay(V.hour)}`; };
 // Make camp on the road: the night passes, an omen, and maybe something comes to the fire.
 export function makeCamp(L = ui.floor){
-  passTime(8); longRest(undefined, true);
+  // the night itself (game/rest.js): a camp, with the party taking turns on watch; a wagon's bunks make it the road
+  const night = sleep(wagonOut()?.bunks ? 'road' : 'camp', sleepers().map(t => t.id), { quiet:true });
   const omen = pick(NIGHT.omen);
-  showCard({ kind:'', title:'The night on the road', sub:clockText(), flair:omen, lines:['A long rest: full HP, every slot and feature back.', 'Roll for watches as you like. If the Gaze is 3 or more, something comes to the fire (added to this stretch).', ...wagonNight()] });
+  showCard({ kind:'', title:'The night on the road', sub:clockText(), flair:omen, lines:[...night.card, 'If the Gaze is 3 or more, something comes to the fire (added to this stretch).', ...wagonNight()] }, false);
   log(`🧭 They make camp. ${clockText()}.`);
   if (state.dread >= 3) newRoadEvent(L);
   changed(); renderPanel();
