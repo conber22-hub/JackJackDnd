@@ -6,6 +6,7 @@ const prop = async (page, k) => (await props(page)).find(p => p.k === k);
 const loadedDice = page => page.evaluate(() => { window.__rand = Math.random; Math.random = () => .97; });
 
 test('a hero opens a chest, shoves a crate and topples a bookshelf; the DM smashes a barrel', async ({ page }) => {
+  test.setTimeout(150_000);   // many taps on a 3D page with a software renderer: close to a minute on a busy run
   await arena(page, [{ name:'Ada', x:7, y:10 }]);
   await page.evaluate(() => {
     const D = window.DreadDelve;
