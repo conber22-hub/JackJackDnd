@@ -8,7 +8,7 @@ import { wx, wz, makeLabel, tween } from './scene.js';
 import { floorViews } from './floors.js';
 import { refreshSelectionRing } from './effects.js';
 import { modelKeyFor, instanceModel, modelState } from './models.js';
-import { shadowsOn } from './gfx.js';
+import { shadowsOn, ultra } from './gfx.js';
 import { buildForge, disposeForge } from './forge/build.js';
 import { poseRig, playAction } from './forge/anim.js';
 import { lookFor } from '../engine/look.js';
@@ -324,12 +324,14 @@ export function syncTokens(){
       tv.group.add(tv.label); tv.labelKey = lk;
     }
   }
-  // torch shadows (high quality): only the first three heroes' torches on the floor being looked at cast them
-  let casters = 0;
+  // torch shadows (high quality): the first three heroes' torches on the floor being looked at cast them; on ultra,
+  // up to eight, with sharper shadow maps
+  let casters = 0; const most = ultra() ? 8 : 3, mapSize = ultra() ? 1024 : 256;
   for (const t of state.tokens){
     const l = tokenViews.get(t.id)?.group.userData.light; if (!l) continue;
-    const on = shadowsOn() && l.userData.torch && t.floor === ui.floor && !t.dead && casters < 3;
+    const on = shadowsOn() && l.userData.torch && t.floor === ui.floor && !t.dead && casters < most;
     if (on) casters++;
+    if (on && l.shadow.mapSize.x !== mapSize){ l.shadow.mapSize.set(mapSize, mapSize); l.shadow.map?.dispose(); l.shadow.map = null; }
     if (l.castShadow !== on) l.castShadow = on;
   }
   refreshSelectionRing();

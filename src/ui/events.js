@@ -4,7 +4,7 @@ import { ensureTourButton } from './tour.js';
 import { ensureGhost } from './ghost.js';
 import { ensureLettersButton } from './letters.js';
 import { ensureEstate } from './estate.js';
-import { ensureLook } from './look.js';
+import { ensureLook, openLookPanel } from './look.js';
 import { toggleNotebook } from './notebook.js';
 import { togglePalette, closePalette, closeShortcuts, showShortcuts, registerCommands } from './palette.js';
 import { updateVision, freeTilesNear, seenNow } from '../engine/grid.js';
@@ -398,6 +398,7 @@ document.addEventListener('click', e => {
     case 'scFull': (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.())?.catch?.(() => {}); break;
     case 'scSound': toast('Sound is on for this screen.'); break;   // the tap itself unlocks the browser's audio
     case 'scLeave': leaveScreen(); break;   // ✕ out of the table screen (ui/screen.js)
+    case 'scLook': openLookPanel(); break;   // 🎨 the TV's own look: quality up to ultra (ui/look.js)
     case 'closeHelp': $('#helpModal').classList.add('hidden'); break;
     case 'help': $('#helpModal').classList.remove('hidden'); break;
     // the threshold (start page)

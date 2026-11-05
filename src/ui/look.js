@@ -1,11 +1,10 @@
 /* The 🎨 Look panel and 📸 photo mode — the controls for how good the app
    looks, on a big TV as much as on a phone, and a way to keep the moments
    worth keeping. Every device chooses for itself: the settings live in
-   render/gfx.js, per browser, never sent to the table. Two things here are
-   hooks for Claude (see the PR): quality 'ultra' in the renderer, and a
-   capture({ scale }) that renders a frame and reads it before the buffer
-   clears. Until the second lands, capture reads the canvas right after a
-   requestAnimationFrame, which may come out blank on some devices. */
+   render/gfx.js, per browser, never sent to the table. Ultra is the
+   renderer's (render/gfx.js, render/post.js, render/minis.js); a photo comes
+   from the renderer's capture() (render/post.js), one frame read at once. */
+import { capture } from '../render/post.js';
 import { ui, log } from '../engine/state.js';
 import { $, esc } from '../util/core.js';
 import { gfx, setGfx, onGfx } from '../render/gfx.js';
@@ -42,7 +41,7 @@ function panelHTML(){
   return `<div style="position:relative;width:min(520px,94vw)"><button class="btn small" data-act="lookClose" style="position:absolute;right:-4px;top:-34px;z-index:2">✕</button>
   <h2 style="margin:0 0 4px">🎨 Look</h2><div class="muted">For this screen only — each device chooses for itself. <span id="lookFps">– fps</span></div>
   <h4>Quality</h4><div class="row">${qBtn('low', 'Low')}${qBtn('medium', 'Medium')}${qBtn('high', 'High')}${qBtn('ultra', 'Ultra')}</div>
-  <div class="muted">Low is fast, for phones · medium adds bloom and film grain · high adds torch shadows · ultra is sharper shadows, every torch casting them, full device resolution. Ultra needs the renderer hook — until it lands, it looks like medium.</div>
+  <div class="muted">Low is fast, for phones · medium adds bloom and film grain · high adds torch shadows · ultra is sharper shadows, every torch casting them, full device resolution.</div>
   <h4>Style</h4><div class="row">${sBtn('classic', 'Classic', 'the app as it is', 'linear-gradient(135deg,#1a1c26,#3a4a3a)')}${sBtn('painted', 'Painted', 'an illustrated poster', 'linear-gradient(135deg,#e8c87a,#a33327 55%,#2a6a6a)')}</div>
   <div class="muted">Painted needs medium or high — picking it at low raises quality to medium.</div>
   <h4>Signs &amp; sound</h4><div class="row"><label><input type="checkbox" data-look-omens ${gfx.omens ? 'checked' : ''}> Omens (Strahd's Gaze, outdoors)</label>
@@ -57,7 +56,7 @@ function panelHTML(){
   <div class="row"><button class="btn small primary" data-act="lookPhoto">📸 Enter photo mode</button></div>
   <div class="muted">Photo mode hides every panel and button, leaving only the 3D view. Capture saves a PNG; the DM can also send one to the table as a handout.</div></div>`;
 }
-function openLookPanel(){
+export function openLookPanel(){
   let m = $('#lookPanel');
   if (!m){ m = document.createElement('div'); m.id = 'lookPanel'; m.className = 'modal hidden'; document.body.appendChild(m); }
   m.innerHTML = panelHTML();
@@ -118,23 +117,22 @@ function enterPhotoMode(){
 }
 function exitPhotoMode(){ document.body.classList.remove('photo'); const b = $('#photoBar'); if (b) b.style.display = 'none'; }
 
-/* Capture: read the 3D canvas right after a frame. Until the renderer hook
-   lands, the buffer may already be cleared on some devices and the PNG may
-   come out blank — the hook must render a frame and read it before the
-   buffer clears, at the scale asked for. */
+/* Capture: a frame from the renderer, then the frame and caption drawn on
+   at the size asked for (full or half). */
 function captureCanvas(){
   const cv = document.querySelector('#stage canvas');
   if (!cv) return Promise.resolve(null);
-  return new Promise(res => requestAnimationFrame(() => {
+  // the renderer's own capture (render/post.js): one frame rendered and read at once, so it's never blank
+  return new Promise(res => { const src = new Image(); src.onload = () => {
     const out = document.createElement('canvas');
     out.width = Math.max(1, Math.round(cv.width * prefs.scale)); out.height = Math.max(1, Math.round(cv.height * prefs.scale));
     const x = out.getContext('2d');
-    x.drawImage(cv, 0, 0, out.width, out.height);
+    x.drawImage(src, 0, 0, out.width, out.height);
     if (prefs.frame){ x.strokeStyle = '#1a1208'; x.lineWidth = 48; x.strokeRect(0, 0, out.width, out.height); x.strokeStyle = '#c9a227'; x.lineWidth = 3; x.strokeRect(32, 32, out.width - 64, out.height - 64); }
     const cap = captionText();
     if (prefs.caption && cap){ const fs = Math.max(20, Math.round(out.width / 40)); x.fillStyle = 'rgba(0,0,0,.55)'; x.fillRect(0, out.height - fs * 2.4, out.width, fs * 2.4); x.fillStyle = '#e8dcc0'; x.font = `${fs}px Georgia, serif`; x.textAlign = 'center'; x.fillText(cap, out.width / 2, out.height - fs * 0.8); }
     res(out.toDataURL('image/png'));
-  }));
+  }; src.onerror = () => res(null); src.src = capture({ scale:1 }); });
 }
 function captionText(){
   let place = '', day = '';
@@ -154,8 +152,8 @@ async function capturePhoto(){
 }
 /* The DM's handout: the same view, shrunk for the table (Night's shape — a
    JPEG, never wider than 1280 px), through the Curtain like every card.
-   The TV shows a handout as it arrives; players' phones will show it once
-   Claude lands the player-side handout display (see the PR). */
+   The TV shows a handout as it arrives, and so do the players' phones
+   (ui/screen.js showHandoutHere). */
 async function sendHandout(){
   const url = await captureCanvas();
   if (!url){ toast('No 3D view to send.'); return; }
@@ -167,7 +165,7 @@ async function sendHandout(){
   const title = captionText() || 'A photo from the table';
   toPlayers({ t:'handout', title, img:cv.toDataURL('image/jpeg', .86), text:`📜 Handout: ${title}` }, 'world');
   log(`📜 Photo handout sent to the table: ${title}.`, true);
-  toast('📜 Sent to the table — the TV shows it now; players\' phones will show it once the handout display lands.');
+  toast('📜 Sent to the table: the TV and the players\' phones show it.');
 }
 
 function onLookClick(ev){

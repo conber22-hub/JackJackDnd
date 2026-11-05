@@ -169,3 +169,14 @@ export function screenMsg(m){
   }
   return false;
 }
+
+/* A handout on a player's phone (a photo from the DM's 📸, a picture from the Night tab): shown over the table,
+   tap anywhere to put it away. The TV shows its own (screenMsg 'handout'). */
+export function showHandoutHere(m){
+  if (!m?.img) return;
+  let ov = $('#handoutView');
+  if (!ov){ ov = document.createElement('div'); ov.id = 'handoutView'; ov.className = 'modal'; document.body.appendChild(ov);
+    ov.addEventListener('click', () => ov.classList.add('hidden')); }
+  ov.innerHTML = `<div class="box" style="text-align:center">${m.title ? `<h2>${esc(m.title)}</h2>` : ''}<img src="${m.img}" alt="" style="max-width:100%;max-height:70vh;border-radius:12px"><div class="muted" style="margin-top:8px">Tap to put it away.</div></div>`;
+  ov.classList.remove('hidden');
+}

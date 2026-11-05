@@ -10,7 +10,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { renderer, scene, camera, LABELS } from './scene.js';
-import { postOn, painted } from './gfx.js';
+import { postOn, painted, ultra, pixelRatio } from './gfx.js';
 
 const DreadShader = {
   uniforms:{ tDiffuse:{ value:null }, time:{ value:0 }, dread:{ value:0 }, grain:{ value:.035 }, aspect:{ value:1 } },
@@ -88,7 +88,7 @@ const PaintShader = {
 let composer = null, bloom = null, dreadPass = null, paintPass = null;
 function build(){
   composer = new EffectComposer(renderer);
-  composer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+  composer.setPixelRatio(postRatio());
   composer.setSize(innerWidth, innerHeight);
   composer.addPass(new RenderPass(scene, camera));
   bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth / 2, innerHeight / 2), .55, .45, .82);
@@ -101,8 +101,26 @@ function build(){
 }
 addEventListener('resize', () => { if (composer){ composer.setSize(innerWidth, innerHeight); bloom.resolution.set(innerWidth / 2, innerHeight / 2); } });
 
+const postRatio = () => ultra() ? devicePixelRatio : Math.min(devicePixelRatio, 1.5);
+// The quality changed: the renderer's and the effects' resolution follow (ultra: the device's own).
+export function applyResolution(){
+  renderer.setPixelRatio(pixelRatio());
+  if (composer){ composer.setPixelRatio(postRatio()); composer.setSize(innerWidth, innerHeight); bloom.resolution.set(innerWidth / (ultra() ? 1 : 2), innerHeight / (ultra() ? 1 : 2)); }
+}
+/* A picture of the view (photo mode, ui/look.js): one frame rendered now and read before the browser clears the
+   buffer. scale renders at that many times the resolution (2 = a real 2× picture, not an upscale). → a PNG data URL */
+let lastT = 0, lastDread = 0;
+export function capture({ scale = 1 } = {}){
+  const pr = renderer.getPixelRatio(), cpr = composer?.getPixelRatio?.() ?? pr;
+  if (scale !== 1){ renderer.setPixelRatio(pr * scale); composer?.setPixelRatio(cpr * scale); composer?.setSize(innerWidth, innerHeight); }
+  renderFrame(lastT, lastDread);
+  const url = renderer.domElement.toDataURL('image/png');
+  if (scale !== 1){ renderer.setPixelRatio(pr); composer?.setPixelRatio(cpr); composer?.setSize(innerWidth, innerHeight); }
+  return url;
+}
 // dread01: 0..1
 export function renderFrame(t, dread01){
+  lastT = t; lastDread = dread01;
   if (!postOn()){ renderer.render(scene, camera); return; }
   if (!composer) build();
   dreadPass.uniforms.time.value = t; dreadPass.uniforms.dread.value = dread01; dreadPass.uniforms.aspect.value = innerWidth / innerHeight;

@@ -6,7 +6,7 @@ import { WHISPERS } from './data/dread.js';
 import { pick, $ } from './util/core.js';
 import { bus } from './util/core.js';
 import { scene, camera, controls, renderer, ambient, hemi, moon, rim, runTweens, fx } from './render/scene.js';
-import { renderFrame } from './render/post.js';
+import { renderFrame, applyResolution } from './render/post.js';
 import { gfx, onGfx, shadowsOn, painted } from './render/gfx.js';
 import { loadStoredModels } from './render/models.js';
 import { setDrone, setAmbience } from './audio/sound.js';
@@ -43,6 +43,7 @@ bus.on('log', () => { if (ui.tab === 'table' || ui.tab === 'log' || ui.role === 
 bus.on('models', key => { if (!state) return; if (String(key).startsWith('kit:')) buildAllFloors(); syncTokens(); });
 function applyQuality(){
   renderer.shadowMap.enabled = shadowsOn(); renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  applyResolution();   // ultra: the device's full resolution (render/post.js)
   if (state){ buildAllFloors(); syncTokens(); }
 }
 onGfx(applyQuality); applyQuality();

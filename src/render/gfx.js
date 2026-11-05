@@ -1,5 +1,6 @@
 /* GRAPHICS & SOUND SETTINGS — per device (kept in this browser, never sent to the table).
-   quality: low (fast, phones) · medium (bloom + film grain) · high (adds torch shadows).
+   quality: low (fast, phones) · medium (bloom + film grain) · high (adds torch shadows) · ultra (every hero's
+   torch casts sharper shadows, at the screen's full resolution: a strong laptop or the TV).
    style: classic · painted (an illustrated-poster look: render/post.js; needs medium or high).
    omens: the moving signs of Strahd's Gaze on outdoor maps (ravens, eyes in the trees: render/omens.js). */
 const KEY = 'dreaddelve.gfx.v1';
@@ -14,5 +15,8 @@ export function setGfx(patch){
   for (const fn of listeners) fn(gfx);
 }
 export const postOn = () => gfx.quality !== 'low';
-export const shadowsOn = () => gfx.quality === 'high';
+export const ultra = () => gfx.quality === 'ultra';
+export const shadowsOn = () => gfx.quality === 'high' || gfx.quality === 'ultra';
+// the renderer's pixel ratio: capped for speed, the device's own on ultra
+export const pixelRatio = () => ultra() ? devicePixelRatio : Math.min(devicePixelRatio, 2);
 export const painted = () => gfx.style === 'painted' && gfx.quality !== 'low';

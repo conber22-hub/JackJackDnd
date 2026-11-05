@@ -15,7 +15,7 @@ import { renderPanel } from '../ui/panels.js';
 import { serialize, deserialize, resetScene, changed } from '../game/session.js';
 import { doMove, takeStairs, doPing, goFloor, select, animatePath, doorAction, search, disarmTrap } from '../game/actions.js';
 import { propAction } from '../game/objects.js';
-import { screenMsg, afterScreenState, screenDie, upNext } from '../ui/screen.js';
+import { screenMsg, afterScreenState, screenDie, upNext, showHandoutHere } from '../ui/screen.js';
 import { answerAsk, askPrompt, askClosed, notePrompt } from '../game/asks.js';
 import { currentTurn, canAct, endConc } from '../game/rules.js';
 import { nextTurn } from '../game/combat.js';
@@ -456,6 +456,7 @@ export function onClientMsg(m){
   else if (m.t === 'whisper') showWhisper(m.text);
   else if (m.t === 'letter') net.onLetter?.(m.letter);   // the Count's letters (ui/letters.js sets the receiver)
   else if (m.t === 'estate') net.onEstate?.(m.estate);   // 🏰 Our place (ui/estate.js sets the receiver)
+  else if (m.t === 'handout' && !ui.screen) showHandoutHere(m);   // a picture from the DM (📸 photo mode, the Night tab): the TV shows its own
   else if (m.t === 'banner') banner(m.text);
   else if (m.t === 'ask') askPrompt(m);
   else if (m.t === 'note') notePrompt(m);

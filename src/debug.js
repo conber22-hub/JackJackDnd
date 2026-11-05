@@ -64,3 +64,6 @@ export { planFor, takeDaysOff } from './game/downtime.js';
 export { wagonOut, setWagon, wagonMeets, wagonHours } from './game/wagons.js';
 export { openRest } from './ui/rest.js';
 export { sleep, preview } from './game/rest.js';
+export { showHandoutHere } from './ui/screen.js';
+export { capture } from './render/post.js';
+export { setGfx } from './render/gfx.js';
