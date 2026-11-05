@@ -46,8 +46,9 @@ export function dressWithModel(g, p, tpl){
   const m = tpl.clone(true);
   // the lid first, in the model's own space: re-hung on a hinge at its back bottom edge, opening as the code-drawn
   // chest's does (closed now; turned open below once the model is measured)
-  let hinge = null;
-  if (spec.lid){
+  let hinge = null, slider = null;
+  if (spec.lid && spec.slide){ slider = m.getObjectByName(spec.lid); }   // (a lid that slides off, a coffin's)
+  else if (spec.lid){
     const lid = m.getObjectByName(spec.lid);
     if (lid){
       m.updateMatrixWorld(true);
@@ -66,8 +67,14 @@ export function dressWithModel(g, p, tpl){
   const s = Math.min(byFoot, byHeight);
   const holder = new THREE.Group(); holder.add(m);
   m.position.set(-centre.x, -tmpBox.min.y, -centre.z);
-  holder.scale.setScalar(s);
+  // (stretch: drawn out along its length to fill its squares, never shorter than it was)
+  holder.scale.set(s, s, spec.stretch ? Math.max(s, d.h * fit / Math.max(size.z, 1e-3)) : s);
   g.add(holder);
+  if (slider){
+    const closed = slider.position.x, open = closed + spec.slide;
+    slider.position.x = p?.open ? open : closed;
+    (g.userData.openers ||= []).push({ o:slider, kind:'position', axis:'x', a:closed, b:open });
+  }
   if (hinge){
     const closed = 0, open = -1.9;
     hinge.rotation.x = p?.open ? open : closed;

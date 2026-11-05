@@ -1,7 +1,7 @@
 /* 3D MODELS FOR PROPS — which ready-made model stands in for a prop the app otherwise draws in code
    (src/render/props.js). All by Kay Lousberg (KayKit), CC0 (public domain), each pack with its LICENSE.txt:
-   - public/assets/props/kaykit/: Dungeon Remastered (furniture, barrels, chests)
-   - public/assets/props/halloween/: Halloween Bits (gravestones, a shrine, a bench, a dead tree)
+   - public/assets/props/kaykit/: Dungeon Remastered (furniture, barrels, chests, a pillar)
+   - public/assets/props/halloween/: Halloween Bits (gravestones, a shrine, a bench, a dead tree, a coffin, a ribcage)
    - public/assets/props/hexagon/: Medieval Hexagon (fences, a field wall, a wheelbarrow, sacks, lumber, a rock)
    Served beside the app and loaded the first time a prop needs one (a .glb, or a .gltf with its .bin and texture).
    The offline single file, or a model that can't load, keeps the hand-built prop.
@@ -12,8 +12,10 @@
      model is scaled so that lands on the app's own height for it (PROP_TOP), so climbing still lines up
    - height: for a prop nobody stands on, how tall it should stand, in squares
    - fit: how much of the prop's squares it may fill (it's never scaled bigger than that)
-   - lid: the name of the part that opens (a chest's lid), hinged at its back edge
-   - turn: a quarter turn (radians) to face it the way the app's prop faces */
+   - lid: the name of the part that opens (a chest's lid), hinged at its back edge; with slide, it slides that far
+     along x (model units) instead, as a coffin's lid does
+   - turn: a quarter turn (radians) to face it the way the app's prop faces
+   - stretch: drawn out along its length to fill its squares (a coffin, slimmer than the pack's) */
 export const PROP_MODELS = {
   barrel:     { file:'kaykit/barrel_large.glb',           top:2.0 },
   kegs:       { file:'kaykit/keg_decorated.glb',          top:2.05 },
@@ -37,5 +39,10 @@ export const PROP_MODELS = {
   sacks:      { file:'hexagon/sack.gltf',                 height:.45 },
   woodpile:   { file:'hexagon/resource_lumber.gltf',      height:.35 },
   boulder:    { file:'hexagon/rock_single_C.gltf',        top:.19 },
+  // below ground (sarcophagi, banners, shelves and braziers stay drawn: they open, hang, hold books or glow; rubble
+  // too: the pack's is a heap as tall as a wall)
+  coffin:     { file:'halloween/coffin.gltf',             height:.6, lid:'coffin_lid', slide:1.2, stretch:true },
+  bones:      { file:'halloween/ribcage.gltf',            height:.45 },
+  pillar:     { file:'kaykit/pillar.glb',                 height:1.6 },
 };
 export const MODEL_CREDIT = 'Props: KayKit (Dungeon Remastered, Halloween Bits, Medieval Hexagon) by Kay Lousberg (kaylousberg.com), CC0';
