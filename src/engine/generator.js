@@ -14,6 +14,7 @@ import { describeRoom } from '../data/descriptions.js';
 import { journeySpecs, landmarkSpecs } from './overland.js';
 import { genPlace } from './settlement.js';
 import { cavify } from './caves.js';
+import { inShape, pickShape } from './shapes.js';
 import { addFeatures, FEATURE_TEXT } from './features.js';
 import { state, makeMonster } from './state.js';
 
@@ -110,9 +111,20 @@ export function genFloor(L, W, H, rng, anchor, isLast, spec = {}){
     if (f.up && f.down.x === f.up.x && f.down.y === f.up.y) f.down.x = clamp(f.down.x + 1, rooms[best].x, rooms[best].x + rooms[best].w - 1);
   }
   rooms.forEach(r => { if (r.type === 'chamber' && r.id !== 0 && !spec.blank) r.type = pickWeighted(th.weights, rng); r.name = pick(ROOM_NAMES[r.type], rng); r.notes = ''; });
+  // not every room is a rectangle (engine/shapes.js): round, eight-sided, cross and L-shaped rooms, from their own
+  // dice so the rest of the floor comes out as it always did. Not in the dug places (they're ragged already), and
+  // never where it would leave the stairs in the rock.
+  const cave = spec.cave ?? th.cave;
+  if (!spec.blank && !cave && spec.shapes !== false){
+    const srng = mulberry32(hashSeed(`shape|${L}|${rooms.map(r => r.x + ',' + r.y).join('|')}`));
+    for (const r of rooms){
+      const s = pickShape(r, srng, th.id); if (!s) continue;
+      r.shape = s;
+      if ([f.up, f.down].some(st => st && st.x >= r.x && st.y >= r.y && st.x < r.x + r.w && st.y < r.y + r.h && !inShape(r, st.x, st.y))) delete r.shape;
+    }
+  }
   carve(f);
   // the mines, the warrens and the deep places are dug, not built (engine/caves.js); its own dice, so the floors after it don't change
-  const cave = spec.cave ?? th.cave;
   if (cave && !spec.blank) cavify(f, mulberry32(hashSeed(`cave|${L}|${rooms.map(r => r.x + ',' + r.y).join('|')}`)), cave);
   if (!spec.blank){ placeDoors(f, rng, cave ? { ...spec, doors:spec.doors ?? .1 } : spec); placeTraps(f, rng, spec); }
   return f;
@@ -129,7 +141,7 @@ export function layoutFloor(L, W, H, spec, anchor, isLast = true){
               up:null, down:null, grid:null, dug:[], filled:[], doors:[], traps:[], base:null, nextObj:1, props:[], buildings:[], exits:lay.exits || null };
   for (const [x, y, w, h, type = 'chamber', name, notes = '', o = {}] of lay.rooms)
     f.rooms.push(recalcRoom({ id:f.nextId++, x, y, w, h, type, name:name || pick(ROOM_NAMES[type] || ROOM_NAMES.chamber), notes, free:true, ...(o.outdoor ? { outdoor:true } : {}), ...(o.ground ? { ground:o.ground } : {}), ...(o.crop ? { crop:o.crop } : {}), ...(o.rise ? { rise:o.rise } : {}),
-      ...(o.use ? { use:o.use } : {}), ...(o.dress ? { dress:true } : {}), ...(o.read ? { read:o.read } : {}), ...(name ? { named:true } : {}) }));
+      ...(o.use ? { use:o.use } : {}), ...(o.shape ? { shape:o.shape } : {}), ...(o.dress ? { dress:true } : {}), ...(o.read ? { read:o.read } : {}), ...(name ? { named:true } : {}) }));
   for (const path of lay.paths || []){
     const w = path.w || 1, off = Math.floor((w - 1) / 2), tiles = new Set(), pts = path.pts;
     const brush = (x, y) => { for (let dy = 0; dy < w; dy++) for (let dx = 0; dx < w; dx++){ const nx = x - off + dx, ny = y - off + dy; if (nx > 0 && ny > 0 && nx < W - 1 && ny < H - 1) tiles.add(ny * W + nx); } };
@@ -177,7 +189,7 @@ export const exitLabel = (f, dir) => (dir === 'down' ? '▼ ' : '▲ ') + (f?.ex
 
 export function recalcRoom(r){ r.cx = r.x + Math.floor(r.w / 2); r.cy = r.y + Math.floor(r.h / 2); return r; }
 export const roomById = (f, id) => f.rooms.find(r => r.id === id);
-export function roomAt(f, x, y){ return f.rooms.find(r => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h); }
+export function roomAt(f, x, y){ return f.rooms.find(r => inShape(r, x, y)); }
 export function nearestRoom(f, x, y, except){ let best = null, bd = 1e9; for (const r of f.rooms){ if (r.id === except) continue; const dd = Math.abs(r.cx - x) + Math.abs(r.cy - y); if (dd < bd){ bd = dd; best = r; } } return best; }
 
 export function linkRooms(rooms, rng){
@@ -230,7 +242,7 @@ export function carve(f, keep = []){
   const hall = i => { if (g[i] === T.ROCK) g[i] = T.HALL; };
   // imported floors keep their own walls inside room rectangles, unless the DM has since moved or drawn the room
   const keepBase = r => f.base && f.base.length === N && !r.free;
-  for (const r of f.rooms) for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++){ const i = y * f.W + x; if (!keepBase(r) || walk(f.base[i])) g[i] = T.ROOM; }
+  for (const r of f.rooms) for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++){ const i = y * f.W + x; if (inShape(r, x, y) && (!keepBase(r) || walk(f.base[i]))) g[i] = T.ROOM; }
   if (f.autoLink !== false) for (const e of f.edges){
     const a = roomById(f, e.a), b = roomById(f, e.b); if (a && b) lPath(f, a.cx, a.cy, b.cx, b.cy, e.bend).forEach(hall);
   }
@@ -261,7 +273,7 @@ export function carve(f, keep = []){
   if (f.chasm?.length) f.chasm = f.chasm.filter(i => !walk(g[i]));
   if (f.mists?.length){ f.mists = f.mists.filter(i => walk(g[i])); if (f.mistWall?.length) f.mistWall = f.mistWall.filter(i => walk(g[i])); }
 }
-export const inRoom = (r, x, y) => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h;
+export const inRoom = (r, x, y) => inShape(r, x, y);   // (a shaped room's cut-away corners are rock, not the room: engine/shapes.js)
 
 /* Raised ground. An open-air room with `rise` (1–3) is a low hill: a dome of ground, highest in the middle, falling
    to the room's edge. f.height { square: level } is worked out from the rooms (each level is STEP_H high), and

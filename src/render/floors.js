@@ -12,6 +12,7 @@ import { surfaceTextures, groundTexture, groundMaps, SURFACES } from './textures
 import { shadowsOn, gfx } from './gfx.js';
 import { kitFor } from './models.js';
 import { instancedModel } from './propmodels.js';
+import { inShape, isShaped, SLANTED } from '../engine/shapes.js';
 import { buildProp, buildBuilding, inBuilding, treeGeometry, treeMaterial, deadTreeGeometry, tuftGeometry, pebbleGeometry, boulderGeometry, cropGeometry, snowCapGeometry } from './props.js';
 import { propSize, propAt } from '../data/props.js';
 
@@ -151,10 +152,15 @@ export function buildFloor(L, opt = {}){
   const pv = viewAsPlayer(), exp = state.explored[L];
   const showTile = i => !pv || exp.has(i);
   const g = opt.grid || viewGrid(f, L);
+  // slanted walls (engine/shapes.js): a square of rock with a round or eight-sided room's floor on two sides that meet,
+  // and nothing open on the other two, is drawn as a wedge with its face on the slant, and floor under its open half,
+  // so those rooms read round instead of stepped. (Only the look: the square is still rock to walk and to see.)
+  const wedges = slantedWalls(f, g, kitFor('wall'), th);
   // floor tiles
   const tiles = [];
   const spans = new Set(f.span || []);   // a rope bridge has no floor under it (drawn below, over the drop)
   for (let i = 0; i < g.length; i++) if (walk(g[i]) && g[i] !== T.DOWN && showTile(i) && !spans.has(i)) tiles.push(i);
+  for (const [i, w] of wedges) if (!pv || w.near.some(j => exp.has(j))) tiles.push(i);
   const kitFloor = kitFor('floor'), kitWall0 = kitFor('wall');
   const rng = mulberry32(L * 999 + 7);
   const base = new THREE.Color(th.floor), hall = new THREE.Color(th.hall);
@@ -205,7 +211,7 @@ export function buildFloor(L, opt = {}){
   const isBuildingWall = i => { if (th.walls === 'trees') return false; const x = i % f.W, y = (i / f.W) | 0;
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++){ const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < f.W && ny < f.H && walk(g[ny * f.W + nx]) && indoor(ny * f.W + nx)) return true; }
     return false; };
-  const wl = [], trees = [], water = new Set([...(f.water || []), ...(f.chasm || [])]), masonry = new Set(f.masonry || []), bare = new Set(f.clear || []);
+  let wl = []; const trees = [], water = new Set([...(f.water || []), ...(f.chasm || [])]), masonry = new Set(f.masonry || []), bare = new Set(f.clear || []);
   const pond = new Set(f.water || []);   // (water proper; `water` above also holds the chasms, which are no wall and no tree either)
   const hr = (i, k) => { let h = Math.imul(i ^ Math.imul(k + 1, 0x9e3779b1), 2654435761) ^ Math.imul(L + 1, 40503); h ^= h >>> 15; h = Math.imul(h, 2246822519); h ^= h >>> 13; return (h >>> 0) / 4294967296; };
   for (const i of all){
@@ -226,6 +232,7 @@ export function buildFloor(L, opt = {}){
   }
   // dug floors (engine/caves.js) have walls of heaped rock, not dressed stone
   const cave = !kitWall && !!th.cave, rockc = new THREE.Color(th.wall).lerp(new THREE.Color(th.floor), .25);
+  const slant = wl.filter(i => wedges.has(i)); if (slant.length){ const ws = new Set(slant); wl = wl.filter(i => !ws.has(i)); }
   const wm = new THREE.InstancedMesh(kitWall ? kitWall.geometry : cave ? boulderGeometry() : G.wall, kitWall ? kitWall.material : fv.mats.wall, Math.max(1, wl.length)); wm.count = wl.length;
   wm.castShadow = wm.receiveShadow = shadows;
   const wc = new THREE.Color(th.wall), trim = new THREE.Color(th.trim), bq = new THREE.Quaternion(), bs = new THREE.Vector3(), bp = new THREE.Vector3(), be = new THREE.Euler();
@@ -237,7 +244,8 @@ export function buildFloor(L, opt = {}){
       mat4.compose(bp, bq, bs);
     } else mat4.makeTranslation(wx(x), WALL_H / 2, wz(y));
     wm.setMatrixAt(n, mat4);
-    if (cave) col.copy(rockc).lerp(trim, .08).multiplyScalar(1.35 + rng() * .5);   // the boulders are the lip of the cut, lighter than the rock else { col.copy(wc).multiplyScalar(.75 + rng() * .45); if (rng() < .06) col.lerp(trim, .35); }
+    if (cave) col.copy(rockc).lerp(trim, .08).multiplyScalar(1.35 + rng() * .5);   // the boulders are the lip of the cut, lighter than the rock
+    else { col.copy(wc).multiplyScalar(.75 + rng() * .45); if (rng() < .06) col.lerp(trim, .35); }
     wm.setColorAt(n, col);
   });
   if (wm.instanceColor) wm.instanceColor.needsUpdate = true;
@@ -248,11 +256,20 @@ export function buildFloor(L, opt = {}){
   wl.forEach((i, n) => { mat4.makeTranslation(wx(i % f.W), WALL_H + .03, wz((i / f.W) | 0)); cm.setMatrixAt(n, mat4); cm.setColorAt(n, col.copy(capc).multiplyScalar(.85 + rng() * .25)); });
   if (cm.instanceColor) cm.instanceColor.needsUpdate = true;
   fv.built.add(cm);
+  if (slant.length){
+    const sm = new THREE.InstancedMesh(wedgeGeometry(WALL_H), fv.mats.wall, slant.length), sc = new THREE.InstancedMesh(wedgeGeometry(.06, 1.02), fv.mats.cap, slant.length);
+    slant.forEach((i, n) => {
+      mat4.makeRotationY(wedges.get(i).turn * Math.PI / 2); mat4.setPosition(wx(i % f.W), WALL_H / 2, wz((i / f.W) | 0)); sm.setMatrixAt(n, mat4);
+      sm.setColorAt(n, col.copy(wc).multiplyScalar(.75 + rng() * .45));
+      mat4.setPosition(wx(i % f.W), WALL_H + .03, wz((i / f.W) | 0)); sc.setMatrixAt(n, mat4); sc.setColorAt(n, col.copy(capc).multiplyScalar(.85 + rng() * .25));
+    });
+    for (const m of [sm, sc]){ if (m.instanceColor) m.instanceColor.needsUpdate = true; m.castShadow = m.receiveShadow = shadows; fv.built.add(m); }
+  }
   // the rock the deep places are cut into: on every square that isn't open floor or a drawn wall, and on past the edge
   // (it lives in fv.rock so the stacked view can leave it out and look down through the floors)
   disposeGroup(fv.rock);
   if (under){
-    const drawn = new Set(wl), slab = [];
+    const drawn = new Set([...wl, ...slant]), slab = [];
     for (let i = 0; i < g.length; i++) if (!drawn.has(i) && !(walk(g[i]) && showTile(i)) && !(water.has(i) && (!pv || seen(i)))) slab.push(i);
     const rmat = fv.mats.rock ||= shared(new THREE.MeshStandardMaterial({ ...groundMaps('rockmass', 2), roughness:1, metalness:0 }));
     const rc = rockc, sm = new THREE.InstancedMesh(G.slab, rmat, Math.max(1, slab.length)); sm.count = slab.length;
@@ -586,4 +603,37 @@ export function animateGridChange(L, oldGrid, newGrid){
   if (L === ui.floor) fx.shake = .35;
   tween(1.8, k => { const e = ease(k); place(rm, rising, -WALL_H / 2 + e * WALL_H - .05); place(sm, sinking, WALL_H / 2 - e * WALL_H - .05); },
     () => { fv.group.remove(rm); fv.group.remove(sm); rm.dispose(); sm.dispose(); buildFloor(L); });
+}
+
+/* The wedges for slanted walls: square → { turn, near } where turn (0–3, quarter turns) faces the slant at the open
+   corner (0: open to the north and east) and near lists the two floor squares it faces (the players see it once
+   they've seen either). Only round and eight-sided rooms, only dressed-stone walls (not a kit's, a cave's or the woods'). */
+function slantedWalls(f, g, kit, th){
+  const out = new Map(), W = f.W, H = f.H;
+  if (kit || th.cave || th.walls === 'trees') return out;
+  const open = (x, y) => x >= 0 && y >= 0 && x < W && y < H && walk(g[y * W + x]);
+  for (const r of f.rooms){
+    if (!SLANTED.has(r.shape) || !isShaped(r)) continue;
+    const floor = (x, y) => open(x, y) && g[y * W + x] === T.ROOM && inShape(r, x, y);
+    for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++){
+      if (open(x, y)) continue;
+      const n = floor(x, y - 1), e = floor(x + 1, y), s = floor(x, y + 1), w = floor(x - 1, y);
+      const turn = n && e && !open(x, y + 1) && !open(x - 1, y) ? 0 : n && w && !open(x, y + 1) && !open(x + 1, y) ? 1
+        : s && w && !open(x, y - 1) && !open(x + 1, y) ? 2 : s && e && !open(x, y - 1) && !open(x - 1, y) ? 3 : -1;
+      if (turn < 0) continue;
+      const near = [[x, y - 1, n], [x + 1, y, e], [x, y + 1, s], [x - 1, y, w]].filter(a => a[2]).map(([a, b]) => b * W + a);
+      out.set(y * W + x, { turn, near });
+    }
+  }
+  return out;
+}
+// A wall square cut on the slant: the solid half of a square (open to the north and east before it's turned), h tall.
+const wedgeCache = new Map();
+function wedgeGeometry(h, size = 1){
+  const key = h + ':' + size; if (wedgeCache.has(key)) return wedgeCache.get(key);
+  const a = size / 2, sh = new THREE.Shape([new THREE.Vector2(-a, -a), new THREE.Vector2(a, -a), new THREE.Vector2(-a, a)]);
+  // (the shape lies in x, y; laid flat, its y runs to -z: these corners become south-west, south-east, north-west)
+  const geo = new THREE.ExtrudeGeometry(sh, { depth:h, bevelEnabled:false });
+  geo.rotateX(-Math.PI / 2); geo.translate(0, -h / 2, 0); geo.computeVertexNormals();
+  wedgeCache.set(key, geo); return geo;
 }

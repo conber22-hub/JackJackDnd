@@ -423,7 +423,10 @@ document.addEventListener('change', e => {
   else if (kind === 'valleyWagon'){ setWagon(el.value); renderPanel(); }
   else if (kind === 'packCoin'){ if (setCoin(el.dataset.id, el.dataset.k, el.value)) renderPanel(); }
   else if (kind === 'atk' && t){ t.attacks = parseAttacks(el.value); changed(); }
-  else if (kind === 'room'){ const r = roomById(state.floors[ui.floor], +el.dataset.id); if (!r) return; r[el.dataset.f] = el.dataset.f === 'rise' ? +el.value : el.value;
+  else if (kind === 'room'){ const r = roomById(state.floors[ui.floor], +el.dataset.id); if (!r) return;
+    if (el.dataset.f === 'shape') snapshot('reshape room');
+    r[el.dataset.f] = el.dataset.f === 'rise' ? +el.value : el.value;
+    if (el.dataset.f === 'shape'){ if (!r.shape) delete r.shape; carve(state.floors[ui.floor], state.tokens.filter(t => t.floor === ui.floor)); updateVision(); syncTokens(); }
     if (el.dataset.f === 'rise'){ snapshot('raise ground'); carve(state.floors[ui.floor], state.tokens.filter(t => t.floor === ui.floor)); syncTokens(); } if (el.dataset.f === 'name') r.named = true; if (!['notes', 'read'].includes(el.dataset.f)) buildFloor(ui.floor); renderPanel(); changed(); }
   else if (kind === 'floorName'){ state.floors[ui.floor].name = el.value; renderTop(); changed(); }
   else if (kind === 'floorTheme'){ state.floors[ui.floor].theme = +el.value; buildFloor(ui.floor); renderPanel(); changed(); }

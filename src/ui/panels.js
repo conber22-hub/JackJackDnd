@@ -5,6 +5,7 @@ import { tableGaps, tableMax } from '../engine/tables.js';
 import { FAMILIES, BEST, bestList } from '../data/bestiary.js';
 import { DREAD, CONDITIONS } from '../data/dread.js';
 import { ROOM_TYPES, TRAP_KINDS, DOOR_STATES } from '../data/rooms.js';
+import { SHAPES } from '../engine/shapes.js';
 import { THEMES, TEMPLATES } from '../data/themes.js';
 import { DEFAULT_SHIFT_TABLE, DEFAULT_WHIM_TABLE, WHIM_STEPS } from '../data/tables.js';
 import { $, esc, avgDice, attacksToText } from '../util/core.js';
@@ -231,7 +232,8 @@ function buildTab(){
   if (r){
     h += `<h4>Selected room</h4><div class="card sel"><div class="hd"><span class="dot" style="color:${ROOM_TYPES[r.type]?.color};background:${ROOM_TYPES[r.type]?.color}"></span>
       <input class="txt" style="flex:1" value="${esc(r.name)}" data-edit="room" data-id="${r.id}" data-f="name"></div>
-      <div class="row"><select class="txt" data-edit="room" data-id="${r.id}" data-f="type">${Object.entries(ROOM_TYPES).map(([k, v]) => opt(k, v.label, r.type === k)).join('')}</select></div>
+      <div class="row"><select class="txt" data-edit="room" data-id="${r.id}" data-f="type">${Object.entries(ROOM_TYPES).map(([k, v]) => opt(k, v.label, r.type === k)).join('')}</select>
+        <select class="txt" title="The room's shape on the grid (5×5 and up; a smaller room stays a rectangle)" data-edit="room" data-id="${r.id}" data-f="shape">${Object.entries(SHAPES).map(([k, v]) => opt(k, v, (r.shape || '') === k)).join('')}</select></div>
       <div class="stat">${r.w}×${r.h} squares (${r.w * 5}×${r.h * 5} ft) at ${r.x}, ${r.y}${r.stairsUp ? ' · stairs up' : ''}${r.stairsDown ? ' · stairs down' : ''}</div>
       <textarea class="txt" style="min-height:44px" placeholder="DM notes…" data-edit="room" data-id="${r.id}" data-f="notes">${esc(r.notes || '')}</textarea>
       <div class="row"><button class="btn small" data-act="populateRoom" data-id="${r.id}">Populate room</button><button class="btn small danger" data-act="delRoom" data-id="${r.id}">Delete room</button></div></div>`;
