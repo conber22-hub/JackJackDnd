@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { PROPS, propSize } from '../data/props.js';
 import { OBJECTS } from '../data/objects.js';
 import { mulberry32 } from '../util/core.js';
+import { propModel, dressWithModel } from './propmodels.js';
 import { wx, wz } from './scene.js';
 
 const mats = new Map(), geos = new Map();
@@ -282,7 +283,9 @@ function debris(g, p, s){
 export function buildProp(p){
   const outer = new THREE.Group(); outer.userData.propId = p.id;
   if (p.broken){ const s = propSize(p); debris(outer, p, s); outer.position.set(wx(p.x) + (s.w - 1) / 2, 0, wz(p.y) + (s.h - 1) / 2); outer.userData.debris = true; return outer; }
-  const g = new THREE.Group(); (BUILD[p.k] || BUILD.crate)(g, p);
+  // a ready-made 3D model when there is one and it's here (render/propmodels.js), the code-drawn prop otherwise
+  const g = new THREE.Group(), tpl = propModel(p.k);
+  if (tpl) dressWithModel(g, p, tpl); else (BUILD[p.k] || BUILD.crate)(g, p);
   g.rotation.y = -(p.rot || 0) * Math.PI / 2;
   outer.userData.openers = g.userData.openers;
   const fl = p.fallen, s = fl ? { w:fl.ow, h:fl.oh } : propSize(p), x0 = fl ? fl.ox : p.x, y0 = fl ? fl.oy : p.y;

@@ -7,6 +7,7 @@ import { pick, $ } from './util/core.js';
 import { bus } from './util/core.js';
 import { scene, camera, controls, renderer, ambient, hemi, moon, rim, runTweens, fx } from './render/scene.js';
 import { renderFrame, applyResolution } from './render/post.js';
+import { onPropModels } from './render/propmodels.js';
 import { gfx, onGfx, shadowsOn, painted } from './render/gfx.js';
 import { loadStoredModels } from './render/models.js';
 import { setDrone, setAmbience } from './audio/sound.js';
@@ -47,6 +48,7 @@ function applyQuality(){
   if (state){ buildAllFloors(); syncTokens(); }
 }
 onGfx(applyQuality); applyQuality();
+onPropModels(() => { if (state){ buildAllFloors(); syncTokens(); } });   // a prop's 3D model has arrived: redraw with it (render/propmodels.js)
 loadStoredModels();
 
 const clock = new THREE.Clock(), rimDir = new THREE.Vector3();

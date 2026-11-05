@@ -229,6 +229,7 @@ document.addEventListener('click', e => {
     case 'goRoom': { const r = roomById(state.floors[ui.floor], +id); if (r){ ui.selRoom = r.id; focusTile(ui.floor, r.cx, r.cy); buildFloor(ui.floor); renderPanel(); } } break;
     // graphics, sound, models
     case 'gfxQ': setGfx({ quality:k }); renderPanel(); break;
+    case 'gfxModels': setGfx({ models:gfx.models === false }); renderPanel(); break;   // 🧊 props as KayKit models, or drawn (render/propmodels.js); applyQuality redraws
     case 'gfxStyle': setGfx({ style:k }); renderPanel(); break;
     case 'gfxOmens': setGfx({ omens:gfx.omens === false }); renderPanel(); break;
     case 'gfxT': setGfx({ [k]:!gfx[k] }); renderPanel(); break;

@@ -57,6 +57,7 @@ const modelSlot = (key, label) => {
 export const gfxPanel = () => `<h3>Graphics & sound</h3>
   <div class="row"><label>Quality</label>${['low', 'medium', 'high'].map(q => `<button class="btn small ${gfx.quality === q ? 'on' : ''}" data-act="gfxQ" data-k="${q}">${q[0].toUpperCase() + q.slice(1)}</button>`).join('')}</div>
   <div class="muted">Low: fastest (phones). Medium: bloom on eyes and runes, film grain that worsens as his Gaze rises. High: torch shadows too.</div>
+  <div class="row"><label>3D models</label><button class="btn small ${gfx.models !== false ? 'on' : ''}" data-act="gfxModels" title="Barrels, chests, tables and beds as ready-made 3D models (loaded once, then cached) instead of the drawn ones">${gfx.models !== false ? '🧊 Props as 3D models: on' : 'Props as 3D models: off'}</button></div>
   <div class="row"><label>Omens</label><button class="btn small ${gfx.omens !== false ? 'on' : ''}" data-act="gfxOmens">${gfx.omens !== false ? '🐦‍⬛ Ravens and eyes: on' : 'Ravens and eyes: off'}</button></div>
   <div class="row"><label>Style</label>${[['classic', 'Classic'], ['painted', '🎨 Painted']].map(([k, l]) => `<button class="btn small ${(gfx.style || 'classic') === k ? 'on' : ''}" data-act="gfxStyle" data-k="${k}">${l}</button>`).join('')}</div>
   <div class="muted">Painted: like an illustrated poster: brush strokes, warm lights and cool shadows, a lit edge on every figure, canvas grain.${gfx.quality === 'low' ? ' <b>Needs Medium or High quality.</b>' : ''}</div>
