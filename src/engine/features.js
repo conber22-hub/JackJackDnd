@@ -37,7 +37,7 @@ export function addFeatures(f, themeId, rng){
   const W = f.W, start = f.up ? f.up.y * W + f.up.x : f.rooms[0].cy * W + f.rooms[0].cx, out = [];
   f.shallow ||= []; f.chasm ||= []; f.span ||= []; f.rough ||= []; f.props ||= [];
   for (const r of f.rooms){
-    if (r.type === 'entrance' || r.stairsUp || r.stairsDown || r.feature) continue;
+    if (r.type === 'entrance' || r.stairsUp || r.stairsDown || r.feature || r.vault) continue;   // (a set piece is its own feature)
     for (const [kind, p] of Object.entries(odds)){
       if (rng() >= p) continue;
       const before = snapshot(f), was = reachable(f, start);

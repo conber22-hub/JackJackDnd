@@ -25,7 +25,7 @@ test('rooms get water, chasms, rock falls and pillars, and the floor still joins
       for (const i of f.shallow || []){ assert.ok(walk(f.grid[i]), 'water to the knee can be walked in'); assert.ok(f.rough.includes(i), 'and it is difficult terrain'); }
       for (const i of f.chasm || []) assert.ok(!walk(f.grid[i]), 'a chasm is a drop');
       for (const i of f.span || []) assert.ok(walk(f.grid[i]), 'the bridge can be walked');
-      if (f.chasm?.length) assert.ok(f.span.length, 'every chasm has a bridge');
+      if (f.rooms.some(r => r.feature === 'chasm')) assert.ok(f.span.length, 'every chasm feature has a bridge');   // (a set piece's pit may have only a ledge round it)
       // no furniture in the water or on the bridge
       const wet = new Set([...(f.shallow || []), ...(f.span || [])]);
       for (const p of f.props || []) if (p.k !== 'rubble' && p.k !== 'pillar') assert.ok(!wet.has(p.y * f.W + p.x), `${p.k} is not in the water`);

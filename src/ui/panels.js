@@ -6,6 +6,8 @@ import { FAMILIES, BEST, bestList } from '../data/bestiary.js';
 import { DREAD, CONDITIONS } from '../data/dread.js';
 import { ROOM_TYPES, TRAP_KINDS, DOOR_STATES } from '../data/rooms.js';
 import { SHAPES } from '../engine/shapes.js';
+import { VAULTS } from '../data/vaults.js';
+import { parseVault } from '../engine/vaults.js';
 import { THEMES, TEMPLATES } from '../data/themes.js';
 import { DEFAULT_SHIFT_TABLE, DEFAULT_WHIM_TABLE, WHIM_STEPS } from '../data/tables.js';
 import { $, esc, avgDice, attacksToText } from '../util/core.js';
@@ -235,6 +237,7 @@ function buildTab(){
       <div class="row"><select class="txt" data-edit="room" data-id="${r.id}" data-f="type">${Object.entries(ROOM_TYPES).map(([k, v]) => opt(k, v.label, r.type === k)).join('')}</select>
         <select class="txt" title="The room's shape on the grid (5×5 and up; a smaller room stays a rectangle)" data-edit="room" data-id="${r.id}" data-f="shape">${Object.entries(SHAPES).map(([k, v]) => opt(k, v, (r.shape || '') === k)).join('')}</select></div>
       <div class="stat">${r.w}×${r.h} squares (${r.w * 5}×${r.h * 5} ft) at ${r.x}, ${r.y}${r.stairsUp ? ' · stairs up' : ''}${r.stairsDown ? ' · stairs down' : ''}</div>
+      ${setPieceRow(r)}
       <textarea class="txt" style="min-height:44px" placeholder="DM notes…" data-edit="room" data-id="${r.id}" data-f="notes">${esc(r.notes || '')}</textarea>
       <div class="row"><button class="btn small" data-act="populateRoom" data-id="${r.id}">Populate room</button><button class="btn small danger" data-act="delRoom" data-id="${r.id}">Delete room</button></div></div>`;
   }
@@ -550,3 +553,13 @@ export function renderPanel(){
   body.scrollTop = scroll;
 }
 export { CONDITIONS, BEST };
+
+// Build tab → Selected room: a set piece (engine/vaults.js) for a plain room, from those that fit it either way round.
+function setPieceRow(r){
+  if (r.vault) return `<div class="muted">🏛 Set piece: ${esc(VAULTS.find(v => v.id === r.vault)?.name || r.vault)} (undo takes it out)</div>`;
+  if (r.shape) return '';
+  const fit = VAULTS.filter(v => { const p = parseVault(v); return (p.w <= r.w && p.h <= r.h) || (p.h <= r.w && p.w <= r.h); });
+  if (!fit.length) return `<div class="muted">🏛 No set piece fits a room this small (most need 7×9).</div>`;
+  return `<div class="row"><select class="txt" id="setPieceSel" title="A hand-designed set piece: its own layout, furniture and read-aloud">${fit.map(v => opt(v.id, v.name, false)).join('')}</select>
+    <button class="btn small" data-act="setPiece" data-id="${r.id}">🏛 Set piece</button></div>`;
+}

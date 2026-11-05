@@ -16,7 +16,7 @@ const SIDES = [[-1, 0, 0], [0, -1, 1], [1, 0, 2], [0, 1, 3]];
 export function furnishFloor(f, themeId, rng){
   f.props ||= [];
   const taken = new Set();                     // each use once a floor before any repeats (one nursery, one library…)
-  for (const r of f.rooms) furnishRoom(f, r, themeId, rng, { taken });
+  for (const r of f.rooms) if (!r.vault) furnishRoom(f, r, themeId, rng, { taken });   // (a set piece comes furnished: engine/vaults.js)
   return f;
 }
 

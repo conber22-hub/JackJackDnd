@@ -68,7 +68,7 @@ import { turnAction, undoMove, closeInMove, selectParty, selectKin, clearGroup, 
 import { useFeature, adjustRes, shortRest, longRest } from '../game/resources.js';
 import { legendOf, legendLeft, useLegendary, useResistance, lairAction } from '../game/combat.js';
 import { rollEncounter, placeEncounter } from '../game/fights.js';
-import { furnish, clearFurniture, describeRooms, readRoom, answerPrompt } from '../game/rooms.js';
+import { furnish, clearFurniture, describeRooms, readRoom, answerPrompt, setPiece } from '../game/rooms.js';
 
 const actor = () => ui.role === 'player' ? tokById(ui.myToken) : (ui.selected && tokById(ui.selected));
 
@@ -109,6 +109,7 @@ document.addEventListener('click', e => {
     case 'furnishFloor': furnish(ui.floor); break;
     case 'furnishRoom': furnish(ui.floor, +id); break;
     case 'clearRoom': clearFurniture(ui.floor, +id); break;
+    case 'setPiece': setPiece(ui.floor, +id, $('#setPieceSel')?.value); break;
     case 'describeFloor': describeRooms(ui.floor); break;
     case 'readRoom': readRoom(ui.floor, +id); break;
     case 'promptRead': answerPrompt(+k, +id, true); break;

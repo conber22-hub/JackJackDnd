@@ -1,15 +1,19 @@
 /* ROOMS AT THE TABLE — reading a room aloud, furnishing rooms by hand (old saves, hand-drawn rooms), and the
    DM's prompt when the party first walks into a room ("📜 Read aloud?"). */
 import { state, ui } from '../engine/state.js';
-import { roomById } from '../engine/generator.js';
+import { roomById, applyVault } from '../engine/generator.js';
 import { furnishRoom, clearRoomProps } from '../engine/dressing.js';
+import { stampVault } from '../engine/vaults.js';
+import { VAULTS } from '../data/vaults.js';
 import { describeRoom } from '../data/descriptions.js';
 import { THEMES } from '../data/themes.js';
 import { $, esc } from '../util/core.js';
 import { buildFloor } from '../render/floors.js';
 import { showCard, toast } from '../ui/hud.js';
 import { renderPanel } from '../ui/panels.js';
-import { changed, snapshot } from './session.js';
+import { changed, snapshot, dropSnapshot } from './session.js';
+import { updateVision } from '../engine/grid.js';
+import { syncTokens } from '../render/minis.js';
 
 const themeOf = f => THEMES[f.theme]?.id;
 const propsIn = (f, r) => (f.props || []).filter(p => p.x >= r.x && p.x < r.x + r.w && p.y >= r.y && p.y < r.y + r.h).length;
@@ -34,6 +38,19 @@ export function clearFurniture(L, id){
   const f = state.floors[L], r = f && roomById(f, id); if (!r) return;
   snapshot('clear furniture'); const n = clearRoomProps(f, r);
   buildFloor(L); changed(); renderPanel(); toast(`${n} prop${n === 1 ? '' : 's'} cleared.`);
+}
+// A set piece (engine/vaults.js) put into a plain room by hand (Build tab → Selected room): its furniture replaces the
+// room's, turned and placed so every way in stays open; undo takes it out again.
+export function setPiece(L, id, vaultId){
+  const f = state.floors[L], r = f && roomById(f, id), v = VAULTS.find(v => v.id === vaultId); if (!r || !v) return;
+  if (r.shape){ toast('Set pieces go in rectangular rooms: make it a rectangle first.'); return; }
+  if (r.vault){ toast('This room already holds a set piece. Undo to take it out first.'); return; }
+  snapshot('set piece'); const kept = (f.props || []).slice(); clearRoomProps(f, r);
+  const out = stampVault(f, r, v, Math.random), start = f.up ? f.up.y * f.W + f.up.x : r.cy * f.W + r.cx;
+  if (!out || !applyVault(f, r, v, out, start, state.tokens.filter(t => t.floor === L && !t.dead).map(t => ({ x:t.x, y:t.y })))){
+    f.props = kept; dropSnapshot(); toast(`${v.name} won't fit in ${r.name} without blocking a way in.`); return;
+  }
+  updateVision(); buildFloor(L); syncTokens(); changed(); renderPanel(); toast(`${v.name}: ${v.read}`);
 }
 export function describeRooms(L){
   const f = state.floors[L]; if (!f) return;

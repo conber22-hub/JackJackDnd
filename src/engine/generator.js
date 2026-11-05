@@ -13,8 +13,9 @@ import { ravenloftLayout } from './castle.js';
 import { describeRoom } from '../data/descriptions.js';
 import { journeySpecs, landmarkSpecs } from './overland.js';
 import { genPlace } from './settlement.js';
-import { cavify } from './caves.js';
+import { cavify, reachable } from './caves.js';
 import { inShape, pickShape } from './shapes.js';
+import { pickVault, stampVault } from './vaults.js';
 import { addFeatures, FEATURE_TEXT } from './features.js';
 import { state, makeMonster } from './state.js';
 
@@ -58,7 +59,9 @@ export function genDelve(meta){
       if (sp.castle !== undefined) for (const r of f.rooms) r.read ||= describeRoom(r, tid, drng);
       return;
     }
-    // a few rooms with something of their own (water, a chasm, a fall of rock, pillars) before the furniture goes in
+    // set pieces first (engine/vaults.js: a crypt of coffin niches, a flooded shrine…), then a few rooms with something
+    // of their own (water, a chasm, a fall of rock, pillars) before the furniture goes in
+    addVaults(f, tid, mulberry32(hashSeed(`${meta.seed}|vaults|${L}`)));
     addFeatures(f, tid, mulberry32(hashSeed(`${meta.seed}|features|${L}`)));
     furnishFloor(f, tid, drng);
     for (const r of f.rooms){ r.read ||= describeRoom(r, tid, drng); if (r.feature) r.read += ' ' + FEATURE_TEXT[r.feature].read; }
@@ -458,4 +461,37 @@ export function populateFloor(f, L, rng = Math.random, withBoss = false, chance 
     for (const [bid, n] of group.group){ const count = typeof n === 'number' ? n : rollWith(n, rng); for (let k = 0; k < count; k++) put(bid, r); }
   }
   return placed;
+}
+
+/* Set pieces (engine/vaults.js, ChatGPT's): for each plain room, maybe a hand-designed vault that fits it, stamped in
+   whole (rock, water, rough ground, a drop, its furniture) as long as nothing that could be walked to before is cut
+   off. The room takes the vault's name and read-aloud, and the features and the furniture leave it alone (r.vault). */
+export function addVaults(f, themeId, rng){
+  const used = [], W = f.W, start = f.up ? f.up.y * W + f.up.x : f.rooms[0].cy * W + f.rooms[0].cx;
+  f.filled ||= []; f.shallow ||= []; f.chasm ||= []; f.rough ||= []; f.props ||= [];
+  for (const r of f.rooms){
+    if (r.type === 'entrance' || r.shape || r.vault || r.feature) continue;
+    const v = pickVault(r, themeId, rng, { used }); if (!v) continue;
+    const out = stampVault(f, r, v, rng); if (!out) continue;
+    if (!applyVault(f, r, v, out, start)) continue;
+    used.push(v.id);
+  }
+  return used;
+}
+// Put a stamped set piece into the floor (its rock, water, rough ground, drop and furniture), unless that would cut off
+// anything that could be walked to from `start` before: then the floor is put back as it was. → true if it went in.
+export function applyVault(f, r, v, out, start, keep = []){
+  f.filled ||= []; f.shallow ||= []; f.chasm ||= []; f.rough ||= []; f.props ||= [];
+  const was = reachable(f, start), before = { filled:f.filled.slice(), shallow:f.shallow.slice(), chasm:f.chasm.slice(), rough:f.rough.slice(), props:f.props.length, nextObj:f.nextObj };
+  f.filled.push(...out.filled, ...out.chasm); f.chasm.push(...out.chasm);
+  f.shallow.push(...out.shallow); f.rough.push(...out.rough, ...out.shallow);   // (knee-deep water is difficult ground too)
+  for (const p of out.props) f.props.push({ id:f.nextObj++, ...p });
+  carve(f, keep);
+  const now = reachable(f, start);
+  if ([...was].some(i => walk(f.grid[i]) && !now.has(i))){
+    Object.assign(f, { filled:before.filled, shallow:before.shallow, chasm:before.chasm, rough:before.rough, nextObj:before.nextObj }); f.props.length = before.props; carve(f, keep);
+    return false;
+  }
+  r.vault = v.id; r.name = v.name; r.named = true; r.read = v.read;
+  return true;
 }
