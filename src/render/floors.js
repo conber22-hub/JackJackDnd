@@ -11,6 +11,7 @@ import { scene, G, mat4, col, wx, wz, floorY, WALL_H, makeLabel, tween, ease, fx
 import { surfaceTextures, groundTexture, groundMaps, SURFACES } from './textures.js';
 import { shadowsOn, gfx } from './gfx.js';
 import { kitFor } from './models.js';
+import { instancedModel } from './propmodels.js';
 import { buildProp, buildBuilding, inBuilding, treeGeometry, treeMaterial, deadTreeGeometry, tuftGeometry, pebbleGeometry, boulderGeometry, cropGeometry, snowCapGeometry } from './props.js';
 import { propSize, propAt } from '../data/props.js';
 
@@ -75,6 +76,13 @@ export function groundWeather(){
 }
 const SNOW = new THREE.Color('#d4d9e0'), WITHERED = new THREE.Color('#4a4438');
 // the same trees again in white, a little inside and above their tiers: snow lying on the branches
+// the woods' trees: the pine and dead-tree models (render/propmodels.js) when they're here, else the drawn ones.
+// A model pine carries its own snow (its material whitens what faces up), so it takes no caps. On low quality (phones)
+// the woods keep the drawn trees, a fifth of the triangles.
+function woodsTree(live, snow){
+  const m = gfx.quality !== 'low' && instancedModel(live ? 'pine' : 'deadtree', live ? 2.3 : 2.1, live ? snow : 0);
+  return m ? { geo:m.geometry, mat:m.material, caps:false } : { geo:live ? treeGeometry() : deadTreeGeometry(), mat:treeMaterial, caps:live };
+}
 function capWithSnow(tm){ const caps = new THREE.InstancedMesh(snowCapGeometry(), treeMaterial, tm.count); caps.instanceMatrix.array.set(tm.instanceMatrix.array); caps.receiveShadow = tm.receiveShadow; return caps; }
 function groundMat(fv, kind){
   fv.mats.ground ||= {};
@@ -259,13 +267,13 @@ export function buildFloor(L, opt = {}){
   const deadShare = (th.id === 'woods' ? .12 : th.walls === 'mixed' ? .06 : 0) + (deadOK ? Math.min(.45, wither * .07) : 0);
   const dead = deadShare ? trees.filter(i => hr(i, 11) < deadShare) : [];
   if (dead.length){
-    const dm = new THREE.InstancedMesh(deadTreeGeometry(), treeMaterial, dead.length), q = new THREE.Quaternion(), sc = new THREE.Vector3(), ps = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+    const wt = woodsTree(false, snow), dm = new THREE.InstancedMesh(wt.geo, wt.mat, dead.length), q = new THREE.Quaternion(), sc = new THREE.Vector3(), ps = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
     dead.forEach((i, n) => { const s = .9 + hr(i, 12) * .6; ps.set(wx(i % f.W) + (hr(i, 2) - .5) * .4, 0, wz((i / f.W) | 0) + (hr(i, 3) - .5) * .4); q.setFromAxisAngle(up, hr(i, 4) * 6.28); sc.set(s, s, s); mat4.compose(ps, q, sc); dm.setMatrixAt(n, mat4); dm.setColorAt(n, col.setRGB(1, 1, 1).multiplyScalar(.75 + hr(i, 6) * .4)); });
     if (dm.instanceColor) dm.instanceColor.needsUpdate = true; dm.castShadow = shadows; fv.built.add(dm);
   }
   if (dead.length){ const ds = new Set(dead); for (let k = trees.length - 1; k >= 0; k--) if (ds.has(trees[k])) trees.splice(k, 1); }
   if (trees.length){
-    const tm = new THREE.InstancedMesh(treeGeometry(), treeMaterial, trees.length), q = new THREE.Quaternion(), sc = new THREE.Vector3(), ps = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+    const wt = woodsTree(true, snow), tm = new THREE.InstancedMesh(wt.geo, wt.mat, trees.length), q = new THREE.Quaternion(), sc = new THREE.Vector3(), ps = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
     const tint = new THREE.Color(th.trim);
     trees.forEach((i, n) => {
       const x = i % f.W, y = (i / f.W) | 0, s = .85 + hr(i, 1) * .6;
@@ -276,7 +284,7 @@ export function buildFloor(L, opt = {}){
     if (tm.instanceColor) tm.instanceColor.needsUpdate = true;
     tm.castShadow = tm.receiveShadow = shadows; tm.userData.trees = 1;
     fv.built.add(tm);
-    if (snow >= .4) fv.built.add(capWithSnow(tm));
+    if (snow >= .4 && wt.caps) fv.built.add(capWithSnow(tm));
   }
   // ground clutter on outdoor floors: grass tufts in the clearings, stones on the roads
   if (outdoor){
@@ -330,13 +338,13 @@ export function buildFloor(L, opt = {}){
       }
       const dead = pts.filter(p => hr(p[5], 135) < (th.id === 'woods' ? .1 : .06) + Math.min(.45, wither * .07)), live = pts.filter(p => !dead.includes(p));
       const q = new THREE.Quaternion(), sc = new THREE.Vector3(), ps = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0), tint = new THREE.Color(th.trim);
-      for (const [list, geo] of [[live, treeGeometry()], [dead, deadTreeGeometry()]]){
+      for (const [list, wt] of [[live, woodsTree(true, snow)], [dead, woodsTree(false, snow)]]){
         if (!list.length) continue;
-        const tm = new THREE.InstancedMesh(geo, treeMaterial, list.length);
+        const tm = new THREE.InstancedMesh(wt.geo, wt.mat, list.length);
         list.forEach(([x, z, s2, a, d], n) => { ps.set(x, 0, z); q.setFromAxisAngle(up, a * 6.28); sc.set(s2, s2 * (.9 + a * .4), s2); mat4.compose(ps, q, sc); tm.setMatrixAt(n, mat4);
           tm.setColorAt(n, col.setRGB(1, 1, 1).lerp(tint, .15).multiplyScalar((.62 + a * .4) * (d > 8 ? .8 : 1))); });
         if (tm.instanceColor) tm.instanceColor.needsUpdate = true; tm.receiveShadow = shadows; fv.rock.add(tm);
-        if (snow >= .4 && geo === treeGeometry()) fv.rock.add(capWithSnow(tm));
+        if (snow >= .4 && wt.caps) fv.rock.add(capWithSnow(tm));
       }
     }
     // rain leaves puddles: on the roads most, a few in the grass (never under a prop, never in the ford)

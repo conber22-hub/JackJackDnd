@@ -5,6 +5,7 @@
    its code-drawn look. Models can be turned off per device (gfx.models === false). */
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { PROP_MODELS } from '../data/prop-models.js';
 import { PROPS, PROP_TOP } from '../data/props.js';
 import { gfx } from './gfx.js';
@@ -25,7 +26,9 @@ function load(k){
   loader.load(root + spec.file, gltf => {
     loading.delete(k);
     const scene = gltf.scene;
-    scene.traverse(o => { if (o.isMesh){ o.castShadow = o.receiveShadow = true; if (o.material) o.material.side = THREE.FrontSide; } });
+    const shade = spec.shade && new THREE.Color(spec.shade), done = new Set();
+    scene.traverse(o => { if (o.isMesh){ o.castShadow = o.receiveShadow = true;
+      if (o.material && !done.has(o.material)){ done.add(o.material); o.material.side = THREE.FrontSide; if (shade) o.material.color.multiply(shade); if (spec.recolor) patch(o.material, { recolor:spec.recolor }); } } });
     ready.set(k, scene); arrived();
   }, undefined, () => { loading.delete(k); failed.add(k); });
 }
@@ -82,4 +85,63 @@ export function dressWithModel(g, p, tpl){
   }
   g.userData.model = true;
   return g;
+}
+
+/* For the woods (render/floors.js): a prop kind's model as one geometry and one material, for an InstancedMesh of
+   hundreds of trees, standing on y = 0, centred, `height` tall (each tree then scaled about that). With snow (0–1,
+   from the day's weather) the material whitens whatever faces up, as the drawn pines get their white caps.
+   → { geometry, material } | null (not here yet: it's fetched, and the floors redraw when it comes) */
+const merged = new Map();
+export function instancedModel(k, height, snow = 0){
+  const tpl = propModel(k); if (!tpl) return null;
+  const key = k + ':' + height;
+  let e = merged.get(key);
+  if (!e){
+    tpl.updateMatrixWorld(true);
+    const geos = []; let mat = null;
+    tpl.traverse(o => { if (!o.isMesh) return; const g = o.geometry.clone().applyMatrix4(o.matrixWorld);
+      for (const a of Object.keys(g.attributes)) if (!['position', 'normal', 'uv'].includes(a)) g.deleteAttribute(a);
+      geos.push(g.index ? g.toNonIndexed() : g); mat ||= Array.isArray(o.material) ? o.material[0] : o.material; });
+    const geometry = geos.length && mergeGeometries(geos, false); if (!geometry) return null;
+    geometry.computeBoundingBox();
+    const b = geometry.boundingBox, c = b.getCenter(new THREE.Vector3()), h = Math.max(b.max.y - b.min.y, 1e-3);
+    geometry.translate(-c.x, -b.min.y, -c.z); geometry.scale(height / h, height / h, height / h);
+    const material = mat.clone(); material.userData.shared = true;
+    if (PROP_MODELS[k].recolor) patch(material, { recolor:PROP_MODELS[k].recolor });   // (a clone leaves the shader patch behind)
+    e = { geometry, material, snowy:null }; merged.set(key, e);
+  }
+  if (snow < .4) return e;
+  // (one snowy material per kind; its whiteness is a uniform, so a heavier fall needs no new shader)
+  if (!e.snowy){
+    const m = e.material.clone(), u = { value:snow }; m.userData = { shared:true, snow:u };
+    patch(m, { recolor:PROP_MODELS[k].recolor, snow:u });
+    e.snowy = { geometry:e.geometry, material:m };
+  }
+  e.snowy.material.userData.snow.value = Math.min(1, .45 + snow * .5);
+  return e.snowy;
+}
+
+/* The shader touches a model's material can take (one patch, as three.js keeps only one onBeforeCompile):
+   - recolor 'fir': the saturated orange and yellow of the texture (autumn needles) turned dark fir green; the trunk,
+     greyer, stays as it is
+   - snow (a uniform { value: 0–1 }): whatever faces up whitened */
+function patch(m, { recolor = null, snow = null }){
+  m.onBeforeCompile = sh => {
+    if (recolor === 'fir') sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
+      { vec3 c = diffuseColor.rgb; float mx = max( c.r, max( c.g, c.b ) ), mn = min( c.r, min( c.g, c.b ) );
+        if ( mx > 0.0 && ( mx - mn ) / mx > 0.55 && c.r > c.b ) diffuseColor.rgb = vec3( c.g * 0.15 + 0.01, c.r * 0.16 + c.g * 0.1, c.r * 0.06 + c.b * 0.45 ); }`);
+    if (snow){
+      sh.uniforms.snowAmt = snow;
+      sh.vertexShader = 'varying float vSnowUp;\n' + sh.vertexShader.replace('#include <beginnormal_vertex>', `#include <beginnormal_vertex>
+        #ifdef USE_INSTANCING
+          vSnowUp = normalize( mat3( modelMatrix ) * mat3( instanceMatrix ) * objectNormal ).y;
+        #else
+          vSnowUp = normalize( mat3( modelMatrix ) * objectNormal ).y;
+        #endif`);
+      sh.fragmentShader = 'uniform float snowAmt;\nvarying float vSnowUp;\n' + sh.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
+        diffuseColor.rgb = mix( diffuseColor.rgb, vec3( 0.86, 0.89, 0.93 ), snowAmt * smoothstep( 0.3, 0.8, vSnowUp ) );`);
+    }
+  };
+  m.customProgramCacheKey = () => 'pm:' + (recolor || '') + (snow ? ':snow' : '');
+  m.needsUpdate = true;
 }

@@ -1,7 +1,8 @@
 /* 3D MODELS FOR PROPS — which ready-made model stands in for a prop the app otherwise draws in code
    (src/render/props.js). All by Kay Lousberg (KayKit), CC0 (public domain), each pack with its LICENSE.txt:
    - public/assets/props/kaykit/: Dungeon Remastered (furniture, barrels, chests, a pillar)
-   - public/assets/props/halloween/: Halloween Bits (gravestones, a shrine, a bench, a dead tree, a coffin, a ribcage)
+   - public/assets/props/halloween/: Halloween Bits (gravestones, a shrine, a bench, the pine and the dead tree that
+     are also the woods', a coffin, a ribcage)
    - public/assets/props/hexagon/: Medieval Hexagon (fences, a field wall, a wheelbarrow, sacks, lumber, a rock)
    Served beside the app and loaded the first time a prop needs one (a .glb, or a .gltf with its .bin and texture).
    The offline single file, or a model that can't load, keeps the hand-built prop.
@@ -14,6 +15,8 @@
    - fit: how much of the prop's squares it may fill (it's never scaled bigger than that)
    - lid: the name of the part that opens (a chest's lid), hinged at its back edge; with slide, it slides that far
      along x (model units) instead, as a coffin's lid does
+   - shade: a colour the model's own is multiplied by
+   - recolor: 'fir' turns the pack's autumn-orange needles a dark fir green (the trunk stays as it is)
    - turn: a quarter turn (radians) to face it the way the app's prop faces
    - stretch: drawn out along its length to fill its squares (a coffin, slimmer than the pack's) */
 export const PROP_MODELS = {
@@ -33,6 +36,8 @@ export const PROP_MODELS = {
   shrine:     { file:'halloween/shrine.gltf',             height:1.15 },
   bench:      { file:'halloween/bench.gltf',              top:.5, turn:Math.PI / 2 },
   deadtree:   { file:'halloween/tree_dead_large.gltf',    height:2.0, fit:1.2 },
+  // the pine is the woods' tree too: every outdoor floor's edge, and on past it (render/floors.js); so is the dead tree
+  pine:       { file:'halloween/tree_pine_orange_large.gltf', height:2.6, fit:1.4, recolor:'fir' },
   fence:      { file:'hexagon/fence_wood_straight.gltf',  height:.7, turn:Math.PI / 2, fit:1 },
   drystone:   { file:'hexagon/fence_stone_straight.gltf', height:.45, turn:Math.PI / 2, fit:1 },
   cart:       { file:'hexagon/wheelbarrow.gltf',          top:.15 },
