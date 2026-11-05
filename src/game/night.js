@@ -20,7 +20,10 @@ export function openScreenWindow(){
   // noopener: the screen gets its own process, so drawing the TV never slows the DM's window (it still hears
   // this one over the BroadcastChannel)
   window.open(location.pathname + '?screen', '_blank', 'noopener,popup=yes,width=1280,height=720');
-  toast('Drag the new window onto the TV, then press ⛶ in its corner. (Nothing opened? Allow pop-ups for this page.)');
+  // (a tablet or phone opens it as a new tab, not a window: say how to get back)
+  const touch = typeof matchMedia !== 'undefined' && matchMedia('(pointer:coarse)').matches;
+  toast(touch ? 'The table screen opened in a new tab: it\'s for the TV, so it has no controls. Tap it and press ✕ Leave to come back here.'
+    : 'Drag the new window onto the TV, then press ⛶ in its corner. (Nothing opened? Allow pop-ups for this page.) ✕ Leave closes it.');
 }
 export const screenLink = code => { const u = new URL(location.href.split('#')[0].split('?')[0]); u.searchParams.set('screen', code); return u.toString(); };
 

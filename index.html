@@ -368,7 +368,9 @@ body.screen #toasts{display:none}
 .sc-join{display:flex;gap:48px;align-items:center;max-width:1100px}.sc-join .qr{width:min(46vh,420px);height:min(46vh,420px);border-radius:14px;box-shadow:0 0 60px #000}
 .sc-join p{font-family:"Cormorant Garamond",Georgia,serif;font-size:clamp(22px,2.4vw,34px);color:#efe1c8;margin:0 0 14px}.sc-join .code{font-family:Cinzel,serif;font-size:clamp(56px,8vw,120px);letter-spacing:.18em;color:var(--candle);text-shadow:0 0 30px #000}
 .sc-hand{text-align:center}.sc-hand img{max-width:84vw;max-height:76vh;border-radius:10px;box-shadow:0 0 60px #000}
-.sc-btns{position:fixed;top:12px;right:12px;z-index:10;display:flex;gap:6px;opacity:.25;transition:opacity .3s}.sc-btns:hover{opacity:1}
+.sc-btns{position:fixed;top:12px;right:12px;z-index:10;display:flex;gap:6px;align-items:center;opacity:.25;transition:opacity .3s}.sc-btns:hover,.sc-btns.show{opacity:1}
+.sc-hint{display:none;font-size:13px;color:#e7dcc8;background:#0c0a10cc;border-radius:999px;padding:6px 12px;margin-right:4px}.sc-btns.show .sc-hint{display:inline-block}
+@media (pointer:coarse){.sc-btns{top:auto;bottom:max(14px,env(safe-area-inset-bottom));right:14px;opacity:.55}.sc-btns .btn.small{padding:10px 14px;font-size:15px}}
 body.screen .pop{transform:scale(1.35)}
 body.screen #turnBanner{font-size:52px;top:46%}
 #scAsk{position:fixed;left:50%;top:150px;transform:translateX(-50%);z-index:7;background:#140d10ee;border:1px solid #8b6a2a;border-radius:16px;padding:12px 22px;text-align:center;box-shadow:0 0 30px #000;font-size:22px;color:#efe1c8}
@@ -669,7 +671,7 @@ body.screen #turnBanner{font-size:52px;top:46%}
   <div id="scDie" class="sc-die hidden"><svg viewBox="0 0 100 100"><polygon points="50,4 93,28 93,72 50,96 7,72 7,28" /><polygon class="in" points="50,22 76,66 24,66" /><path class="ln" d="M50,4 L50,22 M93,28 L76,66 M7,28 L24,66 M93,72 L76,66 M7,72 L24,66 M50,96 L50,66 M50,22 L24,66 M50,22 L76,66" /></svg><b></b></div>
   <div id="scDark" class="hidden"><div class="flame"></div></div>
   <div id="scOver" class="hidden"></div>
-  <div class="sc-btns"><button class="btn small" data-act="scFull" title="Full screen">⛶</button><button class="btn small" data-act="scSound" title="Let the screen play sound (browsers need one tap first)">🔊</button></div>
+  <div class="sc-btns"><span class="sc-hint">📺 The table screen: the DM runs it from their own device</span><button class="btn small" data-act="scFull" title="Full screen">⛶</button><button class="btn small" data-act="scSound" title="Let the screen play sound (browsers need one tap first)">🔊</button><button class="btn small" data-act="scLeave" title="Leave the table screen">✕ Leave</button></div>
 </div>
 <div id="prepVeil" class="hidden"><div class="t"></div><div class="s">Your hero is safe where you left them. Hold on.</div></div>
 <div id="toasts"></div>

@@ -22,6 +22,18 @@ export function bootScreenUI(){
   $('#screenHud').classList.remove('hidden');
   keepAwake(true);   // a TV that dims mid-session is no use
   setInterval(tick, 250);
+  // its buttons (⛶ full screen, 🔊 sound, ✕ leave): shown clearly at first and whenever the screen is touched or the
+  // mouse moves, then faded so the TV stays clean
+  const btns = $('.sc-btns'); let hideAt = 0;
+  const show = (ms = 5000) => { btns?.classList.add('show'); hideAt = Date.now() + ms; };
+  show(9000);
+  setInterval(() => { if (hideAt && Date.now() > hideAt){ btns?.classList.remove('show'); hideAt = 0; } }, 500);
+  for (const ev of ['pointerdown', 'mousemove', 'keydown']) addEventListener(ev, () => show(), { passive:true });
+}
+// Leave the table screen: close the window if this page opened it, otherwise back to the app's start (Continue is there).
+export function leaveScreen(){
+  try { window.close(); } catch {}
+  setTimeout(() => { location.href = location.pathname; }, 150);   // (still here: the window wasn't ours to close)
 }
 const visible = t => { const W = state.floors[t.floor]?.W, s = t.size || 1; if (!W) return false; for (let dy = 0; dy < s; dy++) for (let dx = 0; dx < s; dx++) if (seenNow[t.floor]?.has((t.y + dy) * W + t.x + dx)) return true; return false; };
 const face = (t, big) => {

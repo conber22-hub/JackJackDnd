@@ -25,6 +25,7 @@ import { openTrade, tradeAct, tradeHero } from './trade.js';
 import { openWorkshop } from './workshop.js';
 import { openDowntime } from './downtime.js';
 import { openRest } from './rest.js';
+import { leaveScreen } from './screen.js';
 import { setWagon, wagonMeets } from '../game/wagons.js';
 import { settleTrouble } from '../game/trade.js';
 import { importLibrary, setLibraryKinds, removeLibrary, libraryState } from '../game/library.js';
@@ -395,6 +396,7 @@ document.addEventListener('click', e => {
     case 'cardStep': { const [dx, dy] = k.split(',').map(Number); cardStep(dx, dy); } break;
     case 'scFull': (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.())?.catch?.(() => {}); break;
     case 'scSound': toast('Sound is on for this screen.'); break;   // the tap itself unlocks the browser's audio
+    case 'scLeave': leaveScreen(); break;   // ✕ out of the table screen (ui/screen.js)
     case 'closeHelp': $('#helpModal').classList.add('hidden'); break;
     case 'help': $('#helpModal').classList.remove('hidden'); break;
     // the threshold (start page)
