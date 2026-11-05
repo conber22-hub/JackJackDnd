@@ -32,7 +32,9 @@ Don't bundle assets whose licence is "personal use" or "no redistribution". That
 
 ## What's in the app now
 - **KayKit Dungeon Remastered** (Kay Lousberg, CC0): barrel, kegs, crate, chest (its lid opens), table, long table, chair, stool, bed and candelabra, in `public/assets/props/kaykit/` with the pack's `LICENSE.txt`. Mapped in `src/data/prop-models.js`, loaded on demand by `src/render/propmodels.js`; served beside the app on Vercel, so the single file stays small. The offline file keeps the drawn props. Each device can turn them off (Table tab → 3D models).
-- Fetched from KayKit's public GitHub repository (the itch.io download refuses automated clients).
+- **KayKit Halloween Bits** (CC0): gravestone, roadside shrine, bench and dead tree, in `public/assets/props/halloween/`.
+- **KayKit Medieval Hexagon** (CC0): wooden fence, dry-stone wall, wheelbarrow (the hand cart), sacks, a lumber pile and a boulder, in `public/assets/props/hexagon/`. Its buildings are bright game pieces on hex tiles, so they're left out; lanterns, lampposts and tents stay drawn (the drawn lanterns glow).
+- All fetched from KayKit's public GitHub repositories (the itch.io download refuses automated clients).
 
 ## Licence and credit list (keep it current)
 - KayKit — Kay Lousberg, CC0 — kaylousberg.itch.io
