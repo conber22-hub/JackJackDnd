@@ -23,6 +23,7 @@ import { newDelve } from './build.js';
 import { goFloor } from './actions.js';
 import { changed } from './session.js';
 import { longRest } from './resources.js';
+import { applyWeather } from './weather.js';
 
 export function valley(){
   const C = state.campaign;
@@ -37,12 +38,15 @@ export function travel(to){
   const V = valley(), dest = placeById(to), plan = planJourney(V.at, to);
   if (!dest || !plan){ toast('No road goes there from here.'); return; }
   V.journeys++;
-  V.weather = pick(WEATHER); state.campaign.weather = V.weather;
+  // the valley's weather (game/weather.js), or the DM's own words on the desk; the old roll only if neither
+  if (!applyWeather() && !state.campaign.weatherHand){ V.weather = pick(WEATHER); state.campaign.weather = V.weather; }
+  V.weather = state.campaign.weather;
   // on foot, or at the wagon's pace (game/wagons.js): the road, the weather, the load
   const legs = plan.stretches.map(st => { const way = VALLEY_ROADS.find(r => r.id === st.road).way; return { way, walk:WAY_HOURS[way] || 2 }; });
   const byWagon = wagonHours(legs, V.weather);
   if (byWagon && !Number.isFinite(byWagon.hours)){ toast(`${wagonOut().n} can't move: ${byWagon.why.join(' ')}`); return; }
-  const hours = byWagon ? byWagon.hours : legs.reduce((h, l) => h + l.walk, 0);
+  const pace = state.campaign.wx?.travel || 1;   // on foot, the day's mud, snow or fog slows them (the wagon has its own reckoning)
+  const hours = byWagon ? byWagon.hours : Math.round(legs.reduce((h, l) => h + l.walk, 0) / pace);
   V.journey = { from:V.at, to, path:plan.path, hours, left:{ day:V.day, hour:V.hour } };
   const journey = { from:V.at, to, seed:V.seed, n:V.journeys, gaze:state.dread, bloom:bloomLoose() };
   newDelve({ name:`The road to ${dest.name}`, seed:`${V.seed}|road|${V.journeys}`, floors:plan.stretches.length, size:40, template:'journey', journey }, true, { kind:'road', key:`road:${V.journeys}` });
@@ -81,7 +85,8 @@ export const placeMaps = p => (p.maps || (p.map ? [p.map] : [])).map(id => ({ id
 
 /* ---------- the clock ---------- */
 export function passTime(h){ const V = valley(), d0 = V.day; V.hour += h; while (V.hour >= 24){ V.hour -= 24; V.day++; } state.campaign.day = `Day ${V.day}, ${timeOfDay(V.hour)}`;
-  if (V.day > d0) courtDay(`Day ${V.day}`); }   // a new day: the Count's court moves
+  if (V.day > d0) courtDay(`Day ${V.day}`);   // a new day: the Count's court moves
+  applyWeather({ newDay:V.day > d0 }); }      // and the sky with the hours (game/weather.js)
 // The DM sets the hour (dawn, midday, dusk, midnight, or an hour on): always forward, so a new day comes round
 // properly (and the Count's court moves with it). The sky, the light, the windows and the folk follow (engine/daylight.js).
 export function setHour(to){

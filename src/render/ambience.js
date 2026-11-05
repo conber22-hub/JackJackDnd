@@ -10,6 +10,7 @@ import { THEMES } from '../data/themes.js';
 import { controls, scene, wx, wz } from './scene.js';
 import { floorViews } from './floors.js';
 import { gfx } from './gfx.js';
+import { wxNow, FALLING } from '../game/weather.js';
 
 /* ---------- prop lights ---------- */
 const pool = [];
@@ -55,6 +56,7 @@ function makeSnow(n){
 }
 // What's falling: from the weather line (the DM's desk, or what the players were sent).
 export function weatherKind(){
+  const wx = wxNow(); if (wx) return FALLING[wx.kind] || null;   // (the valley's weather: game/weather.js)
   const w = String(state?.campaign?.weather || state?.weather || '').toLowerCase();
   if (/snow|sleet|blizzard/.test(w)) return /sleet/.test(w) ? 'sleet' : 'snow';
   if (/rain|drizzle|downpour|storm|shower/.test(w) && !/no rain/.test(w)) return /drizzle/.test(w) ? 'drizzle' : 'rain';

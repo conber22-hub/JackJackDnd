@@ -10,6 +10,7 @@ import { mulberry32, hashSeed } from '../util/core.js';
 import { showCard } from '../ui/hud.js';
 import { changed } from './session.js';
 import { transport } from './workshop.js';
+import { wxNow, fourKind } from './weather.js';
 
 export { describeWagon };
 export const EVENT_KINDS = { bloom:'🥀 The Bloom', mists:'🌫 The Mists', ambush:'⚔ An ambush', theft:'🌙 A theft in the night', breakdown:'🔧 A breakdown', search:'🔎 A search by his men', storm:'⛈ A storm' };
@@ -22,6 +23,7 @@ export function setWagon(id){ const v = V(); if (v){ v.wagon = id || null; chang
 
 // The valley's weather is words: read it as the engine's four kinds.
 export function weatherKind(text){
+  const wx = wxNow(); if (wx && (!text || text === (state.campaign?.weather || state.weather))) return fourKind(wx.kind);   // (the valley's weather: game/weather.js)
   const t = String(text || '').toLowerCase();
   return /snow|sleet|frost/.test(t) ? 'snow' : /rain|drizzle|thunder/.test(t) ? 'rain' : /fog|mist/.test(t) ? 'fog' : 'clear';
 }

@@ -6,6 +6,7 @@ import { FAMILIES, BEST, bestList } from '../data/bestiary.js';
 import { DREAD, CONDITIONS } from '../data/dread.js';
 import { ROOM_TYPES, TRAP_KINDS, DOOR_STATES } from '../data/rooms.js';
 import { SHAPES } from '../engine/shapes.js';
+import { outlook } from '../game/weather.js';
 import { VAULTS } from '../data/vaults.js';
 import { parseVault } from '../engine/vaults.js';
 import { THEMES, TEMPLATES } from '../data/themes.js';
@@ -522,7 +523,8 @@ function storyTab(){
     <div class="row"><button class="btn small" data-act="printSess" data-k="${s.n}">🖨 Print this session</button><button class="btn small" data-act="printAll">🖨 All sessions</button></div>
     <h3>The Dark Lord desk</h3>
     <div class="row"><label>Day</label><input class="txt" style="flex:1" value="${esc(C.day)}" data-edit="camp" data-f="day"></div>
-    <div class="row"><label>Weather</label><input class="txt" style="flex:1" value="${esc(C.weather)}" data-edit="camp" data-f="weather"></div>
+    <div class="row"><label>Weather</label><input class="txt" style="flex:1" value="${esc(C.weather)}" data-edit="camp" data-f="weather" title="Write your own and it stands until the next day; or let the valley's weather run"></div>
+    ${weatherDesk(C)}
     <h4>Clocks</h4>
     ${CLOCKS.map(c => `<div class="clkrow"><span class="grow" title="${esc(c.full)}">${esc(c.label)}</span><button class="btn small" data-act="clock" data-k="${c.id}" data-id="-1">−</button><span class="clock">${Array.from({ length:c.max }, (_, i) => `<i class="${i < (C.clocks[c.id] || 0) ? 'on' : ''}"></i>`).join('')}</span><button class="btn small" data-act="clock" data-k="${c.id}" data-id="1">+</button></div>`).join('')}
     <div class="muted">Patience full: he arrives. Bloom fills a quarter: his Gaze +1. Riot full: the square burns. Salt runs out: the unburied dead rise Seeded.</div>
@@ -562,4 +564,11 @@ function setPieceRow(r){
   if (!fit.length) return `<div class="muted">🏛 No set piece fits a room this small (most need 7×9).</div>`;
   return `<div class="row"><select class="txt" id="setPieceSel" title="A hand-designed set piece: its own layout, furniture and read-aloud">${fit.map(v => opt(v.id, v.name, false)).join('')}</select>
     <button class="btn small" data-act="setPiece" data-id="${r.id}">🏛 Set piece</button></div>`;
+}
+
+// The Dark Lord desk: what the valley's weather means at the table, and the next three days (game/weather.js).
+function weatherDesk(C){
+  if (C.weatherHand || !C.wx) return `<div class="row"><span class="muted grow">${C.weatherHand ? 'Your own weather: it stands until the next day.' : 'The valley\'s weather runs with its clock.'}</span><button class="btn small" data-act="valleyWeather" title="The valley's own weather for this day and hour">🌦 The valley's weather</button></div>`;
+  const next = outlook(3).map(w => `${esc(w.label)}`).join(' · ');
+  return `<div class="muted">🌦 ${esc(C.wx.desc)}</div>${next ? `<div class="muted">Next three days: ${next}</div>` : ''}`;
 }

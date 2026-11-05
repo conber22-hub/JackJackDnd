@@ -12,6 +12,7 @@ import { surfaceTextures, groundTexture, groundMaps, SURFACES } from './textures
 import { shadowsOn, gfx } from './gfx.js';
 import { kitFor } from './models.js';
 import { instancedModel } from './propmodels.js';
+import { wxNow } from '../game/weather.js';
 import { inShape, isShaped, SLANTED } from '../engine/shapes.js';
 import { buildProp, buildBuilding, inBuilding, treeGeometry, treeMaterial, deadTreeGeometry, tuftGeometry, pebbleGeometry, boulderGeometry, cropGeometry, snowCapGeometry } from './props.js';
 import { propSize, propAt } from '../data/props.js';
@@ -69,7 +70,7 @@ const EDGE = 60;   // how far the rock or the land runs on past the map
 /* The day's weather on the ground (outdoors): { snow: 0–1 how white, wet: 0–1 how soaked }, from the weather line
    (the DM's desk, or what the players were sent). Snow and frost whiten it; rain darkens it and leaves puddles. */
 export function groundWeather(){
-  const w = String(state?.campaign?.weather || state?.weather || '').toLowerCase();
+  const wx = wxNow(), w = (wx ? wx.ground : String(state?.campaign?.weather || state?.weather || '')).toLowerCase();   // (the valley's weather says what lies underfoot: game/weather.js)
   if (/snow|blizzard/.test(w)) return { snow:/deep|heavy|blizzard|drift/.test(w) ? .85 : .5 };
   if (/frost|rime|hoar|freez/.test(w)) return { snow:.25 };
   if (/rain|drizzle|downpour|storm|shower|sleet/.test(w) && !/no rain/.test(w)) return { wet:/heavy|downpour|storm/.test(w) ? 1 : .55 };

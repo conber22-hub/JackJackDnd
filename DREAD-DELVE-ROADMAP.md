@@ -303,7 +303,12 @@ More to the places the party explores. Pictures: `docs/screens/places-*.jpg`.
   - Each adds a line to the room's read-aloud and the DM's notes. Furniture keeps out of the water and off the bridge.
   - Floor data: `shallow` (walkable water, also in `rough`), `chasm` (a drop, kept solid), `span` (the bridge).
 - **Brooks and fords.** About a third of the road stretches that have no river get a winding brook, which the road wades at a ford: knee-deep, difficult, with nothing standing in it. The DM's notes for the stretch say so. Layouts can list `shallow` squares too.
-- **Weather on the ground** (outdoors), from the day's weather line:
+- **The valley's weather** (`engine/weather.js` and `src/data/weather.js`, by ChatGPT; `game/weather.js`): the sky is the valley's own and runs with its clock. It's worked out from the valley's seed, the day, the hour and his Gaze, so the DM, the players and the TV see the same sky.
+  - Spells of weather last a few days, the seasons turn (day 1 is early autumn), morning fog lifts by noon, snow lies and melts, and the ground stays wet after rain.
+  - At Gaze 6 and up, fair days give way to fog and the light dims. From Gaze 4 the weather line sometimes carries a sign of him.
+  - It sets the weather line, what lies on the ground and what's falling on outdoor maps, the wagons' and a night's rest's reading, and the pace on foot (mud, snow and fog slow a journey).
+  - The Dark Lord desk shows what it means at the table (sight, pace, what's underfoot) and the next three days. The DM's own words in the Weather box stand until the next day; 🌦 brings the valley's back.
+- **Weather on the ground** (outdoors), from the day's weather:
   - snow whitens the ground, the fields and the land past the edge, and lies on the pines
   - frost gives a pale rime
   - rain darkens and wets the ground and leaves puddles, most on the roads
