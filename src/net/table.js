@@ -4,7 +4,7 @@ import { Peer } from 'peerjs';
 import { state, setState, ui, tokById } from '../engine/state.js';
 import { updateVision, seenNow } from '../engine/grid.js';
 import { redactForPlayers } from '../engine/redact.js';
-import { $ } from '../util/core.js';
+import { $, bus } from '../util/core.js';
 import { focusTile } from '../render/scene.js';
 import { ensureFloorViews, buildAllFloors, buildFloor, animateGridChange, animateProp } from '../render/floors.js';
 import { syncTokens, tokenViews, actOn } from '../render/minis.js';
@@ -491,4 +491,5 @@ function applyRemoteState(s){
   lastTurnSeen = key;
   renderAll();
   if (ui.screen) afterScreenState();
+  bus.emit('state', state);   // a new state has arrived from the DM (the Map Book redraws on it: ui/mapbook.js)
 }
