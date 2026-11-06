@@ -8,6 +8,7 @@ import { ROOM_TYPES, TRAP_KINDS, DOOR_STATES } from '../data/rooms.js';
 import { SHAPES } from '../engine/shapes.js';
 import { outlook } from '../game/weather.js';
 import { puzzleIn, PUZZLE_KINDS } from '../game/puzzles.js';
+import { value as hoardValue } from '../engine/hoard.js';
 import { VAULTS } from '../data/vaults.js';
 import { parseVault } from '../engine/vaults.js';
 import { THEMES, TEMPLATES } from '../data/themes.js';
@@ -195,6 +196,7 @@ function dungeonTab(){
     <div class="row"><button class="btn small" data-act="furnishFloor" title="Furniture for every room that has none, by its type and this floor's look">🪑 Furnish empty rooms</button><button class="btn small" data-act="describeFloor" title="A read-aloud line for every room that has none">📜 Describe rooms</button></div>`;
   for (const r of f.rooms) h += `<div class="card ${ui.selRoom === r.id ? 'sel' : ''}"><div class="hd"><span class="dot" style="color:${ROOM_TYPES[r.type]?.color};background:${ROOM_TYPES[r.type]?.color}"></span>
       <input class="txt" style="flex:1" value="${esc(r.name)}" data-edit="room" data-id="${r.id}" data-f="name"><button class="btn small" data-act="goRoom" data-id="${r.id}">Go</button></div>
+      ${r.hoard && !r.hoard.given ? `<div class="row"><span class="muted grow">💰 ${hoardText(r.hoard)}</span><button class="btn small" data-act="giveHoard" data-id="${r.id}">Give to the party</button></div>` : ''}
       ${r.role ? `<div class="muted">🏰 ${esc(r.role)}${r.faction ? ` · ${esc(f.site?.factions?.find(x => x.id === r.faction)?.name || r.faction)}` : ''}${r.encounter ? ` · ⚔ ${esc(r.encounter.difficulty)} (${esc(r.encounter.fam)})` : ''}${r.treasure ? ` · 💰${'•'.repeat(r.treasure)}` : ''}${r.beat ? ` · ${esc(r.beat)}` : ''}</div>` : ''}
       <div class="row"><select class="txt" data-edit="room" data-id="${r.id}" data-f="type">${Object.entries(ROOM_TYPES).map(([k, v]) => opt(k, v.label, r.type === k)).join('')}</select></div>
       ${r.outdoor ? `<div class="row"><select class="txt" title="The ground underfoot" data-edit="room" data-id="${r.id}" data-f="ground">${opt('', 'Ground: as the map', !r.ground)}${Object.entries(GROUNDS).map(([k, v]) => opt(k, v, r.ground === k)).join('')}</select>
@@ -597,5 +599,12 @@ function siteCard(f){
     <div class="trait"><b>The way through.</b> ${S.route.map(name).map(esc).join(' → ')}${S.climax != null ? ` <span class="muted">(climax: ${esc(name(S.climax))})</span>` : ''}</div>
     ${locks.length ? `<div class="trait"><b>Locks.</b> ${locks.map(l => `${esc(name(l.a))} ↔ ${esc(name(l.b))}: ${esc(l.kind)}${l.key ? `, ${esc(l.key.name)} in ${esc(name(l.key.in))} (${esc(l.key.how)})` : ''}`).join('; ')}</div>` : ''}
     <div class="trait"><b>Twist.</b> ${esc(S.twist)}</div>
-    <div class="row"><button class="btn small" data-act="sitePrint">🖨 The site's page</button></div></div>`;
+    ${f.garrison ? `<div class="trait"><b>The garrison.</b> ${f.garrison.groups.length} groups; ${f.garrison.groups.filter(g => g.alert >= 2).length} alert. ${f.garrison.groups.map(g => `${esc(name(g.room))} (${esc(g.posture)}${g.alert ? `, alert ${g.alert}` : ''})`).join(', ')}</div>` : ''}
+    <div class="row"><button class="btn small" data-act="sitePrint">🖨 The site's page</button>${f.garrison ? `<button class="btn small" data-act="garrisonArrive" title="Bring in the groups on their way">⚔ Bring arrivals in</button>` : `<button class="btn small primary" data-act="stockSite" title="The plan's fights become creatures in their rooms: guards, sleepers, a lair, patrols. A fight then raises the alarm along the floor.">⚔ Stock the site</button>`}</div></div>`;
+}
+
+// A room's hoard in a line: its worth, its things, its keys (and the Count's own marked item).
+function hoardText(h){
+  const things = [...(h.items || []).map(i => `${i.n}${i.counts ? ' ⚠ his' : ''}${i.spoiled ? ' (spoiled)' : ''}`), ...(h.art || []).map(a => a.desc), ...(h.keys || []).map(k => `🗝 ${k.name}${k.how === 'carried' ? ' (carried)' : ''}`)];
+  return esc(`${hoardValue(h)} gp${things.length ? ': ' + things.join('; ') : ''}`);
 }

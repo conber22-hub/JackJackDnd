@@ -70,7 +70,7 @@ function redactFloor(f, exp){
   const seenAny = exp.size > 0;
   return {
     ...f, grid, base:null,
-    site:f.site ? { name:f.site.name } : null,   // the site's plan is the DM's: its factions, locks, keys and twist stay home (engine/sites.js)
+    site:f.site ? { name:f.site.name } : null, garrison:null,   // (the garrison's postures and alarms are the DM's too)   // the site's plan is the DM's: its factions, locks, keys and twist stay home (engine/sites.js)
     necks:[],
     name:seenAny ? f.name : 'Unexplored',
     rooms:(f.rooms || []).filter(r => rectKept(r.x, r.y, r.w, r.h, 1)).map(r => ({ id:r.id, x:r.x, y:r.y, w:r.w, h:r.h, cx:r.cx, cy:r.cy, type:'chamber', name:'', notes:'', ...(r.shape ? { shape:r.shape } : {}), ...(r.outdoor ? { outdoor:true } : {}), ...(r.ground ? { ground:r.ground } : {}), ...(r.crop ? { crop:r.crop } : {}) })),

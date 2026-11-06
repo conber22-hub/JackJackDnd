@@ -54,10 +54,12 @@ export function applySite(f, plan, g){
   const doors = new Map((f.doors || []).map(d => [d.id, d])), name = id => f.rooms.find(r => r.id === id)?.name || 'a room';
   for (const lock of plan.locks || []){
     const link = g.links.find(l => (l.a === lock.a && l.b === lock.b) || (l.a === lock.b && l.b === lock.a)); if (!link) continue;
+    lock.doors = [];   // (the doors it actually shut: a key opens these)
     for (const id of link.doors){ const d = doors.get(id); if (!d) continue;
       if (lock.kind === 'secret') d.state = 'secret';
       else if (d.state === 'secret') continue;   // (a secret door stays secret; finding it is the lock)
-      else { d.state = 'locked'; d.dc = lock.kind === 'sealed' ? 20 : 15; d.key = lock.key?.name || null; } }
+      else if (d.key) continue;   // (already shut by another of the plan's locks: one key to a door)
+      else { d.state = 'locked'; d.dc = lock.kind === 'sealed' ? 20 : 15; d.key = lock.key?.name || null; lock.doors.push(id); } }
   }
   for (const r of f.rooms){
     const p = plan.rooms?.[String(r.id)]; if (!p) continue;

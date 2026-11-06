@@ -33,6 +33,7 @@ import { MONSTER_PLAY } from '../data/monster-play.js';
 import { makeNoise } from './noise.js';
 import { nemesisDamage, nemesisHolds, nemesisRegen, nemesisFalls, nemesisSurvives } from './court.js';
 import { toPlayers } from './outbox.js';
+import { alarmAt, garrisonCalm } from './garrison.js';
 
 export { currentTurn };
 
@@ -74,6 +75,7 @@ export function rollInitiative({ ids = null, group = true, surprise = 'none', fi
   const pts = list.filter(t => t.kind !== 'monster').length ? list.filter(t => t.kind !== 'monster') : list;   // the noise is where the party is
   const mid = pts.reduce((m, t) => ({ x:m.x + t.x / pts.length, y:m.y + t.y / pts.length }), { x:0, y:0 });
   makeNoise(L, Math.round(mid.x), Math.round(mid.y), 1, 'Steel and shouting');
+  alarmAt(L, Math.round(mid.x), Math.round(mid.y));   // a stocked site hears it (game/garrison.js)
   startTurn(); changed();
 }
 // Take a creature out of the fight (fled, made peace, the DM's call). Its place in the order closes up.
@@ -230,6 +232,7 @@ function endOfRound(){
   if (D.shift > 0 && Math.random() < D.shift) setTimeout(() => shiftFloor(L, 'Barovia rearranges itself as the round ends'), 400);
 }
 export function endCombat(){ for (const t of state.combat.order.map(tokById)) if (t?.nem && !t.dead) nemesisSurvives(t);   // it beat them, or got away
+  garrisonCalm(state.combat.floor ?? ui.floor);   // the site settles, warier (game/garrison.js)
   clearOpportunities(); state.tokens.forEach(freshTurn); state.combat = { active:false, order:[], idx:0, round:1, floor:ui.floor }; log('Combat ends.'); clearReach(); const t = ui.selected && tokById(ui.selected); if (t) showReach(t); changed(); }
 
 // A figure's swing, spell or flinch, on every screen (only forged figures move; the rest ignore it).

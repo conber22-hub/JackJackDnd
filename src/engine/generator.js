@@ -19,6 +19,7 @@ import { pickVault, stampVault } from './vaults.js';
 import { cavern } from './caverns.js';
 import { planSite } from './sites.js';
 import { siteGraph, applySite } from './sitegraph.js';
+import { hoard, keyItems } from './hoard.js';
 import { addFeatures, FEATURE_TEXT } from './features.js';
 import { state, makeMonster } from './state.js';
 
@@ -546,7 +547,7 @@ export function planFloorSite(f, opts){
   if (!f.rooms?.length || f.rooms.length < 2) return null;
   const g = siteGraph(f);
   for (const graph of [g, { ...g, links:g.links.map(l => l.kind === 'secret' ? { ...l, kind:'door' } : l) }]){
-    try { const plan = planSite(graph, opts); applySite(f, plan, g); return plan; } catch {}
+    try { const plan = planSite(graph, opts); applySite(f, plan, g); hoardsFor(f, plan, g, opts); return plan; } catch {}
   }
   return null;
 }
@@ -566,4 +567,18 @@ export function distinctNames(f){
     }
   }
   return f;
+}
+
+/* The plan's treasure made real (engine/hoard.js, Codex's): a hoard in each room the plan gives treasure, by the
+   holding faction's kind, and the keys its locks name, in the rooms that keep them (carried by someone there, or
+   hidden). Its own dice, so nothing else on the floor changes. */
+function hoardsFor(f, plan, g, opts){
+  const rng = mulberry32(hashSeed(`${opts.seed}|hoard`)), famOf = id => plan.factions.find(x => x.id === id)?.fam || 'folk';
+  const level = Math.max(1, Math.min(20, Math.round(opts.level || 3)));
+  for (const r of f.rooms) if (r.treasure > 0) r.hoard = hoard(Math.min(3, r.treasure), { level, fam:famOf(r.faction), theme:opts.theme, gaze:opts.gaze || 1, rng });
+  for (const k of keyItems((plan.locks || []).filter(l => l.doors?.length), g)){   // (a key only for a lock that shut a door)
+    const lock = (plan.locks || []).find(l => l.key?.name === k.name), r = lock && f.rooms.find(x => x.id === lock.key.in); if (!r) continue;
+    r.hoard ||= { coins:{ cp:0, sp:0, ep:0, gp:0, pp:0 }, items:[], art:[], notes:[] };
+    (r.hoard.keys ||= []).push({ ...k, how:lock.key.how });
+  }
 }

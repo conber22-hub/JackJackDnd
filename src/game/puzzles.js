@@ -66,7 +66,7 @@ export function puzzleHint(L, id, level){
   const p = puzzleById(L, id); if (!p) return;
   const text = hint(p.state, level);
   toPlayers({ t:'card', c:{ kind:'', title:`🧩 ${p.name}`, sub:'A hint', lines:[text] } }, 'dm');
-  showCard({ kind:'', title:`🧩 ${p.name}`, sub:`Hint ${level}, sent to the table`, lines:[text] });
+  showCard({ kind:'', title:`🧩 ${p.name}`, sub:`Hint ${level}, sent to the table`, lines:[text] }, false);   // (already sent: once is enough)
 }
 
 /* A move on a puzzle: by the DM, or from a player's phone (net/table.js checks the hero is in the room first).
@@ -79,14 +79,14 @@ export function playPuzzle(L, id, action, who = null){
   const r = roomById(f, p.room), name = who ? tokById(who)?.name : null;
   if (out.event === 'trap'){
     p.trap = out.state.lastTrap || 'darts';
-    showCard({ kind:'bad', title:`🧩 ${p.name}: a trap`, sub:`${name || 'Someone'} got it wrong in ${r?.name || 'the room'}`, lines:[`It sets off: <b>${p.trap}</b>. Resolve it as the room's trap (a save, the damage) — or let it pass.`] });
+    showCard({ kind:'bad', title:`🧩 ${p.name}: a trap`, sub:`${name || 'Someone'} got it wrong in ${r?.name || 'the room'}`, lines:[`It sets off: <b>${p.trap}</b>. Resolve it as the room's trap (a save, the damage) — or let it pass.`] }, false);
     log(`🧩 ${name || 'The party'} set off the ${p.name}'s trap (${p.trap}).`, true);
   }
   if (out.event === 'solved'){
     const door = (f.doors || []).find(d => d.id === p.door);
     if (door && door.state === 'locked') door.state = 'open';
     const c = { kind:'good', title:`🧩 ${p.name}: solved`, sub:r?.name || '', lines:[out.text || 'Something gives, deep in the stone.', ...(door ? ['The door it held swings open.'] : [])] };
-    toPlayers({ t:'card', c }, 'dm'); showCard(c);
+    toPlayers({ t:'card', c }, 'dm'); showCard(c, false);
     log(`🧩 ${name || 'The party'} solved the ${p.name} in ${r?.name || 'the room'}.`);
     buildFloor(L);
   }
