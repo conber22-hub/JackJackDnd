@@ -8,6 +8,7 @@ import { ensureLook, openLookPanel } from './look.js';
 import { ensureMapbook } from './mapbook.js';
 import { ensurePuzzles, openPuzzle } from './puzzles.js';
 import { setPuzzle } from '../game/puzzles.js';
+import { ensureChronicle } from './chronicle.js';
 import { toggleNotebook } from './notebook.js';
 import { togglePalette, closePalette, closeShortcuts, showShortcuts, registerCommands } from './palette.js';
 import { updateVision, freeTilesNear, seenNow } from '../engine/grid.js';
@@ -505,6 +506,7 @@ ensureEstate();   // "Our place": the palette command, the receiver and the hero
 ensureLook();   // the 🎨 Look panel and 📸 photo mode: the button, the palette commands, the fps watcher (idempotent)
 ensureMapbook();   // the 🗺️ Map Book: the button, the palette command, the live redraw (idempotent)
 ensurePuzzles();   // 🧩 puzzles: the button when there's one to work, the sheet, the palette command
+ensureChronicle();   // the 📜 Chronicle: the button, the palette command, the record of the story (idempotent)
 $('#floorUp').onclick = () => state && goFloor(ui.floor - 1);
 $('#floorDown').onclick = () => state && goFloor(ui.floor + 1);
 $('#whimBadge').onclick = () => { if (state && isDM()){ ui.tab = 'gaze'; ui.panelOpen = true; renderTabs(); renderPanel(); renderDock(); } };
