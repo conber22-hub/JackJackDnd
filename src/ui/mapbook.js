@@ -534,7 +534,7 @@ export function ensureMapbook(){
     const st = document.createElement('style'); st.id = 'mapbookCSS';
     st.textContent = `body.screen #btnMapbook{display:none!important}
     .mapbook-sheet{background:linear-gradient(175deg,#efe3c2,#e2d2a8 60%,#d3bd8d);color:#2b1d10;border-radius:6px 12px 8px 14px/12px 8px 14px 6px;padding:16px 18px;font-family:var(--serif);filter:drop-shadow(0 10px 24px rgba(0,0,0,.5))}
-    .mapbook-sheet h2{font-family:var(--serif);font-size:22px}
+    .mapbook-sheet h2{font-family:var(--serif);font-size:22px;color:#2b1d10;-webkit-text-fill-color:#2b1d10;background:none;text-shadow:none}.mapbook-sheet h2::after,.mapbook-sheet h2::before{display:none}
     .mapbook-head{display:flex;align-items:center;gap:8px}.mapbook-head h2{flex:1;text-align:center}
     .mapbook-head .btn{background:rgba(43,29,16,.08);border-color:rgba(43,29,16,.25);color:#2b1d10}
     #mapCanvas{width:100%;height:min(58vh,520px);display:block;margin-top:8px;border:1px solid rgba(43,29,16,.3);border-radius:4px;touch-action:none;cursor:crosshair}
