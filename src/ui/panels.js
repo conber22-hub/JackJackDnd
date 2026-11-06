@@ -7,6 +7,7 @@ import { DREAD, CONDITIONS } from '../data/dread.js';
 import { ROOM_TYPES, TRAP_KINDS, DOOR_STATES } from '../data/rooms.js';
 import { SHAPES } from '../engine/shapes.js';
 import { outlook } from '../game/weather.js';
+import { puzzleIn, PUZZLE_KINDS } from '../game/puzzles.js';
 import { VAULTS } from '../data/vaults.js';
 import { parseVault } from '../engine/vaults.js';
 import { THEMES, TEMPLATES } from '../data/themes.js';
@@ -239,6 +240,7 @@ function buildTab(){
         <select class="txt" title="The room's shape on the grid (5×5 and up; a smaller room stays a rectangle)" data-edit="room" data-id="${r.id}" data-f="shape">${Object.entries(SHAPES).map(([k, v]) => opt(k, v, (r.shape || '') === k)).join('')}</select></div>
       <div class="stat">${r.w}×${r.h} squares (${r.w * 5}×${r.h * 5} ft) at ${r.x}, ${r.y}${r.stairsUp ? ' · stairs up' : ''}${r.stairsDown ? ' · stairs down' : ''}</div>
       ${setPieceRow(r)}
+      ${puzzleRow(r)}
       <textarea class="txt" style="min-height:44px" placeholder="DM notes…" data-edit="room" data-id="${r.id}" data-f="notes">${esc(r.notes || '')}</textarea>
       <div class="row"><button class="btn small" data-act="populateRoom" data-id="${r.id}">Populate room</button><button class="btn small danger" data-act="delRoom" data-id="${r.id}">Delete room</button></div></div>`;
   }
@@ -571,4 +573,13 @@ function weatherDesk(C){
   if (C.weatherHand || !C.wx) return `<div class="row"><span class="muted grow">${C.weatherHand ? 'Your own weather: it stands until the next day.' : 'The valley\'s weather runs with its clock.'}</span><button class="btn small" data-act="valleyWeather" title="The valley's own weather for this day and hour">🌦 The valley's weather</button></div>`;
   const next = outlook(3).map(w => `${esc(w.label)}`).join(' · ');
   return `<div class="muted">🌦 ${esc(C.wx.desc)}</div>${next ? `<div class="muted">Next three days: ${next}</div>` : ''}`;
+}
+
+// Build tab → Selected room: a puzzle (game/puzzles.js) for the heroes standing in it to work from their phones.
+function puzzleRow(r){
+  const p = puzzleIn(ui.floor, r.id);
+  if (p) return `<div class="row"><span class="muted grow">🧩 ${esc(p.name)}${p.state?.solved ? ' (solved)' : p.door != null ? ' · holds the door shut' : ''}</span><button class="btn small" data-act="openPuzzle" data-id="${esc(p.id)}">Open</button></div>`;
+  return `<div class="row"><select class="txt" id="pzKind" title="A puzzle the heroes in this room work from their phones">${PUZZLE_KINDS.map(k => opt(k.id, k.name, false)).join('')}</select>
+    <select class="txt" id="pzDiff" style="width:auto">${opt('1', 'Easy', false)}${opt('2', 'Fair', true)}${opt('3', 'Hard', false)}</select>
+    <button class="btn small" data-act="setPuzzle" data-id="${r.id}" title="Locks the room's nearest door until it's solved">🧩 Puzzle</button></div>`;
 }

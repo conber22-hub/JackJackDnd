@@ -6,6 +6,8 @@ import { ensureLettersButton } from './letters.js';
 import { ensureEstate } from './estate.js';
 import { ensureLook, openLookPanel } from './look.js';
 import { ensureMapbook } from './mapbook.js';
+import { ensurePuzzles, openPuzzle } from './puzzles.js';
+import { setPuzzle } from '../game/puzzles.js';
 import { toggleNotebook } from './notebook.js';
 import { togglePalette, closePalette, closeShortcuts, showShortcuts, registerCommands } from './palette.js';
 import { updateVision, freeTilesNear, seenNow } from '../engine/grid.js';
@@ -112,6 +114,8 @@ document.addEventListener('click', e => {
     case 'furnishRoom': furnish(ui.floor, +id); break;
     case 'clearRoom': clearFurniture(ui.floor, +id); break;
     case 'setPiece': setPiece(ui.floor, +id, $('#setPieceSel')?.value); break;
+    case 'setPuzzle': setPuzzle(ui.floor, +id, $('#pzKind')?.value, $('#pzDiff')?.value); break;
+    case 'openPuzzle': openPuzzle(ui.floor, id); break;
     case 'valleyWeather': if (!applyWeather({ force:true })) toast('The valley\'s weather starts once the valley clock is running (the Valley tab).'); changed(); renderPanel(); break;
     case 'describeFloor': describeRooms(ui.floor); break;
     case 'readRoom': readRoom(ui.floor, +id); break;
@@ -500,6 +504,7 @@ ensureLettersButton();   // the Count's letters: the ✉ desk button, the palett
 ensureEstate();   // "Our place": the palette command, the receiver and the hero-tab section (idempotent)
 ensureLook();   // the 🎨 Look panel and 📸 photo mode: the button, the palette commands, the fps watcher (idempotent)
 ensureMapbook();   // the 🗺️ Map Book: the button, the palette command, the live redraw (idempotent)
+ensurePuzzles();   // 🧩 puzzles: the button when there's one to work, the sheet, the palette command
 $('#floorUp').onclick = () => state && goFloor(ui.floor - 1);
 $('#floorDown').onclick = () => state && goFloor(ui.floor + 1);
 $('#whimBadge').onclick = () => { if (state && isDM()){ ui.tab = 'gaze'; ui.panelOpen = true; renderTabs(); renderPanel(); renderDock(); } };

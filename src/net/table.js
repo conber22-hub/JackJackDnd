@@ -5,6 +5,7 @@ import { state, setState, ui, tokById } from '../engine/state.js';
 import { updateVision, seenNow } from '../engine/grid.js';
 import { redactForPlayers } from '../engine/redact.js';
 import { $, bus } from '../util/core.js';
+import { puzzleAt, playPuzzle } from '../game/puzzles.js';
 import { focusTile } from '../render/scene.js';
 import { ensureFloorViews, buildAllFloors, buildFloor, animateGridChange, animateProp } from '../render/floors.js';
 import { syncTokens, tokenViews, actOn } from '../render/minis.js';
@@ -287,6 +288,10 @@ function onHostMsg(c, m){
     // their own hero, beside it, on their turn; the act must be one the rules offer them there (engine/objects.js)
     const p = state.floors[m.floor]?.props?.find(q => q.id === m.id);
     if (p && me && me.floor === m.floor && !me.dead && canAct(me) && ['open', 'close', 'pick', 'force', 'push', 'topple', 'smash', 'swing'].includes(m.act)) propAction(me, m.floor, p.id, m.act);
+  }
+  else if (m.t === 'puzzle'){   // a move on the puzzle in the room where their own hero stands (game/puzzles.js)
+    const p = me && puzzleAt(me);
+    if (p && p.id === m.id && me.floor === m.floor && canAct(me) && m.action && typeof m.action === 'object') playPuzzle(me.floor, p.id, m.action, me.id);
   }
   else if (m.t === 'disarm'){
     const tr = state.floors[m.floor]?.traps.find(t => t.id === m.id);

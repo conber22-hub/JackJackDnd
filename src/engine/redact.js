@@ -9,6 +9,7 @@
      stay with the DM. Monsters in the fight that nobody can see go as a blank "something unseen".
    · content: the DM's Shift and Whim tables, and custom creatures nobody can see, stay home; the log keeps
      only the lines meant for everyone (entries marked dm:true are the DM's). */
+import { view as puzzleView } from './puzzles.js';
 const KEEP_FLAGS = ['gone', 'taken', 'bloodied'];
 const MON_FIELDS = ['id', 'kind', 'bid', 'name', 'color', 'size', 'floor', 'x', 'y', 'dead', 'conds', 'moved', 'initRoll', 'speed', 'dodge', 'look'];
 
@@ -81,6 +82,9 @@ function redactFloor(f, exp){
       if (p.hides && f.doors?.some(d => d.id === p.hides && d.state !== 'secret')) c.hides = p.hides;
       return c;
     }),
+    // puzzles (game/puzzles.js): in rooms they've seen, as the players' view only (never the solution)
+    puzzles:(f.puzzles || []).filter(p => { const r = (f.rooms || []).find(r => r.id === p.room); return r && rectKept(r.x, r.y, r.w, r.h, 1); })
+      .map(p => ({ id:p.id, room:p.room, name:p.name, last:p.last || '', view:puzzleView(p.state) })),
     buildings:(f.buildings || []).filter(b => rectKept(b.x, b.y, b.w, b.h, 1)).map(b => { const c = { ...b }; delete c.name; return c; }),
     water:(f.water || []).filter(kept), masonry:(f.masonry || []).filter(kept), clear:(f.clear || []).filter(kept), rough:(f.rough || []).filter(kept),
     shallow:(f.shallow || []).filter(kept), slope:(f.slope || []).filter(kept), mists:(f.mists || []).filter(kept), mistWall:(f.mistWall || []).filter(kept), chasm:(f.chasm || []).filter(kept), span:(f.span || []).filter(kept), ...(f.height ? { height:Object.fromEntries(Object.entries(f.height).filter(([i]) => kept(+i))) } : {}),
