@@ -457,7 +457,7 @@ export function ensureChronicle(){
   if (!document.getElementById('chronicleCSS')){
     const st = document.createElement('style'); st.id = 'chronicleCSS';
     st.textContent = `body.screen #btnChronicle{display:none!important}
-    .chronicle-book{background:linear-gradient(175deg,#f6ecd2,#efe0bb 60%,#e6d3a4);color:#2b1d10;border:6px solid #4a2c14;outline:2px solid #2b1d10;border-radius:4px 14px 14px 4px/14px 4px 4px 14px;padding:18px 20px;font-family:var(--serif);filter:drop-shadow(0 10px 24px rgba(0,0,0,.5));max-width:720px;max-height:86vh;overflow-y:auto}
+    .modal .box.chronicle-book,.chronicle-book{background:linear-gradient(175deg,#f6ecd2,#efe0bb 60%,#e6d3a4);color:#2b1d10;border:6px solid #4a2c14;outline:2px solid #2b1d10;border-radius:4px 14px 14px 4px/14px 4px 4px 14px;padding:18px 20px;font-family:var(--serif);filter:drop-shadow(0 10px 24px rgba(0,0,0,.5));max-width:720px;max-height:86vh;overflow-y:auto}
     .chronicle-book h2{font-family:var(--serif);font-size:24px;color:#2b1d10;-webkit-text-fill-color:#2b1d10;background:none;text-shadow:none}.chronicle-book h2::after,.chronicle-book h2::before{display:none}
     .ch-head{display:flex;align-items:center;gap:8px}.ch-head h2{flex:1}
     .chronicle-book .btn{background:rgba(43,29,16,.08);border-color:rgba(43,29,16,.25);color:#2b1d10}
@@ -471,7 +471,7 @@ export function ensureChronicle(){
     .ch-actions{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
     .ch-night{margin-top:14px;border-top:2px solid rgba(43,29,16,.35);padding-top:10px}
     .ch-night-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
-    .ch-night-head h3{font-size:19px;margin:0}
+    .ch-night-head h3{font-size:19px;margin:0;color:#4a2c14;-webkit-text-fill-color:#4a2c14;background:none;text-shadow:none}.ch-night-head h3::after,.chronicle-book h3::after{display:none}.chronicle-book h3,.chronicle-book h4{color:#2b1d10}
     .ch-entry{display:flex;gap:10px;padding:10px 2px;border-top:1px solid rgba(43,29,16,.18)}
     .ch-icon{font-size:20px;line-height:1.4;flex:none}
     .ch-entry-body{flex:1;min-width:0}
