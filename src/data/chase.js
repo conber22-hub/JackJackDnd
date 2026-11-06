@@ -1,0 +1,14 @@
+// Original Barovian complications; no published chase tables are reproduced.
+const scenes={
+ 'village street':['A funeral procession fills the lane.','A bell starts ringing above the market.','A shutter swings across the street.','A flock of geese scatters.','A handcart spills turnips.','Mourners lower a coffin.','A butcher washes blood into the gutter.','A child rolls a barrel downhill.','A lantern rope falls.','A goat blocks the archway.','Mist pours from a cellar.','A crowd kneels before a passing priest.'],
+ woods:['A root catches a boot.','A wolf howls from ahead.','Mist gathers between the pines.','A branch falls across the path.','A raven strikes a hood.','Thorns catch a sleeve.','A hollow trunk gives way.','A deer bolts through the chase.','A rope snare swings loose.','Wet leaves hide a drop.','A dead pine creaks overhead.','Fungal dust drifts from a log.'],
+ road:['A cart overturns ahead.','A funeral wagon stops at a shrine.','Hooves churn loose gravel.','A milestone falls into the road.','A toll rope stretches across the way.','Mist hides a bend.','A wheel rut fills with water.','A pilgrim drops a bundle.','A horse shies at a raven.','A fallen sign swings on its chain.','A wolf crosses the verge.','A bridge plank cracks.'],
+ marsh:['A boot sinks into black mud.','Reeds hide a narrow channel.','Mist rises from the pools.','A rotten boardwalk tilts.','A frog chorus drowns out footsteps.','A leech-covered branch catches a coat.','A pool bubbles underfoot.','A willow falls across the path.','A bog light distracts the runners.','A flooded ditch cuts the route.','A buried cart wheel turns.','A mat of moss tears loose.'],
+ 'castle halls':['A bell shakes dust from the vault.','A tapestry falls across the hall.','Mist seeps under a door.','A suit of armour topples.','A chandelier chain swings low.','A servant spills a tray.','A carpet slides on polished stone.','A door slams on its own.','A raven bursts from a window.','A stair tread gives way.','A curtain catches a torch.','A coffin blocks a landing.'],
+ rooftops:['A slate slides underfoot.','A chimney belches black smoke.','Mist hides the next roof.','A washing line catches a shoulder.','A loose gutter tears away.','A raven wheels past an ear.','A bell rings beside the runners.','A hatch opens suddenly.','A roof beam bows.','A tile shower strikes the lane below.','A steep gable offers no grip.','A wet ridge ends at a gap.'],
+};
+export const COMPLICATIONS=Object.fromEntries(Object.entries(scenes).map(([terrain,texts])=>[terrain,texts.map((text,i)=>({id:`${terrain}-${i}`,text,check:{ability:i%3===0?'con':'dex',dc:10+i%3*2},effect:i===2 || text.startsWith('Mist')?{mist:true,slow:5}:i%4===0?{slow:15}:i%4===1?{damage:2}: {slow:10}}))]));
+export const TERRAINS=Object.keys(COMPLICATIONS);
+export const MOUNT_SPEED={'riding horse':60,'draft horse':40,horse:60,pony:40};
+export const ROUND_CAP=20;
+export const ESCAPE_LEAD=120;
