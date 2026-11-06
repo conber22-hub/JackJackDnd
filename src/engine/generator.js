@@ -70,6 +70,8 @@ export function genDelve(meta){
     }
     furnishFloor(f, tid, drng);
     for (const r of f.rooms){ r.read ||= describeRoom(r, tid, drng); if (r.feature) r.read += ' ' + FEATURE_TEXT[r.feature].read; }
+    // no two rooms on a floor share a name (a second Altar of Bones becomes the Altar of Bones, west)
+    distinctNames(f);
     // the site's plan (engine/sites.js, ChatGPT's): who holds it, each room's part, locked doors and where their keys are
     planFloorSite(f, { seed:`${meta.seed}|site|${L}`, theme:tid, depth:L, last:L === floors.length - 1, gaze:state?.dread || 1, level:partyLevel() });
     hideSecrets(f, mulberry32(hashSeed(`${meta.seed}|secrets|${L}`)));
@@ -549,3 +551,19 @@ export function planFloorSite(f, opts){
   return null;
 }
 const partyLevel = () => { const pcs = (state?.tokens || []).filter(t => t.kind === 'pc'); return pcs.length ? Math.max(1, Math.round(pcs.reduce((s, t) => s + (t.level || 1), 0) / pcs.length)) : 3; };
+
+// Rooms on a floor that share a name are told apart by where they lie (east, north-west…), or by a number at last.
+export function distinctNames(f){
+  const by = new Map(); for (const r of f.rooms) (by.get(r.name) || by.set(r.name, []).get(r.name)).push(r);
+  const taken = new Set(f.rooms.map(r => r.name));
+  for (const [nm, list] of by){
+    if (list.length < 2 || !nm) continue;
+    for (const r of list.slice(1)){
+      const dx = r.cx - f.W / 2, dy = r.cy - f.H / 2, ns = dy < -f.H / 6 ? 'north' : dy > f.H / 6 ? 'south' : '', ew = dx < -f.W / 6 ? 'west' : dx > f.W / 6 ? 'east' : '';
+      let next = `${nm}, ${ns && ew ? `${ns}-${ew}` : ns || ew || 'the lower'}`;
+      for (let k = 2; taken.has(next); k++) next = `${nm} ${['', '', 'II', 'III', 'IV', 'V', 'VI'][k] || k}`;
+      taken.add(next); r.name = next;
+    }
+  }
+  return f;
+}

@@ -68,6 +68,11 @@ export function applySite(f, plan, g){
     const clue = p.clue ? `🔎 Clue: ${p.clue.text}${p.clue.points != null ? ` (it points to ${name(+p.clue.points)}).` : ''}` : '';
     r.notes = [p.dm, clue, r.notes].filter(Boolean).join(' ');
   }
-  f.site = plan;   // (the whole plan, for the DM's page: engine/sites.js describeSite; players get only its name)
+  // the planner names rooms by their part and number ("the treasury (room 4)"): give the DM the room's own name too
+  const named = JSON.parse(JSON.stringify(plan).replace(/\(room (\d+)\)/g, (m, id) => `(${JSON.stringify(name(+id)).slice(1, -1)})`));
+  for (const r of f.rooms){ const p = named.rooms?.[String(r.id)]; if (!p) continue;
+    if (!r.vault && p.read) r.read = r.read.replace(plan.rooms[String(r.id)].read, p.read);
+    r.notes = r.notes.replace(plan.rooms[String(r.id)].dm, p.dm).replace(/\(room (\d+)\)/g, (m, id) => `(${name(+id)})`); }
+  f.site = named;   // (the whole plan, for the DM's page: engine/sites.js describeSite; players get only its name)
   return f;
 }
