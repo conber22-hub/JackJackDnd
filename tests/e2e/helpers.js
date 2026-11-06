@@ -128,3 +128,15 @@ export async function clickTile(page, x, y){
   const p = await tilePoint(page, x, y);
   await page.mouse.click(p.x, p.y);
 }
+
+// The autosave lands in IndexedDB half a second after a change, and then asynchronously: wait for it before a reload
+// that expects to find the delve (on a busy machine the reload can otherwise beat it).
+export async function waitForSave(page){
+  await expect.poll(() => page.evaluate(() => new Promise(resolve => {
+    const req = indexedDB.open('keyval-store');
+    req.onsuccess = () => { const db = req.result; if (!db.objectStoreNames.contains('keyval')) return resolve(false);
+      const tx = db.transaction('keyval', 'readonly').objectStore('keyval').get('dreaddelve.save.v1');
+      tx.onsuccess = () => resolve(!!tx.result); tx.onerror = () => resolve(false); };
+    req.onerror = () => resolve(false);
+  })), { timeout:20_000 }).toBe(true);
+}

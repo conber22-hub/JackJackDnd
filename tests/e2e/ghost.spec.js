@@ -2,7 +2,7 @@
 // fixture: the fixture keeps Wick quiet, and here he is the thing under test. Each test opens its
 // own context (a fresh device) and prepares it with { wick:true }, then asserts its own errors.
 import { test, expect } from '@playwright/test';
-import { preparePage, idle, startDM, arena, selectHero } from './helpers.js';
+import { preparePage, idle, startDM, arena, selectHero, waitForSave } from './helpers.js';
 
 async function freshPage(browser, baseURL, viewport){
   const context = await browser.newContext({ baseURL, ...(viewport ? { viewport } : {}) });
@@ -139,6 +139,7 @@ test('the start screen: Session Zero, then Continue after a reload', async ({ br
   const second = await freshPage(browser, baseURL);
   try {
     await startDM(second.page);
+    await waitForSave(second.page);   // (the reload must find the delve saved)
     await second.page.reload();
     await second.page.waitForFunction(() => !!window.DreadDelve);
     await expect.poll(() => wickStep(second.page)).toBe('start-continue');
