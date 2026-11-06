@@ -5,6 +5,7 @@ import { ensureGhost } from './ghost.js';
 import { ensureLettersButton } from './letters.js';
 import { ensureEstate } from './estate.js';
 import { ensureLook, openLookPanel } from './look.js';
+import { ensureMapbook } from './mapbook.js';
 import { toggleNotebook } from './notebook.js';
 import { togglePalette, closePalette, closeShortcuts, showShortcuts, registerCommands } from './palette.js';
 import { updateVision, freeTilesNear, seenNow } from '../engine/grid.js';
@@ -68,8 +69,7 @@ import { turnAction, undoMove, closeInMove, selectParty, selectKin, clearGroup, 
 import { useFeature, adjustRes, shortRest, longRest } from '../game/resources.js';
 import { legendOf, legendLeft, useLegendary, useResistance, lairAction } from '../game/combat.js';
 import { rollEncounter, placeEncounter } from '../game/fights.js';
-import { furnish, clearFurniture, describeRooms, readRoom, answerPrompt, setPiece } from '../game/rooms.js';
-import { handWeather, applyWeather } from '../game/weather.js';
+import { furnish, clearFurniture, describeRooms, readRoom, answerPrompt } from '../game/rooms.js';
 
 const actor = () => ui.role === 'player' ? tokById(ui.myToken) : (ui.selected && tokById(ui.selected));
 
@@ -110,8 +110,6 @@ document.addEventListener('click', e => {
     case 'furnishFloor': furnish(ui.floor); break;
     case 'furnishRoom': furnish(ui.floor, +id); break;
     case 'clearRoom': clearFurniture(ui.floor, +id); break;
-    case 'setPiece': setPiece(ui.floor, +id, $('#setPieceSel')?.value); break;
-    case 'valleyWeather': if (!applyWeather({ force:true })) toast('The valley\'s weather starts once the valley clock is running (the Valley tab).'); changed(); renderPanel(); break;
     case 'describeFloor': describeRooms(ui.floor); break;
     case 'readRoom': readRoom(ui.floor, +id); break;
     case 'promptRead': answerPrompt(+k, +id, true); break;
@@ -461,7 +459,7 @@ document.addEventListener('change', e => {
   }
   else if (kind === 'beat'){ markBeat(+el.dataset.k, el.dataset.id, el.checked); }
   else if (kind === 'sessNotes'){ state.campaign.notes[el.dataset.k] = el.value; changed(); }
-  else if (kind === 'camp'){ if (el.dataset.f === 'weather') handWeather(el.value); else state.campaign[el.dataset.f] = el.value; changed(); renderPanel(); }
+  else if (kind === 'camp'){ state.campaign[el.dataset.f] = el.value; changed(); }
   else if (kind === 'fortune'){ state.campaign.fortune[el.dataset.k] = el.value; changed(); }
   else if (kind === 'place'){ state.campaign.places[el.dataset.k] = el.value; changed(); }
   else if (kind === 'dreadName' || kind === 'dreadText'){
@@ -498,6 +496,7 @@ ensureGhost();   // Wick, the guide: the help modal's 🕯 toggle, and his watch
 ensureLettersButton();   // the Count's letters: the ✉ desk button, the palette command, the receiver and the hero-tab list (idempotent)
 ensureEstate();   // "Our place": the palette command, the receiver and the hero-tab section (idempotent)
 ensureLook();   // the 🎨 Look panel and 📸 photo mode: the button, the palette commands, the fps watcher (idempotent)
+ensureMapbook();   // the 🗺️ Map Book: the button, the palette command, the live redraw (idempotent)
 $('#floorUp').onclick = () => state && goFloor(ui.floor - 1);
 $('#floorDown').onclick = () => state && goFloor(ui.floor + 1);
 $('#whimBadge').onclick = () => { if (state && isDM()){ ui.tab = 'gaze'; ui.panelOpen = true; renderTabs(); renderPanel(); renderDock(); } };
