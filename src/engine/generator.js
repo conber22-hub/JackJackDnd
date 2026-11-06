@@ -17,6 +17,8 @@ import { cavify, reachable } from './caves.js';
 import { inShape, pickShape } from './shapes.js';
 import { pickVault, stampVault } from './vaults.js';
 import { cavern } from './caverns.js';
+import { planSite } from './sites.js';
+import { siteGraph, applySite } from './sitegraph.js';
 import { addFeatures, FEATURE_TEXT } from './features.js';
 import { state, makeMonster } from './state.js';
 
@@ -68,6 +70,8 @@ export function genDelve(meta){
     }
     furnishFloor(f, tid, drng);
     for (const r of f.rooms){ r.read ||= describeRoom(r, tid, drng); if (r.feature) r.read += ' ' + FEATURE_TEXT[r.feature].read; }
+    // the site's plan (engine/sites.js, ChatGPT's): who holds it, each room's part, locked doors and where their keys are
+    planFloorSite(f, { seed:`${meta.seed}|site|${L}`, theme:tid, depth:L, last:L === floors.length - 1, gaze:state?.dread || 1, level:partyLevel() });
     hideSecrets(f, mulberry32(hashSeed(`${meta.seed}|secrets|${L}`)));
   });
   if (state) floors.forEach((f, L) => { if (specs[L].populate) populateFloor(f, L, rng, L === meta.floors - 1 || !!specs[L].boss, specs[L].populate === true ? .4 : specs[L].populate); });
@@ -532,3 +536,16 @@ export function cavernFloor(L, W, H, rng, anchor, isLast, spec = {}){
   placeTraps(f, rng, spec);
   return f;
 }
+
+/* The site's plan for a generated floor (engine/sites.js and engine/sitegraph.js). A floor whose way on can only be
+   reached through a secret door is planned as if those were doors (they stay secret); one the planner can't make
+   sense of (the way in and the way on in the same wide place of a cavern) simply has no plan. → the plan or null */
+export function planFloorSite(f, opts){
+  if (!f.rooms?.length || f.rooms.length < 2) return null;
+  const g = siteGraph(f);
+  for (const graph of [g, { ...g, links:g.links.map(l => l.kind === 'secret' ? { ...l, kind:'door' } : l) }]){
+    try { const plan = planSite(graph, opts); applySite(f, plan, g); return plan; } catch {}
+  }
+  return null;
+}
+const partyLevel = () => { const pcs = (state?.tokens || []).filter(t => t.kind === 'pc'); return pcs.length ? Math.max(1, Math.round(pcs.reduce((s, t) => s + (t.level || 1), 0) / pcs.length)) : 3; };

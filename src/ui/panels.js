@@ -190,10 +190,12 @@ function dungeonTab(){
       <button class="btn small ${ui.freeMove ? 'on' : ''}" data-act="toggle" data-k="freeMove">Free move</button>
       <button class="btn small ${ui.whispers ? 'on' : ''}" data-act="toggle" data-k="whispers">Whispers</button>
       <button class="btn small ${ui.roomPrompts !== false ? 'on' : ''}" data-act="toggle" data-k="roomPrompts" title="When the party first walks into a room, offer its read-aloud">Room prompts</button></div>
+    ${siteCard(f)}
     <h4>Rooms (${f.rooms.length})</h4>
     <div class="row"><button class="btn small" data-act="furnishFloor" title="Furniture for every room that has none, by its type and this floor's look">🪑 Furnish empty rooms</button><button class="btn small" data-act="describeFloor" title="A read-aloud line for every room that has none">📜 Describe rooms</button></div>`;
   for (const r of f.rooms) h += `<div class="card ${ui.selRoom === r.id ? 'sel' : ''}"><div class="hd"><span class="dot" style="color:${ROOM_TYPES[r.type]?.color};background:${ROOM_TYPES[r.type]?.color}"></span>
       <input class="txt" style="flex:1" value="${esc(r.name)}" data-edit="room" data-id="${r.id}" data-f="name"><button class="btn small" data-act="goRoom" data-id="${r.id}">Go</button></div>
+      ${r.role ? `<div class="muted">🏰 ${esc(r.role)}${r.faction ? ` · ${esc(f.site?.factions?.find(x => x.id === r.faction)?.name || r.faction)}` : ''}${r.encounter ? ` · ⚔ ${esc(r.encounter.difficulty)} (${esc(r.encounter.fam)})` : ''}${r.treasure ? ` · 💰${'•'.repeat(r.treasure)}` : ''}${r.beat ? ` · ${esc(r.beat)}` : ''}</div>` : ''}
       <div class="row"><select class="txt" data-edit="room" data-id="${r.id}" data-f="type">${Object.entries(ROOM_TYPES).map(([k, v]) => opt(k, v.label, r.type === k)).join('')}</select></div>
       ${r.outdoor ? `<div class="row"><select class="txt" title="The ground underfoot" data-edit="room" data-id="${r.id}" data-f="ground">${opt('', 'Ground: as the map', !r.ground)}${Object.entries(GROUNDS).map(([k, v]) => opt(k, v, r.ground === k)).join('')}</select>
         <select class="txt" title="A field: what grows here" data-edit="room" data-id="${r.id}" data-f="crop">${opt('', 'No crop', !r.crop)}${Object.entries(CROPS).map(([k, v]) => opt(k, v.n, r.crop === k)).join('')}</select>
@@ -582,4 +584,18 @@ function puzzleRow(r){
   return `<div class="row"><select class="txt" id="pzKind" title="A puzzle the heroes in this room work from their phones">${PUZZLE_KINDS.map(k => opt(k.id, k.name, false)).join('')}</select>
     <select class="txt" id="pzDiff" style="width:auto">${opt('1', 'Easy', false)}${opt('2', 'Fair', true)}${opt('3', 'Hard', false)}</select>
     <button class="btn small" data-act="setPuzzle" data-id="${r.id}" title="Locks the room's nearest door until it's solved">🧩 Puzzle</button></div>`;
+}
+
+// Maps tab: the floor's site, as planned (engine/sites.js): who holds it, the hook, the twist, the locks and their keys.
+function siteCard(f){
+  const S = f.site; if (!S) return '';
+  const name = id => f.rooms.find(r => r.id === +id)?.name || '?';
+  const locks = (S.locks || []).filter(l => l.kind !== 'secret' || !l.existing);
+  return `<h4>🏰 The site: ${esc(S.name)}</h4><div class="card"><div class="muted">${esc(S.blurb || '')}</div>
+    <div class="trait"><b>Who holds it.</b> ${S.factions.map(x => `${esc(x.name)} <span class="muted">(${esc(x.attitude)}: ${esc(x.goal)})</span>`).join('; ')}</div>
+    <div class="trait"><b>Hook.</b> ${esc(S.hook)}</div>
+    <div class="trait"><b>The way through.</b> ${S.route.map(name).map(esc).join(' → ')}${S.climax != null ? ` <span class="muted">(climax: ${esc(name(S.climax))})</span>` : ''}</div>
+    ${locks.length ? `<div class="trait"><b>Locks.</b> ${locks.map(l => `${esc(name(l.a))} ↔ ${esc(name(l.b))}: ${esc(l.kind)}${l.key ? `, ${esc(l.key.name)} in ${esc(name(l.key.in))} (${esc(l.key.how)})` : ''}`).join('; ')}</div>` : ''}
+    <div class="trait"><b>Twist.</b> ${esc(S.twist)}</div>
+    <div class="row"><button class="btn small" data-act="sitePrint">🖨 The site's page</button></div></div>`;
 }

@@ -8,6 +8,7 @@ import { ensureLook, openLookPanel } from './look.js';
 import { ensureMapbook } from './mapbook.js';
 import { ensurePuzzles, openPuzzle } from './puzzles.js';
 import { setPuzzle } from '../game/puzzles.js';
+import { describeSite } from '../engine/sites.js';
 import { ensureChronicle } from './chronicle.js';
 import { toggleNotebook } from './notebook.js';
 import { togglePalette, closePalette, closeShortcuts, showShortcuts, registerCommands } from './palette.js';
@@ -117,6 +118,7 @@ document.addEventListener('click', e => {
     case 'setPiece': setPiece(ui.floor, +id, $('#setPieceSel')?.value); break;
     case 'setPuzzle': setPuzzle(ui.floor, +id, $('#pzKind')?.value, $('#pzDiff')?.value); break;
     case 'openPuzzle': openPuzzle(ui.floor, id); break;
+    case 'sitePrint': { const S = state.floors[ui.floor]?.site; if (S){ const w = window.open('', '_blank'); if (w){ w.document.title = S.name; const pre = w.document.createElement('pre'); pre.style.cssText = 'white-space:pre-wrap;font:15px/1.5 Georgia,serif;max-width:760px;margin:24px auto'; pre.textContent = describeSite(S); w.document.body.appendChild(pre); } } } break;
     case 'valleyWeather': if (!applyWeather({ force:true })) toast('The valley\'s weather starts once the valley clock is running (the Valley tab).'); changed(); renderPanel(); break;
     case 'describeFloor': describeRooms(ui.floor); break;
     case 'readRoom': readRoom(ui.floor, +id); break;

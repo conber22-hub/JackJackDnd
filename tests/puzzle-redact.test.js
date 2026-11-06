@@ -23,3 +23,14 @@ test("players see a puzzle's view, never its solution, and only where they have 
     const out2 = redactForPlayers({ meta:{ seed:'s' }, floors:[f], tokens:[], campaign:{} }, { explored:{ 0:exp } });
     assert.ok(!out2.floors[0].puzzles.some(p => p.id === 'pzFar')); }
 });
+
+import { genDelve } from '../src/engine/generator.js';
+test("a generated floor's site plan stays with the DM: players get only its name", () => {
+  const floors = genDelve({ seed:'site-redact', template:'castle', floors:2, size:40 });
+  const f = floors.find(f => f.site); assert.ok(f, 'some floor has a plan');
+  const exp = new Set(); for (let i = 0; i < f.grid.length; i++) if (walk(f.grid[i])) exp.add(i);
+  const out = redactForPlayers({ meta:{ seed:'s' }, floors:[f], tokens:[], campaign:{} }, { explored:{ 0:exp } });
+  const json = JSON.stringify(out.floors[0]);
+  assert.deepEqual(out.floors[0].site, { name:f.site.name });
+  for (const word of ['twist', 'factions', 'locks', '"route"', 'encounter', '"role"', '"key"']) assert.ok(!json.includes(word), `players never see ${word}`);
+});
