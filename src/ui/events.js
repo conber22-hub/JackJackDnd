@@ -13,6 +13,7 @@ import { describeSite } from '../engine/sites.js';
 import { stockSite, garrisonArrive, giveHoard } from '../game/garrison.js';
 import { influenceFolk } from '../game/folk.js';
 import { ensureChronicle } from './chronicle.js';
+import { ensureSoundscape } from './soundscape.js';
 import { toggleNotebook } from './notebook.js';
 import { togglePalette, closePalette, closeShortcuts, showShortcuts, registerCommands } from './palette.js';
 import { updateVision, freeTilesNear, seenNow } from '../engine/grid.js';
@@ -518,6 +519,7 @@ ensureMapbook();   // the 🗺️ Map Book: the button, the palette command, the
 ensurePuzzles();   // 🧩 puzzles: the button when there's one to work, the sheet, the palette command
 ensureChase();   // 🏃 the chase: the DM's sheet and the palette command
 ensureChronicle();   // the 📜 Chronicle: the button, the palette command, the record of the story (idempotent)
+ensureSoundscape();   // the 🎻 Soundscape: the button, the palette command, the board and its receivers (idempotent)
 $('#floorUp').onclick = () => state && goFloor(ui.floor - 1);
 $('#floorDown').onclick = () => state && goFloor(ui.floor + 1);
 $('#whimBadge').onclick = () => { if (state && isDM()){ ui.tab = 'gaze'; ui.panelOpen = true; renderTabs(); renderPanel(); renderDock(); } };
