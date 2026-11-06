@@ -188,6 +188,8 @@ export const themeIndex = id => { const i = THEMES.findIndex(t => t.id === id); 
 export const TEMPLATES = [
   { id:'andral', name:'The Descent of Saint Andral', blurb:'The classic four: church undercroft, silver mine, the Hand-Warrens, the Undertow.',
     floors:[{ theme:'undercroft' }, { theme:'silver' }, { theme:'hands', secret:.25 }, { theme:'undertow', doors:.15 }] },
+  { id:'caverns', name:'The Deep Caverns', blurb:'No builder ever came this far down: open caverns grown out of the dark, a warren of side passages, a black lake with a shallow rim, and a drop crossed by a single bridge.',
+    floors:[{ theme:'hands', cavern:'warren' }, { theme:'undertow', cavern:'lake' }, { theme:'womb', cavern:'chasm' }, { theme:'hands', cavern:'hall' }] },
   { id:'castle', name:'Castle above, crypt below, mine under that', blurb:'Start in the chapel ruins, go down through the crypts, end in the silver vein.',
     floors:[{ theme:'chapel', doors:.6, rooms:1.1 }, { theme:'ossuary' }, { theme:'silver', doors:.2 }] },
   { id:'outbreak', name:'Outbreak — the Seep ascends', blurb:'Every floor is already taken. Populated as you descend: the Budding Mind grows in the Womb, and the Undertow waits at the bottom.',

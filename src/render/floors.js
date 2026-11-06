@@ -166,6 +166,10 @@ export function buildFloor(L, opt = {}){
   const rng = mulberry32(L * 999 + 7);
   const base = new THREE.Color(th.floor), hall = new THREE.Color(th.hall);
   const roomOf = new Map(); for (const r of f.rooms) for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++) roomOf.set(y * f.W + x, r);
+  // a cavern's wide places have boxes that overlap: each square belongs to the nearest one's middle (engine/caverns.js)
+  if (f.cavern) for (const [i, r0] of roomOf){ const x = i % f.W, y = (i / f.W) | 0; let best = r0, bd = Infinity;
+    for (const r of f.rooms) if (x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h){ const d = (r.cx - x) ** 2 + (r.cy - y) ** 2; if (d < bd){ bd = d; best = r; } }
+    roomOf.set(i, best); }
   // which surface each square is: '' is the theme's own floor; outdoor floors have grass, roads and streets
   const outdoorTh = !kitWall0 && (th.walls === 'trees' || th.walls === 'mixed'), under = !kitWall0 && UNDER.has(th.id);
   const indoorKind = ['plank', 'flag'].includes(SURFACES[th.id]?.floor) ? '' : 'plank', roadKind = ROAD[th.id] || 'dirt';

@@ -16,6 +16,7 @@ import { genPlace } from './settlement.js';
 import { cavify, reachable } from './caves.js';
 import { inShape, pickShape } from './shapes.js';
 import { pickVault, stampVault } from './vaults.js';
+import { cavern } from './caverns.js';
 import { addFeatures, FEATURE_TEXT } from './features.js';
 import { state, makeMonster } from './state.js';
 
@@ -61,8 +62,10 @@ export function genDelve(meta){
     }
     // set pieces first (engine/vaults.js: a crypt of coffin niches, a flooded shrine…), then a few rooms with something
     // of their own (water, a chasm, a fall of rock, pillars) before the furniture goes in
-    addVaults(f, tid, mulberry32(hashSeed(`${meta.seed}|vaults|${L}`)));
-    addFeatures(f, tid, mulberry32(hashSeed(`${meta.seed}|features|${L}`)));
+    if (!sp.cavern){   // (a cavern's wide places aren't rooms to stamp or flood: it has its own lake and drop)
+      addVaults(f, tid, mulberry32(hashSeed(`${meta.seed}|vaults|${L}`)));
+      addFeatures(f, tid, mulberry32(hashSeed(`${meta.seed}|features|${L}`)));
+    }
     furnishFloor(f, tid, drng);
     for (const r of f.rooms){ r.read ||= describeRoom(r, tid, drng); if (r.feature) r.read += ' ' + FEATURE_TEXT[r.feature].read; }
     hideSecrets(f, mulberry32(hashSeed(`${meta.seed}|secrets|${L}`)));
@@ -77,6 +80,8 @@ export function genFloor(L, W, H, rng, anchor, isLast, spec = {}){
   if (spec.castle !== undefined){ const lay = ravenloftLayout(spec.castle, Math.floor(rng() * 1e9)); if (lay) return layoutFloor(L, W, H, { ...spec, layout:lay }, anchor, isLast); }
   // a place from the Valley (village, town, camp, tower…): built fresh from the delve's seed
   if (spec.place){ const lay = genPlace(spec.place.kind, { ...spec.place, seed:Math.floor(rng() * 1e9), last:isLast }); if (lay) return layoutFloor(L, W, H, { ...spec, layout:lay }, anchor, isLast); }
+  // a true cavern (engine/caverns.js), grown rather than built
+  if (spec.cavern) return cavernFloor(L, W, H, rng, anchor, isLast, spec);
   const theme = spec.theme !== undefined ? themeIndex(spec.theme) : L % 4, th = THEMES[theme];
   const rooms = [];
   const [smin, smax] = spec.roomSize || [4, 9];
@@ -494,4 +499,36 @@ export function applyVault(f, r, v, out, start, keep = []){
   }
   r.vault = v.id; r.name = v.name; r.named = true; r.read = v.read;
   return true;
+}
+
+/* A true cavern (engine/caverns.js, ChatGPT's): open ground grown by cellular automata, its wide places the rooms
+   (their boxes overlap the rock; carve() keeps the cavern's own shape, as it does an imported map's), an underground
+   lake (deep water, impassable, with a shallow edge that's difficult ground), and a chasm with one bridge. The way up
+   lines up with the floor above; when that isn't open ground, a passage is dug from it to the cavern. */
+export function cavernFloor(L, W, H, rng, anchor, isLast, spec = {}){
+  const theme = spec.theme !== undefined ? themeIndex(spec.theme) : L % 4, th = THEMES[theme];
+  const c = cavern(W, H, { preset:spec.cavern, seed:`cavern|${L}|${Math.floor(rng() * 1e9)}` });
+  const base = Array.from(c.open, v => v ? T.ROOM : T.ROCK);
+  const rooms = c.chambers.map((ch, k) => { const r = recalcRoom({ id:k, x:ch.x, y:ch.y, w:ch.w, h:ch.h, type:'chamber', name:'', notes:'', cave:true }); r.cx = ch.cx; r.cy = ch.cy; return r; });
+  const f = { level:L, W, H, theme, name:th.name, rooms, nextId:rooms.length, edges:[], corridors:[], autoLink:false, cavern:spec.cavern,
+              up:null, down:null, grid:null, dug:[], filled:[], doors:[], traps:[], base, nextObj:1 };
+  f.up = anchor ? { ...anchor } : { ...c.up };
+  if (anchor && !c.open[anchor.y * W + anchor.x]) f.dug.push(...lPath(f, anchor.x, anchor.y, c.up.x, c.up.y, rng() < .5));
+  if (!isLast){
+    f.down = { ...c.down };
+    if (f.down.x === f.up.x && f.down.y === f.up.y){ const far = rooms.reduce((a, r) => Math.abs(r.cx - f.up.x) + Math.abs(r.cy - f.up.y) > Math.abs(a.cx - f.up.x) + Math.abs(a.cy - f.up.y) ? r : a, rooms[0]); f.down = { x:far.cx, y:far.cy }; }
+  }
+  // the chambers with the stairs are the ways in and on; the rest take the floor's weights
+  const holds = (r, p) => p && p.x >= r.x && p.y >= r.y && p.x < r.x + r.w && p.y < r.y + r.h;
+  for (const r of rooms){ r.type = holds(r, f.up) || holds(r, f.down) ? 'entrance' : pickWeighted(th.weights, rng); r.name = pick(ROOM_NAMES[r.type] || ROOM_NAMES.chamber, rng); }
+  f.chasm = c.chasm.slice(); f.span = c.bridge.slice();
+  carve(f);
+  // the water and the drop, as the carved floor stands (a passage dug through the lake is dry ground)
+  f.water = c.deep.filter(i => !walk(f.grid[i]));
+  f.shallow = c.shallow.filter(i => walk(f.grid[i]) && f.grid[i] !== T.UP && f.grid[i] !== T.DOWN);
+  f.rough = f.shallow.slice();
+  f.chasm = f.chasm.filter(i => !walk(f.grid[i])); f.span = f.span.filter(i => walk(f.grid[i]));
+  f.necks = c.necks.slice();
+  placeTraps(f, rng, spec);
+  return f;
 }

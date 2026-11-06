@@ -11,6 +11,7 @@ import { CLOCKS, PLACES } from '../data/campaign.js';
 import { MONSTER_PLAY } from '../data/monster-play.js';
 
 export { T, walk } from './tiles.js';
+import { T, walk } from './tiles.js';
 
 export let state = null;
 export function setState(s){ state = s; rebuildBestiary(s?.content?.bestiary); }
@@ -90,9 +91,22 @@ export function newState(opts){
   try { s.floors = genDelve(s.meta); } finally { state = prev; }
   s.floors.forEach((f, L) => s.explored[L] = new Set());
   const f0 = s.floors[0], r0 = f0.rooms[0];
+  // where the party can stand if a corner of the first room is rock (a shaped room, a cavern's wide place) or the
+  // stairs: the open squares nearest its middle, nearest first
+  const spots = [];
+  if (opts.party !== false) for (let d = 0; d < 12 && spots.length < DEFAULT_PARTY.length * 2; d++)
+    for (let dy = -d; dy <= d; dy++) for (let dx = -d; dx <= d; dx++){
+      if (Math.max(Math.abs(dx), Math.abs(dy)) !== d) continue;
+      const x = r0.cx + dx, y = r0.cy + dy, v = f0.grid[y * f0.W + x];
+      if (x >= 0 && y >= 0 && x < f0.W && y < f0.H && walk(v) && v !== T.UP && v !== T.DOWN && spots.length < DEFAULT_PARTY.length * 2) spots.push({ x, y });
+    }
+  const open = (x, y) => { const v = f0.grid[y * f0.W + x]; return walk(v) && v !== T.UP && v !== T.DOWN; };
   if (opts.party !== false) DEFAULT_PARTY.forEach((p, i) => {
     const t = makePC(p); t.floor = 0;
-    t.x = clamp(r0.x + 1 + (i % 3), r0.x, r0.x + r0.w - 1); t.y = clamp(r0.y + 1 + Math.floor(i / 3), r0.y, r0.y + r0.h - 1);
+    // in the room's corner as ever, unless that's rock or the stairs: then the open squares nearest its middle
+    let at = { x:clamp(r0.x + 1 + (i % 3), r0.x, r0.x + r0.w - 1), y:clamp(r0.y + 1 + Math.floor(i / 3), r0.y, r0.y + r0.h - 1) };
+    if (!open(at.x, at.y)) at = spots.find(sp => !s.tokens.some(o => o.x === sp.x && o.y === sp.y)) || at;
+    t.x = at.x; t.y = at.y;
     s.tokens.push(t);
   });
   return s;
