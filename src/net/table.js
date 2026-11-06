@@ -429,6 +429,8 @@ export function sendHost(m){
 setSender(sendHost);
 export function onClientMsg(m){
   if (!m) return;
+  // what reaches this player's screen from the table, for anything that keeps a record of it (ui/chronicle.js)
+  if (CHRONICLED.has(m.t)) try { bus.emit('table', m); } catch (e) { console.warn(e); }   // (a listener's trouble never stops the message)
   if (ui.screen && screenMsg(m)) return;   // narration, introductions, handouts, lights out (ui/screen.js)
   if (m.t === 'state') applyRemoteState(m.s);
   else if (m.t === 'propfx' && state) animateProp(m.floor, m.id, m.fx);
@@ -468,6 +470,7 @@ export function onClientMsg(m){
 }
 // A phone at the table buzzes when it's your turn (and a tap when you're next).
 const buzz = p => { try { if (!ui.screen) navigator.vibrate?.(p); } catch {} };
+const CHRONICLED = new Set(['card', 'whisper', 'letter', 'handout', 'note', 'banner', 'estate']);
 function applyRemoteState(s){
   const prev = state, ns = deserialize(s);
   ns.art = prev?.art || pendingArt || {};
@@ -491,5 +494,5 @@ function applyRemoteState(s){
   lastTurnSeen = key;
   renderAll();
   if (ui.screen) afterScreenState();
-  bus.emit('state', state);   // a new state has arrived from the DM (the Map Book redraws on it: ui/mapbook.js)
+  try { bus.emit('state', state); } catch (e) { console.warn(e); }   // a new state has arrived from the DM (the Map Book redraws on it: ui/mapbook.js)
 }

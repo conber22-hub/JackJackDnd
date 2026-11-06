@@ -11,7 +11,7 @@
      log    whether they read the log (off: they see only what was sent to them)
    The settings live in the campaign (state.campaign.share), so they travel with the save; the outbox does not. */
 import { state, ui } from '../engine/state.js';
-import { uid, esc } from '../util/core.js';
+import { uid, esc, bus } from '../util/core.js';
 import { broadcast, changed } from './session.js';
 import { sendToSeat } from '../net/table.js';
 
@@ -36,7 +36,8 @@ export function cardCat(c){
 // Something for one hero goes to that player alone: a letter to them (ui/letters.js), their own view of the party's
 // holding (ui/estate.js). Everything else, to the whole table.
 const forHero = msg => msg.t === 'letter' ? msg.letter?.to : msg.t === 'estate' ? msg.estate?.for : null;
-const deliver = msg => { const to = forHero(msg); return to ? sendToSeat(to, msg) : broadcast(msg); };
+// (and the DM's own record of what went to the table: bus 'sent', for ui/chronicle.js)
+const deliver = msg => { const to = forHero(msg); try { bus.emit('sent', { msg, to:to || null, at:Date.now() }); } catch (e) { console.warn(e); } return to ? sendToSeat(to, msg) : broadcast(msg); };
 export function toPlayers(msg, cat = 'world'){
   if (ui.role !== 'dm') return 'kept';
   if (cat === 'dm'){ deliver(msg); return 'sent'; }   // the DM's own doing (a reveal they pressed): that press was the send
