@@ -431,6 +431,7 @@ function nightTab(){
   const N = nightState(), n = screenCount(), room = partyRoom(), sess = SESSIONS.find(x => x.n === state.campaign.session);
   const seg = (act, k, on, label, title = '') => `<button class="btn small ${on ? 'on' : ''}" data-act="${act}" data-k="${k}" title="${esc(title)}">${label}</button>`;
   let h = `<h3>🕯 Game night</h3><div class="muted">For playing round one table: the map on the TV, your laptop running it, the players' phones as their hero cards (or no phones at all), and real dice.</div>
+    <div class="row"><button class="btn small" data-act="chase" title="Someone runs, something follows: round by round (Codex's chase rules)">🏃 A chase</button></div>
     <h4>📺 The table screen</h4>
     <div class="row"><button class="btn primary" data-act="ntOpen">📺 Open the table screen</button><span class="muted">${n ? `<b style="color:var(--candle)">${n} screen${n === 1 ? '' : 's'} connected</b>` : 'none connected'}</span></div>
     <div class="muted">A new window: drag it onto the TV or a second monitor and press ⛶ in its corner. It shows what the party sees (fog, no secrets): the turn order with the heroes' faces across the top, the party along the bottom, and a camera that follows the action and drifts slowly while they explore.</div>

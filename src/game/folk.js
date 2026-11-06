@@ -19,6 +19,10 @@ import { sendHost } from '../net/table.js';
 import { court as getCourt } from './court.js';
 import { SELLERS, openTroubleBy, freshTroubles, markAsking } from './trade.js';
 import { PLACE_NAMES } from '../engine/nemesis.js';
+import { attitudeOf, influence, recall } from '../engine/social.js';
+import { esc } from '../util/core.js';
+import { spendCoins } from '../engine/coins.js';
+import { log } from '../engine/state.js';
 
 const ROLE_NAMES = { villager:'a villager', farmer:'a farmer', smith:'the smith', child:'a child', lostChild:'a lost child', elder:'an elder', watch:'one of the watch',
   priest:'the priest', beggar:'a beggar', traveller:'a traveller', peddler:'a peddler', pilgrim:'a pilgrim', hermit:'a hermit', captive:'a captive', dog:'a dog' };
@@ -122,6 +126,7 @@ export function talkTo(p, { by = null } = {}){
     // a seller: the trade window (ui/trade.js)
     ...(SELLERS.includes(p.role) ? [`<button class="btn small primary" data-act="tradeOpen" data-id="${p.id}" data-k="${ui.floor}">🛒 Trade with ${p.name || roleName(p)}</button>`] : []),
     ...(p.role === 'smith' ? [`<button class="btn small" data-act="workshop" data-id="folk:${ui.floor}:${p.id}">🔨 Commission ${p.name || 'the smith'}</button>`] : []),
+    ...(p.role === 'dog' ? [] : [talkRow(p)]),
   ];
   if (notes.length) showCard({ kind:m ? 'seep' : '', title:'For your eyes', lines:notes }, false);
 }
@@ -145,3 +150,30 @@ setInterval(() => {
   const n = night(); if (wasNight !== null && n !== wasNight) refreshFolk(ui.floor); wasNight = n;
   if (!state.combat?.active) stepFolkNow(ui.floor, { fight:false });
 }, 1000);
+
+/* ---------- talking (Codex's engine/social.js) ----------
+   The DM's card for one of the folk shows how they feel about the party and offers the ways to work on them; the
+   hero doing the talking is the selected hero, else the first on the floor. What they remember stays with them. */
+const today = () => state.campaign?.valley?.day ?? 1;
+const speaker = () => { const sel = ui.selected && state.tokens.find(t => t.id === ui.selected && t.kind === 'pc'); return sel || state.tokens.find(t => t.kind === 'pc' && t.floor === ui.floor && !t.dead); };
+const APPROACH = { persuade:'🗣 Persuade', deceive:'🎭 Deceive', intimidate:'😠 Intimidate', bribe:'🪙 Bribe (5 gp)', perform:'🎻 Perform', insight:'🔍 Read them' };
+const FEEL = { friendly:'friendly 🙂', indifferent:'indifferent 😐', hostile:'hostile 😠', terrified:'terrified 😨' };
+function talkRow(p){
+  p.day = today(); const feel = attitudeOf(p, { gaze:state.dread || 1 }), mem = recall(p).slice(-2);
+  return `🗣 <b>${FEEL[feel] || feel}</b>${mem.length ? ` <span class="muted">· remembers: ${mem.map(m => esc(m.text)).join('; ')}</span>` : ''}<br>
+    <span class="row">${Object.entries(APPROACH).map(([k, l]) => `<button class="btn small" data-act="influence" data-k="${k}" data-id="${ui.floor}:${esc(p.id)}">${l}</button>`).join('')}</span>`;
+}
+export function influenceFolk(L, id, approach){
+  const p = (state.floors[L]?.folk || []).find(x => String(x.id) === String(id)), who = speaker(); if (!p || !who) return;
+  const hero = who.charId ? state.characters?.[who.charId] : null;
+  p.day = today();
+  const offer = approach === 'bribe' ? 5 : 0;
+  if (offer && hero){ const paid = spendCoins(hero.coins || {}, offer); if (!paid){ showCard({ kind:'miss', title:`${who.name} can't pay`, sub:'5 gp' }, false); return; } hero.coins = paid; }
+  const out = influence(p, { approach, hero:hero || { mods:{ cha:2, wis:1 } }, offer, rng:Math.random, gaze:state.dread || 1 });
+  Object.assign(p, { memories:out.person.memories });
+  if (out.cost?.witness) witnessed(L, { kind:'intimidation', x:p.x, y:p.y });
+  const feel = attitudeOf(p, { gaze:state.dread || 1 });
+  const lines = [out.roll ? `${who.name}: ${out.roll.raw} + ${out.roll.bonus} = <b>${out.roll.total}</b> against DC ${out.dc}` : '', esc(out.text), `Now: ${FEEL[feel] || feel}`].filter(Boolean);
+  showCard({ kind:out.ok ? 'good' : 'miss', title:`${APPROACH[approach]} · ${p.name || p.role}`, sub:who.name, lines, cat:'rolls' });
+  log(`🗣 ${who.name} tries to ${approach} ${p.name || p.role}: ${out.ok ? 'it works' : 'no good'} (now ${feel}).`);
+}

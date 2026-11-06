@@ -7,9 +7,11 @@ import { ensureEstate } from './estate.js';
 import { ensureLook, openLookPanel } from './look.js';
 import { ensureMapbook } from './mapbook.js';
 import { ensurePuzzles, openPuzzle } from './puzzles.js';
+import { ensureChase, openChase } from './chase.js';
 import { setPuzzle } from '../game/puzzles.js';
 import { describeSite } from '../engine/sites.js';
 import { stockSite, garrisonArrive, giveHoard } from '../game/garrison.js';
+import { influenceFolk } from '../game/folk.js';
 import { ensureChronicle } from './chronicle.js';
 import { toggleNotebook } from './notebook.js';
 import { togglePalette, closePalette, closeShortcuts, showShortcuts, registerCommands } from './palette.js';
@@ -120,6 +122,8 @@ document.addEventListener('click', e => {
     case 'setPuzzle': setPuzzle(ui.floor, +id, $('#pzKind')?.value, $('#pzDiff')?.value); break;
     case 'openPuzzle': openPuzzle(ui.floor, id); break;
     case 'stockSite': stockSite(ui.floor); break;
+    case 'chase': openChase(); break;
+    case 'influence': { const [L, pid] = String(id).split(':'); influenceFolk(+L, pid, k); } break;
     case 'garrisonArrive': if (!garrisonArrive(ui.floor)) toast('No one is on the way.'); break;
     case 'giveHoard': giveHoard(ui.floor, +id); break;
     case 'sitePrint': { const S = state.floors[ui.floor]?.site; if (S){ const w = window.open('', '_blank'); if (w){ w.document.title = S.name; const pre = w.document.createElement('pre'); pre.style.cssText = 'white-space:pre-wrap;font:15px/1.5 Georgia,serif;max-width:760px;margin:24px auto'; pre.textContent = describeSite(S); w.document.body.appendChild(pre); } } } break;
@@ -512,6 +516,7 @@ ensureEstate();   // "Our place": the palette command, the receiver and the hero
 ensureLook();   // the 🎨 Look panel and 📸 photo mode: the button, the palette commands, the fps watcher (idempotent)
 ensureMapbook();   // the 🗺️ Map Book: the button, the palette command, the live redraw (idempotent)
 ensurePuzzles();   // 🧩 puzzles: the button when there's one to work, the sheet, the palette command
+ensureChase();   // 🏃 the chase: the DM's sheet and the palette command
 ensureChronicle();   // the 📜 Chronicle: the button, the palette command, the record of the story (idempotent)
 $('#floorUp').onclick = () => state && goFloor(ui.floor - 1);
 $('#floorDown').onclick = () => state && goFloor(ui.floor + 1);
