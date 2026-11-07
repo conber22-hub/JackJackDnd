@@ -11,6 +11,7 @@ import { convertPrism, pickLibrary, libCounts, kindCounts, creatorPart, nameKey 
 import { state } from '../engine/state.js';
 import { MAGIC_ITEMS } from '../data/srd-items.js';
 import { FEATURES } from '../data/srd-features.js';
+import { loadBundledPrism } from './bundled-prism.js';
 
 const KEY = 'dreaddelve.library.v1', TABLE_KEY = 'dreaddelve.tablelibrary.v1';
 // What the app has of its own (read before anything is merged in).
@@ -19,7 +20,7 @@ const BUILT_IN = {
   feats:new Set(Object.keys(FEATS).map(nameKey)), subclasses:new Set(Object.values(CLASSES).map(c => nameKey(c.sub))), monsters:new Set(bestList().map(b => nameKey(b.name))),
 };
 // mine: the DM's own import { lib, kinds, name, at, hash } · table: what a player got from their DM's table { part, hash }
-const L = { mine:null, table:null, applied:null, hash:'', ready:false, listeners:new Set() };
+const L = { mine:null, table:null, bundled:null, bundledError:null, applied:null, hash:'', ready:false, listeners:new Set() };
 export const libraryState = () => L;
 export const onLibrary = fn => { L.listeners.add(fn); return () => L.listeners.delete(fn); };
 const tell = () => { for (const fn of L.listeners) try { fn(L); } catch {} };
@@ -43,6 +44,7 @@ function merge(pick){
 function apply(){
   if (L.mine?.lib){ merge(pickLibrary(L.mine.lib, L.mine.kinds, BUILT_IN)); L.hash = hashOf(creatorPart(L.applied)); }
   else if (L.table?.part){ merge(pickLibrary(L.table.part, ['canon', 'ua', 'homebrew'], BUILT_IN)); L.hash = L.table.hash; }   // the DM already chose
+  else if (L.bundled?.lib){ merge(pickLibrary(L.bundled.lib, ['canon', 'ua', 'homebrew'], BUILT_IN)); L.hash = hashOf(creatorPart(L.applied)); }
   else { merge(null); L.hash = ''; }
   tell();
 }
@@ -51,6 +53,16 @@ function apply(){
 export async function loadLibrary(){
   try { L.mine = await get(KEY) || null; L.table = await get(TABLE_KEY) || null; } catch { L.mine = L.table = null; }
   L.ready = true; apply();
+  // The complete owner-provided Prism archive is an optional hosted asset. Offline
+  // single-file builds keep their normal SRD fallback; an explicit browser import
+  // or the DM's shared library always takes priority over the bundled default.
+  if (typeof location !== 'undefined' && location.protocol !== 'file:'){
+    try {
+      const source = await loadBundledPrism();
+      L.bundled = { lib:convertPrism(source), name:'All you need2026.prism' };
+      if (!L.mine && !L.table?.part) apply();
+    } catch (error) { L.bundledError = String(error?.message || error); }
+  }
 }
 // The DM imports a compendium file. → the counts of what's now in use
 export async function importLibrary(text, name = 'compendium'){
@@ -63,10 +75,10 @@ export async function setLibraryKinds(kinds){ if (!L.mine) return; L.mine.kinds 
 export async function removeLibrary(){ L.mine = null; apply(); try { await del(KEY); } catch {} }
 export const libraryInUse = () => !!L.applied;
 export const libraryCounts = () => L.applied ? libCounts(L.applied) : null;
-export const libraryKinds = () => L.mine ? kindCounts(L.mine.lib) : null;
+export const libraryKinds = () => L.mine ? kindCounts(L.mine.lib) : L.bundled ? kindCounts(L.bundled.lib) : null;
 
 /* Sharing with the table. The DM's side: the hash to offer, and the creator's part, gzipped where the browser can. */
-export const tableHash = () => L.mine ? L.hash : '';
+export const tableHash = () => (L.mine || L.bundled) ? L.hash : '';
 export async function packForTable(){
   const json = JSON.stringify(creatorPart(L.applied));
   if (typeof CompressionStream === 'undefined') return { json };
@@ -74,7 +86,7 @@ export async function packForTable(){
   return { gz:new Uint8Array(buf) };
 }
 // The player's side: does this phone already have that version? Then keep it; else ask for it.
-export const haveTableLibrary = hash => !!hash && (L.table?.hash === hash || (L.mine && L.hash === hash));
+export const haveTableLibrary = hash => !!hash && (L.table?.hash === hash || ((L.mine || L.bundled) && L.hash === hash));
 export async function receiveTableLibrary(hash, packed){
   let json = packed?.json;
   if (!json && packed?.gz){
@@ -92,7 +104,7 @@ export async function receiveTableLibrary(hash, packed){
    subclasses. Every entry whose name has all the words. → [{ kind, n, sub, text }] */
 export function lookUp(q, { max = 40, creatures = true } = {}){
   const words = String(q || '').toLowerCase().split(/\s+/).filter(Boolean); if (!words.length) return [];
-  const lib = L.mine?.lib || L.table?.part, out = [], seen = new Set();
+  const lib = L.mine?.lib || L.table?.part || L.bundled?.lib, out = [], seen = new Set();
   const hit = n => words.every(w => n.toLowerCase().includes(w));
   const add = (kind, n, sub, text) => { const k = kind + '|' + n; if (out.length < max && !seen.has(k) && hit(n)){ seen.add(k); out.push({ kind, n, sub, text }); } };
   for (const s of SPELLS) add('Spell', s.n, `${s.l ? `Level ${s.l}` : 'Cantrip'} ${s.school || ''} · ${s.src || ''}`, [`${s.time || ''} · ${s.range || ''} · ${s.comp || ''} · ${s.dur || ''}`, s.text || s.note || '', s.hl && `Higher levels. ${s.hl}`].filter(Boolean).join('\n\n'));
@@ -108,7 +120,7 @@ export function lookUp(q, { max = 40, creatures = true } = {}){
 }
 // The text of something a hero has (a library feature, feat, species trait), for their sheet. → string or ''
 export function textOf(name){
-  const lib = L.mine?.lib || L.table?.part; if (!lib || !name) return '';
+  const lib = L.mine?.lib || L.table?.part || L.bundled?.lib; if (!lib || !name) return '';
   const k = nameKey(name);
   for (const s of Object.values(lib.species || {})) for (const f of s.feats || []) if (nameKey(f.n) === k) return f.text;
   for (const subs of Object.values(lib.subclasses || {})) for (const s of Object.values(subs)) for (const [n, t] of Object.entries(s.texts || {})) if (nameKey(n) === k) return t;
