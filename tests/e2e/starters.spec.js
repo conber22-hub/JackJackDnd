@@ -20,5 +20,9 @@ test('a new hero can start from a ready-made starter and is still the player\'s 
   await expect.poll(() => page.evaluate(() => Object.values(window.DreadDelve.get().characters).find(c => c.name === 'Vesna')?.cls)).toBe('Fighter');
   expect(await page.evaluate(() => Object.values(window.DreadDelve.get().characters).find(c => c.name === 'Vesna').lvl)).toBe(3);
   // an existing hero's sheet doesn't offer the starters
-  expect(await page.evaluate(() => { const D = window.DreadDelve; return !!document.querySelector('#charBox [data-cr="starter"]'); })).toBe(false);
+  const cid = await page.evaluate(() => Object.values(window.DreadDelve.get().characters).find(c => c.name === 'Vesna').id);
+  await page.locator(`[data-act="dmSheet"][data-id="${cid}"]`).first().click();
+  await expect(page.locator('#charModal')).toBeVisible();
+  await expect(box.locator('input[data-cf="name"]')).toHaveValue('Vesna');
+  await expect(box.locator('[data-cr="starter"]')).toHaveCount(0);
 });
