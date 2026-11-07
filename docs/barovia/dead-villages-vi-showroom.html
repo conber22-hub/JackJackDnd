@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Barovia VI · The Dead Villages / 3D Showroom</title>
+<style>
+:root{color-scheme:dark;font-family:Georgia,serif}body{margin:0;background:#0c1217;color:#e9e0d2;overflow:hidden}
+#stage{position:absolute;inset:0}#panel{position:absolute;left:16px;top:16px;z-index:3;max-width:360px;min-width:250px;padding:19px;background:#101820e9;border:1px solid #6f665580;border-radius:12px;box-shadow:0 9px 50px #0007}
+h1{font-size:23px;letter-spacing:.08em;margin:0 0 6px}small{color:#a6aaa9}.sub{font-size:12px;letter-spacing:.14em;color:#c0b09c}
+label{display:block;margin-top:15px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#abb9b4}
+select,input{font-family:inherit;width:100%;margin-top:7px;padding:10px;background:#222f35;border:1px solid #67736e;color:#e9eee9;border-radius:8px;box-sizing:border-box}
+.controls{display:flex;gap:7px;margin-top:12px}button{flex:1;background:#39473f;color:#f1f0e2;border:1px solid #869283;padding:8px;border-radius:7px;cursor:pointer}button.active{background:#829569;color:#0d1416}
+#read{font-size:15px;line-height:1.5;color:#d8c4a4;margin-top:18px;min-height:58px}
+#status{font-size:11px;line-height:1.4;color:#9bacb4;margin-top:12px}.hud{position:absolute;bottom:18px;right:18px;color:#a6b0a7;font:12px system-ui;letter-spacing:.1em;background:#08100b9c;padding:10px;border-radius:8px}
+@media(max-width:600px){#panel{max-width:calc(100vw - 32px);bottom:12px;top:auto}h1{font-size:18px}.sub{font-size:10px}.hud{display:none}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script>
+</head><body><div id="stage"></div><div id="panel"><div class="sub">DREAD DELVE · ASSET SHOWROOM</div><h1>THE DEAD VILLAGES</h1><small>Pack VI | 36 original 3D building skins</small>
+<label for="kind">Building</label><select id="kind"></select>
+<label>State</label><div class="controls"><button id="s0" class="active">Inhabited</button><button id="s1">Abandoned</button><button id="s2">Infested</button></div>
+<div id="read"></div><label for="time">Time of day</label><input id="time" type="range" min="0" max="24" step="1" value="15">
+<div id="status">GLBs are loaded from ./assets/. Three.js CDN access required.</div></div><div class="hud">DRAG TO ORBIT · SCROLL TO ZOOM · STATE CHANGES ARE VISUAL ONLY</div>
+<script type="module">
+import * as THREE from 'three';import {OrbitControls} from 'three/addons/controls/OrbitControls.js';import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {VILLAGE_ARCHETYPES,VILLAGE_STAGES} from '../../src/data/barovia-dead-villages-data.js';
+const container=document.getElementById('stage');const scene=new THREE.Scene();scene.background=new THREE.Color('#101a1f');scene.fog=new THREE.FogExp2('#1a2630',.019);
+const camera=new THREE.PerspectiveCamera(44,innerWidth/innerHeight,.01,130);camera.position.set(8,6.8,10);
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;container.appendChild(renderer.domElement);
+const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.target.set(0,1.2,0);controls.minDistance=3;controls.maxDistance=30;controls.maxPolarAngle=Math.PI*.48;
+const moon=new THREE.DirectionalLight('#aab9cf',2);moon.position.set(-6,10,5);scene.add(moon);const fire=new THREE.PointLight('#eeaa62',0.45,16);fire.position.set(3,4,5);scene.add(fire);scene.add(new THREE.HemisphereLight('#8796b0','#18170f',1.5));
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(80,80),new THREE.MeshStandardMaterial({color:'#2b3533',roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.025;scene.add(ground);
+const grid=new THREE.GridHelper(25,25,'#697069','#3b4540');grid.position.y=.002;grid.material.opacity=.12;grid.material.transparent=true;scene.add(grid);
+const loader=new GLTFLoader();const holder=new THREE.Group();scene.add(holder);const select=document.getElementById('kind');for(const a of VILLAGE_ARCHETYPES){const op=document.createElement('option');op.value=a.id;op.textContent=a.title;select.appendChild(op);}select.value='last_candle_inn';
+let state=0,generation=0;const cache=new Map();const el=document.getElementById('status');
+async function show(){const idx=++generation;const a=VILLAGE_ARCHETYPES.find(v=>v.id===select.value),file=a.states[VILLAGE_STAGES[state]];document.getElementById('read').textContent=a.read[state];
+ for(let i=0;i<3;i++)document.getElementById('s'+i).classList.toggle('active',i===state);
+ el.textContent='Loading '+file+'…';
+ try{if(!cache.has(file))cache.set(file,loader.loadAsync('/assets/dead-villages/'+file));const gltf=await cache.get(file);if(idx!==generation)return;
+ holder.clear();holder.add(gltf.scene.clone(true));controls.target.set(0,1,0);camera.position.set(a.footprint[0]*1.7,a.footprint[0]*1.15,a.footprint[1]*1.65);
+ el.textContent=`${a.footprint[0]}×${a.footprint[1]} five-foot squares · ${VILLAGE_STAGES[state]} · no navigation edits`;
+ }catch(err){el.textContent='Unable to load model. Serve the folder over http(s), with internet access for Three.js. '+err.message;}
+}
+select.addEventListener('change',show);for(let i=0;i<3;i++)document.getElementById('s'+i).onclick=()=>{state=i;show();};
+document.getElementById('time').addEventListener('input',e=>{const t=Number(e.target.value),day=t>=7&&t<=19;moon.intensity=day?2.3:.65;fire.intensity=day?.3:2;scene.background.set(day?'#242d32':'#080d18');});
+window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+renderer.setAnimationLoop(()=>{controls.update();renderer.render(scene,camera);});show();
+</script></body></html>
