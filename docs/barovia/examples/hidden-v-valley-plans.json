@@ -1,0 +1,410 @@
+{
+  "visualOnly": true,
+  "source": "example 40x40 travel maps; authoritative roads are in src/data/barovia-map.js",
+  "examples": [
+    {
+      "roadId": "r-east",
+      "plan": {
+        "seed": "barovia-v-demonstration",
+        "roadId": "r-east",
+        "W": 40,
+        "H": 40,
+        "visualOnly": true,
+        "sites": [
+          {
+            "id": "svalich_road_hatch",
+            "x": 9,
+            "y": 32,
+            "w": 3,
+            "h": 3,
+            "revealed": false
+          },
+          {
+            "id": "ossuary_gravestone",
+            "x": 4,
+            "y": 27,
+            "w": 3,
+            "h": 3,
+            "revealed": false
+          }
+        ]
+      }
+    },
+    {
+      "roadId": "r-west",
+      "plan": {
+        "seed": "barovia-v-demonstration",
+        "roadId": "r-west",
+        "W": 40,
+        "H": 40,
+        "visualOnly": true,
+        "sites": [
+          {
+            "id": "bonegrinder_ash_chute",
+            "x": 29,
+            "y": 25,
+            "w": 3,
+            "h": 3,
+            "revealed": false
+          },
+          {
+            "id": "blackroot_hollow_oak",
+            "x": 14,
+            "y": 22,
+            "w": 4,
+            "h": 4,
+            "revealed": false
+          }
+        ]
+      }
+    },
+    {
+      "roadId": "r-gates",
+      "plan": {
+        "seed": "barovia-v-demonstration",
+        "roadId": "r-gates",
+        "W": 40,
+        "H": 40,
+        "visualOnly": true,
+        "sites": [
+          {
+            "id": "ossuary_gravestone",
+            "x": 8,
+            "y": 14,
+            "w": 3,
+            "h": 3,
+            "revealed": false
+          },
+          {
+            "id": "svalich_road_hatch",
+            "x": 23,
+            "y": 18,
+            "w": 3,
+            "h": 3,
+            "revealed": false
+          }
+        ]
+      }
+    },
+    {
+      "roadId": "r-vallaki",
+      "plan": {
+        "seed": "barovia-v-demonstration",
+        "roadId": "r-vallaki",
+        "W": 40,
+        "H": 40,
+        "visualOnly": true,
+        "sites": [
+          {
+            "id": "inn_floor_cellar",
+            "x": 14,
+            "y": 3,
+            "w": 3,
+            "h": 3,
+            "revealed": false
+          },
+          {
+            "id": "bonegrinder_ash_chute",
+            "x": 27,
+            "y": 29,
+            "w": 3,
+            "h": 3,
+            "revealed": false
+          }
+        ]
+      }
+    },
+    {
+      "roadId": "r-cut",
+      "plan": {
+        "seed": "barovia-v-demonstration",
+        "roadId": "r-cut",
+        "W": 40,
+        "H": 40,
+        "visualOnly": true,
+        "sites": [
+          {
+            "id": "boulder_moss_curtain",
+            "x": 16,
+            "y": 21,
+            "w": 4,
+            "h": 3,
+            "revealed": false
+          },
+          {
+            "id": "blackroot_hollow_oak",
+            "x": 30,
+            "y": 32,
+            "w": 4,
+            "h": 4,
+            "revealed": false
+          }
+        ]
+      }
+    },
+    {
+      "roadId": "r-argyn",
+      "plan": {
+        "seed": "barovia-v-demonstration",
+        "roadId": "r-argyn",
+        "W": 40,
+        "H": 40,
+        "visualOnly": true,
+        "sites": [
+          {
+            "id": "raven_guardian_crypt",
+            "x": 23,
+            "y": 32,
+            "w": 4,
+            "h": 3,
+            "revealed": false
+          },
+          {
+            "id": "blackroot_hollow_oak",
+            "x": 12,
+            "y": 20,
+            "w": 4,
+            "h": 4,
+            "revealed": false
+          }
+        ]
+      }
+    },
+    {
+      "roadId": "r-mist",
+      "plan": {
+        "seed": "barovia-v-demonstration",
+        "roadId": "r-mist",
+        "W": 40,
+        "H": 40,
+        "visualOnly": true,
+        "sites": [
+          {
+            "id": "blackroot_hollow_oak",
+            "x": 26,
+            "y": 4,
+            "w": 4,
+            "h": 4,
+            "revealed": false
+          }
+        ]
+      }
+    },
+    {
+      "roadId": "r-krezk",
+      "plan": {
+        "seed": "barovia-v-demonstration",
+        "roadId": "r-krezk",
+        "W": 40,
+        "H": 40,
+        "visualOnly": true,
+        "sites": [
+          {
+            "id": "dry_well_ladder",
+            "x": 6,
+            "y": 31,
+            "w": 3,
+            "h": 3,
+            "revealed": false
+          },
+          {
+            "id": "straw_barn_hatch",
+            "x": 3,
+            "y": 15,
+            "w": 4,
+            "h": 3,
+            "revealed": false
+          }
+        ]
+      }
+    },
+    {
+      "roadId": "r-yester",
+      "plan": {
+        "seed": "barovia-v-demonstration",
+        "roadId": "r-yester",
+        "W": 40,
+        "H": 40,
+        "visualOnly": true,
+        "sites": [
+          {
+            "id": "raven_guardian_crypt",
+            "x": 18,
+            "y": 4,
+            "w": 4,
+            "h": 3,
+            "revealed": false
+          },
+          {
+            "id": "boulder_moss_curtain",
+            "x": 8,
+            "y": 16,
+            "w": 4,
+            "h": 3,
+            "revealed": false
+          }
+        ]
+      }
+    },
+    {
+      "roadId": "r-winery",
+      "plan": {
+        "seed": "barovia-v-demonstration",
+        "roadId": "r-winery",
+        "W": 40,
+        "H": 40,
+        "visualOnly": true,
+        "sites": [
+          {
+            "id": "straw_barn_hatch",
+            "x": 14,
+            "y": 20,
+            "w": 4,
+            "h": 3,
+            "revealed": false
+          },
+          {
+            "id": "dry_well_ladder",
+            "x": 20,
+            "y": 34,
+            "w": 3,
+            "h": 3,
+            "revealed": false
+          }
+        ]
+      }
+    },
+    {
+      "roadId": "r-castle",
+      "plan": {
+        "seed": "barovia-v-demonstration",
+        "roadId": "r-castle",
+        "W": 40,
+        "H": 40,
+        "visualOnly": true,
+        "sites": [
+          {
+            "id": "ossuary_gravestone",
+            "x": 28,
+            "y": 14,
+            "w": 3,
+            "h": 3,
+            "revealed": false
+          },
+          {
+            "id": "raven_guardian_crypt",
+            "x": 31,
+            "y": 19,
+            "w": 4,
+            "h": 3,
+            "revealed": false
+          }
+        ]
+      }
+    },
+    {
+      "roadId": "r-tser",
+      "plan": {
+        "seed": "barovia-v-demonstration",
+        "roadId": "r-tser",
+        "W": 40,
+        "H": 40,
+        "visualOnly": true,
+        "sites": [
+          {
+            "id": "tser_reed_den",
+            "x": 24,
+            "y": 3,
+            "w": 4,
+            "h": 4,
+            "revealed": false
+          },
+          {
+            "id": "bridge_floodgate",
+            "x": 12,
+            "y": 21,
+            "w": 4,
+            "h": 3,
+            "revealed": false
+          }
+        ]
+      }
+    },
+    {
+      "roadId": "r-berez",
+      "plan": {
+        "seed": "barovia-v-demonstration",
+        "roadId": "r-berez",
+        "W": 40,
+        "H": 40,
+        "visualOnly": true,
+        "sites": [
+          {
+            "id": "bridge_floodgate",
+            "x": 33,
+            "y": 24,
+            "w": 4,
+            "h": 3,
+            "revealed": false
+          },
+          {
+            "id": "tser_reed_den",
+            "x": 18,
+            "y": 30,
+            "w": 4,
+            "h": 4,
+            "revealed": false
+          }
+        ]
+      }
+    },
+    {
+      "roadId": "r-tower",
+      "plan": {
+        "seed": "barovia-v-demonstration",
+        "roadId": "r-tower",
+        "W": 40,
+        "H": 40,
+        "visualOnly": true,
+        "sites": [
+          {
+            "id": "bridge_floodgate",
+            "x": 14,
+            "y": 30,
+            "w": 4,
+            "h": 3,
+            "revealed": false
+          },
+          {
+            "id": "tser_reed_den",
+            "x": 17,
+            "y": 14,
+            "w": 4,
+            "h": 4,
+            "revealed": false
+          }
+        ]
+      }
+    },
+    {
+      "roadId": "r-lake",
+      "plan": {
+        "seed": "barovia-v-demonstration",
+        "roadId": "r-lake",
+        "W": 40,
+        "H": 40,
+        "visualOnly": true,
+        "sites": [
+          {
+            "id": "tser_reed_den",
+            "x": 15,
+            "y": 3,
+            "w": 4,
+            "h": 4,
+            "revealed": false
+          }
+        ]
+      }
+    }
+  ]
+}
