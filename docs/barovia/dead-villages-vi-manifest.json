@@ -1,0 +1,1109 @@
+{
+  "pack": "Barovia VI: The Dead Villages",
+  "version": 6,
+  "scale": "1 square = 1 world unit = 5 feet, +Y up, north -Z",
+  "visualOnly": true,
+  "modelCount": 36,
+  "archetypeCount": 12,
+  "stages": [
+    "inhabited",
+    "abandoned",
+    "infested"
+  ],
+  "archetypes": [
+    {
+      "id": "svalich_cottage",
+      "title": "Svalich Cottage",
+      "footprint": [
+        4,
+        4
+      ],
+      "notes": [
+        "A line of lit candles in the windows.",
+        "There is no chimney smoke.",
+        "The moss reaches for a knock at the door."
+      ]
+    },
+    {
+      "id": "peat_hut",
+      "title": "Peat-Cutter Hut",
+      "footprint": [
+        3,
+        3
+      ],
+      "notes": [
+        "A family has left muddy boots by the door.",
+        "A bundle hangs where a child once slept.",
+        "Soft lights pulse beneath the roof straw."
+      ]
+    },
+    {
+      "id": "timber_longhouse",
+      "title": "Timber Longhouse",
+      "footprint": [
+        6,
+        4
+      ],
+      "notes": [
+        "A pot simmers for the missing woodcutters.",
+        "Knives are driven into the threshold.",
+        "Ribs of wood push through the shingles."
+      ]
+    },
+    {
+      "id": "gallows_watch",
+      "title": "Palisade Watch House",
+      "footprint": [
+        3,
+        3
+      ],
+      "notes": [
+        "A watcher signals from the platform.",
+        "The watch bell has a rope but no clapper.",
+        "Something watches from inside the empty bell."
+      ]
+    },
+    {
+      "id": "morning_chapel",
+      "title": "Morning Chapel",
+      "footprint": [
+        5,
+        4
+      ],
+      "notes": [
+        "Warm candles cling to the altar glass.",
+        "A bell lies in pieces beneath the belfry.",
+        "Roots wind through the windows like fingers."
+      ]
+    },
+    {
+      "id": "last_candle_inn",
+      "title": "Last Candle Inn",
+      "footprint": [
+        6,
+        5
+      ],
+      "notes": [
+        "A soft song drifts through the shutters.",
+        "Chairs stand stacked against the doors.",
+        "The windows glow a sickly green after dusk."
+      ]
+    },
+    {
+      "id": "mourners_ossuary",
+      "title": "Mourner’s Ossuary",
+      "footprint": [
+        4,
+        4
+      ],
+      "notes": [
+        "Fresh flowers lie at the stone threshold.",
+        "Every painted name is scraped away.",
+        "Bone-colored blooms climb the lintel."
+      ]
+    },
+    {
+      "id": "river_granary",
+      "title": "River Granary",
+      "footprint": [
+        4,
+        4
+      ],
+      "notes": [
+        "Fresh flour dust coats the landing.",
+        "Grain leaks through split boards.",
+        "Each sack has sprouted pale tendrils."
+      ]
+    },
+    {
+      "id": "market_stallhouse",
+      "title": "Covered Market Hall",
+      "footprint": [
+        5,
+        4
+      ],
+      "notes": [
+        "Stalls offer bread and a brass scale.",
+        "A sale notice flaps where no merchant stands.",
+        "Spore sacs sway beneath the canvas awning."
+      ]
+    },
+    {
+      "id": "bell_schoolhouse",
+      "title": "Bell Schoolhouse",
+      "footprint": [
+        5,
+        4
+      ],
+      "notes": [
+        "A slate marks today’s lessons.",
+        "The students’ desks face the wall.",
+        "Writing appears across the shuttered windows."
+      ]
+    },
+    {
+      "id": "charcoal_workshop",
+      "title": "Charcoal Workshop",
+      "footprint": [
+        5,
+        4
+      ],
+      "notes": [
+        "A forge burns in spite of the rain.",
+        "The bellows twitch when the room is empty.",
+        "An iron-black growth blooms out of the forge."
+      ]
+    },
+    {
+      "id": "burgomaster_manor",
+      "title": "Burgomaster’s Manor",
+      "footprint": [
+        7,
+        5
+      ],
+      "notes": [
+        "Every downstairs window is lit.",
+        "All the portraits face their own walls.",
+        "The roofline has grown crooked horns."
+      ]
+    }
+  ],
+  "models": [
+    {
+      "id": "svalich_cottage_inhabited",
+      "kind": "svalich_cottage",
+      "stage": "inhabited",
+      "file": "svalich_cottage_inhabited.glb",
+      "footprint": [
+        4,
+        4
+      ],
+      "bounds": [
+        [
+          -1.985,
+          -0.01,
+          -1.988
+        ],
+        [
+          1.985,
+          2.7795,
+          1.988
+        ]
+      ],
+      "drawCalls": 12,
+      "parts": 33,
+      "bytes": 16552,
+      "visualOnly": true
+    },
+    {
+      "id": "svalich_cottage_abandoned",
+      "kind": "svalich_cottage",
+      "stage": "abandoned",
+      "file": "svalich_cottage_abandoned.glb",
+      "footprint": [
+        4,
+        4
+      ],
+      "bounds": [
+        [
+          -1.985,
+          -0.01,
+          -1.988
+        ],
+        [
+          1.985,
+          2.7795,
+          1.988
+        ]
+      ],
+      "drawCalls": 11,
+      "parts": 45,
+      "bytes": 20276,
+      "visualOnly": true
+    },
+    {
+      "id": "svalich_cottage_infested",
+      "kind": "svalich_cottage",
+      "stage": "infested",
+      "file": "svalich_cottage_infested.glb",
+      "footprint": [
+        4,
+        4
+      ],
+      "bounds": [
+        [
+          -1.985,
+          -0.01,
+          -1.988
+        ],
+        [
+          1.985,
+          3.0719,
+          1.988
+        ]
+      ],
+      "drawCalls": 11,
+      "parts": 79,
+      "bytes": 33744,
+      "visualOnly": true
+    },
+    {
+      "id": "peat_hut_inhabited",
+      "kind": "peat_hut",
+      "stage": "inhabited",
+      "file": "peat_hut_inhabited.glb",
+      "footprint": [
+        3,
+        3
+      ],
+      "bounds": [
+        [
+          -1.485,
+          -0.01,
+          -1.488
+        ],
+        [
+          1.485,
+          2.725,
+          1.488
+        ]
+      ],
+      "drawCalls": 12,
+      "parts": 34,
+      "bytes": 16428,
+      "visualOnly": true
+    },
+    {
+      "id": "peat_hut_abandoned",
+      "kind": "peat_hut",
+      "stage": "abandoned",
+      "file": "peat_hut_abandoned.glb",
+      "footprint": [
+        3,
+        3
+      ],
+      "bounds": [
+        [
+          -1.485,
+          -0.01,
+          -1.488
+        ],
+        [
+          1.485,
+          2.725,
+          1.488
+        ]
+      ],
+      "drawCalls": 12,
+      "parts": 46,
+      "bytes": 21112,
+      "visualOnly": true
+    },
+    {
+      "id": "peat_hut_infested",
+      "kind": "peat_hut",
+      "stage": "infested",
+      "file": "peat_hut_infested.glb",
+      "footprint": [
+        3,
+        3
+      ],
+      "bounds": [
+        [
+          -1.485,
+          -0.01,
+          -1.488
+        ],
+        [
+          1.485,
+          2.725,
+          1.488
+        ]
+      ],
+      "drawCalls": 11,
+      "parts": 80,
+      "bytes": 33636,
+      "visualOnly": true
+    },
+    {
+      "id": "timber_longhouse_inhabited",
+      "kind": "timber_longhouse",
+      "stage": "inhabited",
+      "file": "timber_longhouse_inhabited.glb",
+      "footprint": [
+        6,
+        4
+      ],
+      "bounds": [
+        [
+          -2.985,
+          -0.01,
+          -1.988
+        ],
+        [
+          2.985,
+          3.0295,
+          1.988
+        ]
+      ],
+      "drawCalls": 12,
+      "parts": 33,
+      "bytes": 16568,
+      "visualOnly": true
+    },
+    {
+      "id": "timber_longhouse_abandoned",
+      "kind": "timber_longhouse",
+      "stage": "abandoned",
+      "file": "timber_longhouse_abandoned.glb",
+      "footprint": [
+        6,
+        4
+      ],
+      "bounds": [
+        [
+          -2.985,
+          -0.01,
+          -1.988
+        ],
+        [
+          2.985,
+          3.0295,
+          1.988
+        ]
+      ],
+      "drawCalls": 11,
+      "parts": 45,
+      "bytes": 20304,
+      "visualOnly": true
+    },
+    {
+      "id": "timber_longhouse_infested",
+      "kind": "timber_longhouse",
+      "stage": "infested",
+      "file": "timber_longhouse_infested.glb",
+      "footprint": [
+        6,
+        4
+      ],
+      "bounds": [
+        [
+          -2.985,
+          -0.01,
+          -1.988
+        ],
+        [
+          2.985,
+          3.3219,
+          1.988
+        ]
+      ],
+      "drawCalls": 11,
+      "parts": 79,
+      "bytes": 33772,
+      "visualOnly": true
+    },
+    {
+      "id": "gallows_watch_inhabited",
+      "kind": "gallows_watch",
+      "stage": "inhabited",
+      "file": "gallows_watch_inhabited.glb",
+      "footprint": [
+        3,
+        3
+      ],
+      "bounds": [
+        [
+          -1.485,
+          -0.01,
+          -1.488
+        ],
+        [
+          1.485,
+          3.72,
+          1.488
+        ]
+      ],
+      "drawCalls": 13,
+      "parts": 37,
+      "bytes": 17936,
+      "visualOnly": true
+    },
+    {
+      "id": "gallows_watch_abandoned",
+      "kind": "gallows_watch",
+      "stage": "abandoned",
+      "file": "gallows_watch_abandoned.glb",
+      "footprint": [
+        3,
+        3
+      ],
+      "bounds": [
+        [
+          -1.485,
+          -0.01,
+          -1.488
+        ],
+        [
+          1.485,
+          3.72,
+          1.488
+        ]
+      ],
+      "drawCalls": 12,
+      "parts": 49,
+      "bytes": 22376,
+      "visualOnly": true
+    },
+    {
+      "id": "gallows_watch_infested",
+      "kind": "gallows_watch",
+      "stage": "infested",
+      "file": "gallows_watch_infested.glb",
+      "footprint": [
+        3,
+        3
+      ],
+      "bounds": [
+        [
+          -1.485,
+          -0.01,
+          -1.488
+        ],
+        [
+          1.485,
+          4.0719,
+          1.488
+        ]
+      ],
+      "drawCalls": 11,
+      "parts": 83,
+      "bytes": 35492,
+      "visualOnly": true
+    },
+    {
+      "id": "morning_chapel_inhabited",
+      "kind": "morning_chapel",
+      "stage": "inhabited",
+      "file": "morning_chapel_inhabited.glb",
+      "footprint": [
+        5,
+        4
+      ],
+      "bounds": [
+        [
+          -2.485,
+          -0.01,
+          -1.988
+        ],
+        [
+          2.485,
+          5.75,
+          1.988
+        ]
+      ],
+      "drawCalls": 13,
+      "parts": 37,
+      "bytes": 18196,
+      "visualOnly": true
+    },
+    {
+      "id": "morning_chapel_abandoned",
+      "kind": "morning_chapel",
+      "stage": "abandoned",
+      "file": "morning_chapel_abandoned.glb",
+      "footprint": [
+        5,
+        4
+      ],
+      "bounds": [
+        [
+          -2.485,
+          -0.01,
+          -1.988
+        ],
+        [
+          2.485,
+          5.75,
+          1.988
+        ]
+      ],
+      "drawCalls": 12,
+      "parts": 49,
+      "bytes": 20976,
+      "visualOnly": true
+    },
+    {
+      "id": "morning_chapel_infested",
+      "kind": "morning_chapel",
+      "stage": "infested",
+      "file": "morning_chapel_infested.glb",
+      "footprint": [
+        5,
+        4
+      ],
+      "bounds": [
+        [
+          -2.485,
+          -0.01,
+          -1.988
+        ],
+        [
+          2.485,
+          5.75,
+          1.988
+        ]
+      ],
+      "drawCalls": 12,
+      "parts": 83,
+      "bytes": 35400,
+      "visualOnly": true
+    },
+    {
+      "id": "last_candle_inn_inhabited",
+      "kind": "last_candle_inn",
+      "stage": "inhabited",
+      "file": "last_candle_inn_inhabited.glb",
+      "footprint": [
+        6,
+        5
+      ],
+      "bounds": [
+        [
+          -2.985,
+          -0.01,
+          -2.488
+        ],
+        [
+          2.985,
+          3.4295,
+          2.488
+        ]
+      ],
+      "drawCalls": 14,
+      "parts": 39,
+      "bytes": 17864,
+      "visualOnly": true
+    },
+    {
+      "id": "last_candle_inn_abandoned",
+      "kind": "last_candle_inn",
+      "stage": "abandoned",
+      "file": "last_candle_inn_abandoned.glb",
+      "footprint": [
+        6,
+        5
+      ],
+      "bounds": [
+        [
+          -2.985,
+          -0.01,
+          -2.488
+        ],
+        [
+          2.985,
+          3.4295,
+          2.488
+        ]
+      ],
+      "drawCalls": 12,
+      "parts": 50,
+      "bytes": 21972,
+      "visualOnly": true
+    },
+    {
+      "id": "last_candle_inn_infested",
+      "kind": "last_candle_inn",
+      "stage": "infested",
+      "file": "last_candle_inn_infested.glb",
+      "footprint": [
+        6,
+        5
+      ],
+      "bounds": [
+        [
+          -2.985,
+          -0.01,
+          -2.488
+        ],
+        [
+          2.985,
+          3.7219,
+          2.488
+        ]
+      ],
+      "drawCalls": 12,
+      "parts": 84,
+      "bytes": 35652,
+      "visualOnly": true
+    },
+    {
+      "id": "mourners_ossuary_inhabited",
+      "kind": "mourners_ossuary",
+      "stage": "inhabited",
+      "file": "mourners_ossuary_inhabited.glb",
+      "footprint": [
+        4,
+        4
+      ],
+      "bounds": [
+        [
+          -1.985,
+          -0.01,
+          -1.988
+        ],
+        [
+          1.985,
+          3.03,
+          1.988
+        ]
+      ],
+      "drawCalls": 12,
+      "parts": 36,
+      "bytes": 17496,
+      "visualOnly": true
+    },
+    {
+      "id": "mourners_ossuary_abandoned",
+      "kind": "mourners_ossuary",
+      "stage": "abandoned",
+      "file": "mourners_ossuary_abandoned.glb",
+      "footprint": [
+        4,
+        4
+      ],
+      "bounds": [
+        [
+          -1.985,
+          -0.01,
+          -1.988
+        ],
+        [
+          1.985,
+          3.03,
+          1.988
+        ]
+      ],
+      "drawCalls": 10,
+      "parts": 48,
+      "bytes": 20188,
+      "visualOnly": true
+    },
+    {
+      "id": "mourners_ossuary_infested",
+      "kind": "mourners_ossuary",
+      "stage": "infested",
+      "file": "mourners_ossuary_infested.glb",
+      "footprint": [
+        4,
+        4
+      ],
+      "bounds": [
+        [
+          -1.985,
+          -0.01,
+          -1.988
+        ],
+        [
+          1.985,
+          3.1219,
+          1.988
+        ]
+      ],
+      "drawCalls": 11,
+      "parts": 82,
+      "bytes": 34256,
+      "visualOnly": true
+    },
+    {
+      "id": "river_granary_inhabited",
+      "kind": "river_granary",
+      "stage": "inhabited",
+      "file": "river_granary_inhabited.glb",
+      "footprint": [
+        4,
+        4
+      ],
+      "bounds": [
+        [
+          -1.985,
+          -0.01,
+          -1.988
+        ],
+        [
+          1.985,
+          3.2295,
+          1.988
+        ]
+      ],
+      "drawCalls": 13,
+      "parts": 36,
+      "bytes": 17768,
+      "visualOnly": true
+    },
+    {
+      "id": "river_granary_abandoned",
+      "kind": "river_granary",
+      "stage": "abandoned",
+      "file": "river_granary_abandoned.glb",
+      "footprint": [
+        4,
+        4
+      ],
+      "bounds": [
+        [
+          -1.985,
+          -0.01,
+          -1.988
+        ],
+        [
+          1.985,
+          3.2295,
+          1.988
+        ]
+      ],
+      "drawCalls": 12,
+      "parts": 48,
+      "bytes": 21508,
+      "visualOnly": true
+    },
+    {
+      "id": "river_granary_infested",
+      "kind": "river_granary",
+      "stage": "infested",
+      "file": "river_granary_infested.glb",
+      "footprint": [
+        4,
+        4
+      ],
+      "bounds": [
+        [
+          -1.985,
+          -0.01,
+          -1.988
+        ],
+        [
+          1.985,
+          3.5219,
+          1.988
+        ]
+      ],
+      "drawCalls": 12,
+      "parts": 82,
+      "bytes": 35400,
+      "visualOnly": true
+    },
+    {
+      "id": "market_stallhouse_inhabited",
+      "kind": "market_stallhouse",
+      "stage": "inhabited",
+      "file": "market_stallhouse_inhabited.glb",
+      "footprint": [
+        5,
+        4
+      ],
+      "bounds": [
+        [
+          -2.485,
+          -0.01,
+          -1.988
+        ],
+        [
+          2.485,
+          2.2895,
+          1.988
+        ]
+      ],
+      "drawCalls": 12,
+      "parts": 36,
+      "bytes": 17284,
+      "visualOnly": true
+    },
+    {
+      "id": "market_stallhouse_abandoned",
+      "kind": "market_stallhouse",
+      "stage": "abandoned",
+      "file": "market_stallhouse_abandoned.glb",
+      "footprint": [
+        5,
+        4
+      ],
+      "bounds": [
+        [
+          -2.485,
+          -0.01,
+          -1.988
+        ],
+        [
+          2.485,
+          2.4278,
+          1.988
+        ]
+      ],
+      "drawCalls": 12,
+      "parts": 48,
+      "bytes": 21804,
+      "visualOnly": true
+    },
+    {
+      "id": "market_stallhouse_infested",
+      "kind": "market_stallhouse",
+      "stage": "infested",
+      "file": "market_stallhouse_infested.glb",
+      "footprint": [
+        5,
+        4
+      ],
+      "bounds": [
+        [
+          -2.485,
+          -0.01,
+          -1.988
+        ],
+        [
+          2.485,
+          2.9219,
+          1.988
+        ]
+      ],
+      "drawCalls": 11,
+      "parts": 82,
+      "bytes": 34924,
+      "visualOnly": true
+    },
+    {
+      "id": "bell_schoolhouse_inhabited",
+      "kind": "bell_schoolhouse",
+      "stage": "inhabited",
+      "file": "bell_schoolhouse_inhabited.glb",
+      "footprint": [
+        5,
+        4
+      ],
+      "bounds": [
+        [
+          -2.485,
+          -0.01,
+          -1.988
+        ],
+        [
+          2.485,
+          3.0295,
+          1.988
+        ]
+      ],
+      "drawCalls": 14,
+      "parts": 35,
+      "bytes": 18124,
+      "visualOnly": true
+    },
+    {
+      "id": "bell_schoolhouse_abandoned",
+      "kind": "bell_schoolhouse",
+      "stage": "abandoned",
+      "file": "bell_schoolhouse_abandoned.glb",
+      "footprint": [
+        5,
+        4
+      ],
+      "bounds": [
+        [
+          -2.485,
+          -0.01,
+          -1.988
+        ],
+        [
+          2.485,
+          3.0295,
+          1.988
+        ]
+      ],
+      "drawCalls": 12,
+      "parts": 47,
+      "bytes": 21324,
+      "visualOnly": true
+    },
+    {
+      "id": "bell_schoolhouse_infested",
+      "kind": "bell_schoolhouse",
+      "stage": "infested",
+      "file": "bell_schoolhouse_infested.glb",
+      "footprint": [
+        5,
+        4
+      ],
+      "bounds": [
+        [
+          -2.485,
+          -0.01,
+          -1.988
+        ],
+        [
+          2.485,
+          3.3219,
+          1.988
+        ]
+      ],
+      "drawCalls": 13,
+      "parts": 81,
+      "bytes": 35340,
+      "visualOnly": true
+    },
+    {
+      "id": "charcoal_workshop_inhabited",
+      "kind": "charcoal_workshop",
+      "stage": "inhabited",
+      "file": "charcoal_workshop_inhabited.glb",
+      "footprint": [
+        5,
+        4
+      ],
+      "bounds": [
+        [
+          -2.485,
+          -0.01,
+          -1.988
+        ],
+        [
+          2.485,
+          3.8,
+          1.988
+        ]
+      ],
+      "drawCalls": 14,
+      "parts": 35,
+      "bytes": 18652,
+      "visualOnly": true
+    },
+    {
+      "id": "charcoal_workshop_abandoned",
+      "kind": "charcoal_workshop",
+      "stage": "abandoned",
+      "file": "charcoal_workshop_abandoned.glb",
+      "footprint": [
+        5,
+        4
+      ],
+      "bounds": [
+        [
+          -2.485,
+          -0.01,
+          -1.988
+        ],
+        [
+          2.485,
+          3.8,
+          1.988
+        ]
+      ],
+      "drawCalls": 12,
+      "parts": 47,
+      "bytes": 21852,
+      "visualOnly": true
+    },
+    {
+      "id": "charcoal_workshop_infested",
+      "kind": "charcoal_workshop",
+      "stage": "infested",
+      "file": "charcoal_workshop_infested.glb",
+      "footprint": [
+        5,
+        4
+      ],
+      "bounds": [
+        [
+          -2.485,
+          -0.01,
+          -1.988
+        ],
+        [
+          2.485,
+          3.8,
+          1.988
+        ]
+      ],
+      "drawCalls": 13,
+      "parts": 81,
+      "bytes": 35872,
+      "visualOnly": true
+    },
+    {
+      "id": "burgomaster_manor_inhabited",
+      "kind": "burgomaster_manor",
+      "stage": "inhabited",
+      "file": "burgomaster_manor_inhabited.glb",
+      "footprint": [
+        7,
+        5
+      ],
+      "bounds": [
+        [
+          -3.485,
+          -0.01,
+          -2.488
+        ],
+        [
+          3.485,
+          4.19,
+          2.488
+        ]
+      ],
+      "drawCalls": 12,
+      "parts": 38,
+      "bytes": 17188,
+      "visualOnly": true
+    },
+    {
+      "id": "burgomaster_manor_abandoned",
+      "kind": "burgomaster_manor",
+      "stage": "abandoned",
+      "file": "burgomaster_manor_abandoned.glb",
+      "footprint": [
+        7,
+        5
+      ],
+      "bounds": [
+        [
+          -3.485,
+          -0.01,
+          -2.488
+        ],
+        [
+          3.485,
+          4.19,
+          2.488
+        ]
+      ],
+      "drawCalls": 12,
+      "parts": 50,
+      "bytes": 21100,
+      "visualOnly": true
+    },
+    {
+      "id": "burgomaster_manor_infested",
+      "kind": "burgomaster_manor",
+      "stage": "infested",
+      "file": "burgomaster_manor_infested.glb",
+      "footprint": [
+        7,
+        5
+      ],
+      "bounds": [
+        [
+          -3.485,
+          -0.01,
+          -2.488
+        ],
+        [
+          3.485,
+          4.2219,
+          2.488
+        ]
+      ],
+      "drawCalls": 11,
+      "parts": 84,
+      "bytes": 34944,
+      "visualOnly": true
+    }
+  ]
+}
