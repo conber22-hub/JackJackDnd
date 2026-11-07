@@ -1,5 +1,6 @@
 /* Deterministic, dependency-free building interiors for Dread Delve. */
 import { KINDS, ROOMS, FOOTPRINTS, WALL_PIECES } from '../data/interiors.js';
+import { SAINT_ANDRAL, saintAndralSurface, saintAndralCrypt } from '../data/saint-andral.js';
 export { KINDS } from '../data/interiors.js';
 
 const WALL = new Set(WALL_PIECES);
@@ -180,6 +181,8 @@ export function interior(kind,{w,h,seed='barovia',floors='all',name=null}={}){
   const width=w===undefined?roll(rng,...cfg.size.w):w,height=h===undefined?roll(rng,...cfg.size.h):h;
   if(!Number.isSafeInteger(width)||!Number.isSafeInteger(height)||width<1||height<1||width>40||height>40)throw new RangeError('Outside footprint must be 1–40 squares on each side');
   if(!['all','ground','cellar','upper','upper2'].includes(floors)&&!Number.isInteger(floors))throw new RangeError('Unknown floor selection');
+  if(kind==='church' && name===SAINT_ANDRAL && floors==='all')
+    return { kind, name, order:['cellar','ground'], floors:[saintAndralCrypt(), saintAndralSurface()] };
   const title=name??`${choose(['Old','Grey','Weeping','Last','Crooked','Silent'],rng)} ${cfg.label}`;
   const levels=[];
   if(floors==='all'){

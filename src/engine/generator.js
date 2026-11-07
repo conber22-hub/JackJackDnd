@@ -593,6 +593,6 @@ const INTERIOR_LOOK = { tavern:'tavern', shop:'tavern', longhouse:'tavern', hall
 export function interiorPlan(it){ const p = interior(it.kind, { w:it.w, h:it.h, seed:it.seed, name:it.name }); return { floors:[...p.floors].reverse(), order:[...p.order].reverse(), name:p.name }; }
 export function interiorSpecs(it){
   const p = interiorPlan(it);
-  return p.floors.map((lay, i) => ({ layout:lay, theme:p.order[i] === 'cellar' ? 'cellar' : INTERIOR_LOOK[it.kind] || 'manor' }));
+  return p.floors.map((lay, i) => ({ layout:lay, theme:lay.theme || (p.order[i] === 'cellar' ? 'cellar' : INTERIOR_LOOK[it.kind] || 'manor') }));
 }
 export const interiorGround = it => Math.max(0, interiorPlan(it).order.indexOf('ground'));
