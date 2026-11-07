@@ -1,0 +1,1690 @@
+{
+  "name": "The Road Watches",
+  "version": 1,
+  "units": "1 unit = one five-foot grid square",
+  "axis": "Y up; ground-centred pivot; local +Z is approach",
+  "license": "CC0-1.0",
+  "materials": {
+    "earth": {
+      "color": 5260597,
+      "roughness": 1
+    },
+    "stone": {
+      "color": 7961712,
+      "roughness": 0.95
+    },
+    "chalk": {
+      "color": 12039328,
+      "roughness": 0.85
+    },
+    "wood": {
+      "color": 5850675,
+      "roughness": 0.95
+    },
+    "cut": {
+      "color": 10715224,
+      "roughness": 0.85
+    },
+    "iron": {
+      "color": 3358274,
+      "roughness": 0.55,
+      "metalness": 0.5
+    },
+    "cloth": {
+      "color": 10043186,
+      "roughness": 1
+    },
+    "moss": {
+      "color": 6520140,
+      "roughness": 1
+    },
+    "rot": {
+      "color": 3425866,
+      "roughness": 0.8
+    },
+    "amber": {
+      "color": 15777377,
+      "roughness": 0.45,
+      "emissive": 15772210
+    },
+    "pale": {
+      "color": 13944481,
+      "roughness": 0.8
+    },
+    "blue": {
+      "color": 7650754,
+      "roughness": 0.45,
+      "emissive": 3439502
+    }
+  },
+  "treatments": {
+    "wet": {
+      "roughnessMultiplier": 0.65,
+      "colorMultiplier": 0.78
+    },
+    "cold": {
+      "blend": "#b6c4c6",
+      "amount": 0.28
+    },
+    "infected": {
+      "blend": "#596b48",
+      "amount": 0.25
+    }
+  },
+  "assets": [
+    {
+      "id": "rut-shoulder",
+      "name": "Wagon-rut shoulder",
+      "family": "edges",
+      "variant": 0,
+      "file": "/assets/road-watches/rut-shoulder.glb",
+      "terrain": [
+        "woods",
+        "road",
+        "village",
+        "marsh"
+      ],
+      "placement": "shoulder",
+      "opening": false,
+      "stage": null,
+      "footprint": {
+        "w": 2,
+        "h": 2
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -0.5646052062511444,
+          0,
+          -0.8999999761581421
+        ],
+        "max": [
+          0.5646052062511444,
+          0.17046116292476654,
+          0.8999999761581421
+        ]
+      },
+      "triangles": 228,
+      "fileSize": 20128,
+      "drawCalls": 2,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Keep full bounds off playable/mount lanes"
+      ]
+    },
+    {
+      "id": "eroded-verge",
+      "name": "Eroded verge",
+      "family": "edges",
+      "variant": 1,
+      "file": "/assets/road-watches/eroded-verge.glb",
+      "terrain": [
+        "woods",
+        "road",
+        "village",
+        "marsh"
+      ],
+      "placement": "shoulder",
+      "opening": false,
+      "stage": null,
+      "footprint": {
+        "w": 2,
+        "h": 2
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -0.5070846378803253,
+          0,
+          -0.9801561236381531
+        ],
+        "max": [
+          0.5070846378803253,
+          0.34377352334558964,
+          0.9801561236381531
+        ]
+      },
+      "triangles": 144,
+      "fileSize": 14144,
+      "drawCalls": 2,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Keep full bounds off playable/mount lanes"
+      ]
+    },
+    {
+      "id": "split-path",
+      "name": "Split-path tongue",
+      "family": "edges",
+      "variant": 2,
+      "file": "/assets/road-watches/split-path.glb",
+      "terrain": [
+        "woods",
+        "road",
+        "village",
+        "marsh"
+      ],
+      "placement": "shoulder",
+      "opening": false,
+      "stage": null,
+      "footprint": {
+        "w": 2,
+        "h": 2
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -0.8335747718811035,
+          0,
+          -0.8398343920707703
+        ],
+        "max": [
+          0.8335747718811035,
+          0.18323148041963577,
+          0.8398343920707703
+        ]
+      },
+      "triangles": 208,
+      "fileSize": 18748,
+      "drawCalls": 2,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Keep full bounds off playable/mount lanes"
+      ]
+    },
+    {
+      "id": "road-footpath",
+      "name": "Road to footpath",
+      "family": "edges",
+      "variant": 3,
+      "file": "/assets/road-watches/road-footpath.glb",
+      "terrain": [
+        "woods",
+        "road",
+        "village",
+        "marsh"
+      ],
+      "placement": "shoulder",
+      "opening": false,
+      "stage": null,
+      "footprint": {
+        "w": 1,
+        "h": 2
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -0.48575057089328766,
+          0,
+          -0.846308559179306
+        ],
+        "max": [
+          0.48575057089328766,
+          0.10247597564011812,
+          0.846308559179306
+        ]
+      },
+      "triangles": 180,
+      "fileSize": 16184,
+      "drawCalls": 1,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Keep full bounds off playable/mount lanes"
+      ]
+    },
+    {
+      "id": "ditch-cut",
+      "name": "Cut drainage ditch",
+      "family": "edges",
+      "variant": 4,
+      "file": "/assets/road-watches/ditch-cut.glb",
+      "terrain": [
+        "woods",
+        "road",
+        "village",
+        "marsh"
+      ],
+      "placement": "shoulder",
+      "opening": false,
+      "stage": null,
+      "footprint": {
+        "w": 2,
+        "h": 2
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -0.5601176023483276,
+          0,
+          -0.9156378507614136
+        ],
+        "max": [
+          0.5601176023483276,
+          0.22038694510411005,
+          0.9156378507614136
+        ]
+      },
+      "triangles": 212,
+      "fileSize": 18936,
+      "drawCalls": 2,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Keep full bounds off playable/mount lanes"
+      ]
+    },
+    {
+      "id": "cobble-fade",
+      "name": "Cobbles fading to earth",
+      "family": "edges",
+      "variant": 5,
+      "file": "/assets/road-watches/cobble-fade.glb",
+      "terrain": [
+        "woods",
+        "road",
+        "village",
+        "marsh"
+      ],
+      "placement": "shoulder",
+      "opening": false,
+      "stage": null,
+      "footprint": {
+        "w": 1,
+        "h": 2
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -0.42825353145599365,
+          0,
+          -0.6972727179527283
+        ],
+        "max": [
+          0.42825353145599365,
+          0.12025738460943103,
+          0.6972727179527283
+        ]
+      },
+      "triangles": 240,
+      "fileSize": 21056,
+      "drawCalls": 2,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Keep full bounds off playable/mount lanes"
+      ]
+    },
+    {
+      "id": "chipped-mile",
+      "name": "Chipped milestone",
+      "family": "wayfinding",
+      "variant": 0,
+      "file": "/assets/road-watches/chipped-mile.glb",
+      "terrain": [
+        "woods",
+        "road",
+        "village",
+        "marsh"
+      ],
+      "placement": "verge",
+      "opening": false,
+      "stage": null,
+      "footprint": {
+        "w": 1,
+        "h": 1
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -0.3967522382736206,
+          0,
+          -0.2250538468360901
+        ],
+        "max": [
+          0.3967522382736206,
+          1.207684532739222,
+          0.2250538468360901
+        ]
+      },
+      "triangles": 88,
+      "fileSize": 10528,
+      "drawCalls": 3,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Keep full bounds off playable/mount lanes"
+      ]
+    },
+    {
+      "id": "cairn",
+      "name": "Ribbon cairn",
+      "family": "wayfinding",
+      "variant": 1,
+      "file": "/assets/road-watches/cairn.glb",
+      "terrain": [
+        "woods",
+        "road",
+        "village",
+        "marsh"
+      ],
+      "placement": "verge",
+      "opening": false,
+      "stage": null,
+      "footprint": {
+        "w": 1,
+        "h": 1
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -0.4051089286804199,
+          0,
+          -0.3134763538837433
+        ],
+        "max": [
+          0.4051089286804199,
+          0.9692382514476776,
+          0.3134763538837433
+        ]
+      },
+      "triangles": 132,
+      "fileSize": 13256,
+      "drawCalls": 2,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Keep full bounds off playable/mount lanes"
+      ]
+    },
+    {
+      "id": "blazed-snag",
+      "name": "Blazed snag",
+      "family": "wayfinding",
+      "variant": 2,
+      "file": "/assets/road-watches/blazed-snag.glb",
+      "terrain": [
+        "woods",
+        "road",
+        "village",
+        "marsh"
+      ],
+      "placement": "verge",
+      "opening": false,
+      "stage": null,
+      "footprint": {
+        "w": 1,
+        "h": 1
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -0.3630945459008217,
+          0,
+          -0.2246614247560501
+        ],
+        "max": [
+          0.3630945459008217,
+          1.6391065828502178,
+          0.2246614247560501
+        ]
+      },
+      "triangles": 72,
+      "fileSize": 9364,
+      "drawCalls": 3,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Keep full bounds off playable/mount lanes"
+      ]
+    },
+    {
+      "id": "crooked-sign",
+      "name": "Crooked fingerpost",
+      "family": "wayfinding",
+      "variant": 3,
+      "file": "/assets/road-watches/crooked-sign.glb",
+      "terrain": [
+        "woods",
+        "road",
+        "village",
+        "marsh"
+      ],
+      "placement": "verge",
+      "opening": false,
+      "stage": null,
+      "footprint": {
+        "w": 2,
+        "h": 1
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -0.5606662780046463,
+          0,
+          -0.09000000357627869
+        ],
+        "max": [
+          0.5606662780046463,
+          1.6641131518408656,
+          0.09000000357627869
+        ]
+      },
+      "triangles": 84,
+      "fileSize": 10276,
+      "drawCalls": 3,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Keep full bounds off playable/mount lanes"
+      ]
+    },
+    {
+      "id": "moved-marker",
+      "name": "Moved boundary stone",
+      "family": "wayfinding",
+      "variant": 4,
+      "file": "/assets/road-watches/moved-marker.glb",
+      "terrain": [
+        "woods",
+        "road",
+        "village",
+        "marsh"
+      ],
+      "placement": "verge",
+      "opening": false,
+      "stage": null,
+      "footprint": {
+        "w": 2,
+        "h": 1
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -0.642320066690445,
+          0,
+          -0.3268782049417496
+        ],
+        "max": [
+          0.642320066690445,
+          0.8950783605873585,
+          0.3268782049417496
+        ]
+      },
+      "triangles": 76,
+      "fileSize": 9696,
+      "drawCalls": 3,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Keep full bounds off playable/mount lanes"
+      ]
+    },
+    {
+      "id": "lantern-crook",
+      "name": "Lantern beyond the trees",
+      "family": "wayfinding",
+      "variant": 5,
+      "file": "/assets/road-watches/lantern-crook.glb",
+      "terrain": [
+        "woods",
+        "road",
+        "village",
+        "marsh"
+      ],
+      "placement": "verge",
+      "opening": false,
+      "stage": null,
+      "footprint": {
+        "w": 1,
+        "h": 1
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -0.3738564904779196,
+          0,
+          -0.1414213627576828
+        ],
+        "max": [
+          0.3738564904779196,
+          1.9519615054130552,
+          0.1414213627576828
+        ]
+      },
+      "triangles": 128,
+      "fileSize": 13240,
+      "drawCalls": 3,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Keep full bounds off playable/mount lanes"
+      ]
+    },
+    {
+      "id": "bridge-wing",
+      "name": "Timber bridge approach",
+      "family": "crossings",
+      "variant": 0,
+      "file": "/assets/road-watches/bridge-wing.glb",
+      "terrain": [
+        "river-bank",
+        "ford-bank",
+        "bridge-bank"
+      ],
+      "placement": "bank",
+      "opening": false,
+      "stage": null,
+      "footprint": {
+        "w": 2,
+        "h": 2
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -0.6846410036087036,
+          0,
+          -0.8256436586380005
+        ],
+        "max": [
+          0.6846410036087036,
+          1.0534463375806808,
+          0.8256436586380005
+        ]
+      },
+      "triangles": 144,
+      "fileSize": 14032,
+      "drawCalls": 2,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Keep full bounds off playable/mount lanes"
+      ]
+    },
+    {
+      "id": "ford-stones",
+      "name": "Ford-bank stones",
+      "family": "crossings",
+      "variant": 1,
+      "file": "/assets/road-watches/ford-stones.glb",
+      "terrain": [
+        "river-bank",
+        "ford-bank",
+        "bridge-bank"
+      ],
+      "placement": "bank",
+      "opening": false,
+      "stage": null,
+      "footprint": {
+        "w": 1,
+        "h": 3
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -0.4312452971935272,
+          0,
+          -1.0552372336387634
+        ],
+        "max": [
+          0.4312452971935272,
+          0.25697510689496994,
+          1.0552372336387634
+        ]
+      },
+      "triangles": 100,
+      "fileSize": 10420,
+      "drawCalls": 1,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Keep full bounds off playable/mount lanes"
+      ]
+    },
+    {
+      "id": "raised-planks",
+      "name": "Raised plank bank",
+      "family": "crossings",
+      "variant": 2,
+      "file": "/assets/road-watches/raised-planks.glb",
+      "terrain": [
+        "river-bank",
+        "ford-bank",
+        "bridge-bank"
+      ],
+      "placement": "bank",
+      "opening": false,
+      "stage": null,
+      "footprint": {
+        "w": 2,
+        "h": 2
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -0.5506880879402161,
+          0,
+          -0.8700000047683716
+        ],
+        "max": [
+          0.5506880879402161,
+          0.35824405848979946,
+          0.8700000047683716
+        ]
+      },
+      "triangles": 168,
+      "fileSize": 15704,
+      "drawCalls": 2,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Keep full bounds off playable/mount lanes"
+      ]
+    },
+    {
+      "id": "culvert-mouth",
+      "name": "Culvert mouth",
+      "family": "crossings",
+      "variant": 3,
+      "file": "/assets/road-watches/culvert-mouth.glb",
+      "terrain": [
+        "river-bank",
+        "ford-bank",
+        "bridge-bank"
+      ],
+      "placement": "bank",
+      "opening": false,
+      "stage": null,
+      "footprint": {
+        "w": 3,
+        "h": 1
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -1.2191637754440308,
+          0,
+          -0.33914175629615784
+        ],
+        "max": [
+          1.2191637754440308,
+          1.014999985024333,
+          0.33914175629615784
+        ]
+      },
+      "triangles": 160,
+      "fileSize": 15656,
+      "drawCalls": 3,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Keep full bounds off playable/mount lanes"
+      ]
+    },
+    {
+      "id": "washed-bank",
+      "name": "Washed-out bank",
+      "family": "crossings",
+      "variant": 4,
+      "file": "/assets/road-watches/washed-bank.glb",
+      "terrain": [
+        "river-bank",
+        "ford-bank",
+        "bridge-bank"
+      ],
+      "placement": "bank",
+      "opening": false,
+      "stage": null,
+      "footprint": {
+        "w": 2,
+        "h": 2
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -0.5590498596429825,
+          0,
+          -0.9646327793598175
+        ],
+        "max": [
+          0.5590498596429825,
+          0.3941083839163184,
+          0.9646327793598175
+        ]
+      },
+      "triangles": 236,
+      "fileSize": 20736,
+      "drawCalls": 2,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Keep full bounds off playable/mount lanes"
+      ]
+    },
+    {
+      "id": "flood-gauge",
+      "name": "Flood gauge and snag",
+      "family": "crossings",
+      "variant": 5,
+      "file": "/assets/road-watches/flood-gauge.glb",
+      "terrain": [
+        "river-bank",
+        "ford-bank",
+        "bridge-bank"
+      ],
+      "placement": "bank",
+      "opening": false,
+      "stage": null,
+      "footprint": {
+        "w": 2,
+        "h": 2
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -0.5453107357025146,
+          0,
+          -0.671483039855957
+        ],
+        "max": [
+          0.5453107357025146,
+          1.5092172026634216,
+          0.671483039855957
+        ]
+      },
+      "triangles": 132,
+      "fileSize": 13596,
+      "drawCalls": 3,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Keep full bounds off playable/mount lanes"
+      ]
+    },
+    {
+      "id": "wayside-shrine",
+      "name": "Wayside candle shrine",
+      "family": "stops",
+      "variant": 0,
+      "file": "/assets/road-watches/wayside-shrine.glb",
+      "terrain": [
+        "woods",
+        "road",
+        "village",
+        "marsh"
+      ],
+      "placement": "verge",
+      "opening": false,
+      "stage": null,
+      "footprint": {
+        "w": 2,
+        "h": 2
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -0.75,
+          0,
+          -0.6363961100578308
+        ],
+        "max": [
+          0.75,
+          2.374999997317791,
+          0.6363961100578308
+        ]
+      },
+      "triangles": 124,
+      "fileSize": 13440,
+      "drawCalls": 4,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Keep full bounds off playable/mount lanes"
+      ]
+    },
+    {
+      "id": "abandoned-camp",
+      "name": "Abandoned camp",
+      "family": "stops",
+      "variant": 1,
+      "file": "/assets/road-watches/abandoned-camp.glb",
+      "terrain": [
+        "woods",
+        "road",
+        "village",
+        "marsh"
+      ],
+      "placement": "verge",
+      "opening": false,
+      "stage": null,
+      "footprint": {
+        "w": 3,
+        "h": 2
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -1.1225403845310211,
+          0,
+          -0.7061053216457367
+        ],
+        "max": [
+          1.1225403845310211,
+          0.6899999983608722,
+          0.7061053216457367
+        ]
+      },
+      "triangles": 280,
+      "fileSize": 25288,
+      "drawCalls": 5,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Keep full bounds off playable/mount lanes"
+      ]
+    },
+    {
+      "id": "wagon-pullout",
+      "name": "Wagon pullout fence",
+      "family": "stops",
+      "variant": 2,
+      "file": "/assets/road-watches/wagon-pullout.glb",
+      "terrain": [
+        "woods",
+        "road",
+        "village",
+        "marsh"
+      ],
+      "placement": "verge",
+      "opening": false,
+      "stage": null,
+      "footprint": {
+        "w": 3,
+        "h": 2
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -1.3078343868255615,
+          0,
+          -0.7888908684253693
+        ],
+        "max": [
+          1.3078343868255615,
+          1.0391583661548793,
+          0.7888908684253693
+        ]
+      },
+      "triangles": 188,
+      "fileSize": 18236,
+      "drawCalls": 4,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Keep full bounds off playable/mount lanes"
+      ]
+    },
+    {
+      "id": "charcoal-shelter",
+      "name": "Charcoal burner’s shelter",
+      "family": "stops",
+      "variant": 3,
+      "file": "/assets/road-watches/charcoal-shelter.glb",
+      "terrain": [
+        "woods",
+        "road",
+        "village",
+        "marsh"
+      ],
+      "placement": "verge",
+      "opening": false,
+      "stage": null,
+      "footprint": {
+        "w": 3,
+        "h": 2
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -1.012583315372467,
+          0,
+          -0.7950371503829956
+        ],
+        "max": [
+          1.012583315372467,
+          1.9409842610359194,
+          0.7950371503829956
+        ]
+      },
+      "triangles": 320,
+      "fileSize": 26760,
+      "drawCalls": 2,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Keep full bounds off playable/mount lanes"
+      ]
+    },
+    {
+      "id": "roadside-ruin",
+      "name": "Roadside hearth ruin",
+      "family": "stops",
+      "variant": 4,
+      "file": "/assets/road-watches/roadside-ruin.glb",
+      "terrain": [
+        "woods",
+        "road",
+        "village",
+        "marsh"
+      ],
+      "placement": "verge",
+      "opening": false,
+      "stage": null,
+      "footprint": {
+        "w": 2,
+        "h": 2
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -0.925000011920929,
+          0,
+          -0.8085831105709076
+        ],
+        "max": [
+          0.925000011920929,
+          0.8899999916553498,
+          0.8085831105709076
+        ]
+      },
+      "triangles": 152,
+      "fileSize": 14508,
+      "drawCalls": 2,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Keep full bounds off playable/mount lanes"
+      ]
+    },
+    {
+      "id": "toll-remnant",
+      "name": "Ruined toll shelter",
+      "family": "stops",
+      "variant": 5,
+      "file": "/assets/road-watches/toll-remnant.glb",
+      "terrain": [
+        "woods",
+        "road",
+        "village",
+        "marsh"
+      ],
+      "placement": "verge",
+      "opening": false,
+      "stage": null,
+      "footprint": {
+        "w": 3,
+        "h": 1
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -1.0226722359657288,
+          0,
+          -0.18571067601442337
+        ],
+        "max": [
+          1.0226722359657288,
+          2.034072171896696,
+          0.18571067601442337
+        ]
+      },
+      "triangles": 152,
+      "fileSize": 15448,
+      "drawCalls": 4,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Keep full bounds off playable/mount lanes"
+      ]
+    },
+    {
+      "id": "root-opening",
+      "name": "Root-framed opening",
+      "family": "hidden",
+      "variant": 0,
+      "file": "/assets/road-watches/root-opening.glb",
+      "terrain": [
+        "woods",
+        "road",
+        "village",
+        "marsh"
+      ],
+      "placement": "revealed-route",
+      "opening": true,
+      "stage": null,
+      "footprint": {
+        "w": 5,
+        "h": 2
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -2.0076162219047546,
+          0,
+          -0.7598572075366974
+        ],
+        "max": [
+          2.0076162219047546,
+          2.8986408039927483,
+          0.7598572075366974
+        ]
+      },
+      "triangles": 480,
+      "fileSize": 39456,
+      "drawCalls": 4,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Requires existing revealed route or explicit DM reveal"
+      ]
+    },
+    {
+      "id": "overgrown-steps",
+      "name": "Overgrown side steps",
+      "family": "hidden",
+      "variant": 1,
+      "file": "/assets/road-watches/overgrown-steps.glb",
+      "terrain": [
+        "woods",
+        "road",
+        "village",
+        "marsh"
+      ],
+      "placement": "revealed-route",
+      "opening": true,
+      "stage": null,
+      "footprint": {
+        "w": 3,
+        "h": 2
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -1.0840713381767273,
+          0,
+          -0.8396721482276917
+        ],
+        "max": [
+          1.0840713381767273,
+          0.8059596158564091,
+          0.8396721482276917
+        ]
+      },
+      "triangles": 290,
+      "fileSize": 25676,
+      "drawCalls": 4,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Requires existing revealed route or explicit DM reveal"
+      ]
+    },
+    {
+      "id": "broken-wall",
+      "name": "Broken boundary wall",
+      "family": "hidden",
+      "variant": 2,
+      "file": "/assets/road-watches/broken-wall.glb",
+      "terrain": [
+        "woods",
+        "road",
+        "village",
+        "marsh"
+      ],
+      "placement": "revealed-route",
+      "opening": true,
+      "stage": null,
+      "footprint": {
+        "w": 3,
+        "h": 1
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -1.444461703300476,
+          0,
+          -0.3901388868689537
+        ],
+        "max": [
+          1.444461703300476,
+          0.8887405700515956,
+          0.3901388868689537
+        ]
+      },
+      "triangles": 164,
+      "fileSize": 14920,
+      "drawCalls": 1,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Requires existing revealed route or explicit DM reveal"
+      ]
+    },
+    {
+      "id": "cut-fence",
+      "name": "Cut fence",
+      "family": "hidden",
+      "variant": 3,
+      "file": "/assets/road-watches/cut-fence.glb",
+      "terrain": [
+        "woods",
+        "road",
+        "village",
+        "marsh"
+      ],
+      "placement": "revealed-route",
+      "opening": true,
+      "stage": null,
+      "footprint": {
+        "w": 3,
+        "h": 1
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -1.2560666799545288,
+          0,
+          -0.3453301526606083
+        ],
+        "max": [
+          1.2560666799545288,
+          1.0390684651210904,
+          0.3453301526606083
+        ]
+      },
+      "triangles": 172,
+      "fileSize": 16052,
+      "drawCalls": 2,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Requires existing revealed route or explicit DM reveal"
+      ]
+    },
+    {
+      "id": "cloth-marker",
+      "name": "Concealed cloth marker",
+      "family": "hidden",
+      "variant": 4,
+      "file": "/assets/road-watches/cloth-marker.glb",
+      "terrain": [
+        "woods",
+        "road",
+        "village",
+        "marsh"
+      ],
+      "placement": "revealed-route",
+      "opening": false,
+      "stage": null,
+      "footprint": {
+        "w": 1,
+        "h": 1
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -0.3375070095062256,
+          0,
+          -0.1375858187675476
+        ],
+        "max": [
+          0.3375070095062256,
+          1.3060533762909472,
+          0.1375858187675476
+        ]
+      },
+      "triangles": 68,
+      "fileSize": 9152,
+      "drawCalls": 3,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Keep full bounds off playable/mount lanes"
+      ]
+    },
+    {
+      "id": "lantern-recess",
+      "name": "Lantern in a root recess",
+      "family": "hidden",
+      "variant": 5,
+      "file": "/assets/road-watches/lantern-recess.glb",
+      "terrain": [
+        "woods",
+        "road",
+        "village",
+        "marsh"
+      ],
+      "placement": "revealed-route",
+      "opening": true,
+      "stage": null,
+      "footprint": {
+        "w": 2,
+        "h": 1
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -0.619280219078064,
+          0,
+          -0.30274975299835205
+        ],
+        "max": [
+          0.619280219078064,
+          1.3513056337833405,
+          0.30274975299835205
+        ]
+      },
+      "triangles": 120,
+      "fileSize": 13288,
+      "drawCalls": 4,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Requires existing revealed route or explicit DM reveal"
+      ]
+    },
+    {
+      "id": "moss-scout",
+      "name": "Hunger Moss • early fingers",
+      "family": "decay",
+      "variant": 0,
+      "file": "/assets/road-watches/moss-scout.glb",
+      "terrain": [
+        "woods",
+        "road",
+        "village",
+        "marsh"
+      ],
+      "placement": "verge",
+      "opening": false,
+      "stage": "early",
+      "footprint": {
+        "w": 2,
+        "h": 2
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -0.6431005299091339,
+          0,
+          -0.759857177734375
+        ],
+        "max": [
+          0.6431005299091339,
+          0.4821766447275877,
+          0.759857177734375
+        ]
+      },
+      "triangles": 272,
+      "fileSize": 23912,
+      "drawCalls": 3,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Keep full bounds off playable/mount lanes"
+      ]
+    },
+    {
+      "id": "moss-stump",
+      "name": "Hunger Moss • early stump",
+      "family": "decay",
+      "variant": 1,
+      "file": "/assets/road-watches/moss-stump.glb",
+      "terrain": [
+        "woods",
+        "road",
+        "village",
+        "marsh"
+      ],
+      "placement": "verge",
+      "opening": false,
+      "stage": "early",
+      "footprint": {
+        "w": 2,
+        "h": 2
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -0.6628892123699188,
+          0,
+          -0.759857177734375
+        ],
+        "max": [
+          0.6628892123699188,
+          0.8089224025607109,
+          0.759857177734375
+        ]
+      },
+      "triangles": 254,
+      "fileSize": 23164,
+      "drawCalls": 4,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Keep full bounds off playable/mount lanes"
+      ]
+    },
+    {
+      "id": "moss-cradle",
+      "name": "Hunger Moss • established cradle",
+      "family": "decay",
+      "variant": 2,
+      "file": "/assets/road-watches/moss-cradle.glb",
+      "terrain": [
+        "woods",
+        "road",
+        "village",
+        "marsh"
+      ],
+      "placement": "verge",
+      "opening": false,
+      "stage": "established",
+      "footprint": {
+        "w": 2,
+        "h": 2
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -0.8264513313770294,
+          0,
+          -0.759857177734375
+        ],
+        "max": [
+          0.8264513313770294,
+          1.2927449457347393,
+          0.759857177734375
+        ]
+      },
+      "triangles": 450,
+      "fileSize": 36728,
+      "drawCalls": 3,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Keep full bounds off playable/mount lanes"
+      ]
+    },
+    {
+      "id": "moss-fan",
+      "name": "Hunger Moss • established fan",
+      "family": "decay",
+      "variant": 3,
+      "file": "/assets/road-watches/moss-fan.glb",
+      "terrain": [
+        "woods",
+        "road",
+        "village",
+        "marsh"
+      ],
+      "placement": "verge",
+      "opening": false,
+      "stage": "established",
+      "footprint": {
+        "w": 2,
+        "h": 2
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -0.8264513313770294,
+          0,
+          -0.903738409280777
+        ],
+        "max": [
+          0.8264513313770294,
+          1.6428192034363747,
+          0.903738409280777
+        ]
+      },
+      "triangles": 636,
+      "fileSize": 50120,
+      "drawCalls": 3,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Keep full bounds off playable/mount lanes"
+      ]
+    },
+    {
+      "id": "moss-crown",
+      "name": "Hunger Moss • advanced crown",
+      "family": "decay",
+      "variant": 4,
+      "file": "/assets/road-watches/moss-crown.glb",
+      "terrain": [
+        "woods",
+        "road",
+        "village",
+        "marsh"
+      ],
+      "placement": "verge",
+      "opening": false,
+      "stage": "advanced",
+      "footprint": {
+        "w": 3,
+        "h": 2
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -1.4116672277450562,
+          0,
+          -0.9649721384048462
+        ],
+        "max": [
+          1.4116672277450562,
+          2.6045500561594963,
+          0.9649721384048462
+        ]
+      },
+      "triangles": 1088,
+      "fileSize": 83224,
+      "drawCalls": 4,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Keep full bounds off playable/mount lanes"
+      ]
+    },
+    {
+      "id": "moss-husk",
+      "name": "Hunger Moss • advanced husk",
+      "family": "decay",
+      "variant": 5,
+      "file": "/assets/road-watches/moss-husk.glb",
+      "terrain": [
+        "woods",
+        "road",
+        "village",
+        "marsh"
+      ],
+      "placement": "verge",
+      "opening": false,
+      "stage": "advanced",
+      "footprint": {
+        "w": 2,
+        "h": 2
+      },
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "bounds": {
+        "min": [
+          -0.8264513313770294,
+          0,
+          -0.903738409280777
+        ],
+        "max": [
+          0.8264513313770294,
+          2.002736374735832,
+          0.903738409280777
+        ]
+      },
+      "triangles": 642,
+      "fileSize": 51516,
+      "drawCalls": 5,
+      "restrictions": [
+        "No automatic collision or discovery changes",
+        "Never cover entrances, exits, event tiles or bridge decks",
+        "Keep full bounds off playable/mount lanes"
+      ]
+    }
+  ]
+}

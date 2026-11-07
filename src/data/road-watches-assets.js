@@ -1,0 +1,13 @@
+// Original Road Watches assets. One world unit/grid cell = five feet; +Y up.
+const families={
+ edges:[['rut-shoulder','Wagon-rut shoulder'],['eroded-verge','Eroded verge'],['split-path','Split-path tongue'],['road-footpath','Road to footpath'],['ditch-cut','Cut drainage ditch'],['cobble-fade','Cobbles fading to earth']],
+ wayfinding:[['chipped-mile','Chipped milestone'],['cairn','Ribbon cairn'],['blazed-snag','Blazed snag'],['crooked-sign','Crooked fingerpost'],['moved-marker','Moved boundary stone'],['lantern-crook','Lantern beyond the trees']],
+ crossings:[['bridge-wing','Timber bridge approach'],['ford-stones','Ford-bank stones'],['raised-planks','Raised plank bank'],['culvert-mouth','Culvert mouth'],['washed-bank','Washed-out bank'],['flood-gauge','Flood gauge and snag']],
+ stops:[['wayside-shrine','Wayside candle shrine'],['abandoned-camp','Abandoned camp'],['wagon-pullout','Wagon pullout fence'],['charcoal-shelter','Charcoal burner’s shelter'],['roadside-ruin','Roadside hearth ruin'],['toll-remnant','Ruined toll shelter']],
+ hidden:[['root-opening','Root-framed opening'],['overgrown-steps','Overgrown side steps'],['broken-wall','Broken boundary wall'],['cut-fence','Cut fence'],['cloth-marker','Concealed cloth marker'],['lantern-recess','Lantern in a root recess']],
+ decay:[['moss-scout','Hunger Moss • early fingers'],['moss-stump','Hunger Moss • early stump'],['moss-cradle','Hunger Moss • established cradle'],['moss-fan','Hunger Moss • established fan'],['moss-crown','Hunger Moss • advanced crown'],['moss-husk','Hunger Moss • advanced husk']],
+};
+export const ROAD_WATCHES_ASSETS=Object.entries(families).flatMap(([family,items])=>items.map(([id,name],i)=>({id,name,family,variant:i,file:`/assets/road-watches/${id}.glb`,terrain:family==='crossings'?['river-bank','ford-bank','bridge-bank']:['woods','road','village','marsh'],placement:family==='crossings'?'bank':family==='hidden'?'revealed-route':family==='edges'?'shoulder':'verge',opening:['root-opening','overgrown-steps','broken-wall','cut-fence','lantern-recess'].includes(id),stage:family==='decay'?['early','early','established','established','advanced','advanced'][i]:null})));
+export const ROAD_WATCHES_PALETTE={
+ earth:{color:0x504535,roughness:1},stone:{color:0x797c70,roughness:.95},chalk:{color:0xb7b4a0,roughness:.85},wood:{color:0x594633,roughness:.95},cut:{color:0xa38058,roughness:.85},iron:{color:0x333e42,roughness:.55,metalness:.5},cloth:{color:0x993f32,roughness:1},moss:{color:0x637d4c,roughness:1},rot:{color:0x34464a,roughness:.8},amber:{color:0xf0be61,roughness:.45,emissive:0xf0aa32},pale:{color:0xd4c6a1,roughness:.8},blue:{color:0x74bdc2,roughness:.45,emissive:0x347b8e}
+};
