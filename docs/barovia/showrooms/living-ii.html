@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Barovia · Living Valley II | Atmospheric Terrain Laboratory</title>
+<style>
+:root{color-scheme:dark;--bg:#0c1014;--surface:#161d20;--stroke:#364445;--ink:#ece8dc;--muted:#b0b9b6;--accent:#b8ccad}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 system-ui,-apple-system,sans-serif}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:16px 20px;border-bottom:1px solid var(--stroke);background:#141a1e}
+header h1{margin:0;font:small-caps 24px Georgia,serif;letter-spacing:.08em}header p{margin:2px 0 0;color:var(--muted)}
+main{display:grid;grid-template-columns:minmax(270px,310px) minmax(0,1fr);height:calc(100vh - 88px);min-height:580px}
+aside{padding:20px;overflow-y:auto;background:#11191b;border-right:1px solid var(--stroke)}
+label{display:block;font-weight:650;margin:16px 0 7px;color:#d5dfd6}select,input[type=range]{display:block;width:100%}
+select{background:#25312e;color:#fff;border:1px solid #445450;padding:9px;border-radius:8px;font:inherit}
+.pill{font-size:12px;color:var(--muted);margin:4px 0 0}.badge{font:12px system-ui;border:1px solid #57715d;color:#c0d8c2;border-radius:20px;padding:4px 9px;white-space:nowrap}
+#stage{min-height:500px;position:relative;overflow:hidden;background:radial-gradient(at 60% 30%,#1e2a34,#0a1014 70%)}#stage canvas{width:100%;height:100%;display:block;touch-action:none}
+#hud{position:absolute;left:16px;right:16px;bottom:16px;padding:14px 16px;border:1px solid #455257;border-radius:10px;background:#101820d9;backdrop-filter:blur(8px);pointer-events:none}
+#hud strong{font:19px Georgia,serif}#hud p{margin:5px 0 0;color:#c8d0c8}
+#status{font-size:13px;color:#d4dfd5}#metrics{border-top:1px solid #304141;padding-top:15px;margin-top:17px;color:#c4d3ce;font-size:13px;line-height:1.9}
+small{color:#aeb9b2}code{color:#d3dccd;font-size:12px}input{accent-color:#9abda7}
+@media(max-width:850px){main{display:flex;flex-direction:column;height:auto}aside{order:2;overflow:visible}#stage{height:60vh;min-height:370px;order:1}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script>
+</head><body>
+<header><div><h1>BAROVIA · THE LIVING VALLEY</h1><p>Atmospheric terrain laboratory · wind, mist, darkwater, snowfall, Hunger Moss</p></div><span class="badge">36 GLBs + 5 living systems</span></header>
+<main><aside>
+<label for="biome">Landscapes</label><select id="biome">
+<option value="svalichWoods">Svalich Woods · restless trees</option>
+<option value="tserBog">Tser Pool · breathing blackwater</option>
+<option value="winterForest">Winter forest · drifting snow</option>
+<option value="balinokFoothills">Balinok pass · gale and snow</option>
+<option value="ancientGraves">Forgotten graveyard · ground fog</option>
+<option value="hungerMoss">The Hunger · spreading corruption</option></select>
+<label for="weather">Weather layer</label><select id="weather"><option value="mist">Rolling mist</option><option value="snow">Drifting snow</option><option value="clear">Clear, bitter night</option></select>
+<label for="wind">Wind <span id="windVal" class="pill"></span></label><input id="wind" type="range" min="0" max="100" value="35">
+<label for="dread">Strahd's Gaze <span id="dreadVal" class="pill"></span></label><input id="dread" type="range" min="1" max="10" value="1">
+<label for="moss">Hunger Moss stage <span id="mossVal" class="pill"></span></label><input id="moss" type="range" min="0" max="12" value="0">
+<label for="quality">Performance</label><select id="quality"><option value="low">Low · phones</option><option value="medium" selected>Medium · balanced</option><option value="high">High · desktop</option></select>
+<div id="metrics"></div><p class="pill">Effects are decorative. This showroom does not change map collision, pathfinding, travel, or encounter rules.</p>
+<p class="pill">Runs from a local HTTP server and requires network access to the Three.js CDN.</p>
+</aside><section id="stage"><div id="hud"><strong id="title">The road through Svalich</strong><p id="status">Loading the first landscape...</p></div></section></main>
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {createBaroviaTerrain} from '../../../src/render/barovia-terrain-three.js';
+import {planTerrain} from '../../../src/render/barovia-terrain-plan.js';
+import {createLivingValley} from '../../../src/render/barovia-living-three.js';
+import {ATMOSPHERES} from '../../../src/render/barovia-living-state.js';
+const $=id=>document.getElementById(id),stage=$('stage');
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(1.7,window.devicePixelRatio||1));renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.52;stage.prepend(renderer.domElement);
+const scene=new THREE.Scene();scene.background=new THREE.Color('#141c22');scene.fog=new THREE.FogExp2('#20252c',.02);
+const camera=new THREE.PerspectiveCamera(48,1,.1,180);camera.position.set(15,15,19);
+const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.maxPolarAngle=Math.PI*.49;
+controls.target.set(0,.2,0);controls.minDistance=4;controls.maxDistance=60;
+const hemi=new THREE.HemisphereLight('#9facba','#1b231e',1.35);scene.add(hemi);
+const moon=new THREE.DirectionalLight('#b6c9d4',2.5);moon.position.set(-11,15,8);scene.add(moon);
+const terrain=createBaroviaTerrain({baseURL:'/assets/terrain/'}),root=new THREE.Group();scene.add(root);
+let living=null,version=0,loaded=0,elapsed=0;
+const biomeNames={svalichWoods:'The road through Svalich',tserBog:'The still water of Tser Pool',winterForest:'Winter in the black pines',
+ balinokFoothills:'The frozen Balinok pass',ancientGraves:'The restless cemetery',hungerMoss:'The valley being consumed'};
+function safe(x,y){return x>1&&y>1&&x<26&&y<26&&!(x>=12&&x<=15)&&!(x>=9&&x<=18&&y>=13&&y<=15);}
+function clear(){living?.dispose();living=null;root.clear();}
+async function build(){
+ const my=++version;clear();loaded=0;
+ const biome=$('biome').value,quality=$('quality').value,preset=ATMOSPHERES[biome];
+ $('title').textContent=biomeNames[biome];$('status').textContent='Loading terrain models...';
+ $('weather').value=preset.snow?'snow':'mist';$('wind').value=Math.round(preset.wind*100);
+ $('windVal').textContent=$('wind').value+'%';
+ const group=new THREE.Group();root.add(group);
+ const ground=new THREE.Mesh(new THREE.PlaneGeometry(28,28),new THREE.MeshStandardMaterial({color:biome==='tserBog'?'#28342d':biome==='winterForest'||biome==='balinokFoothills'?'#626d72':'#2b332c',roughness:1}));
+ ground.rotation.x=-Math.PI/2;ground.position.y=-.14;group.add(ground);
+ const plan=planTerrain({width:28,height:28,seed:'barovia-living-v2|'+biome,biome,density:.039,allowed:safe});
+ const extra=biome==='tserBog'?[{id:'tser_blackwater_pool',x:16,y:8,rot:0,size:[3,3]},{id:'tser_cattail_reeds',x:20,y:9,rot:0,size:[2,2]}]:[];
+ const chosen=plan.concat(extra);
+ try{
+   await terrain.prefetch(chosen.map(p=>p.id));if(my!==version)return;
+   const created=await terrain.placeAll(group,chosen,{wx:x=>x-13.5,wz:y=>y-13.5,castShadow:false});
+   if(my!==version){created.forEach(p=>p.removeFromParent());return;}
+   living=createLivingValley({parent:group,width:28,height:28,seed:'barovia-living-v2|'+biome,biome,quality});
+   created.forEach((obj,i)=>living.attachTree(obj,{id:chosen[i].id,seedKey:chosen[i].x+':'+chosen[i].y}));
+   living.addGroundFog({allowed:(x,y)=>x>=0&&y>=0});living.addSnowfall({enabled:preset.snow});
+   if(biome==='tserBog')living.addBlackwater({x:4.0,z:-5.0,w:5,h:5,y:.035});
+   if(biome==='hungerMoss')living.addHungerMoss({origins:[{x:6,y:7},{x:22,y:20}],maxSteps:12,maxCells:180,allowed:safe,step:Number($('moss').value)});
+   $('wind').value=Math.round(preset.wind*100);
+   applyAtmosphere();loaded=created.length;
+   $('metrics').textContent=`${loaded} GLB terrain models · ${living.info.trees} moving trees · ${living.info.mossCells} possible moss tiles · ${quality} GPU budget`;
+   $('status').textContent='Drag to orbit · Pinch to zoom · Change the controls to see the valley respond.';
+ }catch(e){$('status').textContent='Scene could not load: '+e.message;console.error(e);}
+}
+function applyAtmosphere(){if(!living)return;
+ const mode=$('weather').value,gaze=Number($('dread').value);
+ living.setWind(Number($('wind').value)/100);living.setDread(gaze);
+ living.setSnowEnabled(mode==='snow');living.setFogEnabled(mode==='mist'||mode==='snow');
+ living.setFogStrength(mode==='snow'?.26:mode==='mist'?.84:0);
+ living.setMossStep(Number($('moss').value));
+ scene.fog.density=mode==='mist'?.025:mode==='snow'?.018:.008;
+ scene.background.set(mode==='clear'?'#1d2832':mode==='snow'?'#1a2730':'#111b20');
+ $('windVal').textContent=$('wind').value+'%';$('dreadVal').textContent=String(gaze);$('mossVal').textContent=String($('moss').value);
+}
+$('biome').onchange=build;$('quality').onchange=build;
+for(const name of ['weather','wind','dread','moss'])$(name).oninput=applyAtmosphere;
+function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/Math.max(1,h);camera.updateProjectionMatrix();}
+window.addEventListener('resize',resize);resize();
+const clock=new THREE.Clock();function frame(){requestAnimationFrame(frame);
+ elapsed+=Math.min(clock.getDelta(),.1);living?.update(elapsed);controls.update();renderer.render(scene,camera);
+}frame();await build();
+</script></body></html>
