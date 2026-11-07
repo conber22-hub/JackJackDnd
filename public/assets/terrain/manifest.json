@@ -1,0 +1,1138 @@
+{
+  "pack": "The Living Valley: Barovia Terrain",
+  "version": "1.0.0",
+  "license": "CC0-1.0 (original generated geometry)",
+  "authoring": "Original custom geometry constructed from primitive and hand-authored organic meshes; no third-party art assets.",
+  "axes": "+Y up, north -Z, center pivot at (0,0,0), ground at Y=0",
+  "unit": "1 Three.js world unit = 1 Dread Delve square = 5 feet",
+  "usage": "Place at tile center: mesh.position.set(wx(x), floorY(level), wz(y)); rotate in 90-degree increments when useful.",
+  "placementTypes": {
+    "surface": "covers or replaces ground art; use only where the map should have this terrain",
+    "obstacle": "solid scenery; keep off playable corridors and exits",
+    "difficult": "optional move-penalty zone; use game terrain rules",
+    "water": "water or ice decoration; handle passability from map semantics",
+    "portal": "structural feature with a passable opening; integrate entry/exit semantics explicitly",
+    "decor": "visual dressing; do not assume it blocks movement"
+  },
+  "items": [
+    {
+      "id": "svalich_black_fir",
+      "name": "Svalich Black Fir",
+      "category": "Svalich Woods",
+      "file": "assets/svalich_black_fir.glb",
+      "size": [
+        1,
+        1
+      ],
+      "geometryBounds": [
+        [
+          -0.667,
+          -0.006,
+          -0.764
+        ],
+        [
+          0.801,
+          2.719,
+          0.703
+        ]
+      ],
+      "pieces": 23,
+      "meshes": 5,
+      "bytes": 10616,
+      "placement": "obstacle",
+      "tags": [
+        "evergreen",
+        "forest"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    },
+    {
+      "id": "windworn_fir",
+      "name": "Windworn Fir",
+      "category": "Svalich Woods",
+      "file": "assets/windworn_fir.glb",
+      "size": [
+        1,
+        1
+      ],
+      "geometryBounds": [
+        [
+          -0.666,
+          -0.026,
+          -0.649
+        ],
+        [
+          0.604,
+          2.348,
+          0.597
+        ]
+      ],
+      "pieces": 11,
+      "meshes": 4,
+      "bytes": 6528,
+      "placement": "obstacle",
+      "tags": [
+        "forest",
+        "windswept"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    },
+    {
+      "id": "snow_crowned_fir",
+      "name": "Snow-Crowned Fir",
+      "category": "Svalich Woods",
+      "file": "assets/snow_crowned_fir.glb",
+      "size": [
+        1,
+        1
+      ],
+      "geometryBounds": [
+        [
+          -0.604,
+          -0.013,
+          -0.692
+        ],
+        [
+          0.725,
+          2.487,
+          0.637
+        ]
+      ],
+      "pieces": 12,
+      "meshes": 5,
+      "bytes": 8004,
+      "placement": "obstacle",
+      "tags": [
+        "forest",
+        "winter"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    },
+    {
+      "id": "hunger_taken_fir",
+      "name": "Hunger-Taken Fir",
+      "category": "Bloom / Hunger Moss",
+      "file": "assets/hunger_taken_fir.glb",
+      "size": [
+        1,
+        1
+      ],
+      "geometryBounds": [
+        [
+          -0.617,
+          -0.003,
+          -0.707
+        ],
+        [
+          0.74,
+          2.534,
+          0.65
+        ]
+      ],
+      "pieces": 21,
+      "meshes": 4,
+      "bytes": 10840,
+      "placement": "obstacle",
+      "tags": [
+        "infected",
+        "forest",
+        "glow"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    },
+    {
+      "id": "crooked_oak",
+      "name": "Crooked Black Oak",
+      "category": "Svalich Woods",
+      "file": "assets/crooked_oak.glb",
+      "size": [
+        2,
+        2
+      ],
+      "geometryBounds": [
+        [
+          -1.003,
+          -0.05,
+          -0.83
+        ],
+        [
+          0.978,
+          2.837,
+          1.089
+        ]
+      ],
+      "pieces": 29,
+      "meshes": 4,
+      "bytes": 14004,
+      "placement": "obstacle",
+      "tags": [
+        "forest",
+        "dead_tree"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    },
+    {
+      "id": "pale_birch_thicket",
+      "name": "Pale Birch Thicket",
+      "category": "Svalich Woods",
+      "file": "assets/pale_birch_thicket.glb",
+      "size": [
+        2,
+        2
+      ],
+      "geometryBounds": [
+        [
+          -0.834,
+          -0.007,
+          -0.54
+        ],
+        [
+          0.888,
+          2.452,
+          0.92
+        ]
+      ],
+      "pieces": 54,
+      "meshes": 5,
+      "bytes": 18384,
+      "placement": "obstacle",
+      "tags": [
+        "forest",
+        "birch"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    },
+    {
+      "id": "hollow_fallen_log",
+      "name": "Hollow Fallen Log",
+      "category": "Svalich Woods",
+      "file": "assets/hollow_fallen_log.glb",
+      "size": [
+        2,
+        1
+      ],
+      "geometryBounds": [
+        [
+          -0.887,
+          -0.04,
+          -0.245
+        ],
+        [
+          0.881,
+          0.47,
+          0.604
+        ]
+      ],
+      "pieces": 22,
+      "meshes": 8,
+      "bytes": 12304,
+      "placement": "obstacle",
+      "tags": [
+        "fallen",
+        "mushrooms"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    },
+    {
+      "id": "thorn_choked_brambles",
+      "name": "Thorn-Choked Brambles",
+      "category": "Svalich Woods",
+      "file": "assets/thorn_choked_brambles.glb",
+      "size": [
+        2,
+        2
+      ],
+      "geometryBounds": [
+        [
+          -0.779,
+          -0.014,
+          -0.778
+        ],
+        [
+          1.091,
+          0.689,
+          0.833
+        ]
+      ],
+      "pieces": 70,
+      "meshes": 3,
+      "bytes": 18968,
+      "placement": "difficult",
+      "tags": [
+        "undergrowth",
+        "brambles"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    },
+    {
+      "id": "mushroom_stump",
+      "name": "Mushroom-Crowned Stump",
+      "category": "Svalich Woods",
+      "file": "assets/mushroom_stump.glb",
+      "size": [
+        1,
+        1
+      ],
+      "geometryBounds": [
+        [
+          -0.491,
+          0.0,
+          -0.514
+        ],
+        [
+          0.532,
+          0.57,
+          0.508
+        ]
+      ],
+      "pieces": 16,
+      "meshes": 5,
+      "bytes": 9744,
+      "placement": "obstacle",
+      "tags": [
+        "mushrooms",
+        "stump"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    },
+    {
+      "id": "hollow_witch_tree",
+      "name": "Hollow Witch Tree",
+      "category": "Svalich Woods",
+      "file": "assets/hollow_witch_tree.glb",
+      "size": [
+        2,
+        2
+      ],
+      "geometryBounds": [
+        [
+          -0.851,
+          0.0,
+          -0.851
+        ],
+        [
+          0.851,
+          1.816,
+          0.867
+        ]
+      ],
+      "pieces": 22,
+      "meshes": 5,
+      "bytes": 12896,
+      "placement": "obstacle",
+      "tags": [
+        "tree",
+        "witch"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    },
+    {
+      "id": "svalich_rutted_road",
+      "name": "Rutted Svalich Road",
+      "category": "Roads & Villages",
+      "file": "assets/svalich_rutted_road.glb",
+      "size": [
+        3,
+        3
+      ],
+      "geometryBounds": [
+        [
+          -1.5,
+          -0.115,
+          -1.559
+        ],
+        [
+          1.5,
+          0.153,
+          1.5
+        ]
+      ],
+      "pieces": 41,
+      "meshes": 3,
+      "bytes": 22396,
+      "placement": "surface",
+      "tags": [
+        "road",
+        "mud"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    },
+    {
+      "id": "svalich_winding_road",
+      "name": "Svalich Road Bend",
+      "category": "Roads & Villages",
+      "file": "assets/svalich_winding_road.glb",
+      "size": [
+        3,
+        3
+      ],
+      "geometryBounds": [
+        [
+          -1.5,
+          -0.115,
+          -1.561
+        ],
+        [
+          1.5,
+          0.112,
+          1.5
+        ]
+      ],
+      "pieces": 41,
+      "meshes": 3,
+      "bytes": 22392,
+      "placement": "surface",
+      "tags": [
+        "road",
+        "bend"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    },
+    {
+      "id": "abandoned_farm_track",
+      "name": "Abandoned Farm Track",
+      "category": "Roads & Villages",
+      "file": "assets/abandoned_farm_track.glb",
+      "size": [
+        3,
+        3
+      ],
+      "geometryBounds": [
+        [
+          -1.5,
+          -0.115,
+          -1.559
+        ],
+        [
+          1.5,
+          0.228,
+          1.5
+        ]
+      ],
+      "pieces": 103,
+      "meshes": 6,
+      "bytes": 39480,
+      "placement": "surface",
+      "tags": [
+        "road",
+        "farm"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    },
+    {
+      "id": "hunger_claimed_road",
+      "name": "Hunger-Claimed Road",
+      "category": "Bloom / Hunger Moss",
+      "file": "assets/hunger_claimed_road.glb",
+      "size": [
+        3,
+        3
+      ],
+      "geometryBounds": [
+        [
+          -1.5,
+          -0.115,
+          -1.594
+        ],
+        [
+          1.5,
+          0.182,
+          1.5
+        ]
+      ],
+      "pieces": 65,
+      "meshes": 5,
+      "bytes": 33048,
+      "placement": "surface",
+      "tags": [
+        "road",
+        "infected"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    },
+    {
+      "id": "vallaki_cracked_cobbles",
+      "name": "Cracked Vallaki Cobbles",
+      "category": "Roads & Villages",
+      "file": "assets/vallaki_cracked_cobbles.glb",
+      "size": [
+        3,
+        3
+      ],
+      "geometryBounds": [
+        [
+          -1.519,
+          -0.124,
+          -1.5
+        ],
+        [
+          1.609,
+          0.052,
+          1.5
+        ]
+      ],
+      "pieces": 58,
+      "meshes": 5,
+      "bytes": 23940,
+      "placement": "surface",
+      "tags": [
+        "urban",
+        "cobblestone"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    },
+    {
+      "id": "lost_svalich_milestone",
+      "name": "Lost Svalich Milestone",
+      "category": "Roads & Villages",
+      "file": "assets/lost_svalich_milestone.glb",
+      "size": [
+        1,
+        1
+      ],
+      "geometryBounds": [
+        [
+          -0.216,
+          -0.019,
+          -0.393
+        ],
+        [
+          0.515,
+          0.94,
+          0.439
+        ]
+      ],
+      "pieces": 17,
+      "meshes": 6,
+      "bytes": 8216,
+      "placement": "obstacle",
+      "tags": [
+        "wayfinding",
+        "roadside"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    },
+    {
+      "id": "collapsed_fieldwall",
+      "name": "Collapsed Fieldstone Wall",
+      "category": "Roads & Villages",
+      "file": "assets/collapsed_fieldwall.glb",
+      "size": [
+        3,
+        1
+      ],
+      "geometryBounds": [
+        [
+          -1.314,
+          -0.041,
+          -0.583
+        ],
+        [
+          1.461,
+          0.402,
+          0.714
+        ]
+      ],
+      "pieces": 38,
+      "meshes": 6,
+      "bytes": 14140,
+      "placement": "obstacle",
+      "tags": [
+        "cover",
+        "stone"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    },
+    {
+      "id": "leaning_splitrail_fence",
+      "name": "Leaning Split-Rail Fence",
+      "category": "Roads & Villages",
+      "file": "assets/leaning_splitrail_fence.glb",
+      "size": [
+        3,
+        1
+      ],
+      "geometryBounds": [
+        [
+          -1.253,
+          -0.012,
+          -0.063
+        ],
+        [
+          1.245,
+          0.909,
+          0.428
+        ]
+      ],
+      "pieces": 8,
+      "meshes": 2,
+      "bytes": 3844,
+      "placement": "obstacle",
+      "tags": [
+        "farm",
+        "fence"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    },
+    {
+      "id": "svalich_splintered_bridge",
+      "name": "Splintered Timber Bridge",
+      "category": "Roads & Villages",
+      "file": "assets/svalich_splintered_bridge.glb",
+      "size": [
+        4,
+        2
+      ],
+      "geometryBounds": [
+        [
+          -2.0,
+          -0.035,
+          -0.973
+        ],
+        [
+          2.0,
+          0.71,
+          1.113
+        ]
+      ],
+      "pieces": 20,
+      "meshes": 4,
+      "bytes": 8896,
+      "placement": "surface",
+      "tags": [
+        "bridge",
+        "hazard"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    },
+    {
+      "id": "tser_blackwater_pool",
+      "name": "Tser Blackwater Pool",
+      "category": "Tser Pool & Bog",
+      "file": "assets/tser_blackwater_pool.glb",
+      "size": [
+        3,
+        3
+      ],
+      "geometryBounds": [
+        [
+          -1.5,
+          -0.119,
+          -1.5
+        ],
+        [
+          1.5,
+          0.398,
+          1.512
+        ]
+      ],
+      "pieces": 112,
+      "meshes": 8,
+      "bytes": 42952,
+      "placement": "water",
+      "tags": [
+        "pool",
+        "marsh"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    },
+    {
+      "id": "tser_cattail_reeds",
+      "name": "Tser Cattail Reeds",
+      "category": "Tser Pool & Bog",
+      "file": "assets/tser_cattail_reeds.glb",
+      "size": [
+        2,
+        2
+      ],
+      "geometryBounds": [
+        [
+          -1.0,
+          -0.102,
+          -1.0
+        ],
+        [
+          1.0,
+          0.819,
+          1.0
+        ]
+      ],
+      "pieces": 39,
+      "meshes": 5,
+      "bytes": 20116,
+      "placement": "difficult",
+      "tags": [
+        "reeds",
+        "marsh"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    },
+    {
+      "id": "tser_sodden_boardwalk",
+      "name": "Sodden Tser Boardwalk",
+      "category": "Tser Pool & Bog",
+      "file": "assets/tser_sodden_boardwalk.glb",
+      "size": [
+        3,
+        1
+      ],
+      "geometryBounds": [
+        [
+          -1.5,
+          -0.108,
+          -0.5
+        ],
+        [
+          1.5,
+          0.48,
+          0.5
+        ]
+      ],
+      "pieces": 17,
+      "meshes": 4,
+      "bytes": 15140,
+      "placement": "surface",
+      "tags": [
+        "bridge",
+        "marsh"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    },
+    {
+      "id": "tser_sodden_hummock",
+      "name": "Sodden Bog Hummock",
+      "category": "Tser Pool & Bog",
+      "file": "assets/tser_sodden_hummock.glb",
+      "size": [
+        3,
+        3
+      ],
+      "geometryBounds": [
+        [
+          -1.5,
+          -0.182,
+          -1.5
+        ],
+        [
+          1.5,
+          0.398,
+          1.5
+        ]
+      ],
+      "pieces": 84,
+      "meshes": 8,
+      "bytes": 31936,
+      "placement": "difficult",
+      "tags": [
+        "marsh",
+        "mushrooms"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    },
+    {
+      "id": "balinok_shale_cliff",
+      "name": "Balinok Shale Cliff",
+      "category": "Balinok Mountains",
+      "file": "assets/balinok_shale_cliff.glb",
+      "size": [
+        3,
+        2
+      ],
+      "geometryBounds": [
+        [
+          -1.53,
+          -0.15,
+          -1.0
+        ],
+        [
+          1.51,
+          1.829,
+          1.0
+        ]
+      ],
+      "pieces": 43,
+      "meshes": 7,
+      "bytes": 19680,
+      "placement": "obstacle",
+      "tags": [
+        "cliff",
+        "mountain"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    },
+    {
+      "id": "balinok_loose_scree",
+      "name": "Loose Balinok Scree",
+      "category": "Balinok Mountains",
+      "file": "assets/balinok_loose_scree.glb",
+      "size": [
+        3,
+        3
+      ],
+      "geometryBounds": [
+        [
+          -1.516,
+          -0.138,
+          -1.6
+        ],
+        [
+          1.5,
+          0.308,
+          1.5
+        ]
+      ],
+      "pieces": 72,
+      "meshes": 7,
+      "bytes": 24380,
+      "placement": "difficult",
+      "tags": [
+        "rocks",
+        "mountain"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    },
+    {
+      "id": "balinok_windblown_snow",
+      "name": "Windblown Snowdrift",
+      "category": "Balinok Mountains",
+      "file": "assets/balinok_windblown_snow.glb",
+      "size": [
+        3,
+        3
+      ],
+      "geometryBounds": [
+        [
+          -1.5,
+          -0.12,
+          -1.5
+        ],
+        [
+          1.5,
+          0.366,
+          1.5
+        ]
+      ],
+      "pieces": 18,
+      "meshes": 4,
+      "bytes": 16064,
+      "placement": "difficult",
+      "tags": [
+        "snow",
+        "winter"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    },
+    {
+      "id": "balinok_frozen_brook",
+      "name": "Frozen Mountain Brook",
+      "category": "Balinok Mountains",
+      "file": "assets/balinok_frozen_brook.glb",
+      "size": [
+        3,
+        2
+      ],
+      "geometryBounds": [
+        [
+          -1.55,
+          -0.11,
+          -1.0
+        ],
+        [
+          1.545,
+          0.141,
+          1.0
+        ]
+      ],
+      "pieces": 42,
+      "meshes": 4,
+      "bytes": 39736,
+      "placement": "water",
+      "tags": [
+        "ice",
+        "stream"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    },
+    {
+      "id": "balinok_cave_mouth",
+      "name": "Balinok Cave Mouth",
+      "category": "Balinok Mountains",
+      "file": "assets/balinok_cave_mouth.glb",
+      "size": [
+        4,
+        3
+      ],
+      "geometryBounds": [
+        [
+          -1.993,
+          -0.08,
+          -1.367
+        ],
+        [
+          2.067,
+          2.474,
+          1.531
+        ]
+      ],
+      "pieces": 21,
+      "meshes": 3,
+      "bytes": 8880,
+      "placement": "portal",
+      "tags": [
+        "cave",
+        "entrance"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    },
+    {
+      "id": "forsaken_road_shrine",
+      "name": "Forsaken Wayside Shrine",
+      "category": "Ruins & Omens",
+      "file": "assets/forsaken_road_shrine.glb",
+      "size": [
+        2,
+        2
+      ],
+      "geometryBounds": [
+        [
+          -0.851,
+          -0.007,
+          -0.818
+        ],
+        [
+          0.878,
+          1.45,
+          0.442
+        ]
+      ],
+      "pieces": 36,
+      "meshes": 10,
+      "bytes": 15984,
+      "placement": "obstacle",
+      "tags": [
+        "holy",
+        "roadside"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    },
+    {
+      "id": "forgotten_graves",
+      "name": "Forgotten Roadside Graves",
+      "category": "Ruins & Omens",
+      "file": "assets/forgotten_graves.glb",
+      "size": [
+        3,
+        3
+      ],
+      "geometryBounds": [
+        [
+          -1.52,
+          -0.13,
+          -1.5
+        ],
+        [
+          1.502,
+          0.452,
+          1.5
+        ]
+      ],
+      "pieces": 82,
+      "meshes": 7,
+      "bytes": 36196,
+      "placement": "difficult",
+      "tags": [
+        "cemetery",
+        "grave"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    },
+    {
+      "id": "ruined_vallaki_arch",
+      "name": "Ruined Stone Arch",
+      "category": "Ruins & Omens",
+      "file": "assets/ruined_vallaki_arch.glb",
+      "size": [
+        3,
+        1
+      ],
+      "geometryBounds": [
+        [
+          -1.473,
+          -0.052,
+          -0.459
+        ],
+        [
+          1.37,
+          2.155,
+          0.501
+        ]
+      ],
+      "pieces": 17,
+      "meshes": 3,
+      "bytes": 6480,
+      "placement": "portal",
+      "tags": [
+        "ruins",
+        "arch"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    },
+    {
+      "id": "abandoned_watchfire",
+      "name": "Abandoned Watchfire",
+      "category": "Ruins & Omens",
+      "file": "assets/abandoned_watchfire.glb",
+      "size": [
+        2,
+        2
+      ],
+      "geometryBounds": [
+        [
+          -1.017,
+          -0.124,
+          -1.051
+        ],
+        [
+          1.0,
+          0.24,
+          1.0
+        ]
+      ],
+      "pieces": 20,
+      "meshes": 6,
+      "bytes": 13112,
+      "placement": "decor",
+      "tags": [
+        "camp",
+        "ruins"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    },
+    {
+      "id": "empty_gallows",
+      "name": "Empty Crossroads Gallows",
+      "category": "Ruins & Omens",
+      "file": "assets/empty_gallows.glb",
+      "size": [
+        2,
+        2
+      ],
+      "geometryBounds": [
+        [
+          -1.0,
+          -0.139,
+          -1.0
+        ],
+        [
+          1.0,
+          1.985,
+          1.0
+        ]
+      ],
+      "pieces": 20,
+      "meshes": 8,
+      "bytes": 12656,
+      "placement": "obstacle",
+      "tags": [
+        "gallows",
+        "ominous"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    },
+    {
+      "id": "hunger_moss_colony",
+      "name": "Hunger Moss Colony",
+      "category": "Bloom / Hunger Moss",
+      "file": "assets/hunger_moss_colony.glb",
+      "size": [
+        3,
+        3
+      ],
+      "geometryBounds": [
+        [
+          -1.663,
+          -0.134,
+          -1.676
+        ],
+        [
+          1.617,
+          0.364,
+          1.62
+        ]
+      ],
+      "pieces": 62,
+      "meshes": 5,
+      "bytes": 29768,
+      "placement": "difficult",
+      "tags": [
+        "infected",
+        "glow",
+        "floor"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    },
+    {
+      "id": "hunger_moss_spires",
+      "name": "Hunger Moss Spires",
+      "category": "Bloom / Hunger Moss",
+      "file": "assets/hunger_moss_spires.glb",
+      "size": [
+        2,
+        2
+      ],
+      "geometryBounds": [
+        [
+          -1.0,
+          -0.128,
+          -1.0
+        ],
+        [
+          1.0,
+          2.08,
+          1.0
+        ]
+      ],
+      "pieces": 41,
+      "meshes": 5,
+      "bytes": 23632,
+      "placement": "obstacle",
+      "tags": [
+        "infected",
+        "glow",
+        "hazard"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    },
+    {
+      "id": "forgotten_sentry_stones",
+      "name": "Forgotten Sentry Stones",
+      "category": "Ruins & Omens",
+      "file": "assets/forgotten_sentry_stones.glb",
+      "size": [
+        3,
+        3
+      ],
+      "geometryBounds": [
+        [
+          -1.5,
+          -0.134,
+          -1.5
+        ],
+        [
+          1.5,
+          1.62,
+          1.5
+        ]
+      ],
+      "pieces": 23,
+      "meshes": 4,
+      "bytes": 12044,
+      "placement": "difficult",
+      "tags": [
+        "standing_stones",
+        "landmark"
+      ],
+      "notes": "Original hand-authored procedural low-poly terrain mesh."
+    }
+  ]
+}
