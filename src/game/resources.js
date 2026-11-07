@@ -6,6 +6,7 @@ import { showCard, toast } from '../ui/hud.js';
 import { addCond } from './rules.js';
 import { heal } from './combat.js';
 import { changed } from './session.js';
+import { longRest as fearRest } from '../engine/horror.js';
 
 const resOf = (t, id) => t.resources?.find(r => r.id === id);
 export const left = (t, id) => t.res?.[id] ?? 0;
@@ -109,6 +110,9 @@ export function longRest(list = party(), quiet = false){
     t.conds = (t.conds || []).filter(c => c.n === 'seeded');
     if (t.exhaustion) t.exhaustion > 1 ? t.exhaustion-- : delete t.exhaustion;   // a long rest: one level of exhaustion less
     for (const r of t.resources || []) t.res[r.id] = r.max;
+    // 😱 fear's short marks fade with sleep; a quiet night eases one point of stress (engine/horror.js)
+    const holder = state.characters?.[t.charId] || t;
+    if (holder.horror) holder.horror = fearRest({ horror:holder.horror }, { safe:true }).horror;
   }
   for (const t of state.tokens) delete t.lres;   // a new day: Legendary Resistance comes back too
   if (!quiet) showCard({ kind:'', title:'A long rest', sub:'Eight hours', flair:'They sleep, after a fashion. In Barovia the dreams are not entirely their own.', lines:['Full HP, every slot and feature back, Hit Dice restored, conditions gone.'] });

@@ -17,6 +17,7 @@ import { cavify, reachable } from './caves.js';
 import { inShape, pickShape } from './shapes.js';
 import { pickVault, stampVault } from './vaults.js';
 import { cavern } from './caverns.js';
+import { interior } from './interiors.js';
 import { planSite } from './sites.js';
 import { siteGraph, applySite } from './sitegraph.js';
 import { hoard, keyItems } from './hoard.js';
@@ -27,6 +28,7 @@ const DEEP = ['hands', 'undertow', 'womb', 'ossuary'];
 export function templateSpecs(meta){
   if (meta.template === 'journey' && meta.journey) return journeySpecs(meta.journey);
   if (meta.template === 'landmark' && meta.place) return landmarkSpecs(meta.place, meta.seed);
+  if (meta.template === 'interior' && meta.interior) return interiorSpecs(meta.interior);
   const tpl = TEMPLATES.find(t => t.id === meta.template) || TEMPLATES[0], out = [];
   for (let L = 0; L < meta.floors; L++){
     if (tpl.floors[L]) out.push(tpl.floors[L]);
@@ -49,6 +51,7 @@ function rollWith(expr, rng){
 export function genDelve(meta){
   const rng = mulberry32(hashSeed(meta.seed + '|' + (meta.template || 'andral')));
   const specs = templateSpecs(meta), floors = []; let anchor = null;
+  if (meta.template === 'interior') meta.floors = specs.length;   // a building has the storeys it has
   for (let L = 0; L < meta.floors; L++){
     const f = genFloor(L, meta.size, meta.size, rng, anchor, L === meta.floors - 1, specs[L]);
     floors.push(f); anchor = f.down;
@@ -582,3 +585,14 @@ function hoardsFor(f, plan, g, opts){
     (r.hoard.keys ||= []).push({ ...k, how:lock.key.how });
   }
 }
+
+/* Inside a building (engine/interiors.js, ChatGPT's): its storeys as hand-built floors, the top one first so each
+   floor's way down meets the next one's way up (the app's floors run downwards). meta.interior: { kind, w, h, seed,
+   name }. → floor specs; interiorGround(meta.interior) says which of them is the ground floor (where the door is). */
+const INTERIOR_LOOK = { tavern:'tavern', shop:'tavern', longhouse:'tavern', hall:'tavern', church:'chapel', windmill:'mill', barn:'mill', tower:'castle' };
+export function interiorPlan(it){ const p = interior(it.kind, { w:it.w, h:it.h, seed:it.seed, name:it.name }); return { floors:[...p.floors].reverse(), order:[...p.order].reverse(), name:p.name }; }
+export function interiorSpecs(it){
+  const p = interiorPlan(it);
+  return p.floors.map((lay, i) => ({ layout:lay, theme:p.order[i] === 'cellar' ? 'cellar' : INTERIOR_LOOK[it.kind] || 'manor' }));
+}
+export const interiorGround = it => Math.max(0, interiorPlan(it).order.indexOf('ground'));

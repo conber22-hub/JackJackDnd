@@ -8,10 +8,13 @@ import { ensureLook, openLookPanel } from './look.js';
 import { ensureMapbook } from './mapbook.js';
 import { ensurePuzzles, openPuzzle } from './puzzles.js';
 import { ensureChase, openChase } from './chase.js';
+import { ensureHorror, openHorror } from './horror.js';
+import { ensureMobs, openMobs } from './mobs.js';
 import { setPuzzle } from '../game/puzzles.js';
 import { describeSite } from '../engine/sites.js';
 import { stockSite, garrisonArrive, giveHoard } from '../game/garrison.js';
 import { influenceFolk } from '../game/folk.js';
+import { goInside } from '../game/interiors.js';
 import { ensureChronicle } from './chronicle.js';
 import { ensureSoundscape } from './soundscape.js';
 import { toggleNotebook } from './notebook.js';
@@ -124,6 +127,9 @@ document.addEventListener('click', e => {
     case 'openPuzzle': openPuzzle(ui.floor, id); break;
     case 'stockSite': stockSite(ui.floor); break;
     case 'chase': openChase(); break;
+    case 'horror': openHorror(); break;   // 😱 a horror check (Codex's engine/horror.js)
+    case 'mobs': openMobs(); break;       // 👥 a mob (Codex's engine/mobs.js)
+    case 'goInside': goInside(ui.floor, +id); break;
     case 'influence': { const [L, pid] = String(id).split(':'); influenceFolk(+L, pid, k); } break;
     case 'garrisonArrive': if (!garrisonArrive(ui.floor)) toast('No one is on the way.'); break;
     case 'giveHoard': giveHoard(ui.floor, +id); break;
@@ -518,6 +524,8 @@ ensureLook();   // the 🎨 Look panel and 📸 photo mode: the button, the pale
 ensureMapbook();   // the 🗺️ Map Book: the button, the palette command, the live redraw (idempotent)
 ensurePuzzles();   // 🧩 puzzles: the button when there's one to work, the sheet, the palette command
 ensureChase();   // 🏃 the chase: the DM's sheet and the palette command
+ensureHorror();  // 😱 fear and its marks
+ensureMobs();    // 👥 the mob
 ensureChronicle();   // the 📜 Chronicle: the button, the palette command, the record of the story (idempotent)
 ensureSoundscape();   // the 🎻 Soundscape: the button, the palette command, the board and its receivers (idempotent)
 $('#floorUp').onclick = () => state && goFloor(ui.floor - 1);

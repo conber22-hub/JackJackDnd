@@ -87,7 +87,7 @@ function frame(){
     moon.position.lerp(DL ? dlPos.set(DL.dir.x, DL.dir.y, DL.dir.z) : MOONP0, k2);
     windowGlow(DL ? DL.windows : 1);
     if (t - (frame.ambAt || 0) > 1){ frame.ambAt = t;   // the room's own sound
-      const w = weatherKind(); setAmbience(outdoor ? (w && w !== 'snow' ? 'rain' : 'wind') : th.id === 'tavern' ? 'fire' : ['undertow', 'cellar', 'womb'].includes(th.id) ? 'water' : 'drips');
+      const w = weatherKind(); if (!ui.soundscapeHolds) setAmbience(outdoor ? (w && w !== 'snow' ? 'rain' : 'wind') : th.id === 'tavern' ? 'fire' : ['undertow', 'cellar', 'womb'].includes(th.id) ? 'water' : 'drips');
       // the weather changed (a new day, the DM's desk), or his Gaze withered the land: redraw the outdoor maps' ground
       const gw = JSON.stringify(groundWeather()) + '|' + witherLevel();   // (and the land withering under his Gaze)
       if (frame.gw !== undefined && frame.gw !== gw) state.floors.forEach((f, L) => { const t2 = THEMES[f.theme]; if (t2 && (t2.walls === 'trees' || t2.walls === 'mixed')) buildFloor(L); });

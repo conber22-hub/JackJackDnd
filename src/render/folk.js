@@ -54,8 +54,14 @@ function dog(x){
   x.beginPath(); x.moveTo(68, 108); x.lineTo(70, 98); x.lineTo(75, 108); x.fill();                 // ear
   x.strokeStyle = '#5b4a3a'; x.lineWidth = 4; x.beginPath(); x.moveTo(23, 124); x.quadraticCurveTo(14, 112, 18, 104); x.stroke();   // tail
 }
+const torch = (x, cx, top, head) => { x.strokeStyle = '#5b4630'; x.lineWidth = 3; x.beginPath(); x.moveTo(cx + 20, top + head * 2.4); x.lineTo(cx + 25, top - 4); x.stroke();
+  const g = x.createRadialGradient(cx + 25, top - 12, 1, cx + 25, top - 12, 14); g.addColorStop(0, '#fff3b0'); g.addColorStop(.45, '#ff9a2a'); g.addColorStop(1, 'rgba(255,90,20,0)');
+  x.fillStyle = g; x.beginPath(); x.ellipse(cx + 25, top - 12, 10, 15, 0, 0, 7); x.fill(); };
 const LOOKS = {
   villager: { coat:'#86735f' },
+  torchbearer: { coat:'#7d6a55', prop:torch },
+  dead:     { coat:'#4d5547', hunch:.3, skin:'#8f9a84', trim:'#1a1d18' },
+  shade:    { coat:'#2e2a34', hood:true, skin:'#5a5560', trim:'#121016' },
   farmer:   { coat:'#937a4f', hat:brim('#8a7346'), prop:fork },
   smith:    { coat:'#655a52', wide:1.15, prop:hammer, skin:SKIN[1] },
   child:    { coat:'#a5785f', h:.62, skin:SKIN[3] },
@@ -118,14 +124,22 @@ function makeView(p){
   const [w, h] = SIZE[p.role] || [.5, .84];
   // (drawn colours as they are: the scene's tone mapping would sink them into the dark)
   const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map:lookTexture(p.role, false), transparent:true, depthWrite:false, toneMapped:false, alphaTest:.05 }));
-  sprite.center.set(.5, 0); sprite.scale.set(w, h, 1); sprite.userData.folkId = p.id; sprite.userData.size = [w, h];
+  sprite.center.set(.5, 0); sprite.scale.set(w, h, 1); sprite.userData.folkId = p.mob ? null : p.id; sprite.userData.size = [w, h];
   group.add(sprite);
   return { sprite, eye:null, x:p.x, y:p.y, flip:false };
+}
+/* A mob (ui/mobs.js, Codex's engine/mobs.js) stands as a crowd of figures, one per member on the map: the risen
+   dead, a village with torches and pitchforks, or dark shapes for anything else. */
+function crowd(f){
+  const out = [];
+  for (const m of f?.mobs || []) (m.formation || []).forEach((s, i) => out.push({ id:`mob|${m.id}|${i}`, mob:true, x:s.x, y:s.y,
+    role:m.look === 'rising' ? (i < (m.torches || 0) ? 'torchbearer' : ['villager', 'farmer', 'elder', 'farmer'][i % 4]) : m.look === 'guards' ? (i < (m.torches || 0) ? 'torchbearer' : 'watch') : m.look || 'shade' }));
+  return out;
 }
 /* Each frame: one figure per person on the floor in view, walking to where the folk engine last put them. */
 export function updateFolk(t, dt){
   if (!state){ group.visible = false; return; }
-  const f = state.floors[ui.floor], list = (ui.view !== 'stack' && f?.folk) || [];
+  const f = state.floors[ui.floor], list = ui.view !== 'stack' ? [...(f?.folk || []), ...crowd(f)] : [];
   group.visible = list.length > 0;
   const live = new Set();
   for (const p of list){
@@ -154,6 +168,5 @@ export function updateFolk(t, dt){
 /* The person under a tap (the raycaster already aimed by ui/input.js), or null. */
 export function pickFolk(raycaster){
   if (!group.visible) return null;
-  const hit = raycaster.intersectObjects([...views.values()].map(v => v.sprite), false)[0];
-  return hit?.object.userData.folkId || null;
+  return raycaster.intersectObjects([...views.values()].map(v => v.sprite).filter(s => s.userData.folkId), false)[0]?.object.userData.folkId || null;
 }

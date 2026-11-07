@@ -20,6 +20,8 @@ import { court as getCourt } from './court.js';
 import { SELLERS, openTroubleBy, freshTroubles, markAsking } from './trade.js';
 import { PLACE_NAMES } from '../engine/nemesis.js';
 import { attitudeOf, influence, recall } from '../engine/social.js';
+import { ROLES as LIFE_ROLES } from '../data/people.js';
+import { village, person as onePerson, introduce } from '../engine/people.js';
 import { esc } from '../util/core.js';
 import { spendCoins } from '../engine/coins.js';
 import { log } from '../engine/state.js';
@@ -52,6 +54,7 @@ export function ensureFolk(L = ui.floor){
   const place = folkPlace(L); if (!place) return false;
   const taken = new Set(partyOn(L).map(t => `${t.x},${t.y}`));
   f.folk = populate(f, { place, seed:`${state.meta.seed}|${L}`, gaze:state.dread || 1, night:night(), court:court() }).filter(p => !taken.has(`${p.x},${p.y}`));
+  giveLives(f, L, place);   // their names, voices, wants, fears, secrets and ties (engine/people.js)
   freshTroubles(f, place);   // what they need help with (game/trade.js)
   const hero = partyOn(L)[0];
   if (hero) witnessed(L, { kind:'arrival', x:hero.x, y:hero.y });
@@ -64,7 +67,8 @@ export function refreshFolk(L = ui.floor){
   const place = folkPlace(L); if (!place) return;
   const old = new Map(f.folk.map(p => [p.id, p]));
   f.folk = populate(f, { place, seed:`${state.meta.seed}|${L}`, gaze:state.dread || 1, night:night(), court:court() })
-    .map(p => old.has(p.id) ? { ...p, x:old.get(p.id).x, y:old.get(p.id).y, seen:old.get(p.id).seen || [], mood:old.get(p.id).mood } : p);
+    .map(p => old.has(p.id) ? { ...p, x:old.get(p.id).x, y:old.get(p.id).y, seen:old.get(p.id).seen || [], mood:old.get(p.id).mood, memories:old.get(p.id).memories, name:old.get(p.id).name } : p);
+  giveLives(f, L, place);
   freshTroubles(f, place);
   sendFolk(L);
 }
@@ -114,8 +118,9 @@ export function talkTo(p, { by = null } = {}){
   if (ui.role !== 'dm'){ sendHost({ t:'talk', L:ui.floor, id:p.id }); showCard({ kind:'', title:p.name || roleName(p), sub:p.name ? roleName(p) : '', flair:'You go over to them. (The DM tells you what they say.)' }, false); return; }
   const r = rng(), said = greet(p, { gaze:state.dread || 1, night:night() }, r), heard = p.role === 'dog' ? null : rumourFor(p, court(), { gaze:state.dread || 1 }, r);
   const rumour = heard && heard.text !== said ? heard : null;
-  const trouble = openTroubleBy(p.id);
-  showCard({ kind:'', title:p.name || roleName(p), sub:`${p.name ? roleName(p) : ''}${by ? `${p.name ? ' · ' : ''}${by} talks to them` : ''}`, flair:trouble ? trouble.text : said, lines:rumour && !trouble ? [`“${rumour.text}”`] : [], cat:'world' });
+  const trouble = openTroubleBy(p.id), life = state.floors[ui.floor]?.lives?.[p.id];
+  const first = life && !p.met; if (first) p.met = true;   // (the first time: who they are, in a line or two)
+  showCard({ kind:'', title:p.name || roleName(p), sub:`${p.name ? roleName(p) : ''}${by ? `${p.name ? ' · ' : ''}${by} talks to them` : ''}`, flair:trouble ? trouble.text : first ? introduce(life, { night:night() }) : said, lines:rumour && !trouble ? [`“${rumour.text}”`] : [], cat:'world' });
   const m = p.spy && court().members.find(x => x.id === p.spy.for), about = rumour?.about && court().members.find(x => x.id === rumour.about);
   const notes = [
     ...(m ? [`👁 One of the Count's eyes: reports to ${m.name} ${m.epithet}${p.seen?.length ? ` (has seen: ${p.seen.map(s => s.kind).join(', ')})` : ''}`] : []),
@@ -127,6 +132,7 @@ export function talkTo(p, { by = null } = {}){
     ...(SELLERS.includes(p.role) ? [`<button class="btn small primary" data-act="tradeOpen" data-id="${p.id}" data-k="${ui.floor}">🛒 Trade with ${p.name || roleName(p)}</button>`] : []),
     ...(p.role === 'smith' ? [`<button class="btn small" data-act="workshop" data-id="folk:${ui.floor}:${p.id}">🔨 Commission ${p.name || 'the smith'}</button>`] : []),
     ...(p.role === 'dog' ? [] : [talkRow(p)]),
+    ...(life ? lifeLines(life, p) : []),
   ];
   if (notes.length) showCard({ kind:m ? 'seep' : '', title:'For your eyes', lines:notes }, false);
 }
@@ -176,4 +182,30 @@ export function influenceFolk(L, id, approach){
   const lines = [out.roll ? `${who.name}: ${out.roll.raw} + ${out.roll.bonus} = <b>${out.roll.total}</b> against DC ${out.dc}` : '', esc(out.text), `Now: ${FEEL[feel] || feel}`].filter(Boolean);
   showCard({ kind:out.ok ? 'good' : 'miss', title:`${APPROACH[approach]} · ${p.name || p.role}`, sub:who.name, lines, cat:'rolls' });
   log(`🗣 ${who.name} tries to ${approach} ${p.name || p.role}: ${out.ok ? 'it works' : 'no good'} (now ${feel}).`);
+}
+
+/* ---------- their lives (ChatGPT's engine/people.js) ----------
+   The first time a place's folk come out, they're given lives together: names, a look, a voice to play them with,
+   what they want and fear and hide, and a web of ties between them (who loves, owes, hates or informs on whom).
+   Newcomers later get a life of their own. Kept on the floor (f.lives by folk id, f.folkTies); the DM's alone. */
+function giveLives(f, L, place){
+  f.lives ||= {}; f.folkTies ||= [];
+  const fresh = (f.folk || []).filter(p => p.role !== 'dog' && !f.lives[p.id]);
+  if (!fresh.length) return;
+  const seed = `${state.meta.seed}|lives|${L}`, gaze = state.dread || 1, where = String(place?.id || place?.kind || place || state.meta.name || 'Barovia');
+  const role = r => LIFE_ROLES[r] ? r : 'farmer';   // a plain villager lives a farmer's life
+  try { lifeFor(f, fresh, seed, where, gaze, role); } catch (e){ console.warn('people.js:', e); }   // a life the engine can't make is no reason to stop the folk
+}
+function lifeFor(f, fresh, seed, place, gaze, role){
+  if (!Object.keys(f.lives).length && fresh.length >= 2){
+    const v = village({ seed, place, roles:fresh.map(p => role(p.role)), gaze }), idOf = new Map(v.people.map((x, i) => [x.id, fresh[i].id]));
+    v.people.forEach((x, i) => { f.lives[fresh[i].id] = x; fresh[i].name = x.name; });
+    f.folkTies = v.ties.map(t => ({ ...t, a:idOf.get(t.a), b:idOf.get(t.b), ...(t.secretOf ? { secretOf:idOf.get(t.secretOf) } : {}) }));
+    f.folkTensions = v.tensions;
+  } else for (const p of fresh){ const x = onePerson({ role:role(p.role), seed:`${seed}|${p.id}`, place, gaze }); f.lives[p.id] = x; if (!p.name) p.name = x.name; }
+}
+function lifeLines(x, p){
+  const f = state.floors[ui.floor], nameOf = id => f.folk.find(q => q.id === id)?.name || 'someone';
+  const ties = (f.folkTies || []).filter(t => t.a === p.id || t.b === p.id).map(t => `🔗 ${esc(t.text)}`);
+  return [`🎭 <i>${esc(x.voice)}</i> · ${esc(x.look.join('; '))}`, `Wants ${esc(x.wants)}. Fears ${esc(x.fears)}.`, `🤫 ${esc(x.secret)}`, ...ties.slice(0, 3), x.hook ? `💡 ${esc(x.hook)}` : ''].filter(Boolean);
 }

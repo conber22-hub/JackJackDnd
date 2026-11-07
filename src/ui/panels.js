@@ -9,6 +9,7 @@ import { SHAPES } from '../engine/shapes.js';
 import { outlook } from '../game/weather.js';
 import { puzzleIn, PUZZLE_KINDS } from '../game/puzzles.js';
 import { value as hoardValue } from '../engine/hoard.js';
+import { buildingKind } from '../game/interiors.js';
 import { VAULTS } from '../data/vaults.js';
 import { parseVault } from '../engine/vaults.js';
 import { THEMES, TEMPLATES } from '../data/themes.js';
@@ -45,6 +46,7 @@ import { nightState, screenCount, screenLink, partyRoom, introducible, realDice 
 import { cardHTML } from './cards.js';
 import { currentAsk } from '../game/asks.js';
 import { CHECKS } from '../engine/checks.js';
+import { markChips } from './horror.js';
 
 const art = (key, label) => {
   const a = state.art[key];
@@ -86,7 +88,7 @@ function tokensTab(){
       ${t.flags.taken ? `<button class="btn small seep" data-act="restore" data-id="${t.id}">Restore</button>` : `<button class="btn small" data-act="sel" data-id="${t.id}">Select</button>`}<button class="btn small" data-act="openPc" data-id="${t.id}">${open ? '▲' : '✎'}</button></div>
       ${t.flags.taken ? `<div class="fam-seep" style="font-size:13px">☣ Taken by the Seep — a Husk walks in their skin.</div>` : ''}
       <div class="stat" style="margin-top:4px">AC ${t.ac} · HP ${t.hp}/${t.maxHp} · ${t.speed} ft · Init ${t.init >= 0 ? '+' : ''}${t.init} · PP ${t.passive}</div>${hpBar(t, true)}
-      ${t.conds?.length ? `<div>${condChips(t, false)}</div>` : ''}${resChips(t, false)}
+      ${t.conds?.length ? `<div>${condChips(t, false)}</div>` : ''}${resChips(t, false)}${markChips(t)}
       ${open ? `<div class="row"><input class="txt" style="flex:1" value="${esc(t.name)}" data-edit="tok" data-id="${t.id}" data-f="name"><input type="color" value="${t.color}" data-edit="tok" data-id="${t.id}" data-f="color"></div>
         <div class="row">${[['ac', 'AC'], ['hp', 'HP'], ['maxHp', 'Max'], ['speed', 'Speed'], ['init', 'Init'], ['saveMod', 'Save'], ['check', 'Tools'], ['passive', 'Passive']].map(([k, l]) => `<label>${l}<br><input class="txt num" type="number" value="${t[k]}" data-edit="tok" data-id="${t.id}" data-f="${k}"></label>`).join('')}</div>
         <div class="muted">Tools = lockpicking / disarm bonus · Passive = passive Perception (spots traps and secret doors on its own)</div>
@@ -192,6 +194,7 @@ function dungeonTab(){
       <button class="btn small ${ui.whispers ? 'on' : ''}" data-act="toggle" data-k="whispers">Whispers</button>
       <button class="btn small ${ui.roomPrompts !== false ? 'on' : ''}" data-act="toggle" data-k="roomPrompts" title="When the party first walks into a room, offer its read-aloud">Room prompts</button></div>
     ${siteCard(f)}
+    ${buildingsCard(f)}
     <h4>Rooms (${f.rooms.length})</h4>
     <div class="row"><button class="btn small" data-act="furnishFloor" title="Furniture for every room that has none, by its type and this floor's look">🪑 Furnish empty rooms</button><button class="btn small" data-act="describeFloor" title="A read-aloud line for every room that has none">📜 Describe rooms</button></div>`;
   for (const r of f.rooms) h += `<div class="card ${ui.selRoom === r.id ? 'sel' : ''}"><div class="hd"><span class="dot" style="color:${ROOM_TYPES[r.type]?.color};background:${ROOM_TYPES[r.type]?.color}"></span>
@@ -431,7 +434,7 @@ function nightTab(){
   const N = nightState(), n = screenCount(), room = partyRoom(), sess = SESSIONS.find(x => x.n === state.campaign.session);
   const seg = (act, k, on, label, title = '') => `<button class="btn small ${on ? 'on' : ''}" data-act="${act}" data-k="${k}" title="${esc(title)}">${label}</button>`;
   let h = `<h3>🕯 Game night</h3><div class="muted">For playing round one table: the map on the TV, your laptop running it, the players' phones as their hero cards (or no phones at all), and real dice.</div>
-    <div class="row"><button class="btn small" data-act="chase" title="Someone runs, something follows: round by round (Codex's chase rules)">🏃 A chase</button></div>
+    <div class="row"><button class="btn small" data-act="chase" title="Someone runs, something follows: round by round (Codex's chase rules)">🏃 A chase</button><button class="btn small" data-act="horror" title="The dead rise, a friend falls, the Count arrives: Wisdom saves, and the marks fear leaves">😱 Horror check</button><button class="btn small" data-act="mobs" title="Thirty zombies, a village with torches: many fighting as one">👥 A mob</button></div>
     <h4>📺 The table screen</h4>
     <div class="row"><button class="btn primary" data-act="ntOpen">📺 Open the table screen</button><span class="muted">${n ? `<b style="color:var(--candle)">${n} screen${n === 1 ? '' : 's'} connected</b>` : 'none connected'}</span></div>
     <div class="muted">A new window: drag it onto the TV or a second monitor and press ⛶ in its corner. It shows what the party sees (fog, no secrets): the turn order with the heroes' faces across the top, the party along the bottom, and a camera that follows the action and drifts slowly while they explore.</div>
@@ -608,4 +611,11 @@ function siteCard(f){
 function hoardText(h){
   const things = [...(h.items || []).map(i => `${i.n}${i.counts ? ' ⚠ his' : ''}${i.spoiled ? ' (spoiled)' : ''}`), ...(h.art || []).map(a => a.desc), ...(h.keys || []).map(k => `🗝 ${k.name}${k.how === 'carried' ? ' (carried)' : ''}`)];
   return esc(`${hoardValue(h)} gp${things.length ? ': ' + things.join('; ') : ''}`);
+}
+
+// Maps tab: the buildings on this map, each with its inside to go into (game/interiors.js).
+function buildingsCard(f){
+  const bs = (f.buildings || []).map((b, i) => ({ b, i })).filter(({ b }) => b.w >= 2 && b.h >= 2);
+  if (!bs.length) return '';
+  return `<h4>🏠 Buildings (${bs.length})</h4><div class="card">${bs.slice(0, 24).map(({ b, i }) => `<div class="row"><span class="grow">${esc(b.name || 'A building')} <span class="muted">(${esc(buildingKind(b))})</span></span><button class="btn small" data-act="goInside" data-id="${i}" title="Its inside as its own map, the party at the door">🚪 Go inside</button></div>`).join('')}</div>`;
 }
