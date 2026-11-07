@@ -1,0 +1,920 @@
+{
+  "pack": "Barovia V: Under the Road",
+  "version": 5,
+  "scale": "1 world unit = 5 ft; +Y up, north -Z",
+  "visualOnly": true,
+  "modelCount": 24,
+  "pairCount": 12,
+  "pairs": [
+    {
+      "id": "svalich_road_hatch",
+      "title": "The Stone That Rings Hollow",
+      "biomes": [
+        "roadside",
+        "forest"
+      ],
+      "roads": [
+        "r-east",
+        "r-west",
+        "r-gates",
+        "r-vallaki"
+      ],
+      "footprint": [
+        3,
+        3
+      ],
+      "approach": "A loose paving stone clicks twice beneath a boot.",
+      "reveal": "A narrow hatch reveals steps cut into a much older road.",
+      "return": "A wet handprint marks the underside of the stone.",
+      "kind": "entrance",
+      "sealed": "svalich_road_hatch_sealed",
+      "revealed": "svalich_road_hatch_revealed"
+    },
+    {
+      "id": "blackroot_hollow_oak",
+      "title": "The Listening Oak",
+      "biomes": [
+        "forest",
+        "graveyard"
+      ],
+      "roads": [
+        "r-cut",
+        "r-west",
+        "r-east",
+        "r-argyn",
+        "r-mist"
+      ],
+      "footprint": [
+        4,
+        4
+      ],
+      "approach": "A hollow oak exhales warm air in a cold wood.",
+      "reveal": "A bark panel swings aside to a root-lined descending stair.",
+      "return": "The opening has grown a fresh ring of wood around its rim.",
+      "kind": "entrance",
+      "sealed": "blackroot_hollow_oak_sealed",
+      "revealed": "blackroot_hollow_oak_revealed"
+    },
+    {
+      "id": "boulder_moss_curtain",
+      "title": "The Green Curtain",
+      "biomes": [
+        "mountain",
+        "corruption"
+      ],
+      "roads": [
+        "r-argyn",
+        "r-krezk",
+        "r-yester",
+        "r-cut"
+      ],
+      "footprint": [
+        4,
+        3
+      ],
+      "approach": "A sheet of moss ripples across a cliff without wind.",
+      "reveal": "Behind it is a dry, hewn threshold lit by spores.",
+      "return": "The spore light spells a name in the stone.",
+      "kind": "entrance",
+      "sealed": "boulder_moss_curtain_sealed",
+      "revealed": "boulder_moss_curtain_revealed"
+    },
+    {
+      "id": "dry_well_ladder",
+      "title": "The Well Without Water",
+      "biomes": [
+        "village",
+        "farmland"
+      ],
+      "roads": [
+        "r-vallaki",
+        "r-winery",
+        "r-gates",
+        "r-krezk"
+      ],
+      "footprint": [
+        3,
+        3
+      ],
+      "approach": "An old well sounds hollow, even when a pebble hits the bottom.",
+      "reveal": "The wooden lid conceals a ladder carved into the stone shaft.",
+      "return": "A bucket hangs halfway up. It was not there before.",
+      "kind": "entrance",
+      "sealed": "dry_well_ladder_sealed",
+      "revealed": "dry_well_ladder_revealed"
+    },
+    {
+      "id": "ossuary_gravestone",
+      "title": "The Wrong Burial",
+      "biomes": [
+        "graveyard",
+        "roadside"
+      ],
+      "roads": [
+        "r-east",
+        "r-castle",
+        "r-argyn",
+        "r-gates"
+      ],
+      "footprint": [
+        3,
+        3
+      ],
+      "approach": "A grave slab lies too level in soil softened by rain.",
+      "reveal": "Below the slab, cramped ossuary steps descend to a sealed passage.",
+      "return": "One more name has appeared on the stone.",
+      "kind": "crypt",
+      "sealed": "ossuary_gravestone_sealed",
+      "revealed": "ossuary_gravestone_revealed"
+    },
+    {
+      "id": "bridge_floodgate",
+      "title": "The Weeping Culvert",
+      "biomes": [
+        "marsh",
+        "roadside"
+      ],
+      "roads": [
+        "r-tser",
+        "r-berez",
+        "r-tower",
+        "r-east"
+      ],
+      "footprint": [
+        4,
+        3
+      ],
+      "approach": "Water drains under the bridge, but the bars are warm.",
+      "reveal": "A hidden iron grille folds upward. Someone has used the tunnel recently.",
+      "return": "A fresh lantern glows beyond the waterline.",
+      "kind": "culvert",
+      "sealed": "bridge_floodgate_sealed",
+      "revealed": "bridge_floodgate_revealed"
+    },
+    {
+      "id": "straw_barn_hatch",
+      "title": "The Hay That Breathes",
+      "biomes": [
+        "farmland",
+        "village"
+      ],
+      "roads": [
+        "r-winery",
+        "r-krezk",
+        "r-vallaki"
+      ],
+      "footprint": [
+        4,
+        3
+      ],
+      "approach": "Hay has been piled into a perfect square on the barn floor.",
+      "reveal": "A slatted hatch conceals a cellar beneath the stalls.",
+      "return": "The straw has been brushed into the shape of a sleeping person.",
+      "kind": "entrance",
+      "sealed": "straw_barn_hatch_sealed",
+      "revealed": "straw_barn_hatch_revealed"
+    },
+    {
+      "id": "tser_reed_den",
+      "title": "The Reedbank Mouth",
+      "biomes": [
+        "marsh",
+        "forest"
+      ],
+      "roads": [
+        "r-tser",
+        "r-berez",
+        "r-lake",
+        "r-tower"
+      ],
+      "footprint": [
+        4,
+        4
+      ],
+      "approach": "Reeds bend in a ring around dry earth.",
+      "reveal": "A root-bound passage opens where the water should be.",
+      "return": "The reeds move toward the party, not the wind.",
+      "kind": "entrance",
+      "sealed": "tser_reed_den_sealed",
+      "revealed": "tser_reed_den_revealed"
+    },
+    {
+      "id": "bonegrinder_ash_chute",
+      "title": "The Ash Below the Mill",
+      "biomes": [
+        "farmland",
+        "corruption"
+      ],
+      "roads": [
+        "r-west",
+        "r-vallaki",
+        "r-cut"
+      ],
+      "footprint": [
+        3,
+        3
+      ],
+      "approach": "The abandoned mill chute smells of warm flour and cold ash.",
+      "reveal": "The millstone rolls aside, uncovering steep stairs beneath the axle.",
+      "return": "Fresh flour dust falls upward from the opening.",
+      "kind": "entrance",
+      "sealed": "bonegrinder_ash_chute_sealed",
+      "revealed": "bonegrinder_ash_chute_revealed"
+    },
+    {
+      "id": "hunter_cairn_cache",
+      "title": "The Hunters Who Never Came Back",
+      "biomes": [
+        "forest",
+        "mountain"
+      ],
+      "roads": [
+        "r-cut",
+        "r-argyn",
+        "r-yester"
+      ],
+      "footprint": [
+        3,
+        3
+      ],
+      "approach": "An arrowhead has been wedged into the highest stone.",
+      "reveal": "The cairn turns on a buried pivot, showing a narrow escape shaft.",
+      "return": "A new arrowhead points toward the party camp.",
+      "kind": "refuge",
+      "sealed": "hunter_cairn_cache_sealed",
+      "revealed": "hunter_cairn_cache_revealed"
+    },
+    {
+      "id": "inn_floor_cellar",
+      "title": "The Cold Hearth",
+      "biomes": [
+        "village",
+        "roadside"
+      ],
+      "roads": [
+        "r-gates",
+        "r-vallaki",
+        "r-krezk"
+      ],
+      "footprint": [
+        3,
+        3
+      ],
+      "approach": "One floorboard below the hearth is warmer than the rest.",
+      "reveal": "The cellar latch lifts to reveal a dark room that should not fit below.",
+      "return": "A second latch has been fitted from inside.",
+      "kind": "entrance",
+      "sealed": "inn_floor_cellar_sealed",
+      "revealed": "inn_floor_cellar_revealed"
+    },
+    {
+      "id": "raven_guardian_crypt",
+      "title": "The Vigil Below",
+      "biomes": [
+        "graveyard",
+        "mountain"
+      ],
+      "roads": [
+        "r-castle",
+        "r-argyn",
+        "r-yester"
+      ],
+      "footprint": [
+        4,
+        3
+      ],
+      "approach": "A headless sentinel guards a moss-covered plinth.",
+      "reveal": "The plinth slides to reveal a crypt door and a descending threshold.",
+      "return": "Stone wings have been scored into the sentinel back.",
+      "kind": "crypt",
+      "sealed": "raven_guardian_crypt_sealed",
+      "revealed": "raven_guardian_crypt_revealed"
+    }
+  ],
+  "assets": [
+    {
+      "id": "svalich_road_hatch_sealed",
+      "site": "svalich_road_hatch",
+      "state": "sealed",
+      "file": "svalich_road_hatch_sealed.glb",
+      "footprint": [
+        3,
+        3
+      ],
+      "bounds": [
+        [
+          -1.465,
+          -0.1041,
+          -1.465
+        ],
+        [
+          1.465,
+          0.2431,
+          1.465
+        ]
+      ],
+      "drawCalls": 9,
+      "parts": 31,
+      "bytes": 18304,
+      "visualOnly": true
+    },
+    {
+      "id": "svalich_road_hatch_revealed",
+      "site": "svalich_road_hatch",
+      "state": "revealed",
+      "file": "svalich_road_hatch_revealed.glb",
+      "footprint": [
+        3,
+        3
+      ],
+      "bounds": [
+        [
+          -1.465,
+          -0.285,
+          -1.465
+        ],
+        [
+          1.465,
+          0.2431,
+          1.465
+        ]
+      ],
+      "drawCalls": 9,
+      "parts": 36,
+      "bytes": 19324,
+      "visualOnly": true
+    },
+    {
+      "id": "blackroot_hollow_oak_sealed",
+      "site": "blackroot_hollow_oak",
+      "state": "sealed",
+      "file": "blackroot_hollow_oak_sealed.glb",
+      "footprint": [
+        4,
+        4
+      ],
+      "bounds": [
+        [
+          -1.965,
+          -0.1066,
+          -1.965
+        ],
+        [
+          1.965,
+          2.4326,
+          1.965
+        ]
+      ],
+      "drawCalls": 6,
+      "parts": 26,
+      "bytes": 19388,
+      "visualOnly": true
+    },
+    {
+      "id": "blackroot_hollow_oak_revealed",
+      "site": "blackroot_hollow_oak",
+      "state": "revealed",
+      "file": "blackroot_hollow_oak_revealed.glb",
+      "footprint": [
+        4,
+        4
+      ],
+      "bounds": [
+        [
+          -1.965,
+          -0.22,
+          -1.965
+        ],
+        [
+          1.965,
+          2.4326,
+          1.965
+        ]
+      ],
+      "drawCalls": 8,
+      "parts": 38,
+      "bytes": 23736,
+      "visualOnly": true
+    },
+    {
+      "id": "boulder_moss_curtain_sealed",
+      "site": "boulder_moss_curtain",
+      "state": "sealed",
+      "file": "boulder_moss_curtain_sealed.glb",
+      "footprint": [
+        4,
+        3
+      ],
+      "bounds": [
+        [
+          -1.965,
+          -0.21,
+          -1.58
+        ],
+        [
+          1.965,
+          1.09,
+          1.465
+        ]
+      ],
+      "drawCalls": 5,
+      "parts": 29,
+      "bytes": 20492,
+      "visualOnly": true
+    },
+    {
+      "id": "boulder_moss_curtain_revealed",
+      "site": "boulder_moss_curtain",
+      "state": "revealed",
+      "file": "boulder_moss_curtain_revealed.glb",
+      "footprint": [
+        4,
+        3
+      ],
+      "bounds": [
+        [
+          -1.965,
+          -0.285,
+          -1.58
+        ],
+        [
+          1.965,
+          1.09,
+          1.465
+        ]
+      ],
+      "drawCalls": 6,
+      "parts": 36,
+      "bytes": 23044,
+      "visualOnly": true
+    },
+    {
+      "id": "dry_well_ladder_sealed",
+      "site": "dry_well_ladder",
+      "state": "sealed",
+      "file": "dry_well_ladder_sealed.glb",
+      "footprint": [
+        3,
+        3
+      ],
+      "bounds": [
+        [
+          -1.465,
+          -0.19,
+          -1.465
+        ],
+        [
+          1.465,
+          1.1541,
+          1.465
+        ]
+      ],
+      "drawCalls": 7,
+      "parts": 29,
+      "bytes": 19168,
+      "visualOnly": true
+    },
+    {
+      "id": "dry_well_ladder_revealed",
+      "site": "dry_well_ladder",
+      "state": "revealed",
+      "file": "dry_well_ladder_revealed.glb",
+      "footprint": [
+        3,
+        3
+      ],
+      "bounds": [
+        [
+          -1.465,
+          -0.395,
+          -1.465
+        ],
+        [
+          1.465,
+          1.1541,
+          1.465
+        ]
+      ],
+      "drawCalls": 7,
+      "parts": 33,
+      "bytes": 20480,
+      "visualOnly": true
+    },
+    {
+      "id": "ossuary_gravestone_sealed",
+      "site": "ossuary_gravestone",
+      "state": "sealed",
+      "file": "ossuary_gravestone_sealed.glb",
+      "footprint": [
+        3,
+        3
+      ],
+      "bounds": [
+        [
+          -1.465,
+          -0.1065,
+          -1.465
+        ],
+        [
+          1.465,
+          0.3113,
+          1.465
+        ]
+      ],
+      "drawCalls": 4,
+      "parts": 23,
+      "bytes": 15340,
+      "visualOnly": true
+    },
+    {
+      "id": "ossuary_gravestone_revealed",
+      "site": "ossuary_gravestone",
+      "state": "revealed",
+      "file": "ossuary_gravestone_revealed.glb",
+      "footprint": [
+        3,
+        3
+      ],
+      "bounds": [
+        [
+          -1.465,
+          -0.285,
+          -1.465
+        ],
+        [
+          1.465,
+          0.3113,
+          1.465
+        ]
+      ],
+      "drawCalls": 5,
+      "parts": 30,
+      "bytes": 17928,
+      "visualOnly": true
+    },
+    {
+      "id": "bridge_floodgate_sealed",
+      "site": "bridge_floodgate",
+      "state": "sealed",
+      "file": "bridge_floodgate_sealed.glb",
+      "footprint": [
+        4,
+        3
+      ],
+      "bounds": [
+        [
+          -1.965,
+          -0.1067,
+          -1.465
+        ],
+        [
+          1.965,
+          0.69,
+          1.465
+        ]
+      ],
+      "drawCalls": 6,
+      "parts": 63,
+      "bytes": 23676,
+      "visualOnly": true
+    },
+    {
+      "id": "bridge_floodgate_revealed",
+      "site": "bridge_floodgate",
+      "state": "revealed",
+      "file": "bridge_floodgate_revealed.glb",
+      "footprint": [
+        4,
+        3
+      ],
+      "bounds": [
+        [
+          -1.965,
+          -0.285,
+          -1.465
+        ],
+        [
+          1.965,
+          1.29,
+          1.465
+        ]
+      ],
+      "drawCalls": 7,
+      "parts": 66,
+      "bytes": 24832,
+      "visualOnly": true
+    },
+    {
+      "id": "straw_barn_hatch_sealed",
+      "site": "straw_barn_hatch",
+      "state": "sealed",
+      "file": "straw_barn_hatch_sealed.glb",
+      "footprint": [
+        4,
+        3
+      ],
+      "bounds": [
+        [
+          -1.965,
+          -0.1068,
+          -1.465
+        ],
+        [
+          1.965,
+          1.31,
+          1.465
+        ]
+      ],
+      "drawCalls": 8,
+      "parts": 27,
+      "bytes": 17060,
+      "visualOnly": true
+    },
+    {
+      "id": "straw_barn_hatch_revealed",
+      "site": "straw_barn_hatch",
+      "state": "revealed",
+      "file": "straw_barn_hatch_revealed.glb",
+      "footprint": [
+        4,
+        3
+      ],
+      "bounds": [
+        [
+          -1.965,
+          -0.285,
+          -1.465
+        ],
+        [
+          1.965,
+          1.31,
+          1.465
+        ]
+      ],
+      "drawCalls": 8,
+      "parts": 32,
+      "bytes": 18180,
+      "visualOnly": true
+    },
+    {
+      "id": "tser_reed_den_sealed",
+      "site": "tser_reed_den",
+      "state": "sealed",
+      "file": "tser_reed_den_sealed.glb",
+      "footprint": [
+        4,
+        4
+      ],
+      "bounds": [
+        [
+          -1.965,
+          -0.1074,
+          -1.965
+        ],
+        [
+          1.965,
+          1.1717,
+          1.965
+        ]
+      ],
+      "drawCalls": 7,
+      "parts": 50,
+      "bytes": 24792,
+      "visualOnly": true
+    },
+    {
+      "id": "tser_reed_den_revealed",
+      "site": "tser_reed_den",
+      "state": "revealed",
+      "file": "tser_reed_den_revealed.glb",
+      "footprint": [
+        4,
+        4
+      ],
+      "bounds": [
+        [
+          -1.965,
+          -0.285,
+          -1.965
+        ],
+        [
+          1.965,
+          1.1717,
+          1.965
+        ]
+      ],
+      "drawCalls": 8,
+      "parts": 57,
+      "bytes": 27336,
+      "visualOnly": true
+    },
+    {
+      "id": "bonegrinder_ash_chute_sealed",
+      "site": "bonegrinder_ash_chute",
+      "state": "sealed",
+      "file": "bonegrinder_ash_chute_sealed.glb",
+      "footprint": [
+        3,
+        3
+      ],
+      "bounds": [
+        [
+          -1.465,
+          -0.1073,
+          -1.465
+        ],
+        [
+          1.465,
+          0.36,
+          1.465
+        ]
+      ],
+      "drawCalls": 7,
+      "parts": 23,
+      "bytes": 17192,
+      "visualOnly": true
+    },
+    {
+      "id": "bonegrinder_ash_chute_revealed",
+      "site": "bonegrinder_ash_chute",
+      "state": "revealed",
+      "file": "bonegrinder_ash_chute_revealed.glb",
+      "footprint": [
+        3,
+        3
+      ],
+      "bounds": [
+        [
+          -1.465,
+          -0.285,
+          -1.465
+        ],
+        [
+          1.465,
+          0.36,
+          1.465
+        ]
+      ],
+      "drawCalls": 7,
+      "parts": 30,
+      "bytes": 19448,
+      "visualOnly": true
+    },
+    {
+      "id": "hunter_cairn_cache_sealed",
+      "site": "hunter_cairn_cache",
+      "state": "sealed",
+      "file": "hunter_cairn_cache_sealed.glb",
+      "footprint": [
+        3,
+        3
+      ],
+      "bounds": [
+        [
+          -1.465,
+          -0.1071,
+          -1.465
+        ],
+        [
+          1.465,
+          0.8824,
+          1.465
+        ]
+      ],
+      "drawCalls": 5,
+      "parts": 40,
+      "bytes": 22276,
+      "visualOnly": true
+    },
+    {
+      "id": "hunter_cairn_cache_revealed",
+      "site": "hunter_cairn_cache",
+      "state": "revealed",
+      "file": "hunter_cairn_cache_revealed.glb",
+      "footprint": [
+        3,
+        3
+      ],
+      "bounds": [
+        [
+          -1.465,
+          -0.22,
+          -1.465
+        ],
+        [
+          1.465,
+          0.8824,
+          1.465
+        ]
+      ],
+      "drawCalls": 6,
+      "parts": 46,
+      "bytes": 23396,
+      "visualOnly": true
+    },
+    {
+      "id": "inn_floor_cellar_sealed",
+      "site": "inn_floor_cellar",
+      "state": "sealed",
+      "file": "inn_floor_cellar_sealed.glb",
+      "footprint": [
+        3,
+        3
+      ],
+      "bounds": [
+        [
+          -1.465,
+          -0.1072,
+          -1.465
+        ],
+        [
+          1.465,
+          0.8627,
+          1.465
+        ]
+      ],
+      "drawCalls": 8,
+      "parts": 35,
+      "bytes": 17068,
+      "visualOnly": true
+    },
+    {
+      "id": "inn_floor_cellar_revealed",
+      "site": "inn_floor_cellar",
+      "state": "revealed",
+      "file": "inn_floor_cellar_revealed.glb",
+      "footprint": [
+        3,
+        3
+      ],
+      "bounds": [
+        [
+          -1.465,
+          -0.285,
+          -1.465
+        ],
+        [
+          1.465,
+          0.8627,
+          1.465
+        ]
+      ],
+      "drawCalls": 8,
+      "parts": 40,
+      "bytes": 20004,
+      "visualOnly": true
+    },
+    {
+      "id": "raven_guardian_crypt_sealed",
+      "site": "raven_guardian_crypt",
+      "state": "sealed",
+      "file": "raven_guardian_crypt_sealed.glb",
+      "footprint": [
+        4,
+        3
+      ],
+      "bounds": [
+        [
+          -1.965,
+          -0.107,
+          -1.465
+        ],
+        [
+          1.965,
+          2.08,
+          1.465
+        ]
+      ],
+      "drawCalls": 5,
+      "parts": 21,
+      "bytes": 14604,
+      "visualOnly": true
+    },
+    {
+      "id": "raven_guardian_crypt_revealed",
+      "site": "raven_guardian_crypt",
+      "state": "revealed",
+      "file": "raven_guardian_crypt_revealed.glb",
+      "footprint": [
+        4,
+        3
+      ],
+      "bounds": [
+        [
+          -1.965,
+          -0.285,
+          -1.465
+        ],
+        [
+          1.965,
+          2.08,
+          1.465
+        ]
+      ],
+      "drawCalls": 6,
+      "parts": 28,
+      "bytes": 17216,
+      "visualOnly": true
+    }
+  ]
+}
