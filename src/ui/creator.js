@@ -5,6 +5,7 @@ import { ABILITIES, ABILITY_NAMES, CLASSES, SPECIES, BACKGROUNDS, WEAPONS, ARMOR
 import { FEATURES } from '../data/srd-features.js';
 import { textOf } from '../game/library.js';
 import { newHero, heroStats, heroAttacks, heroSpells, spellPool, spellLimits, asiLevels, expertiseSlots, heroWarnings, SP, arcanumLevels } from '../engine/hero.js';
+import { heroStarterCards, buildStarterHero } from '../engine/hero-starters.js';
 import { $, esc, clamp, d } from '../util/core.js';
 import { toast } from './hud.js';
 import { heroLook, sheetLook } from '../engine/look.js';
@@ -25,7 +26,7 @@ const sel = (f, list, v, attrs = '') => `<select class="txt" data-cf="${f}" ${at
 
 export function openCreator(sheet, o = {}){
   edit = JSON.parse(JSON.stringify(sheet || newHero()));
-  opts = o;
+  opts = { ...o, fresh:!sheet };   // a new hero: the ready-made starters are offered at the top
   $('#charModal').classList.remove('hidden');
   render();
 }
@@ -112,6 +113,9 @@ function render(){
   const warnings = heroWarnings(h);
   $('#charBox').innerHTML = `
   <div class="cr-head"><h1>${esc(opts.title || 'Create a character')}</h1><button class="btn small" data-cr="close">✕</button></div>
+  ${opts.fresh ? `<div class="cr-starters"><div class="muted">⚡ Start from a ready hero (you can change anything after), or build your own below.</div>
+    <div class="cr-st-row">${heroStarterCards().map(c => `<button class="cr-st ${edit.starter === c.id ? 'on' : ''}" data-cr="starter" data-k="${esc(c.id)}" title="${esc(c.pitch)}"><b>${esc(c.title)}</b><span>${esc(c.species)} ${esc(c.cls)} · ${esc(c.role)}</span></button>`).join('')}</div>
+    ${edit.starter ? `<div class="muted"><i>${esc(heroStarterCards().find(c => c.id === edit.starter)?.pitch || '')}</i> ${esc(heroStarterCards().find(c => c.id === edit.starter)?.hook || '')}</div>` : ''}</div>` : ''}
   <div class="cr-cols"><div class="cr-form">
     <h2>Who</h2>
     <div class="grid2"><label>Name<input class="txt" data-cf="name" value="${esc(h.name)}" placeholder="e.g. Ilse Vantorin"></label>
@@ -294,6 +298,8 @@ document.addEventListener('click', e => {
     order.forEach((k, i) => edit.ab[k] = edit.rolled[i]); render();
   }
   if (a === 'clearPortrait'){ delete edit.portrait; render(); }
+  // ⚡ a ready-made starter (engine/hero-starters.js, ChatGPT's): their class, species, background, skills and gear; the name, player and colour stay
+  if (a === 'starter'){ const keep = { name:edit.name, player:edit.player, color:edit.color, id:edit.id }; edit = { ...buildStarterHero(b.dataset.k, { name:keep.name || '', id:keep.id }), player:keep.player, color:keep.color, starter:b.dataset.k }; render(); }
   if (a === 'portraitFromMini'){ setStage([heroLook(edit)]); const url = portrait(); if (url){ edit.portrait = url; toast('Portrait taken.'); } render(); }
   if (a === 'miniStyle'){ edit.miniStyle = b.dataset.k === 'picture' ? 'picture' : undefined; if (edit.miniStyle === 'picture' && !edit.portrait) toast('Choose a picture (or take one from your mini) for the standee.'); render(); }
   if (a === 'miniSet'){ setMini(b.dataset.k, b.dataset.v); render(); }
