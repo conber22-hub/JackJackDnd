@@ -1,0 +1,63 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Barovia IV · The Road Watches · 3D Set-Piece Showroom</title>
+<style>
+:root{color-scheme:dark;font:14px system-ui,-apple-system,sans-serif;background:#0b1012;color:#ede7df}*{box-sizing:border-box}
+body{margin:0;overflow:hidden}canvas{display:block}
+header{position:fixed;z-index:10;left:15px;top:15px;width:min(370px,calc(100vw - 30px));background:#0c1416ef;box-shadow:0 20px 48px #000c;border:1px solid #50403e;border-radius:12px;padding:18px;max-height:74vh;overflow:auto;backdrop-filter:blur(12px)}
+.eyebrow{font-size:11px;color:#c49a7e;letter-spacing:1.8px;font-weight:700}h1{font:normal 29px Georgia,serif;letter-spacing:.2px;margin:8px 0;color:#f2dfd3}h2{font:normal 18px Georgia,serif;color:#e8d2c3;margin:12px 0 5px}p{font-size:12px;line-height:1.55;color:#b8b6af}label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#afaeaa;margin:12px 0 5px}
+select,button,input{font:inherit;color:#f1e5d9;background:#182025;border:1px solid #514c47;border-radius:6px;padding:9px 10px}select{width:100%}button{cursor:pointer}button:hover{background:#3a3130}.row{display:flex;gap:8px;align-items:center}.row>button{flex:1}.controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:end}.controls label{margin-top:9px}.controls select{font-size:12px}.status{margin-top:10px;border-top:1px solid #4c4a43;padding-top:9px;min-height:35px;color:#b8c9c0;font-size:12px}
+footer{position:fixed;bottom:14px;right:16px;z-index:5;color:#c1bbb1;font-size:11px;max-width:375px;text-align:right;text-shadow:0 2px 4px black}#beat{min-height:46px;color:#e8d3bd;font:italic 14px Georgia,serif}#reveal{background:#5b3439;border-color:#8d595f}
+@media(max-width:600px){header{padding:12px;max-height:55vh}h1{font-size:21px}footer{font-size:10px;bottom:6px}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script>
+</head><body>
+<header><span class="eyebrow">BAROVIA / PACK IV / THE ROAD WATCHES</span><h1>Places That Shouldn’t Exist</h1>
+<p>Explore actual original low-poly GLB models. Every set piece has a story in three stages. The DM decides when the scene reveals itself.</p>
+<label for="scene">Horror set piece</label><select id="scene"></select>
+<div class="controls"><div><label for="gaze">Strahd’s Gaze</label><select id="gaze"><option value="1">1 · Quiet</option><option value="4">4 · Watched</option><option value="7" selected>7 · Unwelcome</option><option value="10">10 · Hunted</option></select></div>
+<div><label for="quality">Visual effects</label><select id="quality"><option value="low">Low / iPhone</option><option value="medium" selected>Medium</option><option value="high">High</option></select></div></div>
+<label for="wind">Wind strength</label><input id="wind" type="range" min="0" max="1" step="0.05" value="0.35" style="width:100%">
+<div class="row"><button id="approach">Approach</button><button id="reveal">DM reveal</button><button id="aftermath">Aftermath</button></div>
+<h2 id="sceneName">The road is quiet</h2><div id="beat">Loading...</div><div class="status" id="status">Loading GLB models…</div>
+</header><footer>Drag to orbit · Pinch to zoom · Right-drag to pan<br>Original Pack IV scenery, not an interactive gameplay map<br>Open using a local HTTP server; Three.js CDN required</footer>
+<script type="module">
+import * as THREE from 'three';import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {HORROR_SCENES} from '../../../src/render/barovia-horror-planner.js';
+import {createHorrorStagecraft} from '../../../src/render/barovia-horror-stagecraft.js';
+const $=id=>document.querySelector('#'+id);
+for(const h of HORROR_SCENES){const opt=document.createElement('option');opt.value=h.id;opt.textContent=h.name; $('scene').append(opt)}
+$('scene').value='last-light';
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight);renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.1;document.body.append(renderer.domElement);
+const scene=new THREE.Scene();scene.background=new THREE.Color('#090f13');scene.fog=new THREE.FogExp2('#101416',.018);
+const camera=new THREE.PerspectiveCamera(49,innerWidth/innerHeight,.1,160);camera.position.set(14,15,17);
+const control=new OrbitControls(camera,renderer.domElement);control.enableDamping=true;control.dampingFactor=.08;control.target.set(0,.3,-3);control.maxPolarAngle=Math.PI*.47;control.minDistance=5;control.maxDistance=55;
+scene.add(new THREE.HemisphereLight('#a3a5b7','#272015',1.25));const moon=new THREE.DirectionalLight('#b0bed1',2.5);moon.position.set(-6,14,8);scene.add(moon);
+const lantern=new THREE.PointLight('#ac7550',.7,15,2);lantern.position.set(-2,3,4);scene.add(lantern);
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(90,90).rotateX(-Math.PI/2),new THREE.MeshStandardMaterial({color:'#202622',roughness:1}));floor.position.y=-.08;scene.add(floor);
+const road=new THREE.Mesh(new THREE.BoxGeometry(40,.028,3),new THREE.MeshStandardMaterial({color:'#4b433c',roughness:1}));road.position.set(0,-.033,4.0);scene.add(road);
+const gutter=new THREE.Mesh(new THREE.BoxGeometry(41,.03,1.15),new THREE.MeshStandardMaterial({color:'#282622',roughness:1}));for(const z of [1.85,6.17]){const c=gutter.clone();c.position.set(0,-.027,z);scene.add(c)}
+const loader=new GLTFLoader(),cache=new Map();let group=null,stage=null,sequence=0,revealed=false,beat='approach';
+async function meshFor(id){if(!cache.has(id))cache.set(id,loader.loadAsync('/assets/horror/'+id+'.glb').then(g=>g.scene).catch(e=>{cache.delete(id);throw e}));return cache.get(id)}
+const spots=[[0,-3.7,0],[-3.5,-6,0],[4.1,-6.1,0],[-5.9,-2.4,0]];
+function updateBeat(){const h=HORROR_SCENES.find(x=>x.id===$('scene').value);$('sceneName').textContent=h.name;$('beat').textContent=h[beat]||'The road is quiet.';
+ $('approach').style.borderColor=beat==='approach'?'#e9d3b0':'#514c47';$('reveal').style.borderColor=beat==='reveal'?'#e9d3b0':'#8d595f';$('aftermath').style.borderColor=beat==='aftermath'?'#e9d3b0':'#514c47';}
+async function show(){const n=++sequence;revealed=false;beat='approach';updateBeat();const h=HORROR_SCENES.find(x=>x.id===$('scene').value);$('status').textContent='Unwrapping old Barovian secrets…';
+ const g=new THREE.Group();g.name=h.name;
+ const ids=[h.primary,...h.satellites];
+ try{for(let i=0;i<ids.length;i++){
+  const obj=(await meshFor(ids[i])).clone(true);const [x,z,rot]=spots[i];obj.position.set(x,0,z);obj.rotation.y=-rot*Math.PI/2;obj.userData.horrorId=ids[i];
+  obj.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=true}});g.add(obj);
+ }
+ if(n!==sequence)return;
+ if(stage)stage.dispose();if(group)group.removeFromParent();group=g;scene.add(g);
+ stage=createHorrorStagecraft(group,{quality:$('quality').value});$('status').textContent=`${ids.length} original 3D assets · ${stage.effectCount} active atmospheric effects · visual only`;
+ }catch(e){console.error(e);$('status').textContent='Could not load assets: '+e.message+' (serve locally over HTTP)';}
+}
+$('scene').onchange=show;$('quality').onchange=show;
+for(const phase of ['approach','reveal','aftermath'])$(phase).onclick=()=>{beat=phase;revealed=phase==='reveal';updateBeat()};
+addEventListener('resize',()=>{renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix()});
+function animate(t){requestAnimationFrame(animate);control.update();const s=t/1000;
+ stage?.update(s,{gaze:+$('gaze').value,wind:+$('wind').value,dmReveal:revealed});lantern.intensity=.65+.13*Math.sin(s*6.2)**2;renderer.render(scene,camera)}
+requestAnimationFrame(animate);show();
+</script></body></html>
