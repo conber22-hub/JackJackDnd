@@ -5,6 +5,7 @@
    denizens: encounter groups the "Populate" button and templates drop into matching rooms.
      where = room types it likes · group = [[creature id, count or dice], ...] */
 import { SALT_ROAD } from './session0.js';
+import { vallakiLayout } from './vallaki.js';
 
 export const THEMES = [
   { id:'undercroft', name:'The Undercroft of St. Andral', floor:'#4b454a', hall:'#37323a', wall:'#2c2731', trim:'#c8cbd6', mist:'#6b6577',
@@ -200,8 +201,8 @@ export const TEMPLATES = [
     floors:[{ theme:'manor', rooms:.8, roomSize:[3, 7], doors:.7, locked:.15 }, { theme:'manor', rooms:.8, roomSize:[3, 6], doors:.7, secret:.15 }, { theme:'ossuary', rooms:.9, doors:.4, secret:.2, traps:1 }, { theme:'womb', rooms:.7, doors:.2, populate:.3 }] },
   { id:'barovia', name:'The Village of Barovia', blurb:'Session 3: the village street in the fog — square, tavern, mercantile, the burgomaster\'s house, the Narrow House at the edge of town — and the church on the rise, whose undercroft has bloomed.', campaign:true,
     floors:[{ theme:'village', place:{ kind:'village', name:'Village of Barovia', church:'The church on the rise', churchNotes:'A priest who has not slept, and something in the undercroft that sings back when he prays.', narrow:true } }, { theme:'chapel', rooms:.7, doors:.5, secret:.2 }] },
-  { id:'vallaki', name:'Vallaki', blurb:'Session 7: the palisade town on the lake — gates, the square dressed for the next festival, the inn, the burgomaster\'s mansion, and Saint Andral\'s church.', campaign:true,
-    floors:[{ theme:'village', place:{ kind:'town', name:'Vallaki', church:'Saint Andral\'s church', churchNotes:'Father Lucian, counting candles. The reliquary is empty. Sessions 8–10 build what is underneath.' } }] },
+  { id:'vallaki', name:'Vallaki', blurb:'The palisade town near Lake Zarovich. Follow the Old Svalich Road past Saint Andral’s, the Blue Water Inn and the square, or take the trail outside the southwest wall to the Vistani camp.', campaign:true,
+    floors:[{ theme:'village', layout:vallakiLayout(), place:{ kind:'town', name:'Vallaki' } }] },
   { id:'krezk', name:'Krezk', blurb:'The walled village under the abbey: a gate that opens for wine, a chapel, a pool, and the road on up the mountain.', campaign:true,
     floors:[{ theme:'village', place:{ kind:'walled', name:'Krezk', church:'The chapel', churchNotes:'A small cold chapel, and a pool behind it that the villagers bless every dawn.' } }] },
   { id:'tserpool', name:'The camp at Tser Pool', blurb:'Painted wagons round a fire that never goes out, the reader\'s tent, and the pool.', campaign:true,
