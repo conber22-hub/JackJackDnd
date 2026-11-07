@@ -8,6 +8,8 @@ import { route, planJourney, placeById, roadBetween } from '../engine/overland.j
 import { valley, onJourney, placeMaps, clockText } from '../game/overworld.js';
 import { BEST } from '../data/bestiary.js';
 import { mapStatus } from '../game/maps.js';
+import { trailChoices, trailPlaceName } from '../game/trails.js';
+import { trailsForPlayers } from '../engine/road-exploration.js';
 import { transport } from '../game/workshop.js';
 import { wagonOut, wagonHours, describeWagon, EVENT_KINDS } from '../game/wagons.js';
 
@@ -29,6 +31,13 @@ function mapSVG(V, sel, onRoute, player = false){
   const peaks = [[8, 6], [16, 4], [24, 7], [50, 5], [58, 8], [76, 6], [84, 9], [92, 13], [12, 58], [44, 60], [62, 57], [86, 56], [96, 48], [3, 40]].map(([x, y]) => `<path d="M${x - 3} ${y + 2.5}L${x} ${y - 2.5}L${x + 3} ${y + 2.5}" />`).join('');
   const roads = VALLEY_ROADS.filter(r => !known || (known.has(r.a) && known.has(r.b) && (V.visited.includes(r.a) || V.visited.includes(r.b)))).map(r => { const a = placeById(r.a), b = placeById(r.b), on = onRoute.has(r.id);
     return `<path class="vroad ${r.way} ${on ? 'on' : ''}" d="${roadPath(a, b, r.id)}"><title>${esc(r.name)}</title></path>`; }).join('');
+  // 🍂 the side trails found and walked (game/trails.js): forks, the places along them, the tracks between
+  let trails = '';
+  if (V.roadExploration?.junctions?.length){ try {
+    const T = trailsForPlayers(V.roadExploration, player ? V.visited : VALLEY_PLACES.map(p => p.id)), at = id => placeById(id) || T.places.find(p => p.id === id);
+    trails = T.roads.map(r => { const a = at(r.a), b = at(r.b); return a && b ? `<path class="vroad trail" stroke-dasharray=".8 .6" d="M${a.x} ${a.y} L${b.x} ${b.y}"/>` : ''; }).join('')
+      + T.places.map(p => `<g transform="translate(${p.x} ${p.y})"><path d="M0 -1 L1 0 L0 1 L-1 0 Z" fill="#c9a24a" stroke="#2a2026" stroke-width=".15"/>${p.kind === 'junction' ? '' : `<text class="nm" y="2.6" style="font-size:1.9px">${esc(p.name.replace(/^The /, ''))}</text>`}</g>`).join('');
+  } catch {} }
   const here = placeById(V.at), j = V.journey && placeById(V.journey.to);
   const lantern = j ? { x:(here.x + j.x) / 2, y:(here.y + j.y) / 2 } : here;
   const places = VALLEY_PLACES.filter(shown).map(p => {
@@ -60,7 +69,7 @@ function mapSVG(V, sel, onRoute, player = false){
     <g class="vtrees">${trees}</g><g class="vpeaks">${peaks}</g>
     <path class="vriver" d="M94 42 Q80 39 69 35 T56 37 T44 43 T37 48 T30 52 T26 56"/>
     <ellipse class="vlake" cx="29" cy="20" rx="6.5" ry="3.6"/><ellipse class="vlake" cx="26.5" cy="56.5" rx="3.5" ry="2"/>
-    ${castle}${roads}${gazeLine}${places}
+    ${castle}${roads}${trails}${gazeLine}${places}
     <g class="vlantern" transform="translate(${lantern.x} ${lantern.y - 3.2})"><circle r="1.6"/><text y=".55">🏮</text></g>
     <rect width="100" height="64" fill="url(#vmist)" pointer-events="none"/>
     <g class="vfog" pointer-events="none"><ellipse cx="10" cy="10" rx="18" ry="6"/><ellipse cx="88" cy="56" rx="20" ry="6"/><ellipse cx="96" cy="26" rx="10" ry="12"/><ellipse cx="4" cy="44" rx="10" ry="14"/></g>
@@ -103,7 +112,8 @@ export function valleyTab(){
     <div class="muted">${maps.length > 1 ? 'Each map is built the first time' : 'Built the first time'}; after that it's kept as the party left it (Maps tab). The party comes along.</div>`;
   else if (sel !== V.at && !V.journey && maps.length) h += `<div class="muted">Maps here: ${maps.map(m => esc(m.name)).join(' · ')} (once they arrive).</div>`;
   h += `</div>`;
-  if (V.journey){
+  if (V.trail) h += trailSection(V);
+  if (V.journey && !V.trail?.leg){
     const L = ui.floor, f = state.floors[L], last = L === state.floors.length - 1, ev = (f?.events || []);
     h += `<h3>🧭 The road to ${esc(placeById(V.journey.to).name)}</h3>
       <div class="sessbar">${state.floors.map((fl, i) => `<span class="chip ${i === L ? 'on' : ''}" data-act="goFloor" data-k="${i}" title="${esc(fl.name)}">${i + 1}</span>`).join('')}</div>
@@ -111,7 +121,7 @@ export function valleyTab(){
     for (const e of ev) h += `<div class="card ${e.done ? '' : 'sel'}"><div class="hd"><span class="nm">${e.done ? '✓ ' : '✦ '}${esc(e.label)}</span></div>
       <div class="look">${esc(e.text)}</div>
       ${e.enc ? `<div class="muted">${e.enc.map(([b, n]) => `${n} ${esc(BEST[b]?.name || b)}`).join(', ')}</div>` : ''}
-      <div class="row"><button class="btn small" data-act="evRead" data-k="${L}" data-id="${e.id}">📜 Read</button>${e.enc && !e.sprung ? `<button class="btn small seep" data-act="evSpring" data-k="${L}" data-id="${e.id}">⚔ Spring it</button>` : ''}<button class="btn small" data-act="evGo" data-k="${L}" data-id="${e.id}">◎ Show</button><button class="btn small" data-act="evDone" data-k="${L}" data-id="${e.id}">${e.done ? 'Undo' : '✓ Done'}</button></div></div>`;
+      <div class="row">${e.trailhead && !e.done ? `<button class="btn small primary" data-act="trailFork" data-k="${L}" data-id="${e.id}" title="They have reached it: the side trail opens">🍂 Take the side trail</button>` : ''}<button class="btn small" data-act="evRead" data-k="${L}" data-id="${e.id}">📜 Read</button>${e.enc && !e.sprung ? `<button class="btn small seep" data-act="evSpring" data-k="${L}" data-id="${e.id}">⚔ Spring it</button>` : ''}<button class="btn small" data-act="evGo" data-k="${L}" data-id="${e.id}">◎ Show</button><button class="btn small" data-act="evDone" data-k="${L}" data-id="${e.id}">${e.done ? 'Undo' : '✓ Done'}</button></div></div>`;
     if (!ev.length) h += `<div class="muted">Nothing waiting on this stretch. Quiet roads are the worst kind.</div>`;
     h += `<div class="row"><button class="btn small" data-act="roadNew">✦ Something on the road</button><button class="btn small" data-act="night" data-k="road">Roll a road encounter (desk)</button></div>
       ${/^Road:/.test(state.campaign.lastNight || '') ? `<div class="look">${esc(state.campaign.lastNight)}</div>` : ''}
@@ -125,6 +135,17 @@ export function valleyTab(){
   h += `<div class="row" style="margin-top:8px"><button class="btn small ${V.shared ? 'on' : ''}" data-act="valleyShare">${V.shared ? '📜 Shared with the table' : '📜 Share the map with the table'}</button></div>
     <div class="muted">${V.shared ? 'Players have a Map tab: the places they have reached, rumours of the places next door, and where they are now.' : 'Players see nothing of this map until you share it — and then only what they have reached.'}</div>`;
   h += `<div class="muted" style="margin-top:8px">Roads: <span class="key road"></span> the Svalich Road · <span class="key path"></span> paths · <span class="key trail"></span> trails. Tap a place to plan the way.</div>`;
+  return h;
+}
+// 🍂 On the side trails (game/trails.js): where they are, the ways on, and back to the road.
+function trailSection(V){
+  const t = V.trail, ch = trailChoices();
+  let h = `<h3>🍂 The side road</h3>`;
+  if (t.leg) h += `<div class="muted">On the trail. When the party reaches the far end of the map, mark it.</div>
+    <div class="row"><button class="btn primary" data-act="trailEnd">They reach the end (+${t.leg.hours}h)</button></div>`;
+  else h += `<div class="muted">At <b>${esc(trailPlaceName(t.at))}</b>. Which way?</div>
+    ${ch.map(c => `<div class="row"><button class="btn small" data-act="trailTake" data-k="${esc(c.id)}">${c.name ? `→ ${esc(c.name)} (${c.hours}h)` : `🪧 ${esc(c.sign)}`}</button></div>`).join('') || '<div class="muted">No way on from here.</div>'}`;
+  if (t.road) h += `<div class="row"><button class="btn small" data-act="trailBack" title="To the main road map where they left it">↩ Back to the road</button></div>`;
   return h;
 }
 // The players' Map tab: what the DM has shared (state.valley, sent with the delve when sharing is on).

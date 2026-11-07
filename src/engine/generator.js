@@ -13,6 +13,9 @@ import { furnishFloor, furnishRoom, hideSecrets } from './dressing.js';
 import { ravenloftLayout } from './castle.js';
 import { describeRoom } from '../data/descriptions.js';
 import { journeySpecs, landmarkSpecs } from './overland.js';
+import { branchingJourneySpecs, trailLegSpecs } from './road-exploration.js';
+import { planRoadWatches } from './road-watches.js';
+import { ROAD_WATCH_MANIFEST } from '../data/road-watches-bounds.js';
 import { genPlace } from './settlement.js';
 import { cavify, reachable } from './caves.js';
 import { inShape, pickShape } from './shapes.js';
@@ -27,7 +30,9 @@ import { state, makeMonster } from './state.js';
 
 const DEEP = ['hands', 'undertow', 'womb', 'ossuary'];
 export function templateSpecs(meta){
-  if (meta.template === 'journey' && meta.journey) return journeySpecs(meta.journey);
+  // 🍂 a journey set out with the valley's seed may fork: a side trail at the middle of a road (engine/road-exploration.js)
+  if (meta.template === 'journey' && meta.journey){ const b = meta.journey.trailSeed ? branchingJourneySpecs({ seed:String(meta.journey.trailSeed), junctions:[], walked:[] }, meta.journey) : []; return b.length ? b : journeySpecs(meta.journey); }
+  if (meta.template === 'trail' && meta.trail){ const t = trailLegSpecs(meta.trail.book, meta.trail); if (t) return t.specs; }
   if (meta.template === 'landmark' && meta.place) return landmarkSpecs(meta.place, meta.seed);
   if (meta.template === 'interior' && meta.interior) return interiorSpecs(meta.interior);
   const tpl = TEMPLATES.find(t => t.id === meta.template) || TEMPLATES[0], out = [];
@@ -52,7 +57,7 @@ function rollWith(expr, rng){
 export function genDelve(meta){
   const rng = mulberry32(hashSeed(meta.seed + '|' + (meta.template || 'andral')));
   const specs = templateSpecs(meta), floors = []; let anchor = null;
-  if (meta.template === 'interior') meta.floors = specs.length;   // a building has the storeys it has
+  if (meta.template === 'interior' || meta.template === 'trail') meta.floors = specs.length;   // a building has the storeys it has; a trail, its stretches
   for (let L = 0; L < meta.floors; L++){
     const f = genFloor(L, meta.size, meta.size, rng, anchor, L === meta.floors - 1, specs[L]);
     floors.push(f); anchor = f.down;
@@ -81,6 +86,15 @@ export function genDelve(meta){
     planFloorSite(f, { seed:`${meta.seed}|site|${L}`, theme:tid, depth:L, last:L === floors.length - 1, gaze:state?.dread || 1, level:partyLevel() });
     hideSecrets(f, mulberry32(hashSeed(`${meta.seed}|secrets|${L}`)));
   });
+  // 🛤 the Road Watches (Codex's pack): milestones, cairns, shrines, Hunger Moss beside a journey's or a trail's road,
+  // placed off the walkable squares (engine/road-watches.js), the trees cleared where they stand; the Moss grows with his Gaze
+  if (meta.template === 'journey' || meta.template === 'trail'){
+    const gz = (meta.journey || meta.trail)?.gaze || 1, stage = gz >= 8 ? 'advanced' : gz >= 5 ? 'established' : 'early';
+    floors.forEach((f, L) => { if (!specs[L]?.layout?.paths?.length) return;
+      try { const plan = planRoadWatches(f, specs[L], ROAD_WATCH_MANIFEST, { seed:`${meta.seed}|watches|${L}`, stage });
+        f.roadWatches = plan.placements.filter(p => p.visibility === 'public').map(({ asset, x, y, rot }) => ({ asset, x, y, rot }));
+        if (f.roadWatches.length) f.clear = [...(f.clear || []), ...plan.clear.map(([x, y]) => y * f.W + x)]; } catch {} });
+  }
   if (state) floors.forEach((f, L) => { if (specs[L].populate) populateFloor(f, L, rng, L === meta.floors - 1 || !!specs[L].boss, specs[L].populate === true ? .4 : specs[L].populate); });
   return floors;
 }

@@ -32,6 +32,17 @@ function load(k){
     ready.set(k, scene); arrived();
   }, undefined, () => { loading.delete(k); failed.add(k); });
 }
+// A model by its path beside the app (the Road Watches' roadside pieces, assets/road-watches/…), loaded once and shared;
+// null until it has arrived (the floors redraw when it does), and always null in the offline file.
+const loose = new Map();
+export function looseModel(path){
+  if (gfx.models === false || typeof location === 'undefined' || location.protocol === 'file:') return null;
+  const e = loose.get(path);
+  if (e) return e.scene || null;
+  loose.set(path, {});
+  loader.load(path, gltf => { gltf.scene.traverse(o => { if (o.isMesh){ o.castShadow = o.receiveShadow = true; } }); loose.set(path, { scene:gltf.scene }); arrived(); }, undefined, () => loose.set(path, { failed:true }));
+  return null;
+}
 // The model for a prop kind, if it's here (and starts fetching it if not). → an Object3D template | null
 export function propModel(k){
   if (gfx.models === false || !PROP_MODELS[k] || failed.has(k)) return null;

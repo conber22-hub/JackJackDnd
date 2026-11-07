@@ -11,7 +11,9 @@ import { scene, G, mat4, col, wx, wz, floorY, WALL_H, makeLabel, tween, ease, fx
 import { surfaceTextures, groundTexture, groundMaps, SURFACES } from './textures.js';
 import { shadowsOn, gfx } from './gfx.js';
 import { kitFor } from './models.js';
-import { instancedModel } from './propmodels.js';
+import { instancedModel, looseModel } from './propmodels.js';
+import { ROAD_WATCH_MANIFEST } from '../data/road-watches-bounds.js';
+const ROAD_WATCH_FILES = Object.fromEntries(ROAD_WATCH_MANIFEST.assets.map(a => [a.id, a.file]));
 import { wxNow } from '../game/weather.js';
 import { inShape, isShaped, SLANTED } from '../engine/shapes.js';
 import { buildProp, buildBuilding, inBuilding, treeGeometry, treeMaterial, deadTreeGeometry, tuftGeometry, pebbleGeometry, boulderGeometry, cropGeometry, snowCapGeometry } from './props.js';
@@ -458,6 +460,13 @@ export function buildFloor(L, opt = {}){
     if (pv){ const s = propSize(p); let any = false; for (let y = p.y; y < p.y + s.h && !any; y++) for (let x = p.x; x < p.x + s.w && !any; x++) if (exp.has(y * f.W + x) || seen(y * f.W + x)) any = true; if (!any) continue; }
     const m = buildProp(p); if (shadows) m.traverse(o => { if (o.isMesh){ o.castShadow = true; o.receiveShadow = true; } });
     if (f.height) m.position.y += groundY(f, p.x, p.y);   // standing on a rise
+    fv.built.add(m);
+  }
+  // the Road Watches (Codex's roadside pieces, engine/road-watches.js): beside the road, in the clearings left for them
+  for (const w of f.roadWatches || []){
+    if (pv && !seen(w.y * f.W + w.x) && !exp.has(w.y * f.W + w.x)) continue;
+    const tpl = looseModel(ROAD_WATCH_FILES[w.asset] || ''); if (!tpl) continue;
+    const m = tpl.clone(true); m.position.set(wx(w.x), f.height ? groundY(f, w.x, w.y) : 0, wz(w.y)); m.rotation.y = -(w.rot || 0);
     fv.built.add(m);
   }
   // stairs

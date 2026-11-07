@@ -11,6 +11,7 @@ import { ensureChase, openChase } from './chase.js';
 import { ensureHorror, openHorror } from './horror.js';
 import { ensureMobs, openMobs } from './mobs.js';
 import { ensureLedger, openLedger } from './ledger.js';
+import { followTrailhead, takeTrail, endTrailLeg, backToRoad } from '../game/trails.js';
 import { setPuzzle } from '../game/puzzles.js';
 import { describeSite } from '../engine/sites.js';
 import { stockSite, garrisonArrive, giveHoard } from '../game/garrison.js';
@@ -277,6 +278,10 @@ document.addEventListener('click', e => {
     case 'goFloor': goFloor(+k); renderPanel(); break;
     case 'valleyEnter': enterPlace(k, id); break;   // the map being left goes on the shelf (Maps tab)
     case 'evRead': readEvent(+k, +id); break;
+    case 'trailFork': followTrailhead(+k, +id); break;   // 🍂 the side trails (game/trails.js)
+    case 'trailTake': takeTrail(k); break;
+    case 'trailEnd': endTrailLeg(); break;
+    case 'trailBack': backToRoad(); break;
     case 'evSpring': springEvent(+k, +id); renderPanel(); break;
     case 'evGo': goToEvent(+k, +id); break;
     case 'evDone': doneEvent(+k, +id); renderPanel(); break;

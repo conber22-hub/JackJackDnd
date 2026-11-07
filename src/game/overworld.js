@@ -31,7 +31,7 @@ export function valley(){
   V.day ??= 1; V.hour ??= 19;   // Session 0 ends at dusk, at the Mist Wall
   return V;
 }
-const bloomLoose = () => (state.campaign.session || 0) >= 3 || (state.campaign.clocks?.bloom || 0) > 1;
+export const bloomLoose = () => (state.campaign.session || 0) >= 3 || (state.campaign.clocks?.bloom || 0) > 1;
 
 // Set out: builds the road from here to there (keeps the party, the campaign and their characters).
 export function travel(to){
@@ -48,7 +48,8 @@ export function travel(to){
   const pace = state.campaign.wx?.travel || 1;   // on foot, the day's mud, snow or fog slows them (the wagon has its own reckoning)
   const hours = byWagon ? byWagon.hours : Math.round(legs.reduce((h, l) => h + l.walk, 0) / pace);
   V.journey = { from:V.at, to, path:plan.path, hours, left:{ day:V.day, hour:V.hour } };
-  const journey = { from:V.at, to, seed:V.seed, n:V.journeys, gaze:state.dread, bloom:bloomLoose() };
+  const journey = { from:V.at, to, seed:V.seed, n:V.journeys, gaze:state.dread, bloom:bloomLoose(), trailSeed:V.seed };   // trailSeed: the road may fork (game/trails.js)
+  V.trail = null;
   newDelve({ name:`The road to ${dest.name}`, seed:`${V.seed}|road|${V.journeys}`, floors:plan.stretches.length, size:40, template:'journey', journey }, true, { kind:'road', key:`road:${V.journeys}` });
   if (plantAmbushes(plan.path).length) state.floors.forEach((_, L) => buildFloor(L));   // the Count's court waits on the road
   ui.tab = 'valley';
