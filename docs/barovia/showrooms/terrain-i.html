@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Barovia / The Living Valley · Terrain Showroom</title>
+<style>
+:root{color-scheme:dark;--bg:#101517;--panel:#1b2326;--hair:#35423e;--ink:#e8e9dc;--soft:#a1ada7;--focus:#a4c3a3}
+*{box-sizing:border-box}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink)}
+header{padding:14px 18px;border-bottom:1px solid var(--hair);display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+h1{font-size:18px;margin:0;font-family:Georgia,serif;font-weight:600;letter-spacing:.08em}header small{color:var(--soft)}
+main{display:grid;grid-template-columns:300px minmax(0,1fr);min-height:calc(100vh - 68px)}
+aside{height:calc(100vh - 68px);overflow:auto;background:#141a1d;border-right:1px solid var(--hair)}.filters{padding:14px;position:sticky;top:0;background:#141a1d;z-index:3;border-bottom:1px solid var(--hair)}
+input,select,button{font:inherit;color:var(--ink);border:1px solid #42524d;background:#242e30;border-radius:8px;padding:9px;width:100%}
+input{margin-top:9px}button{cursor:pointer;transition:background .15s}button:hover,button.active{background:#405248;border-color:#90a58a}
+#list{display:grid;gap:5px;padding:10px}.asset{padding:10px;text-align:left;display:flex;justify-content:space-between;align-items:center;gap:10px}.asset span{min-width:0}.asset small{color:#a8bbb0;white-space:nowrap}
+#stage{position:relative;min-width:0;min-height:550px;overflow:hidden;background:#0c1114}#stage canvas{display:block;width:100%;height:100%;touch-action:none}
+#footer{position:absolute;bottom:12px;left:14px;right:14px;pointer-events:none;background:rgba(15,20,22,.78);padding:12px 15px;border:1px solid #31443d;border-radius:10px;backdrop-filter:blur(6px)}
+#footer strong{font-size:16px;font-family:Georgia,serif}#footer p{margin:5px 0 0;color:#becac3}
+#tools{position:absolute;right:14px;top:14px;display:flex;gap:7px;max-width:450px;flex-wrap:wrap;justify-content:flex-end}#tools button,#tools select{width:auto;max-width:200px;background:#202c2cdd}
+#status{color:var(--soft);font-size:12px;margin-left:auto} .spinner{animation:spin 2s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:760px){header{padding:10px 14px}main{display:flex;flex-direction:column}aside{order:2;height:240px;border-right:none;border-top:1px solid var(--hair)}#stage{order:1;height:60vh;min-height:390px}#tools{top:8px;right:8px;left:8px}#tools button,#tools select{font-size:12px;padding:7px}#footer{font-size:12px;bottom:6px;left:6px;right:6px}#footer strong{font-size:14px}}
+</style>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}
+</script>
+</head>
+<body>
+<header><div><h1>BAROVIA · THE LIVING VALLEY</h1><small>36 original GLB terrain models · Dread Delve / JackJackDnd</small></div><span id="status">Loading terrain library...</span></header>
+<main><aside><div class="filters"><select id="category"><option value="all">All regions</option></select><input id="query" type="search" aria-label="Find terrain" placeholder="Search stones, forest, marsh..." /></div><div id="list"></div></aside><section id="stage"><div id="tools"><button id="single">Single asset</button><select id="biome" aria-label="Biome for diorama"></select><button id="diorama">Build a little Barovia</button><button id="weather">Weather: Mist</button></div><div id="footer"><strong id="title">Svalich Black Fir</strong><p id="details">Drag to orbit · Scroll or pinch to zoom. These are the actual GLBs in the pack.</p></div></section></main>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { createBaroviaTerrain } from '../../../src/render/barovia-terrain-three.js';
+import { BIOMES,planTerrain } from '../../../src/render/barovia-terrain-plan.js';
+const $=id=>document.getElementById(id);
+const manifest=await fetch('/assets/terrain/manifest.json').then(x=>{if(!x.ok)throw new Error('Serve this directory over HTTP');return x.json();});
+const items=manifest.items,library=createBaroviaTerrain({baseURL:'/assets/terrain/'}),selected={id:items[0].id};
+const stage=$('stage'),renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.7));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.55;
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+stage.prepend(renderer.domElement);
+const scene=new THREE.Scene();scene.background=new THREE.Color('#10171b');scene.fog=new THREE.FogExp2('#152126',.035);
+const camera=new THREE.PerspectiveCamera(48,1,.1,200);camera.position.set(7,6,9);
+const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.maxPolarAngle=Math.PI*.48;
+const ambient=new THREE.HemisphereLight('#c1d2da','#272f24',1.15);scene.add(ambient);
+const moon=new THREE.DirectionalLight('#a5b6cf',2.15);moon.position.set(-10,17,8);moon.castShadow=true;
+moon.shadow.mapSize.set(1024,1024);moon.shadow.camera.left=-22;moon.shadow.camera.right=22;moon.shadow.camera.top=22;moon.shadow.camera.bottom=-22;scene.add(moon);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(150,150),new THREE.MeshStandardMaterial({color:'#292f2a',roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.15;ground.receiveShadow=true;scene.add(ground);
+const content=new THREE.Group();scene.add(content);
+const guide=new THREE.GridHelper(16,16,'#50615a','#34443f');guide.position.y=-.11;scene.add(guide);
+const categories=[...new Set(items.map(x=>x.category))];for(const name of categories){const opt=document.createElement('option');opt.value=name;opt.textContent=name;$('category').append(opt);}
+for(const name of Object.keys(BIOMES)){const opt=document.createElement('option');opt.value=name;opt.textContent=name.replace(/([A-Z])/g,' $1').replace(/^./,c=>c.toUpperCase());$('biome').append(opt);}
+function choices(){
+ const cat=$('category').value,q=$('query').value.toLowerCase().trim();$('list').replaceChildren();
+ for(const item of items.filter(x=>(cat==='all'||x.category===cat)&&(x.name.toLowerCase().includes(q)||x.tags.join(' ').includes(q)))){
+  const b=document.createElement('button');b.className='asset'+(selected.id===item.id?' active':'');
+  const name=document.createElement('span');name.textContent=item.name;const dims=document.createElement('small');dims.textContent=item.size.join('×');b.append(name,dims);
+  b.onclick=()=>show(item.id);$('list').append(b);
+ }
+}
+$('category').onchange=choices;$('query').oninput=choices;
+function clear(){content.clear();}
+let run=0;
+async function show(id){
+ const token=++run;selected.id=id;choices();clear();guide.visible=true;
+ const item=items.find(x=>x.id===id);$('title').textContent=item.name;
+ $('details').textContent=`${item.category} · ${item.size.join('×')} squares · ${item.placement} · ${item.tags.join(', ')}. Drag to orbit and pinch to zoom.`;
+ $('status').textContent='Loading model...';
+ try{
+  const obj=await library.instance(id);if(token!==run)return;content.add(obj);
+  const box=new THREE.Box3().setFromObject(obj),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
+  controls.target.set(center.x,Math.max(.3,center.y*.65),center.z);
+  const radius=Math.max(...size.toArray(),1);camera.position.copy(controls.target).add(new THREE.Vector3(radius*1.4,radius*1.15,radius*1.7));controls.minDistance=Math.max(.6,radius*.45);controls.maxDistance=80;
+  $('status').textContent=`${items.length} assets · ${item.meshes} material batches`;
+ }catch(e){$('status').textContent='Load failed: '+e.message;}
+}
+$('single').onclick=()=>show(selected.id);
+$('diorama').onclick=async()=>{
+ const token=++run;clear();guide.visible=false;
+ $('title').textContent='The Living Valley · outdoor test diorama';$('details').textContent='A seeded placement preview. Real game use requires an allowed-cells predicate to protect roads, stairs and combat lanes.';
+ const biome=$('biome').value;const plan=planTerrain({width:24,height:24,seed:'the-living-valley-demo',biome,density:.024});
+ $('status').textContent=`Loading ${plan.length} objects...`;
+ try{
+  await library.prefetch(plan.map(x=>x.id));
+  if(token!==run)return;
+  const placed=await library.placeAll(content,plan,{wx:x=>x-11.5,wz:y=>y-11.5,groundY:0,castShadow:false});
+  if(token!==run){placed.forEach(p=>p.removeFromParent());return;}
+  controls.target.set(0,.25,0);camera.position.set(22,19,25);controls.minDistance=4;controls.maxDistance=75;
+  $('status').textContent=`${biome} · ${placed.length} seeded assets`;
+ }catch(e){$('status').textContent='Placement failed: '+e.message;}
+};
+let weather=0;const weathers=['Mist','Moon','Dusk'];$('weather').onclick=()=>{
+ weather=(weather+1)%weathers.length;
+ $('weather').textContent=`Weather: ${weathers[weather]}`;
+ scene.fog.density=[.035,.008,.018][weather];moon.intensity=[2.15,1.45,1.0][weather];
+ scene.background=new THREE.Color(['#10171b','#1d252f','#42332e'][weather]);
+};
+function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+window.addEventListener('resize',resize);resize();
+function animate(){controls.update();renderer.render(scene,camera);requestAnimationFrame(animate);}animate();
+await show(items[0].id);
+</script>
+</body></html>

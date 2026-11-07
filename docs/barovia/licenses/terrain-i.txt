@@ -1,0 +1,10 @@
+CC0 1.0 Universal / Public Domain Dedication
+
+All original 3D terrain geometries, source scripts, catalog data, preview renders,
+and helper JavaScript authored specifically for the Living Valley Barovia
+Terrain Pack are offered under CC0-1.0.
+
+See https://creativecommons.org/publicdomain/zero/1.0/ for the full legal text.
+
+No copyrighted sourcebook art, third-party model packs, or external textures
+were included in the authored assets.
