@@ -598,6 +598,6 @@ export function interiorPlan(it){
 }
 export function interiorSpecs(it){
   const p = interiorPlan(it);
-  return p.floors.map((lay, i) => ({ layout:lay, theme:p.order[i] === 'cellar' ? 'cellar' : INTERIOR_LOOK[it.kind] || 'manor' }));
+  return p.floors.map((lay, i) => ({ layout:lay, theme:lay.theme || (p.order[i] === 'cellar' ? 'cellar' : INTERIOR_LOOK[it.kind] || 'manor') }));
 }
 export const interiorGround = it => Math.max(0, interiorPlan(it).order.indexOf('ground'));

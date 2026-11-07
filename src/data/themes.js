@@ -8,6 +8,8 @@ import { BLUE_WATER_INN, blueWaterInnPlan } from './blue-water-inn.js';
 import { SALT_ROAD } from './session0.js';
 import { vallakiLayout } from './vallaki.js';
 
+import { SAINT_ANDRAL, saintAndralSurface, saintAndralCrypt } from './saint-andral.js';
+
 export const THEMES = [
   { id:'undercroft', name:'The Undercroft of St. Andral', floor:'#4b454a', hall:'#37323a', wall:'#2c2731', trim:'#c8cbd6', mist:'#6b6577',
     weights:{chamber:4,crypt:3,shrine:2,trap:2,treasure:1,safe:1,lair:1},
@@ -227,7 +229,9 @@ export const TEMPLATES = [
   { id:'bonegrinder', name:'Old Bonegrinder', blurb:'Session 6: the crooked windmill on the road to Vallaki — ground floor, the loft, and the cellar nobody mentions.', campaign:true,
     floors:[{ theme:'mill', rooms:.5, roomSize:[4, 7], doors:.6 }, { theme:'mill', rooms:.4, roomSize:[3, 6], doors:.5 }, { theme:'ossuary', rooms:.5, roomSize:[3, 6], doors:.3, traps:1 }] },
   { id:'standral', name:'Beneath Saint Andral\'s (Vallaki)', blurb:'Sessions 8–10: the church of Saint Andral in Vallaki, its undercroft, and the Dread Zone below — Silver Vein, Hand-Warrens, the Undertow.', campaign:true,
-    floors:[{ theme:'chapel', rooms:.8, doors:.6 }, { theme:'undercroft', secret:.15 }, { theme:'silver' }, { theme:'hands', secret:.25 }, { theme:'undertow', doors:.15 }] },
+    floors:[{ theme:'village', layout:saintAndralSurface(true) }, { theme:'undercroft', secret:.15 }, { theme:'silver' }, { theme:'hands', secret:.25 }, { theme:'undertow', doors:.15 }] },
+  { id:'saint-andral-church', name:SAINT_ANDRAL, blurb:'Vallaki’s church and fenced churchyard, from the steps to the nave and the rooms beside it.', campaign:true,
+    floors:[{ theme:'village', layout:saintAndralSurface() }, { theme:'ossuary', layout:saintAndralCrypt() }] },
   { id:'saltroad', name:'Session 0 — The Salt Road', blurb:'Session 0: the Lantern & Ladle tavern, the village of Hollin\'s Ford, and the Old Salt Road out to where the salt carriage went over — and where the mists begin. Hand-built maps with furniture.', campaign:true,
     floors:[{ theme:'tavern', layout:SALT_ROAD.tavern }, { theme:'village', layout:SALT_ROAD.village }, { theme:'woods', layout:SALT_ROAD.road }] },
   { id:'blue-water-inn', name:BLUE_WATER_INN, blurb:'The Vallaki inn, from the front porch and taproom to the stable yard and rooms upstairs.', campaign:true,
