@@ -5,6 +5,8 @@ import math
 import runpy
 from pathlib import Path
 
+from barovian_bloom_motion import add_bloom_motion
+
 HERE = Path(__file__).resolve().parent
 OUT = HERE.parent / 'public/assets/creatures/barovian-bloom'
 MOSS, SHELL, LICHEN = '#607250', '#354438', '#83936a'
@@ -296,4 +298,5 @@ if __name__ == '__main__':
     for name, mesh in models(runpy.run_path(str(args.builder))['Mesh']).items():
         path = OUT / f'{name}.glb'
         triangles, bounds = mesh.export(path)
+        add_bloom_motion(path, name)
         print(f'{name:18s} {triangles:4d} triangles · {path.stat().st_size:6d} bytes · {bounds}')
