@@ -1,0 +1,53 @@
+// Original concepts. All mechanical choices refer to the existing SRD creator.
+export const HERO_STARTERS = {
+  shield: {
+    title: 'The Road Warden', role: 'Protect the party',
+    pitch: 'Hold the doorway with a shield and keep a javelin ready for anything that stays out of reach.',
+    hook: 'Who once stood in a doorway so you could get away?',
+    sheet: { cls: 'Fighter', sp: 'Human', bg: 'Soldier', bg2: 'Str', bg1: 'Con',
+      skills: ['Perception', 'Survival'], extraSkill: 'Insight', weapons: ['Longsword', 'Javelin'] },
+  },
+  shadow: {
+    title: 'The Lockrunner', role: 'Scout and strike',
+    pitch: 'Spot trouble first, work the locks, and hit an exposed foe with a rapier or shortbow.',
+    hook: 'What did you steal that you still wish you could put back?',
+    sheet: { cls: 'Rogue', sp: 'Halfling', bg: 'Criminal', bg2: 'Dex', bg1: 'Con',
+      skills: ['Perception', 'Investigation', 'Acrobatics', 'Deception'],
+      expert: ['Perception', 'Stealth'], weapons: ['Rapier', 'Shortbow'] },
+  },
+  lantern: {
+    title: 'The Chapel Lantern', role: 'Heal and ward',
+    pitch: 'Keep allies standing with Healing Word and steady the party with Bless.',
+    hook: 'Whose candle do you keep lighting, even when the chapel is empty?',
+    sheet: { cls: 'Cleric', sp: 'Dwarf', bg: 'Acolyte', bg2: 'Wis', bg1: 'Cha',
+      skills: ['Medicine', 'History'], weapons: ['Mace'],
+      spells: ['Guidance', 'Sacred Flame', 'Light', 'Spare the Dying', 'Resistance',
+        'Cure Wounds', 'Healing Word', 'Bless', 'Guiding Bolt', 'Sanctuary'] },
+  },
+  scholar: {
+    title: 'The Mist Scholar', role: 'Shape the fight with magic',
+    pitch: 'Keep enemies back with Grease and carry a spell for when a locked door or a dark hall stops the party.',
+    hook: 'What did you find written in a book that nobody remembers lending you?',
+    sheet: { cls: 'Wizard', sp: 'Gnome', bg: 'Sage', bg2: 'Int', bg1: 'Con',
+      skills: ['Investigation', 'Insight'], weapons: ['Quarterstaff'],
+      spells: ['Fire Bolt', 'Ray of Frost', 'Mage Hand', 'Light', 'Minor Illusion',
+        'Mage Armor', 'Shield', 'Magic Missile', 'Grease', 'Detect Magic'] },
+  },
+  trail: {
+    title: 'The Briar Guide', role: 'Track and fight at range',
+    pitch: 'Find tracks, feed the group with Goodberry, and keep pressure on a quarry with Hunter’s Mark.',
+    hook: 'What made you decide there was one road you would never take again?',
+    sheet: { cls: 'Ranger', sp: 'Elf', spOpt: 'Wood Elf', bg: 'Criminal', bg2: 'Dex', bg1: 'Con',
+      skills: ['Survival', 'Nature', 'Investigation'], shield: false, weapons: ['Longbow', 'Shortsword'],
+      spells: ["Hunter's Mark", 'Goodberry'] },
+  },
+  song: {
+    title: 'The Last Song', role: 'Inspire and talk your way through',
+    pitch: 'Give an ally courage, turn a room with a story, and pull someone back with a word.',
+    hook: 'Whose story do you tell whenever you find a new fire?',
+    sheet: { cls: 'Bard', sp: 'Human', bg: 'Acolyte', bg2: 'Cha', bg1: 'Wis',
+      skills: ['Persuasion', 'Performance', 'Deception'], extraSkill: 'Perception', weapons: ['Dagger'],
+      spells: ['Vicious Mockery', 'Minor Illusion', 'Guidance', 'Sacred Flame',
+        'Bless', 'Healing Word', 'Dissonant Whispers', 'Faerie Fire', 'Heroism'] },
+  },
+};
