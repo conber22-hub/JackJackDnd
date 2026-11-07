@@ -16,11 +16,19 @@ Put the relief beneath the existing Valley SVG's roads and markers as a full-siz
 
 Keep journey selection, time, encounter generation and entry into each location on the native Valley code. The atlas assets are independent of the Roads & Connections battle-scale tiles.
 
+## Three-dimensional atlas
+
+![All sixteen 3D landmarks assembled on the valley relief with the native routes](screens/barovia-overworld-3d.jpg)
+
+`public/assets/overworld/barovia-relief.glb` is a self-contained terrain board. Its X/Z bounds are `[0,100] × [0,64]`, with the northwest corner at the origin and +Z facing south. The sculpted elevations and water are schematic. The board contains geography only. Draw routes and landmarks as separate layers, using the same discovery filters as the SVG view.
+
+For a 3D landmark, use `x = place.x` and `z = place.y`. Set its Y from a downward ray onto the relief and keep an independent hit target at the map coordinate. For route ribbons, sample the native curve, drape each point over the same surface, and lift it slightly above the board. The map retains the existing SVG as its lightweight view.
+
 ## Three-dimensional landmarks
 
-![Six overworld landmarks rendered from their GLB geometry](screens/barovia-overworld-landmarks.jpg)
+[First six landmark renders](screens/barovia-overworld-landmarks.jpg) · [Ten additional landmark renders](screens/barovia-overworld-landmarks-expansion.jpg)
 
-The miniatures in `public/assets/overworld/landmarks/` are named after their actual place IDs. Put them at the source coordinates when building a 3D atlas. Use Y-up, +Z south, and place the model's origin on the atlas surface. Their scale is decorative, so choose the marker scale for the zoom level. Keep the SVG markers available for low-detail views and the places without models.
+The miniatures in `public/assets/overworld/landmarks/` are named after their actual place IDs. Put them at the source coordinates when building a 3D atlas. Use Y-up, +Z south, and place the model's origin on the atlas surface. Their scale is decorative, so choose the marker scale for the zoom level. Keep the SVG markers available for low-detail views and when a GLB is unavailable.
 
 | Place ID | Landmark |
 | --- | --- |
@@ -30,6 +38,16 @@ The miniatures in `public/assets/overworld/landmarks/` are named after their act
 | `krezk` | Hilltop abbey with a stair and cottages below |
 | `tser` | Tents and a fire beside dark water |
 | `coffin` | Iron wreck and scorched trees |
+| `mists` | Lantern and road disappearing into the Mist Wall |
+| `gates` | Iron bars between the headless guardians |
+| `village` | Church on a rise and a lit tavern window |
+| `crossroads` | Gallows and signpost at the fork |
+| `lake` | Lake Zarovich, a skiff, and a jetty |
+| `argyn` | Roofless Argynvostholt and its dark beacon |
+| `berez` | Stilt houses on drowned ground |
+| `winery` | The winery and rows of grapes |
+| `yester` | A crooked tree in the standing-stone ring |
+| `tower` | The Lonely Tower on its tarn island |
 
 Each GLB has one mesh, one vertex-coloured material, and no external textures. These are static atlas pieces. All art is original.
 
@@ -40,4 +58,5 @@ Run from the repository root. The SVGs regenerate from the current Valley data. 
 ```sh
 node scripts/build-barovia-atlas.mjs
 python3 scripts/build-barovia-overworld-landmarks.py --builder /path/to/build-barovian-props.py
+python3 scripts/build-barovia-overworld-relief.py --builder /path/to/build-barovian-props.py
 ```
