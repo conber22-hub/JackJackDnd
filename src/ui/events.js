@@ -10,6 +10,7 @@ import { ensurePuzzles, openPuzzle } from './puzzles.js';
 import { ensureChase, openChase } from './chase.js';
 import { ensureHorror, openHorror } from './horror.js';
 import { ensureMobs, openMobs } from './mobs.js';
+import { ensureLedger, openLedger } from './ledger.js';
 import { setPuzzle } from '../game/puzzles.js';
 import { describeSite } from '../engine/sites.js';
 import { stockSite, garrisonArrive, giveHoard } from '../game/garrison.js';
@@ -129,6 +130,7 @@ document.addEventListener('click', e => {
     case 'chase': openChase(); break;
     case 'horror': openHorror(); break;   // 😱 a horror check (Codex's engine/horror.js)
     case 'mobs': openMobs(); break;       // 👥 a mob (Codex's engine/mobs.js)
+    case 'ledger': openLedger(k || null); break;   // 📒 surveys, the fire, bounties, supply runs, a vote (ChatGPT's)
     case 'goInside': goInside(ui.floor, +id); break;
     case 'influence': { const [L, pid] = String(id).split(':'); influenceFolk(+L, pid, k); } break;
     case 'garrisonArrive': if (!garrisonArrive(ui.floor)) toast('No one is on the way.'); break;
@@ -526,6 +528,7 @@ ensurePuzzles();   // 🧩 puzzles: the button when there's one to work, the she
 ensureChase();   // 🏃 the chase: the DM's sheet and the palette command
 ensureHorror();  // 😱 fear and its marks
 ensureMobs();    // 👥 the mob
+ensureLedger();  // 📒 the ledger
 ensureChronicle();   // the 📜 Chronicle: the button, the palette command, the record of the story (idempotent)
 ensureSoundscape();   // the 🎻 Soundscape: the button, the palette command, the board and its receivers (idempotent)
 $('#floorUp').onclick = () => state && goFloor(ui.floor - 1);

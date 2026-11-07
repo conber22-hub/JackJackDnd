@@ -84,9 +84,10 @@ export function enterPlace(id, mapId, fresh = false){
 export const placeMaps = p => (p.maps || (p.map ? [p.map] : [])).map(id => ({ id, name:id === 'landmark' ? p.name : TEMPLATES.find(t => t.id === id)?.name || id }));
 
 /* ---------- the clock ---------- */
+export const hourHooks = [];   // run after the valley clock moves (ui/ledger.js: supply runs arrive)
 export function passTime(h){ const V = valley(), d0 = V.day; V.hour += h; while (V.hour >= 24){ V.hour -= 24; V.day++; } state.campaign.day = `Day ${V.day}, ${timeOfDay(V.hour)}`;
   if (V.day > d0) courtDay(`Day ${V.day}`);   // a new day: the Count's court moves
-  applyWeather({ newDay:V.day > d0 }); }      // and the sky with the hours (game/weather.js)
+  applyWeather({ newDay:V.day > d0 }); for (const f of hourHooks) try { f(); } catch (e){ console.warn(e); } }      // and the sky with the hours (game/weather.js)
 // The DM sets the hour (dawn, midday, dusk, midnight, or an hour on): always forward, so a new day comes round
 // properly (and the Count's court moves with it). The sky, the light, the windows and the folk follow (engine/daylight.js).
 export function setHour(to){

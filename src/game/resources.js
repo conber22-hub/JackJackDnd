@@ -114,6 +114,7 @@ export function longRest(list = party(), quiet = false){
     const holder = state.characters?.[t.charId] || t;
     if (holder.horror) holder.horror = fearRest({ horror:holder.horror }, { safe:true }).horror;
   }
+  if (state.campaign) state.campaign.lastRestId = `rest-${Date.now().toString(36)}`;   // 🔥 the fire's scenes key on the rest (ui/ledger.js)
   for (const t of state.tokens) delete t.lres;   // a new day: Legendary Resistance comes back too
   if (!quiet) showCard({ kind:'', title:'A long rest', sub:'Eight hours', flair:'They sleep, after a fashion. In Barovia the dreams are not entirely their own.', lines:['Full HP, every slot and feature back, Hit Dice restored, conditions gone.'] });
   log('The party takes a long rest.'); changed();
