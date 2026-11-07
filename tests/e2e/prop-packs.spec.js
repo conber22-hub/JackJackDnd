@@ -3,7 +3,7 @@ import { test, expect, arena } from './helpers.js';
 // The Barovian prop packs (src/data/prop-packs.js): in the Build palette, placed like any prop, and a paired piece
 // (a crypt gate shut / raised) changes into its other state from the DM's prop card. (The test server serves only the
 // app file, so the pieces here are their drawn stand-ins; the models themselves load beside the app on Vercel.)
-test('a crypt gate from the packs: placed, then raised from the DM's prop card', async ({ page }) => {
+test("a crypt gate from the packs: placed, then raised from the DM's prop card", async ({ page }) => {
   test.setTimeout(120_000);
   await arena(page, [{ name:'Ada', x:6, y:10 }]);
   await page.evaluate(() => window.DreadDelve.placePropAt({ floor:0, x:7, y:10 }, 'cryptGateShut'));
