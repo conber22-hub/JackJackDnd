@@ -1,0 +1,1 @@
+Roads & Connections III consists of original, programmatically authored low-poly terrain mesh assets and supporting code created for the user's tabletop project. These new assets may be modified, copied and used within the project. No third-party visual asset packs were used in generating the Pack III models.

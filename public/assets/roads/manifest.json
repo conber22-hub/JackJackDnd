@@ -1,0 +1,2426 @@
+{
+  "pack": "Barovia Roads & Connections III",
+  "version": "3.0",
+  "worldScale": "1 world unit = 5 feet",
+  "tileDimension": 8,
+  "assetCount": 65,
+  "orientation": "N = -Z, E = +X, S = +Z, W = -X; rot=1 means 90 degrees clockwise viewed from above",
+  "collision": "Visual surface only. Host VTT owns the walkable grid, terrain and pathfinding. Do not alter T.ROCK or T.HALL.",
+  "assets": [
+    {
+      "id": "road_straight_ns",
+      "file": "assets/road_straight_ns.glb",
+      "category": "Road connector",
+      "style": "road",
+      "sockets": {
+        "N": "road",
+        "S": "road"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "N": 3.0,
+        "S": 3.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 58,
+      "drawCalls": 9,
+      "bytes": 25912,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.281,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "road_straight_ew",
+      "file": "assets/road_straight_ew.glb",
+      "category": "Road connector",
+      "style": "road",
+      "sockets": {
+        "E": "road",
+        "W": "road"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "E": 3.0,
+        "W": 3.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 52,
+      "drawCalls": 8,
+      "bytes": 23936,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.286,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "road_bend_ne",
+      "file": "assets/road_bend_ne.glb",
+      "category": "Road connector",
+      "style": "road",
+      "sockets": {
+        "N": "road",
+        "E": "road"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "N": 3.0,
+        "E": 3.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 64,
+      "drawCalls": 9,
+      "bytes": 28628,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.277,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "road_bend_es",
+      "file": "assets/road_bend_es.glb",
+      "category": "Road connector",
+      "style": "road",
+      "sockets": {
+        "E": "road",
+        "S": "road"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "E": 3.0,
+        "S": 3.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 66,
+      "drawCalls": 9,
+      "bytes": 29448,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.289,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "road_bend_sw",
+      "file": "assets/road_bend_sw.glb",
+      "category": "Road connector",
+      "style": "road",
+      "sockets": {
+        "S": "road",
+        "W": "road"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "S": 3.0,
+        "W": 3.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 56,
+      "drawCalls": 9,
+      "bytes": 25332,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.266,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "road_bend_wn",
+      "file": "assets/road_bend_wn.glb",
+      "category": "Road connector",
+      "style": "road",
+      "sockets": {
+        "W": "road",
+        "N": "road"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "W": 3.0,
+        "N": 3.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 56,
+      "drawCalls": 9,
+      "bytes": 26024,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.29,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "road_tee_nes",
+      "file": "assets/road_tee_nes.glb",
+      "category": "Road connector",
+      "style": "road",
+      "sockets": {
+        "N": "road",
+        "E": "road",
+        "S": "road"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "N": 3.0,
+        "E": 3.0,
+        "S": 3.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 68,
+      "drawCalls": 8,
+      "bytes": 27664,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.289,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "road_tee_esw",
+      "file": "assets/road_tee_esw.glb",
+      "category": "Road connector",
+      "style": "road",
+      "sockets": {
+        "E": "road",
+        "S": "road",
+        "W": "road"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "E": 3.0,
+        "S": 3.0,
+        "W": 3.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 65,
+      "drawCalls": 9,
+      "bytes": 27884,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.288,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "road_tee_nsw",
+      "file": "assets/road_tee_nsw.glb",
+      "category": "Road connector",
+      "style": "road",
+      "sockets": {
+        "N": "road",
+        "S": "road",
+        "W": "road"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "N": 3.0,
+        "S": 3.0,
+        "W": 3.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 57,
+      "drawCalls": 8,
+      "bytes": 25296,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.277,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "road_tee_new",
+      "file": "assets/road_tee_new.glb",
+      "category": "Road connector",
+      "style": "road",
+      "sockets": {
+        "N": "road",
+        "E": "road",
+        "W": "road"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "N": 3.0,
+        "E": 3.0,
+        "W": 3.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 62,
+      "drawCalls": 9,
+      "bytes": 28400,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.286,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "road_cross",
+      "file": "assets/road_cross.glb",
+      "category": "Road connector",
+      "style": "road",
+      "sockets": {
+        "N": "road",
+        "E": "road",
+        "S": "road",
+        "W": "road"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "N": 3.0,
+        "E": 3.0,
+        "S": 3.0,
+        "W": 3.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 59,
+      "drawCalls": 8,
+      "bytes": 27268,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.252,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "road_cap_n",
+      "file": "assets/road_cap_n.glb",
+      "category": "Road connector",
+      "style": "road",
+      "sockets": {
+        "N": "road"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "N": 3.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 49,
+      "drawCalls": 9,
+      "bytes": 22088,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.276,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "road_cap_e",
+      "file": "assets/road_cap_e.glb",
+      "category": "Road connector",
+      "style": "road",
+      "sockets": {
+        "E": "road"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "E": 3.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 54,
+      "drawCalls": 9,
+      "bytes": 23828,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.285,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "road_cap_s",
+      "file": "assets/road_cap_s.glb",
+      "category": "Road connector",
+      "style": "road",
+      "sockets": {
+        "S": "road"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "S": 3.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 55,
+      "drawCalls": 9,
+      "bytes": 25736,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.291,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "road_cap_w",
+      "file": "assets/road_cap_w.glb",
+      "category": "Road connector",
+      "style": "road",
+      "sockets": {
+        "W": "road"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "W": 3.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 59,
+      "drawCalls": 9,
+      "bytes": 26844,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.279,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "path_straight_ns",
+      "file": "assets/path_straight_ns.glb",
+      "category": "Path connector",
+      "style": "path",
+      "sockets": {
+        "N": "path",
+        "S": "path"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "N": 2.0,
+        "S": 2.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 49,
+      "drawCalls": 8,
+      "bytes": 21564,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.286,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "path_straight_ew",
+      "file": "assets/path_straight_ew.glb",
+      "category": "Path connector",
+      "style": "path",
+      "sockets": {
+        "E": "path",
+        "W": "path"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "E": 2.0,
+        "W": 2.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 60,
+      "drawCalls": 8,
+      "bytes": 25972,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.289,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "path_bend_ne",
+      "file": "assets/path_bend_ne.glb",
+      "category": "Path connector",
+      "style": "path",
+      "sockets": {
+        "N": "path",
+        "E": "path"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "N": 2.0,
+        "E": 2.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 46,
+      "drawCalls": 8,
+      "bytes": 20512,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.279,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "path_bend_es",
+      "file": "assets/path_bend_es.glb",
+      "category": "Path connector",
+      "style": "path",
+      "sockets": {
+        "E": "path",
+        "S": "path"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "E": 2.0,
+        "S": 2.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 54,
+      "drawCalls": 8,
+      "bytes": 24032,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.288,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "path_tee_nes",
+      "file": "assets/path_tee_nes.glb",
+      "category": "Path connector",
+      "style": "path",
+      "sockets": {
+        "N": "path",
+        "E": "path",
+        "S": "path"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "N": 2.0,
+        "E": 2.0,
+        "S": 2.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 60,
+      "drawCalls": 6,
+      "bytes": 24324,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.287,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "path_tee_esw",
+      "file": "assets/path_tee_esw.glb",
+      "category": "Path connector",
+      "style": "path",
+      "sockets": {
+        "E": "path",
+        "S": "path",
+        "W": "path"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "E": 2.0,
+        "S": 2.0,
+        "W": 2.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 60,
+      "drawCalls": 7,
+      "bytes": 25264,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.286,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "path_tee_new",
+      "file": "assets/path_tee_new.glb",
+      "category": "Path connector",
+      "style": "path",
+      "sockets": {
+        "N": "path",
+        "E": "path",
+        "W": "path"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "N": 2.0,
+        "E": 2.0,
+        "W": 2.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 60,
+      "drawCalls": 8,
+      "bytes": 25340,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.289,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "path_cap_n",
+      "file": "assets/path_cap_n.glb",
+      "category": "Path connector",
+      "style": "path",
+      "sockets": {
+        "N": "path"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "N": 2.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 76,
+      "drawCalls": 8,
+      "bytes": 29696,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.286,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "path_cap_e",
+      "file": "assets/path_cap_e.glb",
+      "category": "Path connector",
+      "style": "path",
+      "sockets": {
+        "E": "path"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "E": 2.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 54,
+      "drawCalls": 8,
+      "bytes": 22412,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.276,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "path_cap_s",
+      "file": "assets/path_cap_s.glb",
+      "category": "Path connector",
+      "style": "path",
+      "sockets": {
+        "S": "path"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "S": 2.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 70,
+      "drawCalls": 8,
+      "bytes": 27312,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.289,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "path_cap_w",
+      "file": "assets/path_cap_w.glb",
+      "category": "Path connector",
+      "style": "path",
+      "sockets": {
+        "W": "path"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "W": 2.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 70,
+      "drawCalls": 8,
+      "bytes": 27488,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.288,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "trail_straight_ns",
+      "file": "assets/trail_straight_ns.glb",
+      "category": "Trail connector",
+      "style": "trail",
+      "sockets": {
+        "N": "trail",
+        "S": "trail"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "N": 2.0,
+        "S": 2.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 51,
+      "drawCalls": 8,
+      "bytes": 23972,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.288,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "trail_straight_ew",
+      "file": "assets/trail_straight_ew.glb",
+      "category": "Trail connector",
+      "style": "trail",
+      "sockets": {
+        "E": "trail",
+        "W": "trail"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "E": 2.0,
+        "W": 2.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 48,
+      "drawCalls": 8,
+      "bytes": 23036,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.261,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "trail_bend_sw",
+      "file": "assets/trail_bend_sw.glb",
+      "category": "Trail connector",
+      "style": "trail",
+      "sockets": {
+        "S": "trail",
+        "W": "trail"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "S": 2.0,
+        "W": 2.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 65,
+      "drawCalls": 8,
+      "bytes": 28700,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.29,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "trail_bend_wn",
+      "file": "assets/trail_bend_wn.glb",
+      "category": "Trail connector",
+      "style": "trail",
+      "sockets": {
+        "W": "trail",
+        "N": "trail"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "W": 2.0,
+        "N": 2.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 41,
+      "drawCalls": 8,
+      "bytes": 17840,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.279,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "trail_tee_esw",
+      "file": "assets/trail_tee_esw.glb",
+      "category": "Trail connector",
+      "style": "trail",
+      "sockets": {
+        "E": "trail",
+        "S": "trail",
+        "W": "trail"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "E": 2.0,
+        "S": 2.0,
+        "W": 2.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 61,
+      "drawCalls": 8,
+      "bytes": 26808,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.278,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "trail_tee_nsw",
+      "file": "assets/trail_tee_nsw.glb",
+      "category": "Trail connector",
+      "style": "trail",
+      "sockets": {
+        "N": "trail",
+        "S": "trail",
+        "W": "trail"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "N": 2.0,
+        "S": 2.0,
+        "W": 2.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 44,
+      "drawCalls": 8,
+      "bytes": 21356,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.279,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "trail_tee_new",
+      "file": "assets/trail_tee_new.glb",
+      "category": "Trail connector",
+      "style": "trail",
+      "sockets": {
+        "N": "trail",
+        "E": "trail",
+        "W": "trail"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "N": 2.0,
+        "E": 2.0,
+        "W": 2.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 51,
+      "drawCalls": 8,
+      "bytes": 21344,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.274,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "trail_cap_n",
+      "file": "assets/trail_cap_n.glb",
+      "category": "Trail connector",
+      "style": "trail",
+      "sockets": {
+        "N": "trail"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "N": 2.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 49,
+      "drawCalls": 8,
+      "bytes": 22908,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.284,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "trail_cap_e",
+      "file": "assets/trail_cap_e.glb",
+      "category": "Trail connector",
+      "style": "trail",
+      "sockets": {
+        "E": "trail"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "E": 2.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 71,
+      "drawCalls": 8,
+      "bytes": 30292,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.288,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "trail_cap_s",
+      "file": "assets/trail_cap_s.glb",
+      "category": "Trail connector",
+      "style": "trail",
+      "sockets": {
+        "S": "trail"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "S": 2.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 67,
+      "drawCalls": 8,
+      "bytes": 28324,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.289,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "trail_cap_w",
+      "file": "assets/trail_cap_w.glb",
+      "category": "Trail connector",
+      "style": "trail",
+      "sockets": {
+        "W": "trail"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "W": 2.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 47,
+      "drawCalls": 8,
+      "bytes": 19032,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.279,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "cobble_straight_ns",
+      "file": "assets/cobble_straight_ns.glb",
+      "category": "Cobble connector",
+      "style": "cobble",
+      "sockets": {
+        "N": "cobble",
+        "S": "cobble"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "N": 3.0,
+        "S": 3.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 88,
+      "drawCalls": 9,
+      "bytes": 27296,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.29,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "cobble_straight_ew",
+      "file": "assets/cobble_straight_ew.glb",
+      "category": "Cobble connector",
+      "style": "cobble",
+      "sockets": {
+        "E": "cobble",
+        "W": "cobble"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "E": 3.0,
+        "W": 3.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 71,
+      "drawCalls": 9,
+      "bytes": 25140,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.282,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "cobble_bend_ne",
+      "file": "assets/cobble_bend_ne.glb",
+      "category": "Cobble connector",
+      "style": "cobble",
+      "sockets": {
+        "N": "cobble",
+        "E": "cobble"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "N": 3.0,
+        "E": 3.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 80,
+      "drawCalls": 9,
+      "bytes": 25232,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.287,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "cobble_bend_sw",
+      "file": "assets/cobble_bend_sw.glb",
+      "category": "Cobble connector",
+      "style": "cobble",
+      "sockets": {
+        "S": "cobble",
+        "W": "cobble"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "S": 3.0,
+        "W": 3.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 76,
+      "drawCalls": 9,
+      "bytes": 26724,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.28,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "cobble_tee_new",
+      "file": "assets/cobble_tee_new.glb",
+      "category": "Cobble connector",
+      "style": "cobble",
+      "sockets": {
+        "N": "cobble",
+        "E": "cobble",
+        "W": "cobble"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "N": 3.0,
+        "E": 3.0,
+        "W": 3.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 88,
+      "drawCalls": 9,
+      "bytes": 27392,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.278,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "cobble_tee_esw",
+      "file": "assets/cobble_tee_esw.glb",
+      "category": "Cobble connector",
+      "style": "cobble",
+      "sockets": {
+        "E": "cobble",
+        "S": "cobble",
+        "W": "cobble"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "E": 3.0,
+        "S": 3.0,
+        "W": 3.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 83,
+      "drawCalls": 9,
+      "bytes": 24580,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.261,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "cobble_cross",
+      "file": "assets/cobble_cross.glb",
+      "category": "Cobble connector",
+      "style": "cobble",
+      "sockets": {
+        "N": "cobble",
+        "E": "cobble",
+        "S": "cobble",
+        "W": "cobble"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "N": 3.0,
+        "E": 3.0,
+        "S": 3.0,
+        "W": 3.0
+      },
+      "special": "",
+      "transitional": false,
+      "parts": 96,
+      "drawCalls": 8,
+      "bytes": 29800,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.259,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "transition_road_path_ns",
+      "file": "assets/transition_road_path_ns.glb",
+      "category": "Surface transition",
+      "style": "road",
+      "sockets": {
+        "N": "road",
+        "S": "path"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "N": 3.0,
+        "S": 2.0
+      },
+      "special": "",
+      "transitional": true,
+      "parts": 59,
+      "drawCalls": 10,
+      "bytes": 27288,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.286,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "transition_path_trail_ns",
+      "file": "assets/transition_path_trail_ns.glb",
+      "category": "Surface transition",
+      "style": "path",
+      "sockets": {
+        "N": "path",
+        "S": "trail"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "N": 2.0,
+        "S": 2.0
+      },
+      "special": "",
+      "transitional": true,
+      "parts": 70,
+      "drawCalls": 9,
+      "bytes": 28588,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.284,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "transition_road_cobble_ns",
+      "file": "assets/transition_road_cobble_ns.glb",
+      "category": "Surface transition",
+      "style": "road",
+      "sockets": {
+        "N": "road",
+        "S": "cobble"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "N": 3.0,
+        "S": 3.0
+      },
+      "special": "",
+      "transitional": true,
+      "parts": 54,
+      "drawCalls": 10,
+      "bytes": 25788,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.281,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "transition_cobble_road_ns",
+      "file": "assets/transition_cobble_road_ns.glb",
+      "category": "Surface transition",
+      "style": "cobble",
+      "sockets": {
+        "N": "cobble",
+        "S": "road"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "N": 3.0,
+        "S": 3.0
+      },
+      "special": "",
+      "transitional": true,
+      "parts": 77,
+      "drawCalls": 9,
+      "bytes": 26156,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.285,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "bridge_timber_ew",
+      "file": "assets/bridge_timber_ew.glb",
+      "category": "Landmark / bridge",
+      "style": "road",
+      "sockets": {
+        "E": "road",
+        "W": "road"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "E": 3.0,
+        "W": 3.0
+      },
+      "special": "timber",
+      "transitional": false,
+      "parts": 35,
+      "drawCalls": 5,
+      "bytes": 11956,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          1.01,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "bridge_stone_ew",
+      "file": "assets/bridge_stone_ew.glb",
+      "category": "Landmark / bridge",
+      "style": "road",
+      "sockets": {
+        "E": "road",
+        "W": "road"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "E": 3.0,
+        "W": 3.0
+      },
+      "special": "stonebridge",
+      "transitional": false,
+      "parts": 37,
+      "drawCalls": 5,
+      "bytes": 12176,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.41,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "bridge_foot_ew",
+      "file": "assets/bridge_foot_ew.glb",
+      "category": "Landmark / bridge",
+      "style": "path",
+      "sockets": {
+        "E": "path",
+        "W": "path"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "E": 2.0,
+        "W": 2.0
+      },
+      "special": "footbridge",
+      "transitional": false,
+      "parts": 35,
+      "drawCalls": 4,
+      "bytes": 11472,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          1.01,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "bridge_marsh_ew",
+      "file": "assets/bridge_marsh_ew.glb",
+      "category": "Landmark / bridge",
+      "style": "path",
+      "sockets": {
+        "E": "path",
+        "W": "path"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "E": 2.0,
+        "W": 2.0
+      },
+      "special": "boardwalk",
+      "transitional": false,
+      "parts": 35,
+      "drawCalls": 4,
+      "bytes": 11476,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          1.01,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "bridge_rope_ew",
+      "file": "assets/bridge_rope_ew.glb",
+      "category": "Landmark / bridge",
+      "style": "trail",
+      "sockets": {
+        "E": "trail",
+        "W": "trail"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "E": 2.0,
+        "W": 2.0
+      },
+      "special": "rope",
+      "transitional": false,
+      "parts": 49,
+      "drawCalls": 6,
+      "bytes": 19048,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          1.01,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "bridge_timber_ns",
+      "file": "assets/bridge_timber_ns.glb",
+      "category": "Landmark / bridge",
+      "style": "road",
+      "sockets": {
+        "N": "road",
+        "S": "road"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "N": 3.0,
+        "S": 3.0
+      },
+      "special": "timber",
+      "transitional": false,
+      "parts": 35,
+      "drawCalls": 5,
+      "bytes": 11956,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          1.01,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "gate_barovia_ew",
+      "file": "assets/gate_barovia_ew.glb",
+      "category": "Landmark / bridge",
+      "style": "road",
+      "sockets": {
+        "E": "road",
+        "W": "road"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "E": 3.0,
+        "W": 3.0
+      },
+      "special": "gate",
+      "transitional": false,
+      "parts": 61,
+      "drawCalls": 9,
+      "bytes": 25364,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          2.388,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "gate_vallaki_ew",
+      "file": "assets/gate_vallaki_ew.glb",
+      "category": "Landmark / bridge",
+      "style": "cobble",
+      "sockets": {
+        "E": "cobble",
+        "W": "cobble"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "E": 3.0,
+        "W": 3.0
+      },
+      "special": "palisade",
+      "transitional": false,
+      "parts": 84,
+      "drawCalls": 10,
+      "bytes": 26980,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          2.3,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "gate_krezk_ew",
+      "file": "assets/gate_krezk_ew.glb",
+      "category": "Landmark / bridge",
+      "style": "road",
+      "sockets": {
+        "E": "road",
+        "W": "road"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "E": 3.0,
+        "W": 3.0
+      },
+      "special": "krezk",
+      "transitional": false,
+      "parts": 70,
+      "drawCalls": 9,
+      "bytes": 29908,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          1.99,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "approach_vineyard_ew",
+      "file": "assets/approach_vineyard_ew.glb",
+      "category": "Landmark / bridge",
+      "style": "road",
+      "sockets": {
+        "E": "road",
+        "W": "road"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "E": 3.0,
+        "W": 3.0
+      },
+      "special": "vineyard",
+      "transitional": false,
+      "parts": 86,
+      "drawCalls": 11,
+      "bytes": 38096,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.936,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "approach_bonegrinder_ew",
+      "file": "assets/approach_bonegrinder_ew.glb",
+      "category": "Landmark / bridge",
+      "style": "road",
+      "sockets": {
+        "E": "road",
+        "W": "road"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "E": 3.0,
+        "W": 3.0
+      },
+      "special": "bonegrinder",
+      "transitional": false,
+      "parts": 60,
+      "drawCalls": 12,
+      "bytes": 29300,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          1.11,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "approach_tser_ew",
+      "file": "assets/approach_tser_ew.glb",
+      "category": "Landmark / bridge",
+      "style": "path",
+      "sockets": {
+        "E": "path",
+        "W": "path"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "E": 2.0,
+        "W": 2.0
+      },
+      "special": "landing",
+      "transitional": false,
+      "parts": 69,
+      "drawCalls": 9,
+      "bytes": 29516,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.515,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "mountain_switchback_ew",
+      "file": "assets/mountain_switchback_ew.glb",
+      "category": "Landmark / bridge",
+      "style": "trail",
+      "sockets": {
+        "E": "trail",
+        "W": "trail"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "E": 2.0,
+        "W": 2.0
+      },
+      "special": "mountain",
+      "transitional": false,
+      "parts": 63,
+      "drawCalls": 9,
+      "bytes": 26564,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.489,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "hunger_road_ew",
+      "file": "assets/hunger_road_ew.glb",
+      "category": "Landmark / bridge",
+      "style": "road",
+      "sockets": {
+        "E": "road",
+        "W": "road"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "E": 3.0,
+        "W": 3.0
+      },
+      "special": "hunger",
+      "transitional": false,
+      "parts": 46,
+      "drawCalls": 6,
+      "bytes": 21652,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.315,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "hunger_path_tee_new",
+      "file": "assets/hunger_path_tee_new.glb",
+      "category": "Landmark / bridge",
+      "style": "path",
+      "sockets": {
+        "N": "path",
+        "E": "path",
+        "W": "path"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "N": 2.0,
+        "E": 2.0,
+        "W": 2.0
+      },
+      "special": "hunger",
+      "transitional": false,
+      "parts": 47,
+      "drawCalls": 6,
+      "bytes": 19360,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.315,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "hunger_trail_ew",
+      "file": "assets/hunger_trail_ew.glb",
+      "category": "Landmark / bridge",
+      "style": "trail",
+      "sockets": {
+        "E": "trail",
+        "W": "trail"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "E": 2.0,
+        "W": 2.0
+      },
+      "special": "hunger",
+      "transitional": false,
+      "parts": 56,
+      "drawCalls": 11,
+      "bytes": 25008,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.315,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    },
+    {
+      "id": "burned_cut_trail_ew",
+      "file": "assets/burned_cut_trail_ew.glb",
+      "category": "Landmark / bridge",
+      "style": "trail",
+      "sockets": {
+        "E": "trail",
+        "W": "trail"
+      },
+      "tileSize": [
+        8,
+        8
+      ],
+      "edgeWidth": {
+        "E": 2.0,
+        "W": 2.0
+      },
+      "special": "mountain",
+      "transitional": false,
+      "parts": 56,
+      "drawCalls": 9,
+      "bytes": 25328,
+      "bounds": [
+        [
+          -4.0,
+          -0.25,
+          -4.0
+        ],
+        [
+          4.0,
+          0.575,
+          4.0
+        ]
+      ],
+      "collision": "surface",
+      "nav": "visual_only"
+    }
+  ]
+}
