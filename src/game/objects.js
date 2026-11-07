@@ -7,6 +7,7 @@ import { objInfo, objAC, objHp, besideProp, pushDir, pushTarget, toppleTarget, l
 import { updateVision } from '../engine/grid.js';
 import { bestMelee } from '../engine/movement.js';
 import { MOVE_DC, DEBRIS } from '../data/objects.js';
+import { PROPS } from '../data/props.js';
 import { SEARCHABLE, rollLoot } from '../data/loot.js';
 import { d, rollDice, esc } from '../util/core.js';
 import { buildFloor, animateProp } from '../render/floors.js';
@@ -163,6 +164,7 @@ export function editProp(L, id, field, value){
   else if (field === 'contents'){ if (value) p.contents = String(value).slice(0, 400); else delete p.contents; delete p.searched; delete p.found; }
   else if (field === 'stash'){ if (value) p.stash = { dc:p.stash?.dc || 13, text:String(value).slice(0, 400), found:false }; else delete p.stash; }
   else if (field === 'stashDc'){ if (p.stash) p.stash.dc = +value || 13; }
+  else if (field === 'swap'){ const alt = PROPS[p.k]?.alt; if (alt){ p.k = alt; buildFloor(L); log(`The ${PROPS[alt].n.toLowerCase()} changes.`, true); } }   // ⇄ a pack's piece to its other state (a gate raised, a mirror reaching)
   else if (field === 'repair'){ delete p.broken; delete p.hp; if (p.fallen){ p.x = p.fallen.ox; p.y = p.fallen.oy; delete p.fw; delete p.fh; delete p.fallen; } delete p.swung; delete p.open; f.propsV = (f.propsV || 0) + 1; buildFloor(L); }
   updateVision(); renderSel(); changed();
 }

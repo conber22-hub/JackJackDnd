@@ -1,3 +1,4 @@
+import { PACK_PROPS } from './prop-packs.js';
 /* OBJECTS — what the heroes can do to the furniture: open it, pick its lock, push it, topple it, smash it.
    Numbers follow the SRD 5.2 rules for objects: Armor Class by what it's made of, Hit Points by its size
    (resilient things have more), and a Strength (Athletics) check to shift something heavy.
@@ -72,6 +73,10 @@ export const OBJECTS = {
   minecart:   { m:'iron', sz:'M', move:'light' },
   beam:       { m:'wood', sz:'L', move:'fixed' },
 };
+
+// The Barovian prop packs (src/data/prop-packs.js): each is an object like the drawn prop it stands in for (its
+// material and size), fixed where it stands (a gate, a mirror, an altar), so it has a card the DM can change it from.
+for (const [k, p] of Object.entries(PACK_PROPS)){ const o = OBJECTS[p.draw]; OBJECTS[k] ||= { m:o?.m || 'stone', sz:o?.sz || (p.w * p.h > 1 ? 'L' : 'M'), move:'fixed', ...(o?.frail ? { frail:true } : {}) }; }
 
 // Props that never block a pushed piece: you can shove a crate across a rug or a puddle.
 export const FLAT = new Set(['rug', 'puddle', 'rails', 'cobweb', 'mist', 'bones', 'fungus', 'bloomgrowth', 'saltspill', 'bridge']);

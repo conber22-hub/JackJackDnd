@@ -1,3 +1,4 @@
+import { PACK_PROPS } from './prop-packs.js';
 /* 3D MODELS FOR PROPS — which ready-made model stands in for a prop the app otherwise draws in code
    (src/render/props.js). All by Kay Lousberg (KayKit), CC0 (public domain), each pack with its LICENSE.txt:
    - public/assets/props/kaykit/: Dungeon Remastered (furniture, barrels, chests, a pillar)
@@ -50,4 +51,6 @@ export const PROP_MODELS = {
   bones:      { file:'halloween/ribcage.gltf',            height:.45 },
   pillar:     { file:'kaykit/pillar.glb',                 height:1.6 },
 };
+// the Barovian prop packs (ChatGPT's, original, src/data/prop-packs.js): fitted to their squares
+for (const [k, p] of Object.entries(PACK_PROPS)) PROP_MODELS[k] = { file:p.file, fit:.96, height:p.ht };
 export const MODEL_CREDIT = 'Props: KayKit (Dungeon Remastered, Halloween Bits, Medieval Hexagon) by Kay Lousberg (kaylousberg.com), CC0';

@@ -240,7 +240,8 @@ function renderPropCard(el){
       <label class="muted">Hidden stash <input class="txt" placeholder="Found with Search — e.g. a false bottom with a key" value="${esc(p.stash?.text || '')}" data-edit="propStash"></label>
       ${p.stash ? `<label class="muted">DC <input class="txt num" type="number" value="${p.stash.dc || 13}" data-edit="propStashDc"></label>${p.stash.found ? ' <span class="chip on">found</span>' : ''}` : ''}
       ${door ? `<div class="muted">Hides a secret door — ${door.state === 'secret' ? 'not yet found' : 'found'}.</div>` : ''}
-      ${p.broken || p.fallen || p.swung || p.open ? `<button class="btn small" data-act="propDo" data-k="repair">↺ Set it back</button>` : ''}</div>`;
+      ${p.broken || p.fallen || p.swung || p.open ? `<button class="btn small" data-act="propDo" data-k="repair">↺ Set it back</button>` : ''}
+      ${PROPS[p.k]?.alt ? `<button class="btn small" data-act="propDo" data-k="swap" title="The same piece, changed">⇄ ${esc(PROPS[PROPS[p.k].alt].n)}</button>` : ''}</div>`;
   }
   const state2 = [p.broken && 'broken', p.fallen && 'toppled', p.swung && 'swung aside', p.open && 'open', p.lock && 'locked'].filter(Boolean).join(' · ');
   el.innerHTML = `<div class="top"><span class="dot" style="color:#c9a246;background:#c9a246"></span><span class="nm">${esc(PROPS[p.k]?.n || p.k)}${state2 ? ` <span class="muted" style="font-size:13px">${esc(state2)}</span>` : ''}</span><button class="btn small" data-act="deselect">✕</button></div>

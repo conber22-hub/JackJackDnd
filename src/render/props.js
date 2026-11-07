@@ -285,7 +285,7 @@ export function buildProp(p){
   if (p.broken){ const s = propSize(p); debris(outer, p, s); outer.position.set(wx(p.x) + (s.w - 1) / 2, 0, wz(p.y) + (s.h - 1) / 2); outer.userData.debris = true; return outer; }
   // a ready-made 3D model when there is one and it's here (render/propmodels.js), the code-drawn prop otherwise
   const g = new THREE.Group(), tpl = propModel(p.k);
-  if (tpl) dressWithModel(g, p, tpl); else (BUILD[p.k] || BUILD.crate)(g, p);
+  if (tpl) dressWithModel(g, p, tpl); else (BUILD[p.k] || BUILD[PROPS[p.k]?.draw] || BUILD.crate)(g, p);   // (a pack's piece without its model: the drawn prop it's closest to)
   g.rotation.y = -(p.rot || 0) * Math.PI / 2;
   outer.userData.openers = g.userData.openers;
   const fl = p.fallen, s = fl ? { w:fl.ow, h:fl.oh } : propSize(p), x0 = fl ? fl.ox : p.x, y0 = fl ? fl.oy : p.y;

@@ -101,7 +101,7 @@ document.addEventListener('click', e => {
     case 'deselect': ui.selDoor = null; ui.selTrap = null; ui.selProp = null; select(null); break;
     case 'selProp': { const who = sel || tokById(ui.myToken); if (who) selectProp(who.floor, +k); } break;
     case 'propDo': { const p = selectedProp(); if (!p) break; const L = ui.selProp.floor;
-      if (k === 'repair'){ snapshot('prop'); editProp(L, p.id, 'repair'); }
+      if (k === 'repair' || k === 'swap'){ snapshot('prop'); editProp(L, p.id, k); }
       else propAction(ui.role === 'player' ? tokById(ui.myToken) : actorFor(L, p), L, p.id, k); } break;
     case 'focus': { const t = sel || tokById(ui.myToken); if (t) focusTile(t.floor, t.x, t.y); else focusFloor(); } break;
     case 'atkMode': ui.atkMode = { normal:'adv', adv:'dis', dis:'normal' }[ui.atkMode]; renderSel(); break;

@@ -1,10 +1,11 @@
+import { PACK_PROPS, PACK_CATS } from './prop-packs.js';
 /* PROPS — furniture and set dressing you can drop on any square (Build tab → Props).
    Props never block sight (walls do that). For movement, minis climb onto low pieces (tables, crates, beds),
    hop fences and go round tall ones (shelves, statues, pillars): see PROP_TOP / PROP_HOP / PROP_BLOCK below.
    A prop sits at x, y (its top-left square), covers w × h squares, and turns
    in quarter turns (rot 0–3). The 3D pieces are built in render/props.js.
    cat groups the palette in the Build tab. */
-export const PROP_CATS = { tavern:'Tavern & house', manor:'Manor & castle', village:'Village', road:'Road & wild', barovia:'Barovia', keep:'Camp & keep', dungeon:'Dungeon', mine:'Mine & cave' };
+export const PROP_CATS = { tavern:'Tavern & house', manor:'Manor & castle', village:'Village', road:'Road & wild', barovia:'Barovia', keep:'Camp & keep', dungeon:'Dungeon', mine:'Mine & cave', ...PACK_CATS };
 
 export const PROPS = {
   // tavern & house
@@ -114,6 +115,8 @@ export const PROPS = {
   fungus:     { n:'Pale fungus',     cat:'mine',    w:1, h:1 },
   puddle:     { n:'Black puddle',    cat:'mine',    w:1, h:1 },
 };
+// the Barovian prop packs (src/data/prop-packs.js): their kinds join the palette, each with the drawn prop it falls back to
+for (const [k, p] of Object.entries(PACK_PROPS)) PROPS[k] = { n:p.n, cat:p.cat, w:p.w, h:p.h, draw:p.draw, ...(p.alt ? { alt:p.alt } : {}) };
 // What an open-air room's ground can be (its `ground`; render/floors.js paints it). Unset: grass, or the road.
 export const GROUNDS = { grass:'Grass', moor:'Rough moor', dirt:'Bare earth', mud:'Mud', cobble:'Cobbles', furrow:'Ploughed furrows', flag:'Flagstones', plank:'Boards' };
 // What a field can be growing (an outdoor room's `crop`; render/floors.js plants it). blight: the Barovian kind.
@@ -150,6 +153,7 @@ export const PROP_HOP = new Set(['fence', 'drystone', 'bedroll', 'garden', 'wood
 export const PROP_BLOCK = new Set(['shelf', 'hearth', 'bookshelf', 'wardrobe', 'statue', 'pillar', 'organ', 'armor', 'banner', 'lamppost', 'signpost', 'candelabra',
   'gravestone', 'shrine', 'cage', 'pine', 'deadtree', 'scarecrow', 'well', 'carriage', 'horse', 'vardo', 'tent', 'hull', 'beam', 'brazier', 'lantern', 'milestone',
   'dollhouse', 'gallows', 'palisade', 'stone', 'watchtower', 'stonewall', 'palgate', 'forge', 'stable', 'coveredwagon']);
+for (const [k, p] of Object.entries(PACK_PROPS)){ if (p.move === 'top') PROP_TOP[k] = p.top ?? .4; else if (p.move === 'hop') PROP_HOP.add(k); else if (p.move === 'block') PROP_BLOCK.add(k); }   // the packs' pieces
 // The squares a prop covers, after turning (a toppled one lies across fw × fh squares).
 export function propSize(p){ if (p.fw) return { w:p.fw, h:p.fh }; const d = PROPS[p.k] || { w:1, h:1 }; return (p.rot || 0) % 2 ? { w:d.h, h:d.w } : { w:d.w, h:d.h }; }
 export function propAt(f, x, y){
