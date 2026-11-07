@@ -123,7 +123,8 @@ function render(){
     <div class="grid3"><label>Level${sel('lvl', Array.from({ length:MAX_LEVEL }, (_, i) => i + 1), h.lvl)}</label>
       <label>Class${sel('cls', Object.keys(CLASSES), h.cls)}</label>
       <label>Colour<input type="color" class="txt" data-cf="color" value="${esc(h.color)}"></label></div>
-    ${subs ? `<div class="grid2"><label>Subclass${sel('sub', [[C.sub, `${C.sub} (wired into the rules)`], ...Object.keys(subs).sort().map(n => [n, `📚 ${n}`])], h.sub && subs[h.sub] ? h.sub : C.sub)}</label><span class="muted" style="align-self:end">${h.sub && subs[h.sub] ? `${esc(subs[h.sub].src)} · its features are on your sheet to read; the DM rules what they do` : ''}</span></div>` : ''}
+    ${subs ? `<div class="grid2"><label>Subclass${sel('sub', [[C.sub, `${C.sub} (${C.manual ? "reference rules" : "wired into the rules"})`], ...Object.keys(subs).sort().map(n => [n, `📚 ${n}`])], h.sub && subs[h.sub] ? h.sub : C.sub)}</label><span class="muted" style="align-self:end">${h.sub && subs[h.sub] ? `${esc(subs[h.sub].src)} · its features are on your sheet to read; the DM rules what they do` : ''}</span></div>` : ''}
+    ${C.manual ? '<div class="muted">Supplemental class: core numbers and selectable features are supported, but special actions and resources may require the DM to resolve them from the source rules.</div>' : ''}
     <div class="muted">${L >= 3 || st.sub ? `Subclass: <b>${esc(st.sub || C.sub)}</b>` : `Subclass at level 3: ${esc(h.sub && subs?.[h.sub] ? h.sub : C.sub)}`} · d${C.hd} hit die · saves ${C.sv.join(', ')}${C.cast ? ` · casts with ${C.cast}` : ''}</div>
     <div class="grid2"><label>Species${selLib('sp', SPECIES, h.sp)}</label>${spOptKey ? `<label>${esc(spOptKey)}${sel('spOpt', spOpts[spOptKey], h.spOpt || spOpts[spOptKey][0])}</label>` : '<span></span>'}</div>
     <div class="muted">${esc([spc.note, spc.subs?.[h.spOpt]?.note].filter(Boolean).join(' · '))}${spc.lib ? ` <i>(${esc(spc.src)})</i>` : ''}</div>

@@ -14,9 +14,12 @@
      items        magic items: { n, rarity, type, attune, text }
    Every entry carries src (the book, or 'Unearthed Arcana' / 'Homebrew') and kind ('canon' | 'ua' | 'homebrew'). */
 import { ABILITIES, SKILLS, CLASSES } from '../data/srd.js';
+import { prismExtraCatalog } from './prism-extra.js';
+// Snapshot the built-in class keys BEFORE a Prism library can extend CLASSES.
+const BUILT_IN_CLASS_NAMES = Object.keys(CLASSES);
 
 export const LIB_VERSION = 1;
-const LETTER = { Bard:'B', Cleric:'C', Druid:'D', Paladin:'P', Ranger:'R', Sorcerer:'S', Warlock:'K', Wizard:'W' };
+const LETTER = { Artificer:'A', Bard:'B', Cleric:'C', Druid:'D', Paladin:'P', Ranger:'R', 'Ranger, Revised':'R', Sorcerer:'S', Warlock:'K', Wizard:'W' };
 const AB = { str:'Str', strength:'Str', dex:'Dex', dexterity:'Dex', con:'Con', constitution:'Con', int:'Int', intelligence:'Int', wis:'Wis', wisdom:'Wis', chr:'Cha', cha:'Cha', charisma:'Cha' };
 const CONDS = ['blinded', 'charmed', 'deafened', 'frightened', 'grappled', 'incapacitated', 'paralyzed', 'petrified', 'poisoned', 'prone', 'restrained', 'stunned', 'unconscious'];
 const SIZE_SQ = { tiny:1, small:1, medium:1, large:2, huge:3, gargantuan:4 };
@@ -178,14 +181,15 @@ function convertItem(x){
 export function convertPrism(raw){
   const d = typeof raw === 'string' ? JSON.parse(raw) : raw;
   if (!d || typeof d !== 'object' || !['spells', 'races', 'monsters', 'feats', 'subclasses'].some(k => Array.isArray(d[k]))) throw new Error('This doesn\'t look like a compendium export (no spells, species, monsters, feats or subclasses in it).');
-  const lib = { v:LIB_VERSION, spells:[], species:{}, backgrounds:{}, feats:{}, subclasses:{}, monsters:[], items:[] };
+  const ext = prismExtraCatalog(d, BUILT_IN_CLASS_NAMES);
+  const lib = { v:LIB_VERSION, spells:[], species:{}, backgrounds:{}, feats:{}, subclasses:{}, monsters:[], items:[], ...ext };
   lib.spells = best(d.spells).map(convertSpell).sort((a, b) => a.l - b.l || a.n.localeCompare(b.n));
   const subsOf = new Map(); for (const s of best(d.subraces)) { const k = nameKey(s.raceName); if (!subsOf.has(k)) subsOf.set(k, []); subsOf.get(k).push(s); }
   for (const x of best(d.races)) lib.species[baseName(x.name)] = convertSpecies(x, subsOf.get(nameKey(x.name)) || []);
   for (const x of best(d.backgrounds)) lib.backgrounds[baseName(x.name)] = convertBackground(x);
   for (const x of best((d.feats || []).filter(f => f.type === 'feat' || f.type === 'fightingStyle'))) lib.feats[baseName(x.name)] = convertFeat(x);
   for (const x of best(d.subclasses)){
-    const cls = baseName(x.className); if (!CLASSES[cls]) continue;   // classes the app doesn't have (Artificer, Blood Hunter…) wait for it
+    const cls = baseName(x.className); if (!CLASSES[cls] && !lib.classes[cls]) continue;   // classes the app doesn't have (Artificer, Blood Hunter…) wait for it
     (lib.subclasses[cls] ||= {})[baseName(x.name)] = convertSubclass(x);
   }
   lib.monsters = best(d.monsters).map(convertMonster);
@@ -199,6 +203,10 @@ export function pickLibrary(lib, kinds = ['canon', 'ua'], have = {}){
   const ok = x => kinds.includes(x.kind), fresh = (set, n) => !set?.has(nameKey(n));
   const obj = (o, set) => Object.fromEntries(Object.entries(o || {}).filter(([n, x]) => ok(x) && fresh(set, n)));
   return { v:lib.v,
+    classes:obj(lib.classes, have.classes),
+    invocations:(lib.invocations || []).filter(x => ok(x) && fresh(have.invocations, x.n)),
+    selectionGroups:(lib.selectionGroups || []).filter(ok),
+    features:(lib.features || []).filter(ok),
     spells:(lib.spells || []).filter(s => ok(s) && fresh(have.spells, s.n)),
     species:obj(lib.species, have.species), backgrounds:obj(lib.backgrounds, have.backgrounds), feats:obj(lib.feats, have.feats),
     subclasses:Object.fromEntries(Object.entries(lib.subclasses || {}).map(([c, subs]) => [c, obj(subs, have.subclasses)])),
@@ -208,13 +216,16 @@ export function pickLibrary(lib, kinds = ['canon', 'ua'], have = {}){
 // How much of each there is (for the import card): { spells:n, species:n… } and the kinds present.
 export function libCounts(lib){
   const n = v => Array.isArray(v) ? v.length : Object.keys(v || {}).length;
-  return { spells:n(lib.spells), species:n(lib.species), backgrounds:n(lib.backgrounds), feats:n(lib.feats),
+  return { classes:n(lib.classes), invocations:n(lib.invocations), selectionGroups:n(lib.selectionGroups), features:n(lib.features),
+    spells:n(lib.spells), species:n(lib.species), backgrounds:n(lib.backgrounds), feats:n(lib.feats),
     subclasses:Object.values(lib.subclasses || {}).reduce((a, s) => a + n(s), 0), monsters:n(lib.monsters), items:n(lib.items) };
 }
 export function kindCounts(lib){
-  const all = [...(lib.spells || []), ...Object.values(lib.species || {}), ...Object.values(lib.backgrounds || {}), ...Object.values(lib.feats || {}),
+  const all = [...Object.values(lib.classes || {}), ...(lib.invocations || []), ...(lib.features || []), ...(lib.selectionGroups || []),
+    ...(lib.spells || []), ...Object.values(lib.species || {}), ...Object.values(lib.backgrounds || {}), ...Object.values(lib.feats || {}),
     ...Object.values(lib.subclasses || {}).flatMap(o => Object.values(o)), ...(lib.monsters || []), ...(lib.items || [])];
   const c = { canon:0, ua:0, homebrew:0 }; for (const x of all) c[x.kind] = (c[x.kind] || 0) + 1; return c;
 }
 // The part a player's character creator needs (no monsters, no magic items).
-export const creatorPart = lib => ({ v:lib.v, spells:lib.spells, species:lib.species, backgrounds:lib.backgrounds, feats:lib.feats, subclasses:lib.subclasses, monsters:[], items:[] });
+export const creatorPart = lib => ({ v:lib.v, classes:lib.classes || {}, invocations:lib.invocations || [], selectionGroups:lib.selectionGroups || [],
+  features:lib.features || [], spells:lib.spells, species:lib.species, backgrounds:lib.backgrounds, feats:lib.feats, subclasses:lib.subclasses, monsters:[], items:[] });

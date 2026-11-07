@@ -12,7 +12,7 @@ const lower = a => a.toLowerCase();
 
 export function newHero(cls = 'Fighter'){
   const C = CLASSES[cls];
-  return { id:uid(), v:1, name:'', player:'', lvl:1, cls, sp:'Human', spOpt:null, sub:null, bg:'Soldier', bg2:'Str', bg1:'Con',
+  return { id:uid(), v:1, name:'', player:'', lvl:1, cls, sp:'Human', spOpt:null, sub:C.lib ? C.sub : null, bg:'Soldier', bg2:'Str', bg1:'Con',
     ab:{ ...C.arr }, method:'standard', asi:{}, skills:C.skills[1].slice(0, C.skills[0]), expert:[], extraSkill:'Perception',
     armor:C.armor?.startsWith('heavy') ? 'Chain Mail' : C.armor?.startsWith('medium') ? 'Scale Mail' : C.armor === 'light' || C.armor?.startsWith('light') ? 'Leather' : 'None',
     shield:/shield/.test(C.armor || ''), weapons:cls === 'Fighter' ? ['Longsword', 'Javelin'] : [], style:'Defense', invoc:'Agonizing Blast', spells:[],

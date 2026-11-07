@@ -5,7 +5,7 @@
    creator's part, packed, once per version).
    The app's own entries always win a name clash: they're the ones the rules are wired to. */
 import { get, set, del } from 'idb-keyval';
-import { SPELLS, SPECIES, BACKGROUNDS, FEATS, CLASSES, SUBCLASSES } from '../data/srd.js';
+import { SPELLS, SPECIES, BACKGROUNDS, FEATS, CLASSES, SUBCLASSES, INVOCATIONS } from '../data/srd.js';
 import { bestList, setLibraryBestiary, rebuildBestiary } from '../data/bestiary.js';
 import { convertPrism, pickLibrary, libCounts, kindCounts, creatorPart, nameKey } from '../engine/library.js';
 import { state } from '../engine/state.js';
@@ -17,8 +17,11 @@ const KEY = 'dreaddelve.library.v1', TABLE_KEY = 'dreaddelve.tablelibrary.v1';
 // What the app has of its own (read before anything is merged in).
 const BUILT_IN = {
   spells:new Set(SPELLS.map(s => nameKey(s.n))), species:new Set(Object.keys(SPECIES).map(nameKey)), backgrounds:new Set(Object.keys(BACKGROUNDS).map(nameKey)),
-  feats:new Set(Object.keys(FEATS).map(nameKey)), subclasses:new Set(Object.values(CLASSES).map(c => nameKey(c.sub))), monsters:new Set(bestList().map(b => nameKey(b.name))),
+  feats:new Set(Object.keys(FEATS).map(nameKey)), classes:new Set(Object.keys(CLASSES).map(nameKey)),
+  invocations:new Set(INVOCATIONS.map(nameKey)),
+  subclasses:new Set(Object.values(CLASSES).map(c => nameKey(c.sub))), monsters:new Set(bestList().map(b => nameKey(b.name))),
 };
+const BASE_INVOCATIONS = [...INVOCATIONS];
 // mine: the DM's own import { lib, kinds, name, at, hash } · table: what a player got from their DM's table { part, hash }
 const L = { mine:null, table:null, bundled:null, bundledError:null, applied:null, hash:'', ready:false, listeners:new Set() };
 export const libraryState = () => L;
@@ -33,8 +36,12 @@ function merge(pick){
   for (let i = SPELLS.length - 1; i >= 0; i--) if (SPELLS[i].lib) SPELLS.splice(i, 1);
   for (const T of [SPECIES, BACKGROUNDS, FEATS]) for (const k of Object.keys(T)) if (T[k]?.lib) delete T[k];
   for (const k of Object.keys(SUBCLASSES)) delete SUBCLASSES[k];
+  for (const k of Object.keys(CLASSES)) if (CLASSES[k]?.lib) delete CLASSES[k];
+  INVOCATIONS.splice(0, INVOCATIONS.length, ...BASE_INVOCATIONS);
   if (pick){
     SPELLS.push(...pick.spells);
+    Object.assign(CLASSES, pick.classes || {});
+    for (const invocation of pick.invocations || []) if (!INVOCATIONS.includes(invocation.n)) INVOCATIONS.push(invocation.n);
     Object.assign(SPECIES, pick.species); Object.assign(BACKGROUNDS, pick.backgrounds); Object.assign(FEATS, pick.feats);
     for (const [c, subs] of Object.entries(pick.subclasses || {})) if (Object.keys(subs).length) SUBCLASSES[c] = subs;
   }
@@ -109,6 +116,10 @@ export function lookUp(q, { max = 40, creatures = true } = {}){
   const add = (kind, n, sub, text) => { const k = kind + '|' + n; if (out.length < max && !seen.has(k) && hit(n)){ seen.add(k); out.push({ kind, n, sub, text }); } };
   for (const s of SPELLS) add('Spell', s.n, `${s.l ? `Level ${s.l}` : 'Cantrip'} ${s.school || ''} · ${s.src || ''}`, [`${s.time || ''} · ${s.range || ''} · ${s.comp || ''} · ${s.dur || ''}`, s.text || s.note || '', s.hl && `Higher levels. ${s.hl}`].filter(Boolean).join('\n\n'));
   for (const i of [...MAGIC_ITEMS, ...(lib?.items || [])]) add('Magic item', i.n, `${i.rarity} ${i.type}${i.attune ? ` · ${i.attune}` : ''} · ${i.src}`, i.text);
+  for (const [n, c] of Object.entries(lib?.classes || {})) add('Class', n, `${c.src || ''} · d${c.hd || 8}`, [c.text || '', Object.entries(c.features || {}).filter(([,fs]) => fs.length).map(([lv,fs]) => `Level ${lv}: ${fs.join(', ')}`).join('\n')].join('\n\n'));
+  for (const i of lib?.invocations || []) add('Invocation', i.n, `Level ${i.level || 0} · ${i.src || ''}`, i.text || '');
+  for (const g of lib?.selectionGroups || []) add('Option group', g.n, g.src || '', [g.text, ...(g.items || [])].filter(Boolean).join('\n'));
+  for (const f of lib?.features || []) if (f.text) add('Feature', f.n, `${f.type || ''} · ${f.src || ''}`, f.text);
   for (const [n, f] of Object.entries(FEATS)) if (n !== 'Other') add('Feat', n, [f.cat, f.src].filter(Boolean).join(' · '), [f.req && f.req !== 'None' ? `Prerequisite: ${f.req}` : '', f.text].filter(Boolean).join('\n\n'));
   for (const [n, t] of Object.entries(FEATURES)) add('Class feature', n, 'SRD 5.2.1', t);
   if (creatures) for (const b of bestList()) add('Creature', b.name, `CR ${b.cr} · AC ${b.ac} · HP ${b.hp}${b.src ? ` · ${b.src}` : b.fam === 'srd' ? ' · SRD 5.2.1' : ''}`,
@@ -122,6 +133,9 @@ export function lookUp(q, { max = 40, creatures = true } = {}){
 export function textOf(name){
   const lib = L.mine?.lib || L.table?.part || L.bundled?.lib; if (!lib || !name) return '';
   const k = nameKey(name);
+  for (const c of Object.values(lib.classes || {})) for (const [n, v] of Object.entries(c.texts || {})) if (nameKey(n) === k) return v;
+  for (const v of lib.invocations || []) if (nameKey(v.n) === k) return v.text || '';
+  for (const f of lib.features || []) if (nameKey(f.n) === k && f.text) return f.text;
   for (const s of Object.values(lib.species || {})) for (const f of s.feats || []) if (nameKey(f.n) === k) return f.text;
   for (const subs of Object.values(lib.subclasses || {})) for (const s of Object.values(subs)) for (const [n, t] of Object.entries(s.texts || {})) if (nameKey(n) === k) return t;
   for (const [n, f] of Object.entries(lib.feats || {})) if (nameKey(n) === k) return f.text;
