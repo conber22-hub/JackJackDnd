@@ -1,0 +1,616 @@
+{
+  "models": [
+    {
+      "id": "rut-shoulder",
+      "triangles": 228,
+      "meshes": 2,
+      "bounds": [
+        -0.5646052360534668,
+        0,
+        -0.8999999761581421,
+        0.5646052360534668,
+        0.17046116292476654,
+        0.8999999761581421
+      ]
+    },
+    {
+      "id": "eroded-verge",
+      "triangles": 144,
+      "meshes": 2,
+      "bounds": [
+        -0.5070846080780029,
+        0,
+        -0.9801561236381531,
+        0.5070846080780029,
+        0.3437735140323639,
+        0.9801561236381531
+      ]
+    },
+    {
+      "id": "split-path",
+      "triangles": 208,
+      "meshes": 2,
+      "bounds": [
+        -0.8335747718811035,
+        0,
+        -0.8398343920707703,
+        0.8335747718811035,
+        0.18323147296905518,
+        0.8398343920707703
+      ]
+    },
+    {
+      "id": "road-footpath",
+      "triangles": 180,
+      "meshes": 1,
+      "bounds": [
+        -0.48575055599212646,
+        0,
+        -0.8463085889816284,
+        0.48575055599212646,
+        0.10247597843408585,
+        0.8463085889816284
+      ]
+    },
+    {
+      "id": "ditch-cut",
+      "triangles": 212,
+      "meshes": 2,
+      "bounds": [
+        -0.5601176023483276,
+        0,
+        -0.9156378507614136,
+        0.5601176023483276,
+        0.22038695216178894,
+        0.9156378507614136
+      ]
+    },
+    {
+      "id": "cobble-fade",
+      "triangles": 240,
+      "meshes": 2,
+      "bounds": [
+        -0.42825353145599365,
+        0,
+        -0.6972727179527283,
+        0.42825353145599365,
+        0.12025738507509232,
+        0.6972727179527283
+      ]
+    },
+    {
+      "id": "chipped-mile",
+      "triangles": 88,
+      "meshes": 3,
+      "bounds": [
+        -0.3967522382736206,
+        0,
+        -0.2250538468360901,
+        0.3967522382736206,
+        1.2076845169067383,
+        0.2250538468360901
+      ]
+    },
+    {
+      "id": "cairn",
+      "triangles": 132,
+      "meshes": 2,
+      "bounds": [
+        -0.4051089286804199,
+        0,
+        -0.3134763538837433,
+        0.4051089286804199,
+        0.96923828125,
+        0.3134763538837433
+      ]
+    },
+    {
+      "id": "blazed-snag",
+      "triangles": 72,
+      "meshes": 3,
+      "bounds": [
+        -0.3630945384502411,
+        0,
+        -0.2246614247560501,
+        0.3630945384502411,
+        1.6391066312789917,
+        0.2246614247560501
+      ]
+    },
+    {
+      "id": "crooked-sign",
+      "triangles": 84,
+      "meshes": 3,
+      "bounds": [
+        -0.5606662631034851,
+        0,
+        -0.09000000357627869,
+        0.5606662631034851,
+        1.664113163948059,
+        0.09000000357627869
+      ]
+    },
+    {
+      "id": "moved-marker",
+      "triangles": 76,
+      "meshes": 3,
+      "bounds": [
+        -0.6423200368881226,
+        0,
+        -0.3268781900405884,
+        0.6423200368881226,
+        0.8950783610343933,
+        0.3268781900405884
+      ]
+    },
+    {
+      "id": "lantern-crook",
+      "triangles": 128,
+      "meshes": 3,
+      "bounds": [
+        -0.37385648488998413,
+        0,
+        -0.1414213627576828,
+        0.37385648488998413,
+        1.9519615173339844,
+        0.1414213627576828
+      ]
+    },
+    {
+      "id": "bridge-wing",
+      "triangles": 144,
+      "meshes": 2,
+      "bounds": [
+        -0.6846410036087036,
+        0,
+        -0.8256436586380005,
+        0.6846410036087036,
+        1.0534462928771973,
+        0.8256436586380005
+      ]
+    },
+    {
+      "id": "ford-stones",
+      "triangles": 100,
+      "meshes": 1,
+      "bounds": [
+        -0.4312452971935272,
+        0,
+        -1.0552372932434082,
+        0.4312452971935272,
+        0.25697511434555054,
+        1.0552372932434082
+      ]
+    },
+    {
+      "id": "raised-planks",
+      "triangles": 168,
+      "meshes": 2,
+      "bounds": [
+        -0.5506880879402161,
+        0,
+        -0.8700000047683716,
+        0.5506880879402161,
+        0.35824406147003174,
+        0.8700000047683716
+      ]
+    },
+    {
+      "id": "culvert-mouth",
+      "triangles": 160,
+      "meshes": 3,
+      "bounds": [
+        -1.2191637754440308,
+        0,
+        -0.33914175629615784,
+        1.2191637754440308,
+        1.0149999856948853,
+        0.33914175629615784
+      ]
+    },
+    {
+      "id": "washed-bank",
+      "triangles": 236,
+      "meshes": 2,
+      "bounds": [
+        -0.5590498447418213,
+        0,
+        -0.9646327495574951,
+        0.5590498447418213,
+        0.394108384847641,
+        0.9646327495574951
+      ]
+    },
+    {
+      "id": "flood-gauge",
+      "triangles": 132,
+      "meshes": 3,
+      "bounds": [
+        -0.5453107357025146,
+        0,
+        -0.671483039855957,
+        0.5453107357025146,
+        1.5092172622680664,
+        0.671483039855957
+      ]
+    },
+    {
+      "id": "wayside-shrine",
+      "triangles": 124,
+      "meshes": 4,
+      "bounds": [
+        -0.75,
+        0,
+        -0.6363961100578308,
+        0.75,
+        2.375,
+        0.6363961100578308
+      ]
+    },
+    {
+      "id": "abandoned-camp",
+      "triangles": 280,
+      "meshes": 5,
+      "bounds": [
+        -1.1225403547286987,
+        0,
+        -0.7061053514480591,
+        1.1225403547286987,
+        0.6899999976158142,
+        0.7061053514480591
+      ]
+    },
+    {
+      "id": "wagon-pullout",
+      "triangles": 188,
+      "meshes": 4,
+      "bounds": [
+        -1.3078343868255615,
+        0,
+        -0.7888908386230469,
+        1.3078343868255615,
+        1.0391583442687988,
+        0.7888908386230469
+      ]
+    },
+    {
+      "id": "charcoal-shelter",
+      "triangles": 320,
+      "meshes": 2,
+      "bounds": [
+        -1.0125832557678223,
+        0,
+        -0.7950371503829956,
+        1.0125832557678223,
+        1.9409842491149902,
+        0.7950371503829956
+      ]
+    },
+    {
+      "id": "roadside-ruin",
+      "triangles": 152,
+      "meshes": 2,
+      "bounds": [
+        -0.925000011920929,
+        0,
+        -0.80858314037323,
+        0.925000011920929,
+        0.8899999856948853,
+        0.80858314037323
+      ]
+    },
+    {
+      "id": "toll-remnant",
+      "triangles": 152,
+      "meshes": 4,
+      "bounds": [
+        -1.022672176361084,
+        0,
+        -0.18571066856384277,
+        1.022672176361084,
+        2.034072160720825,
+        0.18571066856384277
+      ]
+    },
+    {
+      "id": "root-opening",
+      "triangles": 480,
+      "meshes": 4,
+      "bounds": [
+        -2.0076162815093994,
+        0,
+        -0.759857177734375,
+        2.0076162815093994,
+        2.8986408710479736,
+        0.759857177734375
+      ]
+    },
+    {
+      "id": "overgrown-steps",
+      "triangles": 290,
+      "meshes": 4,
+      "bounds": [
+        -1.084071397781372,
+        0,
+        -0.8396721482276917,
+        1.084071397781372,
+        0.8059596419334412,
+        0.8396721482276917
+      ]
+    },
+    {
+      "id": "broken-wall",
+      "triangles": 164,
+      "meshes": 1,
+      "bounds": [
+        -1.444461703300476,
+        0,
+        -0.3901388943195343,
+        1.444461703300476,
+        0.888740599155426,
+        0.3901388943195343
+      ]
+    },
+    {
+      "id": "cut-fence",
+      "triangles": 172,
+      "meshes": 2,
+      "bounds": [
+        -1.2560666799545288,
+        0,
+        -0.345330148935318,
+        1.2560666799545288,
+        1.0390684604644775,
+        0.345330148935318
+      ]
+    },
+    {
+      "id": "cloth-marker",
+      "triangles": 68,
+      "meshes": 3,
+      "bounds": [
+        -0.3375070095062256,
+        0,
+        -0.1375858187675476,
+        0.3375070095062256,
+        1.3060534000396729,
+        0.1375858187675476
+      ]
+    },
+    {
+      "id": "lantern-recess",
+      "triangles": 120,
+      "meshes": 4,
+      "bounds": [
+        -0.619280219078064,
+        0,
+        -0.30274975299835205,
+        0.619280219078064,
+        1.351305603981018,
+        0.30274975299835205
+      ]
+    },
+    {
+      "id": "moss-scout",
+      "triangles": 272,
+      "meshes": 3,
+      "bounds": [
+        -0.6431005001068115,
+        0,
+        -0.759857177734375,
+        0.6431005001068115,
+        0.48217663168907166,
+        0.759857177734375
+      ]
+    },
+    {
+      "id": "moss-stump",
+      "triangles": 254,
+      "meshes": 4,
+      "bounds": [
+        -0.6628892421722412,
+        0,
+        -0.759857177734375,
+        0.6628892421722412,
+        0.8089224100112915,
+        0.759857177734375
+      ]
+    },
+    {
+      "id": "moss-cradle",
+      "triangles": 450,
+      "meshes": 3,
+      "bounds": [
+        -0.826451301574707,
+        0,
+        -0.759857177734375,
+        0.826451301574707,
+        1.2927449941635132,
+        0.759857177734375
+      ]
+    },
+    {
+      "id": "moss-fan",
+      "triangles": 636,
+      "meshes": 3,
+      "bounds": [
+        -0.826451301574707,
+        0,
+        -0.9037383794784546,
+        0.826451301574707,
+        1.6428191661834717,
+        0.9037383794784546
+      ]
+    },
+    {
+      "id": "moss-crown",
+      "triangles": 1088,
+      "meshes": 4,
+      "bounds": [
+        -1.4116672277450562,
+        0,
+        -0.9649721384048462,
+        1.4116672277450562,
+        2.6045501232147217,
+        0.9649721384048462
+      ]
+    },
+    {
+      "id": "moss-husk",
+      "triangles": 642,
+      "meshes": 5,
+      "bounds": [
+        -0.826451301574707,
+        0,
+        -0.9037383794784546,
+        0.826451301574707,
+        2.0027363300323486,
+        0.9037383794784546
+      ]
+    }
+  ],
+  "shortcut": {
+    "before": 8,
+    "after": 6,
+    "legs": [
+      {
+        "from": "trail:r-winery:junction",
+        "edge": "trail:r-winery:way-3",
+        "to": "trail:r-winery:first",
+        "hours": 1.5
+      },
+      {
+        "from": "trail:r-winery:first",
+        "edge": "trail:r-winery:way-5",
+        "to": "trail:r-winery:right",
+        "hours": 1
+      },
+      {
+        "from": "trail:r-winery:right",
+        "edge": "trail:r-winery:way-6",
+        "to": "krezk",
+        "hours": 1.5
+      }
+    ]
+  },
+  "nativeRenderer": true,
+  "threeRevision": "169",
+  "views": [
+    {
+      "mode": "fork",
+      "view": "forward",
+      "width": 1280,
+      "seed": "road-watches-01",
+      "assets": 27,
+      "opening": true,
+      "weather": "Vallaki–Krezk fork · road-watches-01 · forward · 27 assets · fork reached"
+    },
+    {
+      "mode": "fork",
+      "view": "reverse",
+      "width": 1280,
+      "seed": "road-watches-01",
+      "assets": 27,
+      "opening": true,
+      "weather": "Vallaki–Krezk fork · road-watches-01 · reverse · 27 assets · fork reached"
+    },
+    {
+      "mode": "woods",
+      "view": "forward",
+      "width": 1280,
+      "seed": "road-watches-01",
+      "assets": 23,
+      "opening": false,
+      "weather": "Svalich Woods side trail · road-watches-01 · forward · 23 assets · unreached fork; no openings shown"
+    },
+    {
+      "mode": "woods",
+      "view": "reverse",
+      "width": 1280,
+      "seed": "road-watches-01",
+      "assets": 23,
+      "opening": false,
+      "weather": "Svalich Woods side trail · road-watches-01 · reverse · 23 assets · unreached fork; no openings shown"
+    },
+    {
+      "mode": "berez",
+      "view": "forward",
+      "width": 1280,
+      "seed": "road-watches-01",
+      "assets": 23,
+      "opening": false,
+      "weather": "Wet crossing near Berez · road-watches-01 · forward · 23 assets · unreached fork; no openings shown"
+    },
+    {
+      "mode": "berez",
+      "view": "reverse",
+      "width": 1280,
+      "seed": "road-watches-01",
+      "assets": 23,
+      "opening": false,
+      "weather": "Wet crossing near Berez · road-watches-01 · reverse · 23 assets · unreached fork; no openings shown"
+    },
+    {
+      "mode": "fork",
+      "view": "forward",
+      "width": 390,
+      "seed": "road-watches-01",
+      "assets": 27,
+      "opening": true,
+      "weather": "Vallaki–Krezk fork · road-watches-01 · forward · 27 assets · fork reached"
+    },
+    {
+      "mode": "fork",
+      "view": "reverse",
+      "width": 390,
+      "seed": "road-watches-01",
+      "assets": 27,
+      "opening": true,
+      "weather": "Vallaki–Krezk fork · road-watches-01 · reverse · 27 assets · fork reached"
+    },
+    {
+      "mode": "woods",
+      "view": "forward",
+      "width": 390,
+      "seed": "road-watches-01",
+      "assets": 23,
+      "opening": false,
+      "weather": "Svalich Woods side trail · road-watches-01 · forward · 23 assets · unreached fork; no openings shown"
+    },
+    {
+      "mode": "woods",
+      "view": "reverse",
+      "width": 390,
+      "seed": "road-watches-01",
+      "assets": 23,
+      "opening": false,
+      "weather": "Svalich Woods side trail · road-watches-01 · reverse · 23 assets · unreached fork; no openings shown"
+    },
+    {
+      "mode": "berez",
+      "view": "forward",
+      "width": 390,
+      "seed": "road-watches-01",
+      "assets": 23,
+      "opening": false,
+      "weather": "Wet crossing near Berez · road-watches-01 · forward · 23 assets · unreached fork; no openings shown"
+    },
+    {
+      "mode": "berez",
+      "view": "reverse",
+      "width": 390,
+      "seed": "road-watches-01",
+      "assets": 23,
+      "opening": false,
+      "weather": "Wet crossing near Berez · road-watches-01 · reverse · 23 assets · unreached fork; no openings shown"
+    }
+  ],
+  "unknownBook": {
+    "places": [],
+    "roads": []
+  },
+  "errors": [],
+  "physicalDevice": false,
+  "deviceNote": "390×844 Chromium viewport; no physical phone tested.",
+  "renderer": "WebKit WebGL"
+}
