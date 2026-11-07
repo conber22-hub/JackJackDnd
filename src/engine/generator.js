@@ -5,6 +5,7 @@
    Pure: no DOM, no Three.js. */
 import { mulberry32, hashSeed, pickWeighted, pick, clamp } from '../util/core.js';
 import { THEMES, TEMPLATES, themeIndex } from '../data/themes.js';
+import { BLUE_WATER_INN, blueWaterInnPlan } from '../data/blue-water-inn.js';
 import { ROOM_NAMES } from '../data/rooms.js';
 import { BEST } from '../data/bestiary.js';
 import { T, walk } from './tiles.js';
@@ -590,7 +591,11 @@ function hoardsFor(f, plan, g, opts){
    floor's way down meets the next one's way up (the app's floors run downwards). meta.interior: { kind, w, h, seed,
    name }. → floor specs; interiorGround(meta.interior) says which of them is the ground floor (where the door is). */
 const INTERIOR_LOOK = { tavern:'tavern', shop:'tavern', longhouse:'tavern', hall:'tavern', church:'chapel', windmill:'mill', barn:'mill', tower:'castle' };
-export function interiorPlan(it){ const p = interior(it.kind, { w:it.w, h:it.h, seed:it.seed, name:it.name }); return { floors:[...p.floors].reverse(), order:[...p.order].reverse(), name:p.name }; }
+export function interiorPlan(it){
+  if (it.kind === 'tavern' && it.name === BLUE_WATER_INN) return blueWaterInnPlan(true);
+  const p = interior(it.kind, { w:it.w, h:it.h, seed:it.seed, name:it.name });
+  return { floors:[...p.floors].reverse(), order:[...p.order].reverse(), name:p.name };
+}
 export function interiorSpecs(it){
   const p = interiorPlan(it);
   return p.floors.map((lay, i) => ({ layout:lay, theme:p.order[i] === 'cellar' ? 'cellar' : INTERIOR_LOOK[it.kind] || 'manor' }));

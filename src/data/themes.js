@@ -4,6 +4,7 @@
    cave: 0–1: the floor is dug, not built (engine/caves.js), and this ragged; its walls are drawn as heaped rock.
    denizens: encounter groups the "Populate" button and templates drop into matching rooms.
      where = room types it likes · group = [[creature id, count or dice], ...] */
+import { BLUE_WATER_INN, blueWaterInnPlan } from './blue-water-inn.js';
 import { SALT_ROAD } from './session0.js';
 
 export const THEMES = [
@@ -228,6 +229,8 @@ export const TEMPLATES = [
     floors:[{ theme:'chapel', rooms:.8, doors:.6 }, { theme:'undercroft', secret:.15 }, { theme:'silver' }, { theme:'hands', secret:.25 }, { theme:'undertow', doors:.15 }] },
   { id:'saltroad', name:'Session 0 — The Salt Road', blurb:'Session 0: the Lantern & Ladle tavern, the village of Hollin\'s Ford, and the Old Salt Road out to where the salt carriage went over — and where the mists begin. Hand-built maps with furniture.', campaign:true,
     floors:[{ theme:'tavern', layout:SALT_ROAD.tavern }, { theme:'village', layout:SALT_ROAD.village }, { theme:'woods', layout:SALT_ROAD.road }] },
+  { id:'blue-water-inn', name:BLUE_WATER_INN, blurb:'The Vallaki inn, from the front porch and taproom to the stable yard and rooms upstairs.', campaign:true,
+    floors:blueWaterInnPlan().floors.map(layout => ({ theme:'tavern', layout })) },
   { id:'blank', name:'Blank stone (build by hand)', blurb:'One landing room per floor and nothing else. Draw rooms, corridors, doors and traps yourself in the Build tab.',
     floors:[{ blank:true }, { blank:true }, { blank:true }] },
 ];
