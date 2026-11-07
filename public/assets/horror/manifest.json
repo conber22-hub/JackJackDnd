@@ -1,0 +1,1590 @@
+{
+  "pack": "Barovia IV — The Road Watches",
+  "version": "4.0",
+  "coordinates": "1 unit = 5 feet; +Y up; N=-Z",
+  "assetCount": 43,
+  "integration": "visual_only; use existing Dread Delve road/grid data for passability",
+  "assets": [
+    {
+      "id": "last_light_inn",
+      "file": "assets/last_light_inn.glb",
+      "category": "structure",
+      "biome": "roadside",
+      "near": [
+        "crossroads",
+        "village",
+        "vallaki",
+        "bonegrinder",
+        "winery",
+        "gates"
+      ],
+      "footprint": [
+        5,
+        4
+      ],
+      "height": 2.605,
+      "bounds": [
+        [
+          -2.04,
+          -0.005,
+          -1.745
+        ],
+        [
+          2.785,
+          2.605,
+          1.71
+        ]
+      ],
+      "parts": 63,
+      "drawCalls": 13,
+      "bytes": 27136,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "The lone warm window is occupied by a silhouette that never shifts."
+    },
+    {
+      "id": "plague_tollhouse",
+      "file": "assets/plague_tollhouse.glb",
+      "category": "structure",
+      "biome": "roadside",
+      "near": [
+        "crossroads",
+        "village",
+        "vallaki",
+        "bonegrinder",
+        "winery",
+        "gates"
+      ],
+      "footprint": [
+        4,
+        4
+      ],
+      "height": 3.1,
+      "bounds": [
+        [
+          -1.49,
+          -0.01,
+          -1.395
+        ],
+        [
+          1.883,
+          3.1,
+          1.36
+        ]
+      ],
+      "parts": 61,
+      "drawCalls": 13,
+      "bytes": 27956,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "The tax ledger lists yesterday in a hand that died decades ago."
+    },
+    {
+      "id": "shuttered_farmhouse",
+      "file": "assets/shuttered_farmhouse.glb",
+      "category": "structure",
+      "biome": "roadside",
+      "near": [
+        "crossroads",
+        "village",
+        "vallaki",
+        "bonegrinder",
+        "winery",
+        "gates"
+      ],
+      "footprint": [
+        4,
+        4
+      ],
+      "height": 2.405,
+      "bounds": [
+        [
+          -1.89,
+          -0.009,
+          -1.645
+        ],
+        [
+          1.89,
+          2.405,
+          1.693
+        ]
+      ],
+      "parts": 61,
+      "drawCalls": 11,
+      "bytes": 25640,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "Every window is boarded from the inside, except one."
+    },
+    {
+      "id": "drowned_waychapel",
+      "file": "assets/drowned_waychapel.glb",
+      "category": "structure",
+      "biome": "marsh",
+      "near": [
+        "berez",
+        "tser",
+        "tower"
+      ],
+      "footprint": [
+        4,
+        5
+      ],
+      "height": 3.32,
+      "bounds": [
+        [
+          -1.59,
+          -0.02,
+          -1.945
+        ],
+        [
+          1.59,
+          3.32,
+          2.464
+        ]
+      ],
+      "parts": 64,
+      "drawCalls": 12,
+      "bytes": 28228,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "Candles burn in water that reaches the pews."
+    },
+    {
+      "id": "wolves_watchtower",
+      "file": "assets/wolves_watchtower.glb",
+      "category": "structure",
+      "biome": "forest",
+      "near": [
+        "crossroads",
+        "bonegrinder",
+        "coffin",
+        "tser",
+        "lake",
+        "yester"
+      ],
+      "footprint": [
+        3,
+        3
+      ],
+      "height": 4.94,
+      "bounds": [
+        [
+          -1.35,
+          -0.003,
+          -1.35
+        ],
+        [
+          1.35,
+          4.94,
+          1.35
+        ]
+      ],
+      "parts": 30,
+      "drawCalls": 5,
+      "bytes": 13704,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "The watch platform creaks under footsteps no one can see."
+    },
+    {
+      "id": "burned_coach_stable",
+      "file": "assets/burned_coach_stable.glb",
+      "category": "structure",
+      "biome": "roadside",
+      "near": [
+        "crossroads",
+        "village",
+        "vallaki",
+        "bonegrinder",
+        "winery",
+        "gates"
+      ],
+      "footprint": [
+        5,
+        4
+      ],
+      "height": 2.06,
+      "bounds": [
+        [
+          -2.34,
+          -0.013,
+          -1.595
+        ],
+        [
+          2.34,
+          2.06,
+          1.56
+        ]
+      ],
+      "parts": 59,
+      "drawCalls": 10,
+      "bytes": 24928,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "Every stall has a name. No horse is left."
+    },
+    {
+      "id": "hunter_hideout",
+      "file": "assets/hunter_hideout.glb",
+      "category": "structure",
+      "biome": "forest",
+      "near": [
+        "crossroads",
+        "bonegrinder",
+        "coffin",
+        "tser",
+        "lake",
+        "yester"
+      ],
+      "footprint": [
+        3,
+        3
+      ],
+      "height": 1.905,
+      "bounds": [
+        [
+          -1.39,
+          -0.019,
+          -1.395
+        ],
+        [
+          1.39,
+          1.905,
+          1.36
+        ]
+      ],
+      "parts": 44,
+      "drawCalls": 9,
+      "bytes": 19820,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "A blind made of branches overlooks the road. Its keeper is missing."
+    },
+    {
+      "id": "bellkeeper_hut",
+      "file": "assets/bellkeeper_hut.glb",
+      "category": "structure",
+      "biome": "village",
+      "near": [
+        "village",
+        "vallaki",
+        "krezk",
+        "gates"
+      ],
+      "footprint": [
+        3,
+        3
+      ],
+      "height": 2.005,
+      "bounds": [
+        [
+          -1.24,
+          -0.017,
+          -1.22
+        ],
+        [
+          1.24,
+          2.005,
+          1.185
+        ]
+      ],
+      "parts": 57,
+      "drawCalls": 11,
+      "bytes": 24952,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "The little bell rings when every other bell is silent."
+    },
+    {
+      "id": "hollow_granary",
+      "file": "assets/hollow_granary.glb",
+      "category": "structure",
+      "biome": "farmland",
+      "near": [
+        "winery",
+        "krezk",
+        "vallaki"
+      ],
+      "footprint": [
+        4,
+        3
+      ],
+      "height": 3.4,
+      "bounds": [
+        [
+          -1.64,
+          0.0,
+          -1.295
+        ],
+        [
+          1.64,
+          3.4,
+          1.26
+        ]
+      ],
+      "parts": 61,
+      "drawCalls": 10,
+      "bytes": 24900,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "The grain is all gone, but the floor still shifts."
+    },
+    {
+      "id": "abandoned_guard_post",
+      "file": "assets/abandoned_guard_post.glb",
+      "category": "structure",
+      "biome": "roadside",
+      "near": [
+        "crossroads",
+        "village",
+        "vallaki",
+        "bonegrinder",
+        "winery",
+        "gates"
+      ],
+      "footprint": [
+        3,
+        3
+      ],
+      "height": 2.105,
+      "bounds": [
+        [
+          -1.29,
+          -0.015,
+          -1.295
+        ],
+        [
+          1.29,
+          2.105,
+          1.26
+        ]
+      ],
+      "parts": 57,
+      "drawCalls": 11,
+      "bytes": 24624,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "The last sentry scratched warnings where visitors could not see."
+    },
+    {
+      "id": "forgotten_crypt_entry",
+      "file": "assets/forgotten_crypt_entry.glb",
+      "category": "structure",
+      "biome": "graveyard",
+      "near": [
+        "village",
+        "crossroads",
+        "argyn",
+        "castle"
+      ],
+      "footprint": [
+        3,
+        3
+      ],
+      "height": 2.455,
+      "bounds": [
+        [
+          -1.34,
+          -0.014,
+          -1.395
+        ],
+        [
+          1.34,
+          2.455,
+          1.36
+        ]
+      ],
+      "parts": 46,
+      "drawCalls": 10,
+      "bytes": 21544,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "Scratches run up the *outside* of the crypt door."
+    },
+    {
+      "id": "root_swallowed_cottage",
+      "file": "assets/root_swallowed_cottage.glb",
+      "category": "structure",
+      "biome": "corruption",
+      "near": [
+        "coffin",
+        "berez",
+        "yester",
+        "bonegrinder"
+      ],
+      "footprint": [
+        4,
+        4
+      ],
+      "height": 2.205,
+      "bounds": [
+        [
+          -1.854,
+          -0.138,
+          -1.595
+        ],
+        [
+          1.854,
+          2.205,
+          1.56
+        ]
+      ],
+      "parts": 79,
+      "drawCalls": 15,
+      "bytes": 36640,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "Roots have learned the shapes of the people who lived here."
+    },
+    {
+      "id": "gallows_three_nooses",
+      "file": "assets/gallows_three_nooses.glb",
+      "category": "horror_prop",
+      "biome": "roadside",
+      "near": [
+        "crossroads",
+        "village",
+        "vallaki",
+        "bonegrinder",
+        "winery",
+        "gates"
+      ],
+      "footprint": [
+        3,
+        2
+      ],
+      "height": 2.65,
+      "bounds": [
+        [
+          -1.725,
+          0.0,
+          -0.8
+        ],
+        [
+          1.725,
+          2.65,
+          0.8
+        ]
+      ],
+      "parts": 13,
+      "drawCalls": 5,
+      "bytes": 9608,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "Three nooses sway though no wind reaches the clearing."
+    },
+    {
+      "id": "noose_oak",
+      "file": "assets/noose_oak.glb",
+      "category": "horror_prop",
+      "biome": "forest",
+      "near": [
+        "crossroads",
+        "bonegrinder",
+        "coffin",
+        "tser",
+        "lake",
+        "yester"
+      ],
+      "footprint": [
+        3,
+        3
+      ],
+      "height": 2.937,
+      "bounds": [
+        [
+          -1.249,
+          -0.05,
+          -1.01
+        ],
+        [
+          1.25,
+          2.937,
+          0.995
+        ]
+      ],
+      "parts": 33,
+      "drawCalls": 3,
+      "bytes": 16268,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "The tree carries empty ropes, swaying to the rhythm of breathing."
+    },
+    {
+      "id": "blood_well",
+      "file": "assets/blood_well.glb",
+      "category": "horror_prop",
+      "biome": "village",
+      "near": [
+        "village",
+        "vallaki",
+        "krezk",
+        "gates"
+      ],
+      "footprint": [
+        2,
+        2
+      ],
+      "height": 2.4,
+      "bounds": [
+        [
+          -1.0,
+          0.22,
+          -0.975
+        ],
+        [
+          1.0,
+          2.4,
+          0.975
+        ]
+      ],
+      "parts": 25,
+      "drawCalls": 9,
+      "bytes": 13700,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "Every bucket brings up black water with a red ring."
+    },
+    {
+      "id": "last_lantern_sign",
+      "file": "assets/last_lantern_sign.glb",
+      "category": "horror_prop",
+      "biome": "roadside",
+      "near": [
+        "crossroads",
+        "village",
+        "vallaki",
+        "bonegrinder",
+        "winery",
+        "gates"
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "height": 1.73,
+      "bounds": [
+        [
+          -0.668,
+          0.01,
+          -0.115
+        ],
+        [
+          0.695,
+          1.73,
+          0.32
+        ]
+      ],
+      "parts": 7,
+      "drawCalls": 6,
+      "bytes": 6964,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "The last lamp before the mist is warm to the touch."
+    },
+    {
+      "id": "wrong_way_signpost",
+      "file": "assets/wrong_way_signpost.glb",
+      "category": "horror_prop",
+      "biome": "roadside",
+      "near": [
+        "crossroads",
+        "village",
+        "vallaki",
+        "bonegrinder",
+        "winery",
+        "gates"
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "height": 1.73,
+      "bounds": [
+        [
+          -0.565,
+          0.01,
+          -0.07
+        ],
+        [
+          0.695,
+          1.73,
+          0.088
+        ]
+      ],
+      "parts": 4,
+      "drawCalls": 3,
+      "bytes": 3460,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "The sign points to a settlement that should be miles behind you."
+    },
+    {
+      "id": "sealed_coffin_stack",
+      "file": "assets/sealed_coffin_stack.glb",
+      "category": "horror_prop",
+      "biome": "graveyard",
+      "near": [
+        "village",
+        "crossroads",
+        "argyn",
+        "castle"
+      ],
+      "footprint": [
+        2,
+        2
+      ],
+      "height": 0.835,
+      "bounds": [
+        [
+          -1.15,
+          0.02,
+          -0.69
+        ],
+        [
+          1.06,
+          0.835,
+          0.76
+        ]
+      ],
+      "parts": 12,
+      "drawCalls": 3,
+      "bytes": 4948,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "One lid knocks once when the party stops speaking."
+    },
+    {
+      "id": "bone_chime_tree",
+      "file": "assets/bone_chime_tree.glb",
+      "category": "horror_prop",
+      "biome": "forest",
+      "near": [
+        "crossroads",
+        "bonegrinder",
+        "coffin",
+        "tser",
+        "lake",
+        "yester"
+      ],
+      "footprint": [
+        3,
+        3
+      ],
+      "height": 2.929,
+      "bounds": [
+        [
+          -1.12,
+          -0.05,
+          -0.591
+        ],
+        [
+          0.998,
+          2.929,
+          0.854
+        ]
+      ],
+      "parts": 27,
+      "drawCalls": 4,
+      "bytes": 13932,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "Windless bone chimes ring in a staggered pattern."
+    },
+    {
+      "id": "rusted_prison_cage",
+      "file": "assets/rusted_prison_cage.glb",
+      "category": "horror_prop",
+      "biome": "roadside",
+      "near": [
+        "crossroads",
+        "village",
+        "vallaki",
+        "bonegrinder",
+        "winery",
+        "gates"
+      ],
+      "footprint": [
+        2,
+        2
+      ],
+      "height": 1.81,
+      "bounds": [
+        [
+          -0.8,
+          0.0,
+          -0.8
+        ],
+        [
+          0.8,
+          1.81,
+          0.845
+        ]
+      ],
+      "parts": 21,
+      "drawCalls": 4,
+      "bytes": 8464,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "Iron bars and fresh scratches. The lock faces inward."
+    },
+    {
+      "id": "mourning_effigy",
+      "file": "assets/mourning_effigy.glb",
+      "category": "horror_prop",
+      "biome": "farmland",
+      "near": [
+        "winery",
+        "krezk",
+        "vallaki"
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "height": 1.733,
+      "bounds": [
+        [
+          -0.602,
+          -0.005,
+          -0.357
+        ],
+        [
+          0.605,
+          1.733,
+          0.388
+        ]
+      ],
+      "parts": 9,
+      "drawCalls": 6,
+      "bytes": 7944,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "A figure of twine with a face made from someone’s clothes."
+    },
+    {
+      "id": "false_scarecrow",
+      "file": "assets/false_scarecrow.glb",
+      "category": "horror_prop",
+      "biome": "farmland",
+      "near": [
+        "winery",
+        "krezk",
+        "vallaki"
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "height": 1.733,
+      "bounds": [
+        [
+          -0.602,
+          -0.005,
+          -0.357
+        ],
+        [
+          0.605,
+          1.733,
+          0.388
+        ]
+      ],
+      "parts": 10,
+      "drawCalls": 7,
+      "bytes": 8796,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "At dusk it faces the road. By dawn it faces the camp."
+    },
+    {
+      "id": "candled_memorial",
+      "file": "assets/candled_memorial.glb",
+      "category": "horror_prop",
+      "biome": "village",
+      "near": [
+        "village",
+        "vallaki",
+        "krezk",
+        "gates"
+      ],
+      "footprint": [
+        2,
+        2
+      ],
+      "height": 1.442,
+      "bounds": [
+        [
+          -0.82,
+          0.01,
+          -0.65
+        ],
+        [
+          0.82,
+          1.442,
+          0.65
+        ]
+      ],
+      "parts": 21,
+      "drawCalls": 4,
+      "bytes": 9168,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "Nine flames stay upright in rain and snow."
+    },
+    {
+      "id": "wicker_doll_shrine",
+      "file": "assets/wicker_doll_shrine.glb",
+      "category": "horror_prop",
+      "biome": "forest",
+      "near": [
+        "crossroads",
+        "bonegrinder",
+        "coffin",
+        "tser",
+        "lake",
+        "yester"
+      ],
+      "footprint": [
+        2,
+        2
+      ],
+      "height": 1.329,
+      "bounds": [
+        [
+          -0.686,
+          0.0,
+          -0.719
+        ],
+        [
+          0.73,
+          1.329,
+          0.719
+        ]
+      ],
+      "parts": 16,
+      "drawCalls": 4,
+      "bytes": 10736,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "Someone has offered a child-sized doll to the woods."
+    },
+    {
+      "id": "handprint_shutter",
+      "file": "assets/handprint_shutter.glb",
+      "category": "horror_prop",
+      "biome": "village",
+      "near": [
+        "village",
+        "vallaki",
+        "krezk",
+        "gates"
+      ],
+      "footprint": [
+        1,
+        1
+      ],
+      "height": 1.665,
+      "bounds": [
+        [
+          -0.45,
+          -0.005,
+          -0.085
+        ],
+        [
+          0.45,
+          1.665,
+          0.122
+        ]
+      ],
+      "parts": 21,
+      "drawCalls": 3,
+      "bytes": 8480,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "Small marks appear in red, one by one, on the locked door."
+    },
+    {
+      "id": "unmarked_grave_row",
+      "file": "assets/unmarked_grave_row.glb",
+      "category": "horror_prop",
+      "biome": "graveyard",
+      "near": [
+        "village",
+        "crossroads",
+        "argyn",
+        "castle"
+      ],
+      "footprint": [
+        3,
+        2
+      ],
+      "height": 0.356,
+      "bounds": [
+        [
+          -1.025,
+          -0.03,
+          -0.646
+        ],
+        [
+          0.801,
+          0.356,
+          0.979
+        ]
+      ],
+      "parts": 16,
+      "drawCalls": 3,
+      "bytes": 11944,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "Each marker has a different date. The last is tomorrow."
+    },
+    {
+      "id": "abandoned_funeral_cart",
+      "file": "assets/abandoned_funeral_cart.glb",
+      "category": "horror_prop",
+      "biome": "roadside",
+      "near": [
+        "crossroads",
+        "village",
+        "vallaki",
+        "bonegrinder",
+        "winery",
+        "gates"
+      ],
+      "footprint": [
+        3,
+        2
+      ],
+      "height": 1.38,
+      "bounds": [
+        [
+          -1.44,
+          0.037,
+          -1.874
+        ],
+        [
+          1.44,
+          1.38,
+          1.07
+        ]
+      ],
+      "parts": 19,
+      "drawCalls": 7,
+      "bytes": 12476,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "The cart has no driver. Its single coffin is lighter than it should be."
+    },
+    {
+      "id": "broken_stone_angel",
+      "file": "assets/broken_stone_angel.glb",
+      "category": "horror_prop",
+      "biome": "graveyard",
+      "near": [
+        "village",
+        "crossroads",
+        "argyn",
+        "castle"
+      ],
+      "footprint": [
+        2,
+        2
+      ],
+      "height": 1.5,
+      "bounds": [
+        [
+          -0.785,
+          0.0,
+          -0.5
+        ],
+        [
+          0.86,
+          1.5,
+          0.5
+        ]
+      ],
+      "parts": 9,
+      "drawCalls": 5,
+      "bytes": 7716,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "The statue’s face was chipped off. A new one lies beneath it."
+    },
+    {
+      "id": "hunger_root_arch",
+      "file": "assets/hunger_root_arch.glb",
+      "category": "corruption",
+      "biome": "corruption",
+      "near": [
+        "coffin",
+        "berez",
+        "yester",
+        "bonegrinder"
+      ],
+      "footprint": [
+        3,
+        2
+      ],
+      "height": 2.074,
+      "bounds": [
+        [
+          -1.513,
+          -0.058,
+          -0.476
+        ],
+        [
+          1.532,
+          2.074,
+          0.492
+        ]
+      ],
+      "parts": 20,
+      "drawCalls": 4,
+      "bytes": 9420,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "The arch bends lower every time someone passes through."
+    },
+    {
+      "id": "hunger_spore_vent",
+      "file": "assets/hunger_spore_vent.glb",
+      "category": "corruption",
+      "biome": "corruption",
+      "near": [
+        "coffin",
+        "berez",
+        "yester",
+        "bonegrinder"
+      ],
+      "footprint": [
+        2,
+        2
+      ],
+      "height": 1.013,
+      "bounds": [
+        [
+          -0.92,
+          -0.07,
+          -0.86
+        ],
+        [
+          0.92,
+          1.013,
+          0.86
+        ]
+      ],
+      "parts": 25,
+      "drawCalls": 4,
+      "bytes": 13280,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "A pale blister opens and releases glittering threads."
+    },
+    {
+      "id": "hunger_stalking_stalks",
+      "file": "assets/hunger_stalking_stalks.glb",
+      "category": "corruption",
+      "biome": "corruption",
+      "near": [
+        "coffin",
+        "berez",
+        "yester",
+        "bonegrinder"
+      ],
+      "footprint": [
+        2,
+        2
+      ],
+      "height": 1.269,
+      "bounds": [
+        [
+          -0.92,
+          -0.07,
+          -0.86
+        ],
+        [
+          0.92,
+          1.269,
+          0.86
+        ]
+      ],
+      "parts": 33,
+      "drawCalls": 4,
+      "bytes": 16416,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "The stalks lean toward voices before they lean toward light."
+    },
+    {
+      "id": "hunger_taken_wagon",
+      "file": "assets/hunger_taken_wagon.glb",
+      "category": "corruption",
+      "biome": "corruption",
+      "near": [
+        "coffin",
+        "berez",
+        "yester",
+        "bonegrinder"
+      ],
+      "footprint": [
+        3,
+        2
+      ],
+      "height": 2.202,
+      "bounds": [
+        [
+          -1.44,
+          0.154,
+          -1.874
+        ],
+        [
+          1.44,
+          2.202,
+          1.07
+        ]
+      ],
+      "parts": 32,
+      "drawCalls": 7,
+      "bytes": 19052,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "Something has rooted itself in the wagon’s floorboards."
+    },
+    {
+      "id": "hunger_heart_tree",
+      "file": "assets/hunger_heart_tree.glb",
+      "category": "corruption",
+      "biome": "corruption",
+      "near": [
+        "coffin",
+        "berez",
+        "yester",
+        "bonegrinder"
+      ],
+      "footprint": [
+        3,
+        3
+      ],
+      "height": 2.945,
+      "bounds": [
+        [
+          -1.301,
+          -0.05,
+          -1.251
+        ],
+        [
+          1.301,
+          2.945,
+          1.251
+        ]
+      ],
+      "parts": 36,
+      "drawCalls": 5,
+      "bytes": 19660,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "The trunk contracts slowly, as though it has a heart."
+    },
+    {
+      "id": "red_mist_stones",
+      "file": "assets/red_mist_stones.glb",
+      "category": "terrain_horror",
+      "biome": "mountain",
+      "near": [
+        "krezk",
+        "argyn",
+        "yester",
+        "castle"
+      ],
+      "footprint": [
+        3,
+        2
+      ],
+      "height": 1.84,
+      "bounds": [
+        [
+          -1.45,
+          -0.03,
+          -1.2
+        ],
+        [
+          1.45,
+          1.84,
+          1.2
+        ]
+      ],
+      "parts": 16,
+      "drawCalls": 4,
+      "bytes": 7748,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "A thin scarlet haze clings to stones older than the road."
+    },
+    {
+      "id": "bog_sunken_hands",
+      "file": "assets/bog_sunken_hands.glb",
+      "category": "terrain_horror",
+      "biome": "marsh",
+      "near": [
+        "berez",
+        "tser",
+        "tower"
+      ],
+      "footprint": [
+        2,
+        2
+      ],
+      "height": 0.583,
+      "bounds": [
+        [
+          -1.13,
+          -0.043,
+          -0.88
+        ],
+        [
+          1.13,
+          0.583,
+          0.88
+        ]
+      ],
+      "parts": 41,
+      "drawCalls": 2,
+      "bytes": 14140,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "White fingers rest just below the black surface."
+    },
+    {
+      "id": "eyeless_stump",
+      "file": "assets/eyeless_stump.glb",
+      "category": "terrain_horror",
+      "biome": "forest",
+      "near": [
+        "crossroads",
+        "bonegrinder",
+        "coffin",
+        "tser",
+        "lake",
+        "yester"
+      ],
+      "footprint": [
+        2,
+        2
+      ],
+      "height": 0.82,
+      "bounds": [
+        [
+          -1.032,
+          0.0,
+          -1.057
+        ],
+        [
+          1.1,
+          0.82,
+          1.052
+        ]
+      ],
+      "parts": 11,
+      "drawCalls": 3,
+      "bytes": 7172,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "Its knots resemble sockets with no eyes."
+    },
+    {
+      "id": "wolf_bone_cairn",
+      "file": "assets/wolf_bone_cairn.glb",
+      "category": "terrain_horror",
+      "biome": "forest",
+      "near": [
+        "crossroads",
+        "bonegrinder",
+        "coffin",
+        "tser",
+        "lake",
+        "yester"
+      ],
+      "footprint": [
+        2,
+        2
+      ],
+      "height": 0.772,
+      "bounds": [
+        [
+          -0.868,
+          -0.02,
+          -0.783
+        ],
+        [
+          0.922,
+          0.772,
+          0.785
+        ]
+      ],
+      "parts": 21,
+      "drawCalls": 3,
+      "bytes": 10392,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "Antlers, jaws, and smooth stones mark the old hunting ground."
+    },
+    {
+      "id": "blackwater_sinkhole",
+      "file": "assets/blackwater_sinkhole.glb",
+      "category": "terrain_horror",
+      "biome": "marsh",
+      "near": [
+        "berez",
+        "tser",
+        "tower"
+      ],
+      "footprint": [
+        3,
+        3
+      ],
+      "height": 0.244,
+      "bounds": [
+        [
+          -1.4,
+          -0.16,
+          -1.2
+        ],
+        [
+          1.4,
+          0.244,
+          1.219
+        ]
+      ],
+      "parts": 15,
+      "drawCalls": 3,
+      "bytes": 9544,
+      "placement": "side_only",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "The water reflects no one standing beside it."
+    },
+    {
+      "id": "shadow_tunnel_roots",
+      "file": "assets/shadow_tunnel_roots.glb",
+      "category": "discovery",
+      "biome": "forest",
+      "near": [
+        "crossroads",
+        "bonegrinder",
+        "coffin",
+        "tser",
+        "lake",
+        "yester"
+      ],
+      "footprint": [
+        3,
+        3
+      ],
+      "height": 2.074,
+      "bounds": [
+        [
+          -1.513,
+          -0.058,
+          -0.476
+        ],
+        [
+          1.532,
+          2.074,
+          0.492
+        ]
+      ],
+      "parts": 20,
+      "drawCalls": 3,
+      "bytes": 11228,
+      "placement": "clearing_entry",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "A gap in the roots is taller on the inside."
+    },
+    {
+      "id": "thorns_arcade",
+      "file": "assets/thorns_arcade.glb",
+      "category": "discovery",
+      "biome": "forest",
+      "near": [
+        "crossroads",
+        "bonegrinder",
+        "coffin",
+        "tser",
+        "lake",
+        "yester"
+      ],
+      "footprint": [
+        3,
+        3
+      ],
+      "height": 1.599,
+      "bounds": [
+        [
+          -1.481,
+          -0.042,
+          -1.217
+        ],
+        [
+          1.484,
+          1.599,
+          1.257
+        ]
+      ],
+      "parts": 58,
+      "drawCalls": 2,
+      "bytes": 16784,
+      "placement": "clearing_entry",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "Black thorns grow into a covered passage toward the hills."
+    },
+    {
+      "id": "bridge_beneath_culvert",
+      "file": "assets/bridge_beneath_culvert.glb",
+      "category": "discovery",
+      "biome": "marsh",
+      "near": [
+        "berez",
+        "tser",
+        "tower"
+      ],
+      "footprint": [
+        4,
+        3
+      ],
+      "height": 2.37,
+      "bounds": [
+        [
+          -1.867,
+          -0.075,
+          -1.25
+        ],
+        [
+          1.34,
+          2.37,
+          1.25
+        ]
+      ],
+      "parts": 12,
+      "drawCalls": 4,
+      "bytes": 6684,
+      "placement": "clearing_entry",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "The road passes overhead. Under it, a tunnel opens into darkness."
+    },
+    {
+      "id": "hidden_cellar_hatch",
+      "file": "assets/hidden_cellar_hatch.glb",
+      "category": "discovery",
+      "biome": "roadside",
+      "near": [
+        "crossroads",
+        "village",
+        "vallaki",
+        "bonegrinder",
+        "winery",
+        "gates"
+      ],
+      "footprint": [
+        2,
+        2
+      ],
+      "height": 0.215,
+      "bounds": [
+        [
+          -1.021,
+          -0.043,
+          -1.179
+        ],
+        [
+          1.157,
+          0.215,
+          1.183
+        ]
+      ],
+      "parts": 14,
+      "drawCalls": 5,
+      "bytes": 8464,
+      "placement": "clearing_entry",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "A hatch beneath a drowned roadside marker leads underground."
+    },
+    {
+      "id": "dripping_cave_door",
+      "file": "assets/dripping_cave_door.glb",
+      "category": "discovery",
+      "biome": "mountain",
+      "near": [
+        "krezk",
+        "argyn",
+        "yester",
+        "castle"
+      ],
+      "footprint": [
+        3,
+        3
+      ],
+      "height": 1.863,
+      "bounds": [
+        [
+          -1.63,
+          -0.01,
+          -1.357
+        ],
+        [
+          1.63,
+          1.863,
+          1.237
+        ]
+      ],
+      "parts": 19,
+      "drawCalls": 4,
+      "bytes": 10640,
+      "placement": "clearing_entry",
+      "passable": false,
+      "collision": "visual_only",
+      "dmWhisper": "It is warmer inside the cave than outside. That is not comforting."
+    }
+  ]
+}

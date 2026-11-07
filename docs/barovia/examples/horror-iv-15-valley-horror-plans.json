@@ -1,0 +1,4780 @@
+{
+  "notice": "Examples use a synthetic 40×40 layout. Recompute from the actual genStretch() scene to avoid blocked squares.",
+  "routes": [
+    {
+      "id": "r-mist",
+      "from": "mists",
+      "to": "gates",
+      "way": "road",
+      "exampleSceneNames": [
+        "The Toll Without a Keeper",
+        "The Road Beneath the Road"
+      ],
+      "plan": {
+        "roadId": "r-mist",
+        "seed": "v4-campaign-01",
+        "gaze": 7,
+        "bloom": true,
+        "density": "standard",
+        "format": "barovia-horror-v4",
+        "version": 4,
+        "width": 40,
+        "height": 40,
+        "scenes": [
+          {
+            "id": "toll-of-the-dead",
+            "name": "The Toll Without a Keeper",
+            "kind": "dilemma",
+            "biomes": [
+              "roadside",
+              "village"
+            ],
+            "primary": {
+              "id": "plague_tollhouse",
+              "x": 22.5,
+              "y": 29.5,
+              "rot": 2,
+              "footprint": [
+                4,
+                4
+              ],
+              "distanceToRoad": 6.52,
+              "near": [
+                22,
+                23
+              ]
+            },
+            "satellites": [
+              {
+                "id": "wrong_way_signpost",
+                "x": 21,
+                "y": 34,
+                "rot": 2,
+                "footprint": [
+                  1,
+                  1
+                ],
+                "distanceToRoad": 11,
+                "near": [
+                  21,
+                  23
+                ]
+              },
+              {
+                "id": "rusted_prison_cage",
+                "x": 17.5,
+                "y": 29.5,
+                "rot": 2,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 6.52,
+                "near": [
+                  17,
+                  23
+                ]
+              },
+              {
+                "id": "sealed_coffin_stack",
+                "x": 27.5,
+                "y": 30.5,
+                "rot": 2,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 7.91,
+                "near": [
+                  25,
+                  23
+                ]
+              }
+            ],
+            "beats": {
+              "approach": "A toll bar is raised. Coins have been arranged by the threshold.",
+              "reveal": "The ledger records the party arriving here tomorrow.",
+              "aftermath": "Every coin left behind is minted with an unfamiliar face."
+            },
+            "suggestedReveal": {
+              "trigger": "GM chooses",
+              "requiresEngineApproval": true
+            },
+            "access": {
+              "nearestExistingRoadSquare": [
+                22,
+                23
+              ],
+              "featureSquare": [
+                22.5,
+                29.5
+              ],
+              "requiresGameplayPathCheck": true
+            }
+          },
+          {
+            "id": "under-the-road",
+            "name": "The Road Beneath the Road",
+            "kind": "secret-entrance",
+            "biomes": [
+              "marsh",
+              "forest",
+              "roadside"
+            ],
+            "primary": {
+              "id": "bridge_beneath_culvert",
+              "x": 25.5,
+              "y": 12,
+              "rot": 0,
+              "footprint": [
+                4,
+                3
+              ],
+              "distanceToRoad": 6.02,
+              "near": [
+                25,
+                18
+              ]
+            },
+            "satellites": [
+              {
+                "id": "hidden_cellar_hatch",
+                "x": 25.5,
+                "y": 6.5,
+                "rot": 0,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 11.51,
+                "near": [
+                  25,
+                  18
+                ]
+              },
+              {
+                "id": "shadow_tunnel_roots",
+                "x": 31,
+                "y": 8,
+                "rot": 0,
+                "footprint": [
+                  3,
+                  3
+                ],
+                "distanceToRoad": 10,
+                "near": [
+                  31,
+                  18
+                ]
+              },
+              {
+                "id": "blood_well",
+                "x": 21.5,
+                "y": 7.5,
+                "rot": 0,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 11.07,
+                "near": [
+                  25,
+                  18
+                ]
+              }
+            ],
+            "beats": {
+              "approach": "A brook vanishes beneath the road, but its sound continues far below.",
+              "reveal": "A second route has been carved beneath the old causeway.",
+              "aftermath": "The original roadside marker has turned to face the tunnel."
+            },
+            "suggestedReveal": {
+              "trigger": "GM chooses",
+              "requiresEngineApproval": true
+            },
+            "access": {
+              "nearestExistingRoadSquare": [
+                25,
+                18
+              ],
+              "featureSquare": [
+                25.5,
+                12
+              ],
+              "requiresGameplayPathCheck": true
+            }
+          }
+        ],
+        "placements": [
+          {
+            "id": "wrong_way_signpost",
+            "x": 21,
+            "y": 34,
+            "rot": 2,
+            "footprint": [
+              1,
+              1
+            ],
+            "distanceToRoad": 11,
+            "near": [
+              21,
+              23
+            ]
+          },
+          {
+            "id": "rusted_prison_cage",
+            "x": 17.5,
+            "y": 29.5,
+            "rot": 2,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 6.52,
+            "near": [
+              17,
+              23
+            ]
+          },
+          {
+            "id": "sealed_coffin_stack",
+            "x": 27.5,
+            "y": 30.5,
+            "rot": 2,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 7.91,
+            "near": [
+              25,
+              23
+            ]
+          },
+          {
+            "id": "plague_tollhouse",
+            "x": 22.5,
+            "y": 29.5,
+            "rot": 2,
+            "footprint": [
+              4,
+              4
+            ],
+            "distanceToRoad": 6.52,
+            "near": [
+              22,
+              23
+            ]
+          },
+          {
+            "id": "hidden_cellar_hatch",
+            "x": 25.5,
+            "y": 6.5,
+            "rot": 0,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 11.51,
+            "near": [
+              25,
+              18
+            ]
+          },
+          {
+            "id": "shadow_tunnel_roots",
+            "x": 31,
+            "y": 8,
+            "rot": 0,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 10,
+            "near": [
+              31,
+              18
+            ]
+          },
+          {
+            "id": "blood_well",
+            "x": 21.5,
+            "y": 7.5,
+            "rot": 0,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 11.07,
+            "near": [
+              25,
+              18
+            ]
+          },
+          {
+            "id": "bridge_beneath_culvert",
+            "x": 25.5,
+            "y": 12,
+            "rot": 0,
+            "footprint": [
+              4,
+              3
+            ],
+            "distanceToRoad": 6.02,
+            "near": [
+              25,
+              18
+            ]
+          }
+        ],
+        "notes": "Visual-only decorations. No collision, passage, spawns, secrets, events, sounds, fear effects or encounters are authored in game state."
+      }
+    },
+    {
+      "id": "r-gates",
+      "from": "gates",
+      "to": "village",
+      "way": "road",
+      "exampleSceneNames": [
+        "The Root Has a Heart",
+        "The Hunters’ Stand"
+      ],
+      "plan": {
+        "roadId": "r-gates",
+        "seed": "v4-campaign-01",
+        "gaze": 7,
+        "bloom": true,
+        "density": "standard",
+        "format": "barovia-horror-v4",
+        "version": 4,
+        "width": 40,
+        "height": 40,
+        "scenes": [
+          {
+            "id": "hunger-below",
+            "name": "The Root Has a Heart",
+            "kind": "infection",
+            "biomes": [
+              "corruption",
+              "forest",
+              "marsh"
+            ],
+            "primary": {
+              "id": "root_swallowed_cottage",
+              "x": 22.5,
+              "y": 29.5,
+              "rot": 2,
+              "footprint": [
+                4,
+                4
+              ],
+              "distanceToRoad": 6.52,
+              "near": [
+                22,
+                23
+              ]
+            },
+            "satellites": [
+              {
+                "id": "hunger_heart_tree",
+                "x": 17,
+                "y": 29,
+                "rot": 2,
+                "footprint": [
+                  3,
+                  3
+                ],
+                "distanceToRoad": 6,
+                "near": [
+                  17,
+                  23
+                ]
+              },
+              {
+                "id": "hunger_spore_vent",
+                "x": 26.5,
+                "y": 34.5,
+                "rot": 2,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 11.6,
+                "near": [
+                  25,
+                  23
+                ]
+              },
+              {
+                "id": "hunger_taken_wagon",
+                "x": 22,
+                "y": 34.5,
+                "rot": 2,
+                "footprint": [
+                  3,
+                  2
+                ],
+                "distanceToRoad": 11.5,
+                "near": [
+                  22,
+                  23
+                ]
+              }
+            ],
+            "beats": {
+              "approach": "The cottage walls lift and settle by the width of a breath.",
+              "reveal": "The floor has been taken over by a root system that carries a pulse.",
+              "aftermath": "New roots have reached the wheel ruts of the road."
+            },
+            "suggestedReveal": {
+              "trigger": "GM chooses",
+              "requiresEngineApproval": true
+            },
+            "access": {
+              "nearestExistingRoadSquare": [
+                22,
+                23
+              ],
+              "featureSquare": [
+                22.5,
+                29.5
+              ],
+              "requiresGameplayPathCheck": true
+            }
+          },
+          {
+            "id": "the-hunters-stand",
+            "name": "The Hunters’ Stand",
+            "kind": "predator",
+            "biomes": [
+              "forest",
+              "mountain"
+            ],
+            "primary": {
+              "id": "wolves_watchtower",
+              "x": 6,
+              "y": 24,
+              "rot": 2,
+              "footprint": [
+                3,
+                3
+              ],
+              "distanceToRoad": 6,
+              "near": [
+                6,
+                18
+              ]
+            },
+            "satellites": [
+              {
+                "id": "hunter_hideout",
+                "x": 6,
+                "y": 30,
+                "rot": 2,
+                "footprint": [
+                  3,
+                  3
+                ],
+                "distanceToRoad": 9.22,
+                "near": [
+                  12,
+                  23
+                ]
+              },
+              {
+                "id": "wolf_bone_cairn",
+                "x": 11.5,
+                "y": 28.5,
+                "rot": 2,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 5.52,
+                "near": [
+                  12,
+                  23
+                ]
+              }
+            ],
+            "beats": {
+              "approach": "From the old tower, a horn sounds once.",
+              "reveal": "The hunting blind faces the camp rather than the game trail.",
+              "aftermath": "Fresh wolf tracks circle the tower, all pointing inward."
+            },
+            "suggestedReveal": {
+              "trigger": "GM chooses",
+              "requiresEngineApproval": true
+            },
+            "access": {
+              "nearestExistingRoadSquare": [
+                6,
+                18
+              ],
+              "featureSquare": [
+                6,
+                24
+              ],
+              "requiresGameplayPathCheck": true
+            }
+          }
+        ],
+        "placements": [
+          {
+            "id": "hunger_heart_tree",
+            "x": 17,
+            "y": 29,
+            "rot": 2,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 6,
+            "near": [
+              17,
+              23
+            ]
+          },
+          {
+            "id": "hunger_spore_vent",
+            "x": 26.5,
+            "y": 34.5,
+            "rot": 2,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 11.6,
+            "near": [
+              25,
+              23
+            ]
+          },
+          {
+            "id": "hunger_taken_wagon",
+            "x": 22,
+            "y": 34.5,
+            "rot": 2,
+            "footprint": [
+              3,
+              2
+            ],
+            "distanceToRoad": 11.5,
+            "near": [
+              22,
+              23
+            ]
+          },
+          {
+            "id": "root_swallowed_cottage",
+            "x": 22.5,
+            "y": 29.5,
+            "rot": 2,
+            "footprint": [
+              4,
+              4
+            ],
+            "distanceToRoad": 6.52,
+            "near": [
+              22,
+              23
+            ]
+          },
+          {
+            "id": "hunter_hideout",
+            "x": 6,
+            "y": 30,
+            "rot": 2,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 9.22,
+            "near": [
+              12,
+              23
+            ]
+          },
+          {
+            "id": "wolf_bone_cairn",
+            "x": 11.5,
+            "y": 28.5,
+            "rot": 2,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 5.52,
+            "near": [
+              12,
+              23
+            ]
+          },
+          {
+            "id": "wolves_watchtower",
+            "x": 6,
+            "y": 24,
+            "rot": 2,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 6,
+            "near": [
+              6,
+              18
+            ]
+          }
+        ],
+        "notes": "Visual-only decorations. No collision, passage, spawns, secrets, events, sounds, fear effects or encounters are authored in game state."
+      }
+    },
+    {
+      "id": "r-east",
+      "from": "village",
+      "to": "crossroads",
+      "way": "road",
+      "exampleSceneNames": [
+        "The Last Watch",
+        "The Hunters’ Stand"
+      ],
+      "plan": {
+        "roadId": "r-east",
+        "seed": "v4-campaign-01",
+        "gaze": 7,
+        "bloom": true,
+        "density": "standard",
+        "format": "barovia-horror-v4",
+        "version": 4,
+        "width": 40,
+        "height": 40,
+        "scenes": [
+          {
+            "id": "the-last-watch",
+            "name": "The Last Watch",
+            "kind": "betrayal",
+            "biomes": [
+              "roadside",
+              "mountain"
+            ],
+            "primary": {
+              "id": "abandoned_guard_post",
+              "x": 18,
+              "y": 17,
+              "rot": 0,
+              "footprint": [
+                3,
+                3
+              ],
+              "distanceToRoad": 6,
+              "near": [
+                18,
+                23
+              ]
+            },
+            "satellites": [
+              {
+                "id": "burned_coach_stable",
+                "x": 23,
+                "y": 11.5,
+                "rot": 0,
+                "footprint": [
+                  5,
+                  4
+                ],
+                "distanceToRoad": 6.8,
+                "near": [
+                  25,
+                  18
+                ]
+              },
+              {
+                "id": "last_lantern_sign",
+                "x": 14,
+                "y": 12,
+                "rot": 0,
+                "footprint": [
+                  1,
+                  1
+                ],
+                "distanceToRoad": 6.32,
+                "near": [
+                  12,
+                  18
+                ]
+              },
+              {
+                "id": "rusted_prison_cage",
+                "x": 17.5,
+                "y": 12.5,
+                "rot": 0,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 7.78,
+                "near": [
+                  12,
+                  18
+                ]
+              }
+            ],
+            "beats": {
+              "approach": "The guard post is deserted. A lantern still burns above the gate.",
+              "reveal": "The locked cage contains the sentries’ weapons, but none of their clothing.",
+              "aftermath": "Fresh bootprints follow the party from the post."
+            },
+            "suggestedReveal": {
+              "trigger": "GM chooses",
+              "requiresEngineApproval": true
+            },
+            "access": {
+              "nearestExistingRoadSquare": [
+                18,
+                23
+              ],
+              "featureSquare": [
+                18,
+                17
+              ],
+              "requiresGameplayPathCheck": true
+            }
+          },
+          {
+            "id": "the-hunters-stand",
+            "name": "The Hunters’ Stand",
+            "kind": "predator",
+            "biomes": [
+              "forest",
+              "mountain"
+            ],
+            "primary": {
+              "id": "wolves_watchtower",
+              "x": 25,
+              "y": 29,
+              "rot": 2,
+              "footprint": [
+                3,
+                3
+              ],
+              "distanceToRoad": 6,
+              "near": [
+                25,
+                23
+              ]
+            },
+            "satellites": [
+              {
+                "id": "hunter_hideout",
+                "x": 26,
+                "y": 34,
+                "rot": 2,
+                "footprint": [
+                  3,
+                  3
+                ],
+                "distanceToRoad": 11.05,
+                "near": [
+                  25,
+                  23
+                ]
+              },
+              {
+                "id": "wolf_bone_cairn",
+                "x": 30.5,
+                "y": 29.5,
+                "rot": 2,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 8.51,
+                "near": [
+                  25,
+                  23
+                ]
+              },
+              {
+                "id": "eyeless_stump",
+                "x": 30.5,
+                "y": 33.5,
+                "rot": 2,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 11.85,
+                "near": [
+                  25,
+                  23
+                ]
+              }
+            ],
+            "beats": {
+              "approach": "From the old tower, a horn sounds once.",
+              "reveal": "The hunting blind faces the camp rather than the game trail.",
+              "aftermath": "Fresh wolf tracks circle the tower, all pointing inward."
+            },
+            "suggestedReveal": {
+              "trigger": "GM chooses",
+              "requiresEngineApproval": true
+            },
+            "access": {
+              "nearestExistingRoadSquare": [
+                25,
+                23
+              ],
+              "featureSquare": [
+                25,
+                29
+              ],
+              "requiresGameplayPathCheck": true
+            }
+          }
+        ],
+        "placements": [
+          {
+            "id": "burned_coach_stable",
+            "x": 23,
+            "y": 11.5,
+            "rot": 0,
+            "footprint": [
+              5,
+              4
+            ],
+            "distanceToRoad": 6.8,
+            "near": [
+              25,
+              18
+            ]
+          },
+          {
+            "id": "last_lantern_sign",
+            "x": 14,
+            "y": 12,
+            "rot": 0,
+            "footprint": [
+              1,
+              1
+            ],
+            "distanceToRoad": 6.32,
+            "near": [
+              12,
+              18
+            ]
+          },
+          {
+            "id": "rusted_prison_cage",
+            "x": 17.5,
+            "y": 12.5,
+            "rot": 0,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 7.78,
+            "near": [
+              12,
+              18
+            ]
+          },
+          {
+            "id": "abandoned_guard_post",
+            "x": 18,
+            "y": 17,
+            "rot": 0,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 6,
+            "near": [
+              18,
+              23
+            ]
+          },
+          {
+            "id": "hunter_hideout",
+            "x": 26,
+            "y": 34,
+            "rot": 2,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 11.05,
+            "near": [
+              25,
+              23
+            ]
+          },
+          {
+            "id": "wolf_bone_cairn",
+            "x": 30.5,
+            "y": 29.5,
+            "rot": 2,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 8.51,
+            "near": [
+              25,
+              23
+            ]
+          },
+          {
+            "id": "eyeless_stump",
+            "x": 30.5,
+            "y": 33.5,
+            "rot": 2,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 11.85,
+            "near": [
+              25,
+              23
+            ]
+          },
+          {
+            "id": "wolves_watchtower",
+            "x": 25,
+            "y": 29,
+            "rot": 2,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 6,
+            "near": [
+              25,
+              23
+            ]
+          }
+        ],
+        "notes": "Visual-only decorations. No collision, passage, spawns, secrets, events, sounds, fear effects or encounters are authored in game state."
+      }
+    },
+    {
+      "id": "r-castle",
+      "from": "crossroads",
+      "to": "castle",
+      "way": "road",
+      "exampleSceneNames": [
+        "The Bell That Was Not Rung",
+        "The Last Watch"
+      ],
+      "plan": {
+        "roadId": "r-castle",
+        "seed": "v4-campaign-01",
+        "gaze": 7,
+        "bloom": true,
+        "density": "standard",
+        "format": "barovia-horror-v4",
+        "version": 4,
+        "width": 40,
+        "height": 40,
+        "scenes": [
+          {
+            "id": "the-unrung-bell",
+            "name": "The Bell That Was Not Rung",
+            "kind": "sound",
+            "biomes": [
+              "village",
+              "roadside"
+            ],
+            "primary": {
+              "id": "bellkeeper_hut",
+              "x": 11,
+              "y": 29,
+              "rot": 2,
+              "footprint": [
+                3,
+                3
+              ],
+              "distanceToRoad": 6.08,
+              "near": [
+                12,
+                23
+              ]
+            },
+            "satellites": [
+              {
+                "id": "candled_memorial",
+                "x": 8.5,
+                "y": 33.5,
+                "rot": 2,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 11.07,
+                "near": [
+                  12,
+                  23
+                ]
+              },
+              {
+                "id": "blood_well",
+                "x": 15.5,
+                "y": 28.5,
+                "rot": 2,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 5.52,
+                "near": [
+                  15,
+                  23
+                ]
+              },
+              {
+                "id": "bone_chime_tree",
+                "x": 6,
+                "y": 28,
+                "rot": 1,
+                "footprint": [
+                  3,
+                  3
+                ],
+                "distanceToRoad": 7.81,
+                "near": [
+                  12,
+                  23
+                ]
+              }
+            ],
+            "beats": {
+              "approach": "The bellkeeper’s hut is shut. A faint bell tone hangs in the air.",
+              "reveal": "The clapper has been removed, but the bell continues to sound.",
+              "aftermath": "The tone follows the party for a single mile."
+            },
+            "suggestedReveal": {
+              "trigger": "GM chooses",
+              "requiresEngineApproval": true
+            },
+            "access": {
+              "nearestExistingRoadSquare": [
+                12,
+                23
+              ],
+              "featureSquare": [
+                11,
+                29
+              ],
+              "requiresGameplayPathCheck": true
+            }
+          },
+          {
+            "id": "the-last-watch",
+            "name": "The Last Watch",
+            "kind": "betrayal",
+            "biomes": [
+              "roadside",
+              "mountain"
+            ],
+            "primary": {
+              "id": "abandoned_guard_post",
+              "x": 12,
+              "y": 12,
+              "rot": 0,
+              "footprint": [
+                3,
+                3
+              ],
+              "distanceToRoad": 6,
+              "near": [
+                12,
+                18
+              ]
+            },
+            "satellites": [
+              {
+                "id": "burned_coach_stable",
+                "x": 12,
+                "y": 5.5,
+                "rot": 0,
+                "footprint": [
+                  5,
+                  4
+                ],
+                "distanceToRoad": 12.5,
+                "near": [
+                  12,
+                  18
+                ]
+              },
+              {
+                "id": "last_lantern_sign",
+                "x": 16,
+                "y": 10,
+                "rot": 0,
+                "footprint": [
+                  1,
+                  1
+                ],
+                "distanceToRoad": 8.94,
+                "near": [
+                  12,
+                  18
+                ]
+              },
+              {
+                "id": "rusted_prison_cage",
+                "x": 7.5,
+                "y": 10.5,
+                "rot": 0,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 7.52,
+                "near": [
+                  7,
+                  18
+                ]
+              }
+            ],
+            "beats": {
+              "approach": "The guard post is deserted. A lantern still burns above the gate.",
+              "reveal": "The locked cage contains the sentries’ weapons, but none of their clothing.",
+              "aftermath": "Fresh bootprints follow the party from the post."
+            },
+            "suggestedReveal": {
+              "trigger": "GM chooses",
+              "requiresEngineApproval": true
+            },
+            "access": {
+              "nearestExistingRoadSquare": [
+                12,
+                18
+              ],
+              "featureSquare": [
+                12,
+                12
+              ],
+              "requiresGameplayPathCheck": true
+            }
+          }
+        ],
+        "placements": [
+          {
+            "id": "candled_memorial",
+            "x": 8.5,
+            "y": 33.5,
+            "rot": 2,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 11.07,
+            "near": [
+              12,
+              23
+            ]
+          },
+          {
+            "id": "blood_well",
+            "x": 15.5,
+            "y": 28.5,
+            "rot": 2,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 5.52,
+            "near": [
+              15,
+              23
+            ]
+          },
+          {
+            "id": "bone_chime_tree",
+            "x": 6,
+            "y": 28,
+            "rot": 1,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 7.81,
+            "near": [
+              12,
+              23
+            ]
+          },
+          {
+            "id": "bellkeeper_hut",
+            "x": 11,
+            "y": 29,
+            "rot": 2,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 6.08,
+            "near": [
+              12,
+              23
+            ]
+          },
+          {
+            "id": "burned_coach_stable",
+            "x": 12,
+            "y": 5.5,
+            "rot": 0,
+            "footprint": [
+              5,
+              4
+            ],
+            "distanceToRoad": 12.5,
+            "near": [
+              12,
+              18
+            ]
+          },
+          {
+            "id": "last_lantern_sign",
+            "x": 16,
+            "y": 10,
+            "rot": 0,
+            "footprint": [
+              1,
+              1
+            ],
+            "distanceToRoad": 8.94,
+            "near": [
+              12,
+              18
+            ]
+          },
+          {
+            "id": "rusted_prison_cage",
+            "x": 7.5,
+            "y": 10.5,
+            "rot": 0,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 7.52,
+            "near": [
+              7,
+              18
+            ]
+          },
+          {
+            "id": "abandoned_guard_post",
+            "x": 12,
+            "y": 12,
+            "rot": 0,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 6,
+            "near": [
+              12,
+              18
+            ]
+          }
+        ],
+        "notes": "Visual-only decorations. No collision, passage, spawns, secrets, events, sounds, fear effects or encounters are authored in game state."
+      }
+    },
+    {
+      "id": "r-cut",
+      "from": "crossroads",
+      "to": "coffin",
+      "way": "trail",
+      "exampleSceneNames": [
+        "The Warm Cave",
+        "The Crows’ Tithe"
+      ],
+      "plan": {
+        "roadId": "r-cut",
+        "seed": "v4-campaign-01",
+        "gaze": 7,
+        "bloom": true,
+        "density": "standard",
+        "format": "barovia-horror-v4",
+        "version": 4,
+        "width": 40,
+        "height": 40,
+        "scenes": [
+          {
+            "id": "mountain-mouth",
+            "name": "The Warm Cave",
+            "kind": "secret-entrance",
+            "biomes": [
+              "mountain",
+              "forest"
+            ],
+            "primary": {
+              "id": "dripping_cave_door",
+              "x": 25,
+              "y": 13,
+              "rot": 0,
+              "footprint": [
+                3,
+                3
+              ],
+              "distanceToRoad": 5,
+              "near": [
+                25,
+                18
+              ]
+            },
+            "satellites": [
+              {
+                "id": "red_mist_stones",
+                "x": 20,
+                "y": 13.5,
+                "rot": 1,
+                "footprint": [
+                  3,
+                  2
+                ],
+                "distanceToRoad": 6.73,
+                "near": [
+                  25,
+                  18
+                ]
+              },
+              {
+                "id": "wolf_bone_cairn",
+                "x": 29.5,
+                "y": 10.5,
+                "rot": 0,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 7.52,
+                "near": [
+                  29,
+                  18
+                ]
+              },
+              {
+                "id": "thorns_arcade",
+                "x": 25,
+                "y": 8,
+                "rot": 0,
+                "footprint": [
+                  3,
+                  3
+                ],
+                "distanceToRoad": 10,
+                "near": [
+                  25,
+                  18
+                ]
+              }
+            ],
+            "beats": {
+              "approach": "Warm breath rises from the rocks through cold mountain air.",
+              "reveal": "The cave opens behind a slab marked with a handprint.",
+              "aftermath": "The warm current now smells of extinguished candles."
+            },
+            "suggestedReveal": {
+              "trigger": "GM chooses",
+              "requiresEngineApproval": true
+            },
+            "access": {
+              "nearestExistingRoadSquare": [
+                25,
+                18
+              ],
+              "featureSquare": [
+                25,
+                13
+              ],
+              "requiresGameplayPathCheck": true
+            }
+          },
+          {
+            "id": "the-crows-tithe",
+            "name": "The Crows’ Tithe",
+            "kind": "omen",
+            "biomes": [
+              "forest",
+              "graveyard",
+              "roadside"
+            ],
+            "primary": {
+              "id": "gallows_three_nooses",
+              "x": 25,
+              "y": 27.5,
+              "rot": 2,
+              "footprint": [
+                3,
+                2
+              ],
+              "distanceToRoad": 4.5,
+              "near": [
+                25,
+                23
+              ]
+            },
+            "satellites": [
+              {
+                "id": "noose_oak",
+                "x": 22,
+                "y": 32,
+                "rot": 2,
+                "footprint": [
+                  3,
+                  3
+                ],
+                "distanceToRoad": 9,
+                "near": [
+                  22,
+                  23
+                ]
+              },
+              {
+                "id": "bone_chime_tree",
+                "x": 28,
+                "y": 32,
+                "rot": 2,
+                "footprint": [
+                  3,
+                  3
+                ],
+                "distanceToRoad": 9.49,
+                "near": [
+                  25,
+                  23
+                ]
+              },
+              {
+                "id": "unmarked_grave_row",
+                "x": 31,
+                "y": 26.5,
+                "rot": 3,
+                "footprint": [
+                  3,
+                  2
+                ],
+                "distanceToRoad": 6.95,
+                "near": [
+                  25,
+                  23
+                ]
+              }
+            ],
+            "beats": {
+              "approach": "Three empty ropes creak in perfect rhythm.",
+              "reveal": "A name is carved into the platform for each member of the party.",
+              "aftermath": "After the party leaves, one of the ropes stops moving."
+            },
+            "suggestedReveal": {
+              "trigger": "GM chooses",
+              "requiresEngineApproval": true
+            },
+            "access": {
+              "nearestExistingRoadSquare": [
+                25,
+                23
+              ],
+              "featureSquare": [
+                25,
+                27.5
+              ],
+              "requiresGameplayPathCheck": true
+            }
+          }
+        ],
+        "placements": [
+          {
+            "id": "red_mist_stones",
+            "x": 20,
+            "y": 13.5,
+            "rot": 1,
+            "footprint": [
+              3,
+              2
+            ],
+            "distanceToRoad": 6.73,
+            "near": [
+              25,
+              18
+            ]
+          },
+          {
+            "id": "wolf_bone_cairn",
+            "x": 29.5,
+            "y": 10.5,
+            "rot": 0,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 7.52,
+            "near": [
+              29,
+              18
+            ]
+          },
+          {
+            "id": "thorns_arcade",
+            "x": 25,
+            "y": 8,
+            "rot": 0,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 10,
+            "near": [
+              25,
+              18
+            ]
+          },
+          {
+            "id": "dripping_cave_door",
+            "x": 25,
+            "y": 13,
+            "rot": 0,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 5,
+            "near": [
+              25,
+              18
+            ]
+          },
+          {
+            "id": "noose_oak",
+            "x": 22,
+            "y": 32,
+            "rot": 2,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 9,
+            "near": [
+              22,
+              23
+            ]
+          },
+          {
+            "id": "bone_chime_tree",
+            "x": 28,
+            "y": 32,
+            "rot": 2,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 9.49,
+            "near": [
+              25,
+              23
+            ]
+          },
+          {
+            "id": "unmarked_grave_row",
+            "x": 31,
+            "y": 26.5,
+            "rot": 3,
+            "footprint": [
+              3,
+              2
+            ],
+            "distanceToRoad": 6.95,
+            "near": [
+              25,
+              23
+            ]
+          },
+          {
+            "id": "gallows_three_nooses",
+            "x": 25,
+            "y": 27.5,
+            "rot": 2,
+            "footprint": [
+              3,
+              2
+            ],
+            "distanceToRoad": 4.5,
+            "near": [
+              25,
+              23
+            ]
+          }
+        ],
+        "notes": "Visual-only decorations. No collision, passage, spawns, secrets, events, sounds, fear effects or encounters are authored in game state."
+      }
+    },
+    {
+      "id": "r-tser",
+      "from": "crossroads",
+      "to": "tser",
+      "way": "path",
+      "exampleSceneNames": [
+        "The Last Light Inn",
+        "The Field of Witnesses"
+      ],
+      "plan": {
+        "roadId": "r-tser",
+        "seed": "v4-campaign-01",
+        "gaze": 7,
+        "bloom": true,
+        "density": "standard",
+        "format": "barovia-horror-v4",
+        "version": 4,
+        "width": 40,
+        "height": 40,
+        "scenes": [
+          {
+            "id": "last-light",
+            "name": "The Last Light Inn",
+            "kind": "false-shelter",
+            "biomes": [
+              "roadside",
+              "village"
+            ],
+            "primary": {
+              "id": "last_light_inn",
+              "x": 24,
+              "y": 28.5,
+              "rot": 2,
+              "footprint": [
+                5,
+                4
+              ],
+              "distanceToRoad": 5.5,
+              "near": [
+                24,
+                23
+              ]
+            },
+            "satellites": [
+              {
+                "id": "abandoned_funeral_cart",
+                "x": 25,
+                "y": 33.5,
+                "rot": 2,
+                "footprint": [
+                  3,
+                  2
+                ],
+                "distanceToRoad": 10.5,
+                "near": [
+                  25,
+                  23
+                ]
+              },
+              {
+                "id": "last_lantern_sign",
+                "x": 21,
+                "y": 33,
+                "rot": 2,
+                "footprint": [
+                  1,
+                  1
+                ],
+                "distanceToRoad": 10,
+                "near": [
+                  21,
+                  23
+                ]
+              },
+              {
+                "id": "handprint_shutter",
+                "x": 29,
+                "y": 30,
+                "rot": 2,
+                "footprint": [
+                  1,
+                  1
+                ],
+                "distanceToRoad": 8.06,
+                "near": [
+                  25,
+                  23
+                ]
+              }
+            ],
+            "beats": {
+              "approach": "The inn has one warm window. Its curtains are drawn.",
+              "reveal": "There is no fireplace behind the window. The warmth comes from beneath the floorboards.",
+              "aftermath": "On returning, the sign bears the name of a missing traveller."
+            },
+            "suggestedReveal": {
+              "trigger": "GM chooses",
+              "requiresEngineApproval": true
+            },
+            "access": {
+              "nearestExistingRoadSquare": [
+                24,
+                23
+              ],
+              "featureSquare": [
+                24,
+                28.5
+              ],
+              "requiresGameplayPathCheck": true
+            }
+          },
+          {
+            "id": "the-watchers-field",
+            "name": "The Field of Witnesses",
+            "kind": "uncanny",
+            "biomes": [
+              "farmland",
+              "roadside"
+            ],
+            "primary": {
+              "id": "shuttered_farmhouse",
+              "x": 13.5,
+              "y": 28.5,
+              "rot": 2,
+              "footprint": [
+                4,
+                4
+              ],
+              "distanceToRoad": 5.52,
+              "near": [
+                13,
+                23
+              ]
+            },
+            "satellites": [
+              {
+                "id": "false_scarecrow",
+                "x": 9,
+                "y": 29,
+                "rot": 2,
+                "footprint": [
+                  1,
+                  1
+                ],
+                "distanceToRoad": 6.71,
+                "near": [
+                  12,
+                  23
+                ]
+              },
+              {
+                "id": "mourning_effigy",
+                "x": 12,
+                "y": 33,
+                "rot": 2,
+                "footprint": [
+                  1,
+                  1
+                ],
+                "distanceToRoad": 10,
+                "near": [
+                  12,
+                  23
+                ]
+              },
+              {
+                "id": "hollow_granary",
+                "x": 7.5,
+                "y": 33,
+                "rot": 2,
+                "footprint": [
+                  4,
+                  3
+                ],
+                "distanceToRoad": 10.97,
+                "near": [
+                  12,
+                  23
+                ]
+              }
+            ],
+            "beats": {
+              "approach": "The scarecrows stand with their backs to the road.",
+              "reveal": "Every one has turned toward the party while no one looked.",
+              "aftermath": "One empty post has appeared at the far end of the field."
+            },
+            "suggestedReveal": {
+              "trigger": "GM chooses",
+              "requiresEngineApproval": true
+            },
+            "access": {
+              "nearestExistingRoadSquare": [
+                13,
+                23
+              ],
+              "featureSquare": [
+                13.5,
+                28.5
+              ],
+              "requiresGameplayPathCheck": true
+            }
+          }
+        ],
+        "placements": [
+          {
+            "id": "abandoned_funeral_cart",
+            "x": 25,
+            "y": 33.5,
+            "rot": 2,
+            "footprint": [
+              3,
+              2
+            ],
+            "distanceToRoad": 10.5,
+            "near": [
+              25,
+              23
+            ]
+          },
+          {
+            "id": "last_lantern_sign",
+            "x": 21,
+            "y": 33,
+            "rot": 2,
+            "footprint": [
+              1,
+              1
+            ],
+            "distanceToRoad": 10,
+            "near": [
+              21,
+              23
+            ]
+          },
+          {
+            "id": "handprint_shutter",
+            "x": 29,
+            "y": 30,
+            "rot": 2,
+            "footprint": [
+              1,
+              1
+            ],
+            "distanceToRoad": 8.06,
+            "near": [
+              25,
+              23
+            ]
+          },
+          {
+            "id": "last_light_inn",
+            "x": 24,
+            "y": 28.5,
+            "rot": 2,
+            "footprint": [
+              5,
+              4
+            ],
+            "distanceToRoad": 5.5,
+            "near": [
+              24,
+              23
+            ]
+          },
+          {
+            "id": "false_scarecrow",
+            "x": 9,
+            "y": 29,
+            "rot": 2,
+            "footprint": [
+              1,
+              1
+            ],
+            "distanceToRoad": 6.71,
+            "near": [
+              12,
+              23
+            ]
+          },
+          {
+            "id": "mourning_effigy",
+            "x": 12,
+            "y": 33,
+            "rot": 2,
+            "footprint": [
+              1,
+              1
+            ],
+            "distanceToRoad": 10,
+            "near": [
+              12,
+              23
+            ]
+          },
+          {
+            "id": "hollow_granary",
+            "x": 7.5,
+            "y": 33,
+            "rot": 2,
+            "footprint": [
+              4,
+              3
+            ],
+            "distanceToRoad": 10.97,
+            "near": [
+              12,
+              23
+            ]
+          },
+          {
+            "id": "shuttered_farmhouse",
+            "x": 13.5,
+            "y": 28.5,
+            "rot": 2,
+            "footprint": [
+              4,
+              4
+            ],
+            "distanceToRoad": 5.52,
+            "near": [
+              13,
+              23
+            ]
+          }
+        ],
+        "notes": "Visual-only decorations. No collision, passage, spawns, secrets, events, sounds, fear effects or encounters are authored in game state."
+      }
+    },
+    {
+      "id": "r-west",
+      "from": "tser",
+      "to": "bonegrinder",
+      "way": "road",
+      "exampleSceneNames": [
+        "The Last Watch",
+        "The Crows’ Tithe"
+      ],
+      "plan": {
+        "roadId": "r-west",
+        "seed": "v4-campaign-01",
+        "gaze": 7,
+        "bloom": true,
+        "density": "standard",
+        "format": "barovia-horror-v4",
+        "version": 4,
+        "width": 40,
+        "height": 40,
+        "scenes": [
+          {
+            "id": "the-last-watch",
+            "name": "The Last Watch",
+            "kind": "betrayal",
+            "biomes": [
+              "roadside",
+              "mountain"
+            ],
+            "primary": {
+              "id": "abandoned_guard_post",
+              "x": 12,
+              "y": 12,
+              "rot": 0,
+              "footprint": [
+                3,
+                3
+              ],
+              "distanceToRoad": 6,
+              "near": [
+                12,
+                18
+              ]
+            },
+            "satellites": [
+              {
+                "id": "burned_coach_stable",
+                "x": 18,
+                "y": 10.5,
+                "rot": 0,
+                "footprint": [
+                  5,
+                  4
+                ],
+                "distanceToRoad": 9.6,
+                "near": [
+                  12,
+                  18
+                ]
+              },
+              {
+                "id": "last_lantern_sign",
+                "x": 11,
+                "y": 8,
+                "rot": 0,
+                "footprint": [
+                  1,
+                  1
+                ],
+                "distanceToRoad": 10,
+                "near": [
+                  11,
+                  18
+                ]
+              },
+              {
+                "id": "rusted_prison_cage",
+                "x": 6.5,
+                "y": 8.5,
+                "rot": 0,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 9.51,
+                "near": [
+                  6,
+                  18
+                ]
+              }
+            ],
+            "beats": {
+              "approach": "The guard post is deserted. A lantern still burns above the gate.",
+              "reveal": "The locked cage contains the sentries’ weapons, but none of their clothing.",
+              "aftermath": "Fresh bootprints follow the party from the post."
+            },
+            "suggestedReveal": {
+              "trigger": "GM chooses",
+              "requiresEngineApproval": true
+            },
+            "access": {
+              "nearestExistingRoadSquare": [
+                12,
+                18
+              ],
+              "featureSquare": [
+                12,
+                12
+              ],
+              "requiresGameplayPathCheck": true
+            }
+          },
+          {
+            "id": "the-crows-tithe",
+            "name": "The Crows’ Tithe",
+            "kind": "omen",
+            "biomes": [
+              "forest",
+              "graveyard",
+              "roadside"
+            ],
+            "primary": {
+              "id": "gallows_three_nooses",
+              "x": 18,
+              "y": 17.5,
+              "rot": 0,
+              "footprint": [
+                3,
+                2
+              ],
+              "distanceToRoad": 5.5,
+              "near": [
+                18,
+                23
+              ]
+            },
+            "satellites": [
+              {
+                "id": "noose_oak",
+                "x": 24,
+                "y": 12,
+                "rot": 0,
+                "footprint": [
+                  3,
+                  3
+                ],
+                "distanceToRoad": 6.08,
+                "near": [
+                  25,
+                  18
+                ]
+              }
+            ],
+            "beats": {
+              "approach": "Three empty ropes creak in perfect rhythm.",
+              "reveal": "A name is carved into the platform for each member of the party.",
+              "aftermath": "After the party leaves, one of the ropes stops moving."
+            },
+            "suggestedReveal": {
+              "trigger": "GM chooses",
+              "requiresEngineApproval": true
+            },
+            "access": {
+              "nearestExistingRoadSquare": [
+                18,
+                23
+              ],
+              "featureSquare": [
+                18,
+                17.5
+              ],
+              "requiresGameplayPathCheck": true
+            }
+          }
+        ],
+        "placements": [
+          {
+            "id": "burned_coach_stable",
+            "x": 18,
+            "y": 10.5,
+            "rot": 0,
+            "footprint": [
+              5,
+              4
+            ],
+            "distanceToRoad": 9.6,
+            "near": [
+              12,
+              18
+            ]
+          },
+          {
+            "id": "last_lantern_sign",
+            "x": 11,
+            "y": 8,
+            "rot": 0,
+            "footprint": [
+              1,
+              1
+            ],
+            "distanceToRoad": 10,
+            "near": [
+              11,
+              18
+            ]
+          },
+          {
+            "id": "rusted_prison_cage",
+            "x": 6.5,
+            "y": 8.5,
+            "rot": 0,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 9.51,
+            "near": [
+              6,
+              18
+            ]
+          },
+          {
+            "id": "abandoned_guard_post",
+            "x": 12,
+            "y": 12,
+            "rot": 0,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 6,
+            "near": [
+              12,
+              18
+            ]
+          },
+          {
+            "id": "noose_oak",
+            "x": 24,
+            "y": 12,
+            "rot": 0,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 6.08,
+            "near": [
+              25,
+              18
+            ]
+          },
+          {
+            "id": "gallows_three_nooses",
+            "x": 18,
+            "y": 17.5,
+            "rot": 0,
+            "footprint": [
+              3,
+              2
+            ],
+            "distanceToRoad": 5.5,
+            "near": [
+              18,
+              23
+            ]
+          }
+        ],
+        "notes": "Visual-only decorations. No collision, passage, spawns, secrets, events, sounds, fear effects or encounters are authored in game state."
+      }
+    },
+    {
+      "id": "r-vallaki",
+      "from": "bonegrinder",
+      "to": "vallaki",
+      "way": "road",
+      "exampleSceneNames": [
+        "The Hunters’ Stand",
+        "The Last Light Inn"
+      ],
+      "plan": {
+        "roadId": "r-vallaki",
+        "seed": "v4-campaign-01",
+        "gaze": 7,
+        "bloom": true,
+        "density": "standard",
+        "format": "barovia-horror-v4",
+        "version": 4,
+        "width": 40,
+        "height": 40,
+        "scenes": [
+          {
+            "id": "the-hunters-stand",
+            "name": "The Hunters’ Stand",
+            "kind": "predator",
+            "biomes": [
+              "forest",
+              "mountain"
+            ],
+            "primary": {
+              "id": "wolves_watchtower",
+              "x": 17,
+              "y": 29,
+              "rot": 2,
+              "footprint": [
+                3,
+                3
+              ],
+              "distanceToRoad": 6,
+              "near": [
+                17,
+                23
+              ]
+            },
+            "satellites": [
+              {
+                "id": "hunter_hideout",
+                "x": 18,
+                "y": 34,
+                "rot": 2,
+                "footprint": [
+                  3,
+                  3
+                ],
+                "distanceToRoad": 11,
+                "near": [
+                  18,
+                  23
+                ]
+              },
+              {
+                "id": "wolf_bone_cairn",
+                "x": 12.5,
+                "y": 31.5,
+                "rot": 2,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 8.51,
+                "near": [
+                  12,
+                  23
+                ]
+              },
+              {
+                "id": "eyeless_stump",
+                "x": 21.5,
+                "y": 28.5,
+                "rot": 2,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 5.52,
+                "near": [
+                  21,
+                  23
+                ]
+              }
+            ],
+            "beats": {
+              "approach": "From the old tower, a horn sounds once.",
+              "reveal": "The hunting blind faces the camp rather than the game trail.",
+              "aftermath": "Fresh wolf tracks circle the tower, all pointing inward."
+            },
+            "suggestedReveal": {
+              "trigger": "GM chooses",
+              "requiresEngineApproval": true
+            },
+            "access": {
+              "nearestExistingRoadSquare": [
+                17,
+                23
+              ],
+              "featureSquare": [
+                17,
+                29
+              ],
+              "requiresGameplayPathCheck": true
+            }
+          },
+          {
+            "id": "last-light",
+            "name": "The Last Light Inn",
+            "kind": "false-shelter",
+            "biomes": [
+              "roadside",
+              "village"
+            ],
+            "primary": {
+              "id": "last_light_inn",
+              "x": 26,
+              "y": 11.5,
+              "rot": 0,
+              "footprint": [
+                5,
+                4
+              ],
+              "distanceToRoad": 6.5,
+              "near": [
+                26,
+                18
+              ]
+            },
+            "satellites": [
+              {
+                "id": "abandoned_funeral_cart",
+                "x": 29,
+                "y": 6.5,
+                "rot": 0,
+                "footprint": [
+                  3,
+                  2
+                ],
+                "distanceToRoad": 11.5,
+                "near": [
+                  29,
+                  18
+                ]
+              },
+              {
+                "id": "last_lantern_sign",
+                "x": 32,
+                "y": 10,
+                "rot": 0,
+                "footprint": [
+                  1,
+                  1
+                ],
+                "distanceToRoad": 8,
+                "near": [
+                  32,
+                  18
+                ]
+              },
+              {
+                "id": "handprint_shutter",
+                "x": 24,
+                "y": 7,
+                "rot": 0,
+                "footprint": [
+                  1,
+                  1
+                ],
+                "distanceToRoad": 11.05,
+                "near": [
+                  25,
+                  18
+                ]
+              }
+            ],
+            "beats": {
+              "approach": "The inn has one warm window. Its curtains are drawn.",
+              "reveal": "There is no fireplace behind the window. The warmth comes from beneath the floorboards.",
+              "aftermath": "On returning, the sign bears the name of a missing traveller."
+            },
+            "suggestedReveal": {
+              "trigger": "GM chooses",
+              "requiresEngineApproval": true
+            },
+            "access": {
+              "nearestExistingRoadSquare": [
+                26,
+                18
+              ],
+              "featureSquare": [
+                26,
+                11.5
+              ],
+              "requiresGameplayPathCheck": true
+            }
+          }
+        ],
+        "placements": [
+          {
+            "id": "hunter_hideout",
+            "x": 18,
+            "y": 34,
+            "rot": 2,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 11,
+            "near": [
+              18,
+              23
+            ]
+          },
+          {
+            "id": "wolf_bone_cairn",
+            "x": 12.5,
+            "y": 31.5,
+            "rot": 2,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 8.51,
+            "near": [
+              12,
+              23
+            ]
+          },
+          {
+            "id": "eyeless_stump",
+            "x": 21.5,
+            "y": 28.5,
+            "rot": 2,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 5.52,
+            "near": [
+              21,
+              23
+            ]
+          },
+          {
+            "id": "wolves_watchtower",
+            "x": 17,
+            "y": 29,
+            "rot": 2,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 6,
+            "near": [
+              17,
+              23
+            ]
+          },
+          {
+            "id": "abandoned_funeral_cart",
+            "x": 29,
+            "y": 6.5,
+            "rot": 0,
+            "footprint": [
+              3,
+              2
+            ],
+            "distanceToRoad": 11.5,
+            "near": [
+              29,
+              18
+            ]
+          },
+          {
+            "id": "last_lantern_sign",
+            "x": 32,
+            "y": 10,
+            "rot": 0,
+            "footprint": [
+              1,
+              1
+            ],
+            "distanceToRoad": 8,
+            "near": [
+              32,
+              18
+            ]
+          },
+          {
+            "id": "handprint_shutter",
+            "x": 24,
+            "y": 7,
+            "rot": 0,
+            "footprint": [
+              1,
+              1
+            ],
+            "distanceToRoad": 11.05,
+            "near": [
+              25,
+              18
+            ]
+          },
+          {
+            "id": "last_light_inn",
+            "x": 26,
+            "y": 11.5,
+            "rot": 0,
+            "footprint": [
+              5,
+              4
+            ],
+            "distanceToRoad": 6.5,
+            "near": [
+              26,
+              18
+            ]
+          }
+        ],
+        "notes": "Visual-only decorations. No collision, passage, spawns, secrets, events, sounds, fear effects or encounters are authored in game state."
+      }
+    },
+    {
+      "id": "r-lake",
+      "from": "vallaki",
+      "to": "lake",
+      "way": "path",
+      "exampleSceneNames": [
+        "The Thorn Gate",
+        "The Hunters’ Stand"
+      ],
+      "plan": {
+        "roadId": "r-lake",
+        "seed": "v4-campaign-01",
+        "gaze": 7,
+        "bloom": true,
+        "density": "standard",
+        "format": "barovia-horror-v4",
+        "version": 4,
+        "width": 40,
+        "height": 40,
+        "scenes": [
+          {
+            "id": "thorn-gate",
+            "name": "The Thorn Gate",
+            "kind": "forbidden-path",
+            "biomes": [
+              "forest",
+              "corruption"
+            ],
+            "primary": {
+              "id": "thorns_arcade",
+              "x": 27,
+              "y": 13,
+              "rot": 0,
+              "footprint": [
+                3,
+                3
+              ],
+              "distanceToRoad": 5,
+              "near": [
+                27,
+                18
+              ]
+            },
+            "satellites": [
+              {
+                "id": "hunger_root_arch",
+                "x": 25,
+                "y": 8.5,
+                "rot": 0,
+                "footprint": [
+                  3,
+                  2
+                ],
+                "distanceToRoad": 9.5,
+                "near": [
+                  25,
+                  18
+                ]
+              },
+              {
+                "id": "hunger_stalking_stalks",
+                "x": 21.5,
+                "y": 13.5,
+                "rot": 0,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 5.7,
+                "near": [
+                  25,
+                  18
+                ]
+              },
+              {
+                "id": "wicker_doll_shrine",
+                "x": 29.5,
+                "y": 6.5,
+                "rot": 0,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 11.51,
+                "near": [
+                  29,
+                  18
+                ]
+              }
+            ],
+            "beats": {
+              "approach": "A dark arcade of thorns leads away from the road.",
+              "reveal": "The vines withdraw from one particular name when spoken aloud.",
+              "aftermath": "On the return journey, the opening is gone."
+            },
+            "suggestedReveal": {
+              "trigger": "GM chooses",
+              "requiresEngineApproval": true
+            },
+            "access": {
+              "nearestExistingRoadSquare": [
+                27,
+                18
+              ],
+              "featureSquare": [
+                27,
+                13
+              ],
+              "requiresGameplayPathCheck": true
+            }
+          },
+          {
+            "id": "the-hunters-stand",
+            "name": "The Hunters’ Stand",
+            "kind": "predator",
+            "biomes": [
+              "forest",
+              "mountain"
+            ],
+            "primary": {
+              "id": "wolves_watchtower",
+              "x": 15,
+              "y": 28,
+              "rot": 2,
+              "footprint": [
+                3,
+                3
+              ],
+              "distanceToRoad": 5,
+              "near": [
+                15,
+                23
+              ]
+            },
+            "satellites": [
+              {
+                "id": "hunter_hideout",
+                "x": 15,
+                "y": 33,
+                "rot": 2,
+                "footprint": [
+                  3,
+                  3
+                ],
+                "distanceToRoad": 10,
+                "near": [
+                  15,
+                  23
+                ]
+              },
+              {
+                "id": "wolf_bone_cairn",
+                "x": 20.5,
+                "y": 27.5,
+                "rot": 2,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 4.53,
+                "near": [
+                  20,
+                  23
+                ]
+              },
+              {
+                "id": "eyeless_stump",
+                "x": 10.5,
+                "y": 28.5,
+                "rot": 2,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 5.7,
+                "near": [
+                  12,
+                  23
+                ]
+              }
+            ],
+            "beats": {
+              "approach": "From the old tower, a horn sounds once.",
+              "reveal": "The hunting blind faces the camp rather than the game trail.",
+              "aftermath": "Fresh wolf tracks circle the tower, all pointing inward."
+            },
+            "suggestedReveal": {
+              "trigger": "GM chooses",
+              "requiresEngineApproval": true
+            },
+            "access": {
+              "nearestExistingRoadSquare": [
+                15,
+                23
+              ],
+              "featureSquare": [
+                15,
+                28
+              ],
+              "requiresGameplayPathCheck": true
+            }
+          }
+        ],
+        "placements": [
+          {
+            "id": "hunger_root_arch",
+            "x": 25,
+            "y": 8.5,
+            "rot": 0,
+            "footprint": [
+              3,
+              2
+            ],
+            "distanceToRoad": 9.5,
+            "near": [
+              25,
+              18
+            ]
+          },
+          {
+            "id": "hunger_stalking_stalks",
+            "x": 21.5,
+            "y": 13.5,
+            "rot": 0,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 5.7,
+            "near": [
+              25,
+              18
+            ]
+          },
+          {
+            "id": "wicker_doll_shrine",
+            "x": 29.5,
+            "y": 6.5,
+            "rot": 0,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 11.51,
+            "near": [
+              29,
+              18
+            ]
+          },
+          {
+            "id": "thorns_arcade",
+            "x": 27,
+            "y": 13,
+            "rot": 0,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 5,
+            "near": [
+              27,
+              18
+            ]
+          },
+          {
+            "id": "hunter_hideout",
+            "x": 15,
+            "y": 33,
+            "rot": 2,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 10,
+            "near": [
+              15,
+              23
+            ]
+          },
+          {
+            "id": "wolf_bone_cairn",
+            "x": 20.5,
+            "y": 27.5,
+            "rot": 2,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 4.53,
+            "near": [
+              20,
+              23
+            ]
+          },
+          {
+            "id": "eyeless_stump",
+            "x": 10.5,
+            "y": 28.5,
+            "rot": 2,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 5.7,
+            "near": [
+              12,
+              23
+            ]
+          },
+          {
+            "id": "wolves_watchtower",
+            "x": 15,
+            "y": 28,
+            "rot": 2,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 5,
+            "near": [
+              15,
+              23
+            ]
+          }
+        ],
+        "notes": "Visual-only decorations. No collision, passage, spawns, secrets, events, sounds, fear effects or encounters are authored in game state."
+      }
+    },
+    {
+      "id": "r-argyn",
+      "from": "vallaki",
+      "to": "argyn",
+      "way": "trail",
+      "exampleSceneNames": [
+        "The Last Watch",
+        "The Drowned Vespers"
+      ],
+      "plan": {
+        "roadId": "r-argyn",
+        "seed": "v4-campaign-01",
+        "gaze": 7,
+        "bloom": true,
+        "density": "standard",
+        "format": "barovia-horror-v4",
+        "version": 4,
+        "width": 40,
+        "height": 40,
+        "scenes": [
+          {
+            "id": "the-last-watch",
+            "name": "The Last Watch",
+            "kind": "betrayal",
+            "biomes": [
+              "roadside",
+              "mountain"
+            ],
+            "primary": {
+              "id": "abandoned_guard_post",
+              "x": 10,
+              "y": 13,
+              "rot": 0,
+              "footprint": [
+                3,
+                3
+              ],
+              "distanceToRoad": 5,
+              "near": [
+                10,
+                18
+              ]
+            },
+            "satellites": [
+              {
+                "id": "burned_coach_stable",
+                "x": 11,
+                "y": 7.5,
+                "rot": 0,
+                "footprint": [
+                  5,
+                  4
+                ],
+                "distanceToRoad": 10.5,
+                "near": [
+                  11,
+                  18
+                ]
+              },
+              {
+                "id": "last_lantern_sign",
+                "x": 14,
+                "y": 13,
+                "rot": 0,
+                "footprint": [
+                  1,
+                  1
+                ],
+                "distanceToRoad": 5.39,
+                "near": [
+                  12,
+                  18
+                ]
+              },
+              {
+                "id": "rusted_prison_cage",
+                "x": 5.5,
+                "y": 9.5,
+                "rot": 0,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 8.51,
+                "near": [
+                  5,
+                  18
+                ]
+              }
+            ],
+            "beats": {
+              "approach": "The guard post is deserted. A lantern still burns above the gate.",
+              "reveal": "The locked cage contains the sentries’ weapons, but none of their clothing.",
+              "aftermath": "Fresh bootprints follow the party from the post."
+            },
+            "suggestedReveal": {
+              "trigger": "GM chooses",
+              "requiresEngineApproval": true
+            },
+            "access": {
+              "nearestExistingRoadSquare": [
+                10,
+                18
+              ],
+              "featureSquare": [
+                10,
+                13
+              ],
+              "requiresGameplayPathCheck": true
+            }
+          },
+          {
+            "id": "drowned-vespers",
+            "name": "The Drowned Vespers",
+            "kind": "investigation",
+            "biomes": [
+              "marsh",
+              "graveyard"
+            ],
+            "primary": {
+              "id": "drowned_waychapel",
+              "x": 19.5,
+              "y": 17,
+              "rot": 1,
+              "footprint": [
+                4,
+                5
+              ],
+              "distanceToRoad": 5.59,
+              "near": [
+                25,
+                18
+              ]
+            },
+            "satellites": [
+              {
+                "id": "bog_sunken_hands",
+                "x": 20.5,
+                "y": 9.5,
+                "rot": 0,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 9.62,
+                "near": [
+                  25,
+                  18
+                ]
+              },
+              {
+                "id": "blackwater_sinkhole",
+                "x": 27,
+                "y": 13,
+                "rot": 0,
+                "footprint": [
+                  3,
+                  3
+                ],
+                "distanceToRoad": 5,
+                "near": [
+                  27,
+                  18
+                ]
+              }
+            ],
+            "beats": {
+              "approach": "A chapel bell rings softly beneath the water.",
+              "reveal": "The chapel pews face the back wall, where a second altar is submerged.",
+              "aftermath": "Small wet footprints lead out toward the road."
+            },
+            "suggestedReveal": {
+              "trigger": "GM chooses",
+              "requiresEngineApproval": true
+            },
+            "access": {
+              "nearestExistingRoadSquare": [
+                25,
+                18
+              ],
+              "featureSquare": [
+                19.5,
+                17
+              ],
+              "requiresGameplayPathCheck": true
+            }
+          }
+        ],
+        "placements": [
+          {
+            "id": "burned_coach_stable",
+            "x": 11,
+            "y": 7.5,
+            "rot": 0,
+            "footprint": [
+              5,
+              4
+            ],
+            "distanceToRoad": 10.5,
+            "near": [
+              11,
+              18
+            ]
+          },
+          {
+            "id": "last_lantern_sign",
+            "x": 14,
+            "y": 13,
+            "rot": 0,
+            "footprint": [
+              1,
+              1
+            ],
+            "distanceToRoad": 5.39,
+            "near": [
+              12,
+              18
+            ]
+          },
+          {
+            "id": "rusted_prison_cage",
+            "x": 5.5,
+            "y": 9.5,
+            "rot": 0,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 8.51,
+            "near": [
+              5,
+              18
+            ]
+          },
+          {
+            "id": "abandoned_guard_post",
+            "x": 10,
+            "y": 13,
+            "rot": 0,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 5,
+            "near": [
+              10,
+              18
+            ]
+          },
+          {
+            "id": "bog_sunken_hands",
+            "x": 20.5,
+            "y": 9.5,
+            "rot": 0,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 9.62,
+            "near": [
+              25,
+              18
+            ]
+          },
+          {
+            "id": "blackwater_sinkhole",
+            "x": 27,
+            "y": 13,
+            "rot": 0,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 5,
+            "near": [
+              27,
+              18
+            ]
+          },
+          {
+            "id": "drowned_waychapel",
+            "x": 19.5,
+            "y": 17,
+            "rot": 1,
+            "footprint": [
+              4,
+              5
+            ],
+            "distanceToRoad": 5.59,
+            "near": [
+              25,
+              18
+            ]
+          }
+        ],
+        "notes": "Visual-only decorations. No collision, passage, spawns, secrets, events, sounds, fear effects or encounters are authored in game state."
+      }
+    },
+    {
+      "id": "r-berez",
+      "from": "vallaki",
+      "to": "berez",
+      "way": "path",
+      "exampleSceneNames": [
+        "The Thorn Gate",
+        "The Drowned Vespers"
+      ],
+      "plan": {
+        "roadId": "r-berez",
+        "seed": "v4-campaign-01",
+        "gaze": 7,
+        "bloom": true,
+        "density": "standard",
+        "format": "barovia-horror-v4",
+        "version": 4,
+        "width": 40,
+        "height": 40,
+        "scenes": [
+          {
+            "id": "thorn-gate",
+            "name": "The Thorn Gate",
+            "kind": "forbidden-path",
+            "biomes": [
+              "forest",
+              "corruption"
+            ],
+            "primary": {
+              "id": "thorns_arcade",
+              "x": 29,
+              "y": 13,
+              "rot": 0,
+              "footprint": [
+                3,
+                3
+              ],
+              "distanceToRoad": 5,
+              "near": [
+                29,
+                18
+              ]
+            },
+            "satellites": [
+              {
+                "id": "hunger_root_arch",
+                "x": 34,
+                "y": 11.5,
+                "rot": 0,
+                "footprint": [
+                  3,
+                  2
+                ],
+                "distanceToRoad": 6.5,
+                "near": [
+                  34,
+                  18
+                ]
+              },
+              {
+                "id": "hunger_stalking_stalks",
+                "x": 24.5,
+                "y": 9.5,
+                "rot": 0,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 8.51,
+                "near": [
+                  25,
+                  18
+                ]
+              },
+              {
+                "id": "wicker_doll_shrine",
+                "x": 20.5,
+                "y": 10.5,
+                "rot": 0,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 8.75,
+                "near": [
+                  25,
+                  18
+                ]
+              }
+            ],
+            "beats": {
+              "approach": "A dark arcade of thorns leads away from the road.",
+              "reveal": "The vines withdraw from one particular name when spoken aloud.",
+              "aftermath": "On the return journey, the opening is gone."
+            },
+            "suggestedReveal": {
+              "trigger": "GM chooses",
+              "requiresEngineApproval": true
+            },
+            "access": {
+              "nearestExistingRoadSquare": [
+                29,
+                18
+              ],
+              "featureSquare": [
+                29,
+                13
+              ],
+              "requiresGameplayPathCheck": true
+            }
+          },
+          {
+            "id": "drowned-vespers",
+            "name": "The Drowned Vespers",
+            "kind": "investigation",
+            "biomes": [
+              "marsh",
+              "graveyard"
+            ],
+            "primary": {
+              "id": "drowned_waychapel",
+              "x": 15.5,
+              "y": 29,
+              "rot": 2,
+              "footprint": [
+                4,
+                5
+              ],
+              "distanceToRoad": 6.02,
+              "near": [
+                15,
+                23
+              ]
+            },
+            "satellites": [
+              {
+                "id": "bog_sunken_hands",
+                "x": 12.5,
+                "y": 34.5,
+                "rot": 2,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 11.51,
+                "near": [
+                  12,
+                  23
+                ]
+              },
+              {
+                "id": "blackwater_sinkhole",
+                "x": 18,
+                "y": 35,
+                "rot": 2,
+                "footprint": [
+                  3,
+                  3
+                ],
+                "distanceToRoad": 12,
+                "near": [
+                  18,
+                  23
+                ]
+              },
+              {
+                "id": "candled_memorial",
+                "x": 10.5,
+                "y": 28.5,
+                "rot": 2,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 5.7,
+                "near": [
+                  12,
+                  23
+                ]
+              }
+            ],
+            "beats": {
+              "approach": "A chapel bell rings softly beneath the water.",
+              "reveal": "The chapel pews face the back wall, where a second altar is submerged.",
+              "aftermath": "Small wet footprints lead out toward the road."
+            },
+            "suggestedReveal": {
+              "trigger": "GM chooses",
+              "requiresEngineApproval": true
+            },
+            "access": {
+              "nearestExistingRoadSquare": [
+                15,
+                23
+              ],
+              "featureSquare": [
+                15.5,
+                29
+              ],
+              "requiresGameplayPathCheck": true
+            }
+          }
+        ],
+        "placements": [
+          {
+            "id": "hunger_root_arch",
+            "x": 34,
+            "y": 11.5,
+            "rot": 0,
+            "footprint": [
+              3,
+              2
+            ],
+            "distanceToRoad": 6.5,
+            "near": [
+              34,
+              18
+            ]
+          },
+          {
+            "id": "hunger_stalking_stalks",
+            "x": 24.5,
+            "y": 9.5,
+            "rot": 0,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 8.51,
+            "near": [
+              25,
+              18
+            ]
+          },
+          {
+            "id": "wicker_doll_shrine",
+            "x": 20.5,
+            "y": 10.5,
+            "rot": 0,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 8.75,
+            "near": [
+              25,
+              18
+            ]
+          },
+          {
+            "id": "thorns_arcade",
+            "x": 29,
+            "y": 13,
+            "rot": 0,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 5,
+            "near": [
+              29,
+              18
+            ]
+          },
+          {
+            "id": "bog_sunken_hands",
+            "x": 12.5,
+            "y": 34.5,
+            "rot": 2,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 11.51,
+            "near": [
+              12,
+              23
+            ]
+          },
+          {
+            "id": "blackwater_sinkhole",
+            "x": 18,
+            "y": 35,
+            "rot": 2,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 12,
+            "near": [
+              18,
+              23
+            ]
+          },
+          {
+            "id": "candled_memorial",
+            "x": 10.5,
+            "y": 28.5,
+            "rot": 2,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 5.7,
+            "near": [
+              12,
+              23
+            ]
+          },
+          {
+            "id": "drowned_waychapel",
+            "x": 15.5,
+            "y": 29,
+            "rot": 2,
+            "footprint": [
+              4,
+              5
+            ],
+            "distanceToRoad": 6.02,
+            "near": [
+              15,
+              23
+            ]
+          }
+        ],
+        "notes": "Visual-only decorations. No collision, passage, spawns, secrets, events, sounds, fear effects or encounters are authored in game state."
+      }
+    },
+    {
+      "id": "r-winery",
+      "from": "vallaki",
+      "to": "winery",
+      "way": "road",
+      "exampleSceneNames": [
+        "The Bell That Was Not Rung",
+        "The Last Watch"
+      ],
+      "plan": {
+        "roadId": "r-winery",
+        "seed": "v4-campaign-01",
+        "gaze": 7,
+        "bloom": true,
+        "density": "standard",
+        "format": "barovia-horror-v4",
+        "version": 4,
+        "width": 40,
+        "height": 40,
+        "scenes": [
+          {
+            "id": "the-unrung-bell",
+            "name": "The Bell That Was Not Rung",
+            "kind": "sound",
+            "biomes": [
+              "village",
+              "roadside"
+            ],
+            "primary": {
+              "id": "bellkeeper_hut",
+              "x": 27,
+              "y": 12,
+              "rot": 0,
+              "footprint": [
+                3,
+                3
+              ],
+              "distanceToRoad": 6,
+              "near": [
+                27,
+                18
+              ]
+            },
+            "satellites": [
+              {
+                "id": "candled_memorial",
+                "x": 22.5,
+                "y": 8.5,
+                "rot": 0,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 9.82,
+                "near": [
+                  25,
+                  18
+                ]
+              },
+              {
+                "id": "blood_well",
+                "x": 32.5,
+                "y": 11.5,
+                "rot": 0,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 6.52,
+                "near": [
+                  32,
+                  18
+                ]
+              },
+              {
+                "id": "bone_chime_tree",
+                "x": 27,
+                "y": 7,
+                "rot": 0,
+                "footprint": [
+                  3,
+                  3
+                ],
+                "distanceToRoad": 11,
+                "near": [
+                  27,
+                  18
+                ]
+              }
+            ],
+            "beats": {
+              "approach": "The bellkeeper’s hut is shut. A faint bell tone hangs in the air.",
+              "reveal": "The clapper has been removed, but the bell continues to sound.",
+              "aftermath": "The tone follows the party for a single mile."
+            },
+            "suggestedReveal": {
+              "trigger": "GM chooses",
+              "requiresEngineApproval": true
+            },
+            "access": {
+              "nearestExistingRoadSquare": [
+                27,
+                18
+              ],
+              "featureSquare": [
+                27,
+                12
+              ],
+              "requiresGameplayPathCheck": true
+            }
+          },
+          {
+            "id": "the-last-watch",
+            "name": "The Last Watch",
+            "kind": "betrayal",
+            "biomes": [
+              "roadside",
+              "mountain"
+            ],
+            "primary": {
+              "id": "abandoned_guard_post",
+              "x": 13,
+              "y": 29,
+              "rot": 2,
+              "footprint": [
+                3,
+                3
+              ],
+              "distanceToRoad": 6,
+              "near": [
+                13,
+                23
+              ]
+            },
+            "satellites": [
+              {
+                "id": "burned_coach_stable",
+                "x": 12,
+                "y": 34.5,
+                "rot": 2,
+                "footprint": [
+                  5,
+                  4
+                ],
+                "distanceToRoad": 11.5,
+                "near": [
+                  12,
+                  23
+                ]
+              },
+              {
+                "id": "last_lantern_sign",
+                "x": 18,
+                "y": 28,
+                "rot": 2,
+                "footprint": [
+                  1,
+                  1
+                ],
+                "distanceToRoad": 5,
+                "near": [
+                  18,
+                  23
+                ]
+              },
+              {
+                "id": "rusted_prison_cage",
+                "x": 5.5,
+                "y": 27.5,
+                "rot": 1,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 7.91,
+                "near": [
+                  12,
+                  23
+                ]
+              }
+            ],
+            "beats": {
+              "approach": "The guard post is deserted. A lantern still burns above the gate.",
+              "reveal": "The locked cage contains the sentries’ weapons, but none of their clothing.",
+              "aftermath": "Fresh bootprints follow the party from the post."
+            },
+            "suggestedReveal": {
+              "trigger": "GM chooses",
+              "requiresEngineApproval": true
+            },
+            "access": {
+              "nearestExistingRoadSquare": [
+                13,
+                23
+              ],
+              "featureSquare": [
+                13,
+                29
+              ],
+              "requiresGameplayPathCheck": true
+            }
+          }
+        ],
+        "placements": [
+          {
+            "id": "candled_memorial",
+            "x": 22.5,
+            "y": 8.5,
+            "rot": 0,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 9.82,
+            "near": [
+              25,
+              18
+            ]
+          },
+          {
+            "id": "blood_well",
+            "x": 32.5,
+            "y": 11.5,
+            "rot": 0,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 6.52,
+            "near": [
+              32,
+              18
+            ]
+          },
+          {
+            "id": "bone_chime_tree",
+            "x": 27,
+            "y": 7,
+            "rot": 0,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 11,
+            "near": [
+              27,
+              18
+            ]
+          },
+          {
+            "id": "bellkeeper_hut",
+            "x": 27,
+            "y": 12,
+            "rot": 0,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 6,
+            "near": [
+              27,
+              18
+            ]
+          },
+          {
+            "id": "burned_coach_stable",
+            "x": 12,
+            "y": 34.5,
+            "rot": 2,
+            "footprint": [
+              5,
+              4
+            ],
+            "distanceToRoad": 11.5,
+            "near": [
+              12,
+              23
+            ]
+          },
+          {
+            "id": "last_lantern_sign",
+            "x": 18,
+            "y": 28,
+            "rot": 2,
+            "footprint": [
+              1,
+              1
+            ],
+            "distanceToRoad": 5,
+            "near": [
+              18,
+              23
+            ]
+          },
+          {
+            "id": "rusted_prison_cage",
+            "x": 5.5,
+            "y": 27.5,
+            "rot": 1,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 7.91,
+            "near": [
+              12,
+              23
+            ]
+          },
+          {
+            "id": "abandoned_guard_post",
+            "x": 13,
+            "y": 29,
+            "rot": 2,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 6,
+            "near": [
+              13,
+              23
+            ]
+          }
+        ],
+        "notes": "Visual-only decorations. No collision, passage, spawns, secrets, events, sounds, fear effects or encounters are authored in game state."
+      }
+    },
+    {
+      "id": "r-krezk",
+      "from": "winery",
+      "to": "krezk",
+      "way": "road",
+      "exampleSceneNames": [
+        "The Hunters’ Stand",
+        "The Warm Cave"
+      ],
+      "plan": {
+        "roadId": "r-krezk",
+        "seed": "v4-campaign-01",
+        "gaze": 7,
+        "bloom": true,
+        "density": "standard",
+        "format": "barovia-horror-v4",
+        "version": 4,
+        "width": 40,
+        "height": 40,
+        "scenes": [
+          {
+            "id": "the-hunters-stand",
+            "name": "The Hunters’ Stand",
+            "kind": "predator",
+            "biomes": [
+              "forest",
+              "mountain"
+            ],
+            "primary": {
+              "id": "wolves_watchtower",
+              "x": 21,
+              "y": 29,
+              "rot": 2,
+              "footprint": [
+                3,
+                3
+              ],
+              "distanceToRoad": 6,
+              "near": [
+                21,
+                23
+              ]
+            },
+            "satellites": [
+              {
+                "id": "hunter_hideout",
+                "x": 24,
+                "y": 34,
+                "rot": 2,
+                "footprint": [
+                  3,
+                  3
+                ],
+                "distanceToRoad": 11,
+                "near": [
+                  24,
+                  23
+                ]
+              },
+              {
+                "id": "wolf_bone_cairn",
+                "x": 16.5,
+                "y": 29.5,
+                "rot": 2,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 6.52,
+                "near": [
+                  16,
+                  23
+                ]
+              },
+              {
+                "id": "eyeless_stump",
+                "x": 25.5,
+                "y": 29.5,
+                "rot": 2,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 6.52,
+                "near": [
+                  25,
+                  23
+                ]
+              }
+            ],
+            "beats": {
+              "approach": "From the old tower, a horn sounds once.",
+              "reveal": "The hunting blind faces the camp rather than the game trail.",
+              "aftermath": "Fresh wolf tracks circle the tower, all pointing inward."
+            },
+            "suggestedReveal": {
+              "trigger": "GM chooses",
+              "requiresEngineApproval": true
+            },
+            "access": {
+              "nearestExistingRoadSquare": [
+                21,
+                23
+              ],
+              "featureSquare": [
+                21,
+                29
+              ],
+              "requiresGameplayPathCheck": true
+            }
+          },
+          {
+            "id": "mountain-mouth",
+            "name": "The Warm Cave",
+            "kind": "secret-entrance",
+            "biomes": [
+              "mountain",
+              "forest"
+            ],
+            "primary": {
+              "id": "dripping_cave_door",
+              "x": 31,
+              "y": 24,
+              "rot": 2,
+              "footprint": [
+                3,
+                3
+              ],
+              "distanceToRoad": 6,
+              "near": [
+                31,
+                18
+              ]
+            },
+            "satellites": [
+              {
+                "id": "red_mist_stones",
+                "x": 30,
+                "y": 28.5,
+                "rot": 2,
+                "footprint": [
+                  3,
+                  2
+                ],
+                "distanceToRoad": 7.43,
+                "near": [
+                  25,
+                  23
+                ]
+              },
+              {
+                "id": "wolf_bone_cairn",
+                "x": 35.5,
+                "y": 23.5,
+                "rot": 2,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 5.52,
+                "near": [
+                  35,
+                  18
+                ]
+              }
+            ],
+            "beats": {
+              "approach": "Warm breath rises from the rocks through cold mountain air.",
+              "reveal": "The cave opens behind a slab marked with a handprint.",
+              "aftermath": "The warm current now smells of extinguished candles."
+            },
+            "suggestedReveal": {
+              "trigger": "GM chooses",
+              "requiresEngineApproval": true
+            },
+            "access": {
+              "nearestExistingRoadSquare": [
+                31,
+                18
+              ],
+              "featureSquare": [
+                31,
+                24
+              ],
+              "requiresGameplayPathCheck": true
+            }
+          }
+        ],
+        "placements": [
+          {
+            "id": "hunter_hideout",
+            "x": 24,
+            "y": 34,
+            "rot": 2,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 11,
+            "near": [
+              24,
+              23
+            ]
+          },
+          {
+            "id": "wolf_bone_cairn",
+            "x": 16.5,
+            "y": 29.5,
+            "rot": 2,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 6.52,
+            "near": [
+              16,
+              23
+            ]
+          },
+          {
+            "id": "eyeless_stump",
+            "x": 25.5,
+            "y": 29.5,
+            "rot": 2,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 6.52,
+            "near": [
+              25,
+              23
+            ]
+          },
+          {
+            "id": "wolves_watchtower",
+            "x": 21,
+            "y": 29,
+            "rot": 2,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 6,
+            "near": [
+              21,
+              23
+            ]
+          },
+          {
+            "id": "red_mist_stones",
+            "x": 30,
+            "y": 28.5,
+            "rot": 2,
+            "footprint": [
+              3,
+              2
+            ],
+            "distanceToRoad": 7.43,
+            "near": [
+              25,
+              23
+            ]
+          },
+          {
+            "id": "wolf_bone_cairn",
+            "x": 35.5,
+            "y": 23.5,
+            "rot": 2,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 5.52,
+            "near": [
+              35,
+              18
+            ]
+          },
+          {
+            "id": "dripping_cave_door",
+            "x": 31,
+            "y": 24,
+            "rot": 2,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 6,
+            "near": [
+              31,
+              18
+            ]
+          }
+        ],
+        "notes": "Visual-only decorations. No collision, passage, spawns, secrets, events, sounds, fear effects or encounters are authored in game state."
+      }
+    },
+    {
+      "id": "r-yester",
+      "from": "krezk",
+      "to": "yester",
+      "way": "trail",
+      "exampleSceneNames": [
+        "The Crows’ Tithe",
+        "The Hunters’ Stand"
+      ],
+      "plan": {
+        "roadId": "r-yester",
+        "seed": "v4-campaign-01",
+        "gaze": 7,
+        "bloom": true,
+        "density": "standard",
+        "format": "barovia-horror-v4",
+        "version": 4,
+        "width": 40,
+        "height": 40,
+        "scenes": [
+          {
+            "id": "the-crows-tithe",
+            "name": "The Crows’ Tithe",
+            "kind": "omen",
+            "biomes": [
+              "forest",
+              "graveyard",
+              "roadside"
+            ],
+            "primary": {
+              "id": "gallows_three_nooses",
+              "x": 22,
+              "y": 27.5,
+              "rot": 2,
+              "footprint": [
+                3,
+                2
+              ],
+              "distanceToRoad": 4.5,
+              "near": [
+                22,
+                23
+              ]
+            },
+            "satellites": [
+              {
+                "id": "noose_oak",
+                "x": 17,
+                "y": 28,
+                "rot": 2,
+                "footprint": [
+                  3,
+                  3
+                ],
+                "distanceToRoad": 5,
+                "near": [
+                  17,
+                  23
+                ]
+              },
+              {
+                "id": "bone_chime_tree",
+                "x": 28,
+                "y": 29,
+                "rot": 2,
+                "footprint": [
+                  3,
+                  3
+                ],
+                "distanceToRoad": 6.71,
+                "near": [
+                  25,
+                  23
+                ]
+              },
+              {
+                "id": "unmarked_grave_row",
+                "x": 22,
+                "y": 31.5,
+                "rot": 2,
+                "footprint": [
+                  3,
+                  2
+                ],
+                "distanceToRoad": 8.5,
+                "near": [
+                  22,
+                  23
+                ]
+              }
+            ],
+            "beats": {
+              "approach": "Three empty ropes creak in perfect rhythm.",
+              "reveal": "A name is carved into the platform for each member of the party.",
+              "aftermath": "After the party leaves, one of the ropes stops moving."
+            },
+            "suggestedReveal": {
+              "trigger": "GM chooses",
+              "requiresEngineApproval": true
+            },
+            "access": {
+              "nearestExistingRoadSquare": [
+                22,
+                23
+              ],
+              "featureSquare": [
+                22,
+                27.5
+              ],
+              "requiresGameplayPathCheck": true
+            }
+          },
+          {
+            "id": "the-hunters-stand",
+            "name": "The Hunters’ Stand",
+            "kind": "predator",
+            "biomes": [
+              "forest",
+              "mountain"
+            ],
+            "primary": {
+              "id": "wolves_watchtower",
+              "x": 12,
+              "y": 13,
+              "rot": 0,
+              "footprint": [
+                3,
+                3
+              ],
+              "distanceToRoad": 5,
+              "near": [
+                12,
+                18
+              ]
+            },
+            "satellites": [
+              {
+                "id": "hunter_hideout",
+                "x": 12,
+                "y": 8,
+                "rot": 0,
+                "footprint": [
+                  3,
+                  3
+                ],
+                "distanceToRoad": 10,
+                "near": [
+                  12,
+                  18
+                ]
+              },
+              {
+                "id": "wolf_bone_cairn",
+                "x": 18.5,
+                "y": 15.5,
+                "rot": 3,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 6.96,
+                "near": [
+                  12,
+                  18
+                ]
+              },
+              {
+                "id": "eyeless_stump",
+                "x": 16.5,
+                "y": 10.5,
+                "rot": 0,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 8.75,
+                "near": [
+                  12,
+                  18
+                ]
+              }
+            ],
+            "beats": {
+              "approach": "From the old tower, a horn sounds once.",
+              "reveal": "The hunting blind faces the camp rather than the game trail.",
+              "aftermath": "Fresh wolf tracks circle the tower, all pointing inward."
+            },
+            "suggestedReveal": {
+              "trigger": "GM chooses",
+              "requiresEngineApproval": true
+            },
+            "access": {
+              "nearestExistingRoadSquare": [
+                12,
+                18
+              ],
+              "featureSquare": [
+                12,
+                13
+              ],
+              "requiresGameplayPathCheck": true
+            }
+          }
+        ],
+        "placements": [
+          {
+            "id": "noose_oak",
+            "x": 17,
+            "y": 28,
+            "rot": 2,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 5,
+            "near": [
+              17,
+              23
+            ]
+          },
+          {
+            "id": "bone_chime_tree",
+            "x": 28,
+            "y": 29,
+            "rot": 2,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 6.71,
+            "near": [
+              25,
+              23
+            ]
+          },
+          {
+            "id": "unmarked_grave_row",
+            "x": 22,
+            "y": 31.5,
+            "rot": 2,
+            "footprint": [
+              3,
+              2
+            ],
+            "distanceToRoad": 8.5,
+            "near": [
+              22,
+              23
+            ]
+          },
+          {
+            "id": "gallows_three_nooses",
+            "x": 22,
+            "y": 27.5,
+            "rot": 2,
+            "footprint": [
+              3,
+              2
+            ],
+            "distanceToRoad": 4.5,
+            "near": [
+              22,
+              23
+            ]
+          },
+          {
+            "id": "hunter_hideout",
+            "x": 12,
+            "y": 8,
+            "rot": 0,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 10,
+            "near": [
+              12,
+              18
+            ]
+          },
+          {
+            "id": "wolf_bone_cairn",
+            "x": 18.5,
+            "y": 15.5,
+            "rot": 3,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 6.96,
+            "near": [
+              12,
+              18
+            ]
+          },
+          {
+            "id": "eyeless_stump",
+            "x": 16.5,
+            "y": 10.5,
+            "rot": 0,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 8.75,
+            "near": [
+              12,
+              18
+            ]
+          },
+          {
+            "id": "wolves_watchtower",
+            "x": 12,
+            "y": 13,
+            "rot": 0,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 5,
+            "near": [
+              12,
+              18
+            ]
+          }
+        ],
+        "notes": "Visual-only decorations. No collision, passage, spawns, secrets, events, sounds, fear effects or encounters are authored in game state."
+      }
+    },
+    {
+      "id": "r-tower",
+      "from": "berez",
+      "to": "tower",
+      "way": "trail",
+      "exampleSceneNames": [
+        "The Hunters’ Stand",
+        "The Warm Cave"
+      ],
+      "plan": {
+        "roadId": "r-tower",
+        "seed": "v4-campaign-01",
+        "gaze": 7,
+        "bloom": true,
+        "density": "standard",
+        "format": "barovia-horror-v4",
+        "version": 4,
+        "width": 40,
+        "height": 40,
+        "scenes": [
+          {
+            "id": "the-hunters-stand",
+            "name": "The Hunters’ Stand",
+            "kind": "predator",
+            "biomes": [
+              "forest",
+              "mountain"
+            ],
+            "primary": {
+              "id": "wolves_watchtower",
+              "x": 16,
+              "y": 28,
+              "rot": 2,
+              "footprint": [
+                3,
+                3
+              ],
+              "distanceToRoad": 5,
+              "near": [
+                16,
+                23
+              ]
+            },
+            "satellites": [
+              {
+                "id": "hunter_hideout",
+                "x": 17,
+                "y": 33,
+                "rot": 2,
+                "footprint": [
+                  3,
+                  3
+                ],
+                "distanceToRoad": 10,
+                "near": [
+                  17,
+                  23
+                ]
+              },
+              {
+                "id": "wolf_bone_cairn",
+                "x": 10.5,
+                "y": 28.5,
+                "rot": 2,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 5.7,
+                "near": [
+                  12,
+                  23
+                ]
+              },
+              {
+                "id": "eyeless_stump",
+                "x": 21.5,
+                "y": 27.5,
+                "rot": 2,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 4.53,
+                "near": [
+                  21,
+                  23
+                ]
+              }
+            ],
+            "beats": {
+              "approach": "From the old tower, a horn sounds once.",
+              "reveal": "The hunting blind faces the camp rather than the game trail.",
+              "aftermath": "Fresh wolf tracks circle the tower, all pointing inward."
+            },
+            "suggestedReveal": {
+              "trigger": "GM chooses",
+              "requiresEngineApproval": true
+            },
+            "access": {
+              "nearestExistingRoadSquare": [
+                16,
+                23
+              ],
+              "featureSquare": [
+                16,
+                28
+              ],
+              "requiresGameplayPathCheck": true
+            }
+          },
+          {
+            "id": "mountain-mouth",
+            "name": "The Warm Cave",
+            "kind": "secret-entrance",
+            "biomes": [
+              "mountain",
+              "forest"
+            ],
+            "primary": {
+              "id": "dripping_cave_door",
+              "x": 20,
+              "y": 17,
+              "rot": 1,
+              "footprint": [
+                3,
+                3
+              ],
+              "distanceToRoad": 5.1,
+              "near": [
+                25,
+                18
+              ]
+            },
+            "satellites": [
+              {
+                "id": "red_mist_stones",
+                "x": 22,
+                "y": 11.5,
+                "rot": 0,
+                "footprint": [
+                  3,
+                  2
+                ],
+                "distanceToRoad": 7.16,
+                "near": [
+                  25,
+                  18
+                ]
+              },
+              {
+                "id": "wolf_bone_cairn",
+                "x": 16.5,
+                "y": 12.5,
+                "rot": 0,
+                "footprint": [
+                  2,
+                  2
+                ],
+                "distanceToRoad": 7.11,
+                "near": [
+                  12,
+                  18
+                ]
+              },
+              {
+                "id": "thorns_arcade",
+                "x": 27,
+                "y": 13,
+                "rot": 0,
+                "footprint": [
+                  3,
+                  3
+                ],
+                "distanceToRoad": 5,
+                "near": [
+                  27,
+                  18
+                ]
+              }
+            ],
+            "beats": {
+              "approach": "Warm breath rises from the rocks through cold mountain air.",
+              "reveal": "The cave opens behind a slab marked with a handprint.",
+              "aftermath": "The warm current now smells of extinguished candles."
+            },
+            "suggestedReveal": {
+              "trigger": "GM chooses",
+              "requiresEngineApproval": true
+            },
+            "access": {
+              "nearestExistingRoadSquare": [
+                25,
+                18
+              ],
+              "featureSquare": [
+                20,
+                17
+              ],
+              "requiresGameplayPathCheck": true
+            }
+          }
+        ],
+        "placements": [
+          {
+            "id": "hunter_hideout",
+            "x": 17,
+            "y": 33,
+            "rot": 2,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 10,
+            "near": [
+              17,
+              23
+            ]
+          },
+          {
+            "id": "wolf_bone_cairn",
+            "x": 10.5,
+            "y": 28.5,
+            "rot": 2,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 5.7,
+            "near": [
+              12,
+              23
+            ]
+          },
+          {
+            "id": "eyeless_stump",
+            "x": 21.5,
+            "y": 27.5,
+            "rot": 2,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 4.53,
+            "near": [
+              21,
+              23
+            ]
+          },
+          {
+            "id": "wolves_watchtower",
+            "x": 16,
+            "y": 28,
+            "rot": 2,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 5,
+            "near": [
+              16,
+              23
+            ]
+          },
+          {
+            "id": "red_mist_stones",
+            "x": 22,
+            "y": 11.5,
+            "rot": 0,
+            "footprint": [
+              3,
+              2
+            ],
+            "distanceToRoad": 7.16,
+            "near": [
+              25,
+              18
+            ]
+          },
+          {
+            "id": "wolf_bone_cairn",
+            "x": 16.5,
+            "y": 12.5,
+            "rot": 0,
+            "footprint": [
+              2,
+              2
+            ],
+            "distanceToRoad": 7.11,
+            "near": [
+              12,
+              18
+            ]
+          },
+          {
+            "id": "thorns_arcade",
+            "x": 27,
+            "y": 13,
+            "rot": 0,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 5,
+            "near": [
+              27,
+              18
+            ]
+          },
+          {
+            "id": "dripping_cave_door",
+            "x": 20,
+            "y": 17,
+            "rot": 1,
+            "footprint": [
+              3,
+              3
+            ],
+            "distanceToRoad": 5.1,
+            "near": [
+              25,
+              18
+            ]
+          }
+        ],
+        "notes": "Visual-only decorations. No collision, passage, spawns, secrets, events, sounds, fear effects or encounters are authored in game state."
+      }
+    }
+  ]
+}
