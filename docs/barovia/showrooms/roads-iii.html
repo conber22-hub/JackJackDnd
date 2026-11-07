@@ -1,0 +1,75 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Barovia Roads III · 3D Showroom</title>
+<style>
+:root{color-scheme:dark;font-family:Inter,system-ui,sans-serif;background:#0c1315;color:#e0e5dc}*{box-sizing:border-box}
+body{margin:0;overflow:hidden}canvas{display:block}header{position:fixed;left:16px;top:16px;width:min(385px,calc(100vw - 32px));padding:20px 20px 16px;background:rgba(9,16,19,.90);border:1px solid #40504c;border-radius:12px;box-shadow:0 13px 40px #0009;z-index:20;backdrop-filter:blur(15px)}
+h1{font-family:Georgia,serif;font-weight:normal;font-size:26px;margin:0 0 4px;line-height:1.13;color:#f3e8cf}small{font-size:11px;letter-spacing:2px;color:#a8b6af}p{font-size:12px;line-height:1.6;color:#acb9b1;margin:10px 0 14px}label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#a7b7b0;display:block;margin:13px 0 5px}
+select,input,button{font:inherit;max-width:100%;padding:9px 10px;background:#111f22;color:#e3e8df;border:1px solid #536662;border-radius:6px}
+select,input{width:100%;}select:focus,input:focus,button:focus{outline:2px solid #9eb39b}
+.row{display:flex;gap:8px;align-items:center}.row>*{flex:1}.row label{margin:4px 0}button{background:#344d42;cursor:pointer}button:hover{background:#456657}.check{display:flex;gap:8px;align-items:center;margin:9px 0;font-size:12px;text-transform:none;letter-spacing:0}.check input{width:auto}.status{border-top:1px solid #3b4d47;padding-top:10px;margin-top:12px;font-size:12px;line-height:1.6;color:#bfcabf}.legend{position:fixed;right:15px;bottom:16px;background:#0e171acb;padding:12px 16px;border:1px solid #40504c;border-radius:8px;color:#becbc2;font-size:12px;z-index:15}a{color:#c5d7b2}
+@media(max-width:620px){header{padding:12px;max-height:57vh;overflow:auto}h1{font-size:20px}.legend{font-size:10px}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script>
+</head><body>
+<header><small>THE LIVING VALLEY · PACK III</small><h1>Roads & Connections</h1><p>Actual modular GLB tiles. Change routes and seeds, examine bridges, gates, detours and paved transitions. Every tile spans 8 five-foot squares.</p>
+<label for="road">Road between places</label><select id="road"></select>
+<div class="row"><div><label for="seed">Seed</label><input id="seed" value="barovia-sleet"/></div><div><label for="segment">Stretch</label><select id="segment"></select></div></div>
+<label class="check"><input id="reverse" type="checkbox"/> Reverse travel direction</label>
+<label class="check"><input id="sockets" type="checkbox"/> Show connector sockets</label>
+<div class="row"><button id="build">Rebuild road</button><button id="reset">Reset view</button></div><div class="status" id="status">Loading the valley…</div></header>
+<div class="legend">Drag to orbit · Scroll or pinch to zoom · Right-drag to pan<br/>Visual scenery only. Walkability stays with the VTT engine.</div>
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {LINKS,PLACES} from '../../../src/render/barovia-road-links.js';
+import {planRoadLink,portsFor} from '../../../src/render/barovia-road-network.js';
+import {createBaroviaRoadAssets} from '../../../src/render/barovia-road-three.js';
+const el=id=>document.querySelector('#'+id), road=el('road'),segment=el('segment'), status=el('status');
+for(const r of LINKS){const o=document.createElement('option');o.value=r.id;o.textContent=PLACES[r.a]+' → '+PLACES[r.b];road.append(o);}
+road.value='r-east';
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.8));renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.32;document.body.append(renderer.domElement);
+const scene=new THREE.Scene();scene.background=new THREE.Color('#111920');scene.fog=new THREE.Fog('#111920',40,90);
+const camera=new THREE.PerspectiveCamera(44,innerWidth/innerHeight,.1,160);camera.position.set(-21,24,26);
+const control=new OrbitControls(camera,renderer.domElement);control.target.set(0,.2,0);control.enableDamping=true;control.maxPolarAngle=Math.PI*.47;control.minDistance=9;control.maxDistance=75;
+scene.add(new THREE.HemisphereLight('#bac6cd','#22251d',1.2));const sun=new THREE.DirectionalLight('#ccbda8',3.0);sun.position.set(-12,25,14);scene.add(sun);
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(90,75).rotateX(-Math.PI/2),new THREE.MeshStandardMaterial({color:'#171f1b',roughness:1}));floor.position.y=-.32;scene.add(floor);
+const grid=new THREE.GridHelper(40,40,'#55695f','#24342d');grid.position.y=-.245;scene.add(grid);
+const assets=createBaroviaRoadAssets({baseURL:'/assets/roads/'});
+let group=null,debug=null,plan=null,generation=0;
+function socketsFor(tiles){
+ const g=new THREE.Group();const verts=[];
+ for(const p of tiles){
+  const x=p.x*8-16.5,z=p.y*8-0.5;
+  for(const [side,port] of Object.entries(portsFor(p.id,p.rot))){
+   const w=port.width,offset=w/2;
+   if(side==='N'||side==='S')verts.push(x-offset,.14,z+(side==='N'?-4:4),x+offset,.14,z+(side==='N'?-4:4));
+   else verts.push(x+(side==='E'?4:-4),.14,z-offset,x+(side==='E'?4:-4),.14,z+offset);
+  }
+ }
+ const geom=new THREE.BufferGeometry();geom.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));const line=new THREE.LineSegments(geom,new THREE.LineBasicMaterial({color:'#bce58f',depthTest:false}));g.add(line);return g;
+}
+async function show(){
+ const generationThis=++generation;
+ try{
+  const r=LINKS.find(x=>x.id===road.value),seed=el('seed').value||'barovia';
+  plan=planRoadLink(r.id,{seed,reverse:el('reverse').checked});
+  const previous=segment.value;
+  segment.replaceChildren();for(let i=0;i<plan.segments.length;i++){const o=document.createElement('option');o.value=i;o.textContent=`${i+1} / ${plan.segments.length}`;segment.append(o);}segment.value=String(Math.min(+previous||0,plan.segments.length-1));
+  const chosen=plan.segments[+segment.value];
+  status.textContent='Loading original GLB tiles…';
+  const newGroup=await assets.placePlan(scene,chosen.tiles,{wx:x=>x-20,wz:z=>z-12,originY:8,groundY:.0});
+  if(generationThis!==generation){scene.remove(newGroup);return;}
+  if(group)scene.remove(group);if(debug)scene.remove(debug);group=newGroup;
+  // The visual debug guide is raised slightly above the ground and uses road local scene coordinates.
+  debug=socketsFor(chosen.tiles);scene.add(debug);debug.visible=el('sockets').checked;
+  const branch=chosen.tiles.some(t=>t.id.includes('tee_'))?' · side path':'',bridge=chosen.tiles.find(t=>t.id.startsWith('bridge_'))?.id||'no crossing';
+  status.innerHTML=`<b>${plan.name}</b><br/>${PLACES[plan.from]} → ${PLACES[plan.to]}<br/>${chosen.tiles.length} physical GLBs${branch} · ${bridge.replaceAll('_',' ')}<br/>No collision grid is modified.`;
+ }catch(e){console.error(e);status.textContent='Unable to load: '+e.message+' (serve this folder by HTTP; requires CDN access)';}
+}
+el('build').onclick=show;road.onchange=show;segment.onchange=()=>{const i=+segment.value;showSegment(i);};
+async function showSegment(i){if(!plan)return;const generationThis=++generation;const chosen=plan.segments[i];try{const next=await assets.placePlan(scene,chosen.tiles,{wx:x=>x-20,wz:z=>z-12,originY:8,groundY:0});if(generationThis!==generation){scene.remove(next);return;}if(group)scene.remove(group);if(debug)scene.remove(debug);group=next;debug=socketsFor(chosen.tiles);debug.visible=el('sockets').checked;scene.add(debug);status.textContent=`${plan.name}: stretch ${i+1}/${plan.segments.length}, ${chosen.tiles.length} GLBs, ${(chosen.tiles.some(t=>t.id.startsWith('bridge_'))?'water crossing':'roadway')}`;}catch(e){status.textContent=e.message;}}
+el('sockets').onchange=()=>{if(debug)debug.visible=el('sockets').checked;};el('reverse').onchange=show;
+el('reset').onclick=()=>{camera.position.set(-21,24,26);control.target.set(0,.2,0);control.update();};
+addEventListener('resize',()=>{renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();});
+function animate(){requestAnimationFrame(animate);control.update();renderer.render(scene,camera);}animate();show();
+</script></body></html>

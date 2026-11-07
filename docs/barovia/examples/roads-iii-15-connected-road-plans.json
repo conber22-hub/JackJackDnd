@@ -1,0 +1,2621 @@
+[
+  {
+    "roadId": "r-mist",
+    "from": "mists",
+    "to": "gates",
+    "name": "Out of the mist",
+    "way": "road",
+    "river": false,
+    "tilesPerStretch": 5,
+    "stretches": 1,
+    "fullWidthSquares": 40,
+    "heightSquares": 24,
+    "tileSize": 8,
+    "entry": {
+      "x": 0,
+      "y": 1,
+      "side": "W",
+      "style": "road"
+    },
+    "exit": {
+      "x": 4,
+      "y": 1,
+      "side": "E",
+      "style": "road"
+    },
+    "tiles": [
+      {
+        "id": "road_straight_ew",
+        "x": 0,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_tee_esw",
+        "x": 1,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 2,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 3,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 4,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_cap_n",
+        "x": 1,
+        "y": 2,
+        "rot": 0
+      }
+    ],
+    "segments": [
+      {
+        "index": 0,
+        "roadId": "r-mist",
+        "widthSquares": 40,
+        "heightSquares": 24,
+        "entry": {
+          "x": 0,
+          "y": 1,
+          "side": "W"
+        },
+        "exit": {
+          "x": 4,
+          "y": 1,
+          "side": "E"
+        },
+        "tiles": [
+          {
+            "id": "road_straight_ew",
+            "x": 0,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_tee_esw",
+            "x": 1,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 2,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 3,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 4,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_cap_n",
+            "x": 1,
+            "y": 2,
+            "rot": 0
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "roadId": "r-gates",
+    "from": "gates",
+    "to": "village",
+    "name": "Old Svalich Road (the gates)",
+    "way": "road",
+    "river": false,
+    "tilesPerStretch": 5,
+    "stretches": 2,
+    "fullWidthSquares": 80,
+    "heightSquares": 24,
+    "tileSize": 8,
+    "entry": {
+      "x": 0,
+      "y": 1,
+      "side": "W",
+      "style": "road"
+    },
+    "exit": {
+      "x": 9,
+      "y": 1,
+      "side": "E",
+      "style": "road"
+    },
+    "tiles": [
+      {
+        "id": "road_straight_ew",
+        "x": 0,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 1,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 2,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 3,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 4,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 5,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_tee_esw",
+        "x": 6,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 7,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 8,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "gate_barovia_ew",
+        "x": 9,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_cap_n",
+        "x": 6,
+        "y": 2,
+        "rot": 0
+      }
+    ],
+    "segments": [
+      {
+        "index": 0,
+        "roadId": "r-gates",
+        "widthSquares": 40,
+        "heightSquares": 24,
+        "entry": {
+          "x": 0,
+          "y": 1,
+          "side": "W"
+        },
+        "exit": {
+          "x": 4,
+          "y": 1,
+          "side": "E"
+        },
+        "tiles": [
+          {
+            "id": "road_straight_ew",
+            "x": 0,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 1,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 2,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 3,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 4,
+            "y": 1,
+            "rot": 0
+          }
+        ]
+      },
+      {
+        "index": 1,
+        "roadId": "r-gates",
+        "widthSquares": 40,
+        "heightSquares": 24,
+        "entry": {
+          "x": 0,
+          "y": 1,
+          "side": "W"
+        },
+        "exit": {
+          "x": 4,
+          "y": 1,
+          "side": "E"
+        },
+        "tiles": [
+          {
+            "id": "road_straight_ew",
+            "x": 0,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_tee_esw",
+            "x": 1,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 2,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 3,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "gate_barovia_ew",
+            "x": 4,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_cap_n",
+            "x": 1,
+            "y": 2,
+            "rot": 0
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "roadId": "r-east",
+    "from": "village",
+    "to": "crossroads",
+    "name": "Old Svalich Road",
+    "way": "road",
+    "river": true,
+    "tilesPerStretch": 5,
+    "stretches": 2,
+    "fullWidthSquares": 80,
+    "heightSquares": 24,
+    "tileSize": 8,
+    "entry": {
+      "x": 0,
+      "y": 1,
+      "side": "W",
+      "style": "road"
+    },
+    "exit": {
+      "x": 9,
+      "y": 1,
+      "side": "E",
+      "style": "road"
+    },
+    "tiles": [
+      {
+        "id": "road_straight_ew",
+        "x": 0,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 1,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 2,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 3,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "bridge_stone_ew",
+        "x": 4,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_tee_esw",
+        "x": 5,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 6,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 7,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 8,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 9,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_cap_n",
+        "x": 5,
+        "y": 2,
+        "rot": 0
+      }
+    ],
+    "segments": [
+      {
+        "index": 0,
+        "roadId": "r-east",
+        "widthSquares": 40,
+        "heightSquares": 24,
+        "entry": {
+          "x": 0,
+          "y": 1,
+          "side": "W"
+        },
+        "exit": {
+          "x": 4,
+          "y": 1,
+          "side": "E"
+        },
+        "tiles": [
+          {
+            "id": "road_straight_ew",
+            "x": 0,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 1,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 2,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 3,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "bridge_stone_ew",
+            "x": 4,
+            "y": 1,
+            "rot": 0
+          }
+        ]
+      },
+      {
+        "index": 1,
+        "roadId": "r-east",
+        "widthSquares": 40,
+        "heightSquares": 24,
+        "entry": {
+          "x": 0,
+          "y": 1,
+          "side": "W"
+        },
+        "exit": {
+          "x": 4,
+          "y": 1,
+          "side": "E"
+        },
+        "tiles": [
+          {
+            "id": "road_tee_esw",
+            "x": 0,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 1,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 2,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 3,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 4,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_cap_n",
+            "x": 0,
+            "y": 2,
+            "rot": 0
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "roadId": "r-castle",
+    "from": "crossroads",
+    "to": "castle",
+    "name": "The castle road",
+    "way": "road",
+    "river": false,
+    "tilesPerStretch": 5,
+    "stretches": 2,
+    "fullWidthSquares": 80,
+    "heightSquares": 24,
+    "tileSize": 8,
+    "entry": {
+      "x": 0,
+      "y": 1,
+      "side": "W",
+      "style": "road"
+    },
+    "exit": {
+      "x": 9,
+      "y": 1,
+      "side": "E",
+      "style": "road"
+    },
+    "tiles": [
+      {
+        "id": "road_cap_s",
+        "x": 4,
+        "y": 0,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 0,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 1,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 2,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 3,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_tee_new",
+        "x": 4,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 5,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 6,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 7,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 8,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "gate_barovia_ew",
+        "x": 9,
+        "y": 1,
+        "rot": 0
+      }
+    ],
+    "segments": [
+      {
+        "index": 0,
+        "roadId": "r-castle",
+        "widthSquares": 40,
+        "heightSquares": 24,
+        "entry": {
+          "x": 0,
+          "y": 1,
+          "side": "W"
+        },
+        "exit": {
+          "x": 4,
+          "y": 1,
+          "side": "E"
+        },
+        "tiles": [
+          {
+            "id": "road_cap_s",
+            "x": 4,
+            "y": 0,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 0,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 1,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 2,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 3,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_tee_new",
+            "x": 4,
+            "y": 1,
+            "rot": 0
+          }
+        ]
+      },
+      {
+        "index": 1,
+        "roadId": "r-castle",
+        "widthSquares": 40,
+        "heightSquares": 24,
+        "entry": {
+          "x": 0,
+          "y": 1,
+          "side": "W"
+        },
+        "exit": {
+          "x": 4,
+          "y": 1,
+          "side": "E"
+        },
+        "tiles": [
+          {
+            "id": "road_straight_ew",
+            "x": 0,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 1,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 2,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 3,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "gate_barovia_ew",
+            "x": 4,
+            "y": 1,
+            "rot": 0
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "roadId": "r-cut",
+    "from": "crossroads",
+    "to": "coffin",
+    "name": "The burned cut",
+    "way": "trail",
+    "river": false,
+    "tilesPerStretch": 5,
+    "stretches": 2,
+    "fullWidthSquares": 80,
+    "heightSquares": 24,
+    "tileSize": 8,
+    "entry": {
+      "x": 0,
+      "y": 1,
+      "side": "W",
+      "style": "trail"
+    },
+    "exit": {
+      "x": 9,
+      "y": 1,
+      "side": "E",
+      "style": "trail"
+    },
+    "tiles": [
+      {
+        "id": "trail_cap_s",
+        "x": 3,
+        "y": 0,
+        "rot": 0
+      },
+      {
+        "id": "trail_straight_ew",
+        "x": 0,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "trail_straight_ew",
+        "x": 1,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "trail_straight_ew",
+        "x": 2,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "trail_tee_new",
+        "x": 3,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "trail_straight_ew",
+        "x": 4,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "trail_straight_ew",
+        "x": 5,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "trail_straight_ew",
+        "x": 6,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "trail_straight_ew",
+        "x": 7,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "trail_straight_ew",
+        "x": 8,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "burned_cut_trail_ew",
+        "x": 9,
+        "y": 1,
+        "rot": 0
+      }
+    ],
+    "segments": [
+      {
+        "index": 0,
+        "roadId": "r-cut",
+        "widthSquares": 40,
+        "heightSquares": 24,
+        "entry": {
+          "x": 0,
+          "y": 1,
+          "side": "W"
+        },
+        "exit": {
+          "x": 4,
+          "y": 1,
+          "side": "E"
+        },
+        "tiles": [
+          {
+            "id": "trail_cap_s",
+            "x": 3,
+            "y": 0,
+            "rot": 0
+          },
+          {
+            "id": "trail_straight_ew",
+            "x": 0,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "trail_straight_ew",
+            "x": 1,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "trail_straight_ew",
+            "x": 2,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "trail_tee_new",
+            "x": 3,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "trail_straight_ew",
+            "x": 4,
+            "y": 1,
+            "rot": 0
+          }
+        ]
+      },
+      {
+        "index": 1,
+        "roadId": "r-cut",
+        "widthSquares": 40,
+        "heightSquares": 24,
+        "entry": {
+          "x": 0,
+          "y": 1,
+          "side": "W"
+        },
+        "exit": {
+          "x": 4,
+          "y": 1,
+          "side": "E"
+        },
+        "tiles": [
+          {
+            "id": "trail_straight_ew",
+            "x": 0,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "trail_straight_ew",
+            "x": 1,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "trail_straight_ew",
+            "x": 2,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "trail_straight_ew",
+            "x": 3,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "burned_cut_trail_ew",
+            "x": 4,
+            "y": 1,
+            "rot": 0
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "roadId": "r-tser",
+    "from": "crossroads",
+    "to": "tser",
+    "name": "The Tser Pool path",
+    "way": "path",
+    "river": true,
+    "tilesPerStretch": 5,
+    "stretches": 1,
+    "fullWidthSquares": 40,
+    "heightSquares": 24,
+    "tileSize": 8,
+    "entry": {
+      "x": 0,
+      "y": 1,
+      "side": "W",
+      "style": "path"
+    },
+    "exit": {
+      "x": 4,
+      "y": 1,
+      "side": "E",
+      "style": "path"
+    },
+    "tiles": [
+      {
+        "id": "path_straight_ew",
+        "x": 0,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "path_tee_esw",
+        "x": 1,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "bridge_foot_ew",
+        "x": 2,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "path_straight_ew",
+        "x": 3,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "approach_tser_ew",
+        "x": 4,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "path_cap_n",
+        "x": 1,
+        "y": 2,
+        "rot": 0
+      }
+    ],
+    "segments": [
+      {
+        "index": 0,
+        "roadId": "r-tser",
+        "widthSquares": 40,
+        "heightSquares": 24,
+        "entry": {
+          "x": 0,
+          "y": 1,
+          "side": "W"
+        },
+        "exit": {
+          "x": 4,
+          "y": 1,
+          "side": "E"
+        },
+        "tiles": [
+          {
+            "id": "path_straight_ew",
+            "x": 0,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "path_tee_esw",
+            "x": 1,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "bridge_foot_ew",
+            "x": 2,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "path_straight_ew",
+            "x": 3,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "approach_tser_ew",
+            "x": 4,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "path_cap_n",
+            "x": 1,
+            "y": 2,
+            "rot": 0
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "roadId": "r-west",
+    "from": "tser",
+    "to": "bonegrinder",
+    "name": "Old Svalich Road (west)",
+    "way": "road",
+    "river": false,
+    "tilesPerStretch": 5,
+    "stretches": 2,
+    "fullWidthSquares": 80,
+    "heightSquares": 24,
+    "tileSize": 8,
+    "entry": {
+      "x": 0,
+      "y": 1,
+      "side": "W",
+      "style": "road"
+    },
+    "exit": {
+      "x": 9,
+      "y": 1,
+      "side": "E",
+      "style": "road"
+    },
+    "tiles": [
+      {
+        "id": "road_straight_ew",
+        "x": 0,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 1,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 2,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 3,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 4,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 5,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 6,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 7,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 8,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "approach_bonegrinder_ew",
+        "x": 9,
+        "y": 1,
+        "rot": 0
+      }
+    ],
+    "segments": [
+      {
+        "index": 0,
+        "roadId": "r-west",
+        "widthSquares": 40,
+        "heightSquares": 24,
+        "entry": {
+          "x": 0,
+          "y": 1,
+          "side": "W"
+        },
+        "exit": {
+          "x": 4,
+          "y": 1,
+          "side": "E"
+        },
+        "tiles": [
+          {
+            "id": "road_straight_ew",
+            "x": 0,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 1,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 2,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 3,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 4,
+            "y": 1,
+            "rot": 0
+          }
+        ]
+      },
+      {
+        "index": 1,
+        "roadId": "r-west",
+        "widthSquares": 40,
+        "heightSquares": 24,
+        "entry": {
+          "x": 0,
+          "y": 1,
+          "side": "W"
+        },
+        "exit": {
+          "x": 4,
+          "y": 1,
+          "side": "E"
+        },
+        "tiles": [
+          {
+            "id": "road_straight_ew",
+            "x": 0,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 1,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 2,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 3,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "approach_bonegrinder_ew",
+            "x": 4,
+            "y": 1,
+            "rot": 0
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "roadId": "r-vallaki",
+    "from": "bonegrinder",
+    "to": "vallaki",
+    "name": "Old Svalich Road (to Vallaki)",
+    "way": "road",
+    "river": false,
+    "tilesPerStretch": 5,
+    "stretches": 2,
+    "fullWidthSquares": 80,
+    "heightSquares": 24,
+    "tileSize": 8,
+    "entry": {
+      "x": 0,
+      "y": 1,
+      "side": "W",
+      "style": "road"
+    },
+    "exit": {
+      "x": 9,
+      "y": 1,
+      "side": "E",
+      "style": "cobble"
+    },
+    "tiles": [
+      {
+        "id": "road_straight_ew",
+        "x": 0,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_tee_esw",
+        "x": 1,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 2,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 3,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 4,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 5,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 6,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 7,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "transition_road_cobble_ns",
+        "x": 8,
+        "y": 1,
+        "rot": 3
+      },
+      {
+        "id": "gate_vallaki_ew",
+        "x": 9,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_cap_n",
+        "x": 1,
+        "y": 2,
+        "rot": 0
+      }
+    ],
+    "segments": [
+      {
+        "index": 0,
+        "roadId": "r-vallaki",
+        "widthSquares": 40,
+        "heightSquares": 24,
+        "entry": {
+          "x": 0,
+          "y": 1,
+          "side": "W"
+        },
+        "exit": {
+          "x": 4,
+          "y": 1,
+          "side": "E"
+        },
+        "tiles": [
+          {
+            "id": "road_straight_ew",
+            "x": 0,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_tee_esw",
+            "x": 1,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 2,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 3,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 4,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_cap_n",
+            "x": 1,
+            "y": 2,
+            "rot": 0
+          }
+        ]
+      },
+      {
+        "index": 1,
+        "roadId": "r-vallaki",
+        "widthSquares": 40,
+        "heightSquares": 24,
+        "entry": {
+          "x": 0,
+          "y": 1,
+          "side": "W"
+        },
+        "exit": {
+          "x": 4,
+          "y": 1,
+          "side": "E"
+        },
+        "tiles": [
+          {
+            "id": "road_straight_ew",
+            "x": 0,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 1,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 2,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "transition_road_cobble_ns",
+            "x": 3,
+            "y": 1,
+            "rot": 3
+          },
+          {
+            "id": "gate_vallaki_ew",
+            "x": 4,
+            "y": 1,
+            "rot": 0
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "roadId": "r-lake",
+    "from": "vallaki",
+    "to": "lake",
+    "name": "The lake path",
+    "way": "path",
+    "river": false,
+    "tilesPerStretch": 5,
+    "stretches": 1,
+    "fullWidthSquares": 40,
+    "heightSquares": 24,
+    "tileSize": 8,
+    "entry": {
+      "x": 0,
+      "y": 1,
+      "side": "W",
+      "style": "path"
+    },
+    "exit": {
+      "x": 4,
+      "y": 1,
+      "side": "E",
+      "style": "path"
+    },
+    "tiles": [
+      {
+        "id": "path_straight_ew",
+        "x": 0,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "path_tee_esw",
+        "x": 1,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "path_straight_ew",
+        "x": 2,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "path_straight_ew",
+        "x": 3,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "path_straight_ew",
+        "x": 4,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "path_cap_n",
+        "x": 1,
+        "y": 2,
+        "rot": 0
+      }
+    ],
+    "segments": [
+      {
+        "index": 0,
+        "roadId": "r-lake",
+        "widthSquares": 40,
+        "heightSquares": 24,
+        "entry": {
+          "x": 0,
+          "y": 1,
+          "side": "W"
+        },
+        "exit": {
+          "x": 4,
+          "y": 1,
+          "side": "E"
+        },
+        "tiles": [
+          {
+            "id": "path_straight_ew",
+            "x": 0,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "path_tee_esw",
+            "x": 1,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "path_straight_ew",
+            "x": 2,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "path_straight_ew",
+            "x": 3,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "path_straight_ew",
+            "x": 4,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "path_cap_n",
+            "x": 1,
+            "y": 2,
+            "rot": 0
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "roadId": "r-argyn",
+    "from": "vallaki",
+    "to": "argyn",
+    "name": "The cliff path",
+    "way": "trail",
+    "river": false,
+    "tilesPerStretch": 5,
+    "stretches": 2,
+    "fullWidthSquares": 80,
+    "heightSquares": 24,
+    "tileSize": 8,
+    "entry": {
+      "x": 0,
+      "y": 1,
+      "side": "W",
+      "style": "trail"
+    },
+    "exit": {
+      "x": 9,
+      "y": 1,
+      "side": "E",
+      "style": "trail"
+    },
+    "tiles": [
+      {
+        "id": "trail_straight_ew",
+        "x": 0,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "trail_straight_ew",
+        "x": 1,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "trail_straight_ew",
+        "x": 2,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "trail_straight_ew",
+        "x": 3,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "trail_straight_ew",
+        "x": 4,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "trail_straight_ew",
+        "x": 5,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "trail_straight_ew",
+        "x": 6,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "trail_straight_ew",
+        "x": 7,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "trail_straight_ew",
+        "x": 8,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "mountain_switchback_ew",
+        "x": 9,
+        "y": 1,
+        "rot": 0
+      }
+    ],
+    "segments": [
+      {
+        "index": 0,
+        "roadId": "r-argyn",
+        "widthSquares": 40,
+        "heightSquares": 24,
+        "entry": {
+          "x": 0,
+          "y": 1,
+          "side": "W"
+        },
+        "exit": {
+          "x": 4,
+          "y": 1,
+          "side": "E"
+        },
+        "tiles": [
+          {
+            "id": "trail_straight_ew",
+            "x": 0,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "trail_straight_ew",
+            "x": 1,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "trail_straight_ew",
+            "x": 2,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "trail_straight_ew",
+            "x": 3,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "trail_straight_ew",
+            "x": 4,
+            "y": 1,
+            "rot": 0
+          }
+        ]
+      },
+      {
+        "index": 1,
+        "roadId": "r-argyn",
+        "widthSquares": 40,
+        "heightSquares": 24,
+        "entry": {
+          "x": 0,
+          "y": 1,
+          "side": "W"
+        },
+        "exit": {
+          "x": 4,
+          "y": 1,
+          "side": "E"
+        },
+        "tiles": [
+          {
+            "id": "trail_straight_ew",
+            "x": 0,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "trail_straight_ew",
+            "x": 1,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "trail_straight_ew",
+            "x": 2,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "trail_straight_ew",
+            "x": 3,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "mountain_switchback_ew",
+            "x": 4,
+            "y": 1,
+            "rot": 0
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "roadId": "r-berez",
+    "from": "vallaki",
+    "to": "berez",
+    "name": "The river path",
+    "way": "path",
+    "river": true,
+    "tilesPerStretch": 5,
+    "stretches": 2,
+    "fullWidthSquares": 80,
+    "heightSquares": 24,
+    "tileSize": 8,
+    "entry": {
+      "x": 0,
+      "y": 1,
+      "side": "W",
+      "style": "path"
+    },
+    "exit": {
+      "x": 9,
+      "y": 1,
+      "side": "E",
+      "style": "path"
+    },
+    "tiles": [
+      {
+        "id": "path_cap_s",
+        "x": 5,
+        "y": 0,
+        "rot": 0
+      },
+      {
+        "id": "path_straight_ew",
+        "x": 0,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "path_straight_ew",
+        "x": 1,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "path_straight_ew",
+        "x": 2,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "path_straight_ew",
+        "x": 3,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "bridge_marsh_ew",
+        "x": 4,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "path_tee_new",
+        "x": 5,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "path_straight_ew",
+        "x": 6,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "path_straight_ew",
+        "x": 7,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "path_straight_ew",
+        "x": 8,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "path_straight_ew",
+        "x": 9,
+        "y": 1,
+        "rot": 0
+      }
+    ],
+    "segments": [
+      {
+        "index": 0,
+        "roadId": "r-berez",
+        "widthSquares": 40,
+        "heightSquares": 24,
+        "entry": {
+          "x": 0,
+          "y": 1,
+          "side": "W"
+        },
+        "exit": {
+          "x": 4,
+          "y": 1,
+          "side": "E"
+        },
+        "tiles": [
+          {
+            "id": "path_straight_ew",
+            "x": 0,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "path_straight_ew",
+            "x": 1,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "path_straight_ew",
+            "x": 2,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "path_straight_ew",
+            "x": 3,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "bridge_marsh_ew",
+            "x": 4,
+            "y": 1,
+            "rot": 0
+          }
+        ]
+      },
+      {
+        "index": 1,
+        "roadId": "r-berez",
+        "widthSquares": 40,
+        "heightSquares": 24,
+        "entry": {
+          "x": 0,
+          "y": 1,
+          "side": "W"
+        },
+        "exit": {
+          "x": 4,
+          "y": 1,
+          "side": "E"
+        },
+        "tiles": [
+          {
+            "id": "path_cap_s",
+            "x": 0,
+            "y": 0,
+            "rot": 0
+          },
+          {
+            "id": "path_tee_new",
+            "x": 0,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "path_straight_ew",
+            "x": 1,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "path_straight_ew",
+            "x": 2,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "path_straight_ew",
+            "x": 3,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "path_straight_ew",
+            "x": 4,
+            "y": 1,
+            "rot": 0
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "roadId": "r-winery",
+    "from": "vallaki",
+    "to": "winery",
+    "name": "Old Svalich Road (to Krezk)",
+    "way": "road",
+    "river": false,
+    "tilesPerStretch": 5,
+    "stretches": 2,
+    "fullWidthSquares": 80,
+    "heightSquares": 24,
+    "tileSize": 8,
+    "entry": {
+      "x": 0,
+      "y": 1,
+      "side": "W",
+      "style": "cobble"
+    },
+    "exit": {
+      "x": 9,
+      "y": 1,
+      "side": "E",
+      "style": "road"
+    },
+    "tiles": [
+      {
+        "id": "road_cap_s",
+        "x": 6,
+        "y": 0,
+        "rot": 0
+      },
+      {
+        "id": "cobble_straight_ew",
+        "x": 0,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "transition_cobble_road_ns",
+        "x": 1,
+        "y": 1,
+        "rot": 3
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 2,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 3,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 4,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 5,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_tee_new",
+        "x": 6,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 7,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 8,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "approach_vineyard_ew",
+        "x": 9,
+        "y": 1,
+        "rot": 0
+      }
+    ],
+    "segments": [
+      {
+        "index": 0,
+        "roadId": "r-winery",
+        "widthSquares": 40,
+        "heightSquares": 24,
+        "entry": {
+          "x": 0,
+          "y": 1,
+          "side": "W"
+        },
+        "exit": {
+          "x": 4,
+          "y": 1,
+          "side": "E"
+        },
+        "tiles": [
+          {
+            "id": "cobble_straight_ew",
+            "x": 0,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "transition_cobble_road_ns",
+            "x": 1,
+            "y": 1,
+            "rot": 3
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 2,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 3,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 4,
+            "y": 1,
+            "rot": 0
+          }
+        ]
+      },
+      {
+        "index": 1,
+        "roadId": "r-winery",
+        "widthSquares": 40,
+        "heightSquares": 24,
+        "entry": {
+          "x": 0,
+          "y": 1,
+          "side": "W"
+        },
+        "exit": {
+          "x": 4,
+          "y": 1,
+          "side": "E"
+        },
+        "tiles": [
+          {
+            "id": "road_cap_s",
+            "x": 1,
+            "y": 0,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 0,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_tee_new",
+            "x": 1,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 2,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 3,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "approach_vineyard_ew",
+            "x": 4,
+            "y": 1,
+            "rot": 0
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "roadId": "r-krezk",
+    "from": "winery",
+    "to": "krezk",
+    "name": "The Krezk road",
+    "way": "road",
+    "river": false,
+    "tilesPerStretch": 5,
+    "stretches": 2,
+    "fullWidthSquares": 80,
+    "heightSquares": 24,
+    "tileSize": 8,
+    "entry": {
+      "x": 0,
+      "y": 1,
+      "side": "W",
+      "style": "road"
+    },
+    "exit": {
+      "x": 9,
+      "y": 1,
+      "side": "E",
+      "style": "road"
+    },
+    "tiles": [
+      {
+        "id": "road_straight_ew",
+        "x": 0,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 1,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 2,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 3,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 4,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_tee_esw",
+        "x": 5,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 6,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 7,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_straight_ew",
+        "x": 8,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "gate_krezk_ew",
+        "x": 9,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "road_cap_n",
+        "x": 5,
+        "y": 2,
+        "rot": 0
+      }
+    ],
+    "segments": [
+      {
+        "index": 0,
+        "roadId": "r-krezk",
+        "widthSquares": 40,
+        "heightSquares": 24,
+        "entry": {
+          "x": 0,
+          "y": 1,
+          "side": "W"
+        },
+        "exit": {
+          "x": 4,
+          "y": 1,
+          "side": "E"
+        },
+        "tiles": [
+          {
+            "id": "road_straight_ew",
+            "x": 0,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 1,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 2,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 3,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 4,
+            "y": 1,
+            "rot": 0
+          }
+        ]
+      },
+      {
+        "index": 1,
+        "roadId": "r-krezk",
+        "widthSquares": 40,
+        "heightSquares": 24,
+        "entry": {
+          "x": 0,
+          "y": 1,
+          "side": "W"
+        },
+        "exit": {
+          "x": 4,
+          "y": 1,
+          "side": "E"
+        },
+        "tiles": [
+          {
+            "id": "road_tee_esw",
+            "x": 0,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 1,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 2,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_straight_ew",
+            "x": 3,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "gate_krezk_ew",
+            "x": 4,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "road_cap_n",
+            "x": 0,
+            "y": 2,
+            "rot": 0
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "roadId": "r-yester",
+    "from": "krezk",
+    "to": "yester",
+    "name": "The hill path",
+    "way": "trail",
+    "river": false,
+    "tilesPerStretch": 5,
+    "stretches": 1,
+    "fullWidthSquares": 40,
+    "heightSquares": 24,
+    "tileSize": 8,
+    "entry": {
+      "x": 0,
+      "y": 1,
+      "side": "W",
+      "style": "trail"
+    },
+    "exit": {
+      "x": 4,
+      "y": 1,
+      "side": "E",
+      "style": "trail"
+    },
+    "tiles": [
+      {
+        "id": "trail_straight_ew",
+        "x": 0,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "trail_tee_esw",
+        "x": 1,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "trail_straight_ew",
+        "x": 2,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "trail_straight_ew",
+        "x": 3,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "hunger_trail_ew",
+        "x": 4,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "trail_cap_n",
+        "x": 1,
+        "y": 2,
+        "rot": 0
+      }
+    ],
+    "segments": [
+      {
+        "index": 0,
+        "roadId": "r-yester",
+        "widthSquares": 40,
+        "heightSquares": 24,
+        "entry": {
+          "x": 0,
+          "y": 1,
+          "side": "W"
+        },
+        "exit": {
+          "x": 4,
+          "y": 1,
+          "side": "E"
+        },
+        "tiles": [
+          {
+            "id": "trail_straight_ew",
+            "x": 0,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "trail_tee_esw",
+            "x": 1,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "trail_straight_ew",
+            "x": 2,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "trail_straight_ew",
+            "x": 3,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "hunger_trail_ew",
+            "x": 4,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "trail_cap_n",
+            "x": 1,
+            "y": 2,
+            "rot": 0
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "roadId": "r-tower",
+    "from": "berez",
+    "to": "tower",
+    "name": "The tarn path",
+    "way": "trail",
+    "river": true,
+    "tilesPerStretch": 5,
+    "stretches": 2,
+    "fullWidthSquares": 80,
+    "heightSquares": 24,
+    "tileSize": 8,
+    "entry": {
+      "x": 0,
+      "y": 1,
+      "side": "W",
+      "style": "trail"
+    },
+    "exit": {
+      "x": 9,
+      "y": 1,
+      "side": "E",
+      "style": "trail"
+    },
+    "tiles": [
+      {
+        "id": "trail_straight_ew",
+        "x": 0,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "trail_straight_ew",
+        "x": 1,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "trail_straight_ew",
+        "x": 2,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "trail_straight_ew",
+        "x": 3,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "bridge_rope_ew",
+        "x": 4,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "trail_tee_esw",
+        "x": 5,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "trail_straight_ew",
+        "x": 6,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "trail_straight_ew",
+        "x": 7,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "trail_straight_ew",
+        "x": 8,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "trail_straight_ew",
+        "x": 9,
+        "y": 1,
+        "rot": 0
+      },
+      {
+        "id": "trail_cap_n",
+        "x": 5,
+        "y": 2,
+        "rot": 0
+      }
+    ],
+    "segments": [
+      {
+        "index": 0,
+        "roadId": "r-tower",
+        "widthSquares": 40,
+        "heightSquares": 24,
+        "entry": {
+          "x": 0,
+          "y": 1,
+          "side": "W"
+        },
+        "exit": {
+          "x": 4,
+          "y": 1,
+          "side": "E"
+        },
+        "tiles": [
+          {
+            "id": "trail_straight_ew",
+            "x": 0,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "trail_straight_ew",
+            "x": 1,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "trail_straight_ew",
+            "x": 2,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "trail_straight_ew",
+            "x": 3,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "bridge_rope_ew",
+            "x": 4,
+            "y": 1,
+            "rot": 0
+          }
+        ]
+      },
+      {
+        "index": 1,
+        "roadId": "r-tower",
+        "widthSquares": 40,
+        "heightSquares": 24,
+        "entry": {
+          "x": 0,
+          "y": 1,
+          "side": "W"
+        },
+        "exit": {
+          "x": 4,
+          "y": 1,
+          "side": "E"
+        },
+        "tiles": [
+          {
+            "id": "trail_tee_esw",
+            "x": 0,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "trail_straight_ew",
+            "x": 1,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "trail_straight_ew",
+            "x": 2,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "trail_straight_ew",
+            "x": 3,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "trail_straight_ew",
+            "x": 4,
+            "y": 1,
+            "rot": 0
+          },
+          {
+            "id": "trail_cap_n",
+            "x": 0,
+            "y": 2,
+            "rot": 0
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,174 @@
+{
+  "places": 16,
+  "links": [
+    {
+      "id": "r-mist",
+      "a": "mists",
+      "b": "gates",
+      "name": "Out of the mist",
+      "len": 1,
+      "way": "road",
+      "mist": true
+    },
+    {
+      "id": "r-gates",
+      "a": "gates",
+      "b": "village",
+      "name": "Old Svalich Road (the gates)",
+      "len": 2,
+      "way": "road"
+    },
+    {
+      "id": "r-east",
+      "a": "village",
+      "b": "crossroads",
+      "name": "Old Svalich Road",
+      "len": 2,
+      "way": "road",
+      "river": true
+    },
+    {
+      "id": "r-castle",
+      "a": "crossroads",
+      "b": "castle",
+      "name": "The castle road",
+      "len": 2,
+      "way": "road"
+    },
+    {
+      "id": "r-cut",
+      "a": "crossroads",
+      "b": "coffin",
+      "name": "The burned cut",
+      "len": 2,
+      "way": "trail"
+    },
+    {
+      "id": "r-tser",
+      "a": "crossroads",
+      "b": "tser",
+      "name": "The Tser Pool path",
+      "len": 1,
+      "way": "path",
+      "river": true
+    },
+    {
+      "id": "r-west",
+      "a": "tser",
+      "b": "bonegrinder",
+      "name": "Old Svalich Road (west)",
+      "len": 2,
+      "way": "road"
+    },
+    {
+      "id": "r-vallaki",
+      "a": "bonegrinder",
+      "b": "vallaki",
+      "name": "Old Svalich Road (to Vallaki)",
+      "len": 2,
+      "way": "road"
+    },
+    {
+      "id": "r-lake",
+      "a": "vallaki",
+      "b": "lake",
+      "name": "The lake path",
+      "len": 1,
+      "way": "path"
+    },
+    {
+      "id": "r-argyn",
+      "a": "vallaki",
+      "b": "argyn",
+      "name": "The cliff path",
+      "len": 2,
+      "way": "trail"
+    },
+    {
+      "id": "r-berez",
+      "a": "vallaki",
+      "b": "berez",
+      "name": "The river path",
+      "len": 2,
+      "way": "path",
+      "river": true
+    },
+    {
+      "id": "r-winery",
+      "a": "vallaki",
+      "b": "winery",
+      "name": "Old Svalich Road (to Krezk)",
+      "len": 2,
+      "way": "road"
+    },
+    {
+      "id": "r-krezk",
+      "a": "winery",
+      "b": "krezk",
+      "name": "The Krezk road",
+      "len": 2,
+      "way": "road"
+    },
+    {
+      "id": "r-yester",
+      "a": "krezk",
+      "b": "yester",
+      "name": "The hill path",
+      "len": 1,
+      "way": "trail"
+    },
+    {
+      "id": "r-tower",
+      "a": "berez",
+      "b": "tower",
+      "name": "The tarn path",
+      "len": 2,
+      "way": "trail",
+      "river": true
+    }
+  ],
+  "examples": {
+    "Village of Barovia → Krezk": {
+      "places": [
+        "village",
+        "crossroads",
+        "tser",
+        "bonegrinder",
+        "vallaki",
+        "winery",
+        "krezk"
+      ],
+      "links": [
+        "r-east",
+        "r-tser",
+        "r-west",
+        "r-vallaki",
+        "r-winery",
+        "r-krezk"
+      ],
+      "stretches": 11,
+      "hours": 23
+    },
+    "Castle Ravenloft → The Lonely Tower": {
+      "places": [
+        "castle",
+        "crossroads",
+        "tser",
+        "bonegrinder",
+        "vallaki",
+        "berez",
+        "tower"
+      ],
+      "links": [
+        "r-castle",
+        "r-tser",
+        "r-west",
+        "r-vallaki",
+        "r-berez",
+        "r-tower"
+      ],
+      "stretches": 11,
+      "hours": 29
+    }
+  }
+}
