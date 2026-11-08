@@ -211,26 +211,27 @@ export const SESSIONS = [
     ending:'End when the last hero steps into the mist. Ask each player what their hero is carrying in their left hand as they go. Then stop.',
     levelUp:'Start at 1.' },
 
-  { n:1, title:'Into the Mists — The Narrow House', level:'1 → 2', gaze:2, length:'3–4 hours',
+  { n:1, title:'Into the Mists — Death House', level:'1 → 2', gaze:2, length:'3–4 hours',
     hook:'Two children at the edge of the fog ask for help. Their house is very tall and very quiet.',
     premise:'The Mists take the party to the edge of a village that is not on any map. Two children beg them to save their baby brother from "the monster in the basement." The house is a gothic trap, and in the Flood Edition the old cult\'s cellar has started to grow.',
-    book:'Run the Death House appendix from your book for the upper floors, the children, and the house\'s secrets. Use the app\'s Narrow House template for the map.',
+    book:'Run the Death House appendix from your book for the upper floors, the children, and the house\'s secrets. Use Death House (Flood Edition) in the app for the map.',
     flood:'The cultists who once lived here dug their ritual chamber down toward something they called "the font beneath." The Bloom found the font first. The cellar walls are slick with grey-green membrane; the cult\'s old dead are half-absorbed into them, and some of them still move.',
     open:'The house leans over the road like a man trying to hear a secret. Every window is dark except one at the very top, where a small light moves from room to room as if someone is looking for something they lost.',
     scenes:[
       { t:'The fog and the children', beats:[
         'The road behind them is gone. The only shelter is the house. The children will not come in with them.',
         'Omen (roll one in the Campaign tab) as they cross the threshold.' ] },
-      { t:'The upper house', delve:{ template:'deathhouse', floors:4, note:'Builds the whole house: two upper floors, the cellars, and the bloomed crypt. Start the party on floor 1.' }, beats:[
+      { t:'The upper house', delve:{ template:'deathhouse', floors:6, note:'Builds four house storeys and two dungeon levels. Start on the ground floor at the portico.' }, beats:[
         'Portraits with scratched-out faces. A nursery that is too clean. Letters that tell the family\'s story (from your book).',
         'Keep the Gaze at 2. Every time they find a family secret, ask one player what their hero hears in the walls.' ] },
       { t:'Something in the walls', enc:{ label:'Rats in the walls', group:[['swarm-of-rats', 2]], where:'party' }, beats:[
         'The first fight is small and fast. Let the rats pour out of a wall that should be solid.' ] },
       { t:'The armour on the landing', enc:{ label:'Animated armour', group:[['animated-armor', 1]], where:'random' }, beats:[
-        'It stands guard over a room the children told them not to open.' ] },
-      { t:'The attic', enc:{ label:'The specter', group:[['specter', 1]], where:'random' }, beats:[
+        'Place it in the Balcony Hall on the bedroom storey, on the approach to the nursery.' ] },
+      { t:'The nursery and attic', enc:{ label:'The nursemaid’s specter', group:[['specter', 1]], where:'random' }, beats:[
+        'Stage the specter in the nursemaid’s suite or the attic storage room, as the party’s route and the book dictate.',
         'The children\'s room is here. What happened to them is in your book. Play it straight and sad.',
-        'The secret way down starts here. Mark it on the map — it is a secret door until someone finds it.' ] },
+        'Reveal the attic door when the party earns the clue from the book. The concealed stairs lead to the family crypts.' ] },
     ],
     npcs:[], loot:['A family signet ring', 'Letters naming the cult and "the font beneath"', 'A silvered key'],
     tick:{ patience:1 },
@@ -245,7 +246,7 @@ export const SESSIONS = [
     open:'The stairs go down further than the house is tall. The air turns warm and sweet, like fruit left in a closed room. Somewhere ahead, many small things are breathing in unison.',
     scenes:[
       { t:'The crypts', beats:[
-        'Floor 3 of the Narrow House delve. Use the Ossuary look. Ghouls and shadows from your book, or populate from the Build tab.',
+        'Start on the Family Crypts level beneath the attic. Ghouls and shadows from your book, or populate from the Build tab.',
         'Let them find a cultist\'s journal entry: "The font answers. It is not him that answers."' ],
         enc:{ label:'Crypt ghouls', group:[['ghoul', 2], ['shadow', 1]], where:'random' } },
       { t:'The first Seeded', beats:[
@@ -253,7 +254,7 @@ export const SESSIONS = [
         'Put a Seeded cultist on the map (Bestiary → Cultist), then apply the ☣ seeded condition and drop it to 0 HP. The app does the rest.' ],
         enc:{ label:'Seeded cultists', group:[['cultist', 2]], where:'random' } },
       { t:'The ritual chamber (Bloom nest)', enc:{ label:'The nest', group:[['bloom-vessel', 1], ['sporeling', 3], ['cyst-node', 2]], where:'nest' }, beats:[
-        'Floor 4. Raise the Gaze to 4 when they enter: he has noticed what they found. The walls weep.',
+        'Use the Bloom Nest level. Raise the Gaze to 4 when they enter: he has noticed what they found. The walls weep.',
         'The Vessel speaks the cult leader\'s last words in a voice that is not hers.',
         'Fire is the answer here. If nobody brought any, the lantern oil in the crypts is.' ] },
       { t:'If they are winning', enc:{ label:'Something bigger', group:[['carrier-hulk', 1]], where:'nest' }, beats:[

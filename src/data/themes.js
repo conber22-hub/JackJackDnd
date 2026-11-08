@@ -10,6 +10,9 @@ import { vallakiLayout } from './vallaki.js';
 
 import { SAINT_ANDRAL, saintAndralSurface, saintAndralCrypt } from './saint-andral.js';
 
+import { deathHouseFloors } from './death-house.js';
+import { AMBER_TEMPLE } from './amber-temple.js';
+
 export const THEMES = [
   { id:'undercroft', name:'The Undercroft of St. Andral', floor:'#4b454a', hall:'#37323a', wall:'#2c2731', trim:'#c8cbd6', mist:'#6b6577',
     weights:{chamber:4,crypt:3,shrine:2,trap:2,treasure:1,safe:1,lair:1},
@@ -182,6 +185,15 @@ export const THEMES = [
       { where:['lair'], group:[['ghoul',2]] },
       { where:['chamber'], group:[['giant-rat',3]] },
     ] },
+  { id:'durst-house', name:'Durst House', floor:'#5a4a3e', hall:'#47392f', wall:'#33281f', trim:'#c9a46a', mist:'#7a6a5c',
+    weights:{chamber:5,shrine:1,lair:1}, light:.85,
+    prompt:'narrow gothic townhouse, polished dark wood below and dust-cloaked bedrooms above, tarnished brass, cold window light, top-down battlemap' },
+  { id:'durst-crypt', name:'Durst Crypts', floor:'#4b4240', hall:'#393031', wall:'#2a2526', trim:'#997c6e', mist:'#6e676b',
+    weights:{crypt:4,chamber:3,shrine:2,lair:1}, light:.7,
+    prompt:'earth and masonry chambers beneath a gothic house, family crypts, shadows, old stone slabs, top-down battlemap' },
+  { id:'amber', name:'The Amber Temple', floor:'#65513d', hall:'#483928', wall:'#332722', trim:'#b98850', mist:'#78757d',
+    weights:{chamber:4,crypt:3,shrine:2,lair:1}, light:.85,
+    prompt:'dark mountain temple, black marble under amber glaze, hooded stone figures, cold dust, gothic fantasy, top-down battlemap' },
 ];
 export const themeIndex = id => { const i = THEMES.findIndex(t => t.id === id); return i < 0 ? 0 : i; };
 
@@ -200,8 +212,10 @@ export const TEMPLATES = [
     floors:[{ theme:'undercroft', populate:true }, { theme:'silver', populate:true }, { theme:'womb', populate:true, boss:true }, { theme:'undertow', populate:true }] },
   { id:'labyrinth', name:'Andral\'s Labyrinth', blurb:'Many small rooms, many doors, many secrets. The hands know the way; you do not.',
     floors:[{ theme:'hands', rooms:1.6, roomSize:[3, 6], doors:.7, locked:.25, secret:.3, traps:2 }, { theme:'ossuary', rooms:1.5, roomSize:[3, 6], doors:.6, secret:.25, traps:2 }, { theme:'hands', rooms:1.6, roomSize:[3, 6], doors:.7, locked:.3, secret:.35, traps:2 }] },
-  { id:'deathhouse', name:'The Narrow House (Flood Edition)', blurb:'Session 1–2: a tall house at the edge of the mist. Two floors up, an attic, then down to the cellars and the old crypt where something green is growing.', campaign:true,
-    floors:[{ theme:'manor', rooms:.8, roomSize:[3, 7], doors:.7, locked:.15 }, { theme:'manor', rooms:.8, roomSize:[3, 6], doors:.7, secret:.15 }, { theme:'ossuary', rooms:.9, doors:.4, secret:.2, traps:1 }, { theme:'womb', rooms:.7, doors:.2, populate:.3 }] },
+  { id:'deathhouse', name:'Death House (Flood Edition)', blurb:'The Narrow House of Sessions 1–2. Explore the Durst family’s four storeys and two dungeon levels, with the Bloom waiting beneath the cult’s altar.', campaign:true,
+    floors:deathHouseFloors(true) },
+  { id:'deathhouse-classic', name:'Death House', blurb:'The Durst family’s house. The children wait outside, the stairs climb past the library, and the cellar lies deeper than the house is tall.', campaign:true,
+    floors:deathHouseFloors() },
   { id:'barovia', name:'The Village of Barovia', blurb:'Session 3: the village street in the fog — square, tavern, mercantile, the burgomaster\'s house, the Narrow House at the edge of town — and the church on the rise, whose undercroft has bloomed.', campaign:true,
     floors:[{ theme:'village', place:{ kind:'village', name:'Village of Barovia', church:'The church on the rise', churchNotes:'A priest who has not slept, and something in the undercroft that sings back when he prays.', narrow:true } }, { theme:'chapel', rooms:.7, doors:.5, secret:.2 }] },
   { id:'vallaki', name:'Vallaki', blurb:'The palisade town near Lake Zarovich. Follow the Old Svalich Road past Saint Andral’s, the Blue Water Inn and the square, or take the trail outside the southwest wall to the Vistani camp.', campaign:true,
@@ -236,6 +250,8 @@ export const TEMPLATES = [
     floors:[{ theme:'tavern', layout:SALT_ROAD.tavern }, { theme:'village', layout:SALT_ROAD.village }, { theme:'woods', layout:SALT_ROAD.road }] },
   { id:'blue-water-inn', name:BLUE_WATER_INN, blurb:'The Vallaki inn, from the front porch and taproom to the stable yard and rooms upstairs.', campaign:true,
     floors:blueWaterInnPlan().floors.map(layout => ({ theme:'tavern', layout })) },
+  { id:'amber-temple', name:'The Amber Temple', blurb:'Beneath Mount Ghakis, the temple’s black galleries overlook a hall where amber holds things that still bargain.', campaign:true,
+    floors:AMBER_TEMPLE },
   { id:'blank', name:'Blank stone (build by hand)', blurb:'One landing room per floor and nothing else. Draw rooms, corridors, doors and traps yourself in the Build tab.',
     floors:[{ blank:true }, { blank:true }, { blank:true }] },
 ];

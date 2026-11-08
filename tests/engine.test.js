@@ -242,7 +242,7 @@ test('difficult terrain costs two squares and the path goes around it when that 
 
 test('furnished rooms: props inside rooms, never on doors, stairs or doorways, never overlapping, wall pieces against a wall', async () => {
   const { propSize } = await import('../src/data/props.js');
-  for (const tpl of ['deathhouse', 'andral', 'castle', 'bonegrinder', 'labyrinth']){
+  for (const tpl of ['andral', 'castle', 'bonegrinder', 'labyrinth']){
     const s = newState({ seed:'furnish-' + tpl, floors:3, template:tpl, party:false }); setState(s);
     for (const f of s.floors){
       assert.ok(f.props.length > 5, `${tpl}: furnished`);
@@ -260,7 +260,4 @@ test('furnished rooms: props inside rooms, never on doors, stairs or doorways, n
       }
     }
   }
-  // the Narrow House has rooms with uses and names to match
-  const h = newState({ seed:'furnish-house', floors:2, template:'deathhouse', party:false });
-  assert.ok(h.floors.flatMap(f => f.rooms).some(r => r.use), 'house rooms get uses');
 });

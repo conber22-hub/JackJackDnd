@@ -12,7 +12,7 @@ export const VALLEY_PLACES = [
     blurb:'Where the Salt Road ended. Behind them, fog the colour of old pewter. There is no way back through it.' },
   { id:'gates', name:'The Gates of Barovia', x:89, y:30, kind:'gates', map:'landmark', state:null, sessions:[1],
     blurb:'Two stone guardians, headless, either side of a gate that opens for you and does not open again.' },
-  { id:'village', name:'Village of Barovia', x:80, y:37, kind:'village', map:'barovia', state:'village', sessions:[1, 2, 3],
+  { id:'village', name:'Village of Barovia', x:80, y:37, kind:'village', map:'barovia', maps:['barovia','deathhouse-classic'], state:'village', sessions:[1, 2, 3],
     blurb:'Shuttered houses in permanent fog, a tavern with one lit window, a church on a rise — and the tall narrow house at the edge of town.' },
   { id:'crossroads', name:'The Gallows Crossroads', x:68, y:32, lab:'n', kind:'crossroads', map:'landmark', state:null, sessions:[4],
     blurb:'Where the Svalich Road meets the river and the castle road. A gallows that is never empty for long.' },

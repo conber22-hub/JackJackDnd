@@ -165,8 +165,8 @@ export function genFloor(L, W, H, rng, anchor, isLast, spec = {}){
 
 /* A hand-built floor from a template's layout (the Session 0 tavern, village and road):
    rooms [x, y, w, h, type, name, notes, { outdoor }] · paths { w, pts:[x0, y0, x1, y1, …] } (straight runs,
-   w squares wide) · doors [x, y, state] · buildings { x, y, w, h, name, door } · props [kind, x, y, rot]
-   · up / down [x, y] · exits { up, down } (what the stairs are called here) · water [[x, y]…] · fill [[x, y]…]
+   w squares wide) · doors [x, y, state, optional DC] · buildings { x, y, w, h, name, door } · props [kind, x, y, rot]
+   · up / down [x, y] · next [x, y] (a down stair only if there is a following floor) · exits { up, down } (what the stairs are called here) · water [[x, y]…] · fill [[x, y]…]
    (squares forced solid) · a room's options { outdoor, ground (grass, cobble, dirt, mud, moor, furrow: see render/floors.js), crop (data/props.js CROPS), rise (1–3: a low hill, see riseHeights), use, dress, read } · masonry / clear [[x, y]…] (solid squares drawn as stone wall / left bare for a prop) · shallow [[x, y]…] (a ford: walkable water, difficult) · mists / mistWall [[x, y]…] (deep mist that hides; the Mist Wall turns travellers back) · events [{ label, text, enc, x, y }] (the road's random happenings, see overland.js). */
 export function layoutFloor(L, W, H, spec, anchor, isLast = true){
   const lay = spec.layout, theme = themeIndex(spec.theme), th = THEMES[theme];
@@ -185,7 +185,7 @@ export function layoutFloor(L, W, H, spec, anchor, isLast = true){
     f.corridors.push({ id:f.nextObj++, tiles:[...tiles] });
   }
   const xy = a => a ? { x:a[0], y:a[1] } : null;
-  f.up = anchor ? { ...anchor } : xy(lay.up); f.down = xy(lay.down);
+  f.up = anchor ? { ...anchor } : xy(lay.up); f.down = xy(lay.down || (!isLast && lay.next));
   if (!f.down && !isLast){
     // more floors were asked for than the layout has: the way on is in the room farthest from the way in
     const from = f.up || { x:f.rooms[0].cx, y:f.rooms[0].cy };
@@ -200,7 +200,7 @@ export function layoutFloor(L, W, H, spec, anchor, isLast = true){
   // squares drawn as stone wall (a village wall) or left bare for a prop to stand on (a palisade) on outdoor floors
   if (lay.masonry?.length) f.masonry = [...new Set(lay.masonry.map(([x, y]) => y * W + x))].filter(i => !walk(f.grid[i]));
   if (lay.clear?.length) f.clear = lay.clear.map(([x, y]) => y * W + x);
-  for (const [x, y, state = 'closed'] of lay.doors || []){ const i = y * W + x; if (walk(f.grid[i])) f.doors.push({ id:f.nextObj++, i, state, dc:state === 'locked' ? 15 : 14 }); }
+  for (const [x, y, state = 'closed', dc = state === 'locked' ? 15 : 14] of lay.doors || []){ const i = y * W + x; if (walk(f.grid[i])) f.doors.push({ id:f.nextObj++, i, state, dc }); }
   for (const [x, y, kind = 'pit'] of lay.traps || []){ const i = y * W + x; if (walk(f.grid[i])) addTrap(f, i, kind); }
   f.buildings = (lay.buildings || []).map(b => ({ ...b }));
   f.props = (lay.props || []).map(([k, x, y, rot = 0]) => ({ id:f.nextObj++, k, x, y, rot }));

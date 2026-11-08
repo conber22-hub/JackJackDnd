@@ -120,7 +120,7 @@ Session Zero in two halves. First the table: tone, safety, and heroes built in t
 
 **Level.** Start at 1.
 
-## Session 1 · Into the Mists — The Narrow House
+## Session 1 · Into the Mists — Death House
 
 *Level 1 → 2 · start at Gaze 2 · 3–4 hours*
 
@@ -128,7 +128,7 @@ Session Zero in two halves. First the table: tone, safety, and heroes built in t
 
 The Mists take the party to the edge of a village that is not on any map. Two children beg them to save their baby brother from "the monster in the basement." The house is a gothic trap, and in the Flood Edition the old cult's cellar has started to grow.
 
-**From your book.** Run the Death House appendix from your book for the upper floors, the children, and the house's secrets. Use the app's Narrow House template for the map.
+**From your book.** Run the Death House appendix from your book for the upper floors, the children, and the house's secrets. Use Death House (Flood Edition) in the app for the map.
 
 **Flood Edition.** The cultists who once lived here dug their ritual chamber down toward something they called "the font beneath." The Bloom found the font first. The cellar walls are slick with grey-green membrane; the cult's old dead are half-absorbed into them, and some of them still move.
 
@@ -141,20 +141,21 @@ The Mists take the party to the edge of a village that is not on any map. Two ch
 ### The upper house
 - Portraits with scratched-out faces. A nursery that is too clean. Letters that tell the family's story (from your book).
 - Keep the Gaze at 2. Every time they find a family secret, ask one player what their hero hears in the walls.
-- ▦ **Dungeon:** The Narrow House (Flood Edition) — Builds the whole house: two upper floors, the cellars, and the bloomed crypt. Start the party on floor 1.
+- ▦ **Dungeon:** Death House (Flood Edition) — Builds four house storeys and two dungeon levels. Start on the ground floor at the portico.
 
 ### Something in the walls
 - The first fight is small and fast. Let the rats pour out of a wall that should be solid.
 - ⚔ **Rats in the walls:** 2 × Swarm of Rats (CR 1/4)
 
 ### The armour on the landing
-- It stands guard over a room the children told them not to open.
+- Place it in the Balcony Hall on the bedroom storey, on the approach to the nursery.
 - ⚔ **Animated armour:** 1 × Animated Armor (CR 1)
 
-### The attic
+### The nursery and attic
+- Stage the specter in the nursemaid’s suite or the attic storage room, as the party’s route and the book dictate.
 - The children's room is here. What happened to them is in your book. Play it straight and sad.
-- The secret way down starts here. Mark it on the map — it is a secret door until someone finds it.
-- ⚔ **The specter:** 1 × Specter (CR 1)
+- Reveal the attic door when the party earns the clue from the book. The concealed stairs lead to the family crypts.
+- ⚔ **The nursemaid’s specter:** 1 × Specter (CR 1)
 
 **Loot.** A family signet ring · Letters naming the cult and "the font beneath" · A silvered key
 
@@ -179,7 +180,7 @@ The cellars, the crypts of the family's cult, and the ritual chamber at the bott
 > The stairs go down further than the house is tall. The air turns warm and sweet, like fruit left in a closed room. Somewhere ahead, many small things are breathing in unison.
 
 ### The crypts
-- Floor 3 of the Narrow House delve. Use the Ossuary look. Ghouls and shadows from your book, or populate from the Build tab.
+- Start on the Family Crypts level beneath the attic. Ghouls and shadows from your book, or populate from the Build tab.
 - Let them find a cultist's journal entry: "The font answers. It is not him that answers."
 - ⚔ **Crypt ghouls:** 2 × Ghoul (CR 1), 1 × Shadow (CR 1/2)
 
@@ -189,7 +190,7 @@ The cellars, the crypts of the family's cult, and the ritual chamber at the bott
 - ⚔ **Seeded cultists:** 2 × Cultist (CR 1/8)
 
 ### The ritual chamber (Bloom nest)
-- Floor 4. Raise the Gaze to 4 when they enter: he has noticed what they found. The walls weep.
+- Use the Bloom Nest level. Raise the Gaze to 4 when they enter: he has noticed what they found. The walls weep.
 - The Vessel speaks the cult leader's last words in a voice that is not hers.
 - Fire is the answer here. If nobody brought any, the lantern oil in the crypts is.
 - ⚔ **The nest:** 1 × Bloom Vessel (CR 2), 3 × Sporeling (CR 1/4), 2 × Cyst Node (CR 1)
