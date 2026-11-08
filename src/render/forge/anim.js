@@ -3,6 +3,8 @@
    and the moment of an action: a swing, a thrust, a shot, a claw, a spell, a flinch. Cloaks ripple (and stream
    out behind a walker), torches flicker, and staves, spears, bows, torches and lanterns stay upright in the hand. */
 import * as THREE from 'three';
+import { loadClips, playClip, applyClips } from './clips.js';
+loadClips();   // the Quaternius clips, fetched in the background; actions keep the hand-keyed poses until they arrive
 
 const PI = Math.PI;
 // joint rotations [x, y, z] for each stance; anything missing is 0
@@ -43,11 +45,13 @@ function sample(frames, k, name){
   return [va[0] + (vb[0] - va[0]) * s, va[1] + (vb[1] - va[1]) * s, va[2] + (vb[2] - va[2]) * s];
 }
 // Start an action on a forged figure: 'attack' (picked by its weapon), 'cast', 'hit', or a swing kind.
+// A Quaternius clip plays where one is loaded for the kind; otherwise the hand-keyed poses below.
 export function playAction(rig, kind){
   if (!rig) return;
   const k = kind === 'attack' ? swingOf(rig) : kind;
+  if (playClip(rig, k)) return;
   if (!ACTIONS[k]) return;
-  rig.action = { k, t0:performance.now() / 1000, dur:DUR[k] };
+  rig.action = { k, t0:performance.now() / 1000, dur:DUR[k] }; rig.clip = null;
 }
 // Turn the figure to face a point (in its parent's space); it turns there over a few frames.
 export function faceToward(fig, x, z){
@@ -86,7 +90,7 @@ export function poseRig(fig, t, dt, moving = false, stance = null){
       if (name === 'chest') y += -s * .1 * w;
       if (slump && name === 'head') z += s * .15 * w;
     }
-    if (act){ const o = sample(act, ak, name); x += o[0]; y += o[1]; z += o[2]; }
+    if (act && !rig.clip){ const o = sample(act, ak, name); x += o[0]; y += o[1]; z += o[2]; }   // a clip action owns its joints instead (applyClips, below)
     j.rotation.set(x, y, z);
   }
   // a tilt that makes each of a pack its own (zombies lean, skeletons cock their heads)
@@ -99,7 +103,7 @@ export function poseRig(fig, t, dt, moving = false, stance = null){
     fig.rotation.y += d * Math.min(1, dt * 7);
   }
   // items held upright (staves, spears at rest, bows at rest, torches, lanterns, holy symbols)
-  const aiming = act && (rig.action?.k === 'thrust' || rig.action?.k === 'smash' || rig.action?.k === 'slash');
+  const aiming = act && !rig.clip && (rig.action?.k === 'thrust' || rig.action?.k === 'smash' || rig.action?.k === 'slash');
   fig.updateMatrixWorld(true);
   for (const it of [rig.items.main, rig.items.off]){
     if (!it || !it.userData.upright) continue;
@@ -119,4 +123,6 @@ export function poseRig(fig, t, dt, moving = false, stance = null){
     p.needsUpdate = true; g.computeVertexNormals();
   }
   for (const f of rig.flames){ const k = .8 + Math.random() * .4; f.scale.set(k, .85 + Math.random() * .3, k); }
+  // a Quaternius clip, if one is playing (an action) or the figure is walking: blended over the pose above
+  applyClips(fig, t, dt, ph);
 }
