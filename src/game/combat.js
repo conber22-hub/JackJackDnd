@@ -3,7 +3,7 @@ import { state, ui, tokById, tokenAt, side, makeMonster, log, dreadLevel, isDM }
 import { freeTilesNear, randomRoomTile, updateVision, spotFor, seenNow } from '../engine/grid.js';
 import { BEST, hasTag, isHost } from '../data/bestiary.js';
 import { CONDITIONS } from '../data/dread.js';
-import { d, rollDice, avgDice, esc, cheb, pick, signed } from '../util/core.js';
+import { d, rollDice, avgDice, esc, cheb, pick, signed, bus } from '../util/core.js';
 import { tween, ease, focusTile } from '../render/scene.js';
 import { syncTokens, tokenViews, actOn } from '../render/minis.js';
 import { burst, showReach, clearReach, flashArea } from '../render/effects.js';
@@ -303,6 +303,7 @@ export function doAttack(aId, tId, i, mode = 'normal', { d20 = null, at = null }
   endOn(a, 'attack');   // Invisibility: it ends when you attack
   if (hits.length && atk.latch && !tg.dead && tg.kind !== 'monster'){ tg.flags.latchedBy = a.id; lines.push(`<span class="fam-seep">${esc(a.name)} is latched on.</span>`); }
   sfx(crit ? 'crit' : hits.length ? 'hit' : 'miss');
+  bus.emit('acted', { actor:a, target:tg, trigger:crit ? 'critical' : hits.length ? 'hit' : 'miss', action:atk.n });   // 🗣 a voice line (ui/voices.js)
   animate(a.id, 'attack', tg.id); if (hits.length) setTimeout(() => animate(tg.id, 'hit', a.id), 330);
   showCard({ kind:crit ? 'crit' : hits.length ? '' : 'miss', title:`${a.name} → ${tg.name}`, sub:atk.n, flair, lines, big:hits.length ? `${total} ${atk.t}` : '', die });
   log(`${a.name} ${atk.n} → ${tg.name}: ${hits.length ? `${total} ${atk.t}${crit ? ' (crit)' : ''}` : 'miss'}`);
@@ -561,6 +562,7 @@ export function castSpell(casterId, targetId, i, aim = null, { at = null } = {})
   if (conc && base0.l && !reuse) startConc(c, base0.n);
   const paid = [...(base0.recharge ? [`<span class="muted">Recharge ${base0.recharge}–6: spent until it comes back</span>`] : []), ...(slot ? [`<span class="muted">${esc(slot)}${level > base0.l ? ` · cast at level ${level}${sp.d !== base0.d ? ` (${esc(sp.d)})` : ''}` : ''}</span>`] : []), ...(conc && base0.l ? [`<span class="muted">🌀 ${esc(c.name)} is concentrating on it</span>`] : [])];
   sfx('roll'); animate(c.id, 'cast', tg.id !== c.id ? tg.id : null);
+  bus.emit('acted', { actor:c, target:tg, trigger:base0.k === 'heal' ? 'heal' : 'spell', action:base0.n });   // 🗣
   if (sp.k === 'heal'){
     // Mass Healing Word / Mass Cure Wounds: up to six of the caster's side around the creature tapped, each rolled
     const who = sp.multi ? [tg, ...state.tokens.filter(t => t.id !== tg.id && t.floor === tg.floor && !t.flags.gone && !(t.dead && t.kind === 'monster') && side(t) === side(c) && cheb(t.x, t.y, tg.x, tg.y) <= (sp.rad || 6))].slice(0, sp.multi) : [tg];

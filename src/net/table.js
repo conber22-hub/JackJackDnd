@@ -466,7 +466,8 @@ export function onClientMsg(m){
   else if (m.t === 'estate') net.onEstate?.(m.estate);   // 🏰 Our place (ui/estate.js sets the receiver)
   else if (m.t === 'soundscape') net.onSoundscape?.(m);   // 🎻 the Soundscape board's mix (ui/soundscape.js)
   else if (m.t === 'soundcue') net.onSoundcue?.(m);       // 🎻 a one-shot stinger from the DM's board
-  else if (m.t === 'vote') net.onVote?.(m);               // 🗳 the party's vote: the ballot, then the result (ui/ledger.js)
+  else if (m.t === 'vote') net.onVote?.(m);
+  else if (m.t === 'voice') net.onVoice?.(m);              // 🗣 a voice line's caption (ui/voices.js)               // 🗳 the party's vote: the ballot, then the result (ui/ledger.js)
   else if (m.t === 'handout' && !ui.screen) showHandoutHere(m);   // a picture from the DM (📸 photo mode, the Night tab): the TV shows its own
   else if (m.t === 'banner') banner(m.text);
   else if (m.t === 'ask') askPrompt(m);

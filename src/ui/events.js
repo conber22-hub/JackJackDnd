@@ -11,6 +11,7 @@ import { ensureChase, openChase } from './chase.js';
 import { ensureHorror, openHorror } from './horror.js';
 import { ensureMobs, openMobs } from './mobs.js';
 import { ensureLedger, openLedger } from './ledger.js';
+import { ensureVoices } from './voices.js';
 import { followTrailhead, takeTrail, endTrailLeg, backToRoad } from '../game/trails.js';
 import { hideRefuge, refugeClue, searchForRefuge, goIntoRefuge, leaveRefugeMap } from '../game/refuges.js';
 import { setPuzzle } from '../game/puzzles.js';
@@ -540,6 +541,7 @@ ensureChase();   // 🏃 the chase: the DM's sheet and the palette command
 ensureHorror();  // 😱 fear and its marks
 ensureMobs();    // 👥 the mob
 ensureLedger();  // 📒 the ledger
+ensureVoices();  // 🗣 voice lines as heroes and creatures act
 ensureChronicle();   // the 📜 Chronicle: the button, the palette command, the record of the story (idempotent)
 ensureSoundscape();   // the 🎻 Soundscape: the button, the palette command, the board and its receivers (idempotent)
 $('#floorUp').onclick = () => state && goFloor(ui.floor - 1);
