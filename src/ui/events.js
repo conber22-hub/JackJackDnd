@@ -12,6 +12,7 @@ import { ensureHorror, openHorror } from './horror.js';
 import { ensureMobs, openMobs } from './mobs.js';
 import { ensureLedger, openLedger } from './ledger.js';
 import { followTrailhead, takeTrail, endTrailLeg, backToRoad } from '../game/trails.js';
+import { hideRefuge, refugeClue, searchForRefuge, goIntoRefuge, leaveRefugeMap } from '../game/refuges.js';
 import { setPuzzle } from '../game/puzzles.js';
 import { describeSite } from '../engine/sites.js';
 import { stockSite, garrisonArrive, giveHoard } from '../game/garrison.js';
@@ -278,6 +279,11 @@ document.addEventListener('click', e => {
     case 'goFloor': goFloor(+k); renderPanel(); break;
     case 'valleyEnter': enterPlace(k, id); break;   // the map being left goes on the shelf (Maps tab)
     case 'evRead': readEvent(+k, +id); break;
+    case 'refugeHide': hideRefuge(k); renderPanel(); break;   // 🕳 hidden refuges (game/refuges.js)
+    case 'refugeClue': refugeClue(); renderPanel(); break;
+    case 'refugeSearch': searchForRefuge(); renderPanel(); break;
+    case 'refugeIn': goIntoRefuge(); renderPanel(); break;
+    case 'refugeOut': leaveRefugeMap(); renderPanel(); break;
     case 'trailFork': followTrailhead(+k, +id); break;   // 🍂 the side trails (game/trails.js)
     case 'trailTake': takeTrail(k); break;
     case 'trailEnd': endTrailLeg(); break;

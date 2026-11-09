@@ -32,6 +32,7 @@ const DEEP = ['hands', 'undertow', 'womb', 'ossuary'];
 export function templateSpecs(meta){
   // 🍂 a journey set out with the valley's seed may fork: a side trail at the middle of a road (engine/road-exploration.js)
   if (meta.template === 'journey' && meta.journey){ const b = meta.journey.trailSeed ? branchingJourneySpecs({ seed:String(meta.journey.trailSeed), junctions:[], walked:[] }, meta.journey) : []; return b.length ? b : journeySpecs(meta.journey); }
+  if (meta.template === 'refuge' && meta.refuge?.specs) return meta.refuge.specs;   // 🕳 a hidden refuge's inside (game/refuges.js)
   if (meta.template === 'trail' && meta.trail){ const t = trailLegSpecs(meta.trail.book, meta.trail); if (t) return t.specs; }
   if (meta.template === 'landmark' && meta.place) return landmarkSpecs(meta.place, meta.seed);
   if (meta.template === 'interior' && meta.interior) return interiorSpecs(meta.interior);
@@ -57,7 +58,7 @@ function rollWith(expr, rng){
 export function genDelve(meta){
   const rng = mulberry32(hashSeed(meta.seed + '|' + (meta.template || 'andral')));
   const specs = templateSpecs(meta), floors = []; let anchor = null;
-  if (meta.template === 'interior' || meta.template === 'trail') meta.floors = specs.length;   // a building has the storeys it has; a trail, its stretches
+  if (meta.template === 'interior' || meta.template === 'trail' || meta.template === 'refuge') meta.floors = specs.length;   // a building has the storeys it has; a trail, its stretches
   for (let L = 0; L < meta.floors; L++){
     const f = genFloor(L, meta.size, meta.size, rng, anchor, L === meta.floors - 1, specs[L]);
     floors.push(f); anchor = f.down;

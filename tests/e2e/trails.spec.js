@@ -20,6 +20,7 @@ test('a road forks: the side trail is taken, walked to its end, and the road is 
   const before = await page.evaluate(() => window.DreadDelve.valley().hour + window.DreadDelve.valley().day * 24);
   await take.filter({ hasText:'🪧' }).last().click();                      // the unknown track
   await expect.poll(() => page.evaluate(() => window.DreadDelve.get().meta.template)).toBe('trail');
+  expect(await page.evaluate(() => window.DreadDelve.get().floors.every(f => /side road/i.test(f.name)))).toBe(true);   // the trail's own stretch, not a generated dungeon
   expect(await page.evaluate(() => window.DreadDelve.get().tokens.filter(t => t.kind === 'pc').length)).toBeGreaterThan(0);
   await page.locator('#tabBody [data-act="trailEnd"]').click();
   await expect.poll(() => page.evaluate(() => window.DreadDelve.valley().roadExploration.walked.length)).toBe(1);

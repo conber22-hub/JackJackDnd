@@ -47,6 +47,7 @@ import { cardHTML } from './cards.js';
 import { currentAsk } from '../game/asks.js';
 import { CHECKS } from '../engine/checks.js';
 import { markChips } from './horror.js';
+import { refugeHere, refugeVisit, REFUGE_KINDS } from '../game/refuges.js';
 
 const art = (key, label) => {
   const a = state.art[key];
@@ -195,6 +196,7 @@ function dungeonTab(){
       <button class="btn small ${ui.roomPrompts !== false ? 'on' : ''}" data-act="toggle" data-k="roomPrompts" title="When the party first walks into a room, offer its read-aloud">Room prompts</button></div>
     ${siteCard(f)}
     ${buildingsCard(f)}
+    ${refugeCard()}
     <h4>Rooms (${f.rooms.length})</h4>
     <div class="row"><button class="btn small" data-act="furnishFloor" title="Furniture for every room that has none, by its type and this floor's look">🪑 Furnish empty rooms</button><button class="btn small" data-act="describeFloor" title="A read-aloud line for every room that has none">📜 Describe rooms</button></div>`;
   for (const r of f.rooms) h += `<div class="card ${ui.selRoom === r.id ? 'sel' : ''}"><div class="hd"><span class="dot" style="color:${ROOM_TYPES[r.type]?.color};background:${ROOM_TYPES[r.type]?.color}"></span>
@@ -615,6 +617,14 @@ function hoardText(h){
 }
 
 // Maps tab: the buildings on this map, each with its inside to go into (game/interiors.js).
+// 🕳 Hidden refuges (game/refuges.js): hide one on this floor, give its clue, search, go in; inside, the way back out.
+function refugeCard(){
+  if (refugeVisit()) return `<h4>🕳 ${esc(state.meta.name)}</h4><div class="card"><div class="muted">A hidden refuge. Bring a hero back to the way in, then:</div><div class="row"><button class="btn small" data-act="refugeOut">↩ Back out</button></div></div>`;
+  const s = refugeHere();
+  if (!s) return `<h4>🕳 Hidden refuge</h4><div class="card"><div class="muted">Somewhere people hid from the Count, under this floor. Hide one here:</div><div class="row">${REFUGE_KINDS.map(k => `<button class="btn small" data-act="refugeHide" data-k="${k}">${{ road:'Under the road', house:'Behind a wall', roots:'Through the roots', cave:'Down the rock' }[k] || k}</button>`).join('')}</div></div>`;
+  return `<h4>🕳 ${esc(s.name)}</h4><div class="card"><div class="muted">${s.found ? 'Found: its way in is on the map.' : `Hidden${s.heard ? ' (they have the clue)' : ''}, at ${s.position.x},${s.position.y}.`}${s.visited ? ' They have been inside.' : ''}</div>
+    <div class="row">${s.heard ? '' : `<button class="btn small" data-act="refugeClue">📜 The clue</button>`}${s.found ? `<button class="btn small primary" data-act="refugeIn" title="The selected hero at the way in">🕳 Go inside</button>` : `<button class="btn small" data-act="refugeSearch" title="The selected hero searches where they stand">🔎 Search here</button>`}</div></div>`;
+}
 function buildingsCard(f){
   const bs = (f.buildings || []).map((b, i) => ({ b, i })).filter(({ b }) => b.w >= 2 && b.h >= 2);
   if (!bs.length) return '';
