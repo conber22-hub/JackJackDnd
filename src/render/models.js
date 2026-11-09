@@ -3,6 +3,7 @@
    (they are too big for the autosave) and the DM's app sends them to players when they join.
    Keys:  bid:<creature id> · tok:<token id> · kit:wall · kit:floor */
 import * as THREE from 'three';
+import { gfx } from './gfx.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
@@ -69,18 +70,48 @@ export async function deleteModel(key){
 }
 export const hasModel = key => entries.has(key);
 export const modelInfo = key => { const e = entries.get(key); return e ? { name:e.name, size:e.size } : null; };
-export const allModels = () => [...entries.entries()].map(([key, e]) => ({ key, buf:e.buf, name:e.name }));
+export const allModels = () => [...entries.entries()].filter(([key]) => !key.startsWith('pack:')).map(([key, e]) => ({ key, buf:e.buf, name:e.name }));   // (the built-in packs every device fetches for itself)
 export const kitFor = slot => entries.get('kit:' + slot)?.kit || null;
-export const modelKeyFor = t => entries.has('tok:' + t.id) ? 'tok:' + t.id : t.bid && entries.has('bid:' + t.bid) ? 'bid:' + t.bid : null;
+export const modelKeyFor = t => entries.has('tok:' + t.id) ? 'tok:' + t.id : t.bid && entries.has('bid:' + t.bid) ? 'bid:' + t.bid : packKey(t);
 
+/* Built-in models for some of the bestiary (ChatGPT's original, animated packs in public/assets/creatures/): the
+   Bloom's creatures and the valley's beasts, healthy or (seeded, rising, or marked bloomed) taken by the Bloom. A model
+   the DM drops on a creature or a token still wins. Fetched from beside the app the first time one is needed; the
+   mini redraws when it arrives; the offline file and devices with models off keep the forge mini. */
+const PACK_CREATURES = {
+  sporeling:'barovian-bloom/sporeling.glb', 'bloom-vessel':'barovian-bloom/bloom-vessel.glb', 'carrier-hulk':'barovian-bloom/carrier-hulk.glb',
+  'cyst-node':'barovian-bloom/cyst-node.glb', 'bloom-stalker':'barovian-bloom/bloom-stalker.glb', 'bloomed-wolf':'barovian-bloom/bloomed-wolf.glb',
+  'srd-deer':['barovian-wilds/svalich-stag-healthy.glb', 'barovian-wilds/svalich-stag-bloomed.glb'],
+  'srd-boar':['barovian-wilds/rootwood-boar-healthy.glb', 'barovian-wilds/rootwood-boar-bloomed.glb'],
+  'srd-raven':['barovian-wilds/marsh-raven-healthy.glb', 'barovian-wilds/marsh-raven-bloomed.glb'],
+};
+const packTried = new Set();
+function packKey(t){
+  const f = t.bid && PACK_CREATURES[t.bid]; if (!f) return null;
+  const file = Array.isArray(f) ? f[t.flags?.seeded || t.flags?.rising || t.flags?.bloomed ? 1 : 0] : f, key = 'pack:' + file;
+  if (entries.has(key)) return key;
+  if (!packTried.has(key) && gfx.models !== false && typeof location !== 'undefined' && location.protocol !== 'file:'){
+    packTried.add(key);
+    fetch('assets/creatures/' + file).then(r => r.ok ? r.arrayBuffer() : null).then(buf => buf && ingest(key, buf, file.split('/').pop())).catch(() => {});
+  }
+  return null;
+}
+
+// A model's bounds from its meshes' own geometry: a freshly cloned skinned model (an animated creature) measured
+// through its bones collapses to a point and would be scaled up a thousandfold.
+function meshBox(obj){
+  obj.updateMatrixWorld(true); const box = new THREE.Box3();
+  obj.traverse(o => { if (o.isMesh && o.geometry){ o.geometry.computeBoundingBox(); box.union(o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld)); } });
+  return box.isEmpty() ? new THREE.Box3(new THREE.Vector3(-.5, 0, -.5), new THREE.Vector3(.5, 1, .5)) : box;
+}
 // A fresh copy of a model, standing on the mini's base and about one square tall. Plays its first animation.
 export function instanceModel(key){
   const e = entries.get(key); if (!e) return null;
   const obj = SkeletonUtils.clone(e.scene);
-  const box = new THREE.Box3().setFromObject(obj), size = box.getSize(new THREE.Vector3());
+  const box = meshBox(obj), size = box.getSize(new THREE.Vector3());
   const s = 1.05 / Math.max(size.y, size.x * .8, size.z * .8, .001);
   obj.scale.multiplyScalar(s);
-  const b2 = new THREE.Box3().setFromObject(obj), c = b2.getCenter(new THREE.Vector3());
+  const b2 = meshBox(obj), c = b2.getCenter(new THREE.Vector3());
   obj.position.set(-c.x, .07 - b2.min.y, -c.z);
   const g = new THREE.Group(); g.add(obj);
   if (e.anims.length){
@@ -88,6 +119,6 @@ export function instanceModel(key){
     const idle = e.anims.find(a => /idle/i.test(a.name)) || e.anims[0];
     mixer.clipAction(idle).play(); g.userData.mixer = mixer;
   }
-  obj.traverse(o => { if (o.isMesh){ o.castShadow = true; o.material = o.material.clone(); } });
+  obj.traverse(o => { if (o.isMesh){ o.castShadow = true; o.material = o.material.clone(); if (o.isSkinnedMesh) o.frustumCulled = false; } });   // (a moving skinned mesh's bounds go stale)
   return g;
 }
