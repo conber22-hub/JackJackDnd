@@ -4,8 +4,8 @@
    The DM's own words on the desk win until the next day comes round.
 
    state.campaign.weather is the line (as before); state.campaign.wx is what the rest of the app reads from it:
-   { kind, label, ground ('heavy snow' | 'snow' | 'frost' | 'heavy rain' | 'rain' | ''), travel, sight, obscured, desc }.
-   Players are sent { kind, ground } as state.wx (net/table.js). */
+   { kind, label, wind (0 still … 3 a gale), ground ('heavy snow' | 'snow' | 'frost' | 'heavy rain' | 'rain' | ''), travel, sight,
+   obscured, desc }. Players are sent { kind, ground, wind } as state.wx (net/table.js). */
 import { state } from '../engine/state.js';
 import { weatherFor, groundLine, describe, forecast } from '../engine/weather.js';
 
@@ -22,7 +22,7 @@ export function outlook(n = 3){
   const V = state?.campaign?.valley; if (!V) return [];
   return forecast(Math.max(1, V.day | 0) + 1, n, opts(V));
 }
-const pack = w => ({ kind:w.kind, label:w.label, ground:groundLine(w), travel:w.travel, sight:w.sight, obscured:w.obscured, desc:describe(w) });
+const pack = w => ({ kind:w.kind, label:w.label, wind:w.wind, ground:groundLine(w), travel:w.travel, sight:w.sight, obscured:w.obscured, desc:describe(w) });
 
 /* Put the sky on the table: the weather line and its reading. newDay: a new day has come, so the DM's own words give way
    to the valley's again. force: the DM asked for the valley's weather back. → the weather, or null (the DM's words stand). */

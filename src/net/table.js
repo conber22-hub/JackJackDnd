@@ -206,7 +206,7 @@ export function toScreens(m){ for (const s of net.conns.values()) if (s.screen &
 function forPlayers(){
   const V = state.campaign?.valley, free = !!state.campaign?.freeRolls;
   const s = redactForPlayers(serialize(false), { seen:seenNow, explored:state.explored });   // secrets stay with the DM (engine/redact.js)
-  s.freeRolls = free; s.realDice = !!state.campaign?.realDice; s.weather = state.campaign?.weather || ''; s.wx = state.campaign?.wx ? { kind:state.campaign.wx.kind, ground:state.campaign.wx.ground } : null; s.hour = V?.hour;
+  s.freeRolls = free; s.realDice = !!state.campaign?.realDice; s.weather = state.campaign?.weather || ''; s.wx = state.campaign?.wx ? { kind:state.campaign.wx.kind, ground:state.campaign.wx.ground, wind:state.campaign.wx.wind } : null; s.hour = V?.hour;
   if (V?.shared) s.valley = { at:V.at, visited:[...V.visited], journey:V.journey ? { to:V.journey.to, path:[...V.journey.path] } : null, day:V.day, hour:V.hour, weather:V.weather || '' };   // the map, if the DM shares it
   return s;
 }   // (and not what waits on the road)

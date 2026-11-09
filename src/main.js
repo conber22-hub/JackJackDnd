@@ -23,6 +23,8 @@ import { tokenViews } from './render/minis.js';
 import { poseRig } from './render/forge/anim.js';
 import { selRing, updatePings, updateGroupRings } from './render/effects.js';
 import { updateAmbience, weatherKind } from './render/ambience.js';
+import { updateWind } from './render/wind.js';
+import { updateGroundMist } from './render/groundfog.js';
 import { updateSkyline } from './render/skyline.js';
 import { sendWhisper } from './ui/hud.js';
 import { renderPanel } from './ui/panels.js';
@@ -129,6 +131,8 @@ function frame(){
     }
     floorViews.forEach(fv => fv?.group.visible && fv.built.traverse(o => { if (o.userData.spin) o.rotation.y += dt * o.userData.spin; if (o.userData.spinZ) o.rotation.z += dt * o.userData.spinZ; if (o.userData.trapId && o.userData.pulse) o.children[0].scale.setScalar(1.05 + Math.sin(t * 3) * .08); }));
     updateAmbience(t, dt);   // candle and fire light, rain and snow
+    updateWind(t, dt);       // the woods, the grass and the corn in the day's wind (render/wind.js)
+    updateGroundMist(floorViews[ui.floor], t, dt);   // fog days: banks of mist over the ground
     updateSkyline(t);        // the castle on the horizon
     updateOmens(t, dt);      // the valley answers his Gaze: ravens, eyes in the trees, the Mists, a red sky
     updateFolk(t, dt);       // the valley's people going about their day (render/folk.js)

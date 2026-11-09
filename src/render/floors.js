@@ -11,7 +11,9 @@ import { scene, G, mat4, col, wx, wz, floorY, WALL_H, makeLabel, tween, ease, fx
 import { surfaceTextures, groundTexture, groundMaps, SURFACES } from './textures.js';
 import { shadowsOn, gfx } from './gfx.js';
 import { kitFor } from './models.js';
-import { instancedModel, looseModel } from './propmodels.js';
+import { instancedModel, instancedLoose, looseModel } from './propmodels.js';
+import { swaying } from './wind.js';
+import { mountGroundMist, dropGroundMist } from './groundfog.js';
 import { ROAD_WATCH_MANIFEST } from '../data/road-watches-bounds.js';
 const ROAD_WATCH_FILES = Object.fromEntries(ROAD_WATCH_MANIFEST.assets.map(a => [a.id, a.file]));
 import { wxNow } from '../game/weather.js';
@@ -85,9 +87,36 @@ const SNOW = new THREE.Color('#d4d9e0'), WITHERED = new THREE.Color('#4a4438');
 // the woods keep the drawn trees, a fifth of the triangles.
 function woodsTree(live, snow){
   const m = gfx.quality !== 'low' && instancedModel(live ? 'pine' : 'deadtree', live ? 2.3 : 2.1, live ? snow : 0);
-  return m ? { geo:m.geometry, mat:m.material, caps:false } : { geo:live ? treeGeometry() : deadTreeGeometry(), mat:treeMaterial, caps:live };
+  return m ? { geo:m.geometry, mat:m.material, caps:false } : { geo:live ? treeGeometry() : deadTreeGeometry(), mat:swaying(treeMaterial, live ? TREE_SWAY : DEAD_SWAY), caps:live };
 }
-function capWithSnow(tm){ const caps = new THREE.InstancedMesh(snowCapGeometry(), treeMaterial, tm.count); caps.instanceMatrix.array.set(tm.instanceMatrix.array); caps.receiveShadow = tm.receiveShadow; return caps; }
+// How the wind takes them (render/wind.js): a pine bends from the trunk up, a dead tree hardly, grass and corn in ripples.
+const TREE_SWAY = { from:.3, top:2.3, amp:.16 }, DEAD_SWAY = { from:.4, top:2.1, amp:.05 }, GRASS_SWAY = { from:0, top:.2, amp:.06 }, CROP_SWAY = { from:.05, top:.7, amp:.09 };
+/* The woods aren't all pines (ChatGPT's Barovia terrain pack, assets/terrain): here and there a windworn fir, a crooked
+   oak, a stand of birches, brambles, a stump or a fallen log, and once in a long while a witch tree. [model, its share
+   of the trees, does it stand tall (the far woods take only those), how the wind takes it]. A square keeps its pine
+   until the model has come, and on Low quality (phones). */
+const WOODS_MIX = [
+  ['windworn_fir', .09, true, { from:.3, top:2.3, amp:.2 }], ['crooked_oak', .05, true, { from:.8, top:2.8, amp:.07 }], ['pale_birch_thicket', .05, true, { from:.4, top:2.4, amp:.14 }],
+  ['thorn_choked_brambles', .035, false, { from:.1, top:.7, amp:.03 }], ['mushroom_stump', .015, false, null], ['hollow_fallen_log', .015, false, null], ['hollow_witch_tree', .006, true, null],
+];
+// The variety for a tree (r: its own number 0–1): → { geometry, material, id } | null (a pine).
+function woodsVariety(r, tallOnly = false){
+  if (gfx.quality === 'low') return null;
+  for (const [id, share, tall, sway] of WOODS_MIX){
+    if ((r -= share) >= 0) continue;
+    if (tallOnly && !tall) return null;
+    const m = instancedLoose(`assets/terrain/${id}.glb`, sway); return m ? (m.id = id, m) : null;
+  }
+  return null;
+}
+// Take the trees that are something else out of a list (in place) → Map(variety → those trees).
+function takeVariety(list, numberOf, tallOnly = false){
+  const out = new Map();
+  for (let k = list.length - 1; k >= 0; k--){ const v = woodsVariety(numberOf(list[k]), tallOnly); if (!v) continue;
+    if (!out.has(v)) out.set(v, []); out.get(v).push(list[k]); list.splice(k, 1); }
+  return out;
+}
+function capWithSnow(tm){ const caps = new THREE.InstancedMesh(snowCapGeometry(), swaying(treeMaterial, TREE_SWAY), tm.count); caps.instanceMatrix.array.set(tm.instanceMatrix.array); caps.receiveShadow = tm.receiveShadow; return caps; }
 function groundMat(fv, kind){
   fv.mats.ground ||= {};
   if (!fv.mats.ground[kind]) fv.mats.ground[kind] = shared(new THREE.MeshStandardMaterial({ ...groundMaps(GROUND[kind]?.tex || kind, 1), roughness:.95, metalness:0 }));
@@ -149,6 +178,7 @@ function viewGrid(f, L){
 export function buildFloor(L, opt = {}){
   const f = state.floors[L], fv = floorViews[L], th = THEMES[f.theme] || THEMES[0];
   if (!f || !fv) return;
+  dropGroundMist(fv);
   disposeGroup(fv.built);
   dressMaterials(fv, th);
   const shadows = shadowsOn();
@@ -298,6 +328,12 @@ export function buildFloor(L, opt = {}){
     if (dm.instanceColor) dm.instanceColor.needsUpdate = true; dm.castShadow = shadows; fv.built.add(dm);
   }
   if (dead.length){ const ds = new Set(dead); for (let k = trees.length - 1; k >= 0; k--) if (ds.has(trees[k])) trees.splice(k, 1); }
+  for (const [v, list] of deadOK ? takeVariety(trees, i => hr(i, 17)) : []){
+    const vm = new THREE.InstancedMesh(v.geometry, v.material, list.length), q = new THREE.Quaternion(), sc = new THREE.Vector3(), ps = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+    list.forEach((i, n) => { const s = .8 + hr(i, 18) * .35; ps.set(wx(i % f.W) + (hr(i, 2) - .5) * .25, 0, wz((i / f.W) | 0) + (hr(i, 3) - .5) * .25); q.setFromAxisAngle(up, hr(i, 4) * 6.28); sc.set(s, s * (.9 + hr(i, 5) * .25), s);
+      mat4.compose(ps, q, sc); vm.setMatrixAt(n, mat4); vm.setColorAt(n, col.setRGB(1, 1, 1).multiplyScalar(.8 + hr(i, 6) * .35).lerp(SNOW, snow * .35)); });
+    if (vm.instanceColor) vm.instanceColor.needsUpdate = true; vm.castShadow = vm.receiveShadow = shadows; vm.userData.variety = v.id; fv.built.add(vm);
+  }
   if (trees.length){
     const wt = woodsTree(true, snow), tm = new THREE.InstancedMesh(wt.geo, wt.mat, trees.length), q = new THREE.Quaternion(), sc = new THREE.Vector3(), ps = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
     const tint = new THREE.Color(th.trim);
@@ -312,6 +348,8 @@ export function buildFloor(L, opt = {}){
     fv.built.add(tm);
     if (snow >= .4 && wt.caps) fv.built.add(capWithSnow(tm));
   }
+  // fog days and still dawns: banks of mist over the open ground (render/groundfog.js), where this viewer can see
+  if (outdoor && !opt.walls) mountGroundMist(fv, f, L, (x, y) => showTile(y * f.W + x) && !inBuilding(f, x, y));
   // ground clutter on outdoor floors: grass tufts in the clearings, stones on the roads
   if (outdoor){
     const tufts = [], pebbles = [];
@@ -322,7 +360,7 @@ export function buildFloor(L, opt = {}){
     }
     for (const [list, geo] of [[tufts, tuftGeometry()], [pebbles, pebbleGeometry()]]){
       if (!list.length) continue;
-      const cm2 = new THREE.InstancedMesh(geo, treeMaterial, list.length), q = new THREE.Quaternion(), sc = new THREE.Vector3(), ps = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+      const cm2 = new THREE.InstancedMesh(geo, list === tufts ? swaying(treeMaterial, GRASS_SWAY) : treeMaterial, list.length), q = new THREE.Quaternion(), sc = new THREE.Vector3(), ps = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
       list.forEach(([i, k], n) => { const s = .7 + hr(i, 40 + k) * .8; ps.set(wx(i % f.W) + (hr(i, 50 + k) - .5) * .85, -.02 + groundY(f, i % f.W, (i / f.W) | 0), wz((i / f.W) | 0) + (hr(i, 60 + k) - .5) * .85); q.setFromAxisAngle(up, hr(i, 70 + k) * 6.28); sc.set(s, s, s); mat4.compose(ps, q, sc); cm2.setMatrixAt(n, mat4); cm2.setColorAt(n, col.setRGB(1, 1, 1).multiplyScalar(.7 + hr(i, 80 + k) * .5)); });
       if (cm2.instanceColor) cm2.instanceColor.needsUpdate = true; cm2.receiveShadow = shadows; fv.built.add(cm2);
     }
@@ -342,7 +380,7 @@ export function buildFloor(L, opt = {}){
     }
   }
   for (const [kind, list] of crops){
-    const cm2 = new THREE.InstancedMesh(cropGeometry(kind), treeMaterial, list.length), q = new THREE.Quaternion(), sc = new THREE.Vector3(), ps = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+    const cm2 = new THREE.InstancedMesh(cropGeometry(kind), swaying(treeMaterial, CROP_SWAY), list.length), q = new THREE.Quaternion(), sc = new THREE.Vector3(), ps = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
     list.forEach(([x, y, i, k, per], n) => {
       const ox = per === 4 ? (k % 2 ? .23 : -.23) : (hr(i, 151 + k) - .5) * .6, oz = per === 4 ? (k < 2 ? -.23 : .23) : (hr(i, 153 + k) - .5) * .6, s2 = .85 + hr(i, 155 + k) * .35;
       ps.set(wx(x) + ox + (hr(i, 157 + k) - .5) * .08, groundY(f, x, y), wz(y) + oz); q.setFromAxisAngle(up, hr(i, 159 + k) * 6.28); sc.set(s2, s2 * (.9 + hr(i, 161 + k) * .25), s2);
@@ -364,6 +402,12 @@ export function buildFloor(L, opt = {}){
       }
       const dead = pts.filter(p => hr(p[5], 135) < (th.id === 'woods' ? .1 : .06) + Math.min(.45, wither * .07)), live = pts.filter(p => !dead.includes(p));
       const q = new THREE.Quaternion(), sc = new THREE.Vector3(), ps = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0), tint = new THREE.Color(th.trim);
+      for (const [v, list] of takeVariety(live, p => hr(p[5], 137), true)){
+        const vm = new THREE.InstancedMesh(v.geometry, v.material, list.length);
+        list.forEach(([x, z, s2, a, d], n) => { ps.set(x, 0, z); q.setFromAxisAngle(up, a * 6.28); sc.set(s2 * .85, s2 * .85, s2 * .85); mat4.compose(ps, q, sc); vm.setMatrixAt(n, mat4);
+          vm.setColorAt(n, col.setRGB(1, 1, 1).multiplyScalar((.7 + a * .35) * (d > 8 ? .8 : 1)).lerp(SNOW, snow * .35)); });
+        if (vm.instanceColor) vm.instanceColor.needsUpdate = true; vm.receiveShadow = shadows; fv.rock.add(vm);
+      }
       for (const [list, wt] of [[live, woodsTree(true, snow)], [dead, woodsTree(false, snow)]]){
         if (!list.length) continue;
         const tm = new THREE.InstancedMesh(wt.geo, wt.mat, list.length);

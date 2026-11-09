@@ -9,6 +9,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { PROP_MODELS } from '../data/prop-models.js';
 import { PROPS, PROP_TOP } from '../data/props.js';
 import { gfx } from './gfx.js';
+import { addSway, swayKey } from './wind.js';
 
 const loader = new GLTFLoader();
 const ready = new Map(), failed = new Set(), loading = new Set();
@@ -118,26 +119,52 @@ export function instancedModel(k, height, snow = 0){
     const b = geometry.boundingBox, c = b.getCenter(new THREE.Vector3()), h = Math.max(b.max.y - b.min.y, 1e-3);
     geometry.translate(-c.x, -b.min.y, -c.z); geometry.scale(height / h, height / h, height / h);
     const material = mat.clone(); material.userData.shared = true;
-    if (PROP_MODELS[k].recolor) patch(material, { recolor:PROP_MODELS[k].recolor });   // (a clone leaves the shader patch behind)
-    e = { geometry, material, snowy:null }; merged.set(key, e);
+    // (the woods move in the wind, render/wind.js: a pine from the trunk up, a dead tree hardly)
+    const sway = k === 'pine' ? { from:.3, top:height, amp:.16 } : k === 'deadtree' ? { from:.4, top:height, amp:.05 } : null;
+    if (PROP_MODELS[k].recolor || sway) patch(material, { recolor:PROP_MODELS[k].recolor, sway });   // (a clone leaves the shader patch behind)
+    e = { geometry, material, snowy:null, sway }; merged.set(key, e);
   }
   if (snow < .4) return e;
   // (one snowy material per kind; its whiteness is a uniform, so a heavier fall needs no new shader)
   if (!e.snowy){
     const m = e.material.clone(), u = { value:snow }; m.userData = { shared:true, snow:u };
-    patch(m, { recolor:PROP_MODELS[k].recolor, snow:u });
+    patch(m, { recolor:PROP_MODELS[k].recolor, snow:u, sway:e.sway });
     e.snowy = { geometry:e.geometry, material:m };
   }
   e.snowy.material.userData.snow.value = Math.min(1, .45 + snow * .5);
   return e.snowy;
 }
 
+/* A loose model (above) as one geometry and one material, for an InstancedMesh: the woods' other trees, from the
+   terrain pack (assets/terrain: plain-coloured parts, no textures). Each part's colour goes into the vertices, so the
+   whole thing is one draw call however many stand in the wood. sway: how the wind takes it (render/wind.js), or null.
+   → { geometry, material } | null (not here yet) */
+const mergedLoose = new Map();
+export function instancedLoose(path, sway = null){
+  const tpl = looseModel(path); if (!tpl) return null;
+  let e = mergedLoose.get(path); if (e) return e;
+  tpl.updateMatrixWorld(true);
+  const geos = [];
+  tpl.traverse(o => { if (!o.isMesh) return;
+    let g = o.geometry.clone().applyMatrix4(o.matrixWorld);
+    for (const a of Object.keys(g.attributes)) if (a !== 'position') g.deleteAttribute(a);
+    if (g.index) g = g.toNonIndexed();
+    const c = (Array.isArray(o.material) ? o.material[0] : o.material)?.color || new THREE.Color('#777'), n = g.attributes.position.count, cols = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++){ cols[i * 3] = c.r; cols[i * 3 + 1] = c.g; cols[i * 3 + 2] = c.b; }
+    g.setAttribute('color', new THREE.BufferAttribute(cols, 3)); g.computeVertexNormals(); geos.push(g); });
+  const geometry = geos.length && mergeGeometries(geos, false); if (!geometry) return null;
+  const material = new THREE.MeshStandardMaterial({ vertexColors:true, roughness:.92, flatShading:true }); material.userData.shared = true;
+  if (sway) patch(material, { sway });
+  e = { geometry, material }; mergedLoose.set(path, e); return e;
+}
+
 /* The shader touches a model's material can take (one patch, as three.js keeps only one onBeforeCompile):
    - recolor 'fir': the saturated orange and yellow of the texture (autumn needles) turned dark fir green; the trunk,
      greyer, stays as it is
    - snow (a uniform { value: 0–1 }): whatever faces up whitened */
-function patch(m, { recolor = null, snow = null }){
+function patch(m, { recolor = null, snow = null, sway = null }){
   m.onBeforeCompile = sh => {
+    if (sway) addSway(sh, sway);
     if (recolor === 'fir') sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
       { vec3 c = diffuseColor.rgb; float mx = max( c.r, max( c.g, c.b ) ), mn = min( c.r, min( c.g, c.b ) );
         if ( mx > 0.0 && ( mx - mn ) / mx > 0.55 && c.r > c.b ) diffuseColor.rgb = vec3( c.g * 0.15 + 0.01, c.r * 0.16 + c.g * 0.1, c.r * 0.06 + c.b * 0.45 ); }`);
@@ -153,6 +180,6 @@ function patch(m, { recolor = null, snow = null }){
         diffuseColor.rgb = mix( diffuseColor.rgb, vec3( 0.86, 0.89, 0.93 ), snowAmt * smoothstep( 0.3, 0.8, vSnowUp ) );`);
     }
   };
-  m.customProgramCacheKey = () => 'pm:' + (recolor || '') + (snow ? ':snow' : '');
+  m.customProgramCacheKey = () => 'pm:' + (recolor || '') + (snow ? ':snow' : '') + (sway ? ':' + swayKey(sway) : '');
   m.needsUpdate = true;
 }

@@ -102,6 +102,8 @@ Picture: `docs/screens/hours.jpg` (dawn, midday, dusk, midnight).
   - **Sun and moon shadows** at High and Ultra (`sunShadow` in `main.js`): the light follows where you're looking, so trees, houses and minis throw shadows that turn with the hour and stretch at dusk.
   - **Fire reaches further** (`render/ambience.js`): hearths, torches and lanterns light more of the room, and phones (Low) get two of them where they had none.
   - **The DM's room colours are an outline** (`render/floors.js`): a sanctuary or a trap room is tinted along its edge, so the floor keeps its own colour. The selected room still fills.
+- **🌬 The wind** (`render/wind.js`): the woods, the grass and the crops sway as hard as the day's weather blows (the weather engine's wind: still, a breeze, a brisk wind, a gale; or the DM's own words: "a howling gale", "still and grey"). The whole wood leans one way and gusts travel across the map. It's a few lines in the vertex shader, shared by every tree, so it costs nothing, phones included. Players' devices are sent the wind with the weather.
+- **🌫 Ground mist** (`render/groundfog.js`, over ChatGPT's Living Valley II in `render/barovia-living-*.js`): on fog days, and at a still dawn, banks of mist lie over an outdoor map and roll slowly; heroes and trees stand up out of them. It thickens and lifts with the weather over a few seconds, takes the hour's colour, and is only the look (sight in fog is the weather engine's).
 - **The sky** (`render/omens.js`) takes the hour's colours, with a warm band at dusk.
 - **Windows** are dark glass by day and candlelit after dark (`render/props.js windowGlow`).
 - **The Mists creep closer and thicker at night.**
