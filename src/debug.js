@@ -69,3 +69,4 @@ export { showHandoutHere } from './ui/screen.js';
 export { capture } from './render/post.js';
 export { setGfx } from './render/gfx.js';
 export { redactForPlayers } from './engine/redact.js';
+export { onClientMsg } from './net/table.js';

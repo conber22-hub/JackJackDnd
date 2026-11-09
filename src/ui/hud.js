@@ -26,7 +26,7 @@ import { sfx } from '../audio/sound.js';
 
 export function toast(msg){ const el = document.createElement('div'); el.className = 'toast'; el.textContent = msg; $('#toasts').appendChild(el); setTimeout(() => el.remove(), 3800); while ($('#toasts').children.length > 5) $('#toasts').firstChild.remove(); }
 export function banner(text){ const b = $('#turnBanner'); b.textContent = text; b.style.opacity = 1; clearTimeout(banner._t); banner._t = setTimeout(() => b.style.opacity = 0, 1800); }
-export function showWhisper(text){ const w = $('#whisper'); w.textContent = text; w.style.opacity = .9; clearTimeout(showWhisper._t); showWhisper._t = setTimeout(() => w.style.opacity = 0, 3800); }
+export function showWhisper(text){ if (calmPhone()) remember({ title:'🤫 A whisper', flair:text }); const w = $('#whisper'); w.textContent = text; w.style.opacity = .9; clearTimeout(showWhisper._t); showWhisper._t = setTimeout(() => w.style.opacity = 0, 3800); }
 export function sendWhisper(text){ showWhisper(text); toPlayers({ t:'whisper', text }, 'whispers'); sfx('whisper'); }
 /* A player's sign that what they did is with the DM: it stays until something comes back (a card, a no) or a minute
    passes, so under the Curtain (game/outbox.js) a quiet screen never looks like a lost tap. waiting(null) clears it. */
@@ -38,14 +38,44 @@ export function waiting(text){
   el.innerHTML = `<span class="spin">⏳</span> ${esc(text)}`; el.classList.add('show');
   waitTimer = setTimeout(() => el.classList.remove('show'), 60000);
 }
+/* On a player's phone, one card at a time: the next waits behind it ("+2 more"), none fades before it's read (a tap
+   moves on), and the last 25 are kept under 🗂 to look back at. Big screens and the DM keep the stack of three. */
+const calmPhone = () => ui.role === 'player' && !ui.screen && innerWidth <= 760;
+const waitingCards = [];
+export const recentCards = [];
+function remember(c){
+  recentCards.unshift({ title:c.title, sub:c.sub || '', flair:c.flair || '', lines:(c.lines || []).slice(0, 8), big:c.big || '', at:Date.now() });
+  recentCards.length = Math.min(recentCards.length, 25); recentButton();
+}
+function recentButton(){
+  let b = $('#recentBtn');
+  if (!b){ b = document.createElement('button'); b.id = 'recentBtn'; b.className = 'icon'; b.title = 'What came up'; b.onclick = openRecent; document.body.appendChild(b); }
+  b.innerHTML = `🗂<span>${recentCards.length}</span>`; b.classList.toggle('hidden', !recentCards.length || !calmPhone());
+}
+function openRecent(){
+  let m = $('#recentModal');
+  if (!m){ m = document.createElement('div'); m.id = 'recentModal'; m.className = 'modal'; document.body.appendChild(m); m.addEventListener('click', e => { if (e.target === m || e.target.closest('[data-rc="x"]')) m.classList.add('hidden'); }); }
+  const ago = t => { const s = Math.round((Date.now() - t) / 1000); return s < 60 ? 'just now' : s < 3600 ? `${Math.round(s / 60)} min ago` : `${Math.round(s / 3600)} h ago`; };
+  m.innerHTML = `<div class="box recent-box"><div class="row" style="align-items:center"><h2 style="flex:1;margin:0">🗂 What came up</h2><button class="btn small" data-rc="x">✕</button></div>
+    ${recentCards.map(c => `<div class="recent-card"><div class="rt">${esc(c.title)} <span class="muted">· ${ago(c.at)}</span></div>${c.sub ? `<div class="muted">${esc(c.sub)}</div>` : ''}${c.flair ? `<div class="rf">${esc(c.flair)}</div>` : ''}${c.lines.map(l => `<div class="r">${l}</div>`).join('')}${c.big ? `<div class="rb">${esc(c.big)}</div>` : ''}</div>`).join('') || '<p class="muted">Nothing yet.</p>'}</div>`;
+  m.classList.remove('hidden');
+}
+function moreChip(){ const el = $('#cardLayer')?.lastElementChild; if (!el) return; let m = el.querySelector('.more'); if (!m){ m = document.createElement('div'); m.className = 'more'; el.insertBefore(m, el.querySelector('.tap')); } m.textContent = waitingCards.length ? `+${waitingCards.length} more after this` : ''; m.style.display = waitingCards.length ? '' : 'none';
+  const tap = el.querySelector('.tap'); if (tap && calmPhone()) tap.textContent = waitingCards.length ? 'tap for the next' : 'tap to close · 🗂 keeps it'; }
 export function showCard(c, share = true){
+  const calm = calmPhone();
+  if (calm){ remember(c); if ($('#cardLayer').children.length){ waitingCards.push(c); moreChip(); return; } }
+  renderCard(c, share, calm);
+}
+function renderCard(c, share, calm){
   const layer = $('#cardLayer'), el = document.createElement('div');
   el.className = 'pop ' + (c.kind || '');
   el.innerHTML = `<div class="t">${esc(c.title)}</div>${c.sub ? `<div class="s">${esc(c.sub)}</div>` : ''}${c.flair ? `<div class="f">${esc(c.flair)}</div>` : ''}${(c.lines || []).map(l => `<div class="r">${l}</div>`).join('')}${c.big ? `<div class="big">${esc(c.big)}</div>` : ''}<div class="tap">tap to dismiss</div>`;
   const born = performance.now();
-  el.onclick = () => { if (performance.now() - born > 400) el.remove(); };   // the tap that made it (a cast on a phone) mustn't also dismiss it
+  el.onclick = () => { if (performance.now() - born > 400){ el.remove(); if (calm && waitingCards.length){ renderCard(waitingCards.shift(), false, true); moreChip(); } } };   // the tap that made it (a cast on a phone) mustn't also dismiss it
   layer.appendChild(el); while (layer.children.length > 3) layer.firstChild.remove();
-  setTimeout(() => el.remove(), 8000);
+  if (calm) moreChip();
+  else setTimeout(() => el.remove(), 8000);
   // the players see it only if the DM sends it (game/outbox.js): a held card says so, with a Send button on it
   if (share && ui.role === 'dm' && toPlayers({ t:'card', c }, cardCat(c)) === 'held'){
     const o = heldFor(c), row = document.createElement('div'); row.className = 'r held';
