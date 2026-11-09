@@ -74,7 +74,8 @@ test('a player sees only their list', async ({ browser }) => {
   await expect(page.locator('.pal-row', { hasText: 'Look it up' })).toBeVisible();
   await expect(page.locator('.pal-row', { hasText: 'Ping the map' })).toBeVisible();
   await expect(page.locator('.pal-row', { hasText: 'Card only' })).toBeVisible();
-  if (atk) await expect(page.locator('.pal-row', { hasText: atk }).first()).toBeVisible();
+  // their own attacks are in their list (searched for: an empty list shows only the first dozen, A to Z)
+  if (atk){ await page.locator('#palQ').fill(atk); await expect(page.locator('.pal-row', { hasText: atk }).first()).toBeVisible(); }
   // and none of the DM's list
   await page.locator('#palQ').fill('host');
   await expect(page.locator('#palList')).not.toContainText('Host the table');
