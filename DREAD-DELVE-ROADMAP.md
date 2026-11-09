@@ -98,6 +98,10 @@ Picture: `docs/screens/hours.jpg` (dawn, midday, dusk, midnight).
   - a pale grey day under the clouds; amber-and-rose dawns and dusks; a moonlit blue night
   - the light's colour and strength change, and the sun crosses the sky low from east to west, so the shadows turn
   - Under a roof and underground, nothing changes.
+  - **Lighting pass**: midday now reads as day (an overcast one) and midnight as moonlight you can play in, where both used to be near dark. `daylight.js` gives `day`, `sunK` (the sun or moon's own strength) and `fill` (the sky's fill, lifted at night).
+  - **Sun and moon shadows** at High and Ultra (`sunShadow` in `main.js`): the light follows where you're looking, so trees, houses and minis throw shadows that turn with the hour and stretch at dusk.
+  - **Fire reaches further** (`render/ambience.js`): hearths, torches and lanterns light more of the room, and phones (Low) get two of them where they had none.
+  - **The DM's room colours are an outline** (`render/floors.js`): a sanctuary or a trap room is tinted along its edge, so the floor keeps its own colour. The selected room still fills.
 - **The sky** (`render/omens.js`) takes the hour's colours, with a warm band at dusk.
 - **Windows** are dark glass by day and candlelit after dark (`render/props.js windowGlow`).
 - **The Mists creep closer and thicker at night.**

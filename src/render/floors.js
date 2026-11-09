@@ -198,7 +198,9 @@ export function buildFloor(L, opt = {}){
       // raised ground catches more light the higher it is, and its slopes are a shade darker, so a rise reads like contours
       if (f.height?.[i]) col.multiplyScalar((1 + f.height[i] * .2) * (slopes.has(i) ? .72 : 1));
       const r = roomOf.get(i);
-      if (r && !pv && r.type !== 'chamber') col.lerp(new THREE.Color(ROOM_TYPES[r.type]?.color || '#888'), r.id === ui.selRoom ? .45 : .22);
+      // the DM's room-type colour: strong round the room's edge, a breath of it inside, so the floor keeps its own look
+      if (r && !pv && r.type !== 'chamber'){ const edge = x === r.x || y === r.y || x === r.x + r.w - 1 || y === r.y + r.h - 1;
+        col.lerp(new THREE.Color(ROOM_TYPES[r.type]?.color || '#888'), r.id === ui.selRoom ? .45 : edge ? .34 : .07); }
       else if (r && !pv && r.id === ui.selRoom) col.lerp(new THREE.Color('#e9a54a'), .3);
       if (!pv && ui.previewFog && !exp.has(i)) col.multiplyScalar(.3);
       fm.setColorAt(n, col);

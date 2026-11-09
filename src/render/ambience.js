@@ -1,5 +1,5 @@
 /* AMBIENCE — the light of candles and fires, and the weather on outdoor maps.
-   Prop lights: a small fixed pool of point lights (none on Low quality) that follows the lit props nearest the
+   Prop lights: a small fixed pool of point lights (two on Low quality, six on Medium, ten on High) that follows the lit props nearest the
    camera on the floor in view — candelabras, braziers, hearths, lanterns, campfires — and flickers. A fixed
    count keeps the shaders from recompiling as you move about.
    Weather: rain or snow (from the day's weather on the Dark Lord desk) falling around the camera on outdoor maps. */
@@ -14,11 +14,11 @@ import { wxNow, FALLING } from '../game/weather.js';
 
 /* ---------- prop lights ---------- */
 const pool = [];
-const POOL = { low:0, medium:4, high:8 };
+const POOL = { low:2, medium:6, high:10 };   // (phones get the two nearest fires: a hearth-lit taproom, not a flat one)
 let lastPick = 0;
 function ensurePool(){
   const n = POOL[gfx.quality] ?? 4;
-  while (pool.length < n){ const l = new THREE.PointLight('#ffb060', 0, 6.5, 1.5); l.userData = { base:0, ph:Math.random() * 10 }; pool.push(l); scene.add(l); }
+  while (pool.length < n){ const l = new THREE.PointLight('#ffb060', 0, 8.5, 1.4); l.userData = { base:0, ph:Math.random() * 10 }; pool.push(l); scene.add(l); }
   while (pool.length > n){ const l = pool.pop(); l.parent?.remove(l); l.dispose?.(); }
 }
 const FIRE_COL = { brazier:'#ff8a3a', hearth:'#ff7a2a', campfire:'#ff7a2a', anvil:'#ff6a2a', cauldron:'#ff8a3a' };
@@ -33,7 +33,7 @@ function pickLights(){
     if (!c){ l.userData.base = 0; l.intensity = 0; return; }
     if (l.parent !== fv.group) fv.group.add(l);
     l.position.set(c.x, c.p.k === 'hearth' || c.p.k === 'campfire' ? .6 : 1.2, c.z);
-    l.color.set(FIRE_COL[c.p.k] || '#ffb060'); l.userData.base = 1.6 * LIT[c.p.k];
+    l.color.set(FIRE_COL[c.p.k] || '#ffb060'); l.userData.base = 2.4 * LIT[c.p.k];
   });
 }
 

@@ -8,7 +8,7 @@ import { bus } from './util/core.js';
 import { scene, camera, controls, renderer, ambient, hemi, moon, rim, runTweens, fx } from './render/scene.js';
 import { renderFrame, applyResolution } from './render/post.js';
 import { onPropModels } from './render/propmodels.js';
-import { gfx, onGfx, shadowsOn, painted } from './render/gfx.js';
+import { gfx, onGfx, shadowsOn, painted, ultra } from './render/gfx.js';
 import { loadStoredModels } from './render/models.js';
 import { setDrone, setAmbience } from './audio/sound.js';
 import { syncTokens } from './render/minis.js';
@@ -62,6 +62,20 @@ function outdoorFog(){
   const hour = state.campaign?.valley?.hour ?? state.hour;
   return out && hour != null ? dlFog.set(daylight(hour).fog) : fogDark;
 }
+/* The sun's (and the moon's) shadows, outdoors at High and Ultra: trees, houses and heroes throw them across the
+   ground, long at dawn and dusk. The shadow follows the view (a 48-square box round what the camera looks at). */
+const sunAim = new THREE.Vector3(), sunDir = moon.position.clone();
+function sunShadow(DL){
+  const on = !!DL && shadowsOn() && ui.view !== 'stack';
+  if (moon.castShadow !== on){ moon.castShadow = on;
+    if (on){ moon.shadow.mapSize.set(ultra() ? 4096 : 2048, ultra() ? 4096 : 2048); Object.assign(moon.shadow.camera, { left:-24, right:24, top:24, bottom:-24, near:1, far:140 }); moon.shadow.camera.updateProjectionMatrix();
+      moon.shadow.bias = -.0006; moon.shadow.normalBias = .05; if (!moon.target.parent) scene.add(moon.target); } }
+  if (!on){ moon.position.copy(sunDir); if (moon.target.parent){ moon.target.position.set(0, 0, 0); moon.target.updateMatrixWorld(); } return; }
+  // (the light keeps its direction, moved to stand over the view)
+  sunAim.copy(sunDir).normalize().multiplyScalar(60);
+  moon.target.position.copy(controls.target); moon.target.updateMatrixWorld();
+  moon.position.copy(controls.target).add(sunAim);
+}
 function frame(){
   requestAnimationFrame(frame);
   const raw = clock.getDelta(), dt = Math.min(raw, .05), now = performance.now(), t = now / 1000;
@@ -84,7 +98,7 @@ function frame(){
     const k2 = Math.min(1, ease * .6);
     ambient.color.lerp(DL ? dlCol.set(DL.amb) : AMB0, k2); hemi.color.lerp(DL ? dlCol.set(DL.amb).lerp(HEMI0, .35) : HEMI0, k2);
     moon.color.lerp(DL ? dlCol.set(DL.sun > 0 ? (DL.warm > .3 ? '#e0a27a' : '#d6d2cc') : '#7f8cc0') : MOON0, k2);
-    moon.position.lerp(DL ? dlPos.set(DL.dir.x, DL.dir.y, DL.dir.z) : MOONP0, k2);
+    sunDir.lerp(DL ? dlPos.set(DL.dir.x, DL.dir.y, DL.dir.z) : MOONP0, k2);   // (where the light comes from; sunShadow() stands it over the view)
     windowGlow(DL ? DL.windows : 1);
     if (t - (frame.ambAt || 0) > 1){ frame.ambAt = t;   // the room's own sound
       const w = weatherKind(); if (!ui.soundscapeHolds) setAmbience(outdoor ? (w && w !== 'snow' ? 'rain' : 'wind') : th.id === 'tavern' ? 'fire' : ['undertow', 'cellar', 'womb'].includes(th.id) ? 'water' : 'drips');
@@ -93,7 +107,8 @@ function frame(){
       if (frame.gw !== undefined && frame.gw !== gw) state.floors.forEach((f, L) => { const t2 = THEMES[f.theme]; if (t2 && (t2.walls === 'trees' || t2.walls === 'mixed')) buildFloor(L); });
       frame.gw = gw; }
     ambient.intensity += (D.amb * 1.5 * lit * (ui.role === 'dm' && !ui.tableView ? 1.35 : 1) - ambient.intensity) * ease;
-    const k = ambient.intensity / .93; hemi.intensity = .45 * k; moon.intensity = 1.1 * k;
+    const k = ambient.intensity / .93; hemi.intensity = .45 * k * (DL ? DL.fill : 1); moon.intensity = 1.1 * k * (DL ? DL.sunK : 1);
+    sunShadow(DL);
     const hue = new THREE.Color(D.hue);
     for (const tv of tokenViews.values()){
       const g = tv.group, u = g.userData, fig = u.fig;
