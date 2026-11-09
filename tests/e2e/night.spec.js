@@ -142,6 +142,10 @@ test('a player\'s phone as a hero card: no map, big buttons, a target list, a re
     await player.locator('#askBox [data-ask="15"]').click();
     await expect(dm.locator('#askBar')).toContainText('1/1 rolled');
     await dm.locator('#askBar [data-act="askReveal"]').click();
+    // on a phone the cards come one at a time (ui/hud.js): the player taps past the attack's to reach the save's
+    for (let i = 0; i < 4 && !(await player.locator('#cardLayer').textContent()).includes('Wisdom saving throw'); i++){
+      if (await player.locator('#cardLayer .pop').count()) await player.locator('#cardLayer .pop').first().click(); else await player.waitForTimeout(500);
+    }
     await expect(player.locator('#cardLayer')).toContainText('Wisdom saving throw');
     // a note for her eyes only
     await dm.locator('[data-act="tab"][data-k="night"]').click();
