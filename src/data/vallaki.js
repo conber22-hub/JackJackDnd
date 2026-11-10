@@ -7,7 +7,8 @@ export function vallakiLayout(){
     [25, 22], [25, 26], [6, 26], [6, 23], [3, 23], [3, 8], [6, 8], [6, 4],
   ];
   const doors = [[3, 14, 'closed'], [28, 17, 'closed'], [18, 4, 'closed']];
-  const props = [], fill = [];
+  // gate posts round each gate, the lantern on the town's side (west, east, north)
+  const props = [['postern', 3, 14, 0], ['postern', 28, 17, 2], ['postern', 18, 4, 1]], fill = [];
   for (let i = 1; i < palisade.length; i++){
     const [x0, y0] = palisade[i - 1], [x1, y1] = palisade[i];
     const dx = Math.sign(x1 - x0), dy = Math.sign(y1 - y0);

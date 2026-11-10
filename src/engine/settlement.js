@@ -134,6 +134,9 @@ function settlement(kind, o, g){
     }
     const gx = wallR.x + wallR.w - 1;
     lay.props.push(P('lamppost', gx + 1, y0 - 2), P('lamppost', gx + 1, y0 + 2));
+    // a gatehouse in each gap, the street running under it (walk through: the gates stand open by day)
+    // (rot 0: its doors open to the east, into the town; the east gate is turned about)
+    lay.props.push(P(walled ? 'stonegate' : 'towngate', wallR.x, y0 - 1, 0), P(walled ? 'stonegate' : 'towngate', gx, y0 - 1, 2));
   }
   // the main street, end to end, and the way in from the east
   lay.paths.push({ w:3, pts:[N - 2, y0, 1, y0] }); pl.take(R(1, y0 - 1, N - 2, 3));

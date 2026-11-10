@@ -147,6 +147,7 @@ function landmark(kind, place, r, g, side){
       // the wall is real (solid), with the gate open in the middle and the street running on through it
       for (let y = r.y - 2; y < r.y + r.h + 2; y++) if (Math.abs(y - mid) > 1){ out.props.push(P('palisade', far, y)); out.fill.push([far, y]); }
       out.paths.push({ w:3, pts:[far, mid, far + dir * 5, mid] });
+      out.props.push(P('towngate', far, mid - 1, dir > 0 ? 0 : 2));   // (its doors open into the town)
       out.buildings.push({ ...beyond(5, 4, r.y), name:'Rooftops', door:side === 'e' ? 'e' : 'w' }, { ...beyond(5, 4, r.y + r.h - 4), name:'Rooftops', door:side === 'e' ? 'e' : 'w', dark:true });
       out.props.push(P('lamppost', far - dir, mid - 2), P('lamppost', far - dir, mid + 2), P('signpost', r.x + Math.floor(r.w / 2), mid + 3), P('cart', r.x + 3, r.y + 2, 1)); break;
     case 'lake':

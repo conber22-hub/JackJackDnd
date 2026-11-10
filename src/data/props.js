@@ -62,6 +62,9 @@ export const PROPS = {
   bridge:     { n:'Bridge planks',   cat:'barovia', w:1, h:1 },
   ravens:     { n:'Ravens',          cat:'barovia', w:1, h:1 },
   palisade:   { n:'Palisade',        cat:'barovia', w:1, h:1 },
+  towngate:   { n:'Town gate (timber)', cat:'barovia', w:1, h:3 },   // (walk through: it stands in the gap of a palisade)
+  stonegate:  { n:'Town gate (stone)',  cat:'barovia', w:1, h:3 },
+  postern:    { n:'Gate posts (timber)', cat:'barovia', w:1, h:1 },  // (round a one-square gate in a palisade: the door is the map's own)
   drystone:   { n:'Drystone wall',   cat:'village', w:1, h:1 },
   rubble:     { n:'Rubble',          cat:'barovia', w:1, h:1 },
   hull:       { n:'Iron hull plate', cat:'barovia', w:2, h:2 },

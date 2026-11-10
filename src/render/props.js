@@ -196,6 +196,28 @@ const BUILD = {
   // dressed stone, with a walk on top and crenels
   stonewall(g){ box(g, 1, 1.3, .55, STONE, 0, .65, 0, { r:.95 }); for (const x of [-.33, .33]) box(g, .28, .25, .55, STONE, x, 1.42, 0, { r:.95 }); box(g, 1.02, .05, .57, '#5f5a54', 0, .5, 0); },
   // two stout posts and a pair of plank doors (they open like any door prop would: closed by default)
+  // a town's gate, standing in the three-square gap of its wall, the road running under it and its doors swung open:
+  // timber towers with a roofed walk across (a palisade town), or stone piers, an arch and battlements (a walled village)
+  towngate(g){
+    for (const z of [-1.55, 1.55]){ cyl(g, .24, .27, 3.1, '#5a4430', 0, 1.55, z, {}, 8); cone(g, .26, .45, '#4a3626', 0, 3.32, z, {}, 8);
+      for (const x of [-.34, .34]){ cyl(g, .13, .14, 2.1, '#54402c', x, 1.05, z * 1.12, {}, 7); cone(g, .13, .28, '#4a3626', x, 2.24, z * 1.12, {}, 7); } }
+    box(g, .95, .1, 3.0, '#4e3a28', 0, 2.3, 0); for (const x of [-.44, .44]){ box(g, .06, .06, 3.0, '#5a4430', x, 2.72, 0); for (const z of [-1, 0, 1]) box(g, .06, .4, .06, '#5a4430', x, 2.52, z); }
+    for (const sx of [-1, 1]){ const r = box(g, .62, .06, 3.3, '#3e2e20', sx * .26, 3.22, 0, { r:.95 }); r.rotation.z = -sx * .5; }
+    box(g, .1, .1, 3.0, '#4a3626', 0, 2.2, 0);
+    // the doors, open inward against the towers; a lantern under the walk
+    for (const z of [-1.28, 1.28]){ box(g, 1.25, 2.0, .09, WOOD, .68, 1.02, z); for (const y of [.45, 1.6]) box(g, 1.27, .08, .11, IRON, .68, y, z, METAL); }
+    box(g, .03, .25, .03, IRON, 0, 2.1, 0, METAL); box(g, .16, .22, .16, '#ffcf7a', 0, 1.9, 0, GLOW);
+  },
+  postern(g){ for (const z of [-.5, .5]){ cyl(g, .19, .21, 2.9, '#5a4430', 0, 1.45, z, {}, 8); cone(g, .2, .4, '#4a3626', 0, 3.1, z, {}, 8); }
+    box(g, .3, .2, 1.3, '#4e3a28', 0, 2.45, 0); for (const sx of [-1, 1]){ const r = box(g, .5, .05, 1.5, '#3e2e20', sx * .2, 2.78, 0, { r:.95 }); r.rotation.z = -sx * .5; }
+    box(g, .03, .2, .03, IRON, .3, 2.25, 0, METAL); box(g, .14, .2, .14, '#ffcf7a', .3, 2.06, 0, GLOW); },
+  stonegate(g){
+    for (const z of [-1.62, 1.62]){ box(g, 1.0, 2.9, .8, STONE, 0, 1.45, z, { r:.95 }); box(g, 1.12, .14, .92, '#5f5a54', 0, .07, z, { r:.95 }); box(g, 1.1, .16, .9, '#5f5a54', 0, 2.2, z, { r:.95 }); }
+    box(g, .9, .75, 3.3, STONE, 0, 2.95, 0, { r:.95 }); box(g, .96, .12, 2.5, '#5f5a54', 0, 2.52, 0, { r:.95 });
+    for (const z of [-1.75, -.88, 0, .88, 1.75]) for (const x of [-.36, .36]) box(g, .24, .3, .42, STONE, x, 3.47, z, { r:.95 });
+    for (const z of [-1.2, 1.2]){ box(g, 1.2, 2.2, .1, DARK, .78, 1.12, z); for (const y of [.5, 1.75]) box(g, 1.22, .09, .12, IRON, .78, y, z, METAL); }
+    box(g, .5, .5, .06, '#8a8478', -.48, 2.95, 0, { r:.9 });   // a worn stone shield over the arch
+  },
   palgate(g, p){ for (const sx of [-1, 1]){ cyl(g, .16, .17, 2, '#5a4430', sx * .9, 1, 0, {}, 7); cone(g, .16, .3, '#4a3626', sx * .9, 2.15, 0, {}, 7); }
     box(g, 2, .12, .12, '#3a2a1c', 0, 1.85, 0);
     for (const sx of [-1, 1]){ const leaf = opener(g, p, 'rotation.y', 0, sx * -1.3, sx * .8, 0, 0); box(leaf, .78, 1.5, .08, WOOD, -sx * .39, .8, 0); box(leaf, .78, .08, .1, DARK, -sx * .39, .5, 0); box(leaf, .78, .08, .1, DARK, -sx * .39, 1.2, 0); } },
