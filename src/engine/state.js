@@ -19,7 +19,7 @@ export function setState(s){ state = s; rebuildBestiary(s?.content?.bestiary); }
 export const ui = {                 // local-only (never saved, never sent)
   role:'dm',                        // 'dm' | 'player'
   tableView:false,                  // DM casting what players see
-  floor:0, view:'tilt',
+  floor:0, view:'tilt', atlas3d:false,          // the Valley tab's 3D atlas view (per device, never saved)
   tab:'story', panelOpen: typeof innerWidth === 'undefined' ? true : innerWidth > 760,
   selected:null, mode:'select', modeData:null,
   previewFog:false, roomLabels:true, freeMove:false, whispers:true, roomPrompts:true,
