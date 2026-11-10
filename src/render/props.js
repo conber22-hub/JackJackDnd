@@ -385,7 +385,12 @@ export function buildBuilding(b, k = 0){
     g.position.set(wx(b.x) + (b.w - 1) / 2, 0, wz(b.y) + (b.h - 1) / 2); return g;
   }
   const g = new THREE.Group(), H = b.tower ? 4.2 : b.mill ? 3.2 : b.tall ? 2.6 : 1.8, long = b.w >= b.h;
-  const wallC = b.wall || WALLS[k % WALLS.length], roofC = b.roof || ROOFS[k % ROOFS.length];
+  // 🏚 a house that has been left (b.decay 'abandoned': grey, boarded, dark, a hole in the roof, the chimney fallen), or
+  // that the Moss has taken ('infested': the same, overgrown and faintly glowing). game/decay.js sets it.
+  const dead = b.decay === 'abandoned' || b.decay === 'infested', moss = b.decay === 'infested', dice = mulberry32((b.x * 73856093) ^ (b.y * 19349663) ^ 0x5bd1e995);
+  const blend = (a, c, t) => '#' + new THREE.Color(a).lerp(new THREE.Color(c), t).getHexString();
+  const wall0 = b.wall || WALLS[k % WALLS.length], roof0 = b.roof || ROOFS[k % ROOFS.length];
+  const wallC = dead ? blend(wall0, moss ? '#4f6050' : '#6b6661', moss ? .5 : .45) : wall0, roofC = dead ? blend(roof0, moss ? '#2f4034' : '#3a3836', .5) : roof0;
   box(g, b.w - .1, H, b.h - .1, wallC, 0, H / 2, 0, { r:.95 });
   // timber frame
   for (const s of [-1, 1]){ box(g, b.w, .1, .12, DARK, 0, H - .05, s * (b.h / 2 - .02)); box(g, .12, .1, b.h, DARK, s * (b.w / 2 - .02), H - .05, 0); }
@@ -395,20 +400,44 @@ export function buildBuilding(b, k = 0){
   for (const s of [-1, 1]){
     const r = box(g, long ? len : slope, .08, long ? slope : len, roofC, 0, H + rise / 2, 0, { r:.8 });
     if (long){ r.position.z = s * (span / 4 + .04); r.rotation.x = s * ang; } else { r.position.x = s * (span / 4 + .04); r.rotation.z = -s * ang; }
+    if (dead && s === 1){   // the roof has gone through on one side: a black gap, a rafter across it
+      const at = (dice() - .5) * len * .45, hole = box(g, long ? len * .24 : slope * .5, .1, long ? slope * .5 : len * .24, '#0e0c0b', 0, H + rise / 2, 0, { r:1 });
+      hole.position.copy(r.position); hole.rotation.copy(r.rotation); if (long) hole.position.x = at; else hole.position.z = at;
+      const raf = box(g, long ? .07 : slope * .5, .12, long ? slope * .5 : .07, DARK, 0, 0, 0); raf.position.copy(hole.position); raf.rotation.copy(r.rotation); if (long) raf.position.x += len * .05; else raf.position.z += len * .05;
+    }
   }
   const tri = geo(`gable${span}`, () => { const sh = new THREE.Shape(); sh.moveTo(-span / 2, 0); sh.lineTo(span / 2, 0); sh.lineTo(0, rise); sh.closePath(); return new THREE.ShapeGeometry(sh); });
   for (const s of [-1, 1]){ const m = new THREE.Mesh(tri, mat(wallC, { ds:true, r:.95 })); m.position.y = H; if (long){ m.rotation.y = Math.PI / 2; m.position.x = s * (b.w / 2 - .05); } else m.position.z = s * (b.h / 2 - .05); g.add(m); }
   // chimney
-  if (!b.noChimney && !b.tower && !b.mill) box(g, .35, rise + .6, .35, '#5f5a55', (long ? b.w * .28 : 0), H + (rise + .6) / 2, (long ? 0 : b.h * .28));
+  const stack = dead ? rise * .55 + .2 : rise + .6;   // (fallen in, on a dead house)
+  if (!b.noChimney && !b.tower && !b.mill) box(g, .35, stack, .35, '#5f5a55', (long ? b.w * .28 : 0), H + stack / 2, (long ? 0 : b.h * .28));
   // door and windows on the street side
   const side = b.door || 's', out = { n:[0, -1], s:[0, 1], e:[1, 0], w:[-1, 0] }[side], along = out[0] ? b.h : b.w;
   const facePos = (t, y) => out[0] ? [out[0] * (b.w / 2 + .01), y, t] : [t, y, out[1] * (b.h / 2 + .01)];
   const dm = box(g, out[0] ? .04 : .45, .8, out[0] ? .45 : .04, '#2a1c14', ...facePos(0, .4));
   dm.userData.door = 1;
+  // boards nailed across a dead house's door and windows
+  const board = (t, y, wide, tilt) => { const [px, py, pz] = facePos(t, y), bd = box(g, out[0] ? .05 : wide, .07, out[0] ? wide : .05, '#4a3a2a', px + out[0] * .03, py, pz + out[1] * .03); if (out[0]) bd.rotation.x = tilt; else bd.rotation.z = tilt; };
+  if (dead){ board(0, .55, .62, .12); board(0, .28, .62, -.1); }
+  const unlit = b.dark || dead;
   for (const t of [-along / 3, along / 3]) if (Math.abs(t) > .5){
-    const lit = b.dark ? '#141210' : '#ffc46a';
-    const w = box(g, out[0] ? .04 : .32, .3, out[0] ? .32 : .04, lit, ...facePos(t, H * .55), b.dark ? {} : { e:'#ffaa50', ei:1.2, r:1 });
-    if (!b.dark && !WINDOWS.has(w.material)){ WINDOWS.add(w.material); windowK = -1; }   // they light up at dusk (windowGlow, from the valley's clock)
+    const lit = unlit ? '#141210' : '#ffc46a';
+    const w = box(g, out[0] ? .04 : .32, .3, out[0] ? .32 : .04, lit, ...facePos(t, H * .55), unlit ? {} : { e:'#ffaa50', ei:1.2, r:1 });
+    if (!unlit && !WINDOWS.has(w.material)){ WINDOWS.add(w.material); windowK = -1; }   // they light up at dusk (windowGlow, from the valley's clock)
+    if (dead){ board(t, H * .55, .46, .55); board(t, H * .55, .46, -.55); }
+  }
+  // the Moss: pads of it over the roof and up the walls, a few pale spires, all faintly alight
+  if (moss){
+    const pad = geo('mosspad', () => new THREE.IcosahedronGeometry(.3, 1)), MOSS = { e:'#2fbf7a', ei:.75, r:.75 }, n = Math.round(7 + b.w * b.h * .55);
+    for (let i = 0; i < n; i++){
+      const s = .6 + dice() * 1.1, onRoof = dice() < .55, c = dice() < .3 ? '#8fcf9a' : dice() < .5 ? '#3f6f4c' : '#5f9468';
+      let x, y, z;
+      if (onRoof){ const u = (dice() - .5) * span * .92, v = (dice() - .5) * len * .9; y = H + rise * (1 - Math.abs(u) / (span / 2 + .15)) + .04; x = long ? v : u; z = long ? u : v; }
+      else { const sideK = Math.floor(dice() * 4), t = dice() - .5; y = .08 + dice() * dice() * H * .9; x = sideK < 2 ? t * b.w : (sideK === 2 ? -1 : 1) * (b.w / 2); z = sideK < 2 ? (sideK ? 1 : -1) * (b.h / 2) : t * b.h; }
+      const m = mesh(g, pad, c, x, y, z, MOSS); m.scale.set(s, s * (.35 + dice() * .3), s * (.8 + dice() * .5)); m.rotation.y = dice() * 6.28;
+    }
+    for (let i = 0; i < 2 + Math.floor(dice() * 3); i++){ const u = (dice() - .5) * span * .5, v = (dice() - .5) * len * .7, h = .5 + dice() * .7;
+      cone(g, .09, h, '#b9e6b0', long ? v : u, H + rise * (1 - Math.abs(u) / (span / 2 + .15)) + h / 2, long ? u : v, { e:'#59e09a', ei:1.1, r:.6 }, 5); }
   }
   // a windmill's sails, on the street side
   if (b.mill){

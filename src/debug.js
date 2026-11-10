@@ -73,3 +73,4 @@ export { onClientMsg } from './net/table.js';
 export { handWeather } from './game/weather.js';
 export { wind } from './render/wind.js';
 export { floorViews } from './render/floors.js';
+export { setDecay, decayOf, decayLines } from './game/decay.js';

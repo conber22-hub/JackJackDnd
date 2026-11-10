@@ -14,6 +14,7 @@ import { ensureLedger, openLedger } from './ledger.js';
 import { ensureVoices } from './voices.js';
 import { followTrailhead, takeTrail, endTrailLeg, backToRoad } from '../game/trails.js';
 import { hideRefuge, refugeClue, searchForRefuge, goIntoRefuge, leaveRefugeMap } from '../game/refuges.js';
+import { setDecay, decayOf } from '../game/decay.js';
 import { setPuzzle } from '../game/puzzles.js';
 import { describeSite } from '../engine/sites.js';
 import { stockSite, garrisonArrive, giveHoard } from '../game/garrison.js';
@@ -280,6 +281,8 @@ document.addEventListener('click', e => {
     case 'goFloor': goFloor(+k); renderPanel(); break;
     case 'valleyEnter': enterPlace(k, id); break;   // the map being left goes on the shelf (Maps tab)
     case 'evRead': readEvent(+k, +id); break;
+    case 'decayStage': setDecay(k); renderPanel(); break;   // 🏚 dead villages (game/decay.js)
+    case 'decayMuch': setDecay(decayOf().stage, +k); renderPanel(); break;
     case 'refugeHide': hideRefuge(k); renderPanel(); break;   // 🕳 hidden refuges (game/refuges.js)
     case 'refugeClue': refugeClue(); renderPanel(); break;
     case 'refugeSearch': searchForRefuge(); renderPanel(); break;
