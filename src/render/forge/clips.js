@@ -9,9 +9,10 @@ import * as THREE from 'three';
 
 // app kind -> clip name(s) in quaternius.json. Smash and shoot have no matching clip in the Standard tier (no
 // overhead two-handed swing, no bow draw), so they keep the hand-keyed poses. Cast is a sequence: the raise, then the release.
+// Death is a sequence of one: the fall, which holds its final pose (see applyClips) instead of fading back.
 export const CLIP_FOR = {
   walk: 'Walk_Loop', slash: 'Sword_Attack', thrust: 'Punch_Jab', claw: 'Punch_Cross',
-  cast: ['Spell_Simple_Enter', 'Spell_Simple_Shoot'], hit: 'Hit_Chest',
+  cast: ['Spell_Simple_Enter', 'Spell_Simple_Shoot'], hit: 'Hit_Chest', death: 'Death01',
 };
 const WALK = 'Walk_Loop';
 let data = null, failed = false, loading = null;
@@ -82,10 +83,23 @@ const sampled = {};
 export function applyClips(fig, t, dt, walkPhase){
   void dt;
   const rig = fig.userData.rig; if (!rig || !data) return;
-  let names = null, ct = 0, w = 0;
-  if (rig.clip && rig.action){
+  let names = null, ct = 0, w = 0, endClip = false;
+  // Death is allowed through without rig.action: poseRig clears the action the moment it ends
+  // (ak >= 1), and that is the very frame the final pose must be written — see the endClip branch.
+  if (rig.clip && (rig.action || rig.clip.kind === 'death')){
     const el = t - rig.clip.t0;
-    if (el >= 0 && el < rig.clip.dur){ names = rig.clip.names; ct = el; w = smooth(Math.min(el / .1, (rig.clip.dur - el) / .1)); }
+    if (el >= 0 && el < rig.clip.dur){
+      names = rig.clip.names; ct = el;
+      // Death holds its final pose: it ramps in like any clip, but never ramps out — a corpse
+      // does not stand back up. Every other clip fades back to the stance.
+      w = rig.clip.kind === 'death' ? smooth(Math.min(el / .1, 1)) : smooth(Math.min(el / .1, (rig.clip.dur - el) / .1));
+    }
+    else if (rig.clip.kind === 'death'){
+      // The clip is over, but the figure must not snap back to standing on this frame: apply
+      // the final frame once, at full weight, then clear the clip. The main loop skips the
+      // dead figure from here on, so its joints freeze at the last frame (see main.js).
+      names = rig.clip.names; ct = rig.clip.dur; w = 1; endClip = true;
+    }
     else rig.clip = null;
   }
   if (!names && !rig.action && rig.walk > .01){
@@ -114,4 +128,5 @@ export function applyClips(fig, t, dt, walkPhase){
     _q3.copy(parent).invert().multiply(_q2);
     j.quaternion.copy(_q3);
   }
+  if (endClip) rig.clip = null;   // the death clip's final frame is in the joints; now let the main loop rest the figure
 }

@@ -11,6 +11,7 @@ import { modelKeyFor, instanceModel, modelState } from './models.js';
 import { shadowsOn, ultra } from './gfx.js';
 import { buildForge, disposeForge } from './forge/build.js';
 import { poseRig, playAction } from './forge/anim.js';
+import { hasClip, clipDuration } from './forge/clips.js';
 import { lookFor } from '../engine/look.js';
 import { hashSeed } from '../util/core.js';
 
@@ -300,7 +301,19 @@ export function syncTokens(){
       const group = buildFigure(t); group.userData.tokenId = t.id; group.userData.wasDead = t.dead;
       tv = { group, key, labelKey:'', label:null, anim:tv?.anim || null }; tokenViews.set(t.id, tv);
       if (keepPos) group.position.copy(keepPos);
-      if (t.dead && wasAlive){ const f = group.userData.fig; const rx = f.rotation.x; f.rotation.x = 0; tween(.5, k => f.rotation.x = rx * k); }
+      if (t.dead && wasAlive){
+        const f = group.userData.fig, rig = f.userData.rig, rx = f.rotation.x;
+        f.rotation.x = 0;
+        if (rig && hasClip('death')){
+          // The real fall: the joints were just posed 'fallen' by buildFigure, so stand the
+          // figure back up first (its own look pose) and let the clip collapse it from there.
+          // The tip-over runs over the clip's length, so the lay-down and the collapse finish
+          // together; afterwards the main loop skips the dead figure and its joints freeze at
+          // the clip's final pose. Without the clip, the fallen pose and the quick topple stand.
+          poseRig(f, 0, 1, false); playAction(rig, 'death');
+          tween(clipDuration('death') || .5, k => f.rotation.x = rx * k);
+        } else tween(.5, k => f.rotation.x = rx * k);
+      }
     }
     const parent = floorViews[t.floor]?.tokens;
     if (parent && tv.group.parent !== parent) parent.add(tv.group);
