@@ -18,7 +18,7 @@ export function newRefugeBook(seed) {
   return { seed, sites: [], active: null };
 }
 
-function entranceCandidates(floor, rule, roots) {
+function entranceCandidates(floor, rule, roots, size) {
   const { W, H } = floor, index = (x, y) => y * W + x;
   const point = i => ({ x: i % W, y: Math.floor(i / W) });
   const mist = new Set(floor.mistWall ?? []);
@@ -57,9 +57,25 @@ function entranceCandidates(floor, rule, roots) {
   }
   const free = [...seen].filter(i => !used.has(i));
   const nearby = free.filter(i => anchors.has(i));
-  if (nearby.length || roots) return nearby.map(point);
-  // A bare wall or the verge of a road works when no fitting prop is nearby.
-  return free.map(point).filter(({ x, y }) => ORTHO.some(([dx, dy]) => !pass(x + dx, y + dy)));
+  // A multi-square entrance: the refuge's position is the tile the hero stands on (beside the entrance), and the
+  // entrance itself is a w × h patch beside that tile. The patch must be clear ground (reachable, unused) so the
+  // #77 model never clips through a wall. Try south, east, north, west in that order, and keep the first clear one.
+  const { w, h } = size;
+  const patch = (p, dir) => {
+    const hw = Math.floor((w - 1) / 2), hh = Math.floor((h - 1) / 2);
+    const [x0, y0] = dir === 'S' ? [p.x - hw, p.y + 1] : dir === 'E' ? [p.x + 1, p.y - hh]
+      : dir === 'N' ? [p.x - hw, p.y - h] : [p.x - w, p.y - hh];
+    for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) {
+      if (!within(x, y) || !seen.has(index(x, y)) || used.has(index(x, y))) return null;
+    }
+    return { x: x0, y: y0 };
+  };
+  const placed = [];
+  for (const i of (nearby.length || roots) ? nearby : free.filter(i => { const { x, y } = point(i); return ORTHO.some(([dx, dy]) => !pass(x + dx, y + dy)); })) {
+    const p = point(i);
+    for (const dir of ['S', 'E', 'N', 'W']) { const propAt = patch(p, dir); if (propAt){ placed.push({ position: p, propAt }); break; } }
+  }
+  return placed;
 }
 
 /** Host-only placement on an eligible road, interior, wooded or rocky floor. */
@@ -76,12 +92,21 @@ export function seedRefuge(book, floor, { mapId, kind, chance = 0.35 }) {
   const id = 'refuge:' + JSON.stringify([mapId, level]);
   const rng = rngFor(book.seed, mapId, level, kind);
   if (rng() >= chance) return { book, id: null };
-  const rule = REFUGES[kind], options = entranceCandidates(floor, rule, kind === 'roots');
+  const rule = REFUGES[kind], size = propSize({ k: rule.entrance }), options = entranceCandidates(floor, rule, kind === 'roots', size);
   if (!options.length) return { book, id: null };
-  const position = options[Math.floor(rng() * options.length)];
-  const site = { id, mapId, level, kind, position, name: rule.names[Math.floor(rng() * rule.names.length)],
+  const { position, propAt } = options[Math.floor(rng() * options.length)];
+  const site = { id, mapId, level, kind, position, propAt, name: rule.names[Math.floor(rng() * rule.names.length)],
     layoutSeed: JSON.stringify([book.seed, id, kind]), heard: false, found: false, visited: false };
   return { book: { ...book, sites: [...book.sites, site] }, id };
+}
+
+/** Where the entrance prop sits for a site: its stored patch, or (for a book saved before the patch) centred on the position. */
+export function entrancePropAt(site) {
+  const rule = REFUGES[site?.kind];
+  if (!rule) return { ...site.position };
+  const { w, h } = propSize({ k: rule.entrance });
+  if (validPoint(site.propAt)) return { ...site.propAt };
+  return { x: site.position.x - Math.floor((w - 1) / 2), y: site.position.y - Math.floor((h - 1) / 2) };
 }
 
 /** The DM hands out this clue from a rumour, document or other discovery. */

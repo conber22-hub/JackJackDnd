@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { REFUGES } from '../src/data/hidden-refuges.js';
+import { propSize } from '../src/data/props.js';
 import { THEMES } from '../src/data/themes.js';
 import { layoutFloor } from '../src/engine/generator.js';
 import { ORTHO, passMove } from '../src/engine/grid.js';
@@ -48,7 +49,11 @@ test('placement is deterministic, walks from the real entrance and ignores props
     assert.equal(blank.sites.length, 0);
     assert.deepEqual(result, seedRefuge(blank, floor, opts));
     const { x, y } = where(result).position;
-    assert.equal(Math.abs(x - 5) + Math.abs(y - 5), 1);
+    // next to the fitting prop (any square it covers — a shelf is 1×2, so the refuge may sit by its far square)
+    const anchor = REFUGES[kind].props[0], { w: aw, h: ah } = propSize({ k: anchor });
+    let nextTo = false;
+    for (let ay = 5; ay < 5 + ah && !nextTo; ay++) for (let ax = 5; ax < 5 + aw && !nextTo; ax++) nextTo = Math.abs(x - ax) + Math.abs(y - ay) === 1;
+    assert.ok(nextTo, `${kind} refuge at (${x}, ${y}) is not beside the ${anchor} at (5, 5)`);
     assert.ok(reach(floor).has(y * floor.W + x));
     assert.equal(seedRefuge(result.book, floor, { ...opts, chance: 0 }).book, result.book);
     assert.equal(seedRefuge(blank, floor, { ...opts, chance: 0 }).id, null);
@@ -112,4 +117,22 @@ test('a saved visit returns only from its exit and preserves the original surfac
   assert.deepEqual(returned.back, { mapId, level: place.level, position: approach });
   assert.equal(refugesForPlayers(returned.book, mapId, place.level)[0].visited, true);
   assert.deepEqual(enterRefuge(returned.book, place).visit.specs, entered.visit.specs);
+});
+
+test('each kind draws its entrance with the #77 model, on a clear multi-square patch beside the spot', () => {
+  const want = { road: ['refugeHatch', 3, 3], house: ['refugeCellar', 3, 3], roots: ['refugeOak', 4, 4], cave: ['refugeCurtain', 4, 4] };
+  for (const kind of Object.keys(REFUGES)) {
+    const [key, w, h] = want[kind];
+    assert.equal(REFUGES[kind].entrance, key, `${kind} entrance key`);
+    assert.deepEqual(propSize({ k: key }), { w, h }, `${kind} entrance footprint`);
+    const { book, id } = make(kind), site = book.sites.find(s => s.id === id);
+    assert.ok(site.propAt, `${kind} site stores its patch corner`);
+    // the patch is clear ground beside the spot, and the spot itself is not inside it
+    const floor = source(REFUGES[kind].props[0]);
+    for (let y = site.propAt.y; y < site.propAt.y + h; y++) for (let x = site.propAt.x; x < site.propAt.x + w; x++) {
+      assert.ok(passMove(floor, y * floor.W + x), `${kind} patch tile (${x}, ${y}) is passable`);
+    }
+    assert.ok(site.position.x < site.propAt.x || site.position.x >= site.propAt.x + w
+      || site.position.y < site.propAt.y || site.position.y >= site.propAt.y + h, `${kind} spot is outside its patch`);
+  }
 });
