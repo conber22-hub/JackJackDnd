@@ -9,7 +9,7 @@ Merged, tested by their own unit tests, not yet in the app. Each line: what it i
   chosen when the Bloom is loose (`bloomLoose()`).
 - ✅ Living Valley II's ground fog done (10 Nov, `render/groundfog.js`; the tree sway is `render/wind.js`, on the instanced woods; its snow, blackwater and Hunger Moss still to do). Terrain I still to do: **Terrain I + Living Valley II** (#73, #72): `render/barovia-terrain-*.js`, `render/barovia-living-*.js` planners;
   mount on outdoor floors after `buildFloor`, gated by `gfx.quality`.
-- **Roads and bridges** (#74): `render/barovia-road-*.js`; dress journey/trail maps like the Road Watches
+- ✅ the timber bridge is in (10 Nov, river crossings: `engine/bridges.js`); the kit's road tiles are whole 8×8 squares of land and don't fit the winding roads; its gates, stone/foot/rope bridges and approaches can be lifted the same way (`instancedLoose(path, null, tint, keep)`): **Roads and bridges** (#74): `render/barovia-road-*.js`; dress journey/trail maps like the Road Watches
   (generator: plan at generation, `f.clear` the cells, draw with `looseModel`).
 - **Roadside horror** (#75): `render/barovia-horror-*.js`; stage at road events (`f.events`), DM-only until sprung.
 - **Hidden entrances** (#77): `render/barovia-hidden-*.js`; sealed/revealed pairs, pair with the refuges engine below.

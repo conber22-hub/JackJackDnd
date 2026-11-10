@@ -213,12 +213,15 @@ export function genStretch(spec){
   // a river across the road (on roads that cross water), with a bridge where the road meets it
   if (road.river && !arrive && g() < .75){
     const runs = center.filter(([x], i) => i > 6 && i < center.length - 6 && Math.abs(x - entry.x) > 6 && Math.abs(x - exit.x) > 6);
-    const horiz = runs.filter(([x, yy], i) => center.some(([x2, y2]) => y2 === yy && Math.abs(x2 - x) === 1));
+    // (where the road runs straight east–west for three squares either side: the river, which wanders a little, then meets
+    //  the road only at its bridge, never alongside it)
+    const horiz = runs.filter(([x, yy]) => center.every(([x2, y2]) => Math.abs(x2 - x) > 3 || y2 === yy));
     const at = horiz.length ? horiz[Math.floor(g() * horiz.length)] : null;
     if (at){
       const phase = g() * 6;
       for (let yy = 1; yy < N - 1; yy++){
-        const cx = at[0] + Math.round(Math.sin(yy / 5 + phase) * 1.5) - (yy === at[1] ? 0 : 0);
+        // (under the bridge and a square either side of the road it runs straight, so the bridge is square to it)
+        const bend = y => at[0] + Math.round(Math.sin(y / 5 + phase)), cx = Math.abs(yy - at[1]) <= Math.floor(width / 2) + 1 ? bend(at[1]) : bend(yy);
         for (let x = cx - 1; x <= cx + 1; x++){
           if (x < 1 || x > N - 2) continue;
           const onRoad = center.some(([rx, ry]) => Math.abs(rx - x) <= 1 && Math.abs(ry - yy) <= Math.floor(width / 2));

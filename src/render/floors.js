@@ -123,7 +123,7 @@ function takeVariety(list, numberOf, tallOnly = false){
    stands over the water in their place: the bridge from ChatGPT's road kit (assets/roads), without the square of land
    the kit sets it on. Until the model has come, and in the offline file, the planks are drawn as before. */
 const bridgeOnly = Object.assign(box => box.max.z - box.min.z < 7, { part:'bridge' });
-const bridgeModel = () => instancedLoose('assets/roads/bridge_timber_ew.glb', null, [.5, .42, .34], bridgeOnly);
+const bridgeModel = () => instancedLoose('assets/roads/bridge_timber_ew.glb', null, [.36, .28, .21], bridgeOnly);
 function capWithSnow(tm){ const caps = new THREE.InstancedMesh(snowCapGeometry(), swaying(treeMaterial, TREE_SWAY), tm.count); caps.instanceMatrix.array.set(tm.instanceMatrix.array); caps.receiveShadow = tm.receiveShadow; return caps; }
 function groundMat(fv, kind){
   fv.mats.ground ||= {};

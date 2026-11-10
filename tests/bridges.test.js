@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { plankBridges } from '../src/engine/bridges.js';
+import { journeySpecs } from '../src/engine/overland.js';
+import { VALLEY_ROADS } from '../src/data/barovia-map.js';
 
 // 🌉 engine/bridges.js: the patch of planks where a road crosses a river is one bridge, running across the water.
 const P = (x, y) => ({ id:x * 100 + y, k:'bridge', x, y });
@@ -22,4 +24,17 @@ test('a jetty, a ragged patch, broken planks and planks over dry ground stay as 
   assert.deepEqual(plankBridges({ W, H, props:[P(5, 9), P(6, 9), P(5, 10), { ...P(6, 10), broken:true }], water }), [], 'a plank gone');
   assert.deepEqual(plankBridges({ W, H, props:[P(5, 9), P(6, 9), P(5, 10), P(6, 10)], water:[] }), [], 'no water');
   assert.deepEqual(plankBridges({ W, H }), []);
+});
+test('on the valley\'s river roads the planks are always one square patch with the river above and below', () => {
+  let bridges = 0;
+  for (const r of VALLEY_ROADS.filter(r => r.river)) for (const [from, to] of [[r.a, r.b], [r.b, r.a]]){
+    for (const { layout } of journeySpecs({ from, to, seed:'bridges', n:0, gaze:1, bloom:false })){
+      const planks = layout.props.filter(p => p[0] === 'bridge'); if (planks.length < 4) continue;
+      const W = 64, props = planks.map(([k, x, y], id) => ({ id, k, x, y })), water = layout.water.map(([x, y]) => y * W + x);
+      const found = plankBridges({ W, H:64, props, water });
+      assert.equal(found.length, 1, `${from} > ${to}: one bridge`); assert.equal(found[0].ew, true); assert.equal(found[0].cells.length, planks.length);
+      bridges++;
+    }
+  }
+  assert.ok(bridges >= 2, 'some of the river roads do cross their river');
 });
