@@ -18,8 +18,8 @@ test('the wind follows the weather: the valley\'s reading, then the DM\'s words'
 });
 test('the force eases towards the weather\'s, and the clock is the frame\'s', () => {
   setState({ campaign:{ wx:{ kind:'storm', wind:3 } } }); wind.force.value = .1;
-  updateWind(12, .5); assert.equal(wind.time.value, 12); assert.ok(wind.force.value > .1 && wind.force.value < 1);
-  for (let i = 0; i < 60; i++) updateWind(12 + i, .5);
+  wind.time.value = 11.5; updateWind(12); assert.equal(wind.time.value, 12); assert.ok(wind.force.value > .1 && wind.force.value < 1);
+  for (let i = 1; i < 60; i++) updateWind(12 + i * .5);
   assert.ok(wind.force.value > .98);
   setState(null);
 });

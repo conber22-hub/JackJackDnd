@@ -61,7 +61,9 @@ export function windForce(){
   return .32;
 }
 // Each frame (main.js): the clock, and the force easing towards the weather's.
-export function updateWind(t, dt){
+// (by the clock, not the frame's capped step: on a slow screen the weather turns as fast as on a quick one)
+export function updateWind(t){
+  const dt = Math.max(0, Math.min(1, t - wind.time.value));
   wind.time.value = t;
   wind.force.value += (windForce() - wind.force.value) * Math.min(1, dt * .6);
 }

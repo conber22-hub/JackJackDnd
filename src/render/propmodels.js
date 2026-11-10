@@ -138,9 +138,10 @@ export function instancedModel(k, height, snow = 0){
 /* A loose model (above) as one geometry and one material, for an InstancedMesh: the woods' other trees, from the
    terrain pack (assets/terrain: plain-coloured parts, no textures). Each part's colour goes into the vertices, so the
    whole thing is one draw call however many stand in the wood. sway: how the wind takes it (render/wind.js), or null.
+   tint: [r, g, b] the colours are multiplied by (the pack is pale and misty; the woods here are dark).
    → { geometry, material } | null (not here yet) */
 const mergedLoose = new Map();
-export function instancedLoose(path, sway = null){
+export function instancedLoose(path, sway = null, tint = null){
   const tpl = looseModel(path); if (!tpl) return null;
   let e = mergedLoose.get(path); if (e) return e;
   tpl.updateMatrixWorld(true);
@@ -150,7 +151,8 @@ export function instancedLoose(path, sway = null){
     for (const a of Object.keys(g.attributes)) if (a !== 'position') g.deleteAttribute(a);
     if (g.index) g = g.toNonIndexed();
     const c = (Array.isArray(o.material) ? o.material[0] : o.material)?.color || new THREE.Color('#777'), n = g.attributes.position.count, cols = new Float32Array(n * 3);
-    for (let i = 0; i < n; i++){ cols[i * 3] = c.r; cols[i * 3 + 1] = c.g; cols[i * 3 + 2] = c.b; }
+    const [tr, tg, tb] = tint || [1, 1, 1];
+    for (let i = 0; i < n; i++){ cols[i * 3] = c.r * tr; cols[i * 3 + 1] = c.g * tg; cols[i * 3 + 2] = c.b * tb; }
     g.setAttribute('color', new THREE.BufferAttribute(cols, 3)); g.computeVertexNormals(); geos.push(g); });
   const geometry = geos.length && mergeGeometries(geos, false); if (!geometry) return null;
   const material = new THREE.MeshStandardMaterial({ vertexColors:true, roughness:.92, flatShading:true }); material.userData.shared = true;

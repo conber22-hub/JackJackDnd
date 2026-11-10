@@ -131,8 +131,8 @@ function frame(){
     }
     floorViews.forEach(fv => fv?.group.visible && fv.built.traverse(o => { if (o.userData.spin) o.rotation.y += dt * o.userData.spin; if (o.userData.spinZ) o.rotation.z += dt * o.userData.spinZ; if (o.userData.trapId && o.userData.pulse) o.children[0].scale.setScalar(1.05 + Math.sin(t * 3) * .08); }));
     updateAmbience(t, dt);   // candle and fire light, rain and snow
-    updateWind(t, dt);       // the woods, the grass and the corn in the day's wind (render/wind.js)
-    updateGroundMist(floorViews[ui.floor], t, dt);   // fog days: banks of mist over the ground
+    updateWind(t);       // the woods, the grass and the corn in the day's wind (render/wind.js)
+    updateGroundMist(floorViews[ui.floor], t);   // fog days: banks of mist over the ground
     updateSkyline(t);        // the castle on the horizon
     updateOmens(t, dt);      // the valley answers his Gaze: ravens, eyes in the trees, the Mists, a red sky
     updateFolk(t, dt);       // the valley's people going about their day (render/folk.js)

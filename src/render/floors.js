@@ -93,19 +93,21 @@ function woodsTree(live, snow){
 const TREE_SWAY = { from:.3, top:2.3, amp:.16 }, DEAD_SWAY = { from:.4, top:2.1, amp:.05 }, GRASS_SWAY = { from:0, top:.2, amp:.06 }, CROP_SWAY = { from:.05, top:.7, amp:.09 };
 /* The woods aren't all pines (ChatGPT's Barovia terrain pack, assets/terrain): here and there a windworn fir, a crooked
    oak, a stand of birches, brambles, a stump or a fallen log, and once in a long while a witch tree. [model, its share
-   of the trees, does it stand tall (the far woods take only those), how the wind takes it]. A square keeps its pine
+   of the trees, does it stand tall (the far woods take only those), how the wind takes it, its tint]. A square keeps its pine
    until the model has come, and on Low quality (phones). */
 const WOODS_MIX = [
-  ['windworn_fir', .09, true, { from:.3, top:2.3, amp:.2 }], ['crooked_oak', .05, true, { from:.8, top:2.8, amp:.07 }], ['pale_birch_thicket', .05, true, { from:.4, top:2.4, amp:.14 }],
-  ['thorn_choked_brambles', .035, false, { from:.1, top:.7, amp:.03 }], ['mushroom_stump', .015, false, null], ['hollow_fallen_log', .015, false, null], ['hollow_witch_tree', .006, true, null],
+  ['svalich_black_fir', .07, true, { from:.3, top:2.7, amp:.16 }, [.42, .62, .42]], ['windworn_fir', .04, true, { from:.3, top:2.3, amp:.2 }, [.45, .62, .45]],
+  ['crooked_oak', .035, true, { from:.8, top:2.8, amp:.07 }, [.62, .56, .5]], ['pale_birch_thicket', .03, true, { from:.4, top:2.4, amp:.14 }, [.72, .76, .64]],
+  ['thorn_choked_brambles', .03, false, { from:.1, top:.7, amp:.03 }, [.5, .62, .45]], ['mushroom_stump', .012, false, null, [.62, .58, .55]],
+  ['hollow_fallen_log', .012, false, null, [.5, .46, .42]], ['hollow_witch_tree', .005, true, null, [.5, .46, .5]],
 ];
 // The variety for a tree (r: its own number 0–1): → { geometry, material, id } | null (a pine).
 function woodsVariety(r, tallOnly = false){
   if (gfx.quality === 'low') return null;
-  for (const [id, share, tall, sway] of WOODS_MIX){
+  for (const [id, share, tall, sway, tint] of WOODS_MIX){
     if ((r -= share) >= 0) continue;
     if (tallOnly && !tall) return null;
-    const m = instancedLoose(`assets/terrain/${id}.glb`, sway); return m ? (m.id = id, m) : null;
+    const m = instancedLoose(`assets/terrain/${id}.glb`, sway, tint); return m ? (m.id = id, m) : null;
   }
   return null;
 }

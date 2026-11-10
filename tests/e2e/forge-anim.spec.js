@@ -60,13 +60,14 @@ test('the walk clip drives a walking figure in the creator preview', async ({ pa
   await expect(page.locator('#crMini canvas')).toBeVisible();
   await inject(page);
   await page.locator('#charBox [data-cr="mini:walk"]').click();
-  // let the walk blend rise, then read the thigh at two points in the stride
+  // let the walk blend rise, then watch the thigh over a stride (many frames, not two instants: the preview's own
+  // frames run in between, and on a busy machine two readings can land at the same point of the stride)
   await page.evaluate(() => { const D = window.DreadDelve; for (let i = 0; i < 5; i++) D.forgeStudio.frame({ moving: true, t: 1 + i * .05 }); });
-  const leg = async t => page.evaluate(tt => { const D = window.DreadDelve, r = D.forgeStudio.studio().figs[0].userData.fig.userData.rig;
-    D.forgeStudio.frame({ moving: true, t: tt }); return { walk: !!r.clipWalk, th: +r.lL.t.rotation.x.toFixed(3) }; }, t);
-  const a = await leg(1.2), b = await leg(1.55);
-  expect(a.walk).toBe(true);
-  expect(Math.abs(a.th - b.th)).toBeGreaterThan(.1);
+  const stride = await page.evaluate(() => { const D = window.DreadDelve, r = D.forgeStudio.studio().figs[0].userData.fig.userData.rig, th = [];
+    for (let i = 0; i < 30; i++){ D.forgeStudio.frame({ moving: true, t: 1.25 + i * .04 }); th.push(r.lL.t.rotation.x); }
+    return { walk: !!r.clipWalk, swing: Math.max(...th) - Math.min(...th) }; });
+  expect(stride.walk).toBe(true);
+  expect(stride.swing).toBeGreaterThan(.1);
 });
 
 test('without clips the hand-keyed poses still play (the offline fallback)', async ({ page }) => {

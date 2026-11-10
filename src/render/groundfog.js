@@ -32,21 +32,24 @@ export function mountGroundMist(fv, f, L, allowed){
   const size = state.meta.size, quality = gfx.quality === 'ultra' ? 'high' : gfx.quality;
   try {
     const layer = createLivingValley({ parent:fv.built, width:size, height:size, seed:`${state.meta.mapId || state.meta.seed}|${L}`, quality, groundY:0, wind:wind.force.value, showFog:false, enableCanopyBend:false });
-    const mesh = layer.addGroundFog({ allowed:(x, y) => x < f.W && y < f.H && allowed(x, y) });
+    // (the pack's count is for a 40-square map: a bigger one gets its share, a few more besides so the banks overlap)
+    const count = Math.min(220, Math.round({ low:16, medium:40, high:70 }[quality] * Math.max(1, (size / 40) ** 2)));
+    const mesh = layer.addGroundFog({ count, allowed:(x, y) => x < f.W && y < f.H && allowed(x, y) });
     mesh.renderOrder = 3; mesh.userData.groundMist = 1;
     fv.mist = { layer, mesh, k:mistWanted() };
-    layer.setFogStrength(fv.mist.k * .8); mesh.visible = fv.mist.k > .02;
+    layer.setFogStrength(fv.mist.k); mesh.visible = fv.mist.k > .02;
   } catch { fv.mist = null; }   // (a map too big for the planner goes without)
 }
 export function dropGroundMist(fv){ if (fv?.mist){ try { fv.mist.layer.dispose(); } catch {} fv.mist = null; } }
 
 // Each frame, for the floor on view.
 const tint = new THREE.Color(), pale = new THREE.Color('#c9ccd6');
-export function updateGroundMist(fv, t, dt){
+export function updateGroundMist(fv, t){
   const m = fv?.mist; if (!m) return;
+  const dt = Math.max(0, Math.min(1, t - (m.t ?? t))); m.t = t;
   m.k += (mistWanted() - m.k) * Math.min(1, dt * .5);
   m.mesh.visible = m.k > .02; if (!m.mesh.visible) return;
-  m.layer.setFogStrength(Math.min(1, m.k * .8)); m.layer.setWind(Math.max(.15, wind.force.value));
-  m.mesh.material.uniforms.uColor.value.copy(tint.copy(scene.fog.color).lerp(pale, .45));   // (the hour's fog colour, lifted: grey by day, blue-dark by night)
+  m.layer.setFogStrength(Math.min(1, m.k)); m.layer.setWind(Math.max(.15, wind.force.value));
+  m.mesh.material.uniforms.uColor.value.copy(tint.copy(scene.fog.color).lerp(pale, .55));   // (the hour's fog colour, lifted: grey by day, blue-dark by night)
   m.layer.update(t);
 }

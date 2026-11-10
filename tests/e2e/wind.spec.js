@@ -13,7 +13,7 @@ test('a gale bends the woods, fog lies on the village, and both pass with the we
   expect((await look()).mist.banks).toBeGreaterThan(5);                  // the banks are there, waiting for a fog day
   await page.evaluate(() => window.DreadDelve.handWeather('A howling gale off the mountains.'));
   await expect.poll(async () => (await look()).force, { timeout:30_000 }).toBeGreaterThan(.8);
-  expect((await look()).mist.on).toBe(false);
+  await expect.poll(async () => (await look()).mist.on, { timeout:40_000 }).toBe(false);   // (whatever the valley's own sky was, a gale clears it)
   await page.evaluate(() => window.DreadDelve.handWeather('Thick fog: the world ends at arm\'s length.'));
   await expect.poll(async () => (await look()).mist.on, { timeout:30_000 }).toBe(true);
   await expect.poll(async () => (await look()).mist.k, { timeout:30_000 }).toBeGreaterThan(.6);
