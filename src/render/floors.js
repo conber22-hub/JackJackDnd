@@ -18,6 +18,7 @@ import { ROAD_WATCH_MANIFEST } from '../data/road-watches-bounds.js';
 const ROAD_WATCH_FILES = Object.fromEntries(ROAD_WATCH_MANIFEST.assets.map(a => [a.id, a.file]));
 import { wxNow } from '../game/weather.js';
 import { inShape, isShaped, SLANTED } from '../engine/shapes.js';
+import { plankBridges } from '../engine/bridges.js';
 import { buildProp, buildBuilding, inBuilding, treeGeometry, treeMaterial, deadTreeGeometry, tuftGeometry, pebbleGeometry, boulderGeometry, cropGeometry, snowCapGeometry } from './props.js';
 import { propSize, propAt } from '../data/props.js';
 
@@ -118,6 +119,11 @@ function takeVariety(list, numberOf, tallOnly = false){
     if (!out.has(v)) out.set(v, []); out.get(v).push(list[k]); list.splice(k, 1); }
   return out;
 }
+/* 🌉 Where a road crosses a river (engine/bridges.js finds the patch of planks), one timber bridge with posts and rails
+   stands over the water in their place: the bridge from ChatGPT's road kit (assets/roads), without the square of land
+   the kit sets it on. Until the model has come, and in the offline file, the planks are drawn as before. */
+const bridgeOnly = Object.assign(box => box.max.z - box.min.z < 7, { part:'bridge' });
+const bridgeModel = () => instancedLoose('assets/roads/bridge_timber_ew.glb', null, [.5, .42, .34], bridgeOnly);
 function capWithSnow(tm){ const caps = new THREE.InstancedMesh(snowCapGeometry(), swaying(treeMaterial, TREE_SWAY), tm.count); caps.instanceMatrix.array.set(tm.instanceMatrix.array); caps.receiveShadow = tm.receiveShadow; return caps; }
 function groundMat(fv, kind){
   fv.mats.ground ||= {};
@@ -194,7 +200,9 @@ export function buildFloor(L, opt = {}){
   // floor tiles
   const tiles = [];
   const spans = new Set(f.span || []);   // a rope bridge has no floor under it (drawn below, over the drop)
-  for (let i = 0; i < g.length; i++) if (walk(g[i]) && g[i] !== T.DOWN && showTile(i) && !spans.has(i)) tiles.push(i);
+  // a river bridge: the water runs on under it, and it is drawn whole (below, after the props)
+  const decks = bridgeModel() ? plankBridges(f) : [], decked = new Set(decks.flatMap(d => d.cells));
+  for (let i = 0; i < g.length; i++) if (walk(g[i]) && g[i] !== T.DOWN && showTile(i) && !spans.has(i) && !decked.has(i)) tiles.push(i);
   for (const [i, w] of wedges) if (!pv || w.near.some(j => exp.has(j))) tiles.push(i);
   const kitFloor = kitFor('floor'), kitWall0 = kitFor('wall');
   const rng = mulberry32(L * 999 + 7);
@@ -444,7 +452,7 @@ export function buildFloor(L, opt = {}){
     if (st.instanceColor) st.instanceColor.needsUpdate = true; st.receiveShadow = shadows; fv.built.add(st);
   }
   // water: rivers, ponds and lakes (impassable, and no trees grow in it)
-  const wt = [...pond].filter(i => !pv || seen(i) || exp.has(i));
+  const wt = [...pond, ...decked].filter(i => !pv || seen(i) || exp.has(i));
   if (wt.length){
     const wm2 = new THREE.InstancedMesh(G.tile, fv.mats.water ||= shared(new THREE.MeshStandardMaterial({ color:'#16242c', roughness:.42, metalness:.1, emissive:new THREE.Color('#081014'), transparent:true, opacity:.94 })), wt.length);
     wt.forEach((i, n) => { mat4.makeTranslation(wx(i % f.W), -.16, wz((i / f.W) | 0)); wm2.setMatrixAt(n, mat4); wm2.setColorAt(n, col.setRGB(1, 1, 1).multiplyScalar(.85 + hr(i, 7) * .3)); });
@@ -506,9 +514,18 @@ export function buildFloor(L, opt = {}){
   // props
   for (const p of f.props || []){
     if (pv){ const s = propSize(p); let any = false; for (let y = p.y; y < p.y + s.h && !any; y++) for (let x = p.x; x < p.x + s.w && !any; x++) if (exp.has(y * f.W + x) || seen(y * f.W + x)) any = true; if (!any) continue; }
+    if (p.k === 'bridge' && decked.has(p.y * f.W + p.x)) continue;   // (one of a river bridge's planks: the bridge stands for it)
     const m = buildProp(p); if (shadows) m.traverse(o => { if (o.isMesh){ o.castShadow = true; o.receiveShadow = true; } });
     if (f.height) m.position.y += groundY(f, p.x, p.y);   // standing on a rise
     fv.built.add(m);
+  }
+  // the river bridges: the kit's is 8 long and 3.4 between the rails; this one reaches a little onto each bank
+  for (const d of decks){
+    if (pv && !d.cells.some(i => exp.has(i) || seen(i))) continue;
+    const bm = bridgeModel(), m = new THREE.Mesh(bm.geometry, bm.material), across = d.ew ? d.w : d.h, wide = d.ew ? d.h : d.w;
+    m.position.set(wx(d.x) + (d.w - 1) / 2, f.height ? groundY(f, d.x, d.y) : 0, wz(d.y) + (d.h - 1) / 2);
+    m.rotation.y = d.ew ? 0 : Math.PI / 2; m.scale.set((across + 1.3) / 8, .9, wide / 3.4);
+    m.castShadow = m.receiveShadow = shadows; m.userData.propId = d.id; m.userData.riverBridge = 1; fv.built.add(m);
   }
   // the Road Watches (Codex's roadside pieces, engine/road-watches.js): beside the road, in the clearings left for them
   for (const w of f.roadWatches || []){

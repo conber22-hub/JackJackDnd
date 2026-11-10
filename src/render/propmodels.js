@@ -139,16 +139,20 @@ export function instancedModel(k, height, snow = 0){
    terrain pack (assets/terrain: plain-coloured parts, no textures). Each part's colour goes into the vertices, so the
    whole thing is one draw call however many stand in the wood. sway: how the wind takes it (render/wind.js), or null.
    tint: [r, g, b] the colours are multiplied by (the pack is pale and misty; the woods here are dark).
+   keep: (a part's box, in the model's space) => is it wanted, with a name for it (keep.part): a bridge without the
+   square of land the road kit sets it on.
    → { geometry, material } | null (not here yet) */
 const mergedLoose = new Map();
-export function instancedLoose(path, sway = null, tint = null){
+export function instancedLoose(path, sway = null, tint = null, keep = null){
   const tpl = looseModel(path); if (!tpl) return null;
-  let e = mergedLoose.get(path); if (e) return e;
+  const key = path + (keep ? '#' + (keep.part || 'part') : '');
+  let e = mergedLoose.get(key); if (e) return e;
   tpl.updateMatrixWorld(true);
   const geos = [];
   tpl.traverse(o => { if (!o.isMesh) return;
     let g = o.geometry.clone().applyMatrix4(o.matrixWorld);
     for (const a of Object.keys(g.attributes)) if (a !== 'position') g.deleteAttribute(a);
+    if (keep){ g.computeBoundingBox(); if (!keep(g.boundingBox)) return; }
     if (g.index) g = g.toNonIndexed();
     const c = (Array.isArray(o.material) ? o.material[0] : o.material)?.color || new THREE.Color('#777'), n = g.attributes.position.count, cols = new Float32Array(n * 3);
     const [tr, tg, tb] = tint || [1, 1, 1];
@@ -157,7 +161,7 @@ export function instancedLoose(path, sway = null, tint = null){
   const geometry = geos.length && mergeGeometries(geos, false); if (!geometry) return null;
   const material = new THREE.MeshStandardMaterial({ vertexColors:true, roughness:.92, flatShading:true }); material.userData.shared = true;
   if (sway) patch(material, { sway });
-  e = { geometry, material }; mergedLoose.set(path, e); return e;
+  e = { geometry, material }; mergedLoose.set(key, e); return e;
 }
 
 /* The shader touches a model's material can take (one patch, as three.js keeps only one onBeforeCompile):
