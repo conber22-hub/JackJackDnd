@@ -317,6 +317,6 @@ export function journeySpecs(j){
       road, entry, side, arrive:last ? to : null, passing:st.end && !last ? to : null, events:ev, name, exits,
       startName:i === 0 ? `Leaving ${from.name}` : road.name, startNotes:i === 0 ? `The road out of ${from.name}.` : '' });
     if (!last){ entry = { ...exit }; side = side === 'e' ? 'w' : 'e'; }
-    return { theme:last && ['village', 'town'].includes(to.kind) ? 'village' : 'woods', layout };
+    return { theme:last && ['village', 'town'].includes(to.kind) ? 'village' : 'woods', layout, road:road.id, gaze:j.gaze, bloom:!!j.bloom };   // (road, gaze, bloom: the roadside horrors, engine/horror-roads.js)
   });
 }

@@ -49,6 +49,7 @@ import { CHECKS } from '../engine/checks.js';
 import { markChips } from './horror.js';
 import { refugeHere, refugeVisit, REFUGE_KINDS } from '../game/refuges.js';
 import { decayOf, decayLines } from '../game/decay.js';
+import { horrorHere } from '../game/horror.js';
 import { DECAY_STAGES, DECAY_NAMES } from '../engine/decay.js';
 
 const art = (key, label) => {
@@ -199,6 +200,7 @@ function dungeonTab(){
     ${siteCard(f)}
     ${buildingsCard(f)}
     ${decayCard(f)}
+    ${horrorCard()}
     ${refugeCard()}
     <h4>Rooms (${f.rooms.length})</h4>
     <div class="row"><button class="btn small" data-act="furnishFloor" title="Furniture for every room that has none, by its type and this floor's look">🪑 Furnish empty rooms</button><button class="btn small" data-act="describeFloor" title="A read-aloud line for every room that has none">📜 Describe rooms</button></div>`;
@@ -627,6 +629,13 @@ function refugeCard(){
   if (!s) return `<h4>🕳 Hidden refuge</h4><div class="card"><div class="muted">Somewhere people hid from the Count, under this floor. Hide one here:</div><div class="row">${REFUGE_KINDS.map(k => `<button class="btn small" data-act="refugeHide" data-k="${k}">${{ road:'Under the road', house:'Behind a wall', roots:'Through the roots', cave:'Down the rock' }[k] || k}</button>`).join('')}</div></div>`;
   return `<h4>🕳 ${esc(s.name)}</h4><div class="card"><div class="muted">${s.found ? 'Found: its way in is on the map.' : `Hidden${s.heard ? ' (they have the clue)' : ''}, at ${s.position.x},${s.position.y}.`}${s.visited ? ' They have been inside.' : ''}</div>
     <div class="row">${s.heard ? '' : `<button class="btn small" data-act="refugeClue">📜 The clue</button>`}${s.found ? `<button class="btn small primary" data-act="refugeIn" title="The selected hero at the way in">🕳 Go inside</button>` : `<button class="btn small" data-act="refugeSearch" title="The selected hero searches where they stand">🔎 Search here</button>`}</div></div>`;
+}
+// 🕯 Roadside horrors (game/horror.js): the scenes staged beside this stretch of road, to show and to read.
+function horrorCard(){
+  const hs = horrorHere(); if (!hs.length) return '';
+  return `<h4>🕯 Beside the road</h4><div class="card"><div class="muted">Staged by the road. On your map now; the players see it when you show it.</div>
+    ${hs.map(s => `<div class="row"><span class="grow"><b>${esc(s.name)}</b> <span class="muted">${esc(s.beats.approach)}</span></span></div>
+      <div class="row"><button class="btn small${s.shown ? '' : ' primary'}" data-act="horrorShow" data-id="${esc(s.id)}" data-k="${s.shown ? 0 : 1}">${s.shown ? '🙈 Hide it' : '👁 Show the table'}</button><button class="btn small" data-act="horrorRead" data-id="${esc(s.id)}">📖 What they find</button></div>`).join('')}</div>`;
 }
 // 🏚 Dead villages (game/decay.js): how far this place has fallen, and the DM's line for each house that has.
 function decayCard(f){

@@ -11,7 +11,7 @@ Merged, tested by their own unit tests, not yet in the app. Each line: what it i
   mount on outdoor floors after `buildFloor`, gated by `gfx.quality`.
 - ✅ the timber bridge is in (10 Nov, river crossings: `engine/bridges.js`); the kit's road tiles are whole 8×8 squares of land and don't fit the winding roads; its gates were looked at and passed over (posts and a beam: the town gates are drawn in code instead, `render/props.js`); its stone/foot/rope bridges and approaches can be lifted the same way (`instancedLoose(path, null, tint, keep)`): **Roads and bridges** (#74): `render/barovia-road-*.js`; dress journey/trail maps like the Road Watches
   (generator: plan at generation, `f.clear` the cells, draw with `looseModel`).
-- **Roadside horror** (#75): `render/barovia-horror-*.js`; stage at road events (`f.events`), DM-only until sprung.
+- ✅ done (11 Nov, journeys; `game/horror.js`, Maps tab): **Roadside horror** (#75): `render/barovia-horror-*.js`; stage at road events (`f.events`), DM-only until sprung.
 - ✅ done by Muse (PR #89, refuge entrances): **Hidden entrances** (#77): `render/barovia-hidden-*.js`; sealed/revealed pairs, pair with the refuges engine below.
 - ✅ done with the planner and drawn decay, not the pack's models (11 Nov, `game/decay.js`, Maps tab): **Dead villages** (#80): `engine/barovia-dead-villages.js` + loader; swap `f.buildings` looks by decay stage
   (inhabited → abandoned → Moss) on settlement maps; hide the code-drawn building it replaces.

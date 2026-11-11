@@ -76,3 +76,4 @@ export { handWeather } from './game/weather.js';
 export { wind } from './render/wind.js';
 export { floorViews } from './render/floors.js';
 export { setDecay, decayOf, decayLines } from './game/decay.js';
+export { horrorHere, showHorror, readHorror } from './game/horror.js';

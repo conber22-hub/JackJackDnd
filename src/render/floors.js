@@ -14,6 +14,7 @@ import { kitFor } from './models.js';
 import { instancedModel, instancedLoose, looseModel } from './propmodels.js';
 import { swaying } from './wind.js';
 import { mountGroundMist, dropGroundMist } from './groundfog.js';
+import { createHorrorStagecraft } from './barovia-horror-stagecraft.js';
 import { ROAD_WATCH_MANIFEST } from '../data/road-watches-bounds.js';
 const ROAD_WATCH_FILES = Object.fromEntries(ROAD_WATCH_MANIFEST.assets.map(a => [a.id, a.file]));
 import { wxNow } from '../game/weather.js';
@@ -122,6 +123,19 @@ function takeVariety(list, numberOf, tallOnly = false){
 /* 🌉 Where a road crosses a river (engine/bridges.js finds the patch of planks), one timber bridge with posts and rails
    stands over the water in their place: the bridge from ChatGPT's road kit (assets/roads), without the square of land
    the kit sets it on. Until the model has come, and in the offline file, the planks are drawn as before. */
+// The horror pack's pieces come without normals (so they light flat and pale): one copy of each with its faces worked
+// out and flat-shaded, a little darkened to sit in the woods, kept.
+const darkTpl = new Map();
+function darkened(path){
+  const tpl = looseModel(path); if (!tpl) return null;
+  let d = darkTpl.get(path); if (d) return d;
+  d = tpl.clone(true); const mats = new Map();
+  d.traverse(o => { if (!o.isMesh) return; const m0 = o.material;
+    if (!o.geometry.attributes.normal) o.geometry.computeVertexNormals();
+    if (!mats.has(m0)){ const m = m0.clone(); m.userData = { shared:true }; m.flatShading = true; m.color.multiplyScalar(.36).lerp(new THREE.Color('#2e261e'), .15); mats.set(m0, m); }
+    o.material = mats.get(m0); o.castShadow = o.receiveShadow = true; });
+  darkTpl.set(path, d); return d;
+}
 const bridgeOnly = Object.assign(box => box.max.z - box.min.z < 7, { part:'bridge' });
 const bridgeModel = () => instancedLoose('assets/roads/bridge_timber_ew.glb', null, [.36, .28, .21], bridgeOnly);
 function capWithSnow(tm){ const caps = new THREE.InstancedMesh(snowCapGeometry(), swaying(treeMaterial, TREE_SWAY), tm.count); caps.instanceMatrix.array.set(tm.instanceMatrix.array); caps.receiveShadow = tm.receiveShadow; return caps; }
@@ -187,6 +201,7 @@ export function buildFloor(L, opt = {}){
   const f = state.floors[L], fv = floorViews[L], th = THEMES[f.theme] || THEMES[0];
   if (!f || !fv) return;
   dropGroundMist(fv);
+  if (fv.horrorFx){ try { fv.horrorFx.fx.dispose(); } catch {} fv.horrorFx = null; }
   disposeGroup(fv.built);
   dressMaterials(fv, th);
   const shadows = shadowsOn();
@@ -527,6 +542,20 @@ export function buildFloor(L, opt = {}){
     m.rotation.y = d.ew ? 0 : Math.PI / 2; m.scale.set((across + 1.3) / 8, .9, wide / 3.4);
     m.castShadow = m.receiveShadow = shadows; m.userData.propId = d.id; m.userData.riverBridge = 1; fv.built.add(m);
   }
+  // 🕯 the roadside horrors (engine/horror-roads.js, ChatGPT's set pieces): the DM sees them all, the players those shown;
+  // their little lights and sways come from the pack's stagecraft (render/barovia-horror-stagecraft.js), run each frame
+  const hg = new THREE.Group();
+  for (const s of f.horror || []){
+    if (pv && !s.shown) continue;
+    for (const p of s.pieces){
+      if (pv && !seen(Math.round(p.y) * f.W + Math.round(p.x)) && !exp.has(Math.round(p.y) * f.W + Math.round(p.x))) continue;
+      const tpl = darkened(`assets/horror/${p.a}.glb`); if (!tpl) continue;
+      const m = tpl.clone(true); m.position.set(wx(p.x), f.height ? groundY(f, Math.round(p.x), Math.round(p.y)) : 0, wz(p.y)); m.rotation.y = -(p.rot || 0) * Math.PI / 2;
+      m.userData.horrorId = p.a; hg.add(m);
+    }
+    if (!pv && ui.roomLabels){ const p = s.pieces[0], lb = makeLabel(`🕯 ${s.name}${s.shown ? '' : ' (hidden)'}`, s.shown ? '#e9c27a' : '#b9a6c9', 20); lb.position.set(wx(p.x), 3.6, wz(p.y)); lb.scale.multiplyScalar(.8); fv.built.add(lb); }
+  }
+  if (hg.children.length){ fv.built.add(hg); try { fv.horrorFx = { fx:createHorrorStagecraft(hg, { quality:gfx.quality === 'ultra' ? 'high' : gfx.quality }), shown:(f.horror || []).some(s => s.shown) }; } catch {} }
   // the Road Watches (Codex's roadside pieces, engine/road-watches.js): beside the road, in the clearings left for them
   for (const w of f.roadWatches || []){
     if (pv && !seen(w.y * f.W + w.x) && !exp.has(w.y * f.W + w.x)) continue;

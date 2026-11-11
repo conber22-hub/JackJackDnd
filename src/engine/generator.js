@@ -15,6 +15,7 @@ import { describeRoom } from '../data/descriptions.js';
 import { journeySpecs, landmarkSpecs } from './overland.js';
 import { branchingJourneySpecs, trailLegSpecs } from './road-exploration.js';
 import { planRoadWatches } from './road-watches.js';
+import { planRoadsideHorror } from './horror-roads.js';
 import { ROAD_WATCH_MANIFEST } from '../data/road-watches-bounds.js';
 import { genPlace } from './settlement.js';
 import { cavify, reachable } from './caves.js';
@@ -95,6 +96,10 @@ export function genDelve(meta){
       try { const plan = planRoadWatches(f, specs[L], ROAD_WATCH_MANIFEST, { seed:`${meta.seed}|watches|${L}`, stage });
         f.roadWatches = plan.placements.filter(p => p.visibility === 'public').map(({ asset, x, y, rot }) => ({ asset, x, y, rot }));
         if (f.roadWatches.length) f.clear = [...(f.clear || []), ...plan.clear.map(([x, y]) => y * f.W + x)]; } catch {} });
+    // 🕯 and, on a journey, now and then one of the valley's horrors staged beside the road (engine/horror-roads.js), the DM's to show
+    if (meta.template === 'journey') floors.forEach((f, L) => {
+      const h = planRoadsideHorror(f, specs[L], { seed:`${meta.seed}|horror|${L}`, avoid:(f.roadWatches || []).map(w => [w.x, w.y]) });
+      if (h.scenes.length){ f.horror = h.scenes; f.clear = [...(f.clear || []), ...h.clear]; } });
   }
   if (state) floors.forEach((f, L) => { if (specs[L].populate) populateFloor(f, L, rng, L === meta.floors - 1 || !!specs[L].boss, specs[L].populate === true ? .4 : specs[L].populate); });
   return floors;

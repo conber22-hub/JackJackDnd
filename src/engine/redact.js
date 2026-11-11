@@ -10,6 +10,7 @@
    · content: the DM's Shift and Whim tables, and custom creatures nobody can see, stay home; the log keeps
      only the lines meant for everyone (entries marked dm:true are the DM's). */
 import { view as puzzleView } from './puzzles.js';
+import { horrorForPlayers } from './horror-roads.js';
 const KEEP_FLAGS = ['gone', 'taken', 'bloodied'];
 const MON_FIELDS = ['id', 'kind', 'bid', 'name', 'color', 'size', 'floor', 'x', 'y', 'dead', 'conds', 'moved', 'initRoll', 'speed', 'dodge', 'look'];
 
@@ -73,6 +74,7 @@ function redactFloor(f, exp){
     site:f.site ? { name:f.site.name } : null, garrison:null, lives:null, folkTies:null, folkTensions:null,   // the site's plan, the garrison and the folk's secrets and ties are the DM's
     mobs:(f.mobs || []).map(m => ({ id:m.id, look:m.look, torches:m.torches || 0, formation:(m.formation || []).map(s => ({ x:s.x, y:s.y })) })),   // a mob: the crowd on the map, not its hit points
     necks:[],
+    horror:horrorForPlayers(f),   // 🕯 the roadside horrors the DM has shown (engine/horror-roads.js), pieces only
     name:seenAny ? f.name : 'Unexplored',
     rooms:(f.rooms || []).filter(r => rectKept(r.x, r.y, r.w, r.h, 1)).map(r => ({ id:r.id, x:r.x, y:r.y, w:r.w, h:r.h, cx:r.cx, cy:r.cy, type:'chamber', name:'', notes:'', ...(r.shape ? { shape:r.shape } : {}), ...(r.outdoor ? { outdoor:true } : {}), ...(r.ground ? { ground:r.ground } : {}), ...(r.crop ? { crop:r.crop } : {}) })),
     doors:(f.doors || []).filter(d => d.state !== 'secret' && kept(d.i)).map(d => ({ id:d.id, i:d.i, state:d.state, dc:d.dc, ...(d.found ? { found:true } : {}) })),
