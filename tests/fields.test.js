@@ -19,7 +19,7 @@ test('a village has fields at its edges, walled or fenced, with a way in from th
     if (fields.length) withFields++;
     for (const r of fields){
       assert.ok(CROPS[r.crop], `seed ${seed}: ${r.crop} is a known crop`);
-      assert.equal(r.ground, 'furrow'); assert.ok(r.outdoor);
+      assert.equal(r.ground, r.crop === 'orchard' ? 'grass' : 'furrow'); assert.ok(r.outdoor);   // (an orchard stands in grass)
       assert.equal(r.name, CROPS[r.crop].field);
       // the ring round it: a wall or fence on every square but one (the gate, where the track comes in)
       let gates = 0;

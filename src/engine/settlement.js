@@ -37,7 +37,7 @@ const room = (lay, r, type, name, notes, outdoor, ground, more = {}) => lay.room
 
 /* Fields at the edge of a village: a walled or fenced plot of crops, with a track straight to the nearest street.
    n: how many to try for. Fields go in before the houses, at the edges, so they get the open ground. */
-const FIELD_CROPS = ['wheat', 'barley', 'cabbage', 'pumpkin', 'fallow', 'blight', 'wheat', 'blight'];
+const FIELD_CROPS = ['wheat', 'barley', 'cabbage', 'pumpkin', 'fallow', 'blight', 'wheat', 'blight', 'orchard'];
 export function plantFields(lay, pl, g, n, streets){
   let made = 0;
   for (let t = 0; t < 400 && made < n; t++){
@@ -55,7 +55,7 @@ export function plantFields(lay, pl, g, n, streets){
     }
     if (!track) continue;
     const crop = FIELD_CROPS[Math.floor(g() * FIELD_CROPS.length)], c = CROPS[crop];
-    room(lay, r, 'chamber', c.field, c.notes, true, 'furrow', { crop });
+    room(lay, r, 'chamber', c.field, c.notes, true, crop === 'orchard' ? 'grass' : 'furrow', { crop });   // (an orchard stands in grass)
     const [gx, gy] = track[0], [ex, ey] = track[track.length - 1];
     lay.paths.push({ w:1, pts:[gx, gy, ex + dx, ey + dy] });
     pl.take(r, 1); for (const [x, y] of track) pl.take(R(x, y, 1, 1), 0);
@@ -64,7 +64,7 @@ export function plantFields(lay, pl, g, n, streets){
     for (let x = r.x - 1; x <= r.x + r.w; x++) for (const yy of [r.y - 1, r.y + r.h]){ if (x === gx && yy === gy) continue; lay.props.push(P(kind, x, yy, 0)); lay.clear.push([x, yy]); }
     for (let yy = r.y; yy < r.y + r.h; yy++) for (const x of [r.x - 1, r.x + r.w]){ if (x === gx && yy === gy) continue; lay.props.push(P(kind, x, yy, 1)); lay.clear.push([x, yy]); }
     // and what stands in it
-    if (crop !== 'fallow' && g() < .7) lay.props.push(P('scarecrow', r.x + 1 + Math.floor(g() * (w - 2)), r.y + 1 + Math.floor(g() * (h - 2))));
+    if (crop !== 'fallow' && crop !== 'orchard' && g() < .7) lay.props.push(P('scarecrow', r.x + 1 + Math.floor(g() * (w - 2)), r.y + 1 + Math.floor(g() * (h - 2))));
     if (g() < .5) lay.props.push(P('hay', r.x + (g() < .5 ? 0 : w - 1), r.y + (g() < .5 ? 0 : h - 1)));
     made++;
   }

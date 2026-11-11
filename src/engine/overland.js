@@ -69,12 +69,13 @@ const MODULES = {
   field:    { w:8, h:6, make:(r, g) => ({ name:'The scarecrow field', notes:'Rows of scarecrows in the barley, all facing the road. No birds. Not one.', crop:'barley', ground:'furrow',
               props:[...[1, 3, 5].flatMap(dx => [P('scarecrow', r.x + dx, r.y + 1), P('scarecrow', r.x + dx + 1, r.y + 3)]), P('fence', r.x, r.y + r.h - 1), P('fence', r.x + 1, r.y + r.h - 1), P('hay', r.x + r.w - 1, r.y + r.h - 2)] }) },
   // open country: a field beside the road, walled with fieldstone
-  ploughland:{ w:9, h:6, make:(r, g) => { const crop = pick(['wheat', 'cabbage', 'pumpkin', 'fallow', 'blight'], g), walls = [];
+  ploughland:{ w:9, h:6, make:(r, g) => { const crop = pick(['wheat', 'cabbage', 'pumpkin', 'fallow', 'blight', 'orchard'], g), walls = [];
               for (let x = r.x; x < r.x + r.w; x++) if (x !== r.x + 4) walls.push(P('drystone', x, r.y, 0), P('drystone', x, r.y + r.h - 1, 0));
-              return { name:{ wheat:'A wheat field', cabbage:'A cabbage field', pumpkin:'A pumpkin field', fallow:'A ploughed field', blight:'A field gone grey' }[crop],
+              return { name:{ wheat:'A wheat field', cabbage:'A cabbage field', pumpkin:'A pumpkin field', fallow:'A ploughed field', blight:'A field gone grey', orchard:'An orchard' }[crop],
                 notes:{ wheat:'Wheat nobody has come to cut. Something has been lying in it: a flattened shape, too long for a man.', cabbage:'Cabbages, and a basket half filled and dropped.',
-                  pumpkin:'Pumpkins rotting on the vine. One has a face cut in it, fresh.', fallow:'Ploughed and left. A plough stands in the last furrow with no horse.', blight:'Grey stalks that crumble at a touch. The soil smells of a cellar.' }[crop],
-                crop, ground:'furrow', props:[...walls, ...(crop === 'fallow' ? [P('cart', r.x + r.w - 2, r.y + 2, 0)] : [P('scarecrow', r.x + 2 + Math.floor(g() * 5), r.y + 2)])] }; } },
+                  pumpkin:'Pumpkins rotting on the vine. One has a face cut in it, fresh.', fallow:'Ploughed and left. A plough stands in the last furrow with no horse.', blight:'Grey stalks that crumble at a touch. The soil smells of a cellar.',
+                  orchard:'Apple trees behind a fieldstone wall, the windfalls rotting in the grass. A ladder leans in one tree, and a basket hangs from a branch, full.' }[crop],
+                crop, ground:crop === 'orchard' ? 'grass' : 'furrow', props:[...walls, ...(crop === 'fallow' ? [P('cart', r.x + r.w - 2, r.y + 2, 0)] : crop === 'orchard' ? [] : [P('scarecrow', r.x + 2 + Math.floor(g() * 5), r.y + 2)])] }; } },
   // a pasture: rough grass inside a rail fence, a trough, and no animals
   pasture:  { w:8, h:6, make:(r) => { const rails = []; for (let x = r.x; x < r.x + r.w; x++) if (x !== r.x + 3) rails.push(P('fence', x, r.y, 0), P('fence', x, r.y + r.h - 1, 0));
               return { name:'An empty pasture', notes:'A fenced pasture, the gate swinging. Hoof-prints going in. None coming out.', ground:'moor',

@@ -21,6 +21,7 @@ import { wxNow } from '../game/weather.js';
 import { inShape, isShaped, SLANTED } from '../engine/shapes.js';
 import { plankBridges } from '../engine/bridges.js';
 import { woodsBloom, bloomedTree } from '../engine/bloom-woods.js';
+import { orchardTrees, orchardTree } from '../engine/orchard.js';
 import { buildProp, buildBuilding, inBuilding, treeGeometry, treeMaterial, deadTreeGeometry, tuftGeometry, pebbleGeometry, boulderGeometry, cropGeometry, snowCapGeometry } from './props.js';
 import { propSize, propAt } from '../data/props.js';
 
@@ -430,6 +431,7 @@ export function buildFloor(L, opt = {}){
       // from Gaze 7 the fields blight, square by square
       const crop = wither >= 3 && r.crop !== 'fallow' && hr(i, 190) < (wither - 2) * .18 ? 'blight' : r.crop;
       if (!crops.has(crop)) crops.set(crop, []);
+      if (crop === 'orchard') continue;   // (its trees are planted below, where the squares meet)
       // wheat and barley: four clumps a square in two rows; cabbages four; pumpkins one or two; fallow a weed or two
       const per = crop === 'pumpkin' ? 1 + (hr(i, 150) < .4 ? 1 : 0) : crop === 'fallow' ? (hr(i, 150) < .5 ? 1 : 0) : 4;
       for (let k = 0; k < per; k++) crops.get(crop).push([x, y, i, k, per]);
@@ -443,6 +445,27 @@ export function buildFloor(L, opt = {}){
       mat4.compose(ps, q, sc); cm2.setMatrixAt(n, mat4); cm2.setColorAt(n, col.setRGB(1, 1, 1).multiplyScalar(.72 + hr(i, 163 + k) * .4).lerp(SNOW, snow * .45));
     });
     if (cm2.instanceColor) cm2.instanceColor.needsUpdate = true; cm2.receiveShadow = shadows; cm2.castShadow = shadows && kind !== 'fallow'; fv.built.add(cm2);
+  }
+  // 🍎 orchards (engine/orchard.js): an apple tree where four open squares meet, two squares apart; bloomed where the
+  // Bloom is in the trees, dead in the blight. Until the pack's model has come, a small fir stands in for it.
+  const orchard = { healthy:[], bloomed:[], dead:[] };
+  for (const r of outdoor ? f.rooms : []){
+    if (r.crop !== 'orchard') continue;
+    for (const [cx, cy] of orchardTrees(r)){
+      const sq = [[cx - 1, cy - 1], [cx, cy - 1], [cx - 1, cy], [cx, cy]];
+      if (!sq.every(([x, y]) => g[y * f.W + x] === T.ROOM && showTile(y * f.W + x) && !propAt(f, x, y))) continue;
+      const i = cy * f.W + cx; orchard[orchardTree(bloom, wither, hr(i, 201), hr(i, 202))].push([cx, cy, i]);
+    }
+  }
+  for (const [kind, list] of Object.entries(orchard)){
+    if (!list.length) continue;
+    const m = kind === 'dead' ? null : instancedLoose(`assets/terrain/barovian-wilds/orchard-apple-${kind}.glb`, { from:.6, top:2, amp:.08 }, kind === 'bloomed' ? [.6, .58, .56] : [.54, .55, .5]);
+    const wt = m ? null : woodsTree(kind !== 'dead', snow), om = new THREE.InstancedMesh(m ? m.geometry : wt.geo, m ? m.material : wt.mat, list.length);
+    const q = new THREE.Quaternion(), sc = new THREE.Vector3(), ps = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+    list.forEach(([cx, cy, i], n) => { const s2 = (m ? .78 : .55) + hr(i, 203) * .2;
+      ps.set(wx(cx) - .5 + (hr(i, 204) - .5) * .2, groundY(f, cx, cy), wz(cy) - .5 + (hr(i, 205) - .5) * .2); q.setFromAxisAngle(up, hr(i, 206) * 6.28); sc.set(s2, s2 * (.92 + hr(i, 207) * .16), s2);
+      mat4.compose(ps, q, sc); om.setMatrixAt(n, mat4); om.setColorAt(n, col.setRGB(1, 1, 1).multiplyScalar(.82 + hr(i, 208) * .3).lerp(SNOW, snow * .35)); });
+    if (om.instanceColor) om.instanceColor.needsUpdate = true; om.castShadow = om.receiveShadow = shadows; om.userData.orchard = kind; fv.built.add(om);
   }
   // past the map's edge the land goes on: dark ground under everything, and the woods thinning into the mist
   if (outdoor){

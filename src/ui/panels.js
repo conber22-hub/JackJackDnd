@@ -656,7 +656,7 @@ function bloomCard(f){
   const th = THEMES[f.theme] || THEMES[0]; if (th.walls !== 'trees' && th.walls !== 'mixed') return '';
   const b = bloomOf(), own = Number(f.bloom) || 0, moss = b > own;
   const lv = l => `<button class="btn small${Math.abs(own - l.v) < .01 ? ' primary' : ''}" data-act="bloomWoods" data-k="${l.v}">${l.icon} ${l.name}</button>`;
-  return `<h4>🌿 The Bloom in the woods</h4><div class="card"><div class="muted">How far the Bloom has got into the trees here: some of them bloomed or Hunger-taken, moss at their feet. Only the look; the players see it.${moss ? ' (The Moss has this place, so some of it is there whatever you choose.)' : ''}</div>
+  return `<h4>🌿 The Bloom in the woods</h4><div class="card"><div class="muted">How far the Bloom has got into the trees here (the orchards' too): some of them bloomed or Hunger-taken, moss at their feet. Only the look; the players see it.${moss ? ' (The Moss has this place, so some of it is there whatever you choose.)' : ''}</div>
     <div class="row">${BLOOM_LEVELS.map(lv).join('')}</div></div>`;
 }
 function buildingsCard(f){

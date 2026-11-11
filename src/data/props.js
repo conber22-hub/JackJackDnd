@@ -130,6 +130,7 @@ export const CROPS = {
   pumpkin:{ n:'Pumpkins',         field:'Pumpkin rows',       notes:'Pumpkins rotting on the vine, faces cut in a few of them. Nobody admits to cutting them.' },
   fallow: { n:'Ploughed earth',   field:'A ploughed field',   notes:'Ploughed and left. The furrows are deep enough to lie down in.' },
   blight: { n:'Blighted stalks',  field:'The blighted field', notes:'Grey stalks that crumble at a touch. The soil smells of a cellar.' },
+  orchard:{ n:'Apple trees',      field:'The orchard',        notes:'Old apple trees in crooked rows, unpruned. The windfalls lie where they dropped and nobody gathers them.' },
 };
 // Props that give off light (candles, fire): the renderer puts a real flickering light on the nearest few.
 export const LIT = { forge:1.1, alchemy:.5,  candelabra:1, brazier:1.3, hearth:1.6, lantern:.8, lamppost:1, campfire:1.6, altar:.7, cauldron:.8, anvil:.9, longtable:.5, organ:.4 };

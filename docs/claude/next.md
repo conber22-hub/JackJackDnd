@@ -5,7 +5,7 @@ Merged, tested by their own unit tests, not yet in the app. Each line: what it i
 ## Models (public/assets/…)
 - ✅ done (9 Nov): **Bloom creatures** (`creatures/barovian-bloom`, PR #68) and **wild beasts** (`creatures/barovian-wilds`, #70):
   map bestiary ids to files in `render/models.js` (the GLB-per-creature path), fall back to the forge mini.
-- ✅ the terrain pack's trees and undergrowth are in the woods (10 Nov, `WOODS_MIX` in `render/floors.js`); ✅ the Bloom's trees too (11 Nov, `engine/bloom-woods.js`: bloomed beeches and willows, Hunger-taken firs, moss; the orchard apples still to place, in farm country): **Bloom trees** (`terrain/barovian-wilds`, #70): extra woods trees via `instancedModel` in `render/floors.js`,
+- ✅ the terrain pack's trees and undergrowth are in the woods (10 Nov, `WOODS_MIX` in `render/floors.js`); ✅ the Bloom's trees too (11 Nov, `engine/bloom-woods.js`: bloomed beeches and willows, Hunger-taken firs, moss; ✅ the orchard apples too, 11 Nov: `engine/orchard.js`, a field's crop 'orchard'): **Bloom trees** (`terrain/barovian-wilds`, #70): extra woods trees via `instancedModel` in `render/floors.js`,
   chosen when the Bloom is loose (`bloomLoose()`).
 - ✅ Living Valley II's ground fog done (10 Nov, `render/groundfog.js`; the tree sway is `render/wind.js`, on the instanced woods; its snow, blackwater and Hunger Moss still to do). Terrain I still to do: **Terrain I + Living Valley II** (#73, #72): `render/barovia-terrain-*.js`, `render/barovia-living-*.js` planners;
   mount on outdoor floors after `buildFloor`, gated by `gfx.quality`.
