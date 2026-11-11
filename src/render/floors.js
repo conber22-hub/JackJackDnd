@@ -20,6 +20,7 @@ const ROAD_WATCH_FILES = Object.fromEntries(ROAD_WATCH_MANIFEST.assets.map(a => 
 import { wxNow } from '../game/weather.js';
 import { inShape, isShaped, SLANTED } from '../engine/shapes.js';
 import { plankBridges } from '../engine/bridges.js';
+import { woodsBloom, bloomedTree } from '../engine/bloom-woods.js';
 import { buildProp, buildBuilding, inBuilding, treeGeometry, treeMaterial, deadTreeGeometry, tuftGeometry, pebbleGeometry, boulderGeometry, cropGeometry, snowCapGeometry } from './props.js';
 import { propSize, propAt } from '../data/props.js';
 
@@ -98,27 +99,46 @@ const TREE_SWAY = { from:.3, top:2.3, amp:.16 }, DEAD_SWAY = { from:.4, top:2.1,
    of the trees, does it stand tall (the far woods take only those), how the wind takes it, its tint]. A square keeps its pine
    until the model has come, and on Low quality (phones). */
 const WOODS_MIX = [
-  ['svalich_black_fir', .07, true, { from:.3, top:2.7, amp:.16 }, [.42, .62, .42]], ['windworn_fir', .04, true, { from:.3, top:2.3, amp:.2 }, [.45, .62, .45]],
+  ['svalich_black_fir', .07, true, { from:.3, top:2.7, amp:.16 }, [.42, .62, .42], 'hunger_taken_fir'], ['windworn_fir', .04, true, { from:.3, top:2.3, amp:.2 }, [.45, .62, .45], 'hunger_taken_fir'],
   ['crooked_oak', .035, true, { from:.8, top:2.8, amp:.07 }, [.62, .56, .5]], ['pale_birch_thicket', .03, true, { from:.4, top:2.4, amp:.14 }, [.72, .76, .64]],
+  ['barovian-wilds/copper-beech-healthy', .03, true, { from:.9, top:3, amp:.1 }, [.62, .6, .56], 'barovian-wilds/copper-beech-bloomed'],
+  ['barovian-wilds/marsh-willow-healthy', .02, true, { from:.8, top:2.8, amp:.18 }, [.58, .62, .56], 'barovian-wilds/marsh-willow-bloomed'],
   ['thorn_choked_brambles', .03, false, { from:.1, top:.7, amp:.03 }, [.5, .62, .45]], ['mushroom_stump', .012, false, null, [.62, .58, .55]],
   ['hollow_fallen_log', .012, false, null, [.5, .46, .42]], ['hollow_witch_tree', .005, true, null, [.5, .46, .5]],
 ];
-// The variety for a tree (r: its own number 0–1): → { geometry, material, id } | null (a pine).
-function woodsVariety(r, tallOnly = false){
+// 🌿 the Bloom's own (engine/bloom-woods.js): what the healthy trees turn into, and the moss spires that come up between them
+const BLOOM_LOOK = {
+  hunger_taken_fir:[true, { from:.3, top:2.5, amp:.12 }, [.36, .4, .34]], hunger_moss_spires:[false, { from:.2, top:2, amp:.05 }, [.55, .6, .5]],
+  'barovian-wilds/copper-beech-bloomed':[true, { from:.9, top:3, amp:.08 }, [.6, .58, .56]], 'barovian-wilds/marsh-willow-bloomed':[true, { from:.8, top:2.8, amp:.14 }, [.58, .6, .56]],
+};
+/* The variety for a tree (r: its own number 0–1; bloom: the floor's, 0–1; rb: the tree's own bloom number 0–1):
+   → { geometry, material, id, bloomed } | null (a pine). Where the Bloom is in the woods some of the firs and the
+   broadleaves are their bloomed twins, a few of the pines are Hunger-taken and moss spires stand among the trees. */
+function woodsVariety(r, tallOnly = false, bloom = 0, rb = 1){
   if (gfx.quality === 'low') return null;
-  for (const [id, share, tall, sway, tint] of WOODS_MIX){
-    if ((r -= share) >= 0) continue;
-    if (tallOnly && !tall) return null;
-    const m = instancedLoose(`assets/terrain/${id}.glb`, sway, tint); return m ? (m.id = id, m) : null;
-  }
-  return null;
+  let row = null;
+  for (const e of WOODS_MIX){ if ((r -= e[1]) >= 0) continue; row = e; break; }
+  let id = row ? bloomedTree(row[0], row[5], rb, bloom) : bloom && rb < bloom * .14 ? 'hunger_taken_fir' : bloom && rb > 1 - bloom * .03 ? 'hunger_moss_spires' : null;
+  if (!id) return null;
+  const [tall, sway, tint] = row && id === row[0] ? row.slice(2, 5) : BLOOM_LOOK[id];
+  if (tallOnly && !tall) return null;
+  const m = instancedLoose(`assets/terrain/${id}.glb`, sway, tint); return m ? (m.id = id, m.bloomed = !row || id !== row[0], m) : null;
 }
 // Take the trees that are something else out of a list (in place) → Map(variety → those trees).
-function takeVariety(list, numberOf, tallOnly = false){
+function takeVariety(list, numberOf, tallOnly = false, bloom = 0, bloomOf = () => 1){
   const out = new Map();
-  for (let k = list.length - 1; k >= 0; k--){ const v = woodsVariety(numberOf(list[k]), tallOnly); if (!v) continue;
+  for (let k = list.length - 1; k >= 0; k--){ const v = woodsVariety(numberOf(list[k]), tallOnly, bloom, bloomOf(list[k])); if (!v) continue;
     if (!out.has(v)) out.set(v, []); out.get(v).push(list[k]); list.splice(k, 1); }
   return out;
+}
+// Hunger Moss at the feet of the Bloom's trees: [[x, z, scale, angle]…] → one instanced mesh of the pack's colony, or null
+// (the colony comes on a flat square of its own ground: only the tufts are kept, so the moss lies on the map's grass)
+const mossTufts = Object.assign(box => box.max.y - box.min.y > .15, { part:'tufts' });
+function mossAt(spots, shadows){
+  const mm = spots.length && instancedLoose('assets/terrain/hunger_moss_colony.glb', null, [.45, .5, .4], mossTufts); if (!mm) return null;
+  const im = new THREE.InstancedMesh(mm.geometry, mm.material, spots.length), q = new THREE.Quaternion(), sc = new THREE.Vector3(), ps = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+  spots.forEach(([x, z, s2, a], n) => { ps.set(x, .02, z); q.setFromAxisAngle(up, a * 6.28); sc.set(s2, s2, s2); mat4.compose(ps, q, sc); im.setMatrixAt(n, mat4); });
+  im.receiveShadow = shadows; im.userData.bloomMoss = 1; return im;
 }
 /* 🌉 Where a road crosses a river (engine/bridges.js finds the patch of planks), one bridge stands over the water in
    their place: timber or stone on a road, a footbridge on a path, a boardwalk in the marsh, a rope bridge on a trail
@@ -239,7 +259,8 @@ export function buildFloor(L, opt = {}){
   const indoorKind = ['plank', 'flag'].includes(SURFACES[th.id]?.floor) ? '' : 'plank', roadKind = ROAD[th.id] || 'dirt';
   const hallUnder = hall.clone().lerp(base, .55);
   const wx_ = outdoorTh ? groundWeather() : {}, snow = wx_.snow || 0, wet = wx_.wet || 0;
-  const wither = outdoorTh ? witherLevel() : 0;   // his Gaze at 5 and up: the trees die, the grass greys, the crops blight (render/omens.js)   // under the rock, a tunnel's floor must stand out from the rock round it
+  const wither = outdoorTh ? witherLevel() : 0, bloom = outdoorTh ? woodsBloom(f) : 0;   // 🌿 how far the Bloom is in the trees (engine/bloom-woods.js)
+  // (wither: his Gaze at 5 and up: the trees die, the grass greys, the crops blight: render/omens.js. hallUnder, above: under the rock, a tunnel's floor must stand out from the rock round it)
   const surfaceOf = i => { if (!outdoorTh) return ''; const r = roomOf.get(i);
     if (r && !r.outdoor) return r.ground || indoorKind; if (r?.ground) return r.ground; if (r?.crop) return 'furrow'; if (f.ground?.[i]) return f.ground[i]; return g[i] === T.HALL ? roadKind : 'grass'; };
   const tq = new THREE.Quaternion(), tp = new THREE.Vector3(), ts = new THREE.Vector3(), yAxis = new THREE.Vector3(0, 1, 0), slopes = new Set(f.slope || []);
@@ -360,12 +381,15 @@ export function buildFloor(L, opt = {}){
     if (dm.instanceColor) dm.instanceColor.needsUpdate = true; dm.castShadow = shadows; fv.built.add(dm);
   }
   if (dead.length){ const ds = new Set(dead); for (let k = trees.length - 1; k >= 0; k--) if (ds.has(trees[k])) trees.splice(k, 1); }
-  for (const [v, list] of deadOK ? takeVariety(trees, i => hr(i, 17)) : []){
+  const moss = [];
+  for (const [v, list] of deadOK ? takeVariety(trees, i => hr(i, 17), false, bloom, i => hr(i, 19)) : []){
     const vm = new THREE.InstancedMesh(v.geometry, v.material, list.length), q = new THREE.Quaternion(), sc = new THREE.Vector3(), ps = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
     list.forEach((i, n) => { const s = .8 + hr(i, 18) * .35; ps.set(wx(i % f.W) + (hr(i, 2) - .5) * .25, 0, wz((i / f.W) | 0) + (hr(i, 3) - .5) * .25); q.setFromAxisAngle(up, hr(i, 4) * 6.28); sc.set(s, s * (.9 + hr(i, 5) * .25), s);
-      mat4.compose(ps, q, sc); vm.setMatrixAt(n, mat4); vm.setColorAt(n, col.setRGB(1, 1, 1).multiplyScalar(.8 + hr(i, 6) * .35).lerp(SNOW, snow * .35)); });
+      mat4.compose(ps, q, sc); vm.setMatrixAt(n, mat4); vm.setColorAt(n, col.setRGB(1, 1, 1).multiplyScalar(.8 + hr(i, 6) * .35).lerp(SNOW, snow * .35));
+      if (v.bloomed && hr(i, 20) < .6) moss.push([ps.x, ps.z, .35 + hr(i, 21) * .25, hr(i, 22)]); });
     if (vm.instanceColor) vm.instanceColor.needsUpdate = true; vm.castShadow = vm.receiveShadow = shadows; vm.userData.variety = v.id; fv.built.add(vm);
   }
+  const mossMesh = mossAt(moss, shadows); if (mossMesh) fv.built.add(mossMesh);
   if (trees.length){
     const wt = woodsTree(true, snow), tm = new THREE.InstancedMesh(wt.geo, wt.mat, trees.length), q = new THREE.Quaternion(), sc = new THREE.Vector3(), ps = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
     const tint = new THREE.Color(th.trim);
@@ -434,7 +458,7 @@ export function buildFloor(L, opt = {}){
       }
       const dead = pts.filter(p => hr(p[5], 135) < (th.id === 'woods' ? .1 : .06) + Math.min(.45, wither * .07)), live = pts.filter(p => !dead.includes(p));
       const q = new THREE.Quaternion(), sc = new THREE.Vector3(), ps = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0), tint = new THREE.Color(th.trim);
-      for (const [v, list] of takeVariety(live, p => hr(p[5], 137), true)){
+      for (const [v, list] of takeVariety(live, p => hr(p[5], 137), true, bloom, p => hr(p[5], 139))){
         const vm = new THREE.InstancedMesh(v.geometry, v.material, list.length);
         list.forEach(([x, z, s2, a, d], n) => { ps.set(x, 0, z); q.setFromAxisAngle(up, a * 6.28); sc.set(s2 * .85, s2 * .85, s2 * .85); mat4.compose(ps, q, sc); vm.setMatrixAt(n, mat4);
           vm.setColorAt(n, col.setRGB(1, 1, 1).multiplyScalar((.7 + a * .35) * (d > 8 ? .8 : 1)).lerp(SNOW, snow * .35)); });

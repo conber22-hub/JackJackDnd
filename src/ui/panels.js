@@ -49,6 +49,8 @@ import { CHECKS } from '../engine/checks.js';
 import { markChips } from './horror.js';
 import { refugeHere, refugeVisit, REFUGE_KINDS } from '../game/refuges.js';
 import { decayOf, decayLines } from '../game/decay.js';
+import { bloomOf } from '../game/bloom.js';
+import { BLOOM_LEVELS } from '../engine/bloom-woods.js';
 import { horrorHere } from '../game/horror.js';
 import { DECAY_STAGES, DECAY_NAMES } from '../engine/decay.js';
 
@@ -200,6 +202,7 @@ function dungeonTab(){
     ${siteCard(f)}
     ${buildingsCard(f)}
     ${decayCard(f)}
+    ${bloomCard(f)}
     ${horrorCard()}
     ${refugeCard()}
     <h4>Rooms (${f.rooms.length})</h4>
@@ -647,6 +650,14 @@ function decayCard(f){
     <div class="row">${DECAY_STAGES.map(stage).join('')}</div>
     ${d.stage === 'inhabited' ? '' : `<div class="row"><span class="muted">How much of it:</span>${much(.34, 'Some')}${much(.67, 'Most')}${much(1, 'All')}</div>`}
     ${gone.slice(0, 10).map(l => `<div class="row"><span class="grow">${icon[l.stage]} ${esc(l.name)} <span class="muted">${esc(l.read)}</span></span></div>`).join('')}${gone.length > 10 ? `<div class="muted">…and ${gone.length - 10} more.</div>` : ''}</div>`;
+}
+// 🌿 the Bloom in the woods (game/bloom.js): only on maps with woods
+function bloomCard(f){
+  const th = THEMES[f.theme] || THEMES[0]; if (th.walls !== 'trees' && th.walls !== 'mixed') return '';
+  const b = bloomOf(), own = Number(f.bloom) || 0, moss = b > own;
+  const lv = l => `<button class="btn small${Math.abs(own - l.v) < .01 ? ' primary' : ''}" data-act="bloomWoods" data-k="${l.v}">${l.icon} ${l.name}</button>`;
+  return `<h4>🌿 The Bloom in the woods</h4><div class="card"><div class="muted">How far the Bloom has got into the trees here: some of them bloomed or Hunger-taken, moss at their feet. Only the look; the players see it.${moss ? ' (The Moss has this place, so some of it is there whatever you choose.)' : ''}</div>
+    <div class="row">${BLOOM_LEVELS.map(lv).join('')}</div></div>`;
 }
 function buildingsCard(f){
   const bs = (f.buildings || []).map((b, i) => ({ b, i })).filter(({ b }) => b.w >= 2 && b.h >= 2);

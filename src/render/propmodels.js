@@ -151,12 +151,14 @@ export function instancedLoose(path, sway = null, tint = null, keep = null){
   const geos = [];
   tpl.traverse(o => { if (!o.isMesh) return;
     let g = o.geometry.clone().applyMatrix4(o.matrixWorld);
-    for (const a of Object.keys(g.attributes)) if (a !== 'position') g.deleteAttribute(a);
+    for (const a of Object.keys(g.attributes)) if (a !== 'position' && a !== 'color') g.deleteAttribute(a);
     if (keep){ g.computeBoundingBox(); if (!keep(g.boundingBox)) return; }
     if (g.index) g = g.toNonIndexed();
-    const c = (Array.isArray(o.material) ? o.material[0] : o.material)?.color || new THREE.Color('#777'), n = g.attributes.position.count, cols = new Float32Array(n * 3);
+    // the material's colour, times the model's own vertex colours where it has them (the wilds pack paints its trees so)
+    const c = (Array.isArray(o.material) ? o.material[0] : o.material)?.color || new THREE.Color('#777'), n = g.attributes.position.count, cols = new Float32Array(n * 3), vc = g.attributes.color;
     const [tr, tg, tb] = tint || [1, 1, 1];
-    for (let i = 0; i < n; i++){ cols[i * 3] = c.r * tr; cols[i * 3 + 1] = c.g * tg; cols[i * 3 + 2] = c.b * tb; }
+    for (let i = 0; i < n; i++){ const k = vc ? [vc.getX(i), vc.getY(i), vc.getZ(i)] : [1, 1, 1];
+      cols[i * 3] = c.r * tr * k[0]; cols[i * 3 + 1] = c.g * tg * k[1]; cols[i * 3 + 2] = c.b * tb * k[2]; }
     g.setAttribute('color', new THREE.BufferAttribute(cols, 3)); g.computeVertexNormals(); geos.push(g); });
   const geometry = geos.length && mergeGeometries(geos, false); if (!geometry) return null;
   const material = new THREE.MeshStandardMaterial({ vertexColors:true, roughness:.92, flatShading:true }); material.userData.shared = true;

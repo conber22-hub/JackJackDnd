@@ -15,6 +15,7 @@ import { ensureVoices } from './voices.js';
 import { followTrailhead, takeTrail, endTrailLeg, backToRoad } from '../game/trails.js';
 import { hideRefuge, refugeClue, searchForRefuge, goIntoRefuge, leaveRefugeMap } from '../game/refuges.js';
 import { setDecay, decayOf } from '../game/decay.js';
+import { setBloom } from '../game/bloom.js';
 import { showHorror, readHorror } from '../game/horror.js';
 import { setPuzzle } from '../game/puzzles.js';
 import { describeSite } from '../engine/sites.js';
@@ -287,6 +288,7 @@ document.addEventListener('click', e => {
     case 'horrorRead': readHorror(el.dataset.id); break;
     case 'decayStage': setDecay(k); renderPanel(); break;   // 🏚 dead villages (game/decay.js)
     case 'decayMuch': setDecay(decayOf().stage, +k); renderPanel(); break;
+    case 'bloomWoods': setBloom(+k); renderPanel(); break;   // 🌿 the Bloom in the woods (game/bloom.js)
     case 'refugeHide': hideRefuge(k); renderPanel(); break;   // 🕳 hidden refuges (game/refuges.js)
     case 'refugeClue': refugeClue(); renderPanel(); break;
     case 'refugeSearch': searchForRefuge(); renderPanel(); break;
