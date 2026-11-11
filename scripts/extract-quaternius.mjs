@@ -33,11 +33,14 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const CLIPS = {
   Walk_Loop: 'walk', Sword_Attack: 'slash', Punch_Jab: 'thrust', Punch_Cross: 'claw',
   Spell_Simple_Enter: 'cast-enter', Spell_Simple_Shoot: 'cast-shoot', Hit_Chest: 'hit',
+  Death01: 'death',
 };
 // Trim (seconds, in the clip's own time) to the strike: Sword_Attack opens with
 // the sword held ready and closes by settling back; the swing itself runs
 // ~0.2–1.1 s. The rest is cut — the player's fade back to the stance covers it.
-const TRIM = { Sword_Attack: [0.2, 1.1] };
+// Death01's fall settles at ~1.83 s; the last 0.57 s is the body lying still.
+// Trimming there keeps the final lying frame and the tip-over in step.
+const TRIM = { Sword_Attack: [0.2, 1.1], Death01: [0, 1.83] };
 // Forge joint <- source bone. The forge's chest carries the whole upper spine
 // (spine.002 + spine.003 compose into it in world space); fingers and toes
 // have no forge joint and are dropped.

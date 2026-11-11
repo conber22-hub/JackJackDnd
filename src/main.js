@@ -115,7 +115,8 @@ function frame(){
     for (const tv of tokenViews.values()){
       const g = tv.group, u = g.userData, fig = u.fig;
       if (u.light){ u.light.intensity = u.light.userData.base * (1 - D.flick * (.5 + .5 * Math.sin(t * 13 + g.id) * Math.sin(t * 7.3 + g.id * 2))); if (u.light.userData.torch) u.light.color.lerp(hue, .05); }
-      if (!fig || g.userData.wasDead || !g.visible) continue;
+      if (!fig || !g.visible) continue;
+      if (g.userData.wasDead && !fig.userData.rig?.clip) continue;   // the dead rest — unless a death clip is playing, which poseRig drives
       if (fig.userData.rig){ poseRig(fig, t, dt, !!tv.anim); continue; }   // forged figures animate themselves
       if (fig.userData.billboard){ const v = camera.position.clone(); g.worldToLocal(v); fig.rotation.y = Math.atan2(v.x, v.z); }
       if (fig.userData.hover) fig.position.y = .15 + Math.sin(t * 2 + g.id) * .08;

@@ -24,10 +24,11 @@ void _s;
 
 export const get = () => stateMod.state;
 export { moves, resolvePath };
-import { tokenViews } from './render/minis.js';
+import { tokenViews, syncTokens } from './render/minis.js';
 import { reachState } from './render/effects.js';
 export const busy = () => [...tokenViews.values()].some(tv => tv.anim);
 export { reachState };
+export { syncTokens };   // the death spec: kill() sets t.dead, syncTokens rebuilds the figure and starts the clip
 import * as forgeStudio from './render/forge/studio.js';
 import * as clips from './render/forge/clips.js';
 import * as look from './engine/look.js';
