@@ -12,15 +12,25 @@ import { trailChoices, trailPlaceName } from '../game/trails.js';
 import { trailsForPlayers } from '../engine/road-exploration.js';
 import { transport } from '../game/workshop.js';
 import { wagonOut, wagonHours, describeWagon, EVENT_KINDS } from '../game/wagons.js';
+import { mountAtlas } from '../render/atlas.js';
+import { gfx } from '../render/gfx.js';
+
+// The 3D view needs its models (loaded from beside the app): no button in the offline
+// file or on a device with models off — the SVG is the map there.
+const can3d = () => gfx.models !== false && (typeof location === 'undefined' || location.protocol !== 'file:');
 
 const GLYPH = { mists:'🌫', gates:'🚪', village:'🏠', crossroads:'⚖', castle:'🏰', coffin:'☄', camp:'🔥', mill:'⚙', town:'🏘', lake:'🌊', ruin:'🏚', swamp:'🛖', vineyard:'🍇', hill:'🗿', tower:'🗼' };
 const opt = (v, l, on) => `<option value="${esc(v)}" ${on ? 'selected' : ''}>${esc(l)}</option>`;
 
+// The road curve's seeded midpoint — the bend the SVG draws and the 3D atlas drapes its ribbon on.
+export function roadMid(a, b, id){
+  const g = mulberry32([...id].reduce((h, c) => h * 31 + c.charCodeAt(0), 7) >>> 0);
+  return { x:(a.x + b.x) / 2 + (g() - .5) * 5, y:(a.y + b.y) / 2 + (g() - .5) * 5 };
+}
 // A gentle bend so roads don't look ruled.
 function roadPath(a, b, id){
-  const g = mulberry32([...id].reduce((h, c) => h * 31 + c.charCodeAt(0), 7) >>> 0);
-  const mx = (a.x + b.x) / 2 + (g() - .5) * 5, my = (a.y + b.y) / 2 + (g() - .5) * 5;
-  return `M${a.x} ${a.y} Q${mx.toFixed(1)} ${my.toFixed(1)} ${b.x} ${b.y}`;
+  const m = roadMid(a, b, id);
+  return `M${a.x} ${a.y} Q${m.x.toFixed(1)} ${m.y.toFixed(1)} ${b.x} ${b.y}`;
 }
 function mapSVG(V, sel, onRoute, player = false){
   // the players' copy shows where they have been, and only rumours of what is next door
@@ -66,6 +76,7 @@ function mapSVG(V, sel, onRoute, player = false){
       <radialGradient id="vcglow"><stop offset="0%" stop-color="#b8202a" stop-opacity=".55"/><stop offset="100%" stop-color="#b8202a" stop-opacity="0"/></radialGradient>
     </defs>
     <rect width="100" height="64" fill="url(#vground)"/>
+    <image href="assets/overworld/barovia-relief.svg" x="0" y="0" width="100" height="64" preserveAspectRatio="none"/>
     <g class="vtrees">${trees}</g><g class="vpeaks">${peaks}</g>
     <path class="vriver" d="M94 42 Q80 39 69 35 T56 37 T44 43 T37 48 T30 52 T26 56"/>
     <ellipse class="vlake" cx="29" cy="20" rx="6.5" ry="3.6"/><ellipse class="vlake" cx="26.5" cy="56.5" rx="3.5" ry="2"/>
@@ -94,10 +105,10 @@ export function valleyTab(){
   const onRoute = new Set(); if (path) for (let i = 1; i < path.length; i++) onRoute.add(roadBetween(path[i - 1], path[i]).id);
   if (V.journey) for (let i = 1; i < V.journey.path.length; i++) onRoute.add(roadBetween(V.journey.path[i - 1], V.journey.path[i]).id);
   const maps = placeMaps(p);
-  let h = `<h3>The Valley of Barovia <button class="btn small" style="float:right" data-act="valleyMap">⤢ Enlarge</button></h3>
+  let h = `<h3>The Valley of Barovia <button class="btn small" style="float:right" data-act="valleyMap">⤢ Enlarge</button>${can3d() ? `<button class="btn small ${ui.atlas3d ? 'on' : ''}" style="float:right" data-act="valleyAtlas">🗺 3D</button>` : ''}</h3>
     <div class="muted">${V.journey ? `On the road to <b>${esc(placeById(V.journey.to).name)}</b>.` : `The party is at <b>${esc(here.name)}</b>.`} ${V.visited.length} of ${VALLEY_PLACES.length} places seen · ${V.journeys} journey${V.journeys === 1 ? '' : 's'}.</div>
     <div class="trait">🕯 <b>${esc(clockText())}</b>${V.weather ? ` · ${esc(V.weather)}` : ''}</div>
-    ${mapSVG(V, sel, onRoute)}
+    ${ui.atlas3d ? '<div id="atlasBox"></div>' : mapSVG(V, sel, onRoute)}
     <div class="card sel"><div class="hd"><span class="nm">${GLYPH[p.kind] || ''} ${esc(p.name)}</span>${V.visited.includes(p.id) ? '' : '<span class="muted">not yet seen</span>'}</div>
       <div class="look">${esc(p.blurb)}</div>
       ${p.sessions.length ? `<div class="trait"><b>Sessions here.</b> ${p.sessions.map(n => `<span class="chip" data-act="session" data-k="${n}">${n}</span>`).join('')}</div>` : ''}
@@ -135,6 +146,15 @@ export function valleyTab(){
   h += `<div class="row" style="margin-top:8px"><button class="btn small ${V.shared ? 'on' : ''}" data-act="valleyShare">${V.shared ? '📜 Shared with the table' : '📜 Share the map with the table'}</button></div>
     <div class="muted">${V.shared ? 'Players have a Map tab: the places they have reached, rumours of the places next door, and where they are now.' : 'Players see nothing of this map until you share it — and then only what they have reached.'}</div>`;
   h += `<div class="muted" style="margin-top:8px">Roads: <span class="key road"></span> the Svalich Road · <span class="key path"></span> paths · <span class="key trail"></span> trails. Tap a place to plan the way.</div>`;
+  if (ui.atlas3d){
+    // The 3D view mounts after the panel's HTML is in the DOM (renderPanel sets it just
+    // before this returns); the mount re-runs on every render, the canvas is re-hung each time.
+    const j = V.journey && placeById(V.journey.to);
+    const lantern = j ? { x:(here.x + j.x) / 2, y:(here.y + j.y) / 2 } : here;
+    const mids = Object.fromEntries(VALLEY_ROADS.map(r => [r.id, roadMid(placeById(r.a), placeById(r.b), r.id)]));
+    const opts = { places:VALLEY_PLACES.map(p => p.id), roads:VALLEY_ROADS.map(r => r.id), mids, onRoute, sel, lantern, dread:state.dread || 1 };
+    queueMicrotask(() => { const host = document.querySelector('#atlasBox'); if (host && ui.atlas3d) mountAtlas(host, opts); });
+  }
   return h;
 }
 // 🍂 On the side trails (game/trails.js): where they are, the ways on, and back to the road.

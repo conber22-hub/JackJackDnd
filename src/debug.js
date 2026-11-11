@@ -31,8 +31,9 @@ export { reachState };
 export { syncTokens };   // the death spec: kill() sets t.dead, syncTokens rebuilds the figure and starts the clip
 import * as forgeStudio from './render/forge/studio.js';
 import * as clips from './render/forge/clips.js';
+import * as atlas from './render/atlas.js';
 import * as look from './engine/look.js';
-export { forgeStudio, clips, look, renderer };
+export { forgeStudio, clips, atlas, look, renderer };
 export { tokenViews };
 import * as objects from './game/objects.js';
 export { objects };

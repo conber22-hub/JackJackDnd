@@ -270,6 +270,7 @@ document.addEventListener('click', e => {
     case 'session': state.campaign.session = +k; if (ui.tab === 'valley') ui.tab = 'story'; renderTabs(); changed(); renderPanel(); $('#tabBody').scrollTop = 0; break;
     // the valley (overworld)
     case 'valleySel': ui.valleySel = k; renderPanel(); if (!$('#valleyModal').classList.contains('hidden')) $('#valleyBox').innerHTML = valleyMapHTML(); break;
+    case 'valleyAtlas': ui.atlas3d = !ui.atlas3d; renderPanel(); break;
     case 'valleyMap': $('#valleyBox').innerHTML = valleyMapHTML(); $('#valleyModal').classList.remove('hidden'); break;
     case 'valleyMapClose': $('#valleyModal').classList.add('hidden'); break;
     case 'valleyGo': ui.valleySel = k; ui.tab = 'valley'; renderTabs(); renderPanel(); $('#tabBody').scrollTop = 0; break;
