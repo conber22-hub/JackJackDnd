@@ -13,7 +13,7 @@ Merged, tested by their own unit tests, not yet in the app. Each line: what it i
   (generator: plan at generation, `f.clear` the cells, draw with `looseModel`).
 - **Roadside horror** (#75): `render/barovia-horror-*.js`; stage at road events (`f.events`), DM-only until sprung.
 - **Hidden entrances** (#77): `render/barovia-hidden-*.js`; sealed/revealed pairs, pair with the refuges engine below.
-- **Dead villages** (#80): `engine/barovia-dead-villages.js` + loader; swap `f.buildings` looks by decay stage
+- ✅ done with the planner and drawn decay, not the pack's models (11 Nov, `game/decay.js`, Maps tab): **Dead villages** (#80): `engine/barovia-dead-villages.js` + loader; swap `f.buildings` looks by decay stage
   (inhabited → abandoned → Moss) on settlement maps; hide the code-drawn building it replaces.
 - **Overworld atlas** (#71): `overworld/*.glb`, landmarks; a 3D valley view beside the Valley tab's SVG map.
 

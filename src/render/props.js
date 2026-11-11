@@ -403,6 +403,8 @@ export function buildBuilding(b, k = 0){
     if (dead && s === 1){   // the roof has gone through on one side: a black gap, a rafter across it
       const at = (dice() - .5) * len * .45, hole = box(g, long ? len * .24 : slope * .5, .1, long ? slope * .5 : len * .24, '#0e0c0b', 0, H + rise / 2, 0, { r:1 });
       hole.position.copy(r.position); hole.rotation.copy(r.rotation); if (long) hole.position.x = at; else hole.position.z = at;
+      const gap2 = box(g, long ? len * .13 : slope * .28, .1, long ? slope * .28 : len * .13, '#0e0c0b', 0, 0, 0, { r:1 }); gap2.position.copy(hole.position); gap2.rotation.copy(r.rotation);
+      if (long){ gap2.position.x += len * .17; gap2.position.z += slope * .08; gap2.position.y -= rise * .12; } else { gap2.position.z += len * .17; gap2.position.x += slope * .08; gap2.position.y -= rise * .12; }
       const raf = box(g, long ? .07 : slope * .5, .12, long ? slope * .5 : .07, DARK, 0, 0, 0); raf.position.copy(hole.position); raf.rotation.copy(r.rotation); if (long) raf.position.x += len * .05; else raf.position.z += len * .05;
     }
   }
@@ -426,18 +428,24 @@ export function buildBuilding(b, k = 0){
     if (!unlit && !WINDOWS.has(w.material)){ WINDOWS.add(w.material); windowK = -1; }   // they light up at dusk (windowGlow, from the valley's clock)
     if (dead){ board(t, H * .55, .46, .55); board(t, H * .55, .46, -.55); }
   }
-  // the Moss: pads of it over the roof and up the walls, a few pale spires, all faintly alight
+  // the Moss: it grows in patches, pads of it heaped over the roof, up the walls and out over the ground at their foot,
+  // a few pale spires standing out of the thickest, all faintly alight
   if (moss){
-    const pad = geo('mosspad', () => new THREE.IcosahedronGeometry(.3, 1)), MOSS = { e:'#2fbf7a', ei:.75, r:.75 }, n = Math.round(7 + b.w * b.h * .55);
+    const pad = geo('mosspad', () => new THREE.IcosahedronGeometry(.3, 1)), n = Math.round(16 + b.w * b.h * 1.1);
+    const roofY = u => H + rise * (1 - Math.abs(u) / (span / 2 + .15)) + .03;
+    const hearts = Array.from({ length:3 + Math.floor(dice() * 2) }, () => [(dice() - .5) * span * .8, (dice() - .5) * len * .8]);   // where it is thickest, on the roof
     for (let i = 0; i < n; i++){
-      const s = .6 + dice() * 1.1, onRoof = dice() < .55, c = dice() < .3 ? '#8fcf9a' : dice() < .5 ? '#3f6f4c' : '#5f9468';
-      let x, y, z;
-      if (onRoof){ const u = (dice() - .5) * span * .92, v = (dice() - .5) * len * .9; y = H + rise * (1 - Math.abs(u) / (span / 2 + .15)) + .04; x = long ? v : u; z = long ? u : v; }
-      else { const sideK = Math.floor(dice() * 4), t = dice() - .5; y = .08 + dice() * dice() * H * .9; x = sideK < 2 ? t * b.w : (sideK === 2 ? -1 : 1) * (b.w / 2); z = sideK < 2 ? (sideK ? 1 : -1) * (b.h / 2) : t * b.h; }
-      const m = mesh(g, pad, c, x, y, z, MOSS); m.scale.set(s, s * (.35 + dice() * .3), s * (.8 + dice() * .5)); m.rotation.y = dice() * 6.28;
+      const where = dice(), s = .35 + dice() * dice() * 1.0, pale = dice() < .14, c = pale ? '#9fd8a4' : dice() < .5 ? '#2f5a3c' : '#3f7650';
+      let x, y, z, flat = .3 + dice() * .3;
+      if (where < .55){ const h = hearts[Math.floor(dice() * hearts.length)], u = Math.max(-span / 2, Math.min(span / 2, h[0] + (dice() - .5) * 1.5)), v = Math.max(-len / 2, Math.min(len / 2, h[1] + (dice() - .5) * 1.7));
+        y = roofY(u); x = long ? v : u; z = long ? u : v; }
+      else { const sideK = Math.floor(dice() * 4), t = dice() - .5, outK = where < .8 ? 0 : .15 + dice() * .5;   // (up a wall, or on the ground at its foot)
+        y = outK ? .03 : .08 + dice() * dice() * H * .95; if (outK) flat = .16;
+        x = sideK < 2 ? t * b.w : (sideK === 2 ? -1 : 1) * (b.w / 2 + outK); z = sideK < 2 ? (sideK ? 1 : -1) * (b.h / 2 + outK) : t * b.h; }
+      const m = mesh(g, pad, c, x, y, z, pale ? { e:'#49d890', ei:.9, r:.7 } : { e:'#1f8f58', ei:.35, r:.85 }); m.scale.set(s, s * flat, s * (.75 + dice() * .5)); m.rotation.y = dice() * 6.28;
     }
-    for (let i = 0; i < 2 + Math.floor(dice() * 3); i++){ const u = (dice() - .5) * span * .5, v = (dice() - .5) * len * .7, h = .5 + dice() * .7;
-      cone(g, .09, h, '#b9e6b0', long ? v : u, H + rise * (1 - Math.abs(u) / (span / 2 + .15)) + h / 2, long ? u : v, { e:'#59e09a', ei:1.1, r:.6 }, 5); }
+    for (let i = 0; i < 2 + Math.floor(dice() * 3); i++){ const h0 = hearts[i % hearts.length], u = h0[0] * .8, v = h0[1] * .8, h = .45 + dice() * .7;
+      cone(g, .08, h, '#b9e6b0', long ? v : u, roofY(u) + h / 2, long ? u : v, { e:'#59e09a', ei:1.1, r:.6 }, 5); }
   }
   // a windmill's sails, on the street side
   if (b.mill){
