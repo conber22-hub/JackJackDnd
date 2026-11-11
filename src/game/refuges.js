@@ -1,11 +1,12 @@
 /* 🕳 HIDDEN REFUGES — ChatGPT's engine/hidden-refuges.js at the table: places people made to hide from the Count,
    under a road, behind a pantry, through the roots, down a crack in the rock. The DM hides one on a floor (Maps tab);
    a clue can be given (a rumour, a document); a hero beside the spot searches (Wisdom (Perception), the clue lowers the
-   DC by 3); found, its entrance shows on the map (the new road-hatch / pantry / root-screen / fissure models); the
+   DC by 3); found, its entrance shows on the map (the #77 models — the road hatch, the inn cellar, the hollow oak,
+   the moss curtain — a 3×3 or 4×4 patch beside where the hero stands); the
    party goes in, and its inside is its own map (built rooms, or a natural cave), with a dilemma for the DM. Leaving
    by the entrance brings them back to where they stood. The book lives on the campaign, DM-side. */
 import { state, ui, tokById, log } from '../engine/state.js';
-import { newRefugeBook, seedRefuge, learnRefugeClue, searchRefuge, enterRefuge, leaveRefuge } from '../engine/hidden-refuges.js';
+import { newRefugeBook, seedRefuge, learnRefugeClue, searchRefuge, enterRefuge, leaveRefuge, entrancePropAt } from '../engine/hidden-refuges.js';
 import { REFUGES } from '../data/hidden-refuges.js';
 import { ensureMapId, goToMap } from './maps.js';
 import { changed } from './session.js';
@@ -14,7 +15,6 @@ import { showCard, toast } from '../ui/hud.js';
 import { d } from '../util/core.js';
 
 export const REFUGE_KINDS = Object.keys(REFUGES);
-const ENTRANCE = { road:'hatchOpen', house:'pantryPassage', roots:'rootScreen', cave:'rockFissure' };   // src/data/prop-packs.js
 export const refugeBook = () => (state.campaign.refuges ||= newRefugeBook(String(state.campaign?.valley?.seed || state.meta.seed)));
 export const refugeHere = (L = ui.floor) => refugeBook().sites.find(s => s.mapId === state.meta.mapId && s.level === L) || null;
 export const refugeVisit = () => { const a = refugeBook().active; return a && a.mapId === state.meta.mapId ? a : null; };
@@ -40,7 +40,8 @@ export function searchForRefuge(){
   state.campaign.refuges = r.book;
   if (r.found){
     const f = state.floors[ui.floor]; f.props ||= [];
-    if (!f.props.some(p => p.refuge === s.id)) f.props.push({ id:f.nextObj++, k:ENTRANCE[s.kind] || 'hatchOpen', x:s.position.x, y:s.position.y, rot:0, refuge:s.id });
+    // the entrance is a multi-square patch beside where the hero stands (the #77 model for this kind)
+    if (!f.props.some(p => p.refuge === s.id)){ const at = entrancePropAt(s); f.props.push({ id:f.nextObj++, k:REFUGES[s.kind].entrance, x:at.x, y:at.y, rot:0, refuge:s.id }); }
     buildFloor(ui.floor);
     showCard({ kind:'', title:`${t.name} finds it`, sub:`🎲 ${roll} → ${total}`, flair:r.tell }, false);
     log(`🕳 ${t.name} finds a hidden way.`);

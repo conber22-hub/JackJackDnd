@@ -17,7 +17,15 @@ test('a refuge down the rock: hidden, found by a search, gone into, and left the
     await page.evaluate(() => document.querySelectorAll('#cardLayer .pop').forEach(el => el.remove()));
     await page.locator('#tabBody [data-act="refugeSearch"]').click();
   }
-  expect(await page.evaluate(() => window.DreadDelve.get().floors[0].props.some(p => p.refuge && p.k === 'rockFissure'))).toBe(true);
+  expect(await page.evaluate(() => window.DreadDelve.get().floors[0].props.some(p => p.refuge && p.k === 'refugeCurtain'))).toBe(true);
+  // the entrance is a multi-square patch beside where Ada stands, not a single tile on the spot
+  const entrance = await page.evaluate(() => {
+    const D = window.DreadDelve, s = D.get().campaign.refuges.sites[0], p = D.get().floors[0].props.find(x => x.refuge === s.id);
+    return { at: { x: p.x, y: p.y }, siteAt: s.propAt, pos: s.position, kind: s.kind };
+  });
+  expect(entrance.at).toEqual(entrance.siteAt);
+  expect(entrance.at.x).not.toBe(entrance.pos.x);
+  expect(entrance.at.y).not.toBe(entrance.pos.y);
   await page.locator('#tabBody [data-act="refugeIn"]').click();
   await expect.poll(() => page.evaluate(() => window.DreadDelve.get().meta.template)).toBe('refuge');
   expect(await page.evaluate(n => window.DreadDelve.get().floors[0].name, site.name)).toBe(site.name);   // its own layout, not a generated dungeon

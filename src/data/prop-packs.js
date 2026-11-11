@@ -20,6 +20,14 @@ export const PACK_PROPS = {
   pantryPassage: { n:'Pantry passage',           cat:'tavern',  w:1, h:1, file:'barovian/pantry-passage.glb',     draw:'shelf',     move:'block', ht:1.3 },
   rootScreen:    { n:'Root screen',              cat:'road',    w:1, h:1, file:'barovian/root-screen.glb',        draw:'stump',     move:'block', ht:1.17 },
   rockFissure:   { n:'Rock fissure',             cat:'mine',    w:1, h:1, file:'barovian/rock-fissure.glb',       draw:'boulder',   move:'block', ht:1.33 },
+  // the hidden refuges' entrances, drawn with the #77 models (src/render/barovia-hidden-*.js): the models are 3–4
+  // squares wide, so these are multi-square props (the refuge's entrance is a 3×3 or 4×4 patch, not a single tile).
+  // file: the #77 GLBs live in public/assets/hidden-sites/, not under props/, so the path climbs out of props/
+  // with ../ — the loader resolves it to assets/hidden-sites/… as usual.
+  refugeHatch:   { n:'Refuge hatch (Svalich road)', cat:'road',  w:3, h:3, file:'../hidden-sites/svalich_road_hatch_revealed.glb', draw:'rubble', move:'block', ht:0.53 },
+  refugeCellar:  { n:'Refuge cellar (inn floor)',   cat:'tavern', w:3, h:3, file:'../hidden-sites/inn_floor_cellar_revealed.glb',  draw:'shelf',  move:'block', ht:1.15 },
+  refugeOak:     { n:'Refuge oak (Blackroot hollow)', cat:'road', w:4, h:4, file:'../hidden-sites/blackroot_hollow_oak_revealed.glb', draw:'stump', move:'block', ht:2.65 },
+  refugeCurtain: { n:'Refuge curtain (moss boulder)', cat:'mine', w:4, h:4, file:'../hidden-sites/boulder_moss_curtain_revealed.glb', draw:'boulder', move:'block', ht:1.38 },
   strawGuard:    { n:'Straw guard (target)',     cat:'keep',    w:1, h:1, file:'barovian/straw-guard.glb',        draw:'scarecrow', move:'block', ht:1.38 },
   lanternPlate:  { n:'Pressure plate',           cat:'keep',    w:1, h:1, file:'barovian/lantern-plate.glb',      draw:'rubble',    move:'walk', ht:0.13 },
   // set 02 · roads and rescues
