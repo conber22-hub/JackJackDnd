@@ -54,6 +54,15 @@ export function rollEvents(rng, { gaze = 1, bloom = false, avoid = [] } = {}, co
    Each fills a clearing (rect) beside the road: { name, notes, props, room? (a smaller walkable part),
    buildings?, water? } — props are [kind, x, y, rot] in map squares. */
 const P = (k, x, y, r = 0) => [k, x, y, r];
+// 🌉 what a road crosses its river on (a road's own bridge in data/barovia-map.js, or by the way it is), and what the DM hears
+const BRIDGE_BY_WAY = { road:'timber', path:'foot', trail:'rope' };
+export const BRIDGE_NOTES = {
+  timber:'The road crosses the river on an old timber bridge.',
+  stone:'The road crosses the river on an old stone bridge, its parapets green with moss and its keystone cut with a worn sun.',
+  foot:'The path crosses the river on a narrow footbridge of split logs, with a rail on one side worn smooth by hands.',
+  marsh:'The path crosses the black water on a sagging boardwalk, the planks soft and the reeds high on either side.',
+  rope:'The trail crosses the river on a rope bridge that sways underfoot; the knots are old, and some are newer than they should be.',
+};
 const MODULES = {
   den:      { w:7, h:6, make:(r, g) => ({ name:'A wolf den', notes:'Gnawed bones and a hollow under the roots. It smells of wet dog and old blood.',
               props:[P('boulder', r.x + 1, r.y + 1), P('deadtree', r.x + r.w - 2, r.y + 1), P('bones', r.x + 2, r.y + r.h - 2), P('bones', r.x + 4, r.y + 2), P('boulder', r.x + r.w - 2, r.y + r.h - 2)] }) },
@@ -229,7 +238,7 @@ export function genStretch(spec){
           if (onRoad) lay.props.push(P('bridge', x, yy, 0)); else { lay.water.push([x, yy]); taken.add(yy * N + x); }
         }
       }
-      lay.riverNote = 'The road crosses the river on an old timber bridge.';
+      lay.bridge = road.bridge || BRIDGE_BY_WAY[road.way] || 'timber'; lay.riverNote = BRIDGE_NOTES[lay.bridge] || BRIDGE_NOTES.timber;
     }
   }
   // no river: sometimes a brook winds across instead, and the road fords it (its own dice, so the road's shape stays)

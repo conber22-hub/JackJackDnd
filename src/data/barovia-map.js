@@ -6,7 +6,9 @@
           clearing, as a map of its own) · maps: more than one to choose from
    state  the id in the Story tab's Places list, so a place's mood (quiet, watched, blooming…) is shared
    lab    where the name sits on the map: below (default), n = above, w = to the left
-   len    how many stretches of road (maps) a road takes · way: road | path | trail · river: it crosses water */
+   len    how many stretches of road (maps) a road takes · way: road | path | trail · river: it crosses water
+          · bridge: what it crosses on (timber, stone, foot, marsh, rope; by default timber on a road, a footbridge on a
+          path, a rope bridge on a trail: engine/overland.js) */
 export const VALLEY_PLACES = [
   { id:'mists', name:'The Mist Wall', x:95, y:22, lab:'w', kind:'mists', map:'landmark', state:null, sessions:[0],
     blurb:'Where the Salt Road ended. Behind them, fog the colour of old pewter. There is no way back through it.' },
@@ -45,19 +47,19 @@ export const VALLEY_PLACES = [
 export const VALLEY_ROADS = [
   { id:'r-mist',    a:'mists',       b:'gates',       name:'Out of the mist',                  len:1, way:'road',  mist:true },
   { id:'r-gates',   a:'gates',       b:'village',     name:'Old Svalich Road (the gates)',     len:2, way:'road' },
-  { id:'r-east',    a:'village',     b:'crossroads',  name:'Old Svalich Road',                 len:2, way:'road',  river:true },
+  { id:'r-east',    a:'village',     b:'crossroads',  name:'Old Svalich Road',                 len:2, way:'road',  river:true, bridge:'stone' },
   { id:'r-castle',  a:'crossroads',  b:'castle',      name:'The castle road',                  len:2, way:'road' },
   { id:'r-cut',     a:'crossroads',  b:'coffin',      name:'The burned cut',                   len:2, way:'trail' },
-  { id:'r-tser',    a:'crossroads',  b:'tser',        name:'The Tser Pool path',               len:1, way:'path',  river:true },
+  { id:'r-tser',    a:'crossroads',  b:'tser',        name:'The Tser Pool path',               len:1, way:'path',  river:true, bridge:'foot' },
   { id:'r-west',    a:'tser',        b:'bonegrinder', name:'Old Svalich Road (west)',          len:2, way:'road' },
   { id:'r-vallaki', a:'bonegrinder', b:'vallaki',     name:'Old Svalich Road (to Vallaki)',    len:2, way:'road' },
   { id:'r-lake',    a:'vallaki',     b:'lake',        name:'The lake path',                    len:1, way:'path' },
   { id:'r-argyn',   a:'vallaki',     b:'argyn',       name:'The cliff path',                   len:2, way:'trail' },
-  { id:'r-berez',   a:'vallaki',     b:'berez',       name:'The river path',                   len:2, way:'path',  river:true },
+  { id:'r-berez',   a:'vallaki',     b:'berez',       name:'The river path',                   len:2, way:'path',  river:true, bridge:'marsh' },
   { id:'r-winery',  a:'vallaki',     b:'winery',      name:'Old Svalich Road (to Krezk)',      len:2, way:'road' },
   { id:'r-krezk',   a:'winery',      b:'krezk',       name:'The Krezk road',                   len:2, way:'road' },
   { id:'r-yester',  a:'krezk',       b:'yester',      name:'The hill path',                    len:1, way:'trail' },
-  { id:'r-tower',   a:'berez',       b:'tower',       name:'The tarn path',                    len:2, way:'trail', river:true },
+  { id:'r-tower',   a:'berez',       b:'tower',       name:'The tarn path',                    len:2, way:'trail', river:true, bridge:'rope' },
 ];
 
 /* What the road throws at them. One is rolled for each stretch (two when the Gaze is high).

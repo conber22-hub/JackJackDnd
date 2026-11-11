@@ -120,8 +120,9 @@ function takeVariety(list, numberOf, tallOnly = false){
     if (!out.has(v)) out.set(v, []); out.get(v).push(list[k]); list.splice(k, 1); }
   return out;
 }
-/* 🌉 Where a road crosses a river (engine/bridges.js finds the patch of planks), one timber bridge with posts and rails
-   stands over the water in their place: the bridge from ChatGPT's road kit (assets/roads), without the square of land
+/* 🌉 Where a road crosses a river (engine/bridges.js finds the patch of planks), one bridge stands over the water in
+   their place: timber or stone on a road, a footbridge on a path, a boardwalk in the marsh, a rope bridge on a trail
+   (the floor's f.bridge, from the road generator), from ChatGPT's road kit (assets/roads), without the square of land
    the kit sets it on. Until the model has come, and in the offline file, the planks are drawn as before. */
 // The horror pack's pieces come without normals (so they light flat and pale): one copy of each with its faces worked
 // out and flat-shaded, a little darkened to sit in the woods, kept.
@@ -137,7 +138,13 @@ function darkened(path){
   darkTpl.set(path, d); return d;
 }
 const bridgeOnly = Object.assign(box => box.max.z - box.min.z < 7, { part:'bridge' });
-const bridgeModel = () => instancedLoose('assets/roads/bridge_timber_ew.glb', null, [.36, .28, .21], bridgeOnly);
+// each kind of the kit's bridges: how wide it is between its rails (a timber road bridge 3.5, a stone one 3.7 between its
+// parapets, the path and trail bridges 2.5), and a tint so its wood or stone sits in the woods' light
+const BRIDGES = {
+  timber:{ wide:3.5, tint:[.36, .28, .21] }, stone:{ wide:3.7, tint:[.15, .16, .14] },
+  foot:{ wide:2.5, tint:[.32, .25, .19] }, marsh:{ wide:2.5, tint:[.22, .21, .15] }, rope:{ wide:2.5, tint:[.3, .24, .18] },
+};
+const bridgeModel = (kind = 'timber') => instancedLoose(`assets/roads/bridge_${BRIDGES[kind] ? kind : 'timber'}_ew.glb`, null, (BRIDGES[kind] || BRIDGES.timber).tint, bridgeOnly);
 function capWithSnow(tm){ const caps = new THREE.InstancedMesh(snowCapGeometry(), swaying(treeMaterial, TREE_SWAY), tm.count); caps.instanceMatrix.array.set(tm.instanceMatrix.array); caps.receiveShadow = tm.receiveShadow; return caps; }
 function groundMat(fv, kind){
   fv.mats.ground ||= {};
@@ -216,7 +223,7 @@ export function buildFloor(L, opt = {}){
   const tiles = [];
   const spans = new Set(f.span || []);   // a rope bridge has no floor under it (drawn below, over the drop)
   // a river bridge: the water runs on under it, and it is drawn whole (below, after the props)
-  const decks = bridgeModel() ? plankBridges(f) : [], decked = new Set(decks.flatMap(d => d.cells));
+  const decks = plankBridges(f).filter(d => bridgeModel(d.kind)), decked = new Set(decks.flatMap(d => d.cells));
   for (let i = 0; i < g.length; i++) if (walk(g[i]) && g[i] !== T.DOWN && showTile(i) && !spans.has(i) && !decked.has(i)) tiles.push(i);
   for (const [i, w] of wedges) if (!pv || w.near.some(j => exp.has(j))) tiles.push(i);
   const kitFloor = kitFor('floor'), kitWall0 = kitFor('wall');
@@ -534,12 +541,12 @@ export function buildFloor(L, opt = {}){
     if (f.height) m.position.y += groundY(f, p.x, p.y);   // standing on a rise
     fv.built.add(m);
   }
-  // the river bridges: the kit's is 8 long and 3.4 between the rails; this one reaches a little onto each bank
+  // the river bridges: the kit's are 8 long (BRIDGES above for how wide); each reaches a little onto either bank
   for (const d of decks){
     if (pv && !d.cells.some(i => exp.has(i) || seen(i))) continue;
-    const bm = bridgeModel(), m = new THREE.Mesh(bm.geometry, bm.material), across = d.ew ? d.w : d.h, wide = d.ew ? d.h : d.w;
+    const bm = bridgeModel(d.kind), m = new THREE.Mesh(bm.geometry, bm.material), across = d.ew ? d.w : d.h, wide = d.ew ? d.h : d.w;
     m.position.set(wx(d.x) + (d.w - 1) / 2, f.height ? groundY(f, d.x, d.y) : 0, wz(d.y) + (d.h - 1) / 2);
-    m.rotation.y = d.ew ? 0 : Math.PI / 2; m.scale.set((across + 1.3) / 8, .9, wide / 3.4);
+    m.rotation.y = d.ew ? 0 : Math.PI / 2; m.scale.set((across + 1.3) / 8, .9, wide / BRIDGES[d.kind].wide);
     m.castShadow = m.receiveShadow = shadows; m.userData.propId = d.id; m.userData.riverBridge = 1; fv.built.add(m);
   }
   // 🕯 the roadside horrors (engine/horror-roads.js, ChatGPT's set pieces): the DM sees them all, the players those shown;

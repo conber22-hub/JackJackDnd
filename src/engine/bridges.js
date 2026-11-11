@@ -2,7 +2,11 @@
    This finds each solid patch of them, so the renderer can stand one whole bridge over it (render/floors.js), and says
    which way it runs: across the water, so the river lies along its sides. Pure: no DOM, no Three.js. */
 
-// → [{ x, y, w, h, ew (it runs east–west), cells:[index…], id (a plank's, for picking) }] for patches at least 2 by 2.
+// The kinds of bridge (the road kit's): a floor's f.bridge, set by the road generator; timber when it says nothing.
+export const BRIDGE_KINDS = ['timber', 'stone', 'foot', 'marsh', 'rope'];
+export const bridgeKind = f => BRIDGE_KINDS.includes(f?.bridge) ? f.bridge : 'timber';
+
+// → [{ x, y, w, h, ew (it runs east–west), kind, cells:[index…], id (a plank's, for picking) }] for patches at least 2 by 2.
 export function plankBridges(f){
   const planks = (f?.props || []).filter(p => p.k === 'bridge' && !p.broken);
   if (planks.length < 4) return [];
@@ -24,7 +28,7 @@ export function plankBridges(f){
     for (let x = x0; x <= x1; x++){ if (water.has((y0 - 1) * W + x)) ns++; if (water.has((y1 + 1) * W + x)) ns++; }
     for (let y = y0; y <= y1; y++){ if (water.has(y * W + x0 - 1)) ew++; if (water.has(y * W + x1 + 1)) ew++; }
     if (!ns && !ew) continue;                                  // (planks over dry ground: a boardwalk, not a bridge)
-    out.push({ x:x0, y:y0, w, h, ew:ns >= ew, cells:cells.sort((a, b) => a - b), id:at.get(start).id });
+    out.push({ x:x0, y:y0, w, h, ew:ns >= ew, kind:bridgeKind(f), cells:cells.sort((a, b) => a - b), id:at.get(start).id });
   }
   return out;
 }

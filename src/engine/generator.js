@@ -215,6 +215,7 @@ export function layoutFloor(L, W, H, spec, anchor, isLast = true){
   // the Mists: deep mist (heavily obscured) and the Mist Wall itself (it turns travellers back: game/actions.js)
   f.mists = [...new Set([...(lay.mists || []), ...(lay.mistWall || [])].map(([x, y]) => y * W + x))].filter(i => walk(f.grid[i]) && f.grid[i] !== T.UP && f.grid[i] !== T.DOWN);
   f.mistWall = [...new Set((lay.mistWall || []).map(([x, y]) => y * W + x))].filter(i => f.mists.includes(i));
+  if (lay.bridge) f.bridge = lay.bridge;   // 🌉 what the road's river bridge is (engine/bridges.js, render/floors.js)
   // fords and flooded floors: walkable water to the knee, difficult terrain
   f.shallow = [...new Set((lay.shallow || []).map(([x, y]) => y * W + x))].filter(i => walk(f.grid[i]));
   for (const i of f.shallow) rough.add(i);
