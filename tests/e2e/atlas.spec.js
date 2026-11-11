@@ -111,12 +111,12 @@ test('the 3D view survives a panel re-render, camera unmoved', async ({ page }) 
 });
 
 test('no injection, no 3D: the models never arrive and the map is offered back', async ({ page }) => {
-  test.setTimeout(120000); // startDM is ~50s and the fail note needs its 8s timer on top
+  test.setTimeout(150000); // startDM is ~50s and the fail note needs its 20s timer on top
   await startDM(page);
   await page.locator('#tabs button[data-act="tab"][data-k="valley"]').click();
   await page.locator('[data-act="valleyAtlas"]').click();
   await expect(page.locator('#atlasBox canvas')).toBeVisible();
-  await expect(page.locator('#atlasBox')).toContainText("didn't load", { timeout: 12000 });
+  await expect(page.locator('#atlasBox')).toContainText("didn't load", { timeout: 30000 });
   await page.locator('#atlasBox [data-act="valleyAtlas"]').click();
   await expect(page.locator('.valley-map')).toBeVisible();
 });

@@ -3,7 +3,7 @@ export const REFUGES = {
   road: {
     names: ['The Milepost Refuge', 'The Cellar of Spare Boots'],
     props: ['milestone', 'log', 'cart', 'boulder'],
-    entrance: 'refugeHatch',   // the #77 model that draws this kind's entrance (src/data/prop-packs.js)
+    entrance: 'refugeHatch', small: 'hatchOpen', entranceBlocks: false,   // the #77 model that draws this kind's entrance (src/data/prop-packs.js)
     dc: 15,
     clue: 'A carter recalls a road repair that took one night. Fresh earth never showed, but the workmen carried down a ladder.',
     tell: 'The grit gives way along a straight seam. A leather loop lies flat beneath it.',
@@ -15,7 +15,7 @@ export const REFUGES = {
   house: {
     names: ['The Rooms Behind the Hearth', 'The Second Pantry'],
     props: ['shelf', 'bookshelf', 'wardrobe', 'barrel'],
-    entrance: 'refugeCellar',   // the #77 model that draws this kind's entrance (src/data/prop-packs.js)
+    entrance: 'refugeCellar', small: 'pantryPassage', entranceBlocks: false,   // the #77 model that draws this kind's entrance (src/data/prop-packs.js)
     dc: 16,
     clue: 'An old carpenter says the house should have been a pace wider inside. The owner paid extra to keep that pace out of the plans.',
     tell: 'The panel lifts on a concealed pin. Cold air passes through a hand-width gap.',
@@ -27,7 +27,7 @@ export const REFUGES = {
   roots: {
     names: ['The Hollow Beneath the Roots', 'The Three-Root Warren'],
     props: ['pine', 'deadtree', 'stump'],
-    entrance: 'refugeOak',   // the #77 model that draws this kind's entrance (src/data/prop-packs.js)
+    entrance: 'refugeOak', small: 'rootScreen',   // the #77 model that draws this kind's entrance (src/data/prop-packs.js)
     preset: 'warren',
     dc: 15,
     clue: 'A woodsman tells the children to count three roots and look for the one rubbed clean. He makes them repeat it before they leave.',
@@ -40,7 +40,7 @@ export const REFUGES = {
   cave: {
     names: ['The Candlebone Grotto', 'The Shelter at Still Water'],
     props: ['boulder', 'stone', 'rubble'],
-    entrance: 'refugeCurtain',   // the #77 model that draws this kind's entrance (src/data/prop-packs.js)
+    entrance: 'refugeCurtain', small: 'rockFissure',   // the #77 model that draws this kind's entrance (src/data/prop-packs.js)
     preset: 'grotto',
     dc: 14,
     clue: 'A shepherd says one crack in the rock breathes warm on winter mornings. The flock will stand near it, but never cross it.',

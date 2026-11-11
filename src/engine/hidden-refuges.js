@@ -2,6 +2,7 @@ import { REFUGES } from '../data/hidden-refuges.js';
 import { propSize } from '../data/props.js';
 import { cavern } from './caverns.js';
 import { ORTHO, passMove } from './grid.js';
+import { T } from './tiles.js';
 import { hashSeed, mulberry32 } from '../util/core.js';
 
 const SIZE = 28;
@@ -60,22 +61,24 @@ function entranceCandidates(floor, rule, roots, size) {
   // A multi-square entrance: the refuge's position is the tile the hero stands on (beside the entrance), and the
   // entrance itself is a w × h patch beside that tile. The patch must be clear ground (reachable, unused) so the
   // #77 model never clips through a wall. Try south, east, north, west in that order, and keep the first clear one.
-  const { w, h } = size;
+  const { w, h } = size, blocks = rule.entranceBlocks !== false;
   const patch = (p, dir) => {
     const hw = Math.floor((w - 1) / 2), hh = Math.floor((h - 1) / 2);
     const [x0, y0] = dir === 'S' ? [p.x - hw, p.y + 1] : dir === 'E' ? [p.x + 1, p.y - hh]
       : dir === 'N' ? [p.x - hw, p.y - h] : [p.x - w, p.y - hh];
     for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) {
-      if (!within(x, y) || !seen.has(index(x, y)) || used.has(index(x, y))) return null;
+      if (!within(x, y) || !seen.has(index(x, y)) || used.has(index(x, y)) || (blocks && floor.grid[index(x, y)] === T.HALL)) return null;
     }
     return { x: x0, y: y0 };
   };
+  const spots = (nearby.length || roots) ? nearby : free.filter(i => { const { x, y } = point(i); return ORTHO.some(([dx, dy]) => !pass(x + dx, y + dy)); });
   const placed = [];
-  for (const i of (nearby.length || roots) ? nearby : free.filter(i => { const { x, y } = point(i); return ORTHO.some(([dx, dy]) => !pass(x + dx, y + dy)); })) {
+  for (const i of spots) {
     const p = point(i);
     for (const dir of ['S', 'E', 'N', 'W']) { const propAt = patch(p, dir); if (propAt){ placed.push({ position: p, propAt }); break; } }
   }
-  return placed;
+  // (where no patch is clear, a spot still takes the small, one-square entrance: a refuge is never lost for want of room)
+  return placed.length ? placed : spots.map(i => ({ position: point(i), propAt: null }));
 }
 
 /** Host-only placement on an eligible road, interior, wooded or rocky floor. */
@@ -100,13 +103,12 @@ export function seedRefuge(book, floor, { mapId, kind, chance = 0.35 }) {
   return { book: { ...book, sites: [...book.sites, site] }, id };
 }
 
-/** Where the entrance prop sits for a site: its stored patch, or (for a book saved before the patch) centred on the position. */
+/** The entrance prop for a site: the #77 model on its stored patch, or (no room for one, or a book saved before the
+ *  patches) the small one-square entrance on the spot itself. → { k, x, y } */
 export function entrancePropAt(site) {
   const rule = REFUGES[site?.kind];
-  if (!rule) return { ...site.position };
-  const { w, h } = propSize({ k: rule.entrance });
-  if (validPoint(site.propAt)) return { ...site.propAt };
-  return { x: site.position.x - Math.floor((w - 1) / 2), y: site.position.y - Math.floor((h - 1) / 2) };
+  if (rule && validPoint(site.propAt)) return { k: rule.entrance, ...site.propAt };
+  return { k: rule?.small || 'hatchOpen', x: site.position.x, y: site.position.y };
 }
 
 /** The DM hands out this clue from a rumour, document or other discovery. */

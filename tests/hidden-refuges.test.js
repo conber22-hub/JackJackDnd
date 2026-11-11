@@ -6,7 +6,7 @@ import { THEMES } from '../src/data/themes.js';
 import { layoutFloor } from '../src/engine/generator.js';
 import { ORTHO, passMove } from '../src/engine/grid.js';
 import {
-  newRefugeBook, seedRefuge, learnRefugeClue, searchRefuge, refugesForPlayers, enterRefuge, leaveRefuge,
+  newRefugeBook, seedRefuge, learnRefugeClue, searchRefuge, refugesForPlayers, enterRefuge, leaveRefuge, entrancePropAt,
 } from '../src/engine/hidden-refuges.js';
 
 const source = (prop = 'deadtree', level = 2) => layoutFloor(level, 18, 18, {
@@ -135,4 +135,21 @@ test('each kind draws its entrance with the #77 model, on a clear multi-square p
     assert.ok(site.position.x < site.propAt.x || site.position.x >= site.propAt.x + w
       || site.position.y < site.propAt.y || site.position.y >= site.propAt.y + h, `${kind} spot is outside its patch`);
   }
+});
+
+// (integration: where no patch is clear the spot keeps the small, one-square entrance, so no kind of refuge is lost
+// for want of room; a big entrance that blocks never closes a road; an old save with no patch gets the small one)
+test('no room for the #77 model: the refuge keeps the small entrance on its spot; tall entrances keep off the road', () => {
+  const tight = layoutFloor(2, 18, 18, { theme:'woods', layout:{ rooms:[[2, 2, 3, 3, 'chamber', 'A hollow']], up:[3, 3], props:[['deadtree', 4, 2]] } }, null);
+  const r = seedRefuge(startBook(), tight, { mapId, kind:'roots', chance:1 });
+  assert.ok(r.id, 'a refuge in a three-square hollow still finds a spot');
+  const site = r.book.sites[0];
+  assert.equal(site.propAt, null);
+  assert.deepEqual(entrancePropAt(site), { k:'rootScreen', x:site.position.x, y:site.position.y });
+  assert.deepEqual(entrancePropAt({ kind:'cave', position:{ x:4, y:5 } }), { k:'rockFissure', x:4, y:5 }, 'a book saved before the patches');
+  for (const kind of Object.keys(REFUGES)){ const { book, id } = make(kind), s = book.sites.find(x => x.id === id); if (s.propAt) assert.equal(entrancePropAt(s).k, REFUGES[kind].entrance); }
+  // a road through a clearing: the oak never stands on it, the hatch (walked over) may
+  const road = layoutFloor(2, 18, 18, { theme:'woods', layout:{ rooms:[[2, 2, 14, 14, 'chamber', 'Clearing', '', { outdoor:true }]], up:[3, 3], paths:[{ w:3, pts:[1, 9, 16, 9] }], props:[['deadtree', 9, 6], ['deadtree', 9, 12], ['milestone', 8, 8]] } }, null);
+  const oak = seedRefuge(startBook(), road, { mapId, kind:'roots', chance:1 }).book.sites[0];
+  if (oak.propAt) for (let y = oak.propAt.y; y < oak.propAt.y + 4; y++) for (let x = oak.propAt.x; x < oak.propAt.x + 4; x++) assert.notEqual(road.grid[y * road.W + x], 2, 'no oak on the road');
 });

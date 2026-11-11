@@ -227,7 +227,7 @@ export function mountAtlas(host, opts){
     if (ui.atlas3d && host.isConnected && !atlasReady()){
       host.innerHTML = '<div class="muted" style="padding:12px">The 3D valley didn\'t load — its models live beside the app and didn\'t arrive. The map is the same valley.</div><div class="row"><button class="btn small" data-act="valleyAtlas">Back to the map</button></div>';
     }
-  }, 8000);
+  }, 20000);   // (a slow phone or connection can take a while over seventeen models: give them time before saying so)
   if (!cv.dataset.wired){
     cv.dataset.wired = 1;
     let down = null;

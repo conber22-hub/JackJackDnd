@@ -41,7 +41,7 @@ export function searchForRefuge(){
   if (r.found){
     const f = state.floors[ui.floor]; f.props ||= [];
     // the entrance is a multi-square patch beside where the hero stands (the #77 model for this kind)
-    if (!f.props.some(p => p.refuge === s.id)){ const at = entrancePropAt(s); f.props.push({ id:f.nextObj++, k:REFUGES[s.kind].entrance, x:at.x, y:at.y, rot:0, refuge:s.id }); }
+    if (!f.props.some(p => p.refuge === s.id)){ const at = entrancePropAt(s); f.props.push({ id:f.nextObj++, k:at.k, x:at.x, y:at.y, rot:0, refuge:s.id }); }
     buildFloor(ui.floor);
     showCard({ kind:'', title:`${t.name} finds it`, sub:`🎲 ${roll} → ${total}`, flair:r.tell }, false);
     log(`🕳 ${t.name} finds a hidden way.`);
