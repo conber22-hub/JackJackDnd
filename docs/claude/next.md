@@ -20,7 +20,7 @@ Merged, tested by their own unit tests, not yet in the app. Each line: what it i
 ## Engines
 - ✅ done (9 Nov, `game/refuges.js`; entrances use the prop-pack models, not yet #77's): **Hidden refuges** (`engine/hidden-refuges.js`, #60): `campaign.refuges`; seed on eligible floors, clue via the
   ledger, search from a hero's square, enter as a map (`goToMap`), the entrance drawn with the #77 models.
-- ✅ voices done (9 Nov, `ui/voices.js`); the players' voice workshop still to do: **Action voices + voice workshop** (`engine/action-voices.js`, `audio/action-voices.js`, `engine/voice-workshop.js`,
+- ✅ voices done (9 Nov, `ui/voices.js`); ✅ the players' voice workshop too (12 Nov, `ui/voiceworkshop.js`, `game/voiceworkshop.js`; heroes also speak when hurt or down): **Action voices + voice workshop** (`engine/action-voices.js`, `audio/action-voices.js`, `engine/voice-workshop.js`,
   #61/#62): call `planActionVoice` after each resolved attack/spell; captions + opt-in speech; the players' editor
   in the hero card, DM approval in the Table tab.
 - **Lantern drill** (`engine/lantern-drill.js`, #59) with the **party lobby** (`engine/party-lobby.js`, #58) and the

@@ -52,6 +52,7 @@ import { decayOf, decayLines } from '../game/decay.js';
 import { bloomOf } from '../game/bloom.js';
 import { BLOOM_LEVELS } from '../engine/bloom-woods.js';
 import { horrorHere } from '../game/horror.js';
+import { voiceTableHTML } from './voiceworkshop.js';
 import { DECAY_STAGES, DECAY_NAMES } from '../engine/decay.js';
 
 const art = (key, label) => {
@@ -373,6 +374,7 @@ function tableTab(){
     if (knocks.some(k => k.state === 'stuck')) h += `<div class="muted">Their device found your table but the two of you can't connect directly (different networks, mobile data, a strict router). Try the same Wi-Fi, or add a relay below and send them the new invite link.</div>`;
     if (!net.conns.size && !knocks.length) h += `<div class="muted">Waiting for players to join…</div>`;
     for (const [pid, s] of net.conns) h += s.screen ? `<div class="row"><span style="flex:1">${esc(s.name)}</span><span class="muted">the Night tab drives it</span></div>` : `<div class="row"><span style="flex:1">🎮 ${esc(s.name)}</span><select class="txt" style="width:auto" data-edit="seat" data-k="${pid}"><option value="">— no token —</option>${state.tokens.filter(t => t.kind !== 'monster').map(t => opt(t.id, t.name, state.seats[pid] === t.id)).join('')}</select></div>`;
+    h += voiceTableHTML();   // 🗣 the lines players wrote for their heroes, to approve (ui/voiceworkshop.js)
     h += `<div class="row"><button class="btn small danger" data-act="unhost">Close table</button></div>`;
   }
   const ps = peerServer() || {}, stuck = [...net.knocks.values()].some(k => k.state === 'stuck');
@@ -505,7 +507,7 @@ function heroTab(){
     h += `<div class="row"><button class="btn small ${ui.cardOnly ? 'on' : ''}" data-act="cardOnly" title="At an in-person game, when the TV shows the map: no map on this phone, just your hero as a big card">📇 Card only${ui.cardOnly ? ': ON' : ' (we\'re at the table)'}</button></div>`;
     if (ui.cardOnly) h += cardHTML(me);
     if (ui.notes?.length) h += `<details class="card"><summary>🤫 Notes for you (${ui.notes.length})</summary>${ui.notes.map(n => `<div class="look" ${n.strahd ? 'style="color:#f0b0b0"' : ''}>${esc(n.text)}</div>`).join('')}</details>`;
-    if (sheet) h += sheetHTML(sheet) + packHTML(sheet) + `<div class="row"><button class="btn small" data-act="editHero" data-id="${sheet.id}">✎ Edit / level up</button></div>`;
+    if (sheet) h += sheetHTML(sheet) + packHTML(sheet) + `<div class="row"><button class="btn small" data-act="editHero" data-id="${sheet.id}">✎ Edit / level up</button>${net.host?.open ? `<button class="btn small" data-act="vwOpen" data-id="${sheet.id}" title="What ${esc(sheet.name)} says when they hit, miss, cast or fall: you write it, the DM approves it">🗣 Your voice</button>` : ''}</div>`;
     h += picker + newAtTable();
     if (!ui.cardOnly) h += `<div class="muted">${state.combat.active ? (turn ? '<b style="color:var(--candle)">It is your turn.</b> Tap a glowing tile to move.' : 'Combat — wait for your turn to move.') : 'Exploring — tap your hero, then a glowing tile.'}<br>Tap a door next to you to open it. Long-press or use ◎ to ping a spot for everyone.</div>`;
   }

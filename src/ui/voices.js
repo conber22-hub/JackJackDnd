@@ -12,6 +12,7 @@ import { CREATURE_VOICES } from '../data/action-voices.js';
 import { net, broadcast } from '../net/table.js';
 import { toast } from './hud.js';
 import { registerCommands } from './palette.js';
+import { voicePackFor } from '../game/voiceworkshop.js';
 
 const KEY = 'dreaddelve.voices.v1';
 let vs = newActionVoiceState(), seq = 0;
@@ -28,15 +29,18 @@ function hear(cue){
 function onActed(e){
   if (ui.role !== 'dm' || !state || !e?.actor) return;
   const a = e.actor, actor = { id:a.id, publicName:a.name, kind:a.kind === 'pc' ? 'pc' : a.kind === 'npc' ? 'npc' : 'monster', bid:a.bid, role:a.role };
-  const pack = state.campaign?.voicePacks?.[a.charId || a.id] || null;
+  const pack = voicePackFor(a);   // the owner's approved lines (game/voiceworkshop.js), or the DM's
   const trigger = e.trigger === 'miss' && CREATURE_VOICES[a.bid] ? 'attack' : e.trigger;   // (a wolf that misses still growls)
-  const r = planActionVoice(vs, { id:`${a.id}:${++seq}`, actor, trigger, action:e.action, targetPublicName:e.target?.name, shareable:!a.flags?.hidden },
+  const r = planActionVoice(vs, { id:`${a.id}:${++seq}`, actor, trigger, action:String(e.action || '').replace(/ \(×.*\)$/, ''), targetPublicName:e.target?.name, shareable:!a.flags?.hidden },
     { now:performance.now(), pack });
   vs = r.state; if (!r.cue) return;
   hear(r.cue);
   const pub = actionVoiceForPlayers(r.cue, { sourceVisible:!a.flags?.hidden && !a.hidden });
   if (pub) try { broadcast({ t:'voice', cue:pub }); } catch {}
 }
+
+// 🔊 in the voice workshop: a line heard on this device, whatever the 🗣 setting (the player asked to hear it).
+export function audition(cue){ playActionVoice(cue, { caption, speech:true, sounds:false }); }
 
 let started = false;
 export function ensureVoices(){

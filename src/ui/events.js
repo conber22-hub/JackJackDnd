@@ -12,6 +12,7 @@ import { ensureHorror, openHorror } from './horror.js';
 import { ensureMobs, openMobs } from './mobs.js';
 import { ensureLedger, openLedger } from './ledger.js';
 import { ensureVoices } from './voices.js';
+import { ensureVoiceWorkshop } from './voiceworkshop.js';
 import { followTrailhead, takeTrail, endTrailLeg, backToRoad } from '../game/trails.js';
 import { hideRefuge, refugeClue, searchForRefuge, goIntoRefuge, leaveRefugeMap } from '../game/refuges.js';
 import { setDecay, decayOf } from '../game/decay.js';
@@ -551,6 +552,7 @@ ensureHorror();  // 😱 fear and its marks
 ensureMobs();    // 👥 the mob
 ensureLedger();  // 📒 the ledger
 ensureVoices();  // 🗣 voice lines as heroes and creatures act
+ensureVoiceWorkshop();   // 🗣 players write their heroes' lines, the DM approves them
 ensureChronicle();   // the 📜 Chronicle: the button, the palette command, the record of the story (idempotent)
 ensureSoundscape();   // the 🎻 Soundscape: the button, the palette command, the board and its receivers (idempotent)
 $('#floorUp').onclick = () => state && goFloor(ui.floor - 1);
