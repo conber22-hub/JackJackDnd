@@ -53,6 +53,8 @@ import { bloomOf } from '../game/bloom.js';
 import { BLOOM_LEVELS } from '../engine/bloom-woods.js';
 import { horrorHere } from '../game/horror.js';
 import { voiceTableHTML } from './voiceworkshop.js';
+import { yardTableHTML, yardPillHTML } from './yard.js';
+import { suggestHero, expectedTable } from '../net/passport.js';
 import { DECAY_STAGES, DECAY_NAMES } from '../engine/decay.js';
 
 const art = (key, label) => {
@@ -374,6 +376,7 @@ function tableTab(){
     if (knocks.some(k => k.state === 'stuck')) h += `<div class="muted">Their device found your table but the two of you can't connect directly (different networks, mobile data, a strict router). Try the same Wi-Fi, or add a relay below and send them the new invite link.</div>`;
     if (!net.conns.size && !knocks.length) h += `<div class="muted">Waiting for players to join…</div>`;
     for (const [pid, s] of net.conns) h += s.screen ? `<div class="row"><span style="flex:1">${esc(s.name)}</span><span class="muted">the Night tab drives it</span></div>` : `<div class="row"><span style="flex:1">🎮 ${esc(s.name)}</span><select class="txt" style="width:auto" data-edit="seat" data-k="${pid}"><option value="">— no token —</option>${state.tokens.filter(t => t.kind !== 'monster').map(t => opt(t.id, t.name, state.seats[pid] === t.id)).join('')}</select></div>`;
+    h += yardTableHTML();    // 🏮 the Lantern Yard at the start of the night (ui/yard.js)
     h += voiceTableHTML();   // 🗣 the lines players wrote for their heroes, to approve (ui/voiceworkshop.js)
     h += `<div class="row"><button class="btn small danger" data-act="unhost">Close table</button></div>`;
   }
@@ -493,8 +496,12 @@ function heroTab(){
   if (net.join && net.status !== 'open') h += `<div class="card" style="border-color:var(--blood)"><div class="hd"><span class="nm">${net.status === 'closed' ? 'The DM closed the table' : net.status === 'lost' ? 'Lost the table' : 'Reconnecting to the table…'}</span></div>
     <div class="muted">${net.status === 'closed' ? 'Your heroes are saved in this browser.' : `Table ${esc(net.join.code)}. ${net.status === 'lost' ? 'It stopped answering.' : 'Your phone may have slept — this happens on its own.'}`}</div>
     <div class="row"><button class="btn small primary" data-act="rejoin">↻ Try again</button><button class="btn small" data-act="startScreen">Start screen</button></div></div>`;
+  h += yardPillHTML();   // 🏮 the way back into the Lantern Yard while it's open (ui/yard.js)
   const others = (ui.tableChars || []).filter(c => c.id !== me?.charId);
-  const picker = others.length ? `<div class="muted">${me ? 'Your other characters at this table:' : 'Your characters at this table — who are you playing tonight?'}</div><div class="row">${others.map(c => `<button class="btn small${me ? '' : ' primary'}" data-act="pickChar" data-id="${c.id}">${esc(c.name)} · ${esc(c.cls)} ${c.lvl}</button>`).join('')}</div>` : '';
+  // the hero they played here last time, first (net/passport.js: only if this is the same table, and still theirs)
+  const again = !me && net.join && suggestHero({ expected:expectedTable(net.join.code, net.join.expect), actual:net.tableMeta?.id, owned:others.map(c => c.id) });
+  if (again) others.sort((a, b) => (b.id === again) - (a.id === again));
+  const picker = others.length ? `<div class="muted">${me ? 'Your other characters at this table:' : 'Your characters at this table — who are you playing tonight?'}</div><div class="row">${others.map(c => `<button class="btn small${me ? '' : c.id === again || !again ? ' primary' : ''}" data-act="pickChar" data-id="${c.id}">${c.id === again ? '▶ ' : ''}${esc(c.name)} · ${esc(c.cls)} ${c.lvl}${c.id === again ? ' again' : ''}</button>`).join('')}</div>` : '';
   if (!me) h += `<div class="muted">${net.host?.open ? (others.length ? '' : 'Connected. Waiting for the DM to seat you — or make your character now.') : 'Connecting to the table…'}</div>` + picker + newAtTable();
   else if (me.flags.taken) h += `<div class="card"><div class="fam-seep">☣ The Seep has taken ${esc(me.name)}. Wait for the DM.</div></div>`;
   else {

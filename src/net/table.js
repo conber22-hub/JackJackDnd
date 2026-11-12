@@ -28,11 +28,14 @@ import { putModel, allModels, deleteModel } from '../render/models.js';
 import { setSender, validAct, receiveAct, dropRequestsFrom } from '../game/requests.js';
 import { tableHash, packForTable, haveTableLibrary, receiveTableLibrary } from '../game/library.js';
 import { folkAt, talkTo, receiveFolk } from '../game/folk.js';
+import { planTableEntry } from '../engine/table-entry.js';
+import { noteTable } from './passport.js';
+import { uid } from '../util/core.js';
 
 export const net = { peer:null, conns:new Map(), knocks:new Map(), host:null, code:null, online:false, hostTries:0, hostTimer:null,
   join:null, status:'idle', tries:0, gen:0, myId:null, everOpen:false, lastSeen:0, retryTimer:null };
 onSfx(name => { if (ui.role === 'dm' && net.conns.size) broadcast({ t:'sfx', name }); });
-let pendingArt = null, lastTurnSeen = '';
+let pendingArt = null, lastTurnSeen = '', cidN = 0;
 
 /* ---------- where the table lives: the free PeerJS server, or your own relay ---------- */
 const TKEY = 'dreaddelve.table.v1', JKEY = 'dreaddelve.join.v1', SKEY = 'dreaddelve.peerserver.v1';
@@ -89,6 +92,7 @@ export function hostTable({ code = savedTable()?.code || newCode(), tries = 0 } 
     if (net.peer !== peer) return;
     const first = net.code !== code;
     net.code = code; net.online = true; net.hostTries = 0; net.opening = null; save(TKEY, { code, at:Date.now() });
+    if (state?.campaign && !state.campaign.tableId){ state.campaign.tableId = `tbl-${uid()}${uid()}`; changed(); }
     for (const pid of Object.keys(state?.seats || {})) if (!net.conns.has(pid)) delete state.seats[pid];   // seats of players from before a reload
     renderTop(); renderPanel(); if (first) toast(`Table open — code ${code}`); else toast('Table back online.');
   });
@@ -107,7 +111,8 @@ export function hostTable({ code = savedTable()?.code || newCode(), tries = 0 } 
       clearTimeout(stuck); if (net.knocks.get(c.peer)?.conn === c) net.knocks.delete(c.peer);
       if (net.peer !== peer) return c.close();
       const old = net.conns.get(c.peer); if (old && old.conn !== c) try { old.conn.close(); } catch {}
-      net.conns.set(c.peer, { conn:c, name:'(joining)', seen:Date.now() }); renderPanel(); renderTop();   // (the top bar counts who has joined)
+      net.conns.set(c.peer, { conn:c, name:'(joining)', seen:Date.now(), cid:`${c.peer}:${++cidN}` }); renderPanel(); renderTop();   // (the top bar counts who has joined)
+      try { c.send({ t:'table', ...tableMeta() }); } catch {}   // which campaign this is, before they say who they are
     });
     c.on('data', m => {
       const s = net.conns.get(c.peer); if (!s || s.conn !== c) return;
@@ -117,7 +122,7 @@ export function hostTable({ code = savedTable()?.code || newCode(), tries = 0 } 
     });
     c.on('close', () => {
       const s = net.conns.get(c.peer); if (!s || s.conn !== c) return;      // an older connection of a player who already came back
-      net.conns.delete(c.peer); dropRequestsFrom(c.peer); delete state.seats[c.peer];
+      net.conns.delete(c.peer); dropRequestsFrom(c.peer); delete state.seats[c.peer]; net.onSeatLeave?.(s);   // (the Lantern Yard: ui/yard.js)
       toast(`${s.name || 'A player'} left`); renderPanel(); renderTop(); pushState();
     });
     c.on('error', () => {});
@@ -194,7 +199,7 @@ function welcome(c, have = []){
 export function addLocalScreen(id, send){
   const conn = { peer:id, open:true, send, close(){ this.open = false; net.conns.delete(id); renderPanel(); } };
   net.conns.set(id, { conn, name:'📺 Table screen (this computer)', screen:true, seen:Date.now() });
-  welcome(conn); toast('📺 The table screen is up.'); renderPanel();
+  welcome(conn); toast('📺 The table screen is up.'); renderPanel(); net.onSeatChange?.(net.conns.get(id), conn, 'screen');
 }
 export function dropLocalScreen(id){ net.conns.get(id)?.conn.close(); }
 export const screens = () => [...net.conns.values()].filter(s => s.screen);
@@ -219,30 +224,32 @@ function onHostMsg(c, m){
   const near = (L, i) => me && me.floor === L && cheb(me.x, me.y, i % state.floors[L].W, (i / state.floors[L].W) | 0) <= 1;
   if (m.t === 'hello' && m.screen){   // a table screen (a TV's browser): sees what the players see, sits nowhere
     seat.name = '📺 Table screen'; seat.screen = true;
-    welcome(c, m.have); toast('📺 A table screen joined.'); renderPanel(); return;
+    welcome(c, m.have); toast('📺 A table screen joined.'); renderPanel(); net.onSeatChange?.(seat, c, 'screen'); return;
   }
   if (m.t === 'hello'){
     seat.name = String(m.name || 'Player').trim().slice(0, 30); seat.key = String(m.key || '').slice(0, 20);
-    let match = null;
-    const lockedAway = t => t.charId && state.characters[t.charId]?.key && !ownsCharacter(state.characters[t.charId], seat.name, seat.key);
-    // while the DM sets up another map the party waits off it (game/maps.js): seat them on their waiting hero
-    const waiting = state.campaign?.away?.tokens || [], prev = state.campaign?.seatsBy?.[idKey(seat.name, seat.key)];
-    const held = waiting.find(t => t.id === prev || (m.char?.id && t.charId === m.char.id)) || waiting.find(t => t.kind === 'pc' && t.name.toLowerCase() === seat.name.toLowerCase());
-    if (held) match = held;
-    else if (m.char?.id && m.char.cls && !waiting.some(t => t.charId === m.char.id)) match = claimSheet(c, seat, m.char);
-    const last = tokById(state.campaign?.seatsBy?.[idKey(seat.name, seat.key)]);
-    if (!match && last && !last.flags?.gone && !lockedAway(last) && !seatTaken(c.peer, last.id)) match = last;
-    const mineAll = charactersOf(seat.name, seat.key);
-    if (!match && mineAll.length === 1){ const tok = state.tokens.find(t => t.charId === mineAll[0].id); if (!tok || !seatTaken(c.peer, tok.id)) match = tok || applyCharacter(mineAll[0], { owner:seat.name, key:seat.key }); }
-    match ||= state.tokens.find(t => t.kind === 'pc' && t.name.toLowerCase() === seat.name.toLowerCase() && !lockedAway(t) && !seatTaken(c.peer, t.id));
+    const last = state.campaign?.seatsBy?.[idKey(seat.name, seat.key)];
+    let match = null, plan = null;
+    // a sheet they bring from their device (new, or changed there): claimed on its own terms (claimSheet)
+    const waiting = state.campaign?.away?.tokens || [];
+    if (m.char?.id && m.char.cls && !waiting.some(t => t.charId === m.char.id)){ const t = claimSheet(c, seat, m.char); if (t && !seatTaken(c.peer, t.id)) match = t; }
+    // else the table decides from what it knows (engine/table-entry.js): the hero they sat at last, or their only one
+    if (!match){ plan = entryPlan(c.peer, { lastTokenId:last }); match = takeEntry(c.peer, plan); }
+    // a token the DM sat them at by hand, with no sheet behind it, is theirs again
+    const lastTok = tokById(last) || waiting.find(t => t.id === last);
+    if (!match && lastTok && !lastTok.charId && !lastTok.flags?.gone && !seatTaken(c.peer, lastTok.id)) match = lastTok;
+    // a hero the DM made for them by name, with no sheet behind it (nobody else's)
+    match ||= [...waiting, ...state.tokens].find(t => t.kind === 'pc' && !t.charId && t.name.toLowerCase() === seat.name.toLowerCase() && !t.flags?.gone && !seatTaken(c.peer, t.id));
     if (match) seatAt(c.peer, match.id);
-    if (!m.re) toast(`${seat.name} joined${match ? ` as ${match.name}` : mineAll.length ? ' — choosing a character' : ' — seat them in the Table tab'}`);
-    else toast(`${seat.name} is back${match ? ` (${match.name})` : ''}.`);
+    const mineAll = charactersOf(seat.name, seat.key), heroOf = id => state.characters[id]?.name || 'their hero';
+    const why = !match && plan?.kind === 'waiting' ? { 'seat-taken':` — ${heroOf(plan.heroId)} is being played from another device`, 'hero-off-map':` — ${heroOf(plan.heroId)} is off the map (dead or gone): seat them in the Table tab`, 'scene-preparing':' — they wait for the scene' }[plan.reason] || '' : '';
+    if (!m.re) toast(`${seat.name} joined${match ? ` as ${match.name}` : why || (mineAll.length ? ' — choosing a character' : ' — seat them in the Table tab')}`);
+    else toast(`${seat.name} is back${match ? ` (${match.name})` : why}.`);
     c.send({ t:'you', peer:c.peer });
-    c.send({ t:'yours', chars:mineAll.length ? charactersOf(seat.name, seat.key).map(sheetForPlayer) : [], quiet:!!m.re });
+    c.send({ t:'yours', chars:mineAll.map(sheetForPlayer), quiet:!!m.re });
     welcome(c, m.have);
     if (tableHash()) c.send({ t:'libHash', hash:tableHash() });   // the DM's books, for their character creator (game/library.js)
-    renderPanel(); pushState();
+    renderPanel(); pushState(); net.onSeatChange?.(seat, c, 'hello');   // (the Lantern Yard lets them in: ui/yard.js)
   }
   else if (m.t === 'libWant'){   // their phone doesn't have this version of the DM's books yet: once per connection
     if (seat.libSent === tableHash() || !tableHash()) return;
@@ -252,9 +259,10 @@ function onHostMsg(c, m){
   else if (m.t === 'pick'){
     const sheet = state.characters[m.id];
     if (!ownsCharacter(sheet, seat.name, seat.key)){ c.send({ t:'denied', text:'That character belongs to someone else.' }); return; }
-    const t = applyCharacter(sheet, { owner:seat.name, key:seat.key });
+    const plan = entryPlan(c.peer, { requestedHeroId:sheet.id }), t = takeEntry(c.peer, plan);
     if (t){ seatAt(c.peer, t.id); toast(`${seat.name} plays ${t.name}.`); }
-    renderPanel(); pushState();
+    else c.send({ t:'denied', text:{ 'seat-taken':`Someone at the table is already playing ${sheet.name}.`, 'hero-off-map':`${sheet.name} isn't on the map just now: ask the DM.`, 'scene-preparing':`The DM is setting the scene: ${sheet.name} joins when it's ready.` }[plan.reason] || 'That hero can\'t sit down just now.' });
+    renderPanel(); pushState(); net.onSeatChange?.(seat, c, 'pick');
   }
   else if (m.t === 'move'){ const t = tokById(m.id); if (t && mine(t.id) && canAct(t) && Number.isInteger(m.x) && Number.isInteger(m.y)) { if (!doMove(t, m.x, m.y, { path:Array.isArray(m.path) ? m.path : null }) && c.open) c.send({ t:'denied', text:'You can\'t move there.' }); } }
   else if (m.t === 'turnAct'){ const t = tokById(m.id); if (t && mine(t.id) && canAct(t) && ['dash', 'disengage', 'dodge', 'stand'].includes(m.k)) turnAction(t, m.k); }
@@ -271,7 +279,7 @@ function onHostMsg(c, m){
     const t = claimSheet(c, seat, m.char); if (!t) return;
     seatAt(c.peer, t.id);
     c.send({ t:'yours', chars:charactersOf(seat.name, seat.key).map(sheetForPlayer), quiet:true });   // the sheet as the DM now has it
-    toast(`${seat.name} updated ${m.char.name}.`); renderPanel(); pushState();
+    toast(`${seat.name} updated ${m.char.name}.`); renderPanel(); pushState(); net.onSeatChange?.(seat, c, 'char');
   }
   else if (m.t === 'act'){
     const deny = text => { if (c.open) c.send({ t:'denied', text }); };
@@ -291,6 +299,7 @@ function onHostMsg(c, m){
   }
   else if (m.t === 'vote') net.onVoteCast?.(me, m);
   else if (['voiceWant', 'voiceSubmit', 'voiceWithdraw'].includes(m.t)) net.onVoiceWorkshop?.(seat, c, m);   // 🗣 their hero's lines (ui/voiceworkshop.js)   // 🗳 a ballot: the seat is the connection's own hero (ui/ledger.js)
+  else if (m.t === 'yard') net.onYard?.(seat, c, m);   // 🏮 a move in the Lantern Yard (ui/yard.js)
   else if (m.t === 'puzzle'){   // a move on the puzzle in the room where their own hero stands (game/puzzles.js)
     const p = me && puzzleAt(me);
     if (p && p.id === m.id && me.floor === m.floor && canAct(me) && m.action && typeof m.action === 'object') playPuzzle(me.floor, p.id, m.action, me.id);
@@ -311,6 +320,34 @@ function seatTaken(peer, tokId){
     return !(o.key && o.key === me?.key && o.name.toLowerCase() === me?.name.toLowerCase());
   });
 }
+/* Where a player sits when they come in or pick a hero (engine/table-entry.js): only heroes the table says are
+   theirs, only a token no other player at the table is on, never a departed one. The plan is read from
+   the table as it is now; takeEntry acts on it. */
+function entryPlan(peer, { requestedHeroId = null, lastTokenId = null } = {}){
+  const s = net.conns.get(peer), away = state.campaign?.away;
+  // (a hero at 0 hit points is down, not gone: here that's t.dead, and their player keeps the seat to roll death
+  // saves; only a hero who has left the table, taken by the Seep or sent away, is the DM's to seat)
+  const tokens = (away ? away.tokens || [] : state.tokens).map(t => t.kind === 'pc' && t.dead && !t.flags?.gone ? { ...t, dead:false } : t);
+  return planTableEntry({ ownedHeroIds:charactersOf(s?.name, s?.key).map(c => c.id), tokens,
+    occupiedTokenIds:tokens.filter(t => seatTaken(peer, t.id)).map(t => t.id), requestedHeroId, lastTokenId, preparing:!!away });
+}
+function takeEntry(peer, plan){
+  const s = net.conns.get(peer);
+  if (plan.kind === 'seat') return tokById(plan.tokenId) || state.campaign?.away?.tokens?.find(t => t.id === plan.tokenId) || null;
+  if (plan.kind === 'place') return applyCharacter(state.characters[plan.heroId], { owner:s.name, key:s.key });
+  return null;
+}
+// Seat a connection on one of their heroes through the same checks (the Lantern Yard's Set out). → the token, or null.
+export function seatHero(peer, heroId){
+  const s = net.conns.get(peer), sheet = state.characters[heroId];
+  if (!s || !ownsCharacter(sheet, s.name, s.key)) return null;
+  const t = takeEntry(peer, entryPlan(peer, { requestedHeroId:heroId }));
+  if (t) seatAt(peer, t.id);
+  return t;
+}
+// Who a connection is (name + secret word: the same on any device), and which campaign this table is.
+export const seatIdOf = s => idKey(s?.name, s?.key);
+export const tableMeta = () => ({ id:state?.campaign?.tableId || '', label:String(state?.meta?.name || 'Dread Delve').slice(0, 80) });
 function seatAt(peer, tokId){
   for (const [pid, tid] of Object.entries(state.seats)) if (tid === tokId && pid !== peer) delete state.seats[pid];
   state.seats[peer] = tokId;
@@ -332,9 +369,10 @@ function claimSheet(c, seat, sheet){
 /* ---------- the player's side: join, and keep coming back ---------- */
 // Join a table. The start page stays up (with a status line) until the DM's table answers; after that,
 // a dropped connection (a phone going to sleep, a Wi-Fi blip, the DM reloading) is retried on its own.
-export function joinTable(code, name, key, hero = null){
+export function joinTable(code, name, key, hero = null, { expect = null } = {}){
   leaveTable(true);
-  net.join = { code:String(code).trim().toUpperCase(), name, key, hero };
+  net.join = { code:String(code).trim().toUpperCase(), name, key, hero, expect };   // expect: the campaign we think is there (net/passport.js)
+  net.seatedAs = null;
   save(JKEY, { code:net.join.code, at:Date.now() });
   net.status = 'connecting'; net.tries = 0; net.everOpen = false;
   joinStatus(`Looking for table ${net.join.code}…`);
@@ -373,7 +411,7 @@ async function connectHost(){
   if (gen !== net.gen) return;
   const c = peer.connect('dreaddelve-' + net.join.code.toLowerCase(), { reliable:true, metadata:{ name:net.join.name } });
   if (!c){ retry('server'); return; }
-  net.host = c;
+  net.host = c; net.tableMeta = null;
   const timer = setTimeout(() => { if (gen === net.gen && !c.open){ try { c.close(); } catch {} retry(net.why || 'timeout'); } }, 10000);
   c.on('open', () => { if (gen !== net.gen) return c.close(); clearTimeout(timer); connected(c); });
   c.on('data', m => { if (gen !== net.gen) return; net.lastSeen = Date.now(); if (m?.t === 'hb'){ net.hbOk = true; return; } onClientMsg(m); });
@@ -387,10 +425,30 @@ function connected(c){
     ui.role = 'player'; ui.myName = J.name; ui.tab = ui.screen ? 'log' : 'hero'; ui.tableChars = [];
     $('#startModal').classList.add('hidden'); joinStatus('');
   }
-  const hero = J.hero || (J.dirty && myHero(J.dirty)); J.hero = null; J.dirty = null;
-  c.send({ t:'hello', name:J.name, key:J.key, re:!first, have:allModels().map(m => m.key), ...(hero ? { char:hero } : {}), ...(J.screen ? { screen:true } : {}) });
+  /* Say who we are once the table has said which campaign it is (a code can be reused by another DM's table):
+     if it isn't the one we came back for, the hero we meant for that table stays on this device. Older tables
+     don't say: after a moment, hello anyway. */
+  const hello = () => {
+    if (net.pendingHello !== hello) return; net.pendingHello = null;
+    if (gen !== net.gen || !c.open) return;
+    const meta = net.tableMeta;
+    if (J.expect && meta?.id && meta.id !== J.expect){
+      toast(`Table ${J.code} is someone else's table now${meta.label ? ` (${meta.label})` : ''}: your hero stays on this device until you pick one.`);
+      J.hero = null; ui.myHeroId = null;
+    }
+    J.expect = meta?.id || J.expect;
+    const hero = J.hero || (J.dirty && myHero(J.dirty)); J.hero = null; J.dirty = null;
+    c.send({ t:'hello', name:J.name, key:J.key, re:!first, have:allModels().map(m => m.key), ...(hero ? { char:hero } : {}), ...(J.screen ? { screen:true } : {}) });
+  };
+  const gen = net.gen; net.pendingHello = hello;
+  if (net.tableMeta) hello(); else setTimeout(hello, 1500);
   toast(first ? 'Connected — waiting for the DM…' : 'Back at the table.');
   renderAll(); renderNetStatus();
+}
+// This browser was let in at this table (and maybe seated on a hero there): remember it (net/passport.js).
+function rememberHere(heroId = null){
+  const meta = net.tableMeta; if (!meta?.id || !net.join || ui.screen) return;
+  noteTable({ tableId:meta.id, label:meta.label || 'A table', code:net.join.code, at:Date.now(), heroId });
 }
 // Back off (1, 2, 4… 30 s, a little random so five phones don't knock at once). Before the first connection,
 // "unavailable" just means the DM hasn't opened the table yet: keep knocking every few seconds.
@@ -440,6 +498,8 @@ export function onClientMsg(m){
   if (CHRONICLED.has(m.t)) try { bus.emit('table', m); } catch (e) { console.warn(e); }   // (a listener's trouble never stops the message)
   if (ui.screen && screenMsg(m)) return;   // narration, introductions, handouts, lights out (ui/screen.js)
   if (m.t === 'state') applyRemoteState(m.s);
+  else if (m.t === 'table'){ net.tableMeta = { id:String(m.id || '').slice(0, 128), label:String(m.label || '').slice(0, 80) }; net.pendingHello?.(); }
+  else if (m.t === 'yard' || m.t === 'yardSay') net.onYard?.(m);   // 🏮 the Lantern Yard (ui/yard.js)
   else if (m.t === 'propfx' && state) animateProp(m.floor, m.id, m.fx);
   else if (m.t === 'anim' && state){ animatePath(m.id, m.path, s => { const t = tokById(m.id); if (t){ t.x = s.x; t.y = s.y; } updateVision(); syncTokens(); }, null, m.id === ui.myToken); }
   else if (m.t === 'you') net.myId = m.peer;
@@ -448,6 +508,7 @@ export function onClientMsg(m){
   else if (m.t === 'yours'){
     // The DM's copies are the real sheets (they may have been levelled or edited at the table): keep them in this browser.
     ui.tableChars = (m.chars || []).map(c => { const local = myHero(c.id); const h = { ...c, portrait:c.portrait || local?.portrait }; if (!h.portrait) delete h.portrait; saveMyHero(h); return h; });
+    rememberHere();   // (the table let us in)
     if (ui.tableChars.length && !m.quiet) toast(`Welcome back — ${ui.tableChars.map(c => c.name).join(', ')} ${ui.tableChars.length > 1 ? 'are' : 'is'} at this table.`);
     renderPanel();
     maybePlayerTour();   // first seating on a hero: the walkthrough, once per device
@@ -492,6 +553,7 @@ function applyRemoteState(s){
   setState(ns);
   const myPrev = ui.myToken; ui.myToken = ns.seats[net.myId || net.peer?.id] || null;
   const seatedAs = ns.tokens.find(t => t.id === ui.myToken)?.charId; if (seatedAs && myHero(seatedAs)) ui.myHeroId = seatedAs;
+  if (seatedAs && seatedAs !== net.seatedAs){ net.seatedAs = seatedAs; rememberHere(seatedAs); }   // (who we played here, for next time)
   if (!sameDelve){ resetScene(); ensureFloorViews(); updateVision(); buildAllFloors(); }
   else { ensureFloorViews(); updateVision(); state.floors.forEach((_, L) => { const mv = moved.find(x => x[0] === L); if (mv) animateGridChange(L, mv[1], state.floors[L].grid); else buildFloor(L); }); }
   syncTokens();

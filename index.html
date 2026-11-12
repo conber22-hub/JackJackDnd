@@ -605,6 +605,41 @@ body.screen #turnBanner{font-size:52px;top:46%}
 @keyframes vpulse{0%,100%{transform:scale(1);opacity:.25}50%{transform:scale(1.6);opacity:.45}}
 @keyframes vdrift{from{transform:translateX(-3px)}to{transform:translateX(4px)}}
 @media (prefers-reduced-motion:reduce){ .valley-map *{animation:none!important} }
+
+/* 🧭 back to a table (net/passport.js) */
+.th-recent{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.th-rt{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:8px 12px;border-radius:var(--r-md);border:1px solid var(--gold-line);background:var(--glass);color:var(--ink);cursor:pointer;font:inherit}
+.th-rt:hover{border-color:var(--gold)}.th-rt b{font-family:var(--serif);color:var(--gold-hi)}.th-rt span{font-size:12px;color:var(--dim)}
+/* 🏮 the Lantern Yard (ui/yard.js) */
+.yd-box .hd{display:flex;align-items:center;justify-content:space-between;gap:8px}.yd-box h2{margin:0}
+.yd-board{display:block;width:min(100%,calc(58vh * 1.5));height:auto;margin:8px auto;border-radius:var(--r-md);background:#15130f;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.yd-board.live{cursor:pointer}
+.yd-ground{fill:#3a342b;stroke:#6b5a3e;stroke-width:.6}.yd-grid{stroke:#ffffff10;stroke-width:.3;fill:none}
+.yd-fireglow{fill:#ff9a3c22;filter:blur(3px)}
+.yd-wall{fill:#7d7466;stroke:#4f483e;stroke-width:.5}
+.yd-prop{font-size:6.6px;text-anchor:middle;pointer-events:none}
+.yd-lbl{font:600 2.6px var(--ui);fill:#e8dcc4;text-anchor:middle;paint-order:stroke;stroke:#000a;stroke-width:.6px;pointer-events:none}
+.yd-dummy rect{fill:#6a4d2e}.yd-dummy circle{fill:#c8a96a;stroke:#5a4022;stroke-width:.6}.yd-dummy .halo{fill:none;stroke:none}
+.yd-dummy text{font:700 3px var(--ui);fill:#2a1b0c;text-anchor:middle}.yd-dummy .yd-lbl{fill:#e8dcc4}
+.yd-dummy.lit .halo{fill:#ffcf5a33;stroke:#ffcf5a;stroke-width:.6;animation:ydPulse 1.2s ease-in-out infinite}
+.yd-dummy.lit circle:not(.halo){fill:#ffd977}.yd-dummy.cleared circle:not(.halo){fill:#4b453d}.yd-dummy.cleared text{fill:#9fe0a0}
+.yd-dummy.waiting circle:not(.halo){fill:#8a7a5c}
+@keyframes ydPulse{50%{opacity:.35}}
+.yd-plate rect{fill:#2b2620;stroke:#a88b4a;stroke-width:.7}.yd-plate circle{fill:#a88b4a55}
+.yd-plate.held rect{stroke:#ffcf5a;fill:#4a3b18}.yd-plate.held circle{fill:#ffcf5a}
+.yd-hero{transition:transform .13s linear}.yd-hero .ring{fill:none;stroke:#0008;stroke-width:.8}
+.yd-hero.me .ring{stroke:var(--gold-hi);stroke-width:1}.yd-hero text{font:700 3.6px var(--serif);fill:#fff;text-anchor:middle;paint-order:stroke;stroke:#0009;stroke-width:.5px}
+.yd-hero .yd-ok{font-size:3px;fill:#9fe0a0}.yd-hero.reconnecting{opacity:.4}
+.yd-roster{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.yd-who{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);background:var(--glass);font-size:12px}
+.yd-who i{width:10px;height:10px;border-radius:50%;display:inline-block}.yd-who.ready{border-color:#6fbf73}.yd-who.reconnecting{opacity:.55}
+.yd-drill{padding:8px 10px;border:1px solid var(--gold-line);border-radius:var(--r-md);background:#ffcf5a0d;margin:6px 0}
+.yd-lanterns{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}.yd-lantern{font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--line)}
+.yd-lantern.lit{border-color:#ffcf5a;color:#ffd977}.yd-lantern.cleared{color:#9fe0a0;opacity:.8}.yd-lantern.waiting{opacity:.6}
+.yd-acts{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.yd-say{min-height:1.3em;font-size:13px;color:var(--gold-hi)}
+.yd-feed{margin-top:8px;font-size:12px;color:var(--dim);border-top:1px solid var(--line);padding-top:6px}
+.screen .yd-box{max-width:min(1200px,96vw)}
 </style>
 </head>
 <body>
@@ -752,6 +787,7 @@ body.screen #turnBanner{font-size:52px;top:46%}
           <label class="muted">Playing as</label><select class="txt" id="joinHero"></select>
           <div class="row"><button class="btn primary" data-act="join">Join the table</button></div>
           <div class="muted hidden" id="joinStatus" role="status"></div>
+          <div class="th-recent hidden" id="recentTables"></div>
         </div>
       </div>
     </section>

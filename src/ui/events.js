@@ -13,6 +13,8 @@ import { ensureMobs, openMobs } from './mobs.js';
 import { ensureLedger, openLedger } from './ledger.js';
 import { ensureVoices } from './voices.js';
 import { ensureVoiceWorkshop } from './voiceworkshop.js';
+import { ensureYard } from './yard.js';
+import { recentTables } from '../net/passport.js';
 import { followTrailhead, takeTrail, endTrailLeg, backToRoad } from '../game/trails.js';
 import { hideRefuge, refugeClue, searchForRefuge, goIntoRefuge, leaveRefugeMap } from '../game/refuges.js';
 import { setDecay, decayOf } from '../game/decay.js';
@@ -383,6 +385,11 @@ document.addEventListener('click', e => {
       if (!who) return;
       if (!code){ toast('Enter the table code from your DM.'); return; }
       ui.myHeroId = hero?.id || null; joinTable(code, who.name, who.key, hero); } break;
+    case 'joinRecent': {   // 🧭 back to a table this browser has joined (net/passport.js): its code, and the hero played there
+      const t = recentTables().find(x => x.tableId === id), who = signIn(); if (!t || !who) return;
+      const hero = t.heroId && myHero(t.heroId);
+      $('#joinCode').value = t.code; if (hero) $('#joinHero').value = hero.id;
+      ui.myHeroId = hero?.id || null; joinTable(t.code, who.name, who.key, hero || null, { expect:t.tableId }); } break;
     // heroes
     case 'newHero': openCreator(null, { onSave:h => { if (!h.player) h.player = myProfile().name || $('#pName').value.trim(); saveMyHero(h); renderHeroList(); toast(`${h.name} is ready.`); } }); break;
     case 'newHeroAtTable': openCreator(null, { saveLabel:'Bring to the table', onSave:h => { if (!h.player) h.player = ui.myName; saveMyHero(h); ui.myHeroId = h.id; if (sendHost({ t:'char', char:h })) toast(`${h.name} sent to the DM.`); else if (net.join) net.join.dirty = h.id; renderPanel(); } }); break;
@@ -553,6 +560,7 @@ ensureMobs();    // 👥 the mob
 ensureLedger();  // 📒 the ledger
 ensureVoices();  // 🗣 voice lines as heroes and creatures act
 ensureVoiceWorkshop();   // 🗣 players write their heroes' lines, the DM approves them
+ensureYard();            // 🏮 the Lantern Yard: practice and the Lantern Gate drill before the night begins
 ensureChronicle();   // the 📜 Chronicle: the button, the palette command, the record of the story (idempotent)
 ensureSoundscape();   // the 🎻 Soundscape: the button, the palette command, the board and its receivers (idempotent)
 $('#floorUp').onclick = () => state && goFloor(ui.floor - 1);
@@ -599,6 +607,16 @@ export function renderHeroList(){
       <div class="acts"><button class="btn small" data-act="editHero" data-id="${h.id}">Edit</button><button class="btn small" data-act="exportHero" data-id="${h.id}" title="Download">⬇</button><button class="btn small danger" data-act="delHero" data-id="${h.id}" title="Delete">✕</button></div></div>`).join('')
     + `<button class="th-hero new" data-act="newHero"><b>+</b><span>Create a character</span></button>`;
   $('#joinHero').innerHTML = list.map(h => `<option value="${h.id}">${esc(h.name)} — ${esc(h.cls)} ${h.lvl}</option>`).join('') + `<option value="">★ My characters at the DM's table${list.length ? '' : ' (or none yet)'}</option>`;
+  renderRecentTables();
+}
+// 🧭 The tables this browser has been let into, newest first: one tap goes back with the hero played there.
+const ago = at => { const d = (Date.now() - at) / 864e5; return d < 1 ? 'today' : d < 2 ? 'yesterday' : d < 14 ? `${Math.floor(d)} days ago` : new Date(at).toLocaleDateString(); };
+function renderRecentTables(){
+  const el = $('#recentTables'); if (!el) return;
+  const list = recentTables().slice(0, 4);
+  el.classList.toggle('hidden', !list.length);
+  el.innerHTML = list.length ? `<label class="muted">Back to a table</label>` + list.map(t => { const h = t.heroId && myHero(t.heroId);
+    return `<button class="th-rt" data-act="joinRecent" data-id="${esc(t.tableId)}"><b>${esc(t.label)}</b><span>${esc(t.code)}${h ? ` · ${esc(h.name)}` : ''} · ${ago(t.at)}</span></button>`; }).join('') : '';
 }
 // The player's name + secret word. The word itself is never stored: only a key made from it.
 function signIn(){

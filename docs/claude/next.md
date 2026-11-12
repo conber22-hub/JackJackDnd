@@ -23,7 +23,7 @@ Merged, tested by their own unit tests, not yet in the app. Each line: what it i
 - ✅ voices done (9 Nov, `ui/voices.js`); ✅ the players' voice workshop too (12 Nov, `ui/voiceworkshop.js`, `game/voiceworkshop.js`; heroes also speak when hurt or down): **Action voices + voice workshop** (`engine/action-voices.js`, `audio/action-voices.js`, `engine/voice-workshop.js`,
   #61/#62): call `planActionVoice` after each resolved attack/spell; captions + opt-in speech; the players' editor
   in the hero card, DM approval in the Table tab.
-- **Lantern drill** (`engine/lantern-drill.js`, #59) with the **party lobby** (`engine/party-lobby.js`, #58) and the
+- ✅ done (12 Nov, `ui/yard.js`, `game/yard.js`, `net/passport.js`; the yard is drawn from above on the phones, not as a 3D scene): **Lantern drill** (`engine/lantern-drill.js`, #59) with the **party lobby** (`engine/party-lobby.js`, #58) and the
   **remembered table** (`engine/table-entry.js`, #57): one piece of work (lobby scene, phone controls, seat checks).
 
 Rule as ever: unit tests, build, the specs touched, then the full e2e suite (check its log says "N passed") before a push.

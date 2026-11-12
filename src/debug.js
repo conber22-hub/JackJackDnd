@@ -39,6 +39,7 @@ import * as objects from './game/objects.js';
 export { objects };
 export { buildFloor } from './render/floors.js';
 export { livingInfo } from './render/living.js';   // 🌨 the snow on the wind, the Hunger Moss (render/living.js)
+export { yard } from './game/yard.js';   // 🏮 the Lantern Yard on the DM's side (game/yard.js)
 import * as maps from './game/maps.js';
 export { maps };
 export { camera, controls, net, receiveAct, makeNoise, rollEncounter, placeEncounter, castSpell, useLegendary, useResistance, lairAction, lairCreature, useFeature, shortRest, longRest, adjustRes, requestAct, answerRequest, requests };
