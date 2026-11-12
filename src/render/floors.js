@@ -14,6 +14,7 @@ import { kitFor } from './models.js';
 import { instancedModel, instancedLoose, looseModel } from './propmodels.js';
 import { swaying } from './wind.js';
 import { mountGroundMist, dropGroundMist } from './groundfog.js';
+import { livingWater, mountLiving, dropLiving } from './living.js';
 import { createHorrorStagecraft } from './barovia-horror-stagecraft.js';
 import { ROAD_WATCH_MANIFEST } from '../data/road-watches-bounds.js';
 const ROAD_WATCH_FILES = Object.fromEntries(ROAD_WATCH_MANIFEST.assets.map(a => [a.id, a.file]));
@@ -228,7 +229,7 @@ function viewGrid(f, L){
 export function buildFloor(L, opt = {}){
   const f = state.floors[L], fv = floorViews[L], th = THEMES[f.theme] || THEMES[0];
   if (!f || !fv) return;
-  dropGroundMist(fv);
+  dropGroundMist(fv); dropLiving(fv);
   if (fv.horrorFx){ try { fv.horrorFx.fx.dispose(); } catch {} fv.horrorFx = null; }
   disposeGroup(fv.built);
   dressMaterials(fv, th);
@@ -407,6 +408,8 @@ export function buildFloor(L, opt = {}){
   }
   // fog days and still dawns: banks of mist over the open ground (render/groundfog.js), where this viewer can see
   if (outdoor && !opt.walls) mountGroundMist(fv, f, L, (x, y) => showTile(y * f.W + x) && !inBuilding(f, x, y));
+  // 🍄 where the Bloom is loose, its moss creeps out of the treeline over the grass (render/living.js)
+  if (outdoor && !opt.walls && bloom) mountLiving(fv, f, L, bloom, showTile);
   // ground clutter on outdoor floors: grass tufts in the clearings, stones on the roads
   if (outdoor){
     const tufts = [], pebbles = [];
@@ -523,15 +526,15 @@ export function buildFloor(L, opt = {}){
   // water: rivers, ponds and lakes (impassable, and no trees grow in it)
   const wt = [...pond, ...decked].filter(i => !pv || seen(i) || exp.has(i));
   if (wt.length){
-    const wm2 = new THREE.InstancedMesh(G.tile, fv.mats.water ||= shared(new THREE.MeshStandardMaterial({ color:'#16242c', roughness:.42, metalness:.1, emissive:new THREE.Color('#081014'), transparent:true, opacity:.94 })), wt.length);
+    const wm2 = new THREE.InstancedMesh(G.tile, livingWater(fv.mats.water ||= shared(new THREE.MeshStandardMaterial({ color:'#16242c', roughness:.42, metalness:.1, emissive:new THREE.Color('#081014'), transparent:true, opacity:.94 })), !outdoor), wt.length);
     wt.forEach((i, n) => { mat4.makeTranslation(wx(i % f.W), -.16, wz((i / f.W) | 0)); wm2.setMatrixAt(n, mat4); wm2.setColorAt(n, col.setRGB(1, 1, 1).multiplyScalar(.85 + hr(i, 7) * .3)); });
     if (wm2.instanceColor) wm2.instanceColor.needsUpdate = true;
-    wm2.receiveShadow = shadows; fv.built.add(wm2);
+    wm2.receiveShadow = shadows; wm2.userData.blackwater = 1; fv.built.add(wm2);
   }
   // water to the knee (a flooded room, a ford): a dark, glassy skin over the floor
   const sh = (f.shallow || []).filter(i => showTile(i));
   if (sh.length){
-    const pm = new THREE.InstancedMesh(G.plane, fv.mats.shallow ||= shared(new THREE.MeshStandardMaterial({ color:'#3a5a66', roughness:.04, metalness:.55, emissive:new THREE.Color('#0d1d24'), transparent:true, opacity:.78, depthWrite:false })), sh.length);
+    const pm = new THREE.InstancedMesh(G.plane, livingWater(fv.mats.shallow ||= shared(new THREE.MeshStandardMaterial({ color:'#3a5a66', roughness:.04, metalness:.55, emissive:new THREE.Color('#0d1d24'), transparent:true, opacity:.78, depthWrite:false })), !outdoor), sh.length);
     sh.forEach((i, n) => { mat4.makeTranslation(wx(i % f.W), .035 + hr(i, 170) * .01 + groundY(f, i % f.W, (i / f.W) | 0), wz((i / f.W) | 0)); pm.setMatrixAt(n, mat4); pm.setColorAt(n, col.setRGB(1, 1, 1).multiplyScalar(.8 + hr(i, 171) * .35)); });
     if (pm.instanceColor) pm.instanceColor.needsUpdate = true; pm.receiveShadow = shadows; fv.built.add(pm);
   }

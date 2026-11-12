@@ -114,6 +114,10 @@ Picture: `docs/screens/hours.jpg` (dawn, midday, dusk, midnight).
 - **💀 Death clip** (Muse, PR #88; `render/forge/clips.js`, `render/minis.js`): a forged figure that dies plays the animation pack's real fall and stays down, instead of the quick topple (still there offline).
 - **🕳 Refuge entrances as models** (Muse, PR #89; `data/hidden-refuges.js`, `engine/hidden-refuges.js`): a found refuge's way in is drawn with the hidden-sites pack: the road hatch, the inn cellar, the hollow oak, the moss curtain, a 3×3 or 4×4 patch beside the spot. Where there is no clear patch the spot keeps the small one-square entrance as before (so every kind can still be hidden wherever it could), the tall oak and curtain never stand on a road, and the hatch and cellar are walked over.
 - **🌫 Ground mist** (`render/groundfog.js`, over ChatGPT's Living Valley II in `render/barovia-living-*.js`): on fog days, and at a still dawn, banks of mist lie over an outdoor map and roll slowly; heroes and trees stand up out of them. It thickens and lifts with the weather over a few seconds, takes the hour's colour, and is only the look (sight in fog is the weather engine's).
+- **🌨 The Living Valley** (`render/living.js`, `engine/hunger-moss.js`, the rest of ChatGPT's Living Valley II): three more things on outdoor maps, only the look.
+  - **Snow on the wind:** falling snow blows downwind, the way the woods lean, and drives harder the harder it blows. A blizzard is thicker. The flakes move on the graphics card now, not one by one each frame.
+  - **Blackwater:** rivers, ponds, lakes, fords and flooded rooms are one dark sheet that ripples with the wind and catches the sun and moon on the ripples. The water in a dungeon barely stirs. It darkens towards blood when his Gaze is 7 or more. Medium quality and above; Low keeps the still water.
+  - **Hunger Moss on the open ground:** where the Bloom is in the woods (🌿 above), its moss creeps out of the treeline over the grass: low dark pads with glowing buds that pulse. A few trees at the woods' edge start it, picked the same at every device, and more of them as it grows. It never lies on a road, a door, the stairs, water, a bridge, a building, a prop, a field's rows or a rise. When the DM turns the Bloom up, the new moss grows out over a few seconds. The players see it only where they have explored.
 - **The sky** (`render/omens.js`) takes the hour's colours, with a warm band at dusk.
 - **Windows** are dark glass by day and candlelit after dark (`render/props.js windowGlow`).
 - **The Mists creep closer and thicker at night.**
@@ -859,6 +863,7 @@ src/render/             Three.js
   minis.js              procedural 3D minis (SHAPES) + syncing tokens
   effects.js            selection ring, reach glow, pings, bursts, Build overlays
   ambience.js           candle and fire light from props, rain and snow outdoors
+  living.js             the Living Valley: snow on the wind, rippling blackwater, the Hunger Moss creeping with the Bloom
   forge/                forged minis: build.js (the jointed, sculpted figure), geo.js (shapes, skinning), mat.js (materials, rim light),
                         anim.js (stances, walk, actions, cloaks), studio.js (the creator's live stage, portraits)
   skyline.js            Castle Ravenloft on the horizon of every outdoor valley map, by compass bearing

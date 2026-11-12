@@ -26,6 +26,7 @@ import { updateAmbience, weatherKind } from './render/ambience.js';
 import { updateWind, wind as windNow_ } from './render/wind.js';
 const windNow = () => windNow_.force.value;
 import { updateGroundMist } from './render/groundfog.js';
+import { updateLiving } from './render/living.js';
 import { updateSkyline } from './render/skyline.js';
 import { sendWhisper } from './ui/hud.js';
 import { renderPanel } from './ui/panels.js';
@@ -135,6 +136,7 @@ function frame(){
     updateAmbience(t, dt);   // candle and fire light, rain and snow
     updateWind(t);       // the woods, the grass and the corn in the day's wind (render/wind.js)
     updateGroundMist(floorViews[ui.floor], t);
+    updateLiving(floorViews[ui.floor], t);   // 🍄 the Hunger Moss grows and glows; the blackwater's Gaze (render/living.js)
     { const hx = floorViews[ui.floor]?.horrorFx; if (hx) hx.fx.update(t, { gaze:state.dread || 1, wind:windNow(), dmReveal:hx.shown }); }   // 🕯 the roadside horrors' lights   // fog days: banks of mist over the ground
     updateSkyline(t);        // the castle on the horizon
     updateOmens(t, dt);      // the valley answers his Gaze: ravens, eyes in the trees, the Mists, a red sky

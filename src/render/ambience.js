@@ -2,7 +2,8 @@
    Prop lights: a small fixed pool of point lights (two on Low quality, six on Medium, ten on High) that follows the lit props nearest the
    camera on the floor in view — candelabras, braziers, hearths, lanterns, campfires — and flickers. A fixed
    count keeps the shaders from recompiling as you move about.
-   Weather: rain or snow (from the day's weather on the Dark Lord desk) falling around the camera on outdoor maps. */
+   Weather: rain or snow (from the day's weather on the Dark Lord desk) falling around the camera on outdoor maps
+   (the snow blows on the wind: render/living.js). */
 import * as THREE from 'three';
 import { state, ui, viewAsPlayer } from '../engine/state.js';
 import { LIT, propSize } from '../data/props.js';
@@ -11,6 +12,7 @@ import { controls, scene, wx, wz } from './scene.js';
 import { floorViews } from './floors.js';
 import { gfx } from './gfx.js';
 import { wxNow, FALLING } from '../game/weather.js';
+import { updateSnowfall } from './living.js';
 
 /* ---------- prop lights ---------- */
 const pool = [];
@@ -38,20 +40,13 @@ function pickLights(){
 }
 
 /* ---------- weather ---------- */
-let rain = null, snow = null;
+let rain = null;
 const N = { low:350, medium:900, high:1600 };
 function makeRain(n){
   const pos = new Float32Array(n * 6);
   for (let i = 0; i < n; i++){ const x = (Math.random() - .5) * 34, y = Math.random() * 14, z = (Math.random() - .5) * 34; pos.set([x, y, z, x + .05, y - .45, z], i * 6); }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   const m = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color:'#9fb0c4', transparent:true, opacity:.35, depthWrite:false }));
-  m.frustumCulled = false; m.userData.n = n; return m;
-}
-function makeSnow(n){
-  const pos = new Float32Array(n * 3);
-  for (let i = 0; i < n; i++) pos.set([(Math.random() - .5) * 34, Math.random() * 14, (Math.random() - .5) * 34], i * 3);
-  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  const m = new THREE.Points(g, new THREE.PointsMaterial({ color:'#e8ecf4', size:.09, transparent:true, opacity:.75, depthWrite:false }));
   m.frustumCulled = false; m.userData.n = n; return m;
 }
 // What's falling: from the weather line (the DM's desk, or what the players were sent).
@@ -73,7 +68,6 @@ export function updateAmbience(t, dt){
   const kind = outdoors() && ui.view !== 'stack' ? weatherKind() : null, n = N[gfx.quality] ?? 900;
   const want = kind === 'rain' || kind === 'drizzle' || kind === 'sleet' ? 'rain' : kind === 'snow' ? 'snow' : null;
   if (rain && (want !== 'rain' || rain.userData.n !== n)){ scene.remove(rain); rain.geometry.dispose(); rain = null; }
-  if (snow && (want !== 'snow' || snow.userData.n !== n)){ scene.remove(snow); snow.geometry.dispose(); snow = null; }
   const tgt = controls.target;
   if (want === 'rain'){
     if (!rain){ rain = makeRain(kind === 'drizzle' ? Math.floor(n / 2) : n); scene.add(rain); }
@@ -83,10 +77,5 @@ export function updateAmbience(t, dt){
       if (p[i + 4] < -1){ const x = (Math.random() - .5) * 34, z = (Math.random() - .5) * 34; p[i] = x; p[i + 1] = 14; p[i + 2] = z; p[i + 3] = x + .05; p[i + 4] = 13.55; p[i + 5] = z; } }
     a.needsUpdate = true; rain.position.set(tgt.x, tgt.y, tgt.z);
   }
-  if (want === 'snow'){
-    if (!snow){ snow = makeSnow(n); scene.add(snow); }
-    const a = snow.geometry.attributes.position, p = a.array;
-    for (let i = 0; i < p.length; i += 3){ p[i + 1] -= 1.1 * dt; p[i] += Math.sin(t + i) * .25 * dt; if (p[i + 1] < -1){ p[i + 1] = 14; p[i] = (Math.random() - .5) * 34; p[i + 2] = (Math.random() - .5) * 34; } }
-    a.needsUpdate = true; snow.position.set(tgt.x, tgt.y, tgt.z);
-  }
+  updateSnowfall(want === 'snow', wxNow()?.kind === 'blizzard' || /blizzard/i.test(String(state?.campaign?.weather || state?.weather || '')), tgt);
 }
