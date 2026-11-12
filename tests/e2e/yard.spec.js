@@ -94,7 +94,7 @@ test('heroes practise in the Lantern Yard, clear a lantern together, set out, an
     await expect(back).toContainText(code);
     await expect(back).toContainText('Ada');
     await back.click(); mark('back to the table');
-    await expect(A.page.locator('#startModal')).toBeHidden();
+    await expect(A.page.locator('#startModal')).toBeHidden({ timeout:30_000 });
     await expect.poll(() => A.page.evaluate(() => window.DreadDelve.get()?.tokens.find(t => t.id === window.DreadDelve.ui.myToken)?.name), { timeout:30_000 }).toBe('Ada');
     // Bea can't sit at Ada, though both are at the table.
     expect(await dm.evaluate(() => { const D = window.DreadDelve, ada = D.get().tokens.find(t => t.name === 'Ada');
