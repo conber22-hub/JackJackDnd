@@ -23,6 +23,7 @@ import { inShape, isShaped, SLANTED } from '../engine/shapes.js';
 import { plankBridges } from '../engine/bridges.js';
 import { woodsBloom, bloomedTree } from '../engine/bloom-woods.js';
 import { orchardTrees, orchardTree } from '../engine/orchard.js';
+import { planDressing } from '../engine/terrain-dress.js';
 import { buildProp, buildBuilding, inBuilding, treeGeometry, treeMaterial, deadTreeGeometry, tuftGeometry, pebbleGeometry, boulderGeometry, cropGeometry, snowCapGeometry } from './props.js';
 import { propSize, propAt } from '../data/props.js';
 
@@ -225,6 +226,19 @@ function viewGrid(f, L){
   return f.grid.map((v, i) => f.doors.some(d => d.i === i && d.state === 'secret') ? T.ROCK : v);
 }
 
+/* The ground pass's plan for a floor, kept while its map stays the same (the seed is the map's own, so every device
+   dresses it alike); and each piece's model, tinted to sit with the woods (null until it has loaded). */
+const DRESS_TINT = { wet:[.5, .56, .46], graves:[.56, .55, .52], high:[.6, .6, .6], farm:[.58, .54, .48], road:[.58, .55, .5], snow:[.9, .92, .95] };
+const DRESS_KIND = { tser_cattail_reeds:'wet', tser_sodden_hummock:'wet', balinok_loose_scree:'high', balinok_shale_cliff:'high', balinok_windblown_snow:'snow',
+  collapsed_fieldwall:'farm', leaning_splitrail_fence:'farm', lost_svalich_milestone:'road', forsaken_road_shrine:'road', abandoned_watchfire:'road' };
+const dressModel = id => instancedLoose(`assets/terrain/${id}.glb`, id === 'tser_cattail_reeds' ? { from:.1, top:1.2, amp:.08 } : null, DRESS_TINT[DRESS_KIND[id] || 'graves']);
+const dressPlans = new WeakMap();
+function dressingFor(f, L, snow){
+  let h = 0; for (let i = 0; i < f.grid.length; i++) h = Math.imul(h ^ f.grid[i], 16777619) + i | 0;
+  const key = [state.meta?.mapId || state.meta?.seed, L, snow, h, (f.water || []).length, (f.props || []).length, (f.buildings || []).length, (f.clear || []).length].join('|');
+  const c = dressPlans.get(f); if (c?.key === key) return c.plan;
+  const plan = planDressing(f, { seed:`${state.meta?.mapId || state.meta?.seed || 'map'}|${L}`, snow }); dressPlans.set(f, { key, plan }); return plan;
+}
 // Rebuilds the stone of one floor. `opt.walls` = Set of wall indices to draw statically (used by the shift animation).
 export function buildFloor(L, opt = {}){
   const f = state.floors[L], fv = floorViews[L], th = THEMES[f.theme] || THEMES[0];
@@ -307,6 +321,9 @@ export function buildFloor(L, opt = {}){
     return false; };
   let wl = []; const trees = [], water = new Set([...(f.water || []), ...(f.chasm || [])]), masonry = new Set(f.masonry || []), bare = new Set(f.clear || []);
   const pond = new Set(f.water || []);   // (water proper; `water` above also holds the chasms, which are no wall and no tree either)
+  // 🌲 the ground pass (engine/terrain-dress.js): the pack's reeds, graves, scree, fences and shrines in glades at the treeline
+  const dress = outdoor && !opt.walls && gfx.quality !== 'low' ? dressingFor(f, L, snow >= .4).filter(d => dressModel(d.id)) : [];
+  for (const d of dress) for (const i of d.cells) bare.add(i);
   const hr = (i, k) => { let h = Math.imul(i ^ Math.imul(k + 1, 0x9e3779b1), 2654435761) ^ Math.imul(L + 1, 40503); h ^= h >>> 15; h = Math.imul(h, 2246822519); h ^= h >>> 13; return (h >>> 0) / 4294967296; };
   for (const i of all){
     if (water.has(i) || bare.has(i) || inBuilding(f, i % f.W, (i / f.W) | 0) || !seen(i)) continue;
@@ -590,6 +607,13 @@ export function buildFloor(L, opt = {}){
     const m = buildProp(p); if (shadows) m.traverse(o => { if (o.isMesh){ o.castShadow = true; o.receiveShadow = true; } });
     if (f.height) m.position.y += groundY(f, p.x, p.y);   // standing on a rise
     fv.built.add(m);
+  }
+  const byId = new Map(); for (const d of dress) if (!pv || d.cells.some(i => seen(i))) (byId.get(d.id) || byId.set(d.id, []).get(d.id)).push(d);
+  for (const [id, list] of byId){
+    const dm = dressModel(id), im = new THREE.InstancedMesh(dm.geometry, dm.material, list.length), q = new THREE.Quaternion(), sc = new THREE.Vector3(1, 1, 1), ps = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+    list.forEach((d, n) => { const [w, h] = d.size, cx = d.x + (w - 1) / 2, cy = d.y + (h - 1) / 2;
+      ps.set(wx(cx), f.height ? groundY(f, Math.round(cx), Math.round(cy)) : 0, wz(cy)); q.setFromAxisAngle(up, d.rot * Math.PI / 2); mat4.compose(ps, q, sc); im.setMatrixAt(n, mat4); });
+    im.castShadow = im.receiveShadow = shadows; im.userData.dress = id; fv.built.add(im);
   }
   // the river bridges: the kit's are 8 long (BRIDGES above for how wide); each reaches a little onto either bank
   for (const d of decks){
