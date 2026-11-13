@@ -36,7 +36,7 @@ export function renderWanderStart(){
       <div class="pt" style="background:radial-gradient(circle at 50% 40%,${h.color}66,#120b10 75%)">${h.portrait ? `<img src="${h.portrait}" alt="">` : esc((h.name || '?')[0])}</div>
       <div class="nm">${esc(h.name || 'Unnamed')}</div><div class="meta">${esc(h.sp)} ${esc(h.cls)} ${h.lvl}</div>
       <div class="acts"><button class="btn small primary" data-act="wdBegin" data-id="${h.id}">Begin</button></div></div>`).join('')}
-      <button class="th-hero new" data-act="newHero"><b>+</b><span>Create a character</span></button></div>
+      <button class="th-hero new" data-act="wdNewHero"><b>+</b><span>Create a character</span></button></div>
     <p class="muted wd-keys">🎮 A controller works in Chrome and Edge: plug it in and press a button. Or the keys: <b>WASD</b> or the arrows walk, <b>Space</b> acts, <b>Tab</b> picks a target, <b>F</b> dodges, <b>Esc</b> ends your turn, <b>M</b> is the menu. Or tap where to walk.</p>`;
 }
 

@@ -392,7 +392,7 @@ document.addEventListener('click', e => {
       $('#joinCode').value = t.code; if (hero) $('#joinHero').value = hero.id;
       ui.myHeroId = hero?.id || null; joinTable(t.code, who.name, who.key, hero || null, { expect:t.tableId }); } break;
     // heroes
-    case 'newHero': openCreator(null, { onSave:h => { if (!h.player) h.player = myProfile().name || $('#pName').value.trim(); saveMyHero(h); renderHeroList(); toast(`${h.name} is ready.`); } }); break;
+    case 'newHero': case 'wdNewHero': openCreator(null, { onSave:h => { if (!h.player) h.player = myProfile().name || $('#pName').value.trim(); saveMyHero(h); renderHeroList(); toast(`${h.name} is ready.`); } }); break;
     case 'newHeroAtTable': openCreator(null, { saveLabel:'Bring to the table', onSave:h => { if (!h.player) h.player = ui.myName; saveMyHero(h); ui.myHeroId = h.id; if (sendHost({ t:'char', char:h })) toast(`${h.name} sent to the DM.`); else if (net.join) net.join.dirty = h.id; renderPanel(); } }); break;
     case 'editHero': { const h = myHero(id); if (h) openCreator(h, { title:`${h.name}`, onSave:h2 => { saveMyHero(h2); renderHeroList(); if (ui.role === 'player'){ if (sendHost({ t:'char', char:h2 })) toast('Sent to the DM.'); else if (net.join) net.join.dirty = h2.id; renderPanel(); } } }); } break;
     case 'delHero': if (confirm('Delete this hero from this browser?')){ deleteMyHero(id); renderHeroList(); } break;
