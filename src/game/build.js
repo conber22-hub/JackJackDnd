@@ -232,11 +232,12 @@ export function clearMonsters(L){
 
 /* ---------- new delves & import ---------- */
 // The campaign desk and the players' characters live above any one dungeon: they travel to the next delve.
-function carryCampaign(s){ if (!state) return; if (state.campaign) s.campaign = state.campaign; if (state.characters) s.characters = state.characters; s.dread = state.dread; s.grasp = state.grasp; }
+function carryCampaign(s){ if (!state || state.campaign?.wander && !ui.wander) return; if (state.campaign) s.campaign = state.campaign; if (state.characters) s.characters = state.characters; s.dread = state.dread; s.grasp = state.grasp; }
 /* A new map. With the party (the usual way): the map being left goes on the shelf (Maps tab) and the party
    travels — through game/maps.js, which also reuses a map already built under the same key. Without it
    (a new campaign, the e2e arena): a clean start that keeps only the campaign desk and the art. */
 export function newDelve(meta, keepParty = true, { key = null, kind = null, party = 'bring', fresh = false } = {}){
+  if (state?.campaign?.wander && !ui.wander) keepParty = false;   // 🗡 a Wanderer's run (game/wander.js) never turns into the DM's campaign
   if (state && keepParty) return goToMap({ meta, key, kind:kind || (meta.template === 'journey' ? 'road' : 'delve'), party, fresh });
   const art = state?.art || {}, content = state?.content;
   const s = newState(meta);

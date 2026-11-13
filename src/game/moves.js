@@ -147,6 +147,8 @@ export function closeInMove(t){
 /* ---------- opportunity attacks ---------- */
 const oaQueue = [];
 export const pausedMover = id => oaQueue.some(q => q.mover === id);
+// 🗡 the Wanderer (game/wander.js): nobody sits at the DM's desk, so every opportunity is taken at once
+export const autoAnswer = { on:false };
 export function offerOpportunity(mover, byId, rest, skip){
   const by = tokById(byId), i = by ? bestMelee(by) : null;
   const q = { id:uid(), mover:mover.id, by:byId, i, rest, skip };
@@ -157,6 +159,7 @@ export function offerOpportunity(mover, byId, rest, skip){
   // a hero's player decides for their hero (the DM can still answer for them)
   if (by.kind !== 'monster') sendToSeat(by.id, { t:'oa', q:{ id:q.id, mover:mover.name, atk:by.attacks[i].n } });
   renderOA(); changed();
+  if (autoAnswer.on) setTimeout(() => answerOpportunity(q.id, true), 350);
 }
 export function answerOpportunity(qid, take, fromPeer = null){
   const k = oaQueue.findIndex(q => q.id === qid); if (k < 0) return;

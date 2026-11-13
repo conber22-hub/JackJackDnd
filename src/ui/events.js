@@ -14,6 +14,7 @@ import { ensureLedger, openLedger } from './ledger.js';
 import { ensureVoices } from './voices.js';
 import { ensureVoiceWorkshop } from './voiceworkshop.js';
 import { ensureYard } from './yard.js';
+import { ensureWander, renderWanderStart } from './wander.js';
 import { recentTables } from '../net/passport.js';
 import { followTrailhead, takeTrail, endTrailLeg, backToRoad } from '../game/trails.js';
 import { hideRefuge, refugeClue, searchForRefuge, goIntoRefuge, leaveRefugeMap } from '../game/refuges.js';
@@ -560,6 +561,7 @@ ensureMobs();    // 👥 the mob
 ensureLedger();  // 📒 the ledger
 ensureVoices();  // 🗣 voice lines as heroes and creatures act
 ensureVoiceWorkshop();   // 🗣 players write their heroes' lines, the DM approves them
+ensureWander();   // 🗡 the Wanderer: playing with the game as DM (ui/wander.js)
 ensureYard();            // 🏮 the Lantern Yard: practice and the Lantern Gate drill before the night begins
 ensureChronicle();   // the 📜 Chronicle: the button, the palette command, the record of the story (idempotent)
 ensureSoundscape();   // the 🎻 Soundscape: the button, the palette command, the board and its receivers (idempotent)
@@ -607,7 +609,7 @@ export function renderHeroList(){
       <div class="acts"><button class="btn small" data-act="editHero" data-id="${h.id}">Edit</button><button class="btn small" data-act="exportHero" data-id="${h.id}" title="Download">⬇</button><button class="btn small danger" data-act="delHero" data-id="${h.id}" title="Delete">✕</button></div></div>`).join('')
     + `<button class="th-hero new" data-act="newHero"><b>+</b><span>Create a character</span></button>`;
   $('#joinHero').innerHTML = list.map(h => `<option value="${h.id}">${esc(h.name)} — ${esc(h.cls)} ${h.lvl}</option>`).join('') + `<option value="">★ My characters at the DM's table${list.length ? '' : ' (or none yet)'}</option>`;
-  renderRecentTables();
+  renderRecentTables(); renderWanderStart();
 }
 // 🧭 The tables this browser has been let into, newest first: one tap goes back with the hero played there.
 const ago = at => { const d = (Date.now() - at) / 864e5; return d < 1 ? 'today' : d < 2 ? 'yesterday' : d < 14 ? `${Math.floor(d)} days ago` : new Date(at).toLocaleDateString(); };
@@ -654,7 +656,8 @@ function cycleVoice(){
 function showRole(r){
   role = r || ''; voiceI = -1; cycleVoice();
   $('#thDoors').classList.toggle('hidden', !!role); $('#thDoors').style.display = role ? 'none' : '';
-  $('#thDM').classList.toggle('hidden', role !== 'dm'); $('#thPlayer').classList.toggle('hidden', role !== 'player');
+  $('#thDM').classList.toggle('hidden', role !== 'dm'); $('#thPlayer').classList.toggle('hidden', role !== 'player'); $('#thWander').classList.toggle('hidden', role !== 'wander');
+  if (role === 'wander') renderWanderStart();
   try { localStorage.setItem('dreaddelve.role', role); } catch {}
   $('#startModal').scrollTop = 0;
 }

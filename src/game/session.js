@@ -68,6 +68,11 @@ export function deserialize(s){
 }
 
 const SAVE_KEY = 'dreaddelve.save.v1';
+// 🗡 a Wanderer's run (game/wander.js) has its own slot: a state with campaign.wander only ever goes there, and the
+// DM's campaign never does, so playing never overwrites the campaign (or the other way round)
+const WANDER_KEY = 'dreaddelve.wander.v1', SAFE_KEY = 'dreaddelve.wander.safe.v1';   // (the safe one: written only at a safe moment)
+let wanderSave = null, wanderSafe = null;
+const slotOf = s => s?.campaign?.wander ? WANDER_KEY : SAVE_KEY;
 // The DM's delve, in IndexedDB with the art included: localStorage's ~5 MB ceiling dropped
 // long campaigns' art. The save read at boot is cached, so loadLocal() stays synchronous.
 let cachedSave = null, savesReady = false;
@@ -77,6 +82,7 @@ let cachedSave = null, savesReady = false;
 export async function initSaves(){
   if (savesReady) return;
   savesReady = true;
+  try { wanderSave = (await get(WANDER_KEY)) ?? null; wanderSafe = (await get(SAFE_KEY)) ?? null; } catch {}
   try {
     const stored = await get(SAVE_KEY);
     if (stored != null){ cachedSave = stored; return; }
@@ -93,13 +99,29 @@ export async function initSaves(){
 let saveTimer = null, warnedQuota = false;
 export function saveSoon(){ if (ui.role !== 'dm') return; clearTimeout(saveTimer); saveTimer = setTimeout(saveLocal, 500); }
 export function saveLocal(){
-  const data = serialize(true);
-  cachedSave = data;
-  set(SAVE_KEY, data).catch(() => {
+  if (!state) return;
+  const data = serialize(true), key = slotOf(state);
+  if (key === WANDER_KEY) wanderSave = data; else cachedSave = data;
+  set(key, data).catch(() => {
     // IndexedDB failed: the old localStorage path, art first, then without it.
-    try { localStorage.setItem(SAVE_KEY, JSON.stringify(data)); }
-    catch { try { localStorage.setItem(SAVE_KEY, JSON.stringify(serialize(false))); if (!warnedQuota){ warnedQuota = true; toast('Autosave skipped art (too big) — use Export to keep it.'); } } catch {} }
+    try { localStorage.setItem(key, JSON.stringify(data)); }
+    catch { try { localStorage.setItem(key, JSON.stringify(serialize(false))); if (!warnedQuota){ warnedQuota = true; toast('Autosave skipped art (too big) — use Export to keep it.'); } } catch {} }
   });
+}
+// Save now, not in half a second (before the state in memory is swapped for another).
+export function flushSave(){ clearTimeout(saveTimer); if (state && ui.role === 'dm') saveLocal(); }
+// 🗡 the Wanderer's last save (or, safe: the last safe moment, where a fallen party wakes), or null
+export function loadWanderSave({ safe = false } = {}){
+  const key = safe ? SAFE_KEY : WANDER_KEY, mem = safe ? wanderSafe : wanderSave;
+  if (mem) return mem;
+  try { const s = localStorage.getItem(key); return s ? JSON.parse(s) : null; } catch { return null; }
+}
+// A safe moment (a start, an arrival, a fight won, a rest): saved, and kept as the place to wake after a defeat.
+export function wanderCheckpoint(){
+  if (!state?.campaign?.wander) return;
+  flushSave();
+  const data = serialize(true); wanderSafe = data;
+  set(SAFE_KEY, data).catch(() => { try { localStorage.setItem(SAFE_KEY, JSON.stringify(serialize(false))); } catch {} });
 }
 export function loadLocal(){
   if (cachedSave) return cachedSave;

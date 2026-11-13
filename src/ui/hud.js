@@ -77,7 +77,7 @@ function renderCard(c, share, calm){
   if (calm) moreChip();
   else setTimeout(() => el.remove(), 8000);
   // the players see it only if the DM sends it (game/outbox.js): a held card says so, with a Send button on it
-  if (share && ui.role === 'dm' && toPlayers({ t:'card', c }, cardCat(c)) === 'held'){
+  if (share && ui.role === 'dm' && !ui.wander && toPlayers({ t:'card', c }, cardCat(c)) === 'held'){   // (🗡 the Wanderer has no players to send to)
     const o = heldFor(c), row = document.createElement('div'); row.className = 'r held';
     row.innerHTML = `<span class="muted">The players haven't seen this.</span> <button class="btn small primary" data-act="outSend" data-id="${o.id}">📤 Send</button>`;
     el.insertBefore(row, el.querySelector('.tap'));

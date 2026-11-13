@@ -101,6 +101,7 @@ export function delayTurn(){
 export function checkVictory(){
   const c = state.combat; if (!c.active || c.won || !fightWon(c.order, tokById)) return;
   c.won = true;
+  if (ui.wander) return;   // 🗡 the Wanderer counts its own (game/wander.js finishFight)
   const xp = fightXp(c.order, tokById, BEST), heroes = c.order.map(tokById).filter(t => t?.kind === 'pc').length || 1;
   showCard({ kind:'crit', title:'The fight is won', sub:`Round ${c.round}`, lines:[xp ? `<b>${xp} XP</b> — ${Math.floor(xp / heroes)} each for ${heroes} hero${heroes === 1 ? '' : 'es'}` : 'Nothing worth counting.'], flair:'For now. Somewhere below, something heard all of that.' });
   log(`⚔ The fight is won (${xp} XP).`); changed();

@@ -80,3 +80,4 @@ export { floorViews } from './render/floors.js';
 export { setDecay, decayOf, decayLines } from './game/decay.js';
 export { setBloom, bloomOf } from './game/bloom.js';   // 🌿 the Bloom in the woods
 export { horrorHere, showHorror, readHorror } from './game/horror.js';
+export * as wander from './game/wander.js';   // 🗡 the Wanderer (game/wander.js): playing with the game as the DM

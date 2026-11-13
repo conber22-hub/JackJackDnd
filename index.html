@@ -509,7 +509,7 @@ body.screen #turnBanner{font-size:52px;top:46%}
 .th-sub{font-family:Cinzel,Georgia,serif;letter-spacing:.6em;text-transform:uppercase;font-size:clamp(12px,1.6vw,16px);color:#9cc23c;text-shadow:0 0 14px rgba(156,194,60,.4)}
 .th-voice{font-family:"IM Fell English","Cormorant Garamond",Georgia,serif;font-style:italic;font-size:clamp(18px,2.3vw,24px);color:#e3cfc0;min-height:2.6em;margin:22px auto 0;max-width:640px;transition:opacity 1.2s ease,filter 1.2s ease}
 .th-voice.fade{opacity:0;filter:blur(4px)}
-.th-doors{display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:820px;margin:0 auto}
+.th-doors{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;max-width:1120px;margin:0 auto}
 .th-door{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;cursor:pointer;color:var(--ink);
   border:1px solid rgba(228,184,102,.22);border-radius:160px 160px 26px 26px;padding:46px 22px 28px;
   background:radial-gradient(ellipse at 50% 0%,rgba(179,48,58,.3),transparent 60%),linear-gradient(rgba(30,16,22,.78),rgba(10,6,9,.86));
@@ -567,6 +567,51 @@ body.screen #turnBanner{font-size:52px;top:46%}
 @keyframes th-heart{0%,100%{filter:drop-shadow(0 0 16px rgba(179,48,58,.3))}12%{filter:drop-shadow(0 0 30px rgba(179,48,58,.6))}22%{filter:drop-shadow(0 0 18px rgba(179,48,58,.35))}32%{filter:drop-shadow(0 0 34px rgba(179,48,58,.65))}}
 @keyframes th-flicker{0%,100%{opacity:1}45%{opacity:.82}50%{opacity:.95}70%{opacity:.88}}
 @keyframes th-rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+/* 🗡 the Wanderer (ui/wander.js): the DM's desk away, a game's HUD over the map */
+body.wander #panel, body.wander #dock, body.wander #selCard, body.wander #initBar, body.wander #topbar, body.wander #topPanels,
+body.wander #modeHint, body.wander #moveTip, body.wander #btnPanel, body.wander #roleBadge, body.wander #waitPill, body.wander #prepVeil{display:none !important}
+#wanderHud{position:fixed;inset:0;pointer-events:none;z-index:40;font-family:"Cormorant Garamond",Georgia,serif;color:var(--ink)}
+#wanderHud.hidden{display:none}
+#wanderHud button{pointer-events:auto}
+.wd-top{position:absolute;top:max(12px,env(safe-area-inset-top));left:16px;right:16px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.wd-where{display:flex;flex-direction:column;gap:2px;padding:10px 16px;border-radius:18px;background:linear-gradient(rgba(30,16,22,.72),rgba(10,6,9,.78));border:1px solid var(--line);box-shadow:var(--spec);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);max-width:min(560px,70vw)}
+.wd-where b{font-family:Cinzel,Georgia,serif;font-size:18px;letter-spacing:.05em;color:#f0d6a8}
+.wd-where span{color:var(--dim);font-size:14px}
+.wd-btn{width:48px;height:48px;border-radius:50%;border:1px solid var(--gold-line);background:linear-gradient(rgba(48,30,20,.85),rgba(14,9,10,.9));color:#f0d6a8;font-size:22px;cursor:pointer}
+.wd-party{position:absolute;left:16px;bottom:max(16px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px}
+.wd-m{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:10px;min-width:220px;padding:8px 14px;border-radius:16px;background:linear-gradient(rgba(30,16,22,.72),rgba(10,6,9,.8));border:1px solid var(--line);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur)}
+.wd-m .nm{font-family:Cinzel,Georgia,serif;font-size:15px;color:#f0d6a8;grid-column:1/3}
+.wd-m .hp{color:var(--dim);font-size:13px;white-space:nowrap}
+.wd-m.me{border-color:var(--gold-line)}
+.wd-m.turn{box-shadow:0 0 0 2px var(--candle),0 0 24px rgba(233,165,74,.4)}
+.wd-m.down{opacity:.55;filter:grayscale(.7)}
+.wd-hp{display:block;align-self:center;height:8px;min-width:90px;border-radius:5px;background:rgba(0,0,0,.55);overflow:hidden;border:1px solid rgba(255,255,255,.08)}
+.wd-hp i{display:block;height:100%;background:linear-gradient(90deg,#7d1420,#c9363f)}
+.wd-prompt{position:absolute;left:50%;bottom:max(24px,env(safe-area-inset-bottom));transform:translateX(-50%)}
+.wd-act{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:999px;border:1px solid var(--gold-line);background:linear-gradient(rgba(48,30,20,.88),rgba(14,9,10,.92));color:var(--ink);font:inherit;font-size:17px;cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.wd-act b{font-family:Cinzel,Georgia,serif;color:var(--candle)}
+.wd-fight{position:absolute;left:50%;transform:translateX(-50%);bottom:max(16px,env(safe-area-inset-bottom));width:min(760px,calc(100vw - 32px));padding:12px 16px;border-radius:22px;background:linear-gradient(rgba(30,16,22,.8),rgba(10,6,9,.88));border:1px solid var(--line);box-shadow:var(--spec),0 20px 60px rgba(0,0,0,.6);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);display:flex;flex-direction:column;gap:8px}
+.wd-fight.hidden,.wd-talk.hidden,.wd-menu.hidden{display:none}
+.wd-order{display:flex;flex-wrap:wrap;gap:6px;font-size:13px}
+.wd-order span{padding:2px 10px;border-radius:999px;border:1px solid var(--line);color:var(--dim)}
+.wd-order .foe{color:#e39a9a}.wd-order .pal{color:#bfe3a3}.wd-order .now{border-color:var(--candle);color:var(--ink)}.wd-order .down{text-decoration:line-through;opacity:.5}
+.wd-fl{font-size:16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wd-fl .wd-hp{width:120px}
+.wd-acts{display:flex;flex-wrap:wrap;gap:8px}
+.wd-acts .wd-act{font-size:15px;padding:8px 14px}
+.wd-talk,.wd-menu{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(620px,calc(100vw - 32px));max-height:calc(100vh - 140px);overflow:auto;padding:20px 22px;border-radius:26px;pointer-events:auto;
+  background:linear-gradient(180deg,rgba(30,20,28,.92),rgba(12,8,12,.95));border:1px solid var(--gold-line);box-shadow:var(--spec),0 30px 90px rgba(0,0,0,.7)}
+.wd-tt{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.wd-tt b{font-family:Cinzel,Georgia,serif;font-size:22px;color:#f0d6a8;letter-spacing:.04em}
+.wd-tt span{color:var(--dim);font-style:italic}
+.wd-tx{font-size:18px;line-height:1.45;white-space:pre-wrap;margin-bottom:14px}
+.wd-opts{display:flex;flex-direction:column;gap:8px}
+.wd-opt{text-align:left;padding:10px 14px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--ink);font:inherit;font-size:17px;cursor:pointer}
+.wd-opt small{display:block;color:var(--dim);font-size:13px}
+.wd-opt.on{border-color:var(--candle);background:rgba(233,165,74,.12)}
+.wd-opt.off{opacity:.5}
+.wd-keys{margin-top:16px;font-size:15px}
+@media (max-width:700px){ .wd-m{min-width:0} .wd-party{bottom:auto;top:96px} .wd-where{max-width:calc(100vw - 100px)} }
 @media (max-width:860px){ .th-steps{grid-template-columns:1fr} .th-doors{grid-template-columns:1fr} .th-door{border-radius:120px 120px 18px 18px;padding:34px 16px 20px} }
 @media (max-width:560px){ .th-feature,.th-continue{flex-direction:column} .th-feature-art{flex-basis:70px} .th-feature-body{padding:0 14px 14px} .th-eyes{gap:30px} }
 @media (prefers-reduced-motion:reduce){ .th-bg *,.th-title,.th-sigil,.th-panel{animation:none!important} .th-eyes i{transform:none;opacity:.5} }
@@ -738,6 +783,7 @@ body.screen #turnBanner{font-size:52px;top:46%}
     <div class="th-doors" id="thDoors">
       <button class="th-door" data-act="thRole" data-k="dm"><span class="th-sigil">♛</span><b>Take the Count's seat</b><span>Dungeon Master — build the board, move the mist, set the dinner table.</span></button>
       <button class="th-door" data-act="thRole" data-k="player"><span class="th-sigil">🕯</span><b>Accept the invitation</b><span>Player — sign in, make your hero, join the table.</span></button>
+      <button class="th-door" data-act="thRole" data-k="wander"><span class="th-sigil">🗡</span><b>Walk the valley alone</b><span>Play — your hero, a controller, and the game as the DM. Win companions over, take the roads, survive.</span></button>
     </div>
 
     <section class="th-panel hidden" id="thDM">
@@ -790,6 +836,13 @@ body.screen #turnBanner{font-size:52px;top:46%}
           <div class="th-recent hidden" id="recentTables"></div>
         </div>
       </div>
+    </section>
+
+    <section class="th-panel hidden" id="thWander">
+      <button class="th-back" data-act="thRole" data-k="">‹ the threshold</button>
+      <h2>Walk the valley alone</h2>
+      <p class="th-whisper">No DM tonight. The Dark Powers will see to everything themselves.</p>
+      <div id="wdStart"></div>
     </section>
 
     <footer class="th-foot">Players open this same page on their own phone or computer. Voice stays on Discord — this handles the map, the minis and the mist. <button class="th-link" data-act="help">How to play</button></footer>
