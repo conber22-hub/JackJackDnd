@@ -4,17 +4,29 @@
    through the same paths as a gamepad (ui/wander.js): the D-pad is read as a stick every frame, a button is a press.
    It shows by itself on a touch screen with no controller plugged in; the menu's Handheld page turns it on or off,
    picks the shell, and the chunky-pixel screen. Kept per device in this browser. Original design (no real console's
-   name or badge). */
+   name or badge).
+   Turning it on boots it (the name drops onto a black screen with a two-note chime; any press skips it). The first
+   press asks for the whole screen (where the phone allows it; the Handheld page can say no) and the phone is kept
+   awake while it's on. The Lantern light by the screen is the hero's health: green, amber, then a quick red blink
+   near death; a hit buzzes the phone, harder for a harder hit. */
 import { dpadStick, skinWanted, SHELLS } from '../engine/wander-cam.js';
 import { setViewRect, view } from '../render/scene.js';
 import { ui } from '../engine/state.js';
+import { gfx } from '../render/gfx.js';
+import { keepAwake } from '../util/wake.js';
 
 const KEY = 'dreaddelve.handheld.v1';
-export const hh = { mode:'auto', shell:'dusk', lcd:false };
+// mode, shell, lcd (the pixel screen), full (ask for the whole screen), seeThru (the hole through walls, ui/wander.js)
+export const hh = { mode:'auto', shell:'dusk', lcd:false, full:true, seeThru:true };
 try { Object.assign(hh, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch {}
-export function setHandheld(patch){ Object.assign(hh, patch); try { localStorage.setItem(KEY, JSON.stringify({ mode:hh.mode, shell:hh.shell, lcd:hh.lcd })); } catch {} relayout(); }
+export function setHandheld(patch){
+  Object.assign(hh, patch);
+  try { localStorage.setItem(KEY, JSON.stringify({ mode:hh.mode, shell:hh.shell, lcd:hh.lcd, full:hh.full, seeThru:hh.seeThru })); } catch {}
+  if (patch.full === false && wentFull) leaveFull();
+  relayout();
+}
 
-let api = { press:() => {}, legend:() => ({}) }, on = false, el = null;
+let api = { press:() => {}, legend:() => ({}), health:() => 1 }, on = false, el = null, boot = null, askedFull = false, wentFull = false;
 const stick = { x:0, y:0 };
 const fingers = new Map();   // pointerId → the control it went down on
 const mq = typeof matchMedia !== 'undefined' ? matchMedia('(pointer:coarse)') : null, coarse = () => !!mq?.matches;
@@ -41,6 +53,9 @@ function build(){
     <div class="hh-pills"><button class="hh-pill" data-hh="select"><i></i>SELECT<small data-lg="select"></small></button><button class="hh-pill" data-hh="view"><i></i>VIEW<small data-lg="view"></small></button><button class="hh-pill" data-hh="start"><i></i>START<small data-lg="start"></small></button></div>
   </div>`;
   document.body.appendChild(el);
+  boot = document.createElement('div'); boot.id = 'hhBoot'; boot.className = 'hidden';
+  boot.innerHTML = '<div class="hh-boot-name">DREAD DELVE</div><div class="hh-boot-sub">pocket</div>';
+  document.body.appendChild(boot);
   el.addEventListener('pointerdown', down);
   el.addEventListener('pointermove', move);
   el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); el.addEventListener('lostpointercapture', up);
@@ -53,6 +68,7 @@ function down(e){
   const c = e.target.closest('[data-hh]'); if (!c) return;
   e.preventDefault(); try { c.setPointerCapture(e.pointerId); } catch {}
   const k = c.dataset.hh; fingers.set(e.pointerId, { k, c });
+  goFull(); endBoot();
   if (k === 'dpad'){ thumb(c, e); return; }
   c.classList.add('down'); buzz();
   api.press(k === 'x' || k === 'y' ? api.legend()[k]?.b : SEND[k]);
@@ -72,7 +88,7 @@ function thumb(c, e){
 }
 
 // Where the HUD, the pop-up cards and the banners go: over the screen, not the whole phone.
-const FIT = ['wanderHud', 'cardLayer'];
+const FIT = ['wanderHud', 'cardLayer', 'hhBoot'];
 function fit(r){
   for (const id of FIT){ const n = document.getElementById(id); if (!n) continue;
     Object.assign(n.style, r ? { left:`${r.x}px`, top:`${r.y}px`, width:`${r.w}px`, height:`${r.h}px`, right:'auto', bottom:'auto' } : { left:'', top:'', width:'', height:'', right:'', bottom:'' }); }
@@ -92,17 +108,70 @@ function relayout(){
 function show(v){
   if (v === on) return; on = v;
   el.classList.toggle('hidden', !v); document.body.classList.toggle('hh', v);
-  if (v) relayout(); else { stick.x = stick.y = 0; fingers.clear(); document.body.classList.remove('hh-lcd'); setViewRect(null); fit(null); }
+  keepAwake(v);
+  if (v){ askedFull = false; relayout(); startBoot(); }
+  else { stick.x = stick.y = 0; fingers.clear(); endBoot(); document.body.classList.remove('hh-lcd'); setViewRect(null); fit(null); if (wentFull) leaveFull(); }
+}
+
+/* ---------- switching on ---------- */
+// (counted in drawn frames, not the clock: building the map can hold the page up longer than the whole boot)
+let bootLeft = 0, bootAt = 0, lastSync = 0;
+function startBoot(){
+  boot.classList.remove('hidden', 'out'); el.classList.add('booting');
+  bootLeft = 1700; bootAt = performance.now(); chimed = false;
+}
+// Any press skips it (the shell's own, a key, a controller's: ui/wander.js press).
+export const skipBoot = () => endBoot();
+function endBoot(){
+  if (!boot || boot.classList.contains('hidden')) return;
+  bootLeft = 0; el.classList.remove('booting'); boot.classList.add('out');
+  setTimeout(() => boot.classList.add('hidden'), 350);
+}
+let actx = null, chimed = false;
+// Two soft notes, a fifth apart (only with the sound effects on).
+function chime(){
+  if (!gfx.sfx) return;
+  try {
+    actx ||= new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === 'suspended') actx.resume();
+    const t = actx.currentTime + .35, vol = .08 * (gfx.volume ?? .7);
+    [[659.25, 0], [987.77, .12]].forEach(([f, d]) => {
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = 'sine'; o.frequency.value = f; o.connect(g); g.connect(actx.destination);
+      g.gain.setValueAtTime(0, t + d); g.gain.linearRampToValueAtTime(vol, t + d + .02); g.gain.exponentialRampToValueAtTime(.0001, t + d + .9);
+      o.start(t + d); o.stop(t + d + 1);
+    });
+  } catch {}
+}
+// The whole screen, once per switching on, from a press (a browser only allows it from one).
+function goFull(){
+  if (askedFull || !hh.full) return; askedFull = true;
+  const d = document.documentElement;
+  if (document.fullscreenElement || !d.requestFullscreen) return;
+  d.requestFullscreen({ navigationUI:'hide' }).then(() => { wentFull = true; }).catch(() => {});
+}
+function leaveFull(){ wentFull = false; if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {}); }
+
+/* ---------- a hit ---------- */
+// k: how hard (the share of the hero's hit points it took)
+export function rumble(k = .2){
+  if (!on) return;
+  try { navigator.vibrate?.(k > .3 ? [70, 40, 110] : k > .12 ? [60] : [30]); } catch {}
+  el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit');
 }
 let lastLg = '';
 /* Every frame from ui/wander.js: playing (the Wanderer is on screen) and whether a controller is plugged in. Shows or
    hides the shell, and keeps the button legends up to date. */
-export function syncHandheld(playing, padIn){
+export function syncHandheld(playing, padIn, now = performance.now()){
   if (!el) build();
+  const step = Math.min(120, Math.max(0, now - lastSync)); lastSync = now;
   const want = skinWanted(hh.mode, { coarse:coarse(), pad:padIn });
   ui.handheld = want;   // (would show while playing: game/wander.js words its first card for it)
   show(!!playing && want);
   if (!on) return;
+  if (bootLeft > 0){ if (!chimed && bootLeft < 1500){ chimed = true; chime(); } bootLeft -= step; if (bootLeft <= 0 || now - bootAt > 6000) endBoot(); }
+  const hp = api.health(), lamp = hp > .5 ? 'ok' : hp > .25 ? 'low' : 'dire';
+  if (el.dataset.hp !== lamp) el.dataset.hp = lamp;
   const lg = api.legend(), key = JSON.stringify(lg);
   if (key !== lastLg){ lastLg = key; for (const n of el.querySelectorAll('[data-lg]')) n.textContent = lg[n.dataset.lg]?.label || ''; }
 }

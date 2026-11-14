@@ -698,6 +698,18 @@ body.hh .wd-opts{gap:4px}body.hh .wd-opt{font-size:12px;padding:5px 9px;border-r
 body.hh .wd-q b{font-size:12px}body.hh .wd-q span{font-size:11px}
 body.hh #cardLayer .pop{width:calc(100% - 20px);padding:9px 12px;max-height:calc(100% - 20px);overflow:auto}
 body.hh #cardLayer .pop .t{font-size:17px}body.hh #cardLayer .pop .f{font-size:13px;margin:4px 0}body.hh #cardLayer .pop .r{font-size:11px}
+#hhBoot{position:fixed;z-index:46;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;pointer-events:none;transition:opacity .3s;border-radius:3px;overflow:hidden}
+#hhBoot.hidden{display:none}#hhBoot.out{opacity:0}
+.hh-boot-name{font-family:Cinzel,Georgia,serif;font-size:clamp(18px,6vw,34px);letter-spacing:.3em;color:#e9c27a;text-shadow:0 0 18px rgba(233,165,74,.55);animation:hhdrop 1s cubic-bezier(.2,.9,.3,1.15) both}
+.hh-boot-sub{font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-size:clamp(13px,3.6vw,20px);color:#a5cc45;opacity:0;animation:hhfade .4s .9s forwards}
+@keyframes hhdrop{0%{transform:translateY(-140%);opacity:0}60%{opacity:1}100%{transform:none;opacity:1}}
+@keyframes hhfade{to{opacity:.85}}
+#handheld.booting .hh-led{opacity:.12;animation:none;box-shadow:none}
+#handheld[data-hp="low"] .hh-led{background:#e9a54a;box-shadow:0 0 8px #e9a54a}
+#handheld[data-hp="dire"] .hh-led{background:#d23a3a;box-shadow:0 0 10px #d23a3a;animation:hhdire .55s steps(2) infinite}
+@keyframes hhdire{50%{opacity:.2}}
+#handheld.hit .hh-bezel{animation:hhhit .4s ease-out}
+@keyframes hhhit{0%{box-shadow:inset 0 0 0 2px rgba(255,255,255,.05),inset 0 8px 20px rgba(0,0,0,.6),0 0 0 3px rgba(210,40,40,.9),0 0 30px rgba(210,40,40,.7)}100%{box-shadow:inset 0 0 0 2px rgba(255,255,255,.05),inset 0 8px 20px rgba(0,0,0,.6),0 1px 0 var(--hh-edge)}}
 @media (max-width:860px){ .th-steps{grid-template-columns:1fr} .th-doors{grid-template-columns:1fr} .th-door{border-radius:120px 120px 18px 18px;padding:34px 16px 20px} }
 @media (max-width:560px){ .th-feature,.th-continue{flex-direction:column} .th-feature-art{flex-basis:70px} .th-feature-body{padding:0 14px 14px} .th-eyes{gap:30px} }
 @media (prefers-reduced-motion:reduce){ .th-bg *,.th-title,.th-sigil,.th-panel{animation:none!important} .th-eyes i{transform:none;opacity:.5} }

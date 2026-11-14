@@ -19,7 +19,11 @@ import { W, rt, hero, members, wandering, startWander, continueWander, leaveWand
 import { loyalty } from '../engine/wander-life.js';
 import { camera, controls, camBusy, wx, wz, floorY } from '../render/scene.js';
 import { toOrbit, fromOrbit, clampOrbit, crane, snapTurn, angleTo, nextView, glide, SHELLS } from '../engine/wander-cam.js';
-import { hh, hhOn, hhPad, syncHandheld, initHandheld, setHandheld } from './handheld.js';
+import { hh, hhOn, hhPad, syncHandheld, initHandheld, setHandheld, rumble, skipBoot } from './handheld.js';
+import { seeThrough, readyFloor } from '../render/seethrough.js';
+import { tokenViews } from '../render/minis.js';
+import { floorViews } from '../render/floors.js';
+import * as THREE from 'three';
 import { toast } from './hud.js';
 
 const $ = s => document.querySelector(s);
@@ -106,7 +110,7 @@ export function renderHud(){
     keepInView('wdMenuBox'); }
 }
 const KEYS_HELP = 'Left stick, D-pad, WASD or the arrows: walk (Q E Z C for the diagonals). Right stick, or [ ] and - =: turn and crane the camera; LB RB out of a fight turn it an eighth; right stick click / V: the next view. Ⓐ / Space: talk, climb, look, strike. LB RB / Tab: pick a target. Ⓨ / R: change weapon. Ⓧ / F: dodge. LT / G: spells. RT / H: drink a potion. Ⓑ / Esc: end your turn, or back. View / I: the pack. Left stick click / J: the journal. ☰ Start / M: this menu. Or tap where to walk.';
-const PAGE_TITLE = { handheld:'Handheld', main:'The valley waits', travel:'Set out for…', keys:'Controls', pack:'The pack', give:'Who drinks it?', journal:'The journal', level:'Level up', spells:'Spells' };
+const PAGE_TITLE = { handheld:'Handheld & camera', main:'The valley waits', travel:'Set out for…', keys:'Controls', pack:'The pack', give:'Who drinks it?', journal:'The journal', level:'Level up', spells:'Spells' };
 // The words above a page's choices: { sub, html }
 function pageInfo(){
   if (menu.page === 'keys') return { html:hhOn() ? HH_HELP : KEYS_HELP };
@@ -134,7 +138,9 @@ function menuItems(){
       { label:`Handheld: ${{ auto:'Auto', on:'On', off:'Off' }[hh.mode] || 'Auto'}`, sub:'Auto · On · Off', run:() => setHandheld({ mode:{ auto:'on', on:'off', off:'auto' }[hh.mode] || 'auto' }) },
       { label:`Shell: ${sh.label}`, sub:SHELLS.map(x => x.label).join(' · '), run:() => setHandheld({ shell:SHELLS[(SHELLS.indexOf(sh) + 1) % SHELLS.length].k }) },
       { label:`Screen: ${hh.lcd ? 'Pixel' : 'Smooth'}`, sub:'Pixel: chunky pixels and lines, like an old handheld', run:() => setHandheld({ lcd:!hh.lcd }) },
+      { label:`Full screen: ${hh.full ? 'On' : 'Off'}`, sub:'The first press fills the whole screen, where the phone allows it', run:() => setHandheld({ full:!hh.full }) },
       { label:'Camera: the next view', sub:'Close · Over the shoulder · High', run:camView },
+      { label:`See through walls: ${hh.seeThru ? 'On' : 'Off'}`, sub:'What stands between the camera and your hero thins away', run:() => setHandheld({ seeThru:!hh.seeThru }) },
       back()]; }
   if (menu.page === 'pack') return [
     ...pack().map(i => ({ label:`${i.n}${i.qty > 1 ? ` ×${i.qty}` : ''}${i.equipped ? ' ✓' : ''}`, sub:i.potion ? 'Drink it, or give it to someone beside you' : ['weapon', 'armor', 'shield'].includes(i.kind) ? (i.equipped ? 'In hand / worn: take it off' : 'Wield it / wear it') : '',
@@ -160,7 +166,7 @@ function menuItems(){
     ...(spellList().length ? [{ label:'Spells', run:go('spells') }] : []),
     { label:'Save', run:() => { saveNow(); toast('Saved.'); closeMenu(); } },
     { label:'Controls', run:go('keys') },
-    { label:'Handheld', sub:hhOn() ? 'On: the phone is the controller' : 'Play on the phone as if it were a pocket console', run:go('handheld') },
+    { label:'Handheld & camera', sub:hhOn() ? 'On: the phone is the controller' : 'Play on the phone as if it were a pocket console', run:go('handheld') },
     { label:'Leave to the threshold', sub:'Saved: carry on from the start page', run:() => { closeMenu(); leaveWander(); import('./events.js').then(m => m.showStart()); } },
   ];
 }
@@ -169,6 +175,7 @@ const closeMenu = () => { menu.open = false; };
 
 /* ---------- input ---------- */
 function press(b){
+  skipBoot();
   if (menu.open){
     const items = menuItems();
     if (b === 'a'){ const o = items[menu.i]; if (o && !o.off) o.run(); }
@@ -202,6 +209,7 @@ function press(b){
 function say(k){ if (!k) return; const r = chooseTalk(k); talkSel.i = 0; if (r === 'joined') toast('A companion follows you now.'); }
 function dismissCard(){ const c = document.querySelector('#cardLayer .pop:last-child'); if (c) c.remove(); return !!c; }
 function step(dx, dy){
+  skipBoot();
   if (menu.open){ if (dy) menu.i = Math.max(0, Math.min(menuItems().length - 1, menu.i + dy)); return; }
   const tv = talkView(); if (tv){ if (dy) talkSel.i = Math.max(0, Math.min(tv.options.length - 1, talkSel.i + dy)); return; }
   if (!stepHero(dx, dy)) pending = { dx, dy, until:performance.now() + 260 };
@@ -231,6 +239,28 @@ function camFrame(dt, pad){
   if (f){ const k = glide(dt, f.rate || 7), t = controls.target; t.x += (f.x - t.x) * k; t.y += (f.y - t.y) * k; t.z += (f.z - t.z) * k; }
   const [x, y, z] = fromOrbit(o); camera.position.set(controls.target.x + x, controls.target.y + y, controls.target.z + z);
 }
+/* ---------- 👁 seeing the hero through walls (render/seethrough.js) ---------- */
+const at = new THREE.Vector3();
+let readyAt = 0, holeOpen = false;
+function lookThrough(now){
+  const h = hero(), tv = h && tokenViews.get(h.id);
+  if (!hh.seeThru || !tv?.group?.parent){ if (holeOpen){ seeThrough(null); holeOpen = false; } return; }
+  if (now - readyAt > 500){ readyAt = now; readyFloor(floorViews[h.floor]); }
+  tv.group.getWorldPosition(at); const feet = at.y; at.y += .75;
+  seeThrough(at, feet); holeOpen = true;
+}
+/* ---------- a hit, felt: the handheld buzzes, a controller rumbles ---------- */
+let hpSeen = null, heroSeen = null;
+function feelHits(gp){
+  const h = hero(); if (!h){ hpSeen = null; return; }
+  if (heroSeen !== h.id){ heroSeen = h.id; hpSeen = h.hp; return; }
+  if (hpSeen !== null && h.hp < hpSeen){
+    const k = (hpSeen - h.hp) / Math.max(1, h.maxHp);
+    rumble(k);
+    try { gp?.vibrationActuator?.playEffect?.('dual-rumble', { duration:Math.round(120 + Math.min(1, k) * 380), strongMagnitude:Math.min(1, .35 + k * 1.5), weakMagnitude:.6 }); } catch {}
+  }
+  hpSeen = h.hp;
+}
 /* ---------- the handheld's buttons ----------
    A, B, the shoulders, Select (the pack), View (the camera), Start (the menu) as a pad's; X and Y as the moment
    wants: in a fight the spells and a potion, out of one the spells and the journal. */
@@ -250,8 +280,8 @@ function frame(now){
   requestAnimationFrame(frame);
   const dt = Math.min(.1, (now - (lastFrame || now)) / 1000); lastFrame = now;
   const gp = [...(navigator.getGamepads?.() || [])].find(g => g && g.connected);
-  syncHandheld(wandering(), !!gp);
-  if (!wandering()){ if (hudOn){ hudOn = false; show('wanderHud', false); } return; }
+  syncHandheld(wandering(), !!gp, now);
+  if (!wandering()){ if (hudOn){ hudOn = false; show('wanderHud', false); seeThrough(null); holeOpen = false; hpSeen = heroSeen = null; } return; }
   hudOn = true;
   let pad = null;
   if (gp){
@@ -260,6 +290,8 @@ function frame(now){
   }
   if (hhOn()){ const r = padIntents(hhPad(), now, hhMem, { yaw:yaw() }); hhMem = r.mem; for (const it of r.intents) if (it.k === 'step') step(it.dx, it.dy); }
   try { camFrame(dt, pad); } catch (e){ console.warn(e); }
+  try { lookThrough(now); } catch (e){ console.warn(e); }
+  feelHits(gp);
   if (pending){ if (now > pending.until) pending = null; else if (stepHero(pending.dx, pending.dy)) pending = null; }
   if (now - lastTick > 180){ lastTick = now; try { fightTick(now); } catch (e){ console.warn(e); } renderHud(); }
 }
@@ -307,7 +339,8 @@ let ready = false;
 export function ensureWander(){
   if (ready) return; ready = true;
   ensureHud();
-  initHandheld({ press:b => { if (!b || !wandering()) return; press(b); renderHud(); }, legend:hhLegend });
+  initHandheld({ press:b => { if (!b || !wandering()) return; press(b); renderHud(); }, legend:hhLegend,
+    health:() => { const h = hero(); return h ? Math.max(0, h.hp) / Math.max(1, h.maxHp) : 1; } });
   ui.wanderTap = null;
   addEventListener('keydown', onKey, { capture:true });
   document.addEventListener('click', onClick, true);
