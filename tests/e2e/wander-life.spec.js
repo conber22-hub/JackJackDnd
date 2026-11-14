@@ -83,6 +83,7 @@ test('a wanderer\'s quests, a roadside choice, a companion\'s approval and quest
     for (let r = 2; r < 6; r++) for (const [dx, dy] of [[r, 0], [-r, 0], [0, r], [0, -r]]){ const x = h.x + dx, y = h.y + dy;
       if (!D.get().tokens.some(t => t.kind === 'monster') && f.grid[y * f.W + x] && !D.get().tokens.some(t => t.floor === h.floor && t.x === x && t.y === y)) D.placeMonster('wolf', { floor:h.floor, x, y }); }
     for (const m of w.members()) m.hp = m.maxHp = 200;
+    for (const t of D.get().tokens.filter(t => t.kind === 'monster')) t.hp = t.maxHp = 200;   // (one Sacred Flame mustn't end the fight before it's looked at)
     w.beginFight('none', D.get().tokens.filter(t => t.kind === 'monster').map(t => t.id)); });
   await expect(page.locator('#wdFight')).toBeVisible();
   await expect.poll(() => ev(page, () => window.DreadDelve.wander.myTurn() && !window.DreadDelve.busy()), { timeout:60_000 }).toBe(true);
