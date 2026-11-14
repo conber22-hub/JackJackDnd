@@ -48,12 +48,13 @@ export function padIntents(pad, now, mem = {}, { yaw = 0, first = 260, repeat = 
 }
 
 /* The keyboard, for those without a pad: arrows or WASD walk (Q E Z C, or the number pad, the diagonals);
-   Space or Enter is A, Escape is B, F is X, R is Y, Tab / Shift+Tab the shoulder buttons, M the menu.
+   Space or Enter is A, Escape is B, F is X, R is Y, Tab / Shift+Tab the shoulder buttons, G and H the triggers
+   (spells, a potion), I the View button (the pack), J the left stick's click (the journal), M the menu.
    key: KeyboardEvent.key → { k:'step', dx, dy } | { k:'press', b } | null */
 const KEY_STEPS = { ArrowUp:[0, -1], w:[0, -1], ArrowDown:[0, 1], s:[0, 1], ArrowLeft:[-1, 0], a:[-1, 0], ArrowRight:[1, 0], d:[1, 0],
   q:[-1, -1], e:[1, -1], z:[-1, 1], c:[1, 1], Home:[-1, -1], PageUp:[1, -1], End:[-1, 1], PageDown:[1, 1],
   8:[0, -1], 2:[0, 1], 4:[-1, 0], 6:[1, 0], 7:[-1, -1], 9:[1, -1], 1:[-1, 1], 3:[1, 1] };
-const KEY_PRESS = { ' ':'a', Enter:'a', Escape:'b', f:'x', r:'y', m:'start', Tab:'rb' };
+const KEY_PRESS = { ' ':'a', Enter:'a', Escape:'b', f:'x', r:'y', m:'start', Tab:'rb', g:'lt', h:'rt', i:'back', j:'ls' };
 export function keyIntent(key, { shift = false, yaw = 0 } = {}){
   const k = key.length === 1 ? key.toLowerCase() : key;
   if (k === 'Tab') return { k:'press', b:shift ? 'lb' : 'rb' };

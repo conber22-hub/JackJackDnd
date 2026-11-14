@@ -611,6 +611,13 @@ body.wander #modeHint, body.wander #moveTip, body.wander #btnPanel, body.wander 
 .wd-opt.on{border-color:var(--candle);background:rgba(233,165,74,.12)}
 .wd-opt.off{opacity:.5}
 .wd-keys{margin-top:16px;font-size:15px}
+.wd-q{display:flex;flex-direction:column;gap:1px;padding:6px 0;border-bottom:1px solid var(--line)}
+.wd-q b{font-size:17px;color:#f0d6a8;font-weight:600}.wd-q span{font-size:15px;color:var(--dim)}.wd-q.done b{color:var(--dim);text-decoration:line-through}
+.wd-sep{margin:14px 0 4px;font-family:Cinzel,Georgia,serif;color:var(--candle);font-size:15px;letter-spacing:.08em}
+.wd-acts .wd-act.off{opacity:.45}
+#wdLvl{margin-left:auto}
+.wd-lvl{pointer-events:auto;border:1px solid var(--candle);background:rgba(233,165,74,.18);color:#f6dcae;font:inherit;font-size:15px;padding:8px 14px;border-radius:999px;cursor:pointer;animation:wdglow 2.4s ease-in-out infinite}
+@keyframes wdglow{0%,100%{box-shadow:0 0 0 rgba(233,165,74,0)}50%{box-shadow:0 0 22px rgba(233,165,74,.5)}}
 @media (max-width:700px){ .wd-m{min-width:0} .wd-party{bottom:auto;top:96px} .wd-where{max-width:calc(100vw - 100px)} }
 @media (max-width:860px){ .th-steps{grid-template-columns:1fr} .th-doors{grid-template-columns:1fr} .th-door{border-radius:120px 120px 18px 18px;padding:34px 16px 20px} }
 @media (max-width:560px){ .th-feature,.th-continue{flex-direction:column} .th-feature-art{flex-basis:70px} .th-feature-body{padding:0 14px 14px} .th-eyes{gap:30px} }

@@ -1,6 +1,7 @@
 /* SESSION — save / load / export, migrating old saves, undo for the Build tools, and changed(). */
 import { heroToken, addRanges } from '../engine/hero.js';
 import { heroLook } from '../engine/look.js';
+import { upgradeWander } from '../engine/wander-life.js';
 import { fillResources } from './resources.js';
 import { clearRequests } from './requests.js';
 import { clearPrompts } from './rooms.js';
@@ -49,6 +50,7 @@ export function deserialize(s){
   if (/Hands Reach/.test(st.content.shift || '')) st.content.shift = null;
   const nc = newCampaign();
   st.campaign = { ...nc, ...(s.campaign || {}), clocks:{ ...nc.clocks, ...(s.campaign?.clocks || {}) }, places:{ ...nc.places, ...(s.campaign?.places || {}) }, notebook:[...(s.campaign?.notebook || [])], letters:[...(s.campaign?.letters || [])] };   // the DM's notebook: old saves get an empty one; the Count's letters likewise
+  if (st.campaign.wander) upgradeWander(st.campaign.wander);   // 🗡 a Wanderer's run from before quests, approval and roadside scenes
   st.characters = s.characters || {};
   st.march = Array.isArray(s.march) ? s.march : [];   // marching order (older saves: as the party was added)
   st.meta.template ||= 'andral';
