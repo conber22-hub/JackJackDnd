@@ -84,7 +84,7 @@ export function startWander(sheet){
   t.floor = 0; t.x = at.x; t.y = at.y;
   placeCompanions();
   enterView(); syncTokens();
-  showCard({ kind:'seep', ...WAKE, ...(ui.handheld ? { lines:WAKE_HANDHELD } : {}) }, false);
+  showCard({ kind:'seep', ...WAKE, ...(ui.handheld ? { lines:WAKE_HANDHELD } : {}), stay:true }, false);   // (it waits to be read: it says how to play)
   log(`🗡 ${t.name} wakes in the Village of Barovia.`);
   addQuest('west', true);
   changed(); saveNow();

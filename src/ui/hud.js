@@ -75,7 +75,7 @@ function renderCard(c, share, calm){
   el.onclick = () => { if (performance.now() - born > 400){ el.remove(); if (calm && waitingCards.length){ renderCard(waitingCards.shift(), false, true); moreChip(); } } };   // the tap that made it (a cast on a phone) mustn't also dismiss it
   layer.appendChild(el); while (layer.children.length > 3) layer.firstChild.remove();
   if (calm) moreChip();
-  else setTimeout(() => el.remove(), 8000);
+  else if (!c.stay) setTimeout(() => el.remove(), 8000);   // (stay: it waits to be dismissed, like the Wanderer's first card)
   // the players see it only if the DM sends it (game/outbox.js): a held card says so, with a Send button on it
   if (share && ui.role === 'dm' && !ui.wander && toPlayers({ t:'card', c }, cardCat(c)) === 'held'){   // (🗡 the Wanderer has no players to send to)
     const o = heldFor(c), row = document.createElement('div'); row.className = 'r held';
