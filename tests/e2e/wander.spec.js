@@ -74,7 +74,9 @@ test('a hero walks the valley alone: a companion won over, an ambush on the road
   }, { timeout:180_000, intervals:[700] }).toBe('over');
   expect(turns).toBeGreaterThan(0);
   const after = await st(page);
-  expect(after.xp).toBeGreaterThan(0);
+  // XP for what fell, unless the whole lot kept out of reach and slipped away (a standoff ends a fight with nothing won)
+  const fell = await page.evaluate(() => window.DreadDelve.get().tokens.some(t => t.kind === 'monster' && (t.dead || t.hp <= 0)));
+  if (fell) expect(after.xp).toBeGreaterThan(0);
   expect(after.hero.hp).toBeGreaterThan(0);
   await expect(page.locator('#wdFight')).toBeHidden();
 
