@@ -41,6 +41,8 @@ export const WAKE = {
   flair:'Cold stone under you, fog in your mouth. You do not remember the road in, only the wall of white behind you, and the feeling of being watched from somewhere high. A tavern has one window lit. The church bell does not ring.',
   lines:['Walk with the left stick (or WASD). Ⓐ (Space) talks, opens and climbs. ☰ (M) is the menu: travel, rest and save.'],
 };
+// (held like a handheld, ui/handheld.js: the shell's own buttons)
+export const WAKE_HANDHELD = ['Walk with the D-pad. A talks, opens and climbs. L and R turn the camera. Start is the menu: travel, rest and save.'];
 
 // What the road says when something comes out of the trees (one at random), and when a fight is over.
 export const AMBUSH = [

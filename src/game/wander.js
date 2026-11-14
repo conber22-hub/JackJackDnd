@@ -14,7 +14,7 @@
    The run lives in state.campaign.wander, so it saves and loads with everything else. */
 import { state, ui, tokById, tokenAt, makeMonster, makeNPC, log, newState } from '../engine/state.js';
 import { newWander, planAmbush, recruitRoll, followSpot, pushTrail, roadEnd, cycleTarget, partyDown, ambushChance } from '../engine/wander.js';
-import { COMPANIONS, companionById, WAKE, AMBUSH, WON, LOST, LIKES, MOOD, QUESTS, questById, MOMENTS, momentById } from '../data/wander.js';
+import { COMPANIONS, companionById, WAKE, WAKE_HANDHELD, AMBUSH, WON, LOST, LIKES, MOOD, QUESTS, questById, MOMENTS, momentById } from '../data/wander.js';
 import { levelFor, xpForNext, shareXp, autoLevel, fightLoot, advanceQuests, questText, questOpen, clampApproval, loyalty, reactions, resolveChoice, momentChance, nextMoment, upgradeWander } from '../engine/wander-life.js';
 import { migrateSheet, itemInfo, canEquip } from '../engine/inventory.js';
 import { mirrorGear } from '../engine/gear.js';
@@ -53,7 +53,7 @@ const night = () => { const h = valley().hour; return h >= 20 || h < 6; };
 const onRoad = () => state.meta.template === 'journey';
 
 // What only this device keeps while playing (never saved): the hero's trail, the aim, whose turn was whose.
-export const rt = { trail:[], target:null, atk:null, heroKey:'', attacks:0, cast:false, bonus:false, acting:'', actAt:0, lastBusy:0, endAt:0, talk:null, seen:new Set(), round:0, unseen:0, hpWas:null };
+export const rt = { trail:[], target:null, atk:null, heroKey:'', attacks:0, cast:false, bonus:false, acting:'', actAt:0, lastBusy:0, endAt:0, talk:null, seen:new Set(), round:0, unseen:0, hpWas:null, focus:null };
 const fresh = () => Object.assign(rt, { trail:[], target:null, atk:null, heroKey:'', attacks:0, cast:false, bonus:false, acting:'', actAt:0, lastBusy:0, endAt:0, talk:null, round:0, unseen:0, hpWas:null });
 
 /* ---------- starting and leaving ---------- */
@@ -84,7 +84,7 @@ export function startWander(sheet){
   t.floor = 0; t.x = at.x; t.y = at.y;
   placeCompanions();
   enterView(); syncTokens();
-  showCard({ kind:'seep', ...WAKE }, false);
+  showCard({ kind:'seep', ...WAKE, ...(ui.handheld ? { lines:WAKE_HANDHELD } : {}) }, false);
   log(`🗡 ${t.name} wakes in the Village of Barovia.`);
   addQuest('west', true);
   changed(); saveNow();
@@ -375,8 +375,9 @@ export function heroCast(entry){
 const heroBusy = () => { const h = hero(); return !h || !!tokenViews.get(h.id)?.anim || pausedMover(h.id); };
 const anyBusy = () => [...tokenViews.values()].some(tv => tv.anim) || state.tokens.some(t => pausedMover(t.id));
 export const myTurn = () => state.combat.active && currentTurn()?.id === W()?.heroTok;
-// The camera glides after the hero, keeping however the player has turned it.
-export function follow(t = hero(), sec = .35){ if (t) camTo(new THREE.Vector3(wx(t.x), floorY(t.floor), wz(t.y)), null, sec); }
+// The camera glides after the hero, keeping however the player has turned it: this only says where to look, and the
+// follow camera (ui/wander.js, every frame) eases there. sec: how quickly (a floor change is a longer glide).
+export function follow(t = hero(), sec = .35){ if (t) rt.focus = { x:wx(t.x), y:floorY(t.floor), z:wz(t.y), rate:sec > .5 ? 4 : 7 }; }
 
 /* One square (dx, dy). A diagonal that's blocked slides along whichever side is open. In a fight it must fit in
    what's left of the hero's speed (no Dash by accident). → true if they stepped */

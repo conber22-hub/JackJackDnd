@@ -9,7 +9,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { renderer, scene, camera, LABELS } from './scene.js';
+import { renderer, scene, camera, LABELS, view, viewSize, setBasePixelRatio } from './scene.js';
 import { postOn, painted, ultra, pixelRatio } from './gfx.js';
 
 const DreadShader = {
@@ -88,10 +88,11 @@ const PaintShader = {
 let composer = null, bloom = null, dreadPass = null, paintPass = null;
 function build(){
   composer = new EffectComposer(renderer);
+  const v = viewSize();
   composer.setPixelRatio(postRatio());
-  composer.setSize(innerWidth, innerHeight);
+  composer.setSize(v.w, v.h);
   composer.addPass(new RenderPass(scene, camera));
-  bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth / 2, innerHeight / 2), .55, .45, .82);
+  bloom = new UnrealBloomPass(new THREE.Vector2(v.w / 2, v.h / 2), .55, .45, .82);
   composer.addPass(bloom);
   composer.addPass(new OutputPass());              // tone mapping + sRGB, then paint, grain and vignette in display space
   paintPass = new ShaderPass(PaintShader);
@@ -99,23 +100,26 @@ function build(){
   dreadPass = new ShaderPass(DreadShader);
   composer.addPass(dreadPass);
 }
-addEventListener('resize', () => { if (composer){ composer.setSize(innerWidth, innerHeight); bloom.resolution.set(innerWidth / 2, innerHeight / 2); } });
+// the picture's size changed (the window, or the handheld's screen: render/scene.js applyView)
+const resize = () => { if (!composer) return; const v = viewSize(); composer.setPixelRatio(postRatio()); composer.setSize(v.w, v.h); bloom.resolution.set(v.w / (ultra() ? 1 : 2), v.h / (ultra() ? 1 : 2)); };
+addEventListener('resize', resize); addEventListener('dd-view', resize);
 
-const postRatio = () => ultra() ? devicePixelRatio : Math.min(devicePixelRatio, 1.5);
+const postRatio = () => (ultra() ? devicePixelRatio : Math.min(devicePixelRatio, 1.5)) * view.px;
 // The quality changed: the renderer's and the effects' resolution follow (ultra: the device's own).
 export function applyResolution(){
-  renderer.setPixelRatio(pixelRatio());
-  if (composer){ composer.setPixelRatio(postRatio()); composer.setSize(innerWidth, innerHeight); bloom.resolution.set(innerWidth / (ultra() ? 1 : 2), innerHeight / (ultra() ? 1 : 2)); }
+  setBasePixelRatio(pixelRatio());
+  resize();
 }
 /* A picture of the view (photo mode, ui/look.js): one frame rendered now and read before the browser clears the
    buffer. scale renders at that many times the resolution (2 = a real 2× picture, not an upscale). → a PNG data URL */
 let lastT = 0, lastDread = 0;
 export function capture({ scale = 1 } = {}){
   const pr = renderer.getPixelRatio(), cpr = composer?.getPixelRatio?.() ?? pr;
-  if (scale !== 1){ renderer.setPixelRatio(pr * scale); composer?.setPixelRatio(cpr * scale); composer?.setSize(innerWidth, innerHeight); }
+  const v = viewSize();
+  if (scale !== 1){ renderer.setPixelRatio(pr * scale); composer?.setPixelRatio(cpr * scale); composer?.setSize(v.w, v.h); }
   renderFrame(lastT, lastDread);
   const url = renderer.domElement.toDataURL('image/png');
-  if (scale !== 1){ renderer.setPixelRatio(pr); composer?.setPixelRatio(cpr); composer?.setSize(innerWidth, innerHeight); }
+  if (scale !== 1){ renderer.setPixelRatio(pr); composer?.setPixelRatio(cpr); composer?.setSize(v.w, v.h); }
   return url;
 }
 // dread01: 0..1
@@ -123,10 +127,10 @@ export function renderFrame(t, dread01){
   lastT = t; lastDread = dread01;
   if (!postOn()){ renderer.render(scene, camera); return; }
   if (!composer) build();
-  dreadPass.uniforms.time.value = t; dreadPass.uniforms.dread.value = dread01; dreadPass.uniforms.aspect.value = innerWidth / innerHeight;
+  dreadPass.uniforms.time.value = t; dreadPass.uniforms.dread.value = dread01; dreadPass.uniforms.aspect.value = viewSize().w / Math.max(1, viewSize().h);
   const p = painted();
   paintPass.enabled = p;
-  if (p){ const pr = composer.renderer.getPixelRatio(); paintPass.uniforms.res.value.set(innerWidth * pr, innerHeight * pr); paintPass.uniforms.radius.value = innerWidth * pr > 2000 ? 3 : 2; }
+  if (p){ const pr = composer.renderer.getPixelRatio(), v = viewSize(); paintPass.uniforms.res.value.set(v.w * pr, v.h * pr); paintPass.uniforms.radius.value = v.w * pr > 2000 ? 3 : 2; }
   bloom.strength = (p ? .85 : .5) + dread01 * .35; bloom.radius = p ? .8 : .45; bloom.threshold = p ? .72 : .82;   // painted: wider, airbrushed glow
   if (!p){ composer.render(); return; }
   // painted: the world without its name plates, then the plates on top, unpainted, so names stay readable

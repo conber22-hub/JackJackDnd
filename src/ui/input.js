@@ -6,7 +6,7 @@ import { payLegend } from '../game/combat.js';
 import { makeNoise } from '../game/noise.js';
 import { state, ui, isDM, tokById, tokenAt, viewAsPlayer, walk } from '../engine/state.js';
 import { roomAt } from '../engine/generator.js';
-import { renderer, camera, controls, floorY } from '../render/scene.js';
+import { renderer, camera, controls, floorY, viewSize } from '../render/scene.js';
 import { tokenViews } from '../render/minis.js';
 import { floorViews, buildFloor } from '../render/floors.js';
 import { reachState, showGhostRect, showRoomHandles, showPathPreview, clearOverlay, showHover, showMovePath, clearMovePath } from '../render/effects.js';
@@ -37,7 +37,8 @@ import { talkTo, folkAt } from '../game/folk.js';
 
 const raycaster = new THREE.Raycaster(), ndc = new THREE.Vector2();
 raycaster.layers.enableAll();   // a tap on a name plate (its own layer, render/scene.js) still picks its mini
-function setNdc(cx, cy){ ndc.set(cx / innerWidth * 2 - 1, -(cy / innerHeight) * 2 + 1); raycaster.setFromCamera(ndc, camera); }
+// (the world may be drawn into part of the page: the Wanderer's handheld screen, render/scene.js viewSize)
+function setNdc(cx, cy){ const v = viewSize(); ndc.set((cx - v.x) / v.w * 2 - 1, -((cy - v.y) / v.h) * 2 + 1); raycaster.setFromCamera(ndc, camera); }
 function pickToken(cx, cy){
   setNdc(cx, cy);
   const groups = [...tokenViews.values()].map(tv => tv.group).filter(g => g.visible && g.parent && g.parent.visible && g.parent.parent?.visible);

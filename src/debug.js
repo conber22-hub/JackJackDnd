@@ -81,3 +81,6 @@ export { setDecay, decayOf, decayLines } from './game/decay.js';
 export { setBloom, bloomOf } from './game/bloom.js';   // 🌿 the Bloom in the woods
 export { horrorHere, showHorror, readHorror } from './game/horror.js';
 export * as wander from './game/wander.js';   // 🗡 the Wanderer (game/wander.js): playing with the game as the DM
+export * as handheld from './ui/handheld.js';   // 🕹 the Wanderer's handheld skin: the phone as the controller
+export { camTurn, camView, camCrane } from './ui/wander.js';   // 🎥 the Wanderer's follow camera
+export { viewSize } from './render/scene.js';

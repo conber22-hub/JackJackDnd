@@ -619,6 +619,85 @@ body.wander #modeHint, body.wander #moveTip, body.wander #btnPanel, body.wander 
 .wd-lvl{pointer-events:auto;border:1px solid var(--candle);background:rgba(233,165,74,.18);color:#f6dcae;font:inherit;font-size:15px;padding:8px 14px;border-radius:999px;cursor:pointer;animation:wdglow 2.4s ease-in-out infinite}
 @keyframes wdglow{0%,100%{box-shadow:0 0 0 rgba(233,165,74,0)}50%{box-shadow:0 0 22px rgba(233,165,74,.5)}}
 @media (max-width:700px){ .wd-m{min-width:0} .wd-party{bottom:auto;top:96px} .wd-where{max-width:calc(100vw - 100px)} }
+/* 🕹 the handheld (ui/handheld.js): the phone held like a pocket console; the world in its screen, the rest the controller */
+#handheld{position:fixed;inset:0;z-index:1;background:#060408;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;font-family:Cinzel,Georgia,serif;
+  --hh-a:#6a5aa8;--hh-b:#3a2d72;--hh-edge:rgba(255,255,255,.22);--hh-ink:rgba(235,228,255,.78);--hh-key:#2a2340;--hh-key-hi:#4a3f6a;--hh-key-ink:#d9d0f4;--hh-ab:#5b2a5e;--hh-ab-hi:#8a4a8c;--hh-bezel:#17131f}
+#handheld.hidden{display:none}
+#handheld[data-shell="bone"]{--hh-a:#e9e0cf;--hh-b:#b9ab90;--hh-edge:rgba(255,255,255,.6);--hh-ink:#5a4a36;--hh-key:#2f2a26;--hh-key-hi:#4d4640;--hh-key-ink:#e8dfcf;--hh-ab:#7a1726;--hh-ab-hi:#a8303e;--hh-bezel:#2b2730}
+#handheld[data-shell="blood"]{--hh-a:#8a2230;--hh-b:#420b13;--hh-edge:rgba(255,190,190,.2);--hh-ink:#f0c9a8;--hh-key:#1c0e11;--hh-key-hi:#3a1d22;--hh-key-ink:#e8c9b2;--hh-ab:#1c0e11;--hh-ab-hi:#40232a;--hh-bezel:#120a0d}
+#handheld[data-shell="moss"]{--hh-a:#5d7a50;--hh-b:#26361f;--hh-edge:rgba(220,255,200,.2);--hh-ink:#dfe8c4;--hh-key:#1a2116;--hh-key-hi:#34402d;--hh-key-ink:#dfe8c4;--hh-ab:#5a3a1c;--hh-ab-hi:#8a5c2e;--hh-bezel:#121710}
+#handheld[data-shell="smoke"]{--hh-a:rgba(58,50,62,.96);--hh-b:#121016;--hh-edge:rgba(233,165,74,.35);--hh-ink:#e9a54a;--hh-key:#241e26;--hh-key-hi:#3d343f;--hh-key-ink:#f0d6a8;--hh-ab:#3a2618;--hh-ab-hi:#6a4426;--hh-bezel:#0a080c}
+.hh-body{position:absolute;inset:max(4px,env(safe-area-inset-top)) max(4px,env(safe-area-inset-right)) max(4px,env(safe-area-inset-bottom)) max(4px,env(safe-area-inset-left));
+  display:grid;grid-template-columns:1fr auto 1fr;grid-template-rows:1fr auto;grid-template-areas:"left screen right" "left pills right";align-items:center;justify-items:center;padding:22px 10px 6px;
+  border-radius:min(150px,16vw)/50%;background:radial-gradient(120% 90% at 50% 0%,rgba(255,255,255,.18),transparent 55%),linear-gradient(170deg,var(--hh-a),var(--hh-b));
+  box-shadow:inset 0 2px 0 var(--hh-edge),inset 0 -6px 18px rgba(0,0,0,.35),0 0 0 1px rgba(0,0,0,.6)}
+.hh-sh{position:absolute;top:0;left:9%;right:9%;height:16px;display:flex;justify-content:space-between;pointer-events:none}
+.hh-shoulder{pointer-events:auto;width:24%;height:22px;margin-top:-4px;border:0;border-radius:4px 4px 14px 14px;background:linear-gradient(var(--hh-key-hi),var(--hh-key));color:var(--hh-key-ink);font:700 11px Cinzel,serif;letter-spacing:.2em;box-shadow:0 3px 0 rgba(0,0,0,.4)}
+.hh-bezel{grid-area:screen;position:relative;height:calc(100dvh - 78px);width:min(calc(100vw - 330px),calc((100dvh - 78px) * 1.62));padding:10px 28px 22px;border-radius:14px 14px 14px 40px;background:var(--hh-bezel);box-shadow:inset 0 0 0 2px rgba(255,255,255,.05),inset 0 8px 20px rgba(0,0,0,.6),0 1px 0 var(--hh-edge)}
+.hh-screen{position:absolute;inset:10px 28px 22px;border-radius:3px;background:#000;box-shadow:0 0 0 2px #000,0 0 18px rgba(0,0,0,.8)}
+.hh-led{position:absolute;left:10px;top:42%;width:7px;height:7px;border-radius:50%;background:#a5cc45;box-shadow:0 0 8px #a5cc45;animation:hhled 4s ease-in-out infinite}
+.hh-ledl{position:absolute;left:3px;top:calc(42% + 12px);font:600 6px system-ui,sans-serif;color:rgba(255,255,255,.35);letter-spacing:.1em;writing-mode:vertical-rl}
+@keyframes hhled{50%{opacity:.55}}
+.hh-brand{position:absolute;left:0;right:0;bottom:4px;text-align:center;font-size:10px;letter-spacing:.32em;color:rgba(255,255,255,.42)}
+.hh-brand em{font-family:"Cormorant Garamond",Georgia,serif;letter-spacing:.05em;font-size:12px;text-transform:lowercase;color:rgba(233,165,74,.7)}
+.hh-left{grid-area:left}.hh-right{grid-area:right;display:flex;flex-direction:column;align-items:center;gap:10px}
+.hh-dpad{position:relative;width:min(132px,15vw,30vh);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,rgba(0,0,0,.25),rgba(0,0,0,.12) 60%,transparent 70%)}
+.hh-dpad i{position:absolute;background:linear-gradient(var(--hh-key-hi),var(--hh-key));box-shadow:0 3px 0 rgba(0,0,0,.45)}
+.hh-dpad .up,.hh-dpad .down{left:35%;width:30%;height:36%}.hh-dpad .up{top:4%;border-radius:6px 6px 0 0}.hh-dpad .down{bottom:4%;border-radius:0 0 6px 6px}
+.hh-dpad .left,.hh-dpad .right{top:35%;height:30%;width:36%}.hh-dpad .left{left:4%;border-radius:6px 0 0 6px}.hh-dpad .right{right:4%;border-radius:0 6px 6px 0}
+.hh-dpad b{position:absolute;left:33%;top:33%;width:34%;height:34%;background:var(--hh-key);border-radius:4px;box-shadow:inset 0 0 0 5px var(--hh-key),inset 0 0 10px rgba(0,0,0,.6)}
+.hh-dpad[data-dir~="up"] .up,.hh-dpad[data-dir~="down"] .down,.hh-dpad[data-dir~="left"] .left,.hh-dpad[data-dir~="right"] .right{background:var(--hh-key);box-shadow:0 1px 0 rgba(0,0,0,.45);filter:brightness(1.25)}
+.hh-face{position:relative;width:min(150px,17vw,34vh);aspect-ratio:1}
+.hh-k{position:absolute;width:38%;aspect-ratio:1;border-radius:50%;border:0;background:radial-gradient(circle at 35% 30%,var(--hh-ab-hi),var(--hh-ab));color:rgba(255,255,255,.75);font:700 15px Cinzel,serif;box-shadow:0 4px 0 rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.25);transition:transform .05s}
+.hh-k.small{width:26%;font-size:11px;background:radial-gradient(circle at 35% 30%,var(--hh-key-hi),var(--hh-key));color:var(--hh-key-ink)}
+.hh-k.b{left:4%;top:52%}.hh-k.a{left:56%;top:30%}.hh-k.y{left:6%;top:16%}.hh-k.x{left:44%;top:0}
+.hh-k.down,.hh-shoulder.down,.hh-pill.down i{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.45);filter:brightness(1.2)}
+.hh-lg{position:absolute;font:600 9px system-ui,sans-serif;color:var(--hh-ink);white-space:nowrap;letter-spacing:.04em;pointer-events:none;transform:translateX(-50%)}
+.hh-lg.b{left:23%;top:92%}.hh-lg.a{left:75%;top:70%}.hh-lg.y{left:19%;top:44%}.hh-lg.x{left:57%;top:27%}
+.hh-grille{width:56px;height:28px;background:radial-gradient(circle,rgba(0,0,0,.45) 2px,transparent 2.5px) 0 0/9px 9px;transform:rotate(-18deg);opacity:.8}
+.hh-pills{grid-area:pills;display:flex;gap:18px;padding-top:4px}
+.hh-pill{display:flex;flex-direction:column;align-items:center;gap:3px;border:0;background:none;color:var(--hh-ink);font:700 8px system-ui,sans-serif;letter-spacing:.18em}
+.hh-pill i{display:block;width:40px;height:12px;border-radius:7px;background:linear-gradient(var(--hh-key-hi),var(--hh-key));box-shadow:0 2px 0 rgba(0,0,0,.45);transform:rotate(-14deg)}
+.hh-pill small{font-weight:500;letter-spacing:.04em;font-size:8px;opacity:.75;min-height:9px}
+@media (orientation:portrait){
+  .hh-body{grid-template-columns:1fr 1fr;grid-template-rows:auto 34px 1fr auto;grid-template-areas:"screen screen" "sh sh" "left right" "pills pills";padding:12px 12px 10px;border-radius:26px 26px 90px 26px}
+  .hh-sh{position:static;grid-area:sh;align-self:center;width:100%;height:auto;padding:0 6px}
+  .hh-shoulder{width:30%;height:26px;margin:0;border-radius:14px}
+  .hh-bezel{width:calc(100vw - 32px);height:min(58dvh,calc((100vw - 32px) * 1.3));padding:12px 18px 24px;border-radius:12px 12px 36px 12px}
+  .hh-screen{inset:12px 18px 24px}
+  .hh-dpad{width:min(150px,38vw)}.hh-face{width:min(160px,40vw)}
+  .hh-pills{padding:0 0 4px}
+}
+body.hh #stage{z-index:2;inset:auto}
+body.hh #stage{position:fixed;overflow:hidden;border-radius:3px}
+body.hh #stage canvas.chunky{image-rendering:pixelated}
+body.hh.hh-lcd #stage::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 1px,transparent 1px 3px),radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,.35));mix-blend-mode:multiply}
+/* the HUD, the cards and the banners, small enough for the handheld's screen (ui/handheld.js sets where) */
+body.hh #wanderHud{inset:auto;font-size:13px}
+body.hh #cardLayer{inset:auto}
+body.hh #toasts{transform:translateX(-50%)}body.hh .toast{font-size:12px;padding:6px 12px}
+body.hh .wd-top{top:5px;left:5px;right:5px;gap:6px}
+body.hh .wd-where{padding:3px 9px;border-radius:10px;max-width:calc(100% - 60px)}
+body.hh .wd-where b{font-size:12px}body.hh .wd-where span{font-size:10px}
+body.hh .wd-btn{width:30px;height:30px;font-size:15px}
+body.hh .wd-lvl{font-size:11px;padding:4px 9px}
+body.hh .wd-party{top:44px;right:5px;left:auto;bottom:auto;gap:3px;align-items:flex-end}
+body.hh .wd-m{min-width:0;padding:2px 8px;border-radius:9px;column-gap:6px}
+body.hh .wd-m .nm{font-size:10px}body.hh .wd-m .hp{font-size:9px}
+body.hh .wd-hp{min-width:44px;height:5px}
+body.hh .wd-prompt{bottom:6px}
+body.hh .wd-act{font-size:12px;padding:5px 11px;gap:5px}
+body.hh .wd-fight{width:calc(100% - 10px);bottom:5px;padding:5px 8px;border-radius:11px;gap:3px}
+body.hh .wd-order{font-size:9px;gap:3px}body.hh .wd-order span{padding:0 6px}
+body.hh .wd-fl{font-size:11px;gap:5px}body.hh .wd-fl .wd-hp{width:60px}
+body.hh .wd-acts{gap:4px}body.hh .wd-acts .wd-act{font-size:10px;padding:3px 8px}
+body.hh .wd-talk,body.hh .wd-menu{width:calc(100% - 14px);max-height:calc(100% - 14px);padding:9px 11px;border-radius:12px}
+body.hh .wd-tt{margin-bottom:5px}body.hh .wd-tt b{font-size:14px}body.hh .wd-tt span{font-size:11px}
+body.hh .wd-tx{font-size:12px;margin-bottom:7px}
+body.hh .wd-opts{gap:4px}body.hh .wd-opt{font-size:12px;padding:5px 9px;border-radius:9px}body.hh .wd-opt small{font-size:10px}
+body.hh .wd-q b{font-size:12px}body.hh .wd-q span{font-size:11px}
+body.hh #cardLayer .pop{width:calc(100% - 20px);padding:9px 12px;max-height:calc(100% - 20px);overflow:auto}
+body.hh #cardLayer .pop .t{font-size:17px}body.hh #cardLayer .pop .f{font-size:13px;margin:4px 0}body.hh #cardLayer .pop .r{font-size:11px}
 @media (max-width:860px){ .th-steps{grid-template-columns:1fr} .th-doors{grid-template-columns:1fr} .th-door{border-radius:120px 120px 18px 18px;padding:34px 16px 20px} }
 @media (max-width:560px){ .th-feature,.th-continue{flex-direction:column} .th-feature-art{flex-basis:70px} .th-feature-body{padding:0 14px 14px} .th-eyes{gap:30px} }
 @media (prefers-reduced-motion:reduce){ .th-bg *,.th-title,.th-sigil,.th-panel{animation:none!important} .th-eyes i{transform:none;opacity:.5} }

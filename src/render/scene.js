@@ -66,8 +66,12 @@ export function camTo(target, offset, sec = .8){
   const p0 = camera.position.clone(), t0 = controls.target.clone();
   const off = offset || camera.position.clone().sub(controls.target);
   const p1 = target.clone().add(off);
+  camBusyUntil = performance.now() + sec * 1000;
   tween(sec, k => { const e = ease(k); controls.target.lerpVectors(t0, target, e); camera.position.lerpVectors(p0, p1, e); });
 }
+// Is a camera glide (camTo) still under way? (the Wanderer's follow camera waits for it)
+let camBusyUntil = 0;
+export const camBusy = () => performance.now() < camBusyUntil;
 export function viewOffset(){ return ui.view === 'top' ? new THREE.Vector3(0, 30, .01) : ui.view === 'stack' ? new THREE.Vector3(34, 18, 34) : new THREE.Vector3(0, 19, 12); }
 export function focusTile(L, x, y){ camTo(new THREE.Vector3(wx(x), floorY(L), wz(y))); }
 export function focusFloor(){
@@ -76,7 +80,30 @@ export function focusFloor(){
 }
 export const fx = { shake:0 };
 
-addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+/* ---------- the view: where on the page the world is drawn ----------
+   Normally the whole window. The Wanderer's handheld skin (ui/handheld.js) draws it into its screen instead, and may ask
+   for chunky pixels (px < 1, the look of an old handheld's screen). Everything that sizes itself to the picture (the
+   effects in render/post.js, taps in ui/input.js) asks viewSize() rather than the window. */
+export const view = { rect:null, px:1, base:Math.min(devicePixelRatio, 2) };
+export const viewSize = () => view.rect ? { ...view.rect } : { x:0, y:0, w:innerWidth, h:innerHeight };
+export function applyView(){
+  const v = viewSize(), st = $('#stage');
+  camera.aspect = v.w / Math.max(1, v.h); camera.updateProjectionMatrix();
+  renderer.setPixelRatio(view.base * view.px);
+  renderer.setSize(v.w, v.h);
+  if (st) Object.assign(st.style, view.rect ? { left:`${v.x}px`, top:`${v.y}px`, width:`${v.w}px`, height:`${v.h}px`, right:'auto', bottom:'auto' } : { left:'', top:'', width:'', height:'', right:'', bottom:'' });
+  renderer.domElement.classList.toggle('chunky', view.px < 1);
+  dispatchEvent(new Event('dd-view'));
+}
+// rect: { x, y, w, h } in page pixels, or null for the whole window. px: how finely (1 = the device's own).
+export function setViewRect(rect, px = 1){
+  const r = rect && { x:Math.round(rect.x), y:Math.round(rect.y), w:Math.max(1, Math.round(rect.w)), h:Math.max(1, Math.round(rect.h)) };
+  const same = JSON.stringify(r) === JSON.stringify(view.rect) && px === view.px;
+  view.rect = r; view.px = px; if (!same) applyView();
+}
+// The renderer's own pixel ratio (render/post.js sets it from the quality), before the view's px.
+export function setBasePixelRatio(pr){ view.base = pr; renderer.setPixelRatio(pr * view.px); }
+addEventListener('resize', applyView);
 
 /* ---------- labels ---------- */
 export function makeLabel(text, color = '#ece1cf', px = 28, hp = null, pc = false, conds = ''){

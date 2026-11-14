@@ -1,7 +1,8 @@
 /* 🗡 THE WANDERER on screen: the third door on the start page (pick a hero, or carry on), and while playing, the
    heads-up display over the map: where and when, the party's health, what Ⓐ would do here, the fight bar on your
    turn, a conversation, and the menu (travel, rest, save, leave). Input: a gamepad (engine/pad.js; the loop below
-   reads it every frame, with the right stick turning the camera), the keyboard, or taps on the map and the buttons. */
+   reads it every frame), the keyboard, the handheld skin's touch buttons (ui/handheld.js), or taps on the map.
+   The follow camera (below) eases after the hero and turns, cranes and cycles views with the right stick, L / R, [ ] - = V. */
 import { state, ui, tokById } from '../engine/state.js';
 import { readPad, padIntents, keyIntent } from '../engine/pad.js';
 import { companionById } from '../data/wander.js';
@@ -16,9 +17,10 @@ import { W, rt, hero, members, wandering, startWander, continueWander, leaveWand
   heroAttack, heroDodge, endHeroTurn, aim, target, attackFor, nextWeapon, attacksLeft, myTurn, fightTick, destinations, setOut, rest, saveNow,
   pack, toggleEquip, usePotion, coinsGp, shopHere, buyPotion, journal, approvalOf, levelReady, partyLevel, nextLevelXp, levelUpHero, sheetOf, spellList, heroCast } from '../game/wander.js';
 import { loyalty } from '../engine/wander-life.js';
-import { camera, controls } from '../render/scene.js';
+import { camera, controls, camBusy, wx, wz, floorY } from '../render/scene.js';
+import { toOrbit, fromOrbit, clampOrbit, crane, snapTurn, angleTo, nextView, glide, SHELLS } from '../engine/wander-cam.js';
+import { hh, hhOn, hhPad, syncHandheld, initHandheld, setHandheld } from './handheld.js';
 import { toast } from './hud.js';
-import * as THREE from 'three';
 
 const $ = s => document.querySelector(s);
 const menu = { open:false, page:'main', i:0 }, talkSel = { i:0 };
@@ -39,7 +41,8 @@ export function renderWanderStart(){
       <div class="nm">${esc(h.name || 'Unnamed')}</div><div class="meta">${esc(h.sp)} ${esc(h.cls)} ${h.lvl}</div>
       <div class="acts"><button class="btn small primary" data-act="wdBegin" data-id="${h.id}">Begin</button></div></div>`).join('')}
       <button class="th-hero new" data-act="wdNewHero"><b>+</b><span>Create a character</span></button></div>
-    <p class="muted wd-keys">🎮 A controller works in Chrome and Edge: plug it in and press a button. Or the keys: <b>WASD</b> or the arrows walk, <b>Space</b> acts, <b>Tab</b> picks a target, <b>F</b> dodges, <b>Esc</b> ends your turn, <b>G</b> casts, <b>H</b> drinks a potion, <b>I</b> is the pack, <b>J</b> the journal, <b>M</b> the menu. Or tap where to walk.</p>`;
+    <p class="muted wd-keys">🎮 A controller works in Chrome and Edge: plug it in and press a button. Or the keys: <b>WASD</b> or the arrows walk, <b>Space</b> acts, <b>Tab</b> picks a target, <b>F</b> dodges, <b>Esc</b> ends your turn, <b>G</b> casts, <b>H</b> drinks a potion, <b>I</b> is the pack, <b>J</b> the journal, <b>M</b> the menu, <b>[ ]</b> turn the camera. Or tap where to walk.</p>
+    <p class="muted wd-keys">🕹 On a phone with no controller, the phone becomes one: it is held like a pocket console, the world on its screen (the menu's Handheld page has the shells and a pixel screen).</p>`;
 }
 
 /* ---------- the HUD ---------- */
@@ -51,6 +54,11 @@ function ensureHud(){
     <div class="wd-talk hidden" id="wdTalk"></div><div class="wd-menu hidden" id="wdMenuBox"></div>`;
   document.body.appendChild(el);
 }
+// A button's name as the player holds it: a pad's, or the handheld's (where a fight's Weapon and Dodge are tapped).
+const PAD_K = { a:'Ⓐ', b:'Ⓑ', x:'Ⓧ', y:'Ⓨ', rb:'RB', lt:'LT', rt:'RT' }, HH_K = { a:'A', b:'B', rb:'R', lt:'X', rt:'Y' };
+const K = k => { const n = (hhOn() ? HH_K : PAD_K)[k]; return n ? `<b>${n}</b>` : ''; };
+// The highlighted choice stays in sight when the D-pad moves through a list longer than the box.
+const keepInView = id => { const o = document.querySelector(`#${id} .wd-opt.on`); if (o && o.dataset.seen !== '1'){ document.querySelectorAll(`#${id} .wd-opt[data-seen]`).forEach(n => delete n.dataset.seen); o.dataset.seen = '1'; o.scrollIntoView({ block:'nearest' }); } };
 const bar = (hp, max) => `<i class="wd-hp"><i style="width:${Math.max(0, Math.min(100, hp / Math.max(1, max) * 100))}%"></i></i>`;
 let last = {};
 const put = (id, html) => { if (last[id] === html) return; last[id] = html; const el = document.getElementById(id); if (el) el.innerHTML = html; };
@@ -67,7 +75,7 @@ export function renderHud(){
     <span class="nm">${esc(m.name)}</span>${bar(m.hp, m.maxHp)}<span class="hp">${Math.max(0, m.hp)} / ${m.maxHp}</span></div>`).join(''));
   // Ⓐ out of a fight
   const here = !state.combat.active && !rt.talk && !menu.open && hereAction();
-  put('wdPrompt', here ? `<button class="wd-act" data-act="wdA"><b>Ⓐ</b> ${esc(here.label)}</button>` : '');
+  put('wdPrompt', here ? `<button class="wd-act" data-act="wdA">${K('a')} ${esc(here.label)}</button>` : '');
   // the fight bar
   show('wdFight', state.combat.active);
   if (state.combat.active){
@@ -77,9 +85,9 @@ export function renderHud(){
       const tg = target(), i = attackFor(t, tg), atk = t.attacks[i] || t.attacks[rt.atk ?? 0];
       body = `<div class="wd-fl"><b>Your turn</b> · ${moveAllowance(t) * 5} ft. to move · ${attacksLeft() ? `${attacksLeft()} strike${attacksLeft() === 1 ? '' : 's'} left` : rt.cast ? 'cast' : 'struck'}</div>
         <div class="wd-fl">${tg ? `🎯 <b>${esc(tg.name)}</b> ${bar(tg.hp, tg.maxHp)}` : 'Nobody in sight'}${atk ? ` · ${esc(atk.n)}${i < 0 && tg ? ' <span class="muted">(out of reach)</span>' : ''}` : ''}</div>
-        <div class="wd-acts"><button class="wd-act" data-act="wdA"><b>Ⓐ</b> Strike</button><button class="wd-act" data-act="wdAim" data-k="1"><b>RB</b> Next target</button>
-        <button class="wd-act" data-act="wdWeapon"><b>Ⓨ</b> Weapon</button>${spellList().length ? `<button class="wd-act" data-act="wdSpells"><b>LT</b> Spell</button>` : ''}${pack().some(i => i.potion) ? `<button class="wd-act${rt.bonus ? ' off' : ''}" data-act="wdPotion"><b>RT</b> Potion</button>` : ''}
-        <button class="wd-act" data-act="wdDodge"><b>Ⓧ</b> Dodge</button><button class="wd-act" data-act="wdEnd"><b>Ⓑ</b> End turn</button></div>`;
+        <div class="wd-acts"><button class="wd-act" data-act="wdA">${K('a')} Strike</button><button class="wd-act" data-act="wdAim" data-k="1">${K('rb')} Next target</button>
+        <button class="wd-act" data-act="wdWeapon">${K('y')} Weapon</button>${spellList().length ? `<button class="wd-act" data-act="wdSpells">${K('lt')} Spell</button>` : ''}${pack().some(i => i.potion) ? `<button class="wd-act${rt.bonus ? ' off' : ''}" data-act="wdPotion">${K('rt')} Potion</button>` : ''}
+        <button class="wd-act" data-act="wdDodge">${K('x')} Dodge</button><button class="wd-act" data-act="wdEnd">${K('b')} End turn</button></div>`;
     } else body = `<div class="wd-fl">${turn ? `<b>${esc(turn.name)}</b>'s turn…` : '…'}</div>`;
     put('wdFight', `<div class="wd-order">${order}</div>${body}`);
   }
@@ -87,20 +95,22 @@ export function renderHud(){
   const tv = talkView(); show('wdTalk', !!tv);
   if (tv){ talkSel.i = Math.min(talkSel.i, tv.options.length - 1);
     put('wdTalk', `<div class="wd-tt"><b>${esc(tv.title)}</b>${tv.sub ? `<span>${esc(tv.sub)}</span>` : ''}</div><div class="wd-tx">${esc(tv.text)}</div>
-      <div class="wd-opts">${tv.options.map((o, k) => `<button class="wd-opt${k === talkSel.i ? ' on' : ''}${o.off ? ' off' : ''}" data-act="wdSay" data-k="${o.k}">${k + 1}. ${esc(o.label)}</button>`).join('')}</div>`); }
+      <div class="wd-opts">${tv.options.map((o, k) => `<button class="wd-opt${k === talkSel.i ? ' on' : ''}${o.off ? ' off' : ''}" data-act="wdSay" data-k="${o.k}">${k + 1}. ${esc(o.label)}</button>`).join('')}</div>`);  keepInView('wdTalk'); }
   // the menu
   show('wdMenuBox', menu.open);
   if (menu.open){ const items = menuItems(); menu.i = Math.min(menu.i, items.length - 1);
     const info = pageInfo();
     put('wdMenuBox', `<div class="wd-tt"><b>${esc(PAGE_TITLE[menu.page] || 'The valley waits')}</b>${info.sub ? `<span>${info.sub}</span>` : ''}</div>
       ${info.html ? `<div class="wd-tx">${info.html}</div>` : ''}
-      <div class="wd-opts">${items.map((o, k) => `<button class="wd-opt${k === menu.i ? ' on' : ''}${o.off ? ' off' : ''}" data-act="wdPick" data-k="${k}">${esc(o.label)}${o.sub ? `<small>${esc(o.sub)}</small>` : ''}</button>`).join('')}</div>`); }
+      <div class="wd-opts">${items.map((o, k) => `<button class="wd-opt${k === menu.i ? ' on' : ''}${o.off ? ' off' : ''}" data-act="wdPick" data-k="${k}">${esc(o.label)}${o.sub ? `<small>${esc(o.sub)}</small>` : ''}</button>`).join('')}</div>`); 
+    keepInView('wdMenuBox'); }
 }
-const KEYS_HELP = 'Left stick, D-pad, WASD or the arrows: walk (Q E Z C for the diagonals). Right stick: turn the camera. Ⓐ / Space: talk, climb, look, strike. LB RB / Tab: pick a target. Ⓨ / R: change weapon. Ⓧ / F: dodge. LT / G: spells. RT / H: drink a potion. Ⓑ / Esc: end your turn, or back. View / I: the pack. Left stick click / J: the journal. ☰ Start / M: this menu. Or tap where to walk.';
-const PAGE_TITLE = { main:'The valley waits', travel:'Set out for…', keys:'Controls', pack:'The pack', give:'Who drinks it?', journal:'The journal', level:'Level up', spells:'Spells' };
+const KEYS_HELP = 'Left stick, D-pad, WASD or the arrows: walk (Q E Z C for the diagonals). Right stick, or [ ] and - =: turn and crane the camera; LB RB out of a fight turn it an eighth; right stick click / V: the next view. Ⓐ / Space: talk, climb, look, strike. LB RB / Tab: pick a target. Ⓨ / R: change weapon. Ⓧ / F: dodge. LT / G: spells. RT / H: drink a potion. Ⓑ / Esc: end your turn, or back. View / I: the pack. Left stick click / J: the journal. ☰ Start / M: this menu. Or tap where to walk.';
+const PAGE_TITLE = { handheld:'Handheld', main:'The valley waits', travel:'Set out for…', keys:'Controls', pack:'The pack', give:'Who drinks it?', journal:'The journal', level:'Level up', spells:'Spells' };
 // The words above a page's choices: { sub, html }
 function pageInfo(){
-  if (menu.page === 'keys') return { html:KEYS_HELP };
+  if (menu.page === 'keys') return { html:hhOn() ? HH_HELP : KEYS_HELP };
+  if (menu.page === 'handheld') return { html:'The phone held like a pocket console: the world on its screen, the rest of it the controller. Auto shows it on a touch screen with no controller plugged in.' };
   if (menu.page === 'pack'){ const s = sheetOf(); return { sub:`${coinsGp()} gp${s?.coins?.sp ? ` · ${s.coins.sp} sp` : ''}` }; }
   if (menu.page === 'journal'){
     const q = journal(), w = W();
@@ -119,6 +129,13 @@ function menuItems(){
   const road = state.meta.template === 'journey', fight = state.combat.active;
   if (menu.page === 'travel') return [...destinations().slice(0, 9).map(d => ({ label:d.name, sub:`${d.stretches} stretch${d.stretches === 1 ? '' : 'es'} of road${d.via.length ? ` · by ${d.via.join(', ')}` : ''}`, run:() => { closeMenu(); setOut(d.id); } })), back()];
   if (menu.page === 'keys' || menu.page === 'journal') return [back()];
+  if (menu.page === 'handheld'){ const sh = SHELLS.find(x => x.k === hh.shell) || SHELLS[0];
+    return [
+      { label:`Handheld: ${{ auto:'Auto', on:'On', off:'Off' }[hh.mode] || 'Auto'}`, sub:'Auto · On · Off', run:() => setHandheld({ mode:{ auto:'on', on:'off', off:'auto' }[hh.mode] || 'auto' }) },
+      { label:`Shell: ${sh.label}`, sub:SHELLS.map(x => x.label).join(' · '), run:() => setHandheld({ shell:SHELLS[(SHELLS.indexOf(sh) + 1) % SHELLS.length].k }) },
+      { label:`Screen: ${hh.lcd ? 'Pixel' : 'Smooth'}`, sub:'Pixel: chunky pixels and lines, like an old handheld', run:() => setHandheld({ lcd:!hh.lcd }) },
+      { label:'Camera: the next view', sub:'Close · Over the shoulder · High', run:camView },
+      back()]; }
   if (menu.page === 'pack') return [
     ...pack().map(i => ({ label:`${i.n}${i.qty > 1 ? ` ×${i.qty}` : ''}${i.equipped ? ' ✓' : ''}`, sub:i.potion ? 'Drink it, or give it to someone beside you' : ['weapon', 'armor', 'shield'].includes(i.kind) ? (i.equipped ? 'In hand / worn: take it off' : 'Wield it / wear it') : '',
       off:fight && !i.potion, run:() => { if (i.potion){ giving = i.id; menu.page = 'give'; menu.i = 0; } else if (['weapon', 'armor', 'shield'].includes(i.kind)) toggleEquip(i.id); } })),
@@ -143,6 +160,7 @@ function menuItems(){
     ...(spellList().length ? [{ label:'Spells', run:go('spells') }] : []),
     { label:'Save', run:() => { saveNow(); toast('Saved.'); closeMenu(); } },
     { label:'Controls', run:go('keys') },
+    { label:'Handheld', sub:hhOn() ? 'On: the phone is the controller' : 'Play on the phone as if it were a pocket console', run:go('handheld') },
     { label:'Leave to the threshold', sub:'Saved: carry on from the start page', run:() => { closeMenu(); leaveWander(); import('./events.js').then(m => m.showStart()); } },
   ];
 }
@@ -157,6 +175,9 @@ function press(b){
     else if (b === 'b' || b === 'start' || (b === 'lt' && menu.page === 'spells')){ if (menu.page === 'give'){ menu.page = 'pack'; menu.i = 0; } else if (menu.page !== 'main' && menu.page !== menu.from){ menu.page = 'main'; menu.i = 0; } else closeMenu(); }
     return;
   }
+  if (b === 'rs'){ camView(); return; }
+  if (b === 'turnl' || b === 'turnr'){ camTurn(b === 'turnl' ? 1 : -1); return; }
+  if (b === 'in' || b === 'out'){ camCrane(b === 'in' ? -1 : 1); return; }
   const tv = talkView();
   if (tv){
     if (b === 'a') say(tv.options[talkSel.i]?.k);
@@ -176,6 +197,7 @@ function press(b){
   }
   if (b === 'a'){ if (dismissCard()) return; const h = hereAction(); if (h){ h.run(); talkSel.i = 0; } }
   else if (b === 'b') dismissCard();
+  else if (b === 'lb' || b === 'rb') camTurn(b === 'lb' ? 1 : -1);   // (out of a fight the shoulders turn the camera)
 }
 function say(k){ if (!k) return; const r = chooseTalk(k); talkSel.i = 0; if (r === 'joined') toast('A companion follows you now.'); }
 function dismissCard(){ const c = document.querySelector('#cardLayer .pop:last-child'); if (c) c.remove(); return !!c; }
@@ -184,20 +206,60 @@ function step(dx, dy){
   const tv = talkView(); if (tv){ if (dy) talkSel.i = Math.max(0, Math.min(tv.options.length - 1, talkSel.i + dy)); return; }
   if (!stepHero(dx, dy)) pending = { dx, dy, until:performance.now() + 260 };
 }
-let pending = null, padMem = {}, lastTick = 0;
+/* ---------- 🎥 the follow camera ----------
+   Every frame while wandering: the camera eases after where the game says to look (game/wander.js follow; in a fight,
+   on another's turn, halfway to whoever is acting), keeping its turn, height and distance; the right stick turns and
+   cranes it; a snap turn (L / R, [ ]) or a view (V, the right stick's click) eases in. A drag or a pinch on the map
+   (OrbitControls) is kept too. engine/wander-cam.js has the numbers. */
+const cam = { yaw:null, goal:null };
+const offset = () => camera.position.clone().sub(controls.target).toArray();
+export function camTurn(dir){ cam.yaw = snapTurn(cam.yaw ?? toOrbit(offset()).yaw, dir); }
+export function camView(){ const v = nextView(cam.goal || toOrbit(offset())); cam.goal = { pitch:v.pitch, dist:v.dist }; toast(`🎥 ${v.label}`); }
+export function camCrane(k){ const o = crane(cam.goal ? { yaw:0, ...cam.goal } : toOrbit(offset()), k * 1.4); cam.goal = { pitch:o.pitch, dist:o.dist }; }
+function camFrame(dt, pad){
+  if (camBusy()) return;   // (a glide of its own is under way: a new floor, the start)
+  let o = toOrbit(offset());
+  if (pad && Math.abs(pad.rx) > .2){ o.yaw -= pad.rx * dt * 2.4; cam.yaw = null; }
+  if (pad && Math.abs(pad.ry) > .25){ o = crane(o, pad.ry * dt * 3.2); cam.goal = null; }
+  if (cam.yaw !== null){ const d = angleTo(o.yaw, cam.yaw); if (Math.abs(d) < .003){ o.yaw = cam.yaw; cam.yaw = null; } else o.yaw += d * glide(dt, 9); }
+  if (cam.goal){ const k = glide(dt, 6); o.pitch += (cam.goal.pitch - o.pitch) * k; o.dist += (cam.goal.dist - o.dist) * k;
+    if (Math.abs(cam.goal.pitch - o.pitch) < .002 && Math.abs(cam.goal.dist - o.dist) < .02) cam.goal = null; }
+  o = clampOrbit(o);
+  let f = rt.focus; const h = hero(), ct = state.combat.active && currentTurn();
+  if (h && ct && ct.id !== h.id && ct.floor === h.floor && !ct.dead && Math.max(Math.abs(ct.x - h.x), Math.abs(ct.y - h.y)) <= 10)
+    f = { x:(wx(h.x) + wx(ct.x)) / 2, y:floorY(h.floor), z:(wz(h.y) + wz(ct.y)) / 2, rate:3 };
+  if (f){ const k = glide(dt, f.rate || 7), t = controls.target; t.x += (f.x - t.x) * k; t.y += (f.y - t.y) * k; t.z += (f.z - t.z) * k; }
+  const [x, y, z] = fromOrbit(o); camera.position.set(controls.target.x + x, controls.target.y + y, controls.target.z + z);
+}
+/* ---------- the handheld's buttons ----------
+   A, B, the shoulders, Select (the pack), View (the camera), Start (the menu) as a pad's; X and Y as the moment
+   wants: in a fight the spells and a potion, out of one the spells and the journal. */
+function hhLegend(){
+  const fight = state.combat.active, spells = spellList().length;
+  if (menu.open || talkView()) return { a:{ label:'Choose' }, b:{ label:'Back' }, x:{ b:null, label:'' }, y:{ b:null, label:'' }, select:{ label:'Pack' }, view:{ label:'Camera' }, start:{ label:'Menu' } };
+  return { a:{ label:fight ? 'Strike' : 'Act' }, b:{ label:fight ? 'End turn' : 'Back' },
+    x:{ b:spells ? 'lt' : null, label:spells ? 'Spells' : '' }, y:fight ? { b:'rt', label:'Potion' } : { b:'ls', label:'Journal' },
+    select:{ label:'Pack' }, view:{ label:'Camera' }, start:{ label:'Menu' } };
+}
+const HH_HELP = 'D-pad: walk (slide your thumb round it for the diagonals), or move through a menu. A: talk, climb, look, strike. B: end your turn, or back. X: spells. Y: the journal (in a fight, a potion). L and R: turn the camera (in a fight, the next target). Select: the pack. View: the next camera view. Start: this menu. Drag on the screen to turn the camera, pinch to zoom, tap to walk or pick a foe.';
+let pending = null, padMem = {}, hhMem = {}, lastTick = 0, lastFrame = 0;
 // the camera's yaw: which way "up on the stick" walks
 const yaw = () => { const o = camera.position.clone().sub(controls.target); return Math.atan2(o.x, o.z); };
 let hudOn = false;
 function frame(now){
   requestAnimationFrame(frame);
+  const dt = Math.min(.1, (now - (lastFrame || now)) / 1000); lastFrame = now;
+  const gp = [...(navigator.getGamepads?.() || [])].find(g => g && g.connected);
+  syncHandheld(wandering(), !!gp);
   if (!wandering()){ if (hudOn){ hudOn = false; show('wanderHud', false); } return; }
   hudOn = true;
-  const gp = [...(navigator.getGamepads?.() || [])].find(g => g && g.connected);
+  let pad = null;
   if (gp){
-    const pad = readPad(gp), r = padIntents(pad, now, padMem, { yaw:yaw() }); padMem = r.mem;
+    pad = readPad(gp); const r = padIntents(pad, now, padMem, { yaw:yaw() }); padMem = r.mem;
     for (const it of r.intents) it.k === 'step' ? step(it.dx, it.dy) : press(it.b);
-    if (pad && Math.abs(pad.rx) > .25){ const o = camera.position.clone().sub(controls.target).applyAxisAngle(new THREE.Vector3(0, 1, 0), -pad.rx * .035); camera.position.copy(controls.target).add(o); }
   }
+  if (hhOn()){ const r = padIntents(hhPad(), now, hhMem, { yaw:yaw() }); hhMem = r.mem; for (const it of r.intents) if (it.k === 'step') step(it.dx, it.dy); }
+  try { camFrame(dt, pad); } catch (e){ console.warn(e); }
   if (pending){ if (now > pending.until) pending = null; else if (stepHero(pending.dx, pending.dy)) pending = null; }
   if (now - lastTick > 180){ lastTick = now; try { fightTick(now); } catch (e){ console.warn(e); } renderHud(); }
 }
@@ -245,6 +307,7 @@ let ready = false;
 export function ensureWander(){
   if (ready) return; ready = true;
   ensureHud();
+  initHandheld({ press:b => { if (!b || !wandering()) return; press(b); renderHud(); }, legend:hhLegend });
   ui.wanderTap = null;
   addEventListener('keydown', onKey, { capture:true });
   document.addEventListener('click', onClick, true);
