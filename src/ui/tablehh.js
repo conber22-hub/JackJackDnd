@@ -30,9 +30,10 @@ import { tune, coachTick, coachLearn, coachDone } from './hhlife.js';
 import { askD20 } from '../game/night.js';
 import { sendHost } from '../net/table.js';
 import { cardAct } from './cards.js';
+import { openPocketSheet, pocketPress, pocketOpen, closePocketSheet } from './pocketsheet.js';
+import { playerLetters } from './letters.js';
 import { toast, waiting } from './hud.js';
-import { hh, hhHost, hhPad, addHost, setHandheld, skipBoot } from './handheld.js';
-import { SHELLS } from '../engine/wander-cam.js';
+import { hh, hhHost, hhPad, addHost, setHandheld, skipBoot, shellItem } from './handheld.js';
 import { camTurn, camView, camCrane, camYaw, camFrame, camStart, miniFocus, lookThrough, closeLook, feelHits } from './followcam.js';
 import { tokenViews } from '../render/minis.js';
 
@@ -125,8 +126,10 @@ function sendCast(t, i, sp, tg, at){
   if (tg.id !== t.id) rt.look = { id:tg.id, until:performance.now() + 1700 };
   coachLearn('cast');
 }
+const dpadName = (dx, dy) => dy < 0 ? 'up' : dy > 0 ? 'down' : dx < 0 ? 'left' : 'right';
 function step(dx, dy){
   if (skipBoot()) return;
+  if (pocketOpen()){ pocketPress(dpadName(dx, dy)); return; }   // (the pocket sheet's rows, not a step)
   if (menu.open){ if (dy){ const n = Math.max(0, Math.min(menuItems().length - 1, menu.i + dy)); if (n !== menu.i) tune('menuMove'); menu.i = n; } renderHud(); return; }
   if (modalUp()) return;
   const t = me(), now = performance.now(); if (!t) return;
@@ -138,6 +141,7 @@ function step(dx, dy){
 function putCardAway(){ const c = document.querySelector('#cardLayer .pop:last-child'); if (!c) return false; c.click(); if (c.isConnected) c.remove(); return true; }
 function press(b){
   if (!b || skipBoot()) return;
+  if (pocketOpen()){ pocketPress(b === 'ls' ? 'back' : b); return; }   // (the pocket sheet takes every press while it's open)
   coachDone();
   if (b === 'rs'){ camView(); coachLearn('camera'); return; }
   if (b === 'turnl' || b === 'turnr'){ camTurn(b === 'turnl' ? 1 : -1); return; }
@@ -191,13 +195,19 @@ function onTap(tile, tokId){
 }
 
 /* ---------- the hero's sheet (Select) ---------- */
-const sheetOpen = () => document.body.classList.contains('hh-sheet');
+// Select: Muse's pocket sheet (ui/pocketsheet.js), pages on the handheld's screen; the menu's "The full sheet" is the
+// classic Hero tab over everything (body.hh-sheet), with notes, letters and the rest to act on
+const sheetOpen = () => pocketOpen() || document.body.classList.contains('hh-sheet');
 function openSheet(){
+  const t = me(); if (!t) return;
+  openPocketSheet({ token:t, sheet:state.characters?.[t.charId] || null, extras:{ notes:ui.notes || [], letters:playerLetters() }, onClose:null });
+}
+function openClassicSheet(){
   ui.panelOpen = true; ui.tab = 'hero';
   document.body.classList.add('hh-sheet');
   import('./panels.js').then(m => m.renderPanel());
 }
-function closeSheet(){ document.body.classList.remove('hh-sheet'); }
+function closeSheet(){ closePocketSheet(); document.body.classList.remove('hh-sheet'); }
 
 /* ---------- the menu (Start) ---------- */
 const openMenu = page => { menu.open = true; menu.page = page; menu.from = page; menu.i = 0; renderHud(); };
@@ -228,9 +238,10 @@ function menuItems(){
       back];
   }
   if (menu.page === 'help') return [back];
-  if (menu.page === 'handheld'){ const sh = SHELLS.find(x => x.k === hh.shell) || SHELLS[0];
+  if (menu.page === 'handheld'){
     return [
-      { label:`Shell: ${sh.label}`, sub:SHELLS.map(x => x.label).join(' · '), run:() => setHandheld({ shell:SHELLS[(SHELLS.indexOf(sh) + 1) % SHELLS.length].k }) },
+      shellItem(),
+      { label:'Stickers…', sub:'Vinyl stickers on your own console', run:() => { menu.open = false; import('./shells.js').then(m => m.openStickerBook({})); } },
       { label:`Screen: ${hh.lcd ? 'Pixel' : 'Smooth'}`, sub:'Pixel: chunky pixels and lines, like an old handheld', run:() => setHandheld({ lcd:!hh.lcd }) },
       { label:`Full screen: ${hh.full ? 'On' : 'Off'}`, sub:'The first press fills the whole screen, where the phone allows it', run:() => setHandheld({ full:!hh.full }) },
       { label:`See through walls: ${hh.seeThru ? 'On' : 'Off'}`, sub:'What stands between the camera and your hero thins away', run:() => setHandheld({ seeThru:!hh.seeThru }) },
@@ -242,7 +253,8 @@ function menuItems(){
   }
   return [
     { label:'Carry on', run:() => { menu.open = false; } },
-    { label:'Your hero', sub:'Your sheet, notes, letters and the rest', run:() => { menu.open = false; openSheet(); } },
+    { label:'Your hero', sub:'Your sheet, a page at a time (Select)', run:() => { menu.open = false; openSheet(); } },
+    { label:'The full sheet', sub:'The classic Hero tab: notes, letters, your voice and the rest', run:() => { menu.open = false; openClassicSheet(); } },
     ...(t.casts?.length ? [{ label:'Spells', run:go('spells') }] : []),
     { label:'Actions', sub:'Dash, Disengage, Dodge, an attack of your choice, features', run:go('actions') },
     { label:'Handheld & camera', sub:'Shell, pixel screen, full screen, seeing through, the classic screen', run:go('handheld') },
@@ -360,8 +372,8 @@ function snapshot(t){
 function onKey(e){
   if (!on() || e.ctrlKey || e.metaKey || e.altKey) return;
   if (/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName)) return;
-  if (sheetOpen() && e.key !== 'Escape') return;
-  const it = keyIntent(e.key, { shift:e.shiftKey, yaw:camYaw() }); if (!it) return;
+  if (document.body.classList.contains('hh-sheet') && e.key !== 'Escape') return;   // (the classic sheet takes its own keys)
+  const it = keyIntent(e.key, { shift:e.shiftKey, yaw:pocketOpen() ? 0 : camYaw() }); if (!it) return;
   e.preventDefault(); e.stopPropagation();
   it.k === 'step' ? step(it.dx, it.dy) : press(it.b === 'back' ? 'back' : it.b);
 }

@@ -13,6 +13,7 @@
    awake while it's on. The Lantern light by the screen is the hero's health: green, amber, then a quick red blink
    near death; a hit buzzes the phone, harder for a harder hit. */
 import { dpadStick, skinWanted, SHELLS } from '../engine/wander-cam.js';
+import { SHELL_PACK, injectShells, mountStickers } from './shells.js';
 import { setViewRect, view } from '../render/scene.js';
 import { ui } from '../engine/state.js';
 import { keepAwake } from '../util/wake.js';
@@ -38,6 +39,13 @@ const stick = { x:0, y:0 };
 const fingers = new Map();   // pointerId → the control it went down on
 const mq = typeof matchMedia !== 'undefined' ? matchMedia('(pointer:coarse)') : null, coarse = () => !!mq?.matches;
 export const hhOn = () => on;
+// Every shell: the five drawn in index.html and Muse's pack (ui/shells.js)
+export const allShells = () => [...SHELLS, ...SHELL_PACK.map(s => ({ k:s.k, label:s.label }))];
+// The menu's Shell line: the next one along
+export function shellItem(){
+  const L = allShells(), k = Math.max(0, L.findIndex(x => x.k === hh.shell)), sh = L[k];
+  return { label:`Shell: ${sh.label}`, sub:`${k + 1} of ${L.length} · A for the next`, run:() => setHandheld({ shell:L[(k + 1) % L.length].k }) };
+}
 // Would this device show it, as things are? (a touch screen with no controller, or turned on)
 export const skinWantedHere = () => skinWanted(hh.mode, { coarse:coarse(), pad:padIn() });
 export const hhHost = () => on ? api.id : '';   // which is holding it: 'wander' | 'table' | ''
@@ -64,6 +72,7 @@ function build(){
     <div class="hh-pills"><button class="hh-pill" data-hh="select"><i></i>SELECT<small data-lg="select"></small></button><button class="hh-pill" data-hh="view"><i></i>VIEW<small data-lg="view"></small></button><button class="hh-pill" data-hh="start"><i></i>START<small data-lg="start"></small></button></div>
   </div>`;
   document.body.appendChild(el);
+  injectShells(); mountStickers(el);   // (Muse's shells and the player's stickers, ui/shells.js)
   boot = document.createElement('div'); boot.id = 'hhBoot'; boot.className = 'hidden';
   // an eye opens in the dark (his, watching), then the name
   boot.innerHTML = `<svg class="hh-eye" viewBox="0 0 200 100" aria-hidden="true">
@@ -122,7 +131,7 @@ function fit(r){
 }
 function relayout(){
   if (!el || !on) return;
-  el.dataset.shell = SHELLS.some(s => s.k === hh.shell) ? hh.shell : 'dusk';
+  el.dataset.shell = allShells().some(s => s.k === hh.shell) ? hh.shell : 'dusk';
   document.body.classList.toggle('hh-lcd', !!hh.lcd);
   const b = el.querySelector('#hhScreen').getBoundingClientRect();
   if (b.width < 20 || b.height < 20) return;

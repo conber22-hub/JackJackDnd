@@ -50,6 +50,22 @@ A player's phone, seated at the DM's table, is now a pocket console by default: 
     - A hit, a heal, a fight won and falling each have their tune.
     - The camera frames the hero and the target on a strike, a cast or an aim.
   - **A fix:** the handheld's menus kept scrolling themselves back to the highlighted row several times a second, so a finger couldn't scroll a long one. They now scroll only when the highlight moves.
+- **📖 The pocket sheet** (Muse's `ui/pocketsheet.js`): **Select** opens the hero's sheet as five small pages on the handheld's screen, like an old handheld game's status screens.
+  - **The pages:**
+    - **Hero:** portrait, AC, HP, speed, conditions, the six abilities.
+    - **Fighting:** attacks; spells by level with slot pips; features with uses left.
+    - **Saves & skills.**
+    - **Pack:** gear, what's worn, coins.
+    - **Notes:** the DM's notes, Strahd's in red; letters, which open in full.
+  - **The buttons:** L and R (or the ◀ ▶ arrows) turn the pages, the D-pad moves through the rows, A opens a spell's or a feature's text or a letter, and B goes back. It only reads.
+  - **The classic sheet:** the menu's **The full sheet** is the old Hero tab over everything (for the voice workshop, the letters to act on and the rest).
+  - **In the Wanderer:** it's **Your hero** in the menu (Select stays the pack there).
+- **🎨 Shells and stickers** (Muse's `ui/shells.js`):
+  - **Shells:** eight more: Ravenloft obsidian, Vistani painted, Amber Temple, Krezk whitewash, Moonlit frost, Svalich pine, Wedding of the Count, Bloodmoon. Thirteen in all, cycled from the Handheld & camera page.
+  - **Stickers:** sixteen hand-drawn vinyl ones (a bat, a rose, a raven, a candle, a d20, a skull, a Vistani wheel, a sun, a moon, an amber shard, garlic, a holy symbol, a wolf, a coffin, a "Don't wake the Count" scroll, a little ghost). The same page's **Stickers…** opens the sticker book.
+    - **Placing:** drag one onto your shell, move it, twist it, scale it, peel it back off. Twelve at most.
+    - **Kept** per device, apart for portrait and landscape.
+    - **Never in the way:** never over the screen, and never in the way of a press.
 - **🎵 Chip tunes** (ChatGPT's `engine/chiptune.js` and `data/chiptune.js`, played by `playTune` in `audio/sound.js`): twenty original minor-key jingles for four voices (two pulse waves with their duty, a triangle bass, a noise drum).
   - **When they play:** switching on, your turn, a level gained, a fight won or lost, a quest taken or finished, a save state written or loaded, the menu's blips, a door, the stairs, a heal, a hit.
   - **Settings:** on the effects bus, so the player's sound settings hold. **Chip tunes: On/Off** on the Handheld & camera page.
@@ -984,6 +1000,8 @@ src/ui/handheld.js         🕹 the handheld skin: the shell, its touch D-pad an
 src/ui/tablehh.js          🕹 the handheld at the table: a seated player's phone as the controller (HUD, D-pad steps, strikes, menu, sheet)
 src/ui/followcam.js        🎥 the follow camera, seeing through walls and a hit felt, for one hero (the Wanderer's and the table's)
 src/ui/hhlife.js           🕹 the handheld's tunes (engine/chiptune.js) and its coach's tips (engine/coach.js)
+src/ui/pocketsheet.js      📖 Muse's pocket sheet: the hero's sheet as pages on the handheld's screen (Select)
+src/ui/shells.js           🎨 Muse's shells pack and the sticker book
 src/engine/coach.js        💡 ChatGPT's coach: one tip that fits the moment, worded for the handheld, a controller or the keys
 src/engine/chiptune.js     🎵 ChatGPT's chiptune parser and scheduler (the jingles in data/chiptune.js)
 src/render/seethrough.js   👁 the Wanderer's hero seen through walls and trees: a dithered hole added to a floor's materials

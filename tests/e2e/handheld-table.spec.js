@@ -52,12 +52,14 @@ test('a seated player plays from the handheld: steps, the sheet, the menu, a str
     const x1 = await dm.evaluate(() => window.DreadDelve.get().tokens.find(t => t.name === 'Ada').x);
     await expectPositions(p, { Ada:{ x:x1, y:10 } });
     if (SP) await p.screenshot({ path:`${SP}/table-walk.png` });
-    // Select: the hero's sheet over everything; B: back to the handheld
+    // Select: Muse's pocket sheet on the screen (its pages turned with R); B: back to the handheld
     await hold('select');
-    await expect(p.locator('body')).toHaveClass(/hh-sheet/);
-    await expect(p.locator('#panel')).toBeVisible();
-    await expect(p.locator('#panel')).toContainText('Ada');
+    await expect(p.locator('#pocketSheet')).toBeVisible();
+    await expect(p.locator('#pocketSheet')).toContainText('Ada');
+    await hold('r');
+    await expect(p.locator('#pocketSheet')).toContainText('Fighting');
     await hold('b');
+    await expect(p.locator('#pocketSheet')).toBeHidden();
     await expect(p.locator('#panel')).toBeHidden();
     // Start: the menu (Actions: Search is there out of a fight)
     await hold('start');

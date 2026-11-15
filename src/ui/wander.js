@@ -19,10 +19,10 @@ import { W, rt, hero, members, wandering, startWander, continueWander, leaveWand
   SLOTS, slotMeta, canSaveSlot, saveToSlot, loadFromSlot } from '../game/wander.js';
 import { sfx } from '../audio/sound.js';
 import { loyalty } from '../engine/wander-life.js';
-import { SHELLS } from '../engine/wander-cam.js';
-import { hh, hhOn, hhHost, hhPad, addHost, setHandheld, skipBoot } from './handheld.js';
+import { hh, hhOn, hhHost, hhPad, addHost, setHandheld, skipBoot, shellItem } from './handheld.js';
 import { camTurn, camView, camCrane, camYaw, camFrame, lookThrough, closeLook, feelHits } from './followcam.js';
 import { tune, coachTick, coachLearn, coachDone, coachHide } from './hhlife.js';
+import { openPocketSheet, pocketPress, pocketOpen } from './pocketsheet.js';
 import { toast } from './hud.js';
 
 const $ = s => document.querySelector(s);
@@ -148,10 +148,11 @@ function menuItems(){
   if (menu.page === 'load') return [
     { label:`Yes, load slot ${loading + 1}`, run:() => { closeMenu(); if (loadFromSlot(loading)){ toast(`💾 Slot ${loading + 1}: back where you were.`); tune('load'); } else toast('That slot would not load.'); } },
     back('states')];
-  if (menu.page === 'handheld'){ const sh = SHELLS.find(x => x.k === hh.shell) || SHELLS[0];
+  if (menu.page === 'handheld'){
     return [
       { label:`Handheld: ${{ auto:'Auto', on:'On', off:'Off' }[hh.mode] || 'Auto'}`, sub:'Auto · On · Off', run:() => setHandheld({ mode:{ auto:'on', on:'off', off:'auto' }[hh.mode] || 'auto' }) },
-      { label:`Shell: ${sh.label}`, sub:SHELLS.map(x => x.label).join(' · '), run:() => setHandheld({ shell:SHELLS[(SHELLS.indexOf(sh) + 1) % SHELLS.length].k }) },
+      shellItem(),
+      { label:'Stickers…', sub:'Vinyl stickers on your own console', run:() => { closeMenu(); import('./shells.js').then(m => m.openStickerBook({})); } },
       { label:`Screen: ${hh.lcd ? 'Pixel' : 'Smooth'}`, sub:'Pixel: chunky pixels and lines, like an old handheld', run:() => setHandheld({ lcd:!hh.lcd }) },
       { label:`Full screen: ${hh.full ? 'On' : 'Off'}`, sub:'The first press fills the whole screen, where the phone allows it', run:() => setHandheld({ full:!hh.full }) },
       { label:'Camera: the next view', sub:'Close · Over the shoulder · High', run:camView },
@@ -180,6 +181,7 @@ function menuItems(){
     { label:road ? 'Rest an hour' : 'Rest the night', sub:fight ? 'Not in a fight' : road ? 'A short rest by the road (something may find you)' : 'Everyone whole again by morning', off:fight, run:() => { closeMenu(); rest(); } },
     { label:'The pack', sub:`${coinsGp()} gp · ${pack().length} things`, run:go('pack') },
     { label:'The journal', sub:'Quests, and what your companions think', run:go('journal') },
+    { label:'Your hero', sub:'Your sheet, a page at a time', run:() => { closeMenu(); openPocketSheet({ token:hero(), sheet:sheetOf(), extras:{}, onClose:null }); } },
     ...(spellList().length ? [{ label:'Spells', run:go('spells') }] : []),
     { label:'Save', run:() => { saveNow(); toast('Saved.'); closeMenu(); } },
     { label:'Save states', sub:'Three slots of your own, to come back to', run:go('states') },
@@ -194,6 +196,7 @@ const closeMenu = () => { menu.open = false; };
 /* ---------- input ---------- */
 function press(b){
   if (skipBoot()) return;   // (the press that skips the handheld's boot does only that)
+  if (pocketOpen()){ pocketPress(b === 'ls' ? 'back' : b); renderHud(); return; }   // (Muse's pocket sheet takes every press while it's open)
   coachDone();
   coachLearn({ a:state.combat.active ? 'strike' : null, lt:'cast', rb:'aim', lb:'aim', start:'menu', rs:'camera', turnl:'camera', turnr:'camera', back:'sheet' }[b] || (b === 'b' && myTurn() ? 'endTurn' : null));
   if (b === 'states' || (b === 'start' && padHeld.back)){ openMenu('states'); return; }
@@ -231,6 +234,7 @@ function say(k){ if (!k) return; const r = chooseTalk(k); talkSel.i = 0; if (r =
 function dismissCard(){ const c = document.querySelector('#cardLayer .pop:last-child'); if (c) c.remove(); return !!c; }
 function step(dx, dy){
   if (skipBoot()) return;
+  if (pocketOpen()){ pocketPress(dy < 0 ? 'up' : dy > 0 ? 'down' : dx < 0 ? 'left' : 'right'); return; }
   if (menu.open){ if (dy){ const n = Math.max(0, Math.min(menuItems().length - 1, menu.i + dy)); if (n !== menu.i) tune('menuMove'); menu.i = n; } return; }
   const tv = talkView(); if (tv){ if (dy) talkSel.i = Math.max(0, Math.min(tv.options.length - 1, talkSel.i + dy)); return; }
   if (!stepHero(dx, dy)) pending = { dx, dy, until:performance.now() + 260 };

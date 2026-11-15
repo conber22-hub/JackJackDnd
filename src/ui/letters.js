@@ -45,6 +45,8 @@ const heroes = () => (state?.tokens || []).filter(t => t.kind !== 'monster');
 const toLabel = l => l.to ? (tokById(l.to)?.name || 'a hero') : 'the whole party';
 const letterKey = () => `dreaddelve.letters.${net.join?.code || net.code || 'local'}.v1`;
 const loadLetters = () => { try { return JSON.parse(localStorage.getItem(letterKey()) || '[]'); } catch { return []; } };
+// A player's letters, newest first (the pocket sheet's Notes page, ui/pocketsheet.js)
+export const playerLetters = () => loadLetters().slice().reverse();
 const saveLetters = list => { try { localStorage.setItem(letterKey(), JSON.stringify(list)); } catch {} };
 
 /* The parchment, as the players see it: torn edges, ink that bleeds a little, a seal that breaks. */
