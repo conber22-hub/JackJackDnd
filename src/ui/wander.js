@@ -15,7 +15,9 @@ import { currentTurn } from '../game/combat.js';
 import { moveAllowance } from '../game/rules.js';
 import { W, rt, hero, members, wandering, startWander, continueWander, leaveWander, stepHero, walkTo, hereAction, talkView, chooseTalk, talkTo,
   heroAttack, heroDodge, endHeroTurn, aim, target, attackFor, nextWeapon, attacksLeft, myTurn, fightTick, destinations, setOut, rest, saveNow,
-  pack, toggleEquip, usePotion, coinsGp, shopHere, buyPotion, journal, approvalOf, levelReady, partyLevel, nextLevelXp, levelUpHero, sheetOf, spellList, heroCast } from '../game/wander.js';
+  pack, toggleEquip, usePotion, coinsGp, shopHere, buyPotion, journal, approvalOf, levelReady, partyLevel, nextLevelXp, levelUpHero, sheetOf, spellList, heroCast,
+  SLOTS, slotMeta, canSaveSlot, saveToSlot, loadFromSlot } from '../game/wander.js';
+import { sfx } from '../audio/sound.js';
 import { loyalty } from '../engine/wander-life.js';
 import { camera, controls, camBusy, wx, wz, floorY } from '../render/scene.js';
 import { toOrbit, fromOrbit, clampOrbit, crane, snapTurn, angleTo, nextView, glide, SHELLS } from '../engine/wander-cam.js';
@@ -109,11 +111,13 @@ export function renderHud(){
       <div class="wd-opts">${items.map((o, k) => `<button class="wd-opt${k === menu.i ? ' on' : ''}${o.off ? ' off' : ''}" data-act="wdPick" data-k="${k}">${esc(o.label)}${o.sub ? `<small>${esc(o.sub)}</small>` : ''}</button>`).join('')}</div>`); 
     keepInView('wdMenuBox'); }
 }
-const KEYS_HELP = 'Left stick, D-pad, WASD or the arrows: walk (Q E Z C for the diagonals). Right stick, or [ ] and - =: turn and crane the camera; LB RB out of a fight turn it an eighth; right stick click / V: the next view. Ⓐ / Space: talk, climb, look, strike. LB RB / Tab: pick a target. Ⓨ / R: change weapon. Ⓧ / F: dodge. LT / G: spells. RT / H: drink a potion. Ⓑ / Esc: end your turn, or back. View / I: the pack. Left stick click / J: the journal. ☰ Start / M: this menu. Or tap where to walk.';
-const PAGE_TITLE = { handheld:'Handheld & camera', main:'The valley waits', travel:'Set out for…', keys:'Controls', pack:'The pack', give:'Who drinks it?', journal:'The journal', level:'Level up', spells:'Spells' };
+const KEYS_HELP = 'Left stick, D-pad, WASD or the arrows: walk (Q E Z C for the diagonals). Right stick, or [ ] and - =: turn and crane the camera; LB RB out of a fight turn it an eighth; right stick click / V: the next view. Ⓐ / Space: talk, climb, look, strike. LB RB / Tab: pick a target. Ⓨ / R: change weapon. Ⓧ / F: dodge. LT / G: spells. RT / H: drink a potion. Ⓑ / Esc: end your turn, or back. View / I: the pack. Left stick click / J: the journal. ☰ Start / M: this menu. View + Start / K: the save states. Or tap where to walk.';
+const PAGE_TITLE = { states:'Save states', load:'Load this one?', handheld:'Handheld & camera', main:'The valley waits', travel:'Set out for…', keys:'Controls', pack:'The pack', give:'Who drinks it?', journal:'The journal', level:'Level up', spells:'Spells' };
 // The words above a page's choices: { sub, html }
 function pageInfo(){
   if (menu.page === 'keys') return { html:hhOn() ? HH_HELP : KEYS_HELP };
+  if (menu.page === 'states') return { html:`Three places to keep the run as it is now, apart from its own autosave: save before a door you're not sure of, and come back to it. ${hhOn() ? 'Select and Start together open this page.' : 'K opens this page (Back and Start together on a controller).'}` };
+  if (menu.page === 'load'){ const m = slotMeta(loading); return { html:m ? `${esc(slotLabel(m))}. Where you are now is kept only if it's saved.` : '' }; }
   if (menu.page === 'handheld') return { html:'The phone held like a pocket console: the world on its screen, the rest of it the controller. Auto shows it on a touch screen with no controller plugged in.' };
   if (menu.page === 'pack'){ const s = sheetOf(); return { sub:`${coinsGp()} gp${s?.coins?.sp ? ` · ${s.coins.sp} sp` : ''}` }; }
   if (menu.page === 'journal'){
@@ -126,6 +130,10 @@ function pageInfo(){
   if (menu.page === 'spells'){ const t = hero(); return { sub:t ? (t.resources || []).filter(r => r.slot).map(r => `L${r.slot} ${t.res?.[r.id] ?? r.max}/${r.max}`).join(' · ') : '' }; }
   return {};
 }
+// A save state in a line: who, where, when
+const ago = t => { const s = Math.round((Date.now() - t) / 1000); return s < 60 ? 'just now' : s < 3600 ? `${Math.round(s / 60)} min ago` : s < 86400 ? `${Math.round(s / 3600)} h ago` : `${Math.round(s / 86400)} d ago`; };
+const slotLabel = m => `${m.name}, level ${m.lvl} · ${m.place} · Day ${m.day}`;
+let loading = 0;   // the slot the 'load' page asks about
 const back = (page = 'main') => ({ label:'Back', run:() => { menu.page = page; menu.i = 0; } });
 const go = page => () => { menu.page = page; menu.i = 0; };
 let giving = null;   // the potion being given (the pack's 'give' page)
@@ -133,6 +141,16 @@ function menuItems(){
   const road = state.meta.template === 'journey', fight = state.combat.active;
   if (menu.page === 'travel') return [...destinations().slice(0, 9).map(d => ({ label:d.name, sub:`${d.stretches} stretch${d.stretches === 1 ? '' : 'es'} of road${d.via.length ? ` · by ${d.via.join(', ')}` : ''}`, run:() => { closeMenu(); setOut(d.id); } })), back()];
   if (menu.page === 'keys' || menu.page === 'journal') return [back()];
+  if (menu.page === 'states'){ const out = [], can = canSaveSlot();
+    for (let n = 0; n < SLOTS; n++){ const m = slotMeta(n);
+      out.push({ label:`Save to slot ${n + 1}`, sub:can ? (m ? `Over: ${slotLabel(m)} (${ago(m.at)})` : 'Empty') : 'Not in a fight or a conversation', off:!can,
+        run:() => { if (saveToSlot(n)){ toast(`💾 Saved to slot ${n + 1}.`); sfx('chime', false); } } }); }
+    for (let n = 0; n < SLOTS; n++){ const m = slotMeta(n);
+      out.push({ label:`Load slot ${n + 1}`, sub:m ? `${slotLabel(m)} · ${ago(m.at)}` : 'Empty', off:!m, run:() => { loading = n; menu.page = 'load'; menu.i = 0; } }); }
+    return [...out, back()]; }
+  if (menu.page === 'load') return [
+    { label:`Yes, load slot ${loading + 1}`, run:() => { closeMenu(); if (loadFromSlot(loading)) toast(`💾 Slot ${loading + 1}: back where you were.`); else toast('That slot would not load.'); } },
+    back('states')];
   if (menu.page === 'handheld'){ const sh = SHELLS.find(x => x.k === hh.shell) || SHELLS[0];
     return [
       { label:`Handheld: ${{ auto:'Auto', on:'On', off:'Off' }[hh.mode] || 'Auto'}`, sub:'Auto · On · Off', run:() => setHandheld({ mode:{ auto:'on', on:'off', off:'auto' }[hh.mode] || 'auto' }) },
@@ -165,6 +183,7 @@ function menuItems(){
     { label:'The journal', sub:'Quests, and what your companions think', run:go('journal') },
     ...(spellList().length ? [{ label:'Spells', run:go('spells') }] : []),
     { label:'Save', run:() => { saveNow(); toast('Saved.'); closeMenu(); } },
+    { label:'Save states', sub:'Three slots of your own, to come back to', run:go('states') },
     { label:'Controls', run:go('keys') },
     { label:'Handheld & camera', sub:hhOn() ? 'On: the phone is the controller' : 'Play on the phone as if it were a pocket console', run:go('handheld') },
     { label:'Leave to the threshold', sub:'Saved: carry on from the start page', run:() => { closeMenu(); leaveWander(); import('./events.js').then(m => m.showStart()); } },
@@ -176,10 +195,11 @@ const closeMenu = () => { menu.open = false; };
 /* ---------- input ---------- */
 function press(b){
   skipBoot();
+  if (b === 'states' || (b === 'start' && padHeld.back)){ openMenu('states'); return; }
   if (menu.open){
     const items = menuItems();
     if (b === 'a'){ const o = items[menu.i]; if (o && !o.off) o.run(); }
-    else if (b === 'b' || b === 'start' || (b === 'lt' && menu.page === 'spells')){ if (menu.page === 'give'){ menu.page = 'pack'; menu.i = 0; } else if (menu.page !== 'main' && menu.page !== menu.from){ menu.page = 'main'; menu.i = 0; } else closeMenu(); }
+    else if (b === 'b' || b === 'start' || (b === 'lt' && menu.page === 'spells')){ if (menu.page === 'give'){ menu.page = 'pack'; menu.i = 0; } else if (menu.page === 'load'){ menu.page = 'states'; menu.i = 0; } else if (menu.page !== 'main' && menu.page !== menu.from){ menu.page = 'main'; menu.i = 0; } else closeMenu(); }
     return;
   }
   if (b === 'rs'){ camView(); return; }
@@ -234,8 +254,10 @@ function camFrame(dt, pad){
     if (Math.abs(cam.goal.pitch - o.pitch) < .002 && Math.abs(cam.goal.dist - o.dist) < .02) cam.goal = null; }
   o = clampOrbit(o);
   let f = rt.focus; const h = hero(), ct = state.combat.active && currentTurn();
-  if (h && ct && ct.id !== h.id && ct.floor === h.floor && !ct.dead && Math.max(Math.abs(ct.x - h.x), Math.abs(ct.y - h.y)) <= 10)
-    f = { x:(wx(h.x) + wx(ct.x)) / 2, y:floorY(h.floor), z:(wz(h.y) + wz(ct.y)) / 2, rate:3 };
+  // whoever else is acting, or what the hero just struck or cast at: the camera frames the two of them a moment
+  const lk = rt.look && performance.now() < rt.look.until && tokById(rt.look.id), other = lk || (ct && ct.id !== h?.id ? ct : null);
+  if (h && other && other.floor === h.floor && Math.max(Math.abs(other.x - h.x), Math.abs(other.y - h.y)) <= 10)
+    f = { x:(wx(h.x) + wx(other.x)) / 2, y:floorY(h.floor), z:(wz(h.y) + wz(other.y)) / 2, rate:lk ? 4 : 3 };
   if (f){ const k = glide(dt, f.rate || 7), t = controls.target; t.x += (f.x - t.x) * k; t.y += (f.y - t.y) * k; t.z += (f.z - t.z) * k; }
   const [x, y, z] = fromOrbit(o); camera.position.set(controls.target.x + x, controls.target.y + y, controls.target.z + z);
 }
@@ -260,7 +282,11 @@ function feelHits(gp){
     try { gp?.vibrationActuator?.playEffect?.('dual-rumble', { duration:Math.round(120 + Math.min(1, k) * 380), strongMagnitude:Math.min(1, .35 + k * 1.5), weakMagnitude:.6 }); } catch {}
   }
   hpSeen = h.hp;
+  // near death, the heart is heard
+  const k = h.hp / Math.max(1, h.maxHp), now = performance.now();
+  if (h.hp > 0 && k <= .25 && now > beatAt){ beatAt = now + (k <= .12 ? 850 : 1150); sfx('thump', false); }
 }
+let beatAt = 0;
 /* ---------- the handheld's buttons ----------
    A, B, the shoulders, Select (the pack), View (the camera), Start (the menu) as a pad's; X and Y as the moment
    wants: in a fight the spells and a potion, out of one the spells and the journal. */
@@ -271,8 +297,9 @@ function hhLegend(){
     x:{ b:spells ? 'lt' : null, label:spells ? 'Spells' : '' }, y:fight ? { b:'rt', label:'Potion' } : { b:'ls', label:'Journal' },
     select:{ label:'Pack' }, view:{ label:'Camera' }, start:{ label:'Menu' } };
 }
-const HH_HELP = 'D-pad: walk (slide your thumb round it for the diagonals), or move through a menu. A: talk, climb, look, strike. B: end your turn, or back. X: spells. Y: the journal (in a fight, a potion). L and R: turn the camera (in a fight, the next target). Select: the pack. View: the next camera view. Start: this menu. Drag on the screen to turn the camera, pinch to zoom, tap to walk or pick a foe.';
+const HH_HELP = 'D-pad: walk (slide your thumb round it for the diagonals), or move through a menu. A: talk, climb, look, strike. B: end your turn, or back. X: spells. Y: the journal (in a fight, a potion). L and R: turn the camera (in a fight, the next target). Select: the pack. View: the next camera view. Start: this menu. Select and Start together: the save states. Drag on the screen to turn the camera, pinch to zoom, tap to walk or pick a foe.';
 let pending = null, padMem = {}, hhMem = {}, lastTick = 0, lastFrame = 0;
+const padHeld = { back:false };   // (Back held while Start goes down: the save states)
 // the camera's yaw: which way "up on the stick" walks
 const yaw = () => { const o = camera.position.clone().sub(controls.target); return Math.atan2(o.x, o.z); };
 let hudOn = false;
@@ -285,7 +312,7 @@ function frame(now){
   hudOn = true;
   let pad = null;
   if (gp){
-    pad = readPad(gp); const r = padIntents(pad, now, padMem, { yaw:yaw() }); padMem = r.mem;
+    pad = readPad(gp); padHeld.back = !!pad?.b.back; const r = padIntents(pad, now, padMem, { yaw:yaw() }); padMem = r.mem;
     for (const it of r.intents) it.k === 'step' ? step(it.dx, it.dy) : press(it.b);
   }
   if (hhOn()){ const r = padIntents(hhPad(), now, hhMem, { yaw:yaw() }); hhMem = r.mem; for (const it of r.intents) if (it.k === 'step') step(it.dx, it.dy); }
@@ -340,7 +367,7 @@ export function ensureWander(){
   if (ready) return; ready = true;
   ensureHud();
   initHandheld({ press:b => { if (!b || !wandering()) return; press(b); renderHud(); }, legend:hhLegend,
-    health:() => { const h = hero(); return h ? Math.max(0, h.hp) / Math.max(1, h.maxHp) : 1; } });
+    health:() => { const h = hero(); return h ? Math.max(0, h.hp) / Math.max(1, h.maxHp) : 1; }, fight:() => !!state.combat.active });
   ui.wanderTap = null;
   addEventListener('keydown', onKey, { capture:true });
   document.addEventListener('click', onClick, true);

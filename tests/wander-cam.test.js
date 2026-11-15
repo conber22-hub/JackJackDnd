@@ -60,6 +60,6 @@ test('the handheld shows on a touch screen with no controller, or when asked', (
   assert.ok(SHELLS.length >= 3 && SHELLS.every(s => s.k && s.label));
 });
 
-test('the camera\'s keys: [ ] , . turn, - = + crane, V the next view', () => {
-  for (const [k, b] of [['[', 'turnl'], [']', 'turnr'], [',', 'turnl'], ['.', 'turnr'], ['-', 'out'], ['=', 'in'], ['+', 'in'], ['v', 'rs'], ['V', 'rs']]) assert.deepEqual(keyIntent(k), { k:'press', b });
+test('the camera\'s keys: [ ] , . turn, - = + crane, V the next view; K the save states', () => {
+  for (const [k, b] of [['[', 'turnl'], [']', 'turnr'], [',', 'turnl'], ['.', 'turnr'], ['-', 'out'], ['=', 'in'], ['+', 'in'], ['v', 'rs'], ['V', 'rs'], ['k', 'states']]) assert.deepEqual(keyIntent(k), { k:'press', b });
 });

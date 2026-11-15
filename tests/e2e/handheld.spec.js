@@ -5,6 +5,8 @@ import { test, expect } from './helpers.js';
 // acts, L turns the camera, Start opens the menu, whose Handheld page sets the pixel screen and turns the shell off.
 // It boots with its name on a black screen (a press skips it), its Lantern light shows the hero's health, a hit
 // flashes the bezel, and walls between the camera and the hero thin away (render/seethrough.js: no shader errors).
+// Select + Start opens the save states: a slot saved, a walk, and the slot loaded puts the hero back. In portrait a
+// fight's bar moves onto a second panel under the screen, and a strike frames the hero and the target.
 // On a desktop it stays away until asked for, and the keys turn and crane the camera.
 const yaw = page => page.evaluate(() => { const D = window.DreadDelve, o = D.camera.position.clone().sub(D.controls.target); return Math.atan2(o.x, o.z); });
 const hero = page => page.evaluate(() => { const h = window.DreadDelve.wander.hero(); return { x:h.x, y:h.y }; });
@@ -63,6 +65,22 @@ test.describe('on a phone', () => {
     await page.evaluate(() => { const h = window.DreadDelve.wander.hero(); h.hp = h.maxHp; });
     await page.waitForTimeout(1500);   // (walls, trees and props near the hero have taken the see-through by now)
     expect(shaderErrors).toEqual([]);
+    // Select + Start: the save states; save slot 1, walk on, load it back
+    const at0 = await hero(page);
+    const sel = page.locator('[data-hh="select"]'), st = page.locator('[data-hh="start"]');
+    await sel.dispatchEvent('pointerdown', { pointerId:21, bubbles:true }); await st.dispatchEvent('pointerdown', { pointerId:22, bubbles:true });
+    await st.dispatchEvent('pointerup', { pointerId:22, bubbles:true }); await sel.dispatchEvent('pointerup', { pointerId:21, bubbles:true });
+    await expect(page.locator('#wdMenuBox')).toContainText('Save states');
+    await page.locator('#wdMenuBox [data-act="wdPick"]', { hasText:'Save to slot 1' }).click();
+    await expect(page.locator('#wdMenuBox [data-act="wdPick"]', { hasText:'Load slot 1' })).toContainText('Vasha, level 1');
+    await hold(page, 'b'); await hold(page, 'b');
+    await expect(page.locator('#wdMenuBox')).toBeHidden();
+    await hold(page, 'dpad', 1300, 0, 1);
+    await expect.poll(async () => JSON.stringify(await hero(page))).not.toBe(JSON.stringify(at0));
+    await page.keyboard.press('k');
+    await page.locator('#wdMenuBox [data-act="wdPick"]', { hasText:'Load slot 1' }).click();
+    await page.locator('#wdMenuBox [data-act="wdPick"]', { hasText:'Yes, load slot 1' }).click();
+    await expect.poll(async () => JSON.stringify(await hero(page))).toBe(JSON.stringify(at0));
     // Start: the menu; its Handheld page: the pixel screen, then the shell off
     await hold(page, 'start');
     await expect(page.locator('#wdMenuBox')).toBeVisible();
@@ -82,6 +100,28 @@ test.describe('on a phone', () => {
     expect(await page.evaluate(() => { const v = window.DreadDelve.viewSize(); return [v.w, v.h]; })).toEqual([844, 390]);
     await expect(page.locator('#stage canvas')).not.toHaveClass(/chunky/);
     expect(await page.evaluate(() => JSON.parse(localStorage.getItem('dreaddelve.handheld.v1')))).toEqual({ mode:'off', shell:'bone', lcd:true, full:false, seeThru:true });
+  });
+});
+
+test.describe('on a phone held upright', () => {
+  test.use({ viewport:{ width:390, height:844 }, hasTouch:true, isMobile:true });
+  test('a fight\'s bar moves onto a second panel under the screen, and a strike frames the target', async ({ page }) => {
+    test.setTimeout(120_000);
+    await begin(page, 'vasha-up', { full:false });
+    await hold(page, 'a');
+    await expect(page.locator('body')).not.toHaveClass(/hh-subon/);
+    await page.evaluate(() => { const D = window.DreadDelve, w = D.wander, h = w.hero(), f = D.get().floors[h.floor];
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]]){ const x = h.x + dx, y = h.y + dy;
+        if (!D.get().tokens.some(t => t.kind === 'monster') && f.grid[y * f.W + x] && !D.get().tokens.some(t => t.floor === h.floor && t.x === x && t.y === y)) D.placeMonster('wolf', { floor:h.floor, x, y }); }
+      for (const m of w.members()) m.hp = m.maxHp = 200;
+      for (const t of D.get().tokens.filter(t => t.kind === 'monster')) t.hp = t.maxHp = 200;
+      w.beginFight('none', D.get().tokens.filter(t => t.kind === 'monster').map(t => t.id)); });
+    await expect(page.locator('body')).toHaveClass(/hh-subon/);
+    const [scr, bar] = await Promise.all([page.locator('#hhScreen').boundingBox(), page.locator('#wdFight').boundingBox()]);
+    expect(bar.y).toBeGreaterThanOrEqual(scr.y + scr.height);   // under the screen, not over it
+    await expect.poll(() => page.evaluate(() => window.DreadDelve.wander.myTurn() && !window.DreadDelve.busy()), { timeout:60_000 }).toBe(true);
+    await hold(page, 'a');
+    await expect.poll(() => page.evaluate(() => { const w = window.DreadDelve.wander; return !!w.rt.look && w.rt.look.id === w.target()?.id; })).toBe(true);
   });
 });
 
@@ -113,4 +153,12 @@ test('on a desktop the handheld waits to be asked for, and the keys turn, crane 
   await expect(page.locator('#wdMenuBox')).toBeHidden();
   const h0 = await hero(page);
   await expect.poll(async () => { await page.keyboard.press('s'); return (await hero(page)).y !== h0.y || (await hero(page)).x !== h0.x; }, { timeout:10_000 }).toBe(true);
+  // the safe moment stays where it was taken: walk on after it, and waking from it puts the hero back there
+  // (game/session.js keeps a copy, not the live state's objects)
+  await page.waitForTimeout(600);
+  const safe = await page.evaluate(() => { window.DreadDelve.wander.saveNow(); const h = window.DreadDelve.wander.hero(); return { x:h.x, y:h.y }; });
+  await expect.poll(async () => { await page.keyboard.press('w'); const h = await hero(page); return h.x !== safe.x || h.y !== safe.y; }, { timeout:10_000 }).toBe(true);
+  await page.waitForTimeout(600);
+  expect(await page.evaluate(() => window.DreadDelve.wander.continueWander({ safe:true }))).toBe(true);
+  expect(await hero(page)).toEqual(safe);
 });

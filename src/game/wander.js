@@ -37,7 +37,7 @@ import { moveAllowance } from './rules.js';
 import { travel, arrive, enterPlace, valley, passTime, clockText, springEvent } from './overworld.js';
 import { court } from './court.js';
 import { longRest, shortRest, canCast } from './resources.js';
-import { loadState, changed, flushSave, loadWanderSave, wanderCheckpoint, deserialize } from './session.js';
+import { loadState, changed, flushSave, loadWanderSave, wanderCheckpoint, deserialize, wanderSlot, saveWanderSlot, WANDER_SLOTS } from './session.js';
 import { showCard, toast } from '../ui/hud.js';
 import { syncTokens, tokenViews } from '../render/minis.js';
 import { camTo, wx, wz, floorY } from '../render/scene.js';
@@ -53,7 +53,7 @@ const night = () => { const h = valley().hour; return h >= 20 || h < 6; };
 const onRoad = () => state.meta.template === 'journey';
 
 // What only this device keeps while playing (never saved): the hero's trail, the aim, whose turn was whose.
-export const rt = { trail:[], target:null, atk:null, heroKey:'', attacks:0, cast:false, bonus:false, acting:'', actAt:0, lastBusy:0, endAt:0, talk:null, seen:new Set(), round:0, unseen:0, hpWas:null, focus:null };
+export const rt = { trail:[], target:null, atk:null, heroKey:'', attacks:0, cast:false, bonus:false, acting:'', actAt:0, lastBusy:0, endAt:0, talk:null, seen:new Set(), round:0, unseen:0, hpWas:null, focus:null, look:null };
 const fresh = () => Object.assign(rt, { trail:[], target:null, atk:null, heroKey:'', attacks:0, cast:false, bonus:false, acting:'', actAt:0, lastBusy:0, endAt:0, talk:null, round:0, unseen:0, hpWas:null });
 
 /* ---------- starting and leaving ---------- */
@@ -90,14 +90,34 @@ export function startWander(sheet){
   changed(); saveNow();
   return t;
 }
-export function continueWander({ safe = false } = {}){
-  const s = loadWanderSave({ safe }); if (!s) return false;
+export function continueWander({ safe = false, from = null } = {}){
+  const s = from || loadWanderSave({ safe }); if (!s) return false;
   if (!ui.wander) flushSave();   // the DM's campaign, if it had anything waiting, to its own slot first
   ui.wander = true; fresh();
   loadState(deserialize(s));
   if (!W()){ ui.wander = false; return false; }
   upgradeWander(W());
   enterView(); changed();
+  return true;
+}
+/* ---------- 🕹 save states ----------
+   Three slots of the player's own (the menu's Save states page; Select + Start on the handheld, Back + Start on a
+   controller, K on the keys). A slot is filled by hand, never by the game, and loading one puts the run back exactly
+   there (and saves it as the run). Not in a fight or a conversation: those have no moment to stop in. */
+export const SLOTS = WANDER_SLOTS;
+export const slotMeta = n => wanderSlot(n)?.meta || null;
+export const canSaveSlot = () => !state.combat.active && !rt.talk;
+export function saveToSlot(n){
+  if (!W() || !canSaveSlot()) return false;
+  const h = hero(), sh = sheetOf(), V = valley();
+  const place = V.journey ? `On the road to ${placeById(V.journey.to)?.name || '…'}` : (state.floors[h?.floor ?? 0]?.name || state.meta.name);
+  return saveWanderSlot(n, { name:h?.name || sh?.name || '', place, day:V.day || 1, lvl:+sh?.lvl || 1, hp:Math.max(0, h?.hp || 0), max:h?.maxHp || 0, party:members().length });
+}
+export function loadFromSlot(n){
+  const v = wanderSlot(n); if (!v?.data) return false;
+  Object.assign(rt, { endAt:0, acting:'', heroKey:'', target:null, cast:false, bonus:false, talk:null, trail:[], attacks:0, look:null, round:0, unseen:0, hpWas:null });
+  if (!continueWander({ from:structuredClone(v.data) })) return false;
+  follow(hero(), 1); saveNow();
   return true;
 }
 export function leaveWander(){
@@ -366,6 +386,7 @@ export function heroCast(entry){
   else { tg = target(); if (!tg){ toast('Nobody to aim at.'); return false; }
     if (sp.area) aimAt = { x:tg.x, y:tg.y };
     else if (cheb(t, tg) > reachSq){ toast(`${tg.name} is out of range of ${sp.n}: walk closer.`); return false; } }
+  if (tg !== t) rt.look = { id:tg.id, until:performance.now() + 1700 };
   if (castSpell(t.id, tg.id, entry.i, aimAt) === false) return false;
   if (state.combat.active) rt.cast = true;
   changed(); return true;
@@ -519,6 +540,7 @@ export function heroAttack(){
   if (!tg) return toast('Nobody to strike.');
   if (!attacksLeft()) return toast(rt.cast ? 'You have cast this turn. Ⓑ ends your turn.' : 'You have struck this turn. Ⓑ ends your turn.');
   const i = attackFor(t, tg); if (i < 0) return toast(`${tg.name} is out of reach: walk closer.`);
+  rt.look = { id:tg.id, until:performance.now() + 1500 };   // (the camera frames the two of them a moment: ui/wander.js)
   if (doAttack(t.id, tg.id, i) !== false) rt.attacks++;
   changed();
 }

@@ -1,7 +1,8 @@
 /* SOUND — everything is synthesised with WebAudio (no files, works offline).
    drone(dread)  a low bed that thickens, detunes and starts to throb as the Dread rises
    sfx(name)     grind (the Shift) · toll (the Bellmouth, bells) · skitter (hands) · door · trap · hit · crit · miss ·
-                 burst (Bloom/Seep deaths) · whisper · ping · turn · rise · boom (Dread up) · roll (dice)
+                 burst (Bloom/Seep deaths) · whisper · ping · turn · rise · boom (Dread up) · roll (dice) ·
+                 tick · chime · thump (the Wanderer's handheld: a button, switching on, a heartbeat near death)
    The DM's app plays a sound and sends it to the table; players play what they're sent. Browsers only allow
    audio after a tap, so nothing plays until the first click. */
 import { gfx, onGfx } from '../render/gfx.js';
@@ -126,6 +127,10 @@ const FX = {
   rise(){ const t = now(); const n = noise(1.2, 'lowpass', 300, 2, .5, t); n.f.frequency.linearRampToValueAtTime(900, t + 1); env(n.g, t, .5, .35, .7); },
   boom(){ const t = now(); const o = tone('sine', 55, 2.5, .8, t); o.o.frequency.exponentialRampToValueAtTime(30, t + 2); env(o.g, t, .02, .7, 2.4); const n = noise(1.5, 'lowpass', 200, 1, .5, t); env(n.g, t, .02, .4, 1.4); },
   roll(){ const t = now(); for (let i = 0; i < 6; i++){ const at = t + i * .045 + Math.random() * .02; const n = noise(.03, 'bandpass', 2000 + Math.random() * 1500, 3, .3, at); env(n.g, at, .001, .3, .025); } },
+  // 🕹 the Wanderer's handheld (ui/handheld.js): a button's click, the chime it boots with, and the hero's heartbeat near death
+  tick(){ const t = now(); const n = noise(.02, 'highpass', 3200, 1, .2, t); env(n.g, t, .001, .14, .016); const o = tone('triangle', 1900, .03, .1, t); env(o.g, t, .001, .05, .025); },
+  chime(){ const t = now(); [[659.25, 0], [987.77, .12]].forEach(([f, d]) => { const o = tone('sine', f, 1, .2, t + d); env(o.g, t + d, .02, .16, .9); }); },
+  thump(){ const t = now(); [0, .2].forEach((d, i) => { const o = tone('sine', i ? 52 : 60, .25, .5, t + d); o.o.frequency.exponentialRampToValueAtTime(38, t + d + .18); env(o.g, t + d, .01, i ? .32 : .45, .2); }); },
 };
 export const SFX_NAMES = Object.keys(FX);
 // share = true: the DM's sound is sent to everyone at the table too

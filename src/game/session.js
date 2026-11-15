@@ -74,6 +74,10 @@ const SAVE_KEY = 'dreaddelve.save.v1';
 // DM's campaign never does, so playing never overwrites the campaign (or the other way round)
 const WANDER_KEY = 'dreaddelve.wander.v1', SAFE_KEY = 'dreaddelve.wander.safe.v1';   // (the safe one: written only at a safe moment)
 let wanderSave = null, wanderSafe = null;
+// 🕹 and its save states: three slots the player fills and loads by hand (the menu's Save states page), apart from
+// the run's own autosave. Each is { meta:{ at, name, place, day, lvl, hp, max }, data }.
+export const WANDER_SLOTS = 3;
+const slotKey = n => `dreaddelve.wander.slot${n + 1}.v1`, wanderSlots = Array(WANDER_SLOTS).fill(null);
 const slotOf = s => s?.campaign?.wander ? WANDER_KEY : SAVE_KEY;
 // The DM's delve, in IndexedDB with the art included: localStorage's ~5 MB ceiling dropped
 // long campaigns' art. The save read at boot is cached, so loadLocal() stays synchronous.
@@ -85,6 +89,7 @@ export async function initSaves(){
   if (savesReady) return;
   savesReady = true;
   try { wanderSave = (await get(WANDER_KEY)) ?? null; wanderSafe = (await get(SAFE_KEY)) ?? null; } catch {}
+  for (let n = 0; n < WANDER_SLOTS; n++) try { wanderSlots[n] = (await get(slotKey(n))) ?? null; } catch {}
   try {
     const stored = await get(SAVE_KEY);
     if (stored != null){ cachedSave = stored; return; }
@@ -103,7 +108,7 @@ export function saveSoon(){ if (ui.role !== 'dm') return; clearTimeout(saveTimer
 export function saveLocal(){
   if (!state) return;
   const data = serialize(true), key = slotOf(state);
-  if (key === WANDER_KEY) wanderSave = data; else cachedSave = data;
+  if (key === WANDER_KEY) wanderSave = structuredClone(data); else cachedSave = data;   // (the Wanderer's is read back mid-run: a copy, not the live state's objects)
   set(key, data).catch(() => {
     // IndexedDB failed: the old localStorage path, art first, then without it.
     try { localStorage.setItem(key, JSON.stringify(data)); }
@@ -122,8 +127,17 @@ export function loadWanderSave({ safe = false } = {}){
 export function wanderCheckpoint(){
   if (!state?.campaign?.wander) return;
   flushSave();
-  const data = serialize(true); wanderSafe = data;
+  const data = serialize(true); wanderSafe = structuredClone(data);   // (a copy: the party wakes here after a defeat, not where it fell)
   set(SAFE_KEY, data).catch(() => { try { localStorage.setItem(SAFE_KEY, JSON.stringify(serialize(false))); } catch {} });
+}
+// A save state: what's in a slot (or null), and putting the run as it is now into one.
+export const wanderSlot = n => wanderSlots[n] || null;
+export function saveWanderSlot(n, meta){
+  if (!state?.campaign?.wander || n < 0 || n >= WANDER_SLOTS) return false;
+  const v = { meta:{ ...meta, at:Date.now() }, data:structuredClone(serialize(true)) };   // (a copy: serialize shares the live state's objects, and the run goes on)
+  wanderSlots[n] = v;
+  set(slotKey(n), v).catch(() => {});
+  return true;
 }
 export function loadLocal(){
   if (cachedSave) return cachedSave;

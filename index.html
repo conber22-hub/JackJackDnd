@@ -655,19 +655,24 @@ body.wander #modeHint, body.wander #moveTip, body.wander #btnPanel, body.wander 
 .hh-lg{position:absolute;font:600 9px system-ui,sans-serif;color:var(--hh-ink);white-space:nowrap;letter-spacing:.04em;pointer-events:none;transform:translateX(-50%)}
 .hh-lg.b{left:23%;top:92%}.hh-lg.a{left:75%;top:70%}.hh-lg.y{left:19%;top:44%}.hh-lg.x{left:57%;top:27%}
 .hh-grille{width:56px;height:28px;background:radial-gradient(circle,rgba(0,0,0,.45) 2px,transparent 2.5px) 0 0/9px 9px;transform:rotate(-18deg);opacity:.8}
+.hh-sub{display:none;grid-area:sub}
 .hh-pills{grid-area:pills;display:flex;gap:18px;padding-top:4px}
 .hh-pill{display:flex;flex-direction:column;align-items:center;gap:3px;border:0;background:none;color:var(--hh-ink);font:700 8px system-ui,sans-serif;letter-spacing:.18em}
 .hh-pill i{display:block;width:40px;height:12px;border-radius:7px;background:linear-gradient(var(--hh-key-hi),var(--hh-key));box-shadow:0 2px 0 rgba(0,0,0,.45);transform:rotate(-14deg)}
 .hh-pill small{font-weight:500;letter-spacing:.04em;font-size:8px;opacity:.75;min-height:9px}
 @media (orientation:portrait){
-  .hh-body{grid-template-columns:1fr 1fr;grid-template-rows:auto 34px 1fr auto;grid-template-areas:"screen screen" "sh sh" "left right" "pills pills";padding:12px 12px 10px;border-radius:26px 26px 90px 26px}
+  .hh-body{grid-template-columns:1fr 1fr;grid-template-rows:auto auto 34px 1fr auto;grid-template-areas:"screen screen" "sub sub" "sh sh" "left right" "pills pills";padding:12px 12px 10px;border-radius:26px 26px 90px 26px}
   .hh-sh{position:static;grid-area:sh;align-self:center;width:100%;height:auto;padding:0 6px}
   .hh-shoulder{width:30%;height:26px;margin:0;border-radius:14px}
   .hh-bezel{width:calc(100vw - 32px);height:min(58dvh,calc((100vw - 32px) * 1.3));padding:12px 18px 24px;border-radius:12px 12px 36px 12px}
   .hh-screen{inset:12px 18px 24px}
   .hh-dpad{width:min(150px,38vw)}.hh-face{width:min(160px,40vw)}
   .hh-pills{padding:0 0 4px}
+  /* in a fight: a second panel under a shorter screen, and the fight bar on it */
+  #handheld.fight .hh-bezel{height:min(41dvh,calc((100vw - 32px) * 1.02))}
+  #handheld.fight .hh-sub{display:block;width:calc(100vw - 32px);height:clamp(112px,18dvh,156px);margin-top:8px;border-radius:10px 10px 22px 10px;background:var(--hh-bezel);box-shadow:inset 0 0 0 2px rgba(255,255,255,.05),inset 0 6px 16px rgba(0,0,0,.6),0 1px 0 var(--hh-edge)}
 }
+body.hh-subon #wdFight{position:fixed;left:var(--hh-sub-x);top:var(--hh-sub-y);width:var(--hh-sub-w);height:var(--hh-sub-h);transform:none;bottom:auto;box-sizing:border-box;overflow:auto;padding:7px 9px;border-radius:10px;background:transparent;border:0;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
 body.hh #stage{z-index:2;inset:auto}
 body.hh #stage{position:fixed;overflow:hidden;border-radius:3px}
 body.hh #stage canvas.chunky{image-rendering:pixelated}
@@ -700,8 +705,15 @@ body.hh #cardLayer .pop{width:calc(100% - 20px);padding:9px 12px;max-height:calc
 body.hh #cardLayer .pop .t{font-size:17px}body.hh #cardLayer .pop .f{font-size:13px;margin:4px 0}body.hh #cardLayer .pop .r{font-size:11px}
 #hhBoot{position:fixed;z-index:46;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;pointer-events:none;transition:opacity .3s;border-radius:3px;overflow:hidden}
 #hhBoot.hidden{display:none}#hhBoot.out{opacity:0}
-.hh-boot-name{font-family:Cinzel,Georgia,serif;font-size:clamp(18px,6vw,34px);letter-spacing:.3em;color:#e9c27a;text-shadow:0 0 18px rgba(233,165,74,.55);animation:hhdrop 1s cubic-bezier(.2,.9,.3,1.15) both}
-.hh-boot-sub{font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-size:clamp(13px,3.6vw,20px);color:#a5cc45;opacity:0;animation:hhfade .4s .9s forwards}
+.hh-eye{width:min(44%,230px);height:auto;filter:drop-shadow(0 0 14px rgba(200,40,30,.45))}
+.hh-eye-open{transform-origin:100px 50px;transform:scaleY(.02);animation:hheye 1.05s .25s cubic-bezier(.3,.8,.3,1) forwards}
+.hh-pupil{transform-origin:100px 50px;animation:hhpupil 1.1s 1s ease-out forwards}
+.hh-eye-look{animation:hhlook 2.2s 1.2s ease-in-out}
+@keyframes hheye{0%{transform:scaleY(.02)}50%{transform:scaleY(.62)}64%{transform:scaleY(.4)}100%{transform:scaleY(1)}}
+@keyframes hhpupil{to{transform:scaleX(.5)}}
+@keyframes hhlook{30%{transform:translateX(-10px)}62%{transform:translateX(8px)}100%{transform:none}}
+.hh-boot-name{font-family:Cinzel,Georgia,serif;font-size:clamp(16px,5vw,30px);letter-spacing:.3em;color:#e9c27a;text-shadow:0 0 18px rgba(233,165,74,.55);animation:hhdrop .8s 1s cubic-bezier(.2,.9,.3,1.15) both}
+.hh-boot-sub{font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-size:clamp(12px,3.4vw,19px);color:#a5cc45;opacity:0;animation:hhfade .4s 1.6s forwards}
 @keyframes hhdrop{0%{transform:translateY(-140%);opacity:0}60%{opacity:1}100%{transform:none;opacity:1}}
 @keyframes hhfade{to{opacity:.85}}
 #handheld.booting .hh-led{opacity:.12;animation:none;box-shadow:none}
