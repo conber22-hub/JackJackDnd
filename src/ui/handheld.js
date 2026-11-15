@@ -17,15 +17,17 @@ import { setViewRect, view } from '../render/scene.js';
 import { ui } from '../engine/state.js';
 import { keepAwake } from '../util/wake.js';
 import { sfx } from '../audio/sound.js';
+import { tune, coachDone } from './hhlife.js';
 
 const KEY = 'dreaddelve.handheld.v1';
 // mode, shell, lcd (the pixel screen), full (ask for the whole screen), seeThru (the hole through walls,
 // ui/followcam.js), table (at the table, a player's phone is the handheld too: off for the classic screen)
-export const hh = { mode:'auto', shell:'dusk', lcd:false, full:true, seeThru:true, table:true };
+// tips (the coach, ui/hhlife.js), chip (its little tunes)
+export const hh = { mode:'auto', shell:'dusk', lcd:false, full:true, seeThru:true, table:true, tips:true, chip:true };
 try { Object.assign(hh, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch {}
 export function setHandheld(patch){
   Object.assign(hh, patch);
-  try { localStorage.setItem(KEY, JSON.stringify({ mode:hh.mode, shell:hh.shell, lcd:hh.lcd, full:hh.full, seeThru:hh.seeThru, table:hh.table })); } catch {}
+  try { localStorage.setItem(KEY, JSON.stringify({ mode:hh.mode, shell:hh.shell, lcd:hh.lcd, full:hh.full, seeThru:hh.seeThru, table:hh.table, tips:hh.tips, chip:hh.chip })); } catch {}
   if (patch.full === false && wentFull) leaveFull();
   relayout();
 }
@@ -84,6 +86,7 @@ function down(e){
   const c = e.target.closest('[data-hh]'); if (!c) return;
   e.preventDefault(); try { c.setPointerCapture(e.pointerId); } catch {}
   const k = c.dataset.hh; fingers.set(e.pointerId, { k, c });
+  coachDone();
   goFull();
   if (endBoot()){ if (k !== 'dpad'){ c.classList.add('down'); buzz(); } return; }   // (the press that skips the boot does only that)
   if (k === 'dpad'){ thumb(c, e); return; }
@@ -191,7 +194,7 @@ function syncHandheld(now = performance.now()){
   if (host && host !== api){ if (on) show(false); api = host; lastLg = ''; }
   show(!!host && want);
   if (!on){ api = NOHOST; return; }
-  if (bootLeft > 0){ if (!chimed && bootLeft < 1300){ chimed = true; sfx('chime', false); } bootLeft -= step; if (bootLeft <= 0 || now - bootAt > 6000) endBoot(); }
+  if (bootLeft > 0){ if (!chimed && bootLeft < 1300){ chimed = true; if (hh.chip === false) sfx('chime', false); else tune('boot'); } bootLeft -= step; if (bootLeft <= 0 || now - bootAt > 6000) endBoot(); }
   const fight = !!api.fight();
   if (el.classList.contains('fight') !== fight){ el.classList.toggle('fight', fight); requestAnimationFrame(relayout); }
   const hp = api.health(), lamp = hp > .5 ? 'ok' : hp > .25 ? 'low' : 'dire';

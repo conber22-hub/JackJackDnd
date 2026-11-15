@@ -33,6 +33,31 @@ A player's phone, seated at the DM's table, is now a pocket console by default: 
 - **Taps:** taps on the screen still work. Tap a foe to aim at it, and tap it again to strike. Tap your hero for A, or the ground to walk there. Doors and objects work as before.
 - **On the screen:** the place and the round, whose turn it is, and the party's health. In a fight there's a bar with the order, your move left, the target and the buttons (under the screen on a phone held upright). The follow camera, seeing through walls, the Lantern light and the buzz on a hit work as in the Wanderer.
 - **The classic screen:** the menu's **Handheld & camera → The classic screen** brings back the map with the panels on that phone. **🕹 Handheld** on the Hero tab brings the handheld back. This is kept per device, along with the shell, pixel screen, full screen and seeing through.
+- **Fighting from the handheld** (play-tested at a table, a cleric against two zombies, with nothing but the buttons):
+  - **The turn's action:** the DM's app leaves the count of attacks to the DM, so the handheld keeps it, as a player would. The fight bar says what's left ("1 strike left", "struck", "action spent"), and a second strike or a spell after a strike is refused on the phone with "B ends your turn".
+    - Extra Attack counts: Fighters, Barbarians, Paladins, Rangers and Monks from level 5; Fighters three at 11 and four at 20.
+    - Dash, Disengage and Dodge spend the action too.
+  - **A** strikes with the reaching attack that does the most, not just the first in the list.
+  - **Spells from the buttons alone:**
+    - **X** lists them with what each will do ("cantrip · at Zombie", "heals", "an area").
+    - **A** casts at the target, or an area aimed at its square, with a range check.
+    - Healing and help go to a friend chosen on the screen (yourself first; out-of-reach friends greyed).
+    - When there's more than one slot level to spend, the slot is chosen on the screen too.
+    - No tap-only lists any more.
+  - **Reactions:** when a foe walks out of the hero's reach, the handheld asks on the screen ("⚔ Zombie is getting away: your reaction?"): **A** strikes, **B** lets it go, with a buzz. (On the classic phone this was the top panel, which the handheld hid, so the question never reached the player.)
+  - **Feedback:**
+    - Your turn coming round gives a buzz and a tune, and clears last turn's "with the DM…".
+    - A hit, a heal, a fight won and falling each have their tune.
+    - The camera frames the hero and the target on a strike, a cast or an aim.
+  - **A fix:** the handheld's menus kept scrolling themselves back to the highlighted row several times a second, so a finger couldn't scroll a long one. They now scroll only when the highlight moves.
+- **🎵 Chip tunes** (ChatGPT's `engine/chiptune.js` and `data/chiptune.js`, played by `playTune` in `audio/sound.js`): twenty original minor-key jingles for four voices (two pulse waves with their duty, a triangle bass, a noise drum).
+  - **When they play:** switching on, your turn, a level gained, a fight won or lost, a quest taken or finished, a save state written or loaded, the menu's blips, a door, the stairs, a heal, a hit.
+  - **Settings:** on the effects bus, so the player's sound settings hold. **Chip tunes: On/Off** on the Handheld & camera page.
+- **💡 The coach** (ChatGPT's `engine/coach.js` and `data/coach.js`, shown by `ui/hhlife.js`): now and then, one short tip that fits the moment, as a line on the handheld's screen ("Your foe is out of reach. Move closer: the D-pad.").
+  - **Wording:** for the handheld, a controller or the keys, whichever the player is holding.
+  - **Repeats:** never the same tip twice. Tips stop once the player has shown they know the thing (a strike, a cast, an aim, ending a turn, the camera, the menu, the sheet, a door, the stairs).
+  - **Settings:** any press or a tap puts a tip away. It's kept per device, and **Tips: On/Off** is on the Handheld & camera page.
+  - **Where:** at the table and in the Wanderer. In tests it's muted unless asked (`preparePage(page, { coach:true })`).
 - **Shared code:** the follow camera, seeing through and the felt hits moved into `ui/followcam.js`, shared by the Wanderer and the table. The handheld picks its *host* (the Wanderer or the table) each frame.
 - **Tests:** a seated phone in the tests keeps the classic screen unless the test asks for the handheld (`preparePage(page, { handheld:true })`). `preparePage` now also waits for the start page to be drawn, so a test that sets up its own map can't have the start page come back over it.
 
@@ -958,6 +983,9 @@ src/engine/wander-cam.js   🎥 the follow camera's numbers (orbit, eighth turns
 src/ui/handheld.js         🕹 the handheld skin: the shell, its touch D-pad and buttons, the world drawn into its screen, the boot, the Lantern light, its hosts
 src/ui/tablehh.js          🕹 the handheld at the table: a seated player's phone as the controller (HUD, D-pad steps, strikes, menu, sheet)
 src/ui/followcam.js        🎥 the follow camera, seeing through walls and a hit felt, for one hero (the Wanderer's and the table's)
+src/ui/hhlife.js           🕹 the handheld's tunes (engine/chiptune.js) and its coach's tips (engine/coach.js)
+src/engine/coach.js        💡 ChatGPT's coach: one tip that fits the moment, worded for the handheld, a controller or the keys
+src/engine/chiptune.js     🎵 ChatGPT's chiptune parser and scheduler (the jingles in data/chiptune.js)
 src/render/seethrough.js   👁 the Wanderer's hero seen through walls and trees: a dithered hole added to a floor's materials
 src/data/wander.js         🗡 the companions (their sheets, words and likes), their quests and the others, the roadside scenes, the narration
 src/net/passport.js        🧭 the tables this browser has joined, and the hero played at each

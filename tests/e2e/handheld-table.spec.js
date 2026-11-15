@@ -3,13 +3,16 @@ import { test, expect, preparePage, arena, expectPositions } from './helpers.js'
 // 🕹 The handheld at the table (ui/tablehh.js): a player's phone, seated at the DM's table, is the pocket console by
 // default. The map in the shell's screen with the classic screen's furniture away; the D-pad steps the hero (the DM's
 // app moves it, both screens agree); Select opens the hero's sheet over everything; Start the menu; in a fight on
-// their turn, A strikes the target through the usual request; the menu's "The classic screen" puts the old phone back,
-// and the Hero tab's 🕹 Handheld brings the handheld back.
+// their turn, A strikes the target through the usual request (once: the handheld counts the turn's action), X casts
+// a spell at it from the buttons, and a foe getting away asks for her reaction on the screen (A strikes); the menu's
+// "The classic screen" puts the old phone back, and the Hero tab's 🕹 Handheld brings the handheld back.
 const SP = process.env.HH_SHOTS;   // a folder to keep screenshots in
 test('a seated player plays from the handheld: steps, the sheet, the menu, a strike in a fight, and the classic screen', async ({ page:dm, browser, baseURL }) => {
   test.setTimeout(240_000);
-  await arena(dm);
-  await dm.evaluate(() => { const D = window.DreadDelve; D.get().campaign.freeRolls = true; });   // (the player's rolls go straight through)
+  await arena(dm, []);
+  await dm.evaluate(() => { const D = window.DreadDelve; D.get().campaign.freeRolls = true;   // (the player's rolls go straight through)
+    const h = D.newHero('Cleric'); h.name = 'Ada'; h.id = 'ada-hh'; h.spells = ['Sacred Flame', 'Cure Wounds'];   // (a cleric: a strike and spells)
+    const t = D.applyCharacter(h, { owner:'Ada' }); t.floor = 0; t.x = 6; t.y = 10; });
   await dm.locator('[data-act="tab"][data-k="table"]').click();
   await dm.locator('[data-act="host"]').click();
   await expect.poll(() => dm.evaluate(() => window.DreadDelve.net.online)).toBe(true);
@@ -43,6 +46,9 @@ test('a seated player plays from the handheld: steps, the sheet, the menu, a str
     await p.evaluate(() => { const D = window.DreadDelve, h = D.get().tokens.find(t => t.id === D.ui.myToken), o = D.camera.position.clone().sub(D.controls.target), d = Math.hypot(o.x, o.z);
       D.camera.position.set(D.controls.target.x, D.camera.position.y, D.controls.target.z + d); });
     await expect.poll(async () => { await hold('dpad', 260, 1, 0); return dm.evaluate(() => window.DreadDelve.get().tokens.find(t => t.name === 'Ada').x); }, { timeout:20_000 }).toBeGreaterThan(6);
+    // (a held D-pad may have sent a second step: wait for the DM's app and the phone to agree)
+    const adaX = page => page.evaluate(() => { const t = window.DreadDelve.get().tokens.find(t => t.name === 'Ada'); return `${t.x},${t.y}`; });
+    await expect.poll(async () => (await adaX(dm)) === (await adaX(p)) && !(await dm.evaluate(() => window.DreadDelve.busy())), { timeout:15_000 }).toBe(true);
     const x1 = await dm.evaluate(() => window.DreadDelve.get().tokens.find(t => t.name === 'Ada').x);
     await expectPositions(p, { Ada:{ x:x1, y:10 } });
     if (SP) await p.screenshot({ path:`${SP}/table-walk.png` });
@@ -71,8 +77,29 @@ test('a seated player plays from the handheld: steps, the sheet, the menu, a str
     await expect(p.locator('#tbFight')).toContainText('Zombie');
     if (SP) await p.screenshot({ path:`${SP}/table-fight.png` });
     const logLen = await dm.evaluate(() => window.DreadDelve.get().log.length);
+    await expect(p.locator('#tbFight')).toContainText('1 strike left');
     await hold('a');
     await expect.poll(() => dm.evaluate(n => window.DreadDelve.get().log.slice(n).some(l => /Ada/.test(typeof l === 'string' ? l : JSON.stringify(l))), logLen), { timeout:20_000 }).toBe(true);
+    // the turn's action is spent: a second strike is refused on the phone
+    await expect(p.locator('#tbFight')).toContainText('struck');
+    await hold('a');
+    await expect(p.locator('#toasts')).toContainText("You've struck this turn");
+    // her next turn: X, then Sacred Flame at the target, from the buttons alone
+    await dm.evaluate(() => { const D = window.DreadDelve, c = D.get().combat; D.nextTurn(); for (let k = 0; k < 6 && D.tokById(c.order[c.idx])?.name !== 'Ada'; k++) D.nextTurn(); });
+    await expect(p.locator('#tbFight')).toContainText('1 strike left', { timeout:20_000 });
+    await hold('x');
+    await expect(p.locator('#tbMenu')).toContainText('Sacred Flame');
+    await expect(p.locator('#tbMenu .wd-opt.on')).toContainText('at Zombie');
+    const n2 = await dm.evaluate(() => window.DreadDelve.get().log.length);
+    await hold('a');
+    await expect.poll(() => dm.evaluate(n => window.DreadDelve.get().log.slice(n).some(l => /Sacred Flame/.test(JSON.stringify(l))), n2), { timeout:20_000 }).toBe(true);
+    await expect(p.locator('#tbFight')).toContainText('action spent');
+    // a foe getting away: her reaction, asked on the screen; A takes it
+    await p.evaluate(() => { window.DreadDelve.ui.oaAsk = [{ id:'oa-e2e', mover:'Zombie', atk:'Unarmed Strike' }]; });
+    await expect(p.locator('#tbPrompt')).toContainText('getting away');
+    await expect(p.locator('.hh-lg.a')).toHaveText('Strike!');
+    await hold('a');
+    await expect.poll(() => p.evaluate(() => window.DreadDelve.ui.oaAsk?.length || 0)).toBe(0);
     // the menu's "The classic screen", and the Hero tab's way back
     await hold('start');
     await p.locator('#tbMenu [data-tb="pick"]', { hasText:/^Handheld & camera/ }).click();

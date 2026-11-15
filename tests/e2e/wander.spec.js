@@ -33,6 +33,7 @@ test('a hero walks the valley alone: a companion won over, an ambush on the road
     if (Math.max(Math.abs(h.x - il.x), Math.abs(h.y - il.y)) <= 1) return true;
     w.walkTo(il.x, il.y); return false; }), { timeout:60_000, intervals:[2500] }).toBe(true);
   await expect(page.locator('#wdPrompt')).toContainText('Talk to Ilse Varga');
+  await expect.poll(() => page.evaluate(() => !window.DreadDelve.busy())).toBe(true);   // (the walk's last step done: a step closes a conversation)
   await page.keyboard.press('Space');
   await expect(page.locator('#wdTalk')).toContainText('Ilse Varga');
   await page.evaluate(() => { window.__rand = Math.random; Math.random = () => .999; });

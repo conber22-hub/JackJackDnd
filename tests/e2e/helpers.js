@@ -15,13 +15,15 @@ export const test = base.extend({
 // the ghost's own test passes { wick:true }.
 // handheld: false (the default) keeps a seated player's phone on the classic screen, which the older tests drive; the
 // handheld's own tests pass { handheld:true } (ui/tablehh.js). Other handheld settings a test saves are kept.
-export async function preparePage(page, { tour = false, wick = false, handheld = false } = {}){
+// coach: false (the default) mutes the handheld's tips (ui/hhlife.js), so none sits on a button a test taps.
+export async function preparePage(page, { tour = false, wick = false, handheld = false, coach = false } = {}){
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   // Fonts are cosmetic; keep functional tests independent of Google's CDN.
   await page.route(/^https:\/\/fonts\.(googleapis|gstatic)\.com\//, route => route.abort());
   if (!tour) await page.addInitScript(() => localStorage.setItem('dreaddelve.tour.v1', '1'));
   if (!wick) await page.addInitScript(() => localStorage.setItem('dreaddelve.wick.v1', 'off'));
+  if (!coach) await page.addInitScript(() => { if (!localStorage.getItem('dreaddelve.coach.v1')) localStorage.setItem('dreaddelve.coach.v1', JSON.stringify({ muted:true })); });
   if (!handheld) await page.addInitScript(() => { let p = {}; try { p = JSON.parse(localStorage.getItem('dreaddelve.handheld.v1') || '{}'); } catch {}
     if (!('table' in p)) localStorage.setItem('dreaddelve.handheld.v1', JSON.stringify({ ...p, table:false })); });
   await page.addInitScript(() => {

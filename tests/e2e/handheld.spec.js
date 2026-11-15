@@ -100,7 +100,7 @@ test.describe('on a phone', () => {
     await expect(page.locator('#handheld')).toBeHidden();
     expect(await page.evaluate(() => { const v = window.DreadDelve.viewSize(); return [v.w, v.h]; })).toEqual([844, 390]);
     await expect(page.locator('#stage canvas')).not.toHaveClass(/chunky/);
-    expect(await page.evaluate(() => JSON.parse(localStorage.getItem('dreaddelve.handheld.v1')))).toEqual({ mode:'off', shell:'bone', lcd:true, full:false, seeThru:true, table:false });
+    expect(await page.evaluate(() => JSON.parse(localStorage.getItem('dreaddelve.handheld.v1')))).toEqual({ mode:'off', shell:'bone', lcd:true, full:false, seeThru:true, table:false, tips:true, chip:true });
   });
 });
 

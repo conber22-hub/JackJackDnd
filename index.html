@@ -685,6 +685,13 @@ body.hh-table #topPanels,body.hh-table #modeHint,body.hh-table #moveTip,body.hh-
 body.hh-table:not(.hh-sheet) #panel{display:none !important}
 body.hh-table.hh-sheet #panel{display:flex !important;position:fixed;inset:max(8px,env(safe-area-inset-top)) 8px 64px 8px;width:auto;height:auto !important;z-index:60;transform:none !important;border-radius:20px}
 #hhSheetBack{display:none}
+/* the coach's tip (ui/hhlife.js), a line on the handheld's screen; the reaction prompt (ui/tablehh.js) */
+#hhTip{position:fixed;z-index:44;left:calc(var(--hh-scr-x, 8px) + 8px);width:calc(var(--hh-scr-w, 100vw) - 16px);top:calc(var(--hh-scr-y, 8px) + 46px);box-sizing:border-box;padding:6px 10px;border-radius:10px;
+  background:rgba(14,10,14,.86);border:1px solid var(--gold-line);color:#f0d6a8;font:13px/1.35 "Cormorant Garamond",Georgia,serif;box-shadow:0 6px 18px rgba(0,0,0,.5);animation:hhtip .3s ease-out;cursor:pointer}
+#hhTip.hidden{display:none}
+@keyframes hhtip{from{opacity:0;transform:translateY(-6px)}}
+#tbPrompt{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:calc(100% - 12px)}
+.wd-oa{flex-basis:100%;text-align:center;padding:4px 10px;border-radius:10px;background:rgba(120,20,30,.82);border:1px solid #d23a3a;color:#ffe6e6;font-size:13px;animation:hhtip .25s ease-out}
 body.hh-table.hh-sheet #hhSheetBack{display:block;position:fixed;left:50%;bottom:max(12px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:61}
 body.hh-table #waitPill{top:calc(var(--hh-scr-y, 40px) + var(--hh-scr-h, 300px) - 52px);left:calc(var(--hh-scr-x, 0px) + var(--hh-scr-w, 100vw) / 2);transform:translateX(-50%);font-size:12px}
 body.hh #cardLayer{inset:auto}

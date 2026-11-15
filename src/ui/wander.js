@@ -14,7 +14,7 @@ import { valley, clockText } from '../game/overworld.js';
 import { currentTurn } from '../game/combat.js';
 import { moveAllowance } from '../game/rules.js';
 import { W, rt, hero, members, wandering, startWander, continueWander, leaveWander, stepHero, walkTo, hereAction, talkView, chooseTalk, talkTo,
-  heroAttack, heroDodge, endHeroTurn, aim, target, attackFor, nextWeapon, attacksLeft, myTurn, fightTick, destinations, setOut, rest, saveNow,
+  heroAttack, heroDodge, endHeroTurn, aim, target, targets, attackFor, nextWeapon, attacksLeft, myTurn, fightTick, destinations, setOut, rest, saveNow,
   pack, toggleEquip, usePotion, coinsGp, shopHere, buyPotion, journal, approvalOf, levelReady, partyLevel, nextLevelXp, levelUpHero, sheetOf, spellList, heroCast,
   SLOTS, slotMeta, canSaveSlot, saveToSlot, loadFromSlot } from '../game/wander.js';
 import { sfx } from '../audio/sound.js';
@@ -22,6 +22,7 @@ import { loyalty } from '../engine/wander-life.js';
 import { SHELLS } from '../engine/wander-cam.js';
 import { hh, hhOn, hhHost, hhPad, addHost, setHandheld, skipBoot } from './handheld.js';
 import { camTurn, camView, camCrane, camYaw, camFrame, lookThrough, closeLook, feelHits } from './followcam.js';
+import { tune, coachTick, coachLearn, coachDone, coachHide } from './hhlife.js';
 import { toast } from './hud.js';
 
 const $ = s => document.querySelector(s);
@@ -140,12 +141,12 @@ function menuItems(){
   if (menu.page === 'states'){ const out = [], can = canSaveSlot();
     for (let n = 0; n < SLOTS; n++){ const m = slotMeta(n);
       out.push({ label:`Save to slot ${n + 1}`, sub:can ? (m ? `Over: ${slotLabel(m)} (${ago(m.at)})` : 'Empty') : 'Not in a fight or a conversation', off:!can,
-        run:() => { if (saveToSlot(n)){ toast(`💾 Saved to slot ${n + 1}.`); sfx('chime', false); } } }); }
+        run:() => { if (saveToSlot(n)){ toast(`💾 Saved to slot ${n + 1}.`); if (hh.chip === false) sfx('chime', false); else tune('save'); } } }); }
     for (let n = 0; n < SLOTS; n++){ const m = slotMeta(n);
       out.push({ label:`Load slot ${n + 1}`, sub:m ? `${slotLabel(m)} · ${ago(m.at)}` : 'Empty', off:!m, run:() => { loading = n; menu.page = 'load'; menu.i = 0; } }); }
     return [...out, back()]; }
   if (menu.page === 'load') return [
-    { label:`Yes, load slot ${loading + 1}`, run:() => { closeMenu(); if (loadFromSlot(loading)) toast(`💾 Slot ${loading + 1}: back where you were.`); else toast('That slot would not load.'); } },
+    { label:`Yes, load slot ${loading + 1}`, run:() => { closeMenu(); if (loadFromSlot(loading)){ toast(`💾 Slot ${loading + 1}: back where you were.`); tune('load'); } else toast('That slot would not load.'); } },
     back('states')];
   if (menu.page === 'handheld'){ const sh = SHELLS.find(x => x.k === hh.shell) || SHELLS[0];
     return [
@@ -155,6 +156,8 @@ function menuItems(){
       { label:`Full screen: ${hh.full ? 'On' : 'Off'}`, sub:'The first press fills the whole screen, where the phone allows it', run:() => setHandheld({ full:!hh.full }) },
       { label:'Camera: the next view', sub:'Close · Over the shoulder · High', run:camView },
       { label:`See through walls: ${hh.seeThru ? 'On' : 'Off'}`, sub:'What stands between the camera and your hero thins away', run:() => setHandheld({ seeThru:!hh.seeThru }) },
+      { label:`Tips: ${hh.tips === false ? 'Off' : 'On'}`, sub:'A short hint now and then, at the right moment', run:() => setHandheld({ tips:hh.tips === false }) },
+      { label:`Chip tunes: ${hh.chip === false ? 'Off' : 'On'}`, sub:'Its little jingles (with the sound effects on)', run:() => setHandheld({ chip:hh.chip === false }) },
       back()]; }
   if (menu.page === 'pack') return [
     ...pack().map(i => ({ label:`${i.n}${i.qty > 1 ? ` ×${i.qty}` : ''}${i.equipped ? ' ✓' : ''}`, sub:i.potion ? 'Drink it, or give it to someone beside you' : ['weapon', 'armor', 'shield'].includes(i.kind) ? (i.equipped ? 'In hand / worn: take it off' : 'Wield it / wear it') : '',
@@ -191,10 +194,12 @@ const closeMenu = () => { menu.open = false; };
 /* ---------- input ---------- */
 function press(b){
   if (skipBoot()) return;   // (the press that skips the handheld's boot does only that)
+  coachDone();
+  coachLearn({ a:state.combat.active ? 'strike' : null, lt:'cast', rb:'aim', lb:'aim', start:'menu', rs:'camera', turnl:'camera', turnr:'camera', back:'sheet' }[b] || (b === 'b' && myTurn() ? 'endTurn' : null));
   if (b === 'states' || (b === 'start' && padHeld.back)){ openMenu('states'); return; }
   if (menu.open){
     const items = menuItems();
-    if (b === 'a'){ const o = items[menu.i]; if (o && !o.off) o.run(); }
+    if (b === 'a'){ const o = items[menu.i]; if (o && !o.off){ tune('menuOk'); o.run(); } }
     else if (b === 'b' || b === 'start' || (b === 'lt' && menu.page === 'spells')){ if (menu.page === 'give'){ menu.page = 'pack'; menu.i = 0; } else if (menu.page === 'load'){ menu.page = 'states'; menu.i = 0; } else if (menu.page !== 'main' && menu.page !== menu.from){ menu.page = 'main'; menu.i = 0; } else closeMenu(); }
     return;
   }
@@ -226,7 +231,7 @@ function say(k){ if (!k) return; const r = chooseTalk(k); talkSel.i = 0; if (r =
 function dismissCard(){ const c = document.querySelector('#cardLayer .pop:last-child'); if (c) c.remove(); return !!c; }
 function step(dx, dy){
   if (skipBoot()) return;
-  if (menu.open){ if (dy) menu.i = Math.max(0, Math.min(menuItems().length - 1, menu.i + dy)); return; }
+  if (menu.open){ if (dy){ const n = Math.max(0, Math.min(menuItems().length - 1, menu.i + dy)); if (n !== menu.i) tune('menuMove'); menu.i = n; } return; }
   const tv = talkView(); if (tv){ if (dy) talkSel.i = Math.max(0, Math.min(tv.options.length - 1, talkSel.i + dy)); return; }
   if (!stepHero(dx, dy)) pending = { dx, dy, until:performance.now() + 260 };
 }
@@ -254,11 +259,34 @@ let pending = null, padMem = {}, hhMem = {}, lastTick = 0, lastFrame = 0;
 const padHeld = { back:false };   // (Back held while Start goes down: the save states)
 const yaw = camYaw;   // (which way "up on the stick" walks)
 let hudOn = false;
+/* ---------- 🕹 the tunes and the coach (ui/hhlife.js) ---------- */
+const was = { turn:false, fight:false, lvl:false, quests:-1, done:-1 };
+function wanderMoments(){
+  const w = W(), h = hero(); if (!w || !h) return;
+  const mine = myTurn(), f = !!state.combat.active, lvl = levelReady(), q = w.quests?.length || 0, d = (w.quests || []).filter(x => x.done).length;
+  if (mine && !was.turn) tune('turnStart');
+  if (!f && was.fight) tune(members().every(m => m.dead || m.hp <= 0) ? 'defeat' : 'victory');
+  if (lvl && !was.lvl) tune('levelUp');
+  if (was.quests >= 0 && q > was.quests) tune('questNew');
+  if (was.done >= 0 && d > was.done) tune('questDone');
+  Object.assign(was, { turn:mine, fight:f, lvl, quests:q, done:d });
+}
+function wanderSnapshot(){
+  const h = hero(); if (!h) return null;
+  const tg = state.combat.active ? target() : null, i = tg ? attackFor(h, tg) : -1;
+  const slots = (h.resources || []).filter(r => r.slot).reduce((n, r) => n + (h.res?.[r.id] ?? 0), 0);
+  return { where:'wander', fight:!!state.combat.active, myTurn:myTurn(), hp:Math.max(0, h.hp), maxHp:h.maxHp, down:h.dead || h.hp <= 0,
+    conditions:(h.conds || []).map(c => c.n), moveLeft:state.combat.active ? moveAllowance(h) * 5 : 30,
+    target:tg ? { name:tg.name, inReach:i >= 0, seen:true } : null, foesSeen:state.combat.active ? targets().length : 0,
+    alliesDown:members().filter(m => m.id !== h.id && (m.dead || m.hp <= 0)).length, hasSpells:spellList().length > 0, slotsLeft:slots,
+    cantrips:(h.casts || []).filter(c => !c.l).length, hasHealing:(h.casts || []).some(c => c.k === 'heal'), potions:pack().filter(x => x.potion).reduce((n, x) => n + x.qty, 0),
+    cardUp:!!document.querySelector('#cardLayer .pop') || !!talkView(), menuOpen:menu.open, sheetOpen:false, waitingOnDM:false };
+}
 function frame(now){
   requestAnimationFrame(frame);
   const dt = Math.min(.1, (now - (lastFrame || now)) / 1000); lastFrame = now;
   const gp = [...(navigator.getGamepads?.() || [])].find(g => g && g.connected);
-  if (!wandering()){ if (hudOn){ hudOn = false; show('wanderHud', false); closeLook(); feelHits(null); } return; }
+  if (!wandering()){ if (hudOn){ hudOn = false; show('wanderHud', false); closeLook(); feelHits(null); coachHide(); } return; }
   hudOn = true;
   let pad = null;
   if (gp){
@@ -269,6 +297,7 @@ function frame(now){
   try { wanderCam(dt, pad); } catch (e){ console.warn(e); }
   try { lookThrough(hero(), now); } catch (e){ console.warn(e); }
   feelHits(hero(), gp);
+  try { wanderMoments(); coachTick(wanderSnapshot); } catch (e){ console.warn(e); }
   if (pending){ if (now > pending.until) pending = null; else if (stepHero(pending.dx, pending.dy)) pending = null; }
   if (now - lastTick > 180){ lastTick = now; try { fightTick(now); } catch (e){ console.warn(e); } renderHud(); }
 }

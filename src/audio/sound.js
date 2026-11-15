@@ -142,5 +142,39 @@ export function sfx(name, share = true){
   if (!init() || ctx.state !== 'running') return;
   try { FX[name](); } catch {}
 }
+/* ---------- 🕹 chiptunes: the handheld's little tunes (ChatGPT's engine/chiptune.js gives the notes) ----------
+   evts: [{ t, dur, wave:'square'|'triangle'|'noise', duty, freq | drum, vol }]. Square waves are true pulses of the
+   given duty (a PeriodicWave), the triangle is the bass, noise hits are filtered bursts. On the effects bus, so the
+   player's sound settings and volume hold. → a stop() function. */
+const pulses = new Map();
+function pulseWave(duty){
+  const k = Math.round(duty * 100) / 100; if (pulses.has(k)) return pulses.get(k);
+  const N = 32, re = new Float32Array(N), im = new Float32Array(N);
+  for (let n = 1; n < N; n++){ re[n] = Math.sin(2 * Math.PI * n * k) / (n * Math.PI); im[n] = (1 - Math.cos(2 * Math.PI * n * k)) / (n * Math.PI); }
+  const w = ctx.createPeriodicWave(re, im); pulses.set(k, w); return w;
+}
+export function playTune(evts, { gain = .5, at = 0 } = {}){
+  if (!gfx.sfx || !evts?.length) return () => {};
+  if (!init() || ctx.state !== 'running') return () => {};
+  const t0 = ctx.currentTime + .03 + at, nodes = [];
+  try {
+    for (const e of evts){
+      const s = t0 + e.t, end = s + Math.max(.02, e.dur), v = Math.max(.0002, (e.vol ?? 1) * gain * .22);
+      const g = ctx.createGain(); g.gain.setValueAtTime(.0001, s); g.gain.exponentialRampToValueAtTime(v, s + .006);
+      g.gain.setValueAtTime(v, Math.max(s + .007, end - .03)); g.gain.exponentialRampToValueAtTime(.0001, end); g.connect(sfxBus);
+      if (e.wave === 'noise'){
+        const src = ctx.createBufferSource(); src.buffer = noiseBuf; src.loop = true;
+        const f = ctx.createBiquadFilter(); f.type = e.drum === 'h' ? 'highpass' : 'bandpass'; f.frequency.value = e.drum === 'h' ? 6000 : e.drum === 'X' ? 900 : 1800; f.Q.value = .8;
+        g.gain.cancelScheduledValues(s); g.gain.setValueAtTime(v * 2.2, s); g.gain.exponentialRampToValueAtTime(.0001, s + Math.min(e.dur, e.drum === 'X' ? .35 : .12));
+        src.connect(f); f.connect(g); src.start(s, Math.random()); src.stop(end + .05); nodes.push(src);
+      } else {
+        const o = ctx.createOscillator();
+        if (e.wave === 'square') o.setPeriodicWave(pulseWave(e.duty ?? .5)); else o.type = 'triangle';
+        o.frequency.value = e.freq; o.connect(g); o.start(s); o.stop(end + .05); nodes.push(o);
+      }
+    }
+  } catch {}
+  return () => { for (const n of nodes) try { n.stop(); } catch {} };
+}
 addEventListener('pointerdown', unlock, { once:false, passive:true });
 addEventListener('keydown', unlock, { once:false });
