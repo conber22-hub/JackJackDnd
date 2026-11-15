@@ -5,7 +5,8 @@
    It shows by itself on a touch screen with no controller plugged in; the menu's Handheld page turns it on or off,
    picks the shell, and the chunky-pixel screen. Kept per device in this browser. Original design (no real console's
    name or badge).
-   Turning it on boots it (an eye opens on a black screen, then the name, with a two-note chime; any press skips it).
+   Turning it on boots it (an eye opens on a black screen, then the name, with a two-note chime; a press skips it,
+   and does nothing else).
    Its buttons click. Select and Start together open the save states (ui/wander.js). In portrait, a fight's bar
    moves out of the screen onto a small second panel under it, so the fight stays in view. The first
    press asks for the whole screen (where the phone allows it; the Handheld page can say no) and the phone is kept
@@ -78,7 +79,8 @@ function down(e){
   const c = e.target.closest('[data-hh]'); if (!c) return;
   e.preventDefault(); try { c.setPointerCapture(e.pointerId); } catch {}
   const k = c.dataset.hh; fingers.set(e.pointerId, { k, c });
-  goFull(); endBoot();
+  goFull();
+  if (endBoot()){ if (k !== 'dpad'){ c.classList.add('down'); buzz(); } return; }   // (the press that skips the boot does only that)
   if (k === 'dpad'){ thumb(c, e); return; }
   c.classList.add('down'); buzz(); sfx('tick', false);
   // Select and Start together: the save states
@@ -138,11 +140,13 @@ function startBoot(){
   bootLeft = 2300; bootAt = performance.now(); chimed = false;
 }
 // Any press skips it (the shell's own, a key, a controller's: ui/wander.js press).
+// → true if it was booting (that press is spent skipping it)
 export const skipBoot = () => endBoot();
 function endBoot(){
-  if (!boot || boot.classList.contains('hidden')) return;
+  if (!boot || !el?.classList.contains('booting')) return false;
   bootLeft = 0; el.classList.remove('booting'); boot.classList.add('out');
-  setTimeout(() => boot.classList.add('hidden'), 350);
+  setTimeout(() => { if (!el.classList.contains('booting')) boot.classList.add('hidden'); }, 350);
+  return true;
 }
 let chimed = false;
 // The whole screen, once per switching on, from a press (a browser only allows it from one).

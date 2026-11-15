@@ -194,7 +194,7 @@ const closeMenu = () => { menu.open = false; };
 
 /* ---------- input ---------- */
 function press(b){
-  skipBoot();
+  if (skipBoot()) return;   // (the press that skips the handheld's boot does only that)
   if (b === 'states' || (b === 'start' && padHeld.back)){ openMenu('states'); return; }
   if (menu.open){
     const items = menuItems();
@@ -229,7 +229,7 @@ function press(b){
 function say(k){ if (!k) return; const r = chooseTalk(k); talkSel.i = 0; if (r === 'joined') toast('A companion follows you now.'); }
 function dismissCard(){ const c = document.querySelector('#cardLayer .pop:last-child'); if (c) c.remove(); return !!c; }
 function step(dx, dy){
-  skipBoot();
+  if (skipBoot()) return;
   if (menu.open){ if (dy) menu.i = Math.max(0, Math.min(menuItems().length - 1, menu.i + dy)); return; }
   const tv = talkView(); if (tv){ if (dy) talkSel.i = Math.max(0, Math.min(tv.options.length - 1, talkSel.i + dy)); return; }
   if (!stepHero(dx, dy)) pending = { dx, dy, until:performance.now() + 260 };

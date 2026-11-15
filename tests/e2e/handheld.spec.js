@@ -42,10 +42,11 @@ test.describe('on a phone', () => {
       return { s:[s.left, s.top, s.width, s.height].map(Math.round), v:[v.x, v.y, v.w, v.h], c:[c.left, c.top, c.width, c.height].map(Math.round), h:[h.left, h.top, h.width, h.height].map(Math.round) }; });
     expect(fit.v).toEqual(fit.s); expect(fit.c).toEqual(fit.s); expect(fit.h).toEqual(fit.s);
     expect(fit.s[2]).toBeLessThan(844);
-    // A skips the boot and dismisses the card; holding the D-pad down walks
+    // a press skips the boot (if it's still on: the desktop test checks it does nothing else); A clears the cards;
+    // holding the D-pad down walks
     await hold(page, 'a');
     await expect(page.locator('#hhBoot')).toBeHidden();
-    await expect(page.locator('#cardLayer .pop')).toHaveCount(0);
+    await expect.poll(async () => { await hold(page, 'a'); return page.locator('#cardLayer .pop').count(); }, { timeout:15_000 }).toBe(0);
     const h0 = await hero(page);
     await hold(page, 'dpad', 1300, 0, 1);
     await expect.poll(async () => (await hero(page)).y).toBeGreaterThan(h0.y);
@@ -146,8 +147,10 @@ test('on a desktop the handheld waits to be asked for, and the keys turn, crane 
   await page.locator('#wdMenuBox [data-act="wdPick"]', { hasText:'Handheld: Auto' }).click();
   await expect(page.locator('#handheld')).toBeVisible();
   await expect(page.locator('#hhBoot')).toBeVisible();
-  await page.keyboard.press('ArrowDown');   // (a key skips the boot too)
+  const sel0 = await page.locator('#wdMenuBox .wd-opt.on').textContent();
+  await page.keyboard.press('ArrowDown');   // (a key skips the boot too, and does nothing else)
   await expect(page.locator('#hhBoot')).toBeHidden();
+  expect(await page.locator('#wdMenuBox .wd-opt.on').textContent()).toBe(sel0);
   await expect(page.locator('.hh-lg.a')).toHaveText('Choose');
   await page.keyboard.press('Escape'); await page.keyboard.press('Escape');
   await expect(page.locator('#wdMenuBox')).toBeHidden();
