@@ -16,6 +16,26 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.27 — everyone at the table holds a handheld
+
+A player's phone, seated at the DM's table, is now a pocket console by default: the same shell as the Wanderer's (`ui/handheld.js`), with the map on its screen and the rest of the phone as the controller (`ui/tablehh.js`). Everything still goes to the DM as before: the same requests, the DM's app still rolls and decides, and nothing new crosses the table.
+- **When it shows:** on a seated player's touch screen with no controller plugged in. It doesn't show on the TV, in card-only mode, or in the Lantern Yard. The DM's laptop keeps the desk. A player with a controller plugged in (or who turns it on) can use it on a laptop too.
+- **The buttons:**
+  - **D-pad:** a step per press, and holding it keeps walking (each step waits for the DM's app to move the hero). Up is away from the camera.
+  - **A:** strikes the target with the first attack that reaches it. Out of a fight, A takes the stairs you're standing on, opens or shuts a door beside you, or puts a card away.
+  - **B:** ends your turn in a fight. Otherwise it's back, or puts a card away.
+  - **X:** spells, which then ask who to aim at and which slot, as card-only mode does.
+  - **Y:** actions: Dash, Disengage, Dodge, Stand up, an attack of your choice, features, and Search.
+  - **L / R:** the next target in a fight. Otherwise they turn the camera.
+  - **Select:** the hero's sheet (the Hero tab) over everything, with notes, letters and the rest. B, or **🕹 Back to the handheld**, closes it.
+  - **View:** the camera's next view.
+  - **Start:** the menu.
+- **Taps:** taps on the screen still work. Tap a foe to aim at it, and tap it again to strike. Tap your hero for A, or the ground to walk there. Doors and objects work as before.
+- **On the screen:** the place and the round, whose turn it is, and the party's health. In a fight there's a bar with the order, your move left, the target and the buttons (under the screen on a phone held upright). The follow camera, seeing through walls, the Lantern light and the buzz on a hit work as in the Wanderer.
+- **The classic screen:** the menu's **Handheld & camera → The classic screen** brings back the map with the panels on that phone. **🕹 Handheld** on the Hero tab brings the handheld back. This is kept per device, along with the shell, pixel screen, full screen and seeing through.
+- **Shared code:** the follow camera, seeing through and the felt hits moved into `ui/followcam.js`, shared by the Wanderer and the table. The handheld picks its *host* (the Wanderer or the table) each frame.
+- **Tests:** a seated phone in the tests keeps the classic screen unless the test asks for the handheld (`preparePage(page, { handheld:true })`). `preparePage` now also waits for the start page to be drawn, so a test that sets up its own map can't have the start page come back over it.
+
 ## v1.26 — the workshop, and a place of their own
 
 Codex's round 7 (#23 crafting, #24 holdings). Pictures: `docs/screens/workshop.jpg`, `docs/screens/holding.jpg`, `docs/screens/keep-props.jpg`.
@@ -935,7 +955,9 @@ src/engine/wander.js       🗡 the director's rules: ambush odds and packs, win
 src/engine/wander-life.js  🗡 the long road: XP and levels, levelling a sheet by itself, loot, quests, approval, roadside choices
 src/engine/pad.js          🎮 a gamepad (or the keys) read as steps and presses: dead zone, repeat, camera-turned stick
 src/engine/wander-cam.js   🎥 the follow camera's numbers (orbit, eighth turns, crane, views, glide), the touch D-pad, when the handheld shows
-src/ui/handheld.js         🕹 the handheld skin: the shell, its touch D-pad and buttons, the world drawn into its screen, the boot, the Lantern light
+src/ui/handheld.js         🕹 the handheld skin: the shell, its touch D-pad and buttons, the world drawn into its screen, the boot, the Lantern light, its hosts
+src/ui/tablehh.js          🕹 the handheld at the table: a seated player's phone as the controller (HUD, D-pad steps, strikes, menu, sheet)
+src/ui/followcam.js        🎥 the follow camera, seeing through walls and a hit felt, for one hero (the Wanderer's and the table's)
 src/render/seethrough.js   👁 the Wanderer's hero seen through walls and trees: a dithered hole added to a floor's materials
 src/data/wander.js         🗡 the companions (their sheets, words and likes), their quests and the others, the roadside scenes, the narration
 src/net/passport.js        🧭 the tables this browser has joined, and the hero played at each

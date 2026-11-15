@@ -19,21 +19,26 @@ import { keepAwake } from '../util/wake.js';
 import { sfx } from '../audio/sound.js';
 
 const KEY = 'dreaddelve.handheld.v1';
-// mode, shell, lcd (the pixel screen), full (ask for the whole screen), seeThru (the hole through walls, ui/wander.js)
-export const hh = { mode:'auto', shell:'dusk', lcd:false, full:true, seeThru:true };
+// mode, shell, lcd (the pixel screen), full (ask for the whole screen), seeThru (the hole through walls,
+// ui/followcam.js), table (at the table, a player's phone is the handheld too: off for the classic screen)
+export const hh = { mode:'auto', shell:'dusk', lcd:false, full:true, seeThru:true, table:true };
 try { Object.assign(hh, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch {}
 export function setHandheld(patch){
   Object.assign(hh, patch);
-  try { localStorage.setItem(KEY, JSON.stringify({ mode:hh.mode, shell:hh.shell, lcd:hh.lcd, full:hh.full, seeThru:hh.seeThru })); } catch {}
+  try { localStorage.setItem(KEY, JSON.stringify({ mode:hh.mode, shell:hh.shell, lcd:hh.lcd, full:hh.full, seeThru:hh.seeThru, table:hh.table })); } catch {}
   if (patch.full === false && wentFull) leaveFull();
   relayout();
 }
 
-let api = { press:() => {}, legend:() => ({}), health:() => 1, fight:() => false }, on = false, el = null, boot = null, askedFull = false, wentFull = false;
+const NOHOST = { id:'', active:() => false, press:() => {}, legend:() => ({}), health:() => 1, fight:() => false };
+let api = NOHOST, on = false, el = null, boot = null, askedFull = false, wentFull = false;
 const stick = { x:0, y:0 };
 const fingers = new Map();   // pointerId → the control it went down on
 const mq = typeof matchMedia !== 'undefined' ? matchMedia('(pointer:coarse)') : null, coarse = () => !!mq?.matches;
 export const hhOn = () => on;
+// Would this device show it, as things are? (a touch screen with no controller, or turned on)
+export const skinWantedHere = () => skinWanted(hh.mode, { coarse:coarse(), pad:padIn() });
+export const hhHost = () => on ? api.id : '';   // which is holding it: 'wander' | 'table' | ''
 // The D-pad as a stick (for padIntents): { x, y, rx, ry, b }
 export const hhPad = () => ({ x:stick.x, y:stick.y, rx:0, ry:0, b:{} });
 
@@ -103,12 +108,14 @@ function thumb(c, e){
 }
 
 // Where the HUD, the pop-up cards and the banners go: over the screen, not the whole phone.
-const FIT = ['wanderHud', 'cardLayer', 'hhBoot'];
+const FIT = ['wanderHud', 'tableHud', 'cardLayer', 'hhBoot', 'vignette', 'bloodrim'];
 function fit(r){
   for (const id of FIT){ const n = document.getElementById(id); if (!n) continue;
     Object.assign(n.style, r ? { left:`${r.x}px`, top:`${r.y}px`, width:`${r.w}px`, height:`${r.h}px`, right:'auto', bottom:'auto' } : { left:'', top:'', width:'', height:'', right:'', bottom:'' }); }
   const t = document.getElementById('toasts');
   if (t) Object.assign(t.style, r ? { top:`${r.y + 44}px`, left:`${r.x + r.w / 2}px`, maxWidth:`${r.w - 16}px` } : { top:'', left:'', maxWidth:'' });
+  // (and where the screen is, for anything else that sits on it: the table's "with the DM…" pill)
+  for (const [k, v] of [['x', r?.x], ['y', r?.y], ['w', r?.w], ['h', r?.h]]) r ? document.body.style.setProperty(`--hh-scr-${k}`, `${Math.round(v)}px`) : document.body.style.removeProperty(`--hh-scr-${k}`);
 }
 function relayout(){
   if (!el || !on) return;
@@ -126,7 +133,7 @@ function relayout(){
 }
 function show(v){
   if (v === on) return; on = v;
-  el.classList.toggle('hidden', !v); document.body.classList.toggle('hh', v);
+  el.classList.toggle('hidden', !v); document.body.classList.toggle('hh', v); document.body.classList.toggle('hh-table', v && api.id === 'table');
   keepAwake(v);
   if (v){ askedFull = false; relayout(); startBoot(); }
   else { stick.x = stick.y = 0; fingers.clear(); endBoot(); document.body.classList.remove('hh-lcd', 'hh-subon'); el.classList.remove('fight'); setViewRect(null); fit(null); if (wentFull) leaveFull(); }
@@ -166,15 +173,24 @@ export function rumble(k = .2){
   el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit');
 }
 let lastLg = '';
-/* Every frame from ui/wander.js: playing (the Wanderer is on screen) and whether a controller is plugged in. Shows or
-   hides the shell, and keeps the button legends up to date. */
-export function syncHandheld(playing, padIn, now = performance.now()){
+/* ---------- who holds it ----------
+   A host is a way of playing one hero: the Wanderer (ui/wander.js) or a player at the table (ui/tablehh.js).
+   { id, active(), press(b), legend(), health(), fight() }. Every frame the first active host has the handheld (if the
+   device wants it: a touch screen with no controller, or turned on; at the table, unless the classic screen is chosen).
+   Hosts read the D-pad themselves (hhPad) in their own frames. */
+const hosts = [];
+export function addHost(h){ hosts.push({ ...NOHOST, ...h }); if (hosts.length === 1) requestAnimationFrame(loop); }
+function loop(now){ requestAnimationFrame(loop); try { syncHandheld(now); } catch (e){ console.warn(e); } }
+const padIn = () => [...(navigator.getGamepads?.() || [])].some(g => g && g.connected);
+function syncHandheld(now = performance.now()){
   if (!el) build();
   const step = Math.min(120, Math.max(0, now - lastSync)); lastSync = now;
-  const want = skinWanted(hh.mode, { coarse:coarse(), pad:padIn });
+  const want = skinWanted(hh.mode, { coarse:coarse(), pad:padIn() });
   ui.handheld = want;   // (would show while playing: game/wander.js words its first card for it)
-  show(!!playing && want);
-  if (!on) return;
+  const host = hosts.find(h => h.active() && (h.id !== 'table' || hh.table !== false));
+  if (host && host !== api){ if (on) show(false); api = host; lastLg = ''; }
+  show(!!host && want);
+  if (!on){ api = NOHOST; return; }
   if (bootLeft > 0){ if (!chimed && bootLeft < 1300){ chimed = true; sfx('chime', false); } bootLeft -= step; if (bootLeft <= 0 || now - bootAt > 6000) endBoot(); }
   const fight = !!api.fight();
   if (el.classList.contains('fight') !== fight){ el.classList.toggle('fight', fight); requestAnimationFrame(relayout); }
@@ -183,5 +199,4 @@ export function syncHandheld(playing, padIn, now = performance.now()){
   const lg = api.legend(), key = JSON.stringify(lg);
   if (key !== lastLg){ lastLg = key; for (const n of el.querySelectorAll('[data-lg]')) n.textContent = lg[n.dataset.lg]?.label || ''; }
 }
-// ui/wander.js hands over what a press does and what the buttons are called just now.
-export function initHandheld(o){ api = { ...api, ...o }; }
+

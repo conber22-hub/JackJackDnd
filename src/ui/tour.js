@@ -1,6 +1,7 @@
 /* FIRST-NIGHT WALKTHROUGH — a player's first seating, and the DM's help button.
    driver.js does the highlighting; this file only picks the steps, keeps the
    player tour to once per device, and dresses the popover in regal glass. */
+import { hh, skinWantedHere } from './handheld.js';
 import { driver } from 'driver.js';
 import 'driver.js/dist/driver.css';
 import { state, ui, tokById } from '../engine/state.js';
@@ -68,6 +69,7 @@ export function startPlayerTour(){
 export function maybePlayerTour(){
   if (localStorage.getItem(TOUR_KEY)) return;
   if (ui.role !== 'player' || !state || !tokById(ui.myToken)) return;   // (the table's welcome can come before its map)
+  if (hh.table !== false && skinWantedHere() && !ui.cardOnly) return;   // (the handheld holds this phone: its buttons say what they do; the tour is the classic screen's)
   localStorage.setItem(TOUR_KEY, '1');
   startPlayerTour();
 }

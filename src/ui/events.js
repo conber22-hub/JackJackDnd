@@ -15,6 +15,7 @@ import { ensureVoices } from './voices.js';
 import { ensureVoiceWorkshop } from './voiceworkshop.js';
 import { ensureYard } from './yard.js';
 import { ensureWander, renderWanderStart } from './wander.js';
+import { ensureTableHH } from './tablehh.js';
 import { recentTables } from '../net/passport.js';
 import { followTrailhead, takeTrail, endTrailLeg, backToRoad } from '../game/trails.js';
 import { hideRefuge, refugeClue, searchForRefuge, goIntoRefuge, leaveRefugeMap } from '../game/refuges.js';
@@ -169,6 +170,7 @@ document.addEventListener('click', e => {
     case 'restore': { const t = tokById(id); if (t) restoreTaken(t); } break;
     case 'joinInit': if (sel){ addToInit(sel); changed(); } break;
     case 'stairs': { const t = sel && (ui.role === 'dm' || sel.id === ui.myToken) ? sel : tokById(ui.myToken); if (t) takeStairs(t); } break;
+    case 'hhTable': import('./handheld.js').then(m => { m.setHandheld({ table:true, mode:m.hh.mode === 'off' ? 'auto' : m.hh.mode }); if (!m.skinWantedHere()) m.setHandheld({ mode:'on' }); }); break;
     case 'search': { const t = ui.role === 'player' ? tokById(ui.myToken) : sel; if (t) search(t); } break;
     case 'remove': if (sel) removeToken(sel.id); break;
     case 'turnAct': { const t = actor(); if (!t) break; if (ui.role === 'player') sendHost({ t:'turnAct', id:t.id, k }); else turnAction(t, k); } break;
@@ -562,6 +564,7 @@ ensureLedger();  // 📒 the ledger
 ensureVoices();  // 🗣 voice lines as heroes and creatures act
 ensureVoiceWorkshop();   // 🗣 players write their heroes' lines, the DM approves them
 ensureWander();   // 🗡 the Wanderer: playing with the game as DM (ui/wander.js)
+ensureTableHH();   // 🕹 a player's phone held as a handheld at the table (ui/tablehh.js)
 ensureYard();            // 🏮 the Lantern Yard: practice and the Lantern Gate drill before the night begins
 ensureChronicle();   // the 📜 Chronicle: the button, the palette command, the record of the story (idempotent)
 ensureSoundscape();   // the 🎻 Soundscape: the button, the palette command, the board and its receivers (idempotent)

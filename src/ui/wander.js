@@ -19,13 +19,9 @@ import { W, rt, hero, members, wandering, startWander, continueWander, leaveWand
   SLOTS, slotMeta, canSaveSlot, saveToSlot, loadFromSlot } from '../game/wander.js';
 import { sfx } from '../audio/sound.js';
 import { loyalty } from '../engine/wander-life.js';
-import { camera, controls, camBusy, wx, wz, floorY } from '../render/scene.js';
-import { toOrbit, fromOrbit, clampOrbit, crane, snapTurn, angleTo, nextView, glide, SHELLS } from '../engine/wander-cam.js';
-import { hh, hhOn, hhPad, syncHandheld, initHandheld, setHandheld, rumble, skipBoot } from './handheld.js';
-import { seeThrough, readyFloor } from '../render/seethrough.js';
-import { tokenViews } from '../render/minis.js';
-import { floorViews } from '../render/floors.js';
-import * as THREE from 'three';
+import { SHELLS } from '../engine/wander-cam.js';
+import { hh, hhOn, hhHost, hhPad, addHost, setHandheld, skipBoot } from './handheld.js';
+import { camTurn, camView, camCrane, camYaw, camFrame, lookThrough, closeLook, feelHits } from './followcam.js';
 import { toast } from './hud.js';
 
 const $ = s => document.querySelector(s);
@@ -56,7 +52,7 @@ function ensureHud(){
   if ($('#wanderHud')) return;
   const el = document.createElement('div'); el.id = 'wanderHud'; el.className = 'hidden';
   el.innerHTML = `<div class="wd-top"><div class="wd-where"><b id="wdPlace"></b><span id="wdClock"></span></div><span id="wdLvl"></span><button class="wd-btn" data-act="wdMenu" aria-label="Menu">☰</button></div>
-    <div class="wd-party" id="wdParty"></div><div class="wd-prompt" id="wdPrompt"></div><div class="wd-fight hidden" id="wdFight"></div>
+    <div class="wd-party" id="wdParty"></div><div class="wd-prompt" id="wdPrompt"></div><div class="wd-fight hh-fightbar hidden" id="wdFight"></div>
     <div class="wd-talk hidden" id="wdTalk"></div><div class="wd-menu hidden" id="wdMenuBox"></div>`;
   document.body.appendChild(el);
 }
@@ -234,59 +230,15 @@ function step(dx, dy){
   const tv = talkView(); if (tv){ if (dy) talkSel.i = Math.max(0, Math.min(tv.options.length - 1, talkSel.i + dy)); return; }
   if (!stepHero(dx, dy)) pending = { dx, dy, until:performance.now() + 260 };
 }
-/* ---------- 🎥 the follow camera ----------
-   Every frame while wandering: the camera eases after where the game says to look (game/wander.js follow; in a fight,
-   on another's turn, halfway to whoever is acting), keeping its turn, height and distance; the right stick turns and
-   cranes it; a snap turn (L / R, [ ]) or a view (V, the right stick's click) eases in. A drag or a pinch on the map
-   (OrbitControls) is kept too. engine/wander-cam.js has the numbers. */
-const cam = { yaw:null, goal:null };
-const offset = () => camera.position.clone().sub(controls.target).toArray();
-export function camTurn(dir){ cam.yaw = snapTurn(cam.yaw ?? toOrbit(offset()).yaw, dir); }
-export function camView(){ const v = nextView(cam.goal || toOrbit(offset())); cam.goal = { pitch:v.pitch, dist:v.dist }; toast(`🎥 ${v.label}`); }
-export function camCrane(k){ const o = crane(cam.goal ? { yaw:0, ...cam.goal } : toOrbit(offset()), k * 1.4); cam.goal = { pitch:o.pitch, dist:o.dist }; }
-function camFrame(dt, pad){
-  if (camBusy()) return;   // (a glide of its own is under way: a new floor, the start)
-  let o = toOrbit(offset());
-  if (pad && Math.abs(pad.rx) > .2){ o.yaw -= pad.rx * dt * 2.4; cam.yaw = null; }
-  if (pad && Math.abs(pad.ry) > .25){ o = crane(o, pad.ry * dt * 3.2); cam.goal = null; }
-  if (cam.yaw !== null){ const d = angleTo(o.yaw, cam.yaw); if (Math.abs(d) < .003){ o.yaw = cam.yaw; cam.yaw = null; } else o.yaw += d * glide(dt, 9); }
-  if (cam.goal){ const k = glide(dt, 6); o.pitch += (cam.goal.pitch - o.pitch) * k; o.dist += (cam.goal.dist - o.dist) * k;
-    if (Math.abs(cam.goal.pitch - o.pitch) < .002 && Math.abs(cam.goal.dist - o.dist) < .02) cam.goal = null; }
-  o = clampOrbit(o);
-  let f = rt.focus; const h = hero(), ct = state.combat.active && currentTurn();
-  // whoever else is acting, or what the hero just struck or cast at: the camera frames the two of them a moment
-  const lk = rt.look && performance.now() < rt.look.until && tokById(rt.look.id), other = lk || (ct && ct.id !== h?.id ? ct : null);
-  if (h && other && other.floor === h.floor && Math.max(Math.abs(other.x - h.x), Math.abs(other.y - h.y)) <= 10)
-    f = { x:(wx(h.x) + wx(other.x)) / 2, y:floorY(h.floor), z:(wz(h.y) + wz(other.y)) / 2, rate:lk ? 4 : 3 };
-  if (f){ const k = glide(dt, f.rate || 7), t = controls.target; t.x += (f.x - t.x) * k; t.y += (f.y - t.y) * k; t.z += (f.z - t.z) * k; }
-  const [x, y, z] = fromOrbit(o); camera.position.set(controls.target.x + x, controls.target.y + y, controls.target.z + z);
+/* ---------- 🎥 the follow camera, seeing through, a hit felt (ui/followcam.js, shared with the table's handheld) ----------
+   Where to look: where the game says (game/wander.js follow); with someone else to frame (what the hero just struck
+   or cast at, or whoever else is acting in a fight), halfway between the two. */
+export { camTurn, camView, camCrane };
+function wanderCam(dt, pad){
+  const h = hero(), ct = state.combat.active && currentTurn();
+  const lk = rt.look && performance.now() < rt.look.until && tokById(rt.look.id);
+  camFrame(dt, pad, { focus:rt.focus, me:h, other:lk || (ct && ct.id !== h?.id ? ct : null), otherRate:lk ? 4 : 3 });
 }
-/* ---------- 👁 seeing the hero through walls (render/seethrough.js) ---------- */
-const at = new THREE.Vector3();
-let readyAt = 0, holeOpen = false;
-function lookThrough(now){
-  const h = hero(), tv = h && tokenViews.get(h.id);
-  if (!hh.seeThru || !tv?.group?.parent){ if (holeOpen){ seeThrough(null); holeOpen = false; } return; }
-  if (now - readyAt > 500){ readyAt = now; readyFloor(floorViews[h.floor]); }
-  tv.group.getWorldPosition(at); const feet = at.y; at.y += .75;
-  seeThrough(at, feet); holeOpen = true;
-}
-/* ---------- a hit, felt: the handheld buzzes, a controller rumbles ---------- */
-let hpSeen = null, heroSeen = null;
-function feelHits(gp){
-  const h = hero(); if (!h){ hpSeen = null; return; }
-  if (heroSeen !== h.id){ heroSeen = h.id; hpSeen = h.hp; return; }
-  if (hpSeen !== null && h.hp < hpSeen){
-    const k = (hpSeen - h.hp) / Math.max(1, h.maxHp);
-    rumble(k);
-    try { gp?.vibrationActuator?.playEffect?.('dual-rumble', { duration:Math.round(120 + Math.min(1, k) * 380), strongMagnitude:Math.min(1, .35 + k * 1.5), weakMagnitude:.6 }); } catch {}
-  }
-  hpSeen = h.hp;
-  // near death, the heart is heard
-  const k = h.hp / Math.max(1, h.maxHp), now = performance.now();
-  if (h.hp > 0 && k <= .25 && now > beatAt){ beatAt = now + (k <= .12 ? 850 : 1150); sfx('thump', false); }
-}
-let beatAt = 0;
 /* ---------- the handheld's buttons ----------
    A, B, the shoulders, Select (the pack), View (the camera), Start (the menu) as a pad's; X and Y as the moment
    wants: in a fight the spells and a potion, out of one the spells and the journal. */
@@ -300,25 +252,23 @@ function hhLegend(){
 const HH_HELP = 'D-pad: walk (slide your thumb round it for the diagonals), or move through a menu. A: talk, climb, look, strike. B: end your turn, or back. X: spells. Y: the journal (in a fight, a potion). L and R: turn the camera (in a fight, the next target). Select: the pack. View: the next camera view. Start: this menu. Select and Start together: the save states. Drag on the screen to turn the camera, pinch to zoom, tap to walk or pick a foe.';
 let pending = null, padMem = {}, hhMem = {}, lastTick = 0, lastFrame = 0;
 const padHeld = { back:false };   // (Back held while Start goes down: the save states)
-// the camera's yaw: which way "up on the stick" walks
-const yaw = () => { const o = camera.position.clone().sub(controls.target); return Math.atan2(o.x, o.z); };
+const yaw = camYaw;   // (which way "up on the stick" walks)
 let hudOn = false;
 function frame(now){
   requestAnimationFrame(frame);
   const dt = Math.min(.1, (now - (lastFrame || now)) / 1000); lastFrame = now;
   const gp = [...(navigator.getGamepads?.() || [])].find(g => g && g.connected);
-  syncHandheld(wandering(), !!gp, now);
-  if (!wandering()){ if (hudOn){ hudOn = false; show('wanderHud', false); seeThrough(null); holeOpen = false; hpSeen = heroSeen = null; } return; }
+  if (!wandering()){ if (hudOn){ hudOn = false; show('wanderHud', false); closeLook(); feelHits(null); } return; }
   hudOn = true;
   let pad = null;
   if (gp){
     pad = readPad(gp); padHeld.back = !!pad?.b.back; const r = padIntents(pad, now, padMem, { yaw:yaw() }); padMem = r.mem;
     for (const it of r.intents) it.k === 'step' ? step(it.dx, it.dy) : press(it.b);
   }
-  if (hhOn()){ const r = padIntents(hhPad(), now, hhMem, { yaw:yaw() }); hhMem = r.mem; for (const it of r.intents) if (it.k === 'step') step(it.dx, it.dy); }
-  try { camFrame(dt, pad); } catch (e){ console.warn(e); }
-  try { lookThrough(now); } catch (e){ console.warn(e); }
-  feelHits(gp);
+  if (hhOn() && hhHost() === 'wander'){ const r = padIntents(hhPad(), now, hhMem, { yaw:yaw() }); hhMem = r.mem; for (const it of r.intents) if (it.k === 'step') step(it.dx, it.dy); }
+  try { wanderCam(dt, pad); } catch (e){ console.warn(e); }
+  try { lookThrough(hero(), now); } catch (e){ console.warn(e); }
+  feelHits(hero(), gp);
   if (pending){ if (now > pending.until) pending = null; else if (stepHero(pending.dx, pending.dy)) pending = null; }
   if (now - lastTick > 180){ lastTick = now; try { fightTick(now); } catch (e){ console.warn(e); } renderHud(); }
 }
@@ -366,7 +316,7 @@ let ready = false;
 export function ensureWander(){
   if (ready) return; ready = true;
   ensureHud();
-  initHandheld({ press:b => { if (!b || !wandering()) return; press(b); renderHud(); }, legend:hhLegend,
+  addHost({ id:'wander', active:wandering, press:b => { if (!b || !wandering()) return; press(b); renderHud(); }, legend:hhLegend,
     health:() => { const h = hero(); return h ? Math.max(0, h.hp) / Math.max(1, h.maxHp) : 1; }, fight:() => !!state.combat.active });
   ui.wanderTap = null;
   addEventListener('keydown', onKey, { capture:true });

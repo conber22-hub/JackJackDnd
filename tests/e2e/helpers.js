@@ -13,13 +13,17 @@ export const test = base.extend({
 // the tour's own test passes { tour:true }.
 // wick: false (the default) turns Wick off, so he doesn't float beside the buttons a test taps;
 // the ghost's own test passes { wick:true }.
-export async function preparePage(page, { tour = false, wick = false } = {}){
+// handheld: false (the default) keeps a seated player's phone on the classic screen, which the older tests drive; the
+// handheld's own tests pass { handheld:true } (ui/tablehh.js). Other handheld settings a test saves are kept.
+export async function preparePage(page, { tour = false, wick = false, handheld = false } = {}){
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   // Fonts are cosmetic; keep functional tests independent of Google's CDN.
   await page.route(/^https:\/\/fonts\.(googleapis|gstatic)\.com\//, route => route.abort());
   if (!tour) await page.addInitScript(() => localStorage.setItem('dreaddelve.tour.v1', '1'));
   if (!wick) await page.addInitScript(() => localStorage.setItem('dreaddelve.wick.v1', 'off'));
+  if (!handheld) await page.addInitScript(() => { let p = {}; try { p = JSON.parse(localStorage.getItem('dreaddelve.handheld.v1') || '{}'); } catch {}
+    if (!('table' in p)) localStorage.setItem('dreaddelve.handheld.v1', JSON.stringify({ ...p, table:false })); });
   await page.addInitScript(() => {
     localStorage.setItem('dreaddelve.gfx.v1', JSON.stringify({ quality:'low', music:false, sfx:false }));
     localStorage.setItem('dreaddelve.peerserver.v1', JSON.stringify({
@@ -28,6 +32,9 @@ export async function preparePage(page, { tour = false, wick = false } = {}){
   });
   await page.goto('/dread-delve.html');
   await page.waitForFunction(() => !!window.DreadDelve);
+  // and the start page drawn: it comes once the saves are read (main.js initSaves → showStart), and a test that sets up
+  // its own map before then would have the start page come back over it
+  await page.waitForFunction(() => document.querySelector('#tplGrid')?.children.length > 0);
   return errors;
 }
 

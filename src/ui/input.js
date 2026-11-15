@@ -203,6 +203,7 @@ function cancelDrag(){ if (!drag) return; const dg = drag; drag = null; clearOve
 function handleTap(cx, cy, shift = false){
   if (!state) return;
   if (ui.wanderTap){ ui.wanderTap(pickTile(cx, cy), pickToken(cx, cy)); return; }   // 🗡 the Wanderer (ui/wander.js)
+  if (ui.hhTap && ui.hhTap(pickTile(cx, cy), pickToken(cx, cy)) !== false) return;   // 🕹 the handheld at the table (ui/tablehh.js; false: doors and objects as usual)
   const tokId = pickToken(cx, cy), tile = pickTile(cx, cy), f = state.floors[ui.floor];
   const ti = tile ? tile.y * f.W + tile.x : -1;
   switch (ui.mode){

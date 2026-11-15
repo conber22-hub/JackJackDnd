@@ -1,4 +1,5 @@
 /* SIDE PANEL — one function per tab. The DM gets Story · Tokens · Bestiary · Dungeon · Build · Gaze · Table; players get Your hero · Log. */
+import { hh } from './handheld.js';
 import { state, ui, tokById, dreadLevel, shiftTable, whimTable } from '../engine/state.js';
 import { roomById, exitLabel } from '../engine/generator.js';
 import { tableGaps, tableMax } from '../engine/tables.js';
@@ -511,7 +512,7 @@ function heroTab(){
       <div class="stat">AC ${me.ac} · HP ${me.hp}/${me.maxHp} · Speed ${me.speed} ft${state.combat.active ? ` · moved ${(me.moved || 0) * 5} ft` : ''}</div>${hpBar(me, true)}
       ${me.conds?.length ? `<div>${condChips(me, false)}</div>` : ''}${resChips(me, false)}
       <div class="row">${ui.cardOnly ? '' : `<button class="btn small" data-act="sel" data-id="${me.id}">Select & show moves</button>`}<button class="btn small" data-act="search">🔍 Search</button>${st ? `<button class="btn small primary" data-act="stairs">${esc(exitLabel(state.floors[me.floor], st))}</button>` : ''}${turn ? `<button class="btn small primary" data-act="endMyTurn">End my turn</button>` : ''}</div></div>`;
-    h += `<div class="row"><button class="btn small ${ui.cardOnly ? 'on' : ''}" data-act="cardOnly" title="At an in-person game, when the TV shows the map: no map on this phone, just your hero as a big card">📇 Card only${ui.cardOnly ? ': ON' : ' (we\'re at the table)'}</button></div>`;
+    h += `<div class="row"><button class="btn small ${ui.cardOnly ? 'on' : ''}" data-act="cardOnly" title="At an in-person game, when the TV shows the map: no map on this phone, just your hero as a big card">📇 Card only${ui.cardOnly ? ': ON' : ' (we\'re at the table)'}</button>${hh.table === false ? '<button class="btn small" data-act="hhTable" title="Hold the phone like a pocket console: the map on its screen, the rest of it the controller">🕹 Handheld</button>' : ''}</div>`;
     if (ui.cardOnly) h += cardHTML(me);
     if (ui.notes?.length) h += `<details class="card"><summary>🤫 Notes for you (${ui.notes.length})</summary>${ui.notes.map(n => `<div class="look" ${n.strahd ? 'style="color:#f0b0b0"' : ''}>${esc(n.text)}</div>`).join('')}</details>`;
     if (sheet) h += sheetHTML(sheet) + packHTML(sheet) + `<div class="row"><button class="btn small" data-act="editHero" data-id="${sheet.id}">✎ Edit / level up</button>${net.host?.open ? `<button class="btn small" data-act="vwOpen" data-id="${sheet.id}" title="What ${esc(sheet.name)} says when they hit, miss, cast or fall: you write it, the DM approves it">🗣 Your voice</button>` : ''}</div>`;
