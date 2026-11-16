@@ -38,6 +38,7 @@ export function parseVoice(text, { bpm } = {}){
   return out;
 }
 export function validate(song){
+  if (typeof song === 'string') song = SONGS.find(s => s.id === song);
   const problems = [];
   if (!record(song)) return ['Song must be an object.'];
   if (typeof song.id !== 'string' || !song.id.trim()) problems.push('Song needs an id.');
@@ -64,7 +65,7 @@ export function validate(song){
   return problems;
 }
 export function events(id, { tempo = 1, transpose = 0 } = {}){
-  const song = SONGS.find(s => s.id === id);
+  const song = typeof id === 'string' ? SONGS.find(s => s.id === id) : id;
   if (!song) throw new RangeError(`Unknown song "${id}".`);
   if (!positive(tempo)) throw new RangeError('tempo must be a finite positive number.');
   if (!Number.isFinite(transpose)) throw new RangeError('transpose must be finite semitones.');
