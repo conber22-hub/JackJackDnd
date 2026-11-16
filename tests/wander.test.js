@@ -31,7 +31,9 @@ test('the controller: a dead zone, eight ways, a held stick repeats, a button co
   // the keyboard
   assert.deepEqual(keyIntent('w'), { k:'step', dx:0, dy:-1 });
   assert.deepEqual(keyIntent(' '), { k:'press', b:'a' });
-  assert.deepEqual(keyIntent('Tab', { shift:true }), { k:'press', b:'lb' });
+  assert.deepEqual(keyIntent('Tab'), { k:'press', b:'y' });   // (one button, one job: Y and Tab, the next target)
+  assert.deepEqual(keyIntent('Tab', { shift:true }), { k:'press', b:'yprev' });
+  assert.deepEqual(keyIntent('n'), { k:'press', b:'endturn' });
   assert.equal(keyIntent('x'), null);
 });
 

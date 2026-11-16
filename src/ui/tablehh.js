@@ -2,14 +2,16 @@
    The world in the shell's screen (ui/handheld.js), the camera following the hero (ui/followcam.js), and the buttons
    doing what the player's phone already could, through the same requests to the DM (the DM's app still decides,
    rolls and broadcasts, so nothing new crosses the table):
-     · D-pad: a step a press (requestMove; held, it keeps walking as the DM moves the hero), up is away from the camera
-     · A: strike the target (the first attack that reaches it); out of a fight, the stairs the hero stands on, a door
-       beside the hero opens or shuts, or a card on the screen is put away
-     · B: end the turn in a fight; else back, or put a card away
-     · X: spells (the card-only path: who to aim at, which slot); Y: actions (Dash, Disengage, Dodge, Stand up,
-       a chosen attack, features, Search)
-     · L / R: the next target in a fight; else turn the camera. View: the next camera view
-     · Select: the hero's sheet (the Hero tab, over everything, with notes, letters and the rest); Start: the menu
+   Each button does one thing, always (the same in a fight or out of one):
+     · D-pad: a step a press (requestMove; held, it keeps walking as the DM moves the hero), up is away from the
+       camera; in a menu, up and down through it
+     · A: what the line on the screen says: strike the target (the attack that reaches it, or the one last chosen),
+       the action spent, end the turn; out of a fight, the stairs, a door beside the hero, a card put away; in a menu, choose
+     · B: back, put a card away, let a foe go
+     · X: the Actions menu: each attack, Spells…, Dash, Disengage, Dodge, Stand up, features (Action Surge gives the
+       action back), Search, End turn
+     · Y: the next target. L / R: turn the camera. View: the next camera view
+     · Select: the hero's sheet (Muse's pocket sheet); Start: the menu
      · taps on the screen: a foe to aim at (again to strike), the hero for A, the ground to walk there; doors and
        objects as before
    It holds the handheld whenever this phone is seated with a hero (not the TV, not card only, not in the Lantern
@@ -45,15 +47,24 @@ const modalUp = () => [...document.querySelectorAll('.modal:not(.hidden)')].leng
 const yardUp = () => !!document.querySelector('#yardModal:not(.hidden)');
 const tableActive = () => ui.role === 'player' && !ui.screen && !ui.cardOnly && !!state && !!me() && !yardUp();
 const on = () => hhHost() === 'table';
-const rt = { target:null, look:null, sentAt:0, sentFrom:null, cast:null, hpWas:null, turnWas:false, fightWas:false };
+const rt = { target:null, atk:null, aAt:0, surgeWas:null, look:null, sentAt:0, sentFrom:null, cast:null, hpWas:null, turnWas:false, fightWas:false };
 
 /* ---------- the turn's action ----------
    The DM's app doesn't count a player's attacks (the DM rules on it), so the handheld does, the way a player would:
    a strike each (two or more with Extra Attack: Fighters, Barbarians, Paladins, Rangers and Monks from level 5,
-   Fighters three at 11 and four at 20), or one spell, then B ends the turn. */
+   Fighters three at 11 and four at 20), or one spell; Action Surge gives the action back (once a turn); then A, or
+   X's End turn, ends the turn. */
 const turnKey = () => fight() ? `${state.combat.round}:${state.combat.idx}` : '';
-const used = { key:'', strikes:0, acted:false };
-const usedNow = () => { const k = turnKey(); if (used.key !== k){ used.key = k; used.strikes = 0; used.acted = false; } return used; };
+const used = { key:'', strikes:0, acted:false, surged:false };
+const usedNow = () => { const k = turnKey(); if (used.key !== k){ used.key = k; used.strikes = 0; used.acted = false; used.surged = false; } return used; };
+// Action Surge spent on the hero's turn (from the handheld, the classic card or the DM's app: its count going down
+// is what tells): one more action, strikes and all
+function surgeWatch(t){
+  const n = (t.resources || []).some(r => r.id === 'surge') ? left(t, 'surge') : null;
+  if (n !== null && rt.surgeWas != null && n < rt.surgeWas && myTurn()){ const u = usedNow();
+    if (!u.surged){ u.surged = true; u.strikes = 0; u.acted = false; toast('⚡ Action Surge: one more action this turn.'); tune('crit'); } }
+  rt.surgeWas = n;
+}
 function maxStrikes(t){
   const m = /^(\w+) (\d+)/.exec(t?.cls || ''); if (!m) return 1;
   const c = m[1], L = +m[2];
@@ -85,8 +96,8 @@ function strike(tg = target()){
   const t = me(); if (!t) return;
   if (fight() && !myTurn()) return toast('Not your turn yet.');
   if (!tg) return toast('Nobody to strike.');
-  if (fight() && !strikesLeft(t)) return toast(usedNow().acted ? 'You\'ve cast this turn: B ends your turn.' : 'You\'ve struck this turn: B ends your turn.');
-  const i = attackFor(t, tg); if (i < 0) return toast(`${tg.name} is out of reach: walk closer.`);
+  if (fight() && !strikesLeft(t)) return toast(usedNow().acted ? 'Your action is spent this turn: A again ends your turn.' : 'You\'ve struck this turn: A again ends your turn.');
+  const i = rt.atk != null && t.attacks[rt.atk] && rangeCheck(t, tg, t.attacks[rt.atk]).ok ? rt.atk : attackFor(t, tg); if (i < 0) return toast(`${tg.name} is out of reach: walk closer.`);
   rt.look = { id:tg.id, until:performance.now() + 1500 };
   if (fight()) usedNow().strikes++;
   coachLearn('strike');
@@ -99,7 +110,7 @@ function strike(tg = target()){
 function castFromList(i){
   const t = me(), sp = t?.casts?.[i]; if (!sp) return;
   if (fight() && !myTurn()) return toast('Not your turn yet.');
-  if (fight() && !actionLeft(t)) return toast('Your action is spent: B ends your turn.');
+  if (fight() && !actionLeft(t)) return toast('Your action is spent: A again ends your turn.');
   if (!canCast(t, sp.l, sp.n, sp.again)) return toast(`${sp.n}: no slot left for it.`);
   const area = areaOf(sp), help = sp.k === 'heal' || sp.k === 'buff';
   const go = target => slotThen(t, sp, at => sendCast(t, i, sp, target, at));
@@ -139,17 +150,24 @@ function step(dx, dy){
   requestMove(t, t.x + dx, t.y + dy);
 }
 function putCardAway(){ const c = document.querySelector('#cardLayer .pop:last-child'); if (!c) return false; c.click(); if (c.isConnected) c.remove(); return true; }
+/* One button, one job (the same on the handheld, a controller and the keys):
+     D-pad: walk, or move through a menu        A: do what the screen says (strike, end the turn, the stairs, a door…), or choose
+     B: back, put away, let go                  X: the Actions menu (attacks, spells, Dash…, features, Search, End turn)
+     Y: the next target                          L / R: turn the camera
+     Select: your hero's sheet                   Start: the menu                View: the next camera view */
 function press(b){
   if (!b || skipBoot()) return;
   if (pocketOpen()){ pocketPress(b === 'ls' ? 'back' : b); return; }   // (the pocket sheet takes every press while it's open)
   coachDone();
   if (b === 'rs'){ camView(); coachLearn('camera'); return; }
   if (b === 'turnl' || b === 'turnr'){ camTurn(b === 'turnl' ? 1 : -1); return; }
+  if (b === 'lb' || b === 'rb'){ camTurn(b === 'lb' ? 1 : -1); coachLearn('camera'); return; }
   if (b === 'in' || b === 'out'){ camCrane(b === 'in' ? -1 : 1); return; }
   if (sheetOpen()){ if (b === 'b' || b === 'back' || b === 'ls' || b === 'start') closeSheet(); return; }
   if (menu.open){
     const items = menuItems();
     if (b === 'a'){ const o = items[menu.i]; if (o && !o.off){ tune('menuOk'); o.run(); } }
+    else if (b === 'x' && menu.from === 'actions'){ tune('menuBack'); menu.open = false; }   // (X again puts its menu away)
     else if (b === 'b' || b === 'start'){ tune('menuBack'); rt.cast = null; if (menu.page !== 'main' && menu.page !== menu.from) { menu.page = 'main'; menu.i = 0; } else menu.open = false; }
     renderHud(); return;
   }
@@ -159,18 +177,24 @@ function press(b){
   if (modalUp()) return;   // (a target list, a die to enter, a question from the DM: tapped)
   if (b === 'start'){ openMenu('main'); coachLearn('menu'); return; }
   if (b === 'back' || b === 'ls'){ openSheet(); coachLearn('sheet'); return; }
-  if (b === 'x' || b === 'lt' || b === 'spells'){ if (me()?.casts?.length) openMenu('spells'); else toast('No spells.'); return; }
-  if (b === 'y' || b === 'rt' || b === 'actions'){ openMenu('actions'); return; }
-  if (fight()){
-    if (b === 'a') strike();
-    else if (b === 'b'){ if (myTurn()){ sendHost({ t:'endturn' }); coachLearn('endTurn'); } else putCardAway(); }
-    else if (b === 'rb' || b === 'lb'){ const n = aim(b === 'rb' ? 1 : -1); if (n) rt.look = { id:n.id, until:performance.now() + 900 }; coachLearn('aim'); }
-    renderHud(); return;
-  }
-  if (b === 'a'){ if (putCardAway()) return; const h = hereAction(); if (h) h.run(); }
+  if (b === 'x' || b === 'actions'){ openMenu('actions'); return; }
+  if (b === 'lt' || b === 'spells'){ if (me()?.casts?.length) openMenu('spells'); else toast('No spells.'); return; }   // (a controller's trigger, a shortcut)
+  if (b === 'y' || b === 'yprev'){ const n = aim(b === 'y' ? 1 : -1); if (n){ rt.look = { id:n.id, until:performance.now() + 900 }; coachLearn('aim'); } else toast('Nobody in sight.'); renderHud(); return; }
+  if (b === 'endturn'){ endTurn(); renderHud(); return; }
+  if (b === 'a'){ if (!fight() && putCardAway()) return; const h = fight() ? fightAction() : hereAction(); if (h){ h.run(); rt.aAt = performance.now(); } }   // (in a fight, B puts a card away: A is for the fight)
   else if (b === 'b') putCardAway();
-  else if (b === 'lb' || b === 'rb'){ camTurn(b === 'lb' ? 1 : -1); coachLearn('camera'); }
   renderHud();
+}
+function endTurn(){ if (!myTurn()) return; sendHost({ t:'endturn' }); coachLearn('endTurn'); tune('menuOk'); }
+// What A does in a fight (the prompt line says it): strike the target, walk closer, or, the action spent, end the turn.
+// (A second press straight after a strike doesn't end the turn: a double tap shouldn't throw away the move.)
+function fightAction(){
+  const t = me(); if (!t) return null;
+  if (!myTurn()){ const cur = currentTurn(); return { label:cur ? `${cur.name}'s turn…` : 'Wait for your turn', run:() => toast('Not your turn yet.'), idle:true }; }
+  const tg = target(), u = usedNow();
+  if (strikesLeft(t) && tg && attackFor(t, tg) >= 0) return { label:`Strike ${tg.name}`, run:() => strike(tg) };
+  if (strikesLeft(t)) return { label:tg ? `${tg.name} is out of reach: walk closer` : 'Nobody in reach', run:() => toast(tg ? `${tg.name} is out of reach: walk closer, or X for more.` : 'Nobody in sight. X for more.'), idle:true };
+  return { label:'End your turn', run:() => { if (performance.now() - (rt.aAt || 0) < 1200) return toast(u.acted ? 'Your action is spent this turn: A again ends your turn.' : 'You\'ve struck this turn: A again ends your turn.'); endTurn(); } };
 }
 // What A would do out of a fight: { label, run } | null
 function hereAction(){
@@ -214,7 +238,7 @@ const openMenu = page => { menu.open = true; menu.page = page; menu.from = page;
 const go = page => () => { menu.page = page; menu.i = 0; };
 const back = { label:'Back', run:() => { if (menu.page === menu.from) menu.open = false; else { menu.page = 'main'; menu.i = 0; } } };
 const TITLE = { main:'At the table', spells:'Spells', actions:'Actions', handheld:'Handheld & camera', help:'How to play', allies:'On whom?', slot:'Which slot?' };
-const HELP = 'D-pad: a step a press (hold it to keep walking); up is away from the camera. A: strike your target; out of a fight, take the stairs, open a door, put a card away. B: end your turn (or back). X: spells. Y: Dash, Disengage, Dodge, an attack of your choice, features, Search. L and R: the next target in a fight, else turn the camera. Select: your hero\'s sheet. View: the next camera view. Start: this menu. Or tap: a foe to aim (again to strike), the ground to walk, a door or a thing to use it. The DM still decides everything, as before.';
+const HELP = 'Each button does one thing. D-pad: walk a step a press (hold it to keep walking; up is away from the camera), or move through a menu. A: do what the line on the screen says (strike your target, end your turn, take the stairs, open a door), or choose in a menu. B: back, or put a card away. X: Actions: your attacks, spells, Dash, Disengage, Dodge, features like Action Surge, Search, End turn. Y: the next target. L and R: turn the camera. Select: your hero\'s sheet. View: the next camera view. Start: this menu. Or touch the screen: a foe to aim (again to strike), the ground to walk, a door or a thing to use it, any line of a menu. The DM still decides everything, as before.';
 function menuItems(){
   const t = me(); if (!t) return [back];
   const turnOk = !fight() || myTurn();
@@ -229,12 +253,22 @@ function menuItems(){
       run:() => c.cb(l === c.base ? null : l) })), { label:'Back', run:() => { rt.cast = null; menu.open = false; } }]; }
   if (menu.page === 'actions'){
     const ta = k => () => { menu.open = false; sendHost({ t:'turnAct', id:t.id, k }); if (k === 'dash' || k === 'dodge' || k === 'disengage'){ if (fight()) usedNow().acted = true; coachLearn(k); } };
+    const tg = target(), spent = fight() && myTurn() && !strikesLeft(t);
+    const end = fight() ? [{ label:'End your turn', sub:spent ? 'Your action is spent' : 'Done for this round', off:!myTurn(), run:() => { menu.open = false; endTurn(); } }] : [];
+    // an attack: at the target, if it reaches (and from now on, A strikes with it); else choose who on the screen
+    const atk = (a, i) => () => { menu.open = false;
+      if (tg && rangeCheck(t, tg, a).ok && coverOf(t, tg).cover !== 'total'){ rt.atk = i; strike(tg); return; }
+      if (fight()) usedNow().strikes++; cardAct('atk', i); };
     return [
+      ...(spent ? end : []),
+      ...t.attacks.map((a, i) => ({ label:a.n, sub:`${a.b >= 0 ? '+' : ''}${a.b} · ${a.d} · ${tg && rangeCheck(t, tg, a).ok ? `at ${tg.name}` : 'choose who'}`, off:!turnOk || (fight() && !strikesLeft(t)) || (a.l && !canCast(t, a.l, a.sn || a.n, a.again)), run:atk(a, i) })),
+      ...(t.casts?.length ? [{ label:'Spells…', sub:fight() && !actionLeft(t) ? 'Your action is spent' : (t.resources || []).filter(r => r.slot).map(r => `L${r.slot} ${left(t, r.id)}/${r.max}`).join(' · ') || 'Cantrips', run:() => { menu.page = 'spells'; menu.i = 0; } }] : []),
       ...(fight() ? [{ label:'Dash', sub:'Your speed again this turn', off:!myTurn(), run:ta('dash') }, { label:'Disengage', sub:'Leave without opportunity attacks', off:!myTurn(), run:ta('disengage') },
         { label:'Dodge', sub:'Attacks against you at disadvantage', off:!myTurn(), run:ta('dodge') }, ...(t.conds?.some(c => c.n === 'prone') ? [{ label:'Stand up', off:!myTurn(), run:ta('stand') }] : [])] : []),
-      ...t.attacks.map((a, i) => ({ label:a.n, sub:`${a.b >= 0 ? '+' : ''}${a.b} · ${a.d} · choose who`, off:!turnOk || (fight() && !strikesLeft(t)) || (a.l && !canCast(t, a.l, a.sn || a.n, a.again)), run:() => { menu.open = false; if (fight()) usedNow().strikes++; cardAct('atk', i); } })),
-      ...(t.resources || []).filter(r => !r.slot).map(r => ({ label:r.id === 'hd' ? 'Hit Die' : r.n, sub:'A feature', off:!turnOk, run:() => { menu.open = false; cardAct('feat', 0, r.id); } })),
+      ...(t.resources || []).filter(r => !r.slot).map(r => ({ label:r.id === 'hd' ? 'Hit Die' : r.n, sub:`${left(t, r.id)} of ${r.max} left${r.id === 'surge' && usedNow().surged ? ' · used this turn' : ''}`,
+        off:!turnOk || !left(t, r.id) || (r.id === 'surge' && (!fight() || usedNow().surged)), run:() => { menu.open = false; cardAct('feat', 0, r.id); } })),
       { label:'🔍 Search', sub:'Look around for what\'s hidden', off:!turnOk, run:() => { menu.open = false; search(me()); } },
+      ...(spent ? [] : end),
       back];
   }
   if (menu.page === 'help') return [back];
@@ -275,7 +309,7 @@ function ensureHud(){
     const k = b.dataset.tb;
     if (k === 'menu') menu.open ? (menu.open = false) : openMenu('main');
     else if (k === 'pick'){ menu.i = +b.dataset.i; press('a'); }
-    else if (k === 'a') press('a'); else if (k === 'b') press('b'); else if (k === 'x') press('spells'); else if (k === 'y') press('actions'); else if (k === 'rb') press('rb');
+    else if (['a', 'b', 'x', 'y', 'endturn'].includes(k)) press(k);
     renderHud();
   });
 }
@@ -293,9 +327,9 @@ export function renderHud(){
   put('tbClock', esc(fight() ? `Round ${state.combat.round || 1} · ${cur ? (cur.id === t.id ? 'your turn' : `${cur.name}'s turn`) : '…'}` : `${state.meta?.name || ''}`));
   const party = [t, ...state.tokens.filter(o => o.kind === 'pc' && o.id !== t.id && o.floor === t.floor && !o.flags?.gone)].slice(0, 4);
   put('tbParty', party.map(m => `<div class="wd-m${m.id === t.id ? ' me' : ''}${cur?.id === m.id ? ' turn' : ''}${m.dead || m.hp <= 0 ? ' down' : ''}"><span class="nm">${esc(m.name)}</span>${bar(m.hp, m.maxHp)}<span class="hp">${Math.max(0, m.hp)} / ${m.maxHp}</span></div>`).join(''));
-  const oa = ui.oaAsk?.[0], here = !oa && !fight() && !menu.open && hereAction();
+  const oa = ui.oaAsk?.[0], here = !oa && !menu.open && (fight() ? fightAction() : hereAction());
   put('tbPrompt', oa ? `<div class="wd-oa">⚔ <b>${esc(oa.mover)}</b> is getting away: your reaction?</div><button class="wd-act" data-tb="a"><b>A</b> Strike with ${esc(oa.atk)}</button><button class="wd-act" data-tb="b"><b>B</b> Let them go</button>`
-    : here ? `<button class="wd-act" data-tb="a"><b>A</b> ${esc(here.label)}</button>` : '');
+    : here ? (here.idle ? `<div class="wd-tx">${esc(here.label)}</div>` : `<button class="wd-act" data-tb="a"><b>A</b> ${esc(here.label)}</button>`) : '');
   show('tbFight', fight());
   if (fight()){
     const order = state.combat.order.map(tokById).filter(o => o && !o.flags?.gone).map(o => `<span class="${o.kind === 'monster' ? 'foe' : 'pal'}${o.id === cur?.id ? ' now' : ''}${o.dead || o.hp <= 0 ? ' down' : ''}">${esc(o.name)}</span>`).join('');
@@ -303,7 +337,7 @@ export function renderHud(){
     const body = myTurn()
       ? `<div class="wd-fl"><b>Your turn</b> · ${Math.max(0, moveAllowance(t)) * 5} ft. to move · ${usedNow().acted ? 'action spent' : strikesLeft(t) ? `${strikesLeft(t)} strike${strikesLeft(t) === 1 ? '' : 's'} left` : 'struck'}</div>
         <div class="wd-fl">${tg ? `🎯 <b>${esc(tg.name)}</b>${tg.maxHp ? ` ${bar(tg.hp, tg.maxHp)}` : ''}${i >= 0 ? ` · ${esc(t.attacks[i].n)}` : ' <span class="muted">(out of reach)</span>'}` : 'Nobody in sight'}</div>
-        <div class="wd-acts"><button class="wd-act" data-tb="a"><b>A</b> Strike</button><button class="wd-act" data-tb="rb"><b>R</b> Next target</button>${t.casts?.length ? '<button class="wd-act" data-tb="x"><b>X</b> Spells</button>' : ''}<button class="wd-act" data-tb="y"><b>Y</b> Actions</button><button class="wd-act" data-tb="b"><b>B</b> End turn</button></div>`
+        <div class="wd-acts"><button class="wd-act" data-tb="x"><b>X</b> Actions</button><button class="wd-act" data-tb="y"><b>Y</b> Next target</button><button class="wd-act" data-tb="endturn">End turn</button></div>`
       : `<div class="wd-fl">${cur ? `<b>${esc(cur.name)}</b>'s turn…` : '…'}</div>${tg ? `<div class="wd-fl">🎯 ${esc(tg.name)}</div>` : ''}`;
     put('tbFight', `<div class="wd-order">${order}</div>${body}`);
   }
@@ -314,12 +348,10 @@ export function renderHud(){
     const key = `${menu.page}:${menu.i}`; if (key !== scrolledTo){ scrolledTo = key; document.querySelector('#tbMenu .wd-opt.on')?.scrollIntoView({ block:'nearest' }); } }
   else scrolledTo = '';
 }
+// The buttons' names on the shell: the same whatever's going on (the prompt line says what A does just now)
 function legend(){
-  if (ui.oaAsk?.length) return { a:{ label:'Strike!' }, b:{ label:'Let go' }, x:{ b:null, label:'' }, y:{ b:null, label:'' }, select:{ label:'Hero' }, view:{ label:'Camera' }, start:{ label:'Menu' } };
-  if (menu.open || sheetOpen()) return { a:{ label:'Choose' }, b:{ label:'Back' }, x:{ b:null, label:'' }, y:{ b:null, label:'' }, select:{ label:'Hero' }, view:{ label:'Camera' }, start:{ label:'Menu' } };
-  const t = me(), sp = !!t?.casts?.length;
-  return { a:{ label:fight() ? 'Strike' : 'Act' }, b:{ label:fight() ? 'End turn' : 'Back' }, x:{ b:sp ? 'spells' : null, label:sp ? 'Spells' : '' }, y:{ b:'actions', label:'Actions' },
-    select:{ label:'Hero' }, view:{ label:'Camera' }, start:{ label:'Menu' } };
+  const foe = !!foes().length;
+  return { a:{ label:'OK' }, b:{ label:'Back' }, x:{ b:'x', label:'Actions' }, y:{ b:'y', label:foe ? 'Target' : '' }, select:{ label:'Hero' }, view:{ label:'Camera' }, start:{ label:'Menu' } };
 }
 
 /* ---------- every frame ---------- */
@@ -341,7 +373,7 @@ function frame(now){
   try { camFrame(dt, pad, { focus:miniFocus(t), me:t, other:lk || (cur && cur.id !== t.id ? cur : null), otherRate:lk ? 4 : 3 }); } catch (e){ console.warn(e); }
   try { lookThrough(t, now); } catch (e){ console.warn(e); }
   feelHits(t, gp);
-  moments(t);
+  moments(t); surgeWatch(t);
   try { coachTick(() => snapshot(t)); } catch (e){ console.warn(e); }
   if (now - lastHud > 180){ lastHud = now; renderHud(); }
 }

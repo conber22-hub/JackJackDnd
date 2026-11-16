@@ -61,7 +61,7 @@ test('a hero walks the valley alone: a companion won over, an ambush on the road
     return false; }, { timeout:60_000, intervals:[2500] }).toBe(true);
   expect((await st(page)).ambushes).toBe(1);
   await expect(page.locator('#wdFight')).toBeVisible();
-  // the fight: on the hero's turn, Ⓐ strikes and Ⓑ ends it; Ilse and the creatures take theirs on their own
+  // the fight: on the hero's turn, Ⓐ strikes and then ends it; Ilse and the creatures take theirs on their own
   let turns = 0;
   await expect.poll(async () => {
     const s = await st(page); if (!s.fight) return 'over';
@@ -69,7 +69,9 @@ test('a hero walks the valley alone: a companion won over, an ambush on the road
       turns++;
       await page.evaluate(() => { const D = window.DreadDelve, w = D.wander, h = w.hero(), tg = w.target(); if (tg && w.attackFor(h, tg) < 0) w.walkTo(tg.x, tg.y); });
       await page.waitForTimeout(1200);
-      await page.keyboard.press('Space'); await page.waitForTimeout(600); await page.keyboard.press('Escape');
+      // Ⓐ strikes; Ⓐ again (once the strike has landed) ends the turn; N ends it whatever happened
+      await page.keyboard.press('Space'); await page.waitForTimeout(1500); await page.keyboard.press('Space'); await page.waitForTimeout(400);
+      if (await page.evaluate(() => window.DreadDelve.wander.myTurn())) await page.keyboard.press('n');
     }
     return 'on';
   }, { timeout:180_000, intervals:[700] }).toBe('over');

@@ -13,8 +13,9 @@ import { loadWanderSave } from '../game/session.js';
 import { valley, clockText } from '../game/overworld.js';
 import { currentTurn } from '../game/combat.js';
 import { moveAllowance } from '../game/rules.js';
+import { rangeCheck } from '../engine/targeting.js';
 import { W, rt, hero, members, wandering, startWander, continueWander, leaveWander, stepHero, walkTo, hereAction, talkView, chooseTalk, talkTo,
-  heroAttack, heroDodge, endHeroTurn, aim, target, targets, attackFor, nextWeapon, attacksLeft, myTurn, fightTick, destinations, setOut, rest, saveNow,
+  heroAttack, heroDodge, heroTurnAct, heroFeatures, heroFeature, endHeroTurn, aim, target, targets, attackFor, nextWeapon, attacksLeft, myTurn, fightTick, destinations, setOut, rest, saveNow,
   pack, toggleEquip, usePotion, coinsGp, shopHere, buyPotion, journal, approvalOf, levelReady, partyLevel, nextLevelXp, levelUpHero, sheetOf, spellList, heroCast,
   SLOTS, slotMeta, canSaveSlot, saveToSlot, loadFromSlot } from '../game/wander.js';
 import { sfx } from '../audio/sound.js';
@@ -22,7 +23,7 @@ import { loyalty } from '../engine/wander-life.js';
 import { hh, hhOn, hhHost, hhPad, addHost, setHandheld, skipBoot, shellItem } from './handheld.js';
 import { camTurn, camView, camCrane, camYaw, camFrame, lookThrough, closeLook, feelHits } from './followcam.js';
 import { tune, coachTick, coachLearn, coachDone, coachHide } from './hhlife.js';
-import { openPocketSheet, pocketPress, pocketOpen } from './pocketsheet.js';
+import { openPocketSheet, pocketPress, pocketOpen, closePocketSheet } from './pocketsheet.js';
 import { toast } from './hud.js';
 
 const $ = s => document.querySelector(s);
@@ -44,7 +45,7 @@ export function renderWanderStart(){
       <div class="nm">${esc(h.name || 'Unnamed')}</div><div class="meta">${esc(h.sp)} ${esc(h.cls)} ${h.lvl}</div>
       <div class="acts"><button class="btn small primary" data-act="wdBegin" data-id="${h.id}">Begin</button></div></div>`).join('')}
       <button class="th-hero new" data-act="wdNewHero"><b>+</b><span>Create a character</span></button></div>
-    <p class="muted wd-keys">🎮 A controller works in Chrome and Edge: plug it in and press a button. Or the keys: <b>WASD</b> or the arrows walk, <b>Space</b> acts, <b>Tab</b> picks a target, <b>F</b> dodges, <b>Esc</b> ends your turn, <b>G</b> casts, <b>H</b> drinks a potion, <b>I</b> is the pack, <b>J</b> the journal, <b>M</b> the menu, <b>[ ]</b> turn the camera. Or tap where to walk.</p>
+    <p class="muted wd-keys">🎮 A controller works in Chrome and Edge: plug it in and press a button. Or the keys: <b>WASD</b> or the arrows walk, <b>Space</b> does what the screen says (strike, talk, end your turn), <b>Esc</b> goes back, <b>F</b> opens your actions, <b>Tab</b> picks a target, <b>I</b> is your hero, <b>M</b> the menu, <b>[ ]</b> turn the camera. Or tap where to walk.</p>
     <p class="muted wd-keys">🕹 On a phone with no controller, the phone becomes one: it is held like a pocket console, the world on its screen (the menu's Handheld page has the shells and a pixel screen).</p>`;
 }
 
@@ -57,8 +58,8 @@ function ensureHud(){
     <div class="wd-talk hidden" id="wdTalk"></div><div class="wd-menu hidden" id="wdMenuBox"></div>`;
   document.body.appendChild(el);
 }
-// A button's name as the player holds it: a pad's, or the handheld's (where a fight's Weapon and Dodge are tapped).
-const PAD_K = { a:'Ⓐ', b:'Ⓑ', x:'Ⓧ', y:'Ⓨ', rb:'RB', lt:'LT', rt:'RT' }, HH_K = { a:'A', b:'B', rb:'R', lt:'X', rt:'Y' };
+// A button's name as the player holds it: a pad's, or the handheld's.
+const PAD_K = { a:'Ⓐ', b:'Ⓑ', x:'Ⓧ', y:'Ⓨ' }, HH_K = { a:'A', b:'B', x:'X', y:'Y' };
 const K = k => { const n = (hhOn() ? HH_K : PAD_K)[k]; return n ? `<b>${n}</b>` : ''; };
 // The highlighted choice stays in sight when the D-pad moves through a list longer than the box.
 const keepInView = id => { const o = document.querySelector(`#${id} .wd-opt.on`); if (o && o.dataset.seen !== '1'){ document.querySelectorAll(`#${id} .wd-opt[data-seen]`).forEach(n => delete n.dataset.seen); o.dataset.seen = '1'; o.scrollIntoView({ block:'nearest' }); } };
@@ -76,9 +77,9 @@ export function renderHud(){
   const turn = state.combat.active && currentTurn();
   put('wdParty', members().map(m => `<div class="wd-m${m.id === t?.id ? ' me' : ''}${turn?.id === m.id ? ' turn' : ''}${m.dead || m.hp <= 0 ? ' down' : ''}">
     <span class="nm">${esc(m.name)}</span>${bar(m.hp, m.maxHp)}<span class="hp">${Math.max(0, m.hp)} / ${m.maxHp}</span></div>`).join(''));
-  // Ⓐ out of a fight
-  const here = !state.combat.active && !rt.talk && !menu.open && hereAction();
-  put('wdPrompt', here ? `<button class="wd-act" data-act="wdA">${K('a')} ${esc(here.label)}</button>` : '');
+  // what Ⓐ does just now
+  const here = !rt.talk && !menu.open && (state.combat.active ? fightAction() : hereAction());
+  put('wdPrompt', here ? (here.idle ? `<div class="wd-tx">${esc(here.label)}</div>` : `<button class="wd-act" data-act="wdA">${K('a')} ${esc(here.label)}</button>`) : '');
   // the fight bar
   show('wdFight', state.combat.active);
   if (state.combat.active){
@@ -88,9 +89,7 @@ export function renderHud(){
       const tg = target(), i = attackFor(t, tg), atk = t.attacks[i] || t.attacks[rt.atk ?? 0];
       body = `<div class="wd-fl"><b>Your turn</b> · ${moveAllowance(t) * 5} ft. to move · ${attacksLeft() ? `${attacksLeft()} strike${attacksLeft() === 1 ? '' : 's'} left` : rt.cast ? 'cast' : 'struck'}</div>
         <div class="wd-fl">${tg ? `🎯 <b>${esc(tg.name)}</b> ${bar(tg.hp, tg.maxHp)}` : 'Nobody in sight'}${atk ? ` · ${esc(atk.n)}${i < 0 && tg ? ' <span class="muted">(out of reach)</span>' : ''}` : ''}</div>
-        <div class="wd-acts"><button class="wd-act" data-act="wdA">${K('a')} Strike</button><button class="wd-act" data-act="wdAim" data-k="1">${K('rb')} Next target</button>
-        <button class="wd-act" data-act="wdWeapon">${K('y')} Weapon</button>${spellList().length ? `<button class="wd-act" data-act="wdSpells">${K('lt')} Spell</button>` : ''}${pack().some(i => i.potion) ? `<button class="wd-act${rt.bonus ? ' off' : ''}" data-act="wdPotion">${K('rt')} Potion</button>` : ''}
-        <button class="wd-act" data-act="wdDodge">${K('x')} Dodge</button><button class="wd-act" data-act="wdEnd">${K('b')} End turn</button></div>`;
+        <div class="wd-acts"><button class="wd-act" data-act="wdX">${K('x')} Actions</button><button class="wd-act" data-act="wdAim" data-k="1">${K('y')} Next target</button><button class="wd-act" data-act="wdEnd">End turn</button></div>`;
     } else body = `<div class="wd-fl">${turn ? `<b>${esc(turn.name)}</b>'s turn…` : '…'}</div>`;
     put('wdFight', `<div class="wd-order">${order}</div>${body}`);
   }
@@ -108,8 +107,8 @@ export function renderHud(){
       <div class="wd-opts">${items.map((o, k) => `<button class="wd-opt${k === menu.i ? ' on' : ''}${o.off ? ' off' : ''}" data-act="wdPick" data-k="${k}">${esc(o.label)}${o.sub ? `<small>${esc(o.sub)}</small>` : ''}</button>`).join('')}</div>`); 
     keepInView('wdMenuBox'); }
 }
-const KEYS_HELP = 'Left stick, D-pad, WASD or the arrows: walk (Q E Z C for the diagonals). Right stick, or [ ] and - =: turn and crane the camera; LB RB out of a fight turn it an eighth; right stick click / V: the next view. Ⓐ / Space: talk, climb, look, strike. LB RB / Tab: pick a target. Ⓨ / R: change weapon. Ⓧ / F: dodge. LT / G: spells. RT / H: drink a potion. Ⓑ / Esc: end your turn, or back. View / I: the pack. Left stick click / J: the journal. ☰ Start / M: this menu. View + Start / K: the save states. Or tap where to walk.';
-const PAGE_TITLE = { states:'Save states', load:'Load this one?', handheld:'Handheld & camera', main:'The valley waits', travel:'Set out for…', keys:'Controls', pack:'The pack', give:'Who drinks it?', journal:'The journal', level:'Level up', spells:'Spells' };
+const KEYS_HELP = 'Each button does one thing. Left stick, D-pad, WASD or the arrows: walk (Q E Z C for the diagonals), or move through a menu. Ⓐ / Space: do what the line on the screen says (talk, climb, look, strike, end your turn), or choose. Ⓑ / Esc: back, or put a card away. Ⓧ / F: Actions (each weapon, spells, Dash, Disengage, Dodge, features like Action Surge, a potion, End turn). Ⓨ / Tab: the next target. LB RB / [ ]: turn the camera; right stick or - = crane it; right stick click / V: the next view. View / I: your hero. ☰ Start / M: this menu. View + Start / K: the save states. Shortcuts: LT / G spells, RT / H a potion, left stick click / J the journal, N end your turn. Or tap where to walk.';
+const PAGE_TITLE = { states:'Save states', load:'Load this one?', handheld:'Handheld & camera', main:'The valley waits', travel:'Set out for…', keys:'Controls', pack:'The pack', give:'Who drinks it?', journal:'The journal', level:'Level up', spells:'Spells', actions:'Actions' };
 // The words above a page's choices: { sub, html }
 function pageInfo(){
   if (menu.page === 'keys') return { html:hhOn() ? HH_HELP : KEYS_HELP };
@@ -131,6 +130,7 @@ function pageInfo(){
 const ago = t => { const s = Math.round((Date.now() - t) / 1000); return s < 60 ? 'just now' : s < 3600 ? `${Math.round(s / 60)} min ago` : s < 86400 ? `${Math.round(s / 3600)} h ago` : `${Math.round(s / 86400)} d ago`; };
 const slotLabel = m => `${m.name}, level ${m.lvl} · ${m.place} · Day ${m.day}`;
 let loading = 0;   // the slot the 'load' page asks about
+const attackForWith = (t, tg, i) => { try { return rangeCheck(t, tg, t.attacks[i]).ok; } catch { return false; } };
 const back = (page = 'main') => ({ label:'Back', run:() => { menu.page = page; menu.i = 0; } });
 const go = page => () => { menu.page = page; menu.i = 0; };
 let giving = null;   // the potion being given (the pack's 'give' page)
@@ -173,7 +173,23 @@ function menuItems(){
       import('./creator.js').then(m => m.openCreator(s, { title:`${s.name}: level ${s.lvl}`, saveLabel:'Level up', onSave:h => levelUpHero(h) })); } },
     back()];
   if (menu.page === 'spells') return [...spellList().map(e => ({ label:`${e.n}${e.l ? ` (level ${e.l})` : e.l === 0 ? ' (cantrip)' : ''}`, sub:e.why ? `Only ${e.why}` : e.k === 'heal' ? 'On the most hurt of you, within reach' : e.kind === 'atk' ? 'An attack roll, at the target' : '',
-    off:!e.ok, run:() => { closeMenu(); heroCast(e); } })), { label:'Back', run:closeMenu }];
+    off:!e.ok, run:() => { closeMenu(); heroCast(e); } })), { label:'Back', run:() => { if (menu.from === 'actions'){ menu.page = 'actions'; menu.i = 0; } else closeMenu(); } }];
+  if (menu.page === 'actions'){
+    const t = hero(), fight = !!state.combat.active, mine = myTurn(), tg = fight ? target() : null, spent = fight && mine && !attacksLeft();
+    const end = fight ? [{ label:'End your turn', sub:spent ? 'Your action is spent' : 'Done for this round', off:!mine, run:() => { closeMenu(); endHeroTurn(); } }] : [];
+    const ta = (k, label, sub) => ({ label, sub, off:!mine || (k !== 'stand' && !attacksLeft()), run:() => { closeMenu(); heroTurnAct(k); } });
+    return [
+      ...(spent ? end : []),
+      ...(fight ? (t?.attacks || []).map((a, i) => ({ label:a.n, sub:`${a.b >= 0 ? '+' : ''}${a.b} · ${a.d}${tg ? ` · at ${tg.name}${attackForWith(t, tg, i) ? '' : ' (out of reach)'}` : ''}`,
+        off:!mine || !attacksLeft(), run:() => { closeMenu(); rt.atk = i; heroAttack(); } })) : []),
+      ...(spellList().length ? [{ label:'Spells…', sub:fight && (rt.cast || rt.attacks) ? 'Your action is spent' : '', run:() => { menu.page = 'spells'; menu.i = 0; } }] : []),
+      ...(fight ? [ta('dash', 'Dash', 'Your speed again this turn'), ta('disengage', 'Disengage', 'Leave without opportunity attacks'), ta('dodge', 'Dodge', 'Attacks against you at disadvantage'),
+        ...((t?.conds || []).some(c => c.n === 'prone') ? [ta('stand', 'Stand up', 'Half your move')] : [])] : []),
+      ...heroFeatures().map(f => ({ label:f.n, sub:`${f.left} of ${f.max} left${f.why ? ` · ${f.why}` : ''}`, off:!!f.why, run:() => { closeMenu(); heroFeature(f.id); } })),
+      ...(pack().some(i => i.potion) ? [{ label:'Drink a potion', sub:`${pack().filter(i => i.potion).reduce((n, i) => n + i.qty, 0)} in the pack${fight && rt.bonus ? ' · one a turn' : ''}`, off:fight && (!mine || rt.bonus), run:() => { closeMenu(); usePotion(); } }] : []),
+      ...(spent ? [] : end),
+      { label:'Back', run:closeMenu }];
+  }
   return [
     { label:'Carry on', run:closeMenu },
     ...(levelReady() ? [{ label:`Level up to ${partyLevel()}`, sub:'New hit points, and choices', off:fight, run:go('level') }] : []),
@@ -181,7 +197,7 @@ function menuItems(){
     { label:road ? 'Rest an hour' : 'Rest the night', sub:fight ? 'Not in a fight' : road ? 'A short rest by the road (something may find you)' : 'Everyone whole again by morning', off:fight, run:() => { closeMenu(); rest(); } },
     { label:'The pack', sub:`${coinsGp()} gp · ${pack().length} things`, run:go('pack') },
     { label:'The journal', sub:'Quests, and what your companions think', run:go('journal') },
-    { label:'Your hero', sub:'Your sheet, a page at a time', run:() => { closeMenu(); openPocketSheet({ token:hero(), sheet:sheetOf(), extras:{}, onClose:null }); } },
+    { label:'Your hero', sub:'Your sheet, a page at a time (Select)', run:() => { closeMenu(); openHero(); } },
     ...(spellList().length ? [{ label:'Spells', run:go('spells') }] : []),
     { label:'Save', run:() => { saveNow(); toast('Saved.'); closeMenu(); } },
     { label:'Save states', sub:'Three slots of your own, to come back to', run:go('states') },
@@ -196,19 +212,21 @@ const closeMenu = () => { menu.open = false; };
 /* ---------- input ---------- */
 function press(b){
   if (skipBoot()) return;   // (the press that skips the handheld's boot does only that)
+  if (b === 'states' && pocketOpen()) closePocketSheet();   // (Select, then Start with it: the save states, not the sheet)
   if (pocketOpen()){ pocketPress(b === 'ls' ? 'back' : b); renderHud(); return; }   // (Muse's pocket sheet takes every press while it's open)
   coachDone();
-  coachLearn({ a:state.combat.active ? 'strike' : null, lt:'cast', rb:'aim', lb:'aim', start:'menu', rs:'camera', turnl:'camera', turnr:'camera', back:'sheet' }[b] || (b === 'b' && myTurn() ? 'endTurn' : null));
+  coachLearn({ a:state.combat.active ? 'strike' : null, lt:'cast', y:'aim', yprev:'aim', x:'actions', start:'menu', rs:'camera', turnl:'camera', turnr:'camera', lb:'camera', rb:'camera', back:'sheet', endturn:'endTurn' }[b]);
   if (b === 'states' || (b === 'start' && padHeld.back)){ openMenu('states'); return; }
+  if (b === 'rs'){ camView(); return; }
+  if (b === 'turnl' || b === 'turnr' || b === 'lb' || b === 'rb'){ camTurn(b === 'turnl' || b === 'lb' ? 1 : -1); return; }   // (L and R: the camera, always)
+  if (b === 'in' || b === 'out'){ camCrane(b === 'in' ? -1 : 1); return; }
   if (menu.open){
     const items = menuItems();
     if (b === 'a'){ const o = items[menu.i]; if (o && !o.off){ tune('menuOk'); o.run(); } }
-    else if (b === 'b' || b === 'start' || (b === 'lt' && menu.page === 'spells')){ if (menu.page === 'give'){ menu.page = 'pack'; menu.i = 0; } else if (menu.page === 'load'){ menu.page = 'states'; menu.i = 0; } else if (menu.page !== 'main' && menu.page !== menu.from){ menu.page = 'main'; menu.i = 0; } else closeMenu(); }
+    else if (b === 'x' && menu.from === 'actions') closeMenu();   // (X again puts its menu away)
+    else if (b === 'b' || b === 'start' || (b === 'lt' && menu.page === 'spells')){ if (menu.page === 'give'){ menu.page = 'pack'; menu.i = 0; } else if (menu.page === 'load'){ menu.page = 'states'; menu.i = 0; } else if (menu.page === 'spells' && menu.from === 'actions'){ menu.page = 'actions'; menu.i = 0; } else if (menu.page !== 'main' && menu.page !== menu.from){ menu.page = 'main'; menu.i = 0; } else closeMenu(); }
     return;
   }
-  if (b === 'rs'){ camView(); return; }
-  if (b === 'turnl' || b === 'turnr'){ camTurn(b === 'turnl' ? 1 : -1); return; }
-  if (b === 'in' || b === 'out'){ camCrane(b === 'in' ? -1 : 1); return; }
   const tv = talkView();
   if (tv){
     if (b === 'a') say(tv.options[talkSel.i]?.k);
@@ -216,19 +234,28 @@ function press(b){
     return;
   }
   if (b === 'start'){ openMenu(); return; }
-  if (b === 'back'){ openMenu('pack'); return; }
+  if (b === 'back'){ openHero(); return; }
+  if (b === 'x'){ openMenu('actions'); return; }
+  if (b === 'y' || b === 'yprev'){ if (!aim(b === 'y' ? 1 : -1)) toast('Nobody in sight.'); return; }
+  if (b === 'endturn'){ endHeroTurn(); return; }
+  // the shortcuts (a controller's triggers and stick, the keys)
   if (b === 'ls'){ openMenu('journal'); return; }
   if (b === 'lt'){ if (spellList().length) openMenu('spells'); else toast('No spells.'); return; }
   if (b === 'rt' && (state.combat.active || pack().some(i => i.potion))){ usePotion(); return; }
-  if (state.combat.active){
-    if (b === 'a') heroAttack(); else if (b === 'b') endHeroTurn(); else if (b === 'x') heroDodge();
-    else if (b === 'y'){ const a = nextWeapon(); if (a) toast(`Ready: ${a.n}`); }
-    else if (b === 'rb') aim(1); else if (b === 'lb') aim(-1);
-    return;
-  }
-  if (b === 'a'){ if (dismissCard()) return; const h = hereAction(); if (h){ h.run(); talkSel.i = 0; } }
+  if (b === 'a'){ if (!state.combat.active && dismissCard()) return; const h = state.combat.active ? fightAction() : hereAction(); if (h){ h.run(); talkSel.i = 0; aAt = performance.now(); } }   // (in a fight, B puts a card away: A is for the fight)
   else if (b === 'b') dismissCard();
-  else if (b === 'lb' || b === 'rb') camTurn(b === 'lb' ? 1 : -1);   // (out of a fight the shoulders turn the camera)
+}
+let aAt = 0;
+const openHero = () => openPocketSheet({ token:hero(), sheet:sheetOf(), extras:{}, onClose:null });
+/* What Ⓐ does in a fight (the line on the screen says it): strike the target, walk closer, or, the action spent, end
+   the turn. A second press straight after a strike doesn't end it (a double tap shouldn't throw away the move). */
+function fightAction(){
+  const t = hero(); if (!t) return null;
+  if (!myTurn()){ const c = currentTurn(); return { label:c ? `${c.name}'s turn…` : '…', run:() => {}, idle:true }; }
+  const tg = target();
+  if (attacksLeft() && tg && attackFor(t, tg) >= 0) return { label:`Strike ${tg.name}`, run:heroAttack };
+  if (attacksLeft()) return { label:tg ? `${tg.name} is out of reach: walk closer` : 'Nobody in reach', run:() => toast(tg ? `${tg.name} is out of reach: walk closer, or Ⓧ for more.` : 'Nobody in sight.'), idle:true };
+  return { label:'End your turn', run:() => { if (performance.now() - aAt < 1200) return toast(rt.cast ? 'You have cast this turn: Ⓐ again ends your turn.' : 'You have struck this turn: Ⓐ again ends your turn.'); endHeroTurn(); } };
 }
 function say(k){ if (!k) return; const r = chooseTalk(k); talkSel.i = 0; if (r === 'joined') toast('A companion follows you now.'); }
 function dismissCard(){ const c = document.querySelector('#cardLayer .pop:last-child'); if (c) c.remove(); return !!c; }
@@ -249,16 +276,12 @@ function wanderCam(dt, pad){
   camFrame(dt, pad, { focus:rt.focus, me:h, other:lk || (ct && ct.id !== h?.id ? ct : null), otherRate:lk ? 4 : 3 });
 }
 /* ---------- the handheld's buttons ----------
-   A, B, the shoulders, Select (the pack), View (the camera), Start (the menu) as a pad's; X and Y as the moment
-   wants: in a fight the spells and a potion, out of one the spells and the journal. */
+   One button, one job, whatever's going on (the line on the screen says what A does just now). */
 function hhLegend(){
-  const fight = state.combat.active, spells = spellList().length;
-  if (menu.open || talkView()) return { a:{ label:'Choose' }, b:{ label:'Back' }, x:{ b:null, label:'' }, y:{ b:null, label:'' }, select:{ label:'Pack' }, view:{ label:'Camera' }, start:{ label:'Menu' } };
-  return { a:{ label:fight ? 'Strike' : 'Act' }, b:{ label:fight ? 'End turn' : 'Back' },
-    x:{ b:spells ? 'lt' : null, label:spells ? 'Spells' : '' }, y:fight ? { b:'rt', label:'Potion' } : { b:'ls', label:'Journal' },
-    select:{ label:'Pack' }, view:{ label:'Camera' }, start:{ label:'Menu' } };
+  return { a:{ label:'OK' }, b:{ label:'Back' }, x:{ b:'x', label:'Actions' }, y:{ b:'y', label:targets().length ? 'Target' : '' },
+    select:{ label:'Hero' }, view:{ label:'Camera' }, start:{ label:'Menu' } };
 }
-const HH_HELP = 'D-pad: walk (slide your thumb round it for the diagonals), or move through a menu. A: talk, climb, look, strike. B: end your turn, or back. X: spells. Y: the journal (in a fight, a potion). L and R: turn the camera (in a fight, the next target). Select: the pack. View: the next camera view. Start: this menu. Select and Start together: the save states. Drag on the screen to turn the camera, pinch to zoom, tap to walk or pick a foe.';
+const HH_HELP = 'Each button does one thing. D-pad: walk (slide your thumb round it for the diagonals), or move through a menu. A: do what the line on the screen says (talk, climb, look, strike, end your turn), or choose. B: back, or put a card away. X: Actions: each weapon, spells, Dash, Disengage, Dodge, features like Action Surge, a potion, End turn. Y: the next target. L and R: turn the camera. Select: your hero. View: the next camera view. Start: this menu. Select and Start together: the save states. Touch works too: drag on the screen to turn the camera, pinch to zoom, tap to walk or pick a foe, tap any line of a menu.';
 let pending = null, padMem = {}, hhMem = {}, lastTick = 0, lastFrame = 0;
 const padHeld = { back:false };   // (Back held while Start goes down: the save states)
 const yaw = camYaw;   // (which way "up on the stick" walks)
@@ -325,7 +348,8 @@ function onClick(e){
     case 'wdSay': say(k); break;
     case 'wdA': press('a'); break;
     case 'wdAim': aim(+k || 1); break;
-    case 'wdWeapon': press('y'); break;
+    case 'wdWeapon': { const a = nextWeapon(); if (a) toast(`Ready: ${a.n}`); } break;
+    case 'wdX': press('x'); break;
     case 'wdDodge': heroDodge(); break;
     case 'wdEnd': endHeroTurn(); break;
     case 'wdSpells': press('lt'); break;

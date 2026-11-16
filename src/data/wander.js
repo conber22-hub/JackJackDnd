@@ -39,10 +39,10 @@ export const companionById = id => COMPANIONS.find(c => c.id === id) || null;
 export const WAKE = {
   title:'You wake in the Village of Barovia',
   flair:'Cold stone under you, fog in your mouth. You do not remember the road in, only the wall of white behind you, and the feeling of being watched from somewhere high. A tavern has one window lit. The church bell does not ring.',
-  lines:['Walk with the left stick (or WASD). Ⓐ (Space) talks, opens and climbs. ☰ (M) is the menu: travel, rest and save.'],
+  lines:['Walk with the left stick (or WASD). Ⓐ (Space) does what the screen says: talk, open, climb, strike. Ⓑ (Esc) goes back. Ⓧ (F) is your actions. ☰ (M) is the menu: travel, rest and save.'],
 };
 // (held like a handheld, ui/handheld.js: the shell's own buttons)
-export const WAKE_HANDHELD = ['Walk with the D-pad. A talks, opens and climbs. L and R turn the camera. Start is the menu: travel, rest and save.'];
+export const WAKE_HANDHELD = ['Walk with the D-pad. A does what the screen says: talk, open, climb, strike. B goes back. X is your actions. L and R turn the camera. Start is the menu: travel, rest and save. Or touch the screen.'];
 
 // What the road says when something comes out of the trees (one at random), and when a fight is over.
 export const AMBUSH = [

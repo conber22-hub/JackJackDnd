@@ -77,7 +77,7 @@ it('mute and overlays suppress everything without consuming a tip', () => {
 });
 it('fill adapts controls and leaves unknown placeholders visible', () => {
   assert.equal(fill('{A}', 'keys'), 'Space'); assert.equal(fill('{A}', 'handheld'), 'A');
-  assert.equal(fill('{X} {Y} {SELECT} {VIEW}', 'keys'), 'G R I V');
+  assert.equal(fill('{X} {Y} {SELECT} {VIEW}', 'keys'), 'F Tab I V');
   assert.equal(fill('{A}', 'unknown'), 'A'); assert.equal(fill('{UNKNOWN}', 'keys'), '{UNKNOWN}');
 });
 it('priority and prerequisites decide predictably', () => {

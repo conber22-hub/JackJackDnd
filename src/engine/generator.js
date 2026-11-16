@@ -9,7 +9,7 @@ import { BLUE_WATER_INN, blueWaterInnPlan } from '../data/blue-water-inn.js';
 import { ROOM_NAMES } from '../data/rooms.js';
 import { BEST } from '../data/bestiary.js';
 import { T, walk } from './tiles.js';
-import { furnishFloor, furnishRoom, hideSecrets } from './dressing.js';
+import { furnishFloor, furnishRoom, hideSecrets, keepDoorwaysClear } from './dressing.js';
 import { ravenloftLayout } from './castle.js';
 import { describeRoom } from '../data/descriptions.js';
 import { journeySpecs, landmarkSpecs } from './overland.js';
@@ -73,6 +73,7 @@ export function genDelve(meta){
     if (sp.layout || sp.place || sp.castle !== undefined){
       for (const r of f.rooms) if (r.dress) furnishRoom(f, r, tid, drng, { rename:false });
       if (sp.castle !== undefined) for (const r of f.rooms) r.read ||= describeRoom(r, tid, drng);
+      keepDoorwaysClear(f);   // (a hand-built map's pieces stand where its plan put them: none of them in a doorway)
       return;
     }
     // set pieces first (engine/vaults.js: a crypt of coffin niches, a flooded shrine…), then a few rooms with something
@@ -87,6 +88,7 @@ export function genDelve(meta){
     distinctNames(f);
     // the site's plan (engine/sites.js, ChatGPT's): who holds it, each room's part, locked doors and where their keys are
     planFloorSite(f, { seed:`${meta.seed}|site|${L}`, theme:tid, depth:L, last:L === floors.length - 1, gaze:state?.dread || 1, level:partyLevel() });
+    keepDoorwaysClear(f);   // (a set piece's furniture, too: nothing on or beside a door or the stairs)
     hideSecrets(f, mulberry32(hashSeed(`${meta.seed}|secrets|${L}`)));
   });
   // 🛤 the Road Watches (Codex's pack): milestones, cairns, shrines, Hunger Moss beside a journey's or a trail's road,

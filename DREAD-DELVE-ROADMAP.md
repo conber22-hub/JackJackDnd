@@ -16,6 +16,21 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.28 — one button, one job; touch; Action Surge; clear doorways
+
+From the first table night on the handhelds.
+- **One button, one job** (the table, `ui/tablehh.js`, and the Wanderer, `ui/wander.js`; a controller and the keys the same). Having different buttons do different things at different moments was confusing, so now:
+  - **D-pad:** walk, or move through a menu or a conversation.
+  - **A:** does what the line on the screen says, and in a menu, chooses. In a fight that's **Strike** the target; once the action is spent, **End your turn** (a second press straight after a strike doesn't end it, so a double tap can't throw away the move). Out of a fight: talk, the stairs, a door, climb, look.
+  - **B:** back, put a card away, let a fleeing foe go. It never ends the turn.
+  - **X:** the **Actions** menu: each attack (at the target; the one chosen is what A strikes with after), **Spells…**, Dash, Disengage, Dodge, Stand up, features (Second Wind, Action Surge, Rage…), a potion (Wanderer), Search (table), and **End your turn** (first in the list once the action is spent).
+  - **Y:** the next target (Tab on the keys, Shift+Tab the one before). **L / R:** turn the camera, always.
+  - **Select:** your hero's sheet (in the Wanderer too; the pack is on the menu). **Start:** the menu. **View:** the next camera view.
+  - The legends under the buttons don't change any more (A is **OK**, X **Actions**, Y **Target** when there's a foe). The keys keep a few shortcuts: **G** spells, **H** a potion, **J** the journal, **N** end your turn. The coach's tips (ChatGPT's `data/coach.js`) were reworded for the new buttons.
+- **⚡ Action Surge:** a fighter couldn't use it. The table's handheld counts the turn's strikes itself, and spending Action Surge didn't give them back. Now it does, once a turn, however it was used (the handheld's Actions, the classic card, or the DM's app). The handheld watches the count go down. The Wanderer had no features at all; its Actions menu now has them (`heroFeatures`, `heroFeature` in `game/wander.js`), and Action Surge resets the turn's strikes and cast there too. Dash, Disengage and Dodge spend the action without ending the turn.
+- **👆 Touch, everywhere on the screen:** checked with real taps on a phone, upright and sideways: the ground walks, a foe aims (again to strike), the fight bar's buttons, every menu line, the prompt, the pocket sheet's arrows. The pocket sheet (Muse's) had no way to close it by touch; it now has a ✕, and its footer line does what B does.
+- **🚪 Nothing in front of a door:** a pass after every map is made (`keepDoorwaysClear` in `engine/dressing.js`, run by `genDelve` for both hand-built and generated floors). Nothing you'd climb, hop or go round may stand on a door, on the squares either side of it, or on or beside the stairs. Such a piece moves to the nearest free square in the same room (a hearth or a shelf goes to one with a wall at its back), or is taken away if there's nowhere for it. A shelf hiding a secret door stays, and so does anything with a stash or a lock. The fixed furniture spots in the villages' houses and taverns (`engine/settlement.js`) were putting hearths and barrels in doorways; a test checks every template.
+
 ## v1.27 — everyone at the table holds a handheld
 
 A player's phone, seated at the DM's table, is now a pocket console by default: the same shell as the Wanderer's (`ui/handheld.js`), with the map on its screen and the rest of the phone as the controller (`ui/tablehh.js`). Everything still goes to the DM as before: the same requests, the DM's app still rolls and decides, and nothing new crosses the table.
@@ -927,7 +942,7 @@ src/engine/             pure logic: no DOM, no Three.js, unit-tested
   targeting.js          reach and range, cover (grid corner rule), area templates and who they catch
   movement.js           dragged routes, threat & opportunity attacks, following in marching order, formations, Close in
   castle.js             Castle Ravenloft's five hand-shaped floors (approach, halls, upper keep, dungeons, catacombs)
-  dressing.js           furnishing generated rooms (kits in src/data/dressing.js, read-aloud in src/data/descriptions.js); locks, stashes, shelves over secret doors
+  dressing.js           furnishing generated rooms (kits in src/data/dressing.js, read-aloud in src/data/descriptions.js); locks, stashes, shelves over secret doors; doorways kept clear on every map
   objects.js            furniture rules: beside, push / topple targets, damage, what a hero can do with a piece
   maps.js               the map library: who travels, packing a map for the shelf, where the party arrives
   fight.js              who's in a fight, initiative (grouped, surprise, real dice), victory and XP

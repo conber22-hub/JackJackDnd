@@ -10,6 +10,9 @@ import { test, expect } from './helpers.js';
 // On a desktop it stays away until asked for, and the keys turn and crane the camera.
 const yaw = page => page.evaluate(() => { const D = window.DreadDelve, o = D.camera.position.clone().sub(D.controls.target); return Math.atan2(o.x, o.z); });
 const hero = page => page.evaluate(() => { const h = window.DreadDelve.wander.hero(); return { x:h.x, y:h.y }; });
+// where a square (dx, dy from the hero) is on the screen, to tap it
+const spot = (page, dx, dy) => page.evaluate(([dx, dy]) => { const D = window.DreadDelve, h = D.wander.hero(), g = D.tokenViews.get(h.id).group, c = document.querySelector('#stage canvas').getBoundingClientRect();
+  const v = g.position.clone(); v.x += dx; v.z += dy; v.project(D.camera); return { x:c.left + (v.x + 1) / 2 * c.width, y:c.top + (1 - v.y) / 2 * c.height }; }, [dx, dy]);
 async function begin(page, id, prefs = null){
   await page.evaluate(([id, prefs]) => { const D = window.DreadDelve, h = D.newHero('Fighter'); h.name = 'Vasha'; h.id = id; localStorage.setItem('dreaddelve.heroes.v1', JSON.stringify([h])); localStorage.removeItem('dreaddelve.role');
     if (prefs) localStorage.setItem('dreaddelve.handheld.v1', JSON.stringify(prefs)); }, [id, prefs]);
@@ -50,12 +53,18 @@ test.describe('on a phone', () => {
     const h0 = await hero(page);
     await hold(page, 'dpad', 1300, 0, 1);
     await expect.poll(async () => (await hero(page)).y).toBeGreaterThan(h0.y);
+    // touch: a tap on the ground three squares on walks there
+    await page.waitForTimeout(800);
+    const h1 = await hero(page), sq = await spot(page, 0, 3);
+    await page.touchscreen.tap(sq.x, sq.y);
+    await expect.poll(async () => (await hero(page)).y, { timeout:10_000 }).toBe(h1.y + 3);
     // L turns the camera an eighth
     const y0 = await yaw(page);
     await hold(page, 'l');
     await expect.poll(async () => Math.abs(Math.abs(((await yaw(page)) - y0 + 3 * Math.PI) % (2 * Math.PI) - Math.PI) - Math.PI / 4), { timeout:5000 }).toBeLessThan(.05);
-    // the legends say what X and Y do now
-    await expect(page.locator('.hh-lg.y')).toHaveText('Journal');
+    // one button, one job: X is always Actions; Y (the next target) only shows with a foe in sight
+    await expect(page.locator('.hh-lg.x')).toHaveText('Actions');
+    await expect(page.locator('.hh-lg.y')).toHaveText('');
     // the Lantern light is the hero's health; a hit flashes the bezel
     await expect(page.locator('#handheld')).toHaveAttribute('data-hp', 'ok');
     await page.evaluate(() => { const h = window.DreadDelve.wander.hero(); h.hp = Math.max(1, Math.floor(h.maxHp * .4)); });
@@ -121,8 +130,15 @@ test.describe('on a phone held upright', () => {
     const [scr, bar] = await Promise.all([page.locator('#hhScreen').boundingBox(), page.locator('#wdFight').boundingBox()]);
     expect(bar.y).toBeGreaterThanOrEqual(scr.y + scr.height);   // under the screen, not over it
     await expect.poll(() => page.evaluate(() => window.DreadDelve.wander.myTurn() && !window.DreadDelve.busy()), { timeout:60_000 }).toBe(true);
+    await expect(page.locator('#wdPrompt')).toContainText('Strike Wolf');   // (A does what the line says)
     await hold(page, 'a');
     await expect.poll(() => page.evaluate(() => { const w = window.DreadDelve.wander; return !!w.rt.look && w.rt.look.id === w.target()?.id; })).toBe(true);
+    // the action spent: the line says A ends the turn; touch: the fight bar's Actions, its lines, Back
+    await expect(page.locator('#wdPrompt')).toContainText('End your turn');
+    await page.locator('#wdFight [data-act="wdX"]').tap();
+    await expect(page.locator('#wdMenuBox')).toContainText('Disengage');
+    await page.locator('#wdMenuBox [data-act="wdPick"]', { hasText:/^Back/ }).tap();
+    await expect(page.locator('#wdMenuBox')).toBeHidden();
   });
 });
 
@@ -151,7 +167,8 @@ test('on a desktop the handheld waits to be asked for, and the keys turn, crane 
   await page.keyboard.press('ArrowDown');   // (a key skips the boot too, and does nothing else)
   await expect(page.locator('#hhBoot')).toBeHidden();
   expect(await page.locator('#wdMenuBox .wd-opt.on').textContent()).toBe(sel0);
-  await expect(page.locator('.hh-lg.a')).toHaveText('Choose');
+  await expect(page.locator('.hh-lg.a')).toHaveText('OK');   // (one button, one job: the legends never change)
+  await expect(page.locator('.hh-lg.x')).toHaveText('Actions');
   await page.keyboard.press('Escape'); await page.keyboard.press('Escape');
   await expect(page.locator('#wdMenuBox')).toBeHidden();
   const h0 = await hero(page);

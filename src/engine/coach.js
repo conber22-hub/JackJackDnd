@@ -14,9 +14,9 @@ const DEFAULTS = {
 export const CONDITION_KEYS = [...Object.keys(DEFAULTS), 'hp/maxHp'];
 export const LABELS = {
   handheld:{ A:'A', B:'B', X:'X', Y:'Y', L:'L', R:'R', SELECT:'Select', START:'Start', VIEW:'View', DPAD:'the D-pad' },
-  pad:{ A:'Ⓐ', B:'Ⓑ', X:'LT', Y:'Ⓨ', L:'LB', R:'RB', SELECT:'Back', START:'Start', VIEW:'right-stick click', DPAD:'the stick' },
-  keys:{ A:'Space', B:'Esc', X:'G', Y:'R', L:'Shift+Tab', R:'Tab', SELECT:'I', START:'M', VIEW:'V', DPAD:'WASD' },
-  touch:{ A:'tap Strike', B:'tap End turn', X:'tap Spells', Y:'tap Actions', L:'tap a foe', R:'tap a foe', SELECT:'tap Hero', START:'tap Menu', VIEW:'tap View', DPAD:'tap the ground' },
+  pad:{ A:'Ⓐ', B:'Ⓑ', X:'Ⓧ', Y:'Ⓨ', L:'LB', R:'RB', SELECT:'Back', START:'Start', VIEW:'right-stick click', DPAD:'the stick' },
+  keys:{ A:'Space', B:'Esc', X:'F', Y:'Tab', L:'[', R:']', SELECT:'I', START:'M', VIEW:'V', DPAD:'WASD' },
+  touch:{ A:'tap the prompt', B:'tap Back', X:'tap Actions', Y:'tap a foe', L:'drag the screen', R:'drag the screen', SELECT:'tap Hero', START:'tap Menu', VIEW:'tap View', DPAD:'tap the ground' },
 };
 function value(key, snapshot){
   if (key === 'hp/maxHp'){

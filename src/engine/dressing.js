@@ -5,7 +5,7 @@
    Tall pieces (shelves, statues, pillars…) block movement, so the dresser keeps doorways and stairs clear,
    never lets a blocking piece cut a room in two, and puts wall pieces with their backs to the wall. */
 import { T, walk } from './tiles.js';
-import { PROPS, PROP_BLOCK, propSize } from '../data/props.js';
+import { PROPS, PROP_BLOCK, PROP_TOP, PROP_HOP, propSize } from '../data/props.js';
 import { ROOM_USES, THEME_KIT, TYPE_KIT } from '../data/dressing.js';
 import { OBJECTS, STASHES } from '../data/objects.js';
 
@@ -170,4 +170,60 @@ export function clearRoomProps(f, r){
   const before = (f.props || []).length;
   f.props = (f.props || []).filter(p => !(p.x >= r.x && p.x < r.x + r.w && p.y >= r.y && p.y < r.y + r.h));
   return before - f.props.length;
+}
+
+/* DOORWAYS — after everything else has put its pieces down (hand-built maps place theirs at fixed spots, set pieces
+   stamp whole rooms): nothing you'd have to climb, hop or go round stands on a door, on the squares either side of
+   it, or on and beside the stairs. Such a piece is moved to the nearest free square (a wall piece, a hearth or a shelf,
+   to one with a wall at its back), or taken away if there's nowhere for it. A shelf hiding a secret door is meant to
+   be in front of it, and stays. Returns how many pieces moved or went. */
+export function keepDoorwaysClear(f){
+  if (!f?.props?.length || !f.grid) return 0;
+  const W = f.W, H = f.H, keep = new Set();
+  const open = (x, y) => x >= 0 && y >= 0 && x < W && y < H && walk(f.grid[y * W + x]);
+  const solid = (x, y) => !open(x, y);
+  const doorAt = new Set((f.doors || []).map(d => d.i));
+  for (const d of f.doors || []){
+    const x = d.i % W, y = (d.i / W) | 0; keep.add(d.i);
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (open(x + dx, y + dy)) keep.add((y + dy) * W + x + dx);
+  }
+  for (const s of [f.up, f.down]) if (s) for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (open(s.x + dx, s.y + dy)) keep.add((s.y + dy) * W + s.x + dx);
+  if (!keep.size) return 0;
+  const inWay = p => PROP_BLOCK.has(p.k) || p.k in PROP_TOP || PROP_HOP.has(p.k);
+  const squares = (p, x = p.x, y = p.y, rot = p.rot) => { const s = sizeOf({ ...p, rot }), out = [];
+    for (let yy = y; yy < y + s.h; yy++) for (let xx = x; xx < x + s.w; xx++) out.push([xx, yy]); return out; };
+  const wet = new Set([...(f.shallow || []), ...(f.span || []), ...(f.water || [])]);
+  const roomOf = (x, y) => (f.rooms || []).find(r => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h) || null;
+  const backed = (p, x, y, rot) => { const s = sizeOf({ ...p, rot }), [dx, dy] = SIDES[(rot || 0) % 4];
+    for (let yy = y; yy < y + s.h; yy++) for (let xx = x; xx < x + s.w; xx++){
+      const onBack = dx < 0 ? xx === x : dx > 0 ? xx === x + s.w - 1 : dy < 0 ? yy === y : yy === y + s.h - 1;
+      if (onBack && !solid(xx + dx, yy + dy)) return false; }
+    return true; };
+  let changed = 0;
+  for (const p of [...f.props]){
+    if (p.hides || !inWay(p) || p.fallen || p.broken) continue;
+    if (!squares(p).some(([x, y]) => keep.has(y * W + x))) continue;
+    const wallPiece = backed(p, p.x, p.y, p.rot), home = roomOf(p.x, p.y);
+    const others = new Set(); for (const q of f.props) if (q !== p) for (const [x, y] of squares(q)) others.add(y * W + x);
+    const fits = (x, y, rot) => squares(p, x, y, rot).every(([xx, yy]) => { const i = yy * W + xx;
+      return open(xx, yy) && !keep.has(i) && !doorAt.has(i) && !others.has(i) && !wet.has(i) && roomOf(xx, yy) === home; });
+    // the nearest squares first, out to a few steps, in the same room (or outdoors, if it stood outdoors)
+    let spot = null;
+    for (let d = 1; d <= 6 && !spot; d++){
+      for (let dy = -d; dy <= d && !spot; dy++) for (let dx = -d; dx <= d && !spot; dx++){
+        if (Math.max(Math.abs(dx), Math.abs(dy)) !== d) continue;
+        const x = p.x + dx, y = p.y + dy;
+        if (wallPiece){ for (let rot = 0; rot < 4 && !spot; rot++) if (fits(x, y, rot) && backed(p, x, y, rot)) spot = [x, y, rot]; }
+        else if (fits(x, y, p.rot)) spot = [x, y, p.rot];
+        // a blocking piece mustn't wall anything off where it goes
+        if (spot && PROP_BLOCK.has(p.k)){ const was = [p.x, p.y, p.rot], before = reachable(f);
+          [p.x, p.y, p.rot] = spot; const after = reachable(f); [p.x, p.y, p.rot] = was;
+          if (after < before - squares(p).length) spot = null; }
+      }
+    }
+    if (spot){ [p.x, p.y] = spot; if (spot[2] !== undefined) p.rot = spot[2]; else delete p.rot; changed++; }
+    else if (!p.stash && !p.lock && !p.items && !p.loot){ f.props.splice(f.props.indexOf(p), 1); changed++; }
+  }
+  if (changed) f.propsV = (f.propsV || 0) + 1;
+  return changed;
 }

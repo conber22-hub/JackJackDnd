@@ -36,7 +36,7 @@ import { turnAction, pausedMover, autoAnswer } from './moves.js';
 import { moveAllowance } from './rules.js';
 import { travel, arrive, enterPlace, valley, passTime, clockText, springEvent } from './overworld.js';
 import { court } from './court.js';
-import { longRest, shortRest, canCast } from './resources.js';
+import { longRest, shortRest, canCast, useFeature, left } from './resources.js';
 import { loadState, changed, flushSave, loadWanderSave, wanderCheckpoint, deserialize, wanderSlot, saveWanderSlot, WANDER_SLOTS } from './session.js';
 import { showCard, toast } from '../ui/hud.js';
 import { syncTokens, tokenViews } from '../render/minis.js';
@@ -538,13 +538,33 @@ export function heroAttack(){
   const t = hero(), tg = target();
   if (!myTurn()) return toast('Not your turn yet.');
   if (!tg) return toast('Nobody to strike.');
-  if (!attacksLeft()) return toast(rt.cast ? 'You have cast this turn. Ⓑ ends your turn.' : 'You have struck this turn. Ⓑ ends your turn.');
+  if (!attacksLeft()) return toast(rt.cast ? 'You have cast this turn: Ⓐ again ends your turn.' : 'You have struck this turn: Ⓐ again ends your turn.');
   const i = attackFor(t, tg); if (i < 0) return toast(`${tg.name} is out of reach: walk closer.`);
   rt.look = { id:tg.id, until:performance.now() + 1500 };   // (the camera frames the two of them a moment: ui/wander.js)
   if (doAttack(t.id, tg.id, i) !== false) rt.attacks++;
   changed();
 }
-export function heroDodge(){ const t = hero(); if (!myTurn()) return; turnAction(t, 'dodge'); rt.attacks = maxAttacks(t); toast(`${t.name} takes the Dodge.`); endHeroTurn(); }
+export function heroDodge(){ heroTurnAct('dodge'); }
+// Dash, Disengage, Dodge (or Stand up, which costs movement): the action spent, the turn not over (there may be moving to do)
+export function heroTurnAct(k){
+  const t = hero(); if (!myTurn()) return toast('Not your turn yet.');
+  if (k !== 'stand' && (rt.cast || rt.attacks)) return toast('You have used your action this turn.');
+  if (!turnAction(t, k)) return;
+  if (k !== 'stand') rt.attacks = maxAttacks(t);
+  toast(k === 'dodge' ? `${t.name} takes the Dodge.` : k === 'dash' ? `${t.name} dashes: twice the move this turn.` : k === 'disengage' ? `${t.name} disengages: no free strikes as they go.` : `${t.name} gets up.`);
+  changed();
+}
+// The hero's features (Second Wind, Action Surge, Rage, Lay on Hands on themselves…): engine-side, game/resources.js.
+// Action Surge gives the turn's action back, strikes and all (once a turn).
+export const heroFeatures = () => { const t = hero(); return t ? (t.resources || []).filter(r => !r.slot && r.id !== 'hd').map(r => ({ id:r.id, n:r.n, left:left(t, r.id), max:r.max,
+  why:!left(t, r.id) ? 'none left: a rest brings it back' : r.id === 'surge' && !state.combat.active ? 'in a fight' : r.id === 'surge' && rt.surged ? 'once a turn' : state.combat.active && !myTurn() ? 'on your turn' : '' })) : []; };
+export function heroFeature(id){
+  const t = hero(), f = heroFeatures().find(x => x.id === id); if (!t || !f) return false;
+  if (f.why) return toast(`${f.n}: ${f.why}.`), false;
+  if (!useFeature(t, id, t)) return false;
+  if (id === 'surge'){ rt.surged = true; rt.attacks = 0; rt.cast = false; toast('⚡ Action Surge: one more action this turn.'); }
+  changed(); return true;
+}
 export function endHeroTurn(){ if (myTurn()){ rt.heroKey = ''; nextTurn(); } }
 
 /* A tick of the fight (from the frame loop): wait while anyone is walking, then the next one's turn; the hero waits
@@ -566,7 +586,7 @@ export function fightTick(now = performance.now()){
   const key = `${c.round}:${c.idx}:${t.id}`;
   if (t.id === W().heroTok){
     if (t.dead || t.hp <= 0){ if (rt.acting !== key){ rt.acting = key; rt.actAt = now; } else if (now - rt.actAt > 900) nextTurn(); return; }
-    if (rt.heroKey !== key){ rt.heroKey = key; rt.attacks = 0; rt.cast = false; rt.bonus = false; rt.atk = null; if (!target()) aim(1); follow(t); }
+    if (rt.heroKey !== key){ rt.heroKey = key; rt.attacks = 0; rt.cast = false; rt.bonus = false; rt.surged = false; rt.atk = null; if (!target()) aim(1); follow(t); }
     if (!attacksLeft() && moveAllowance(t) <= 0 && now - rt.lastBusy > 900) endHeroTurn();
     return;
   }

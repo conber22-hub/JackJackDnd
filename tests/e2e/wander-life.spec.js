@@ -70,7 +70,8 @@ test('a wanderer\'s quests, a roadside choice, a companion\'s approval and quest
 
   // the pack: a potion, drunk by the hero
   await ev(page, () => { const w = window.DreadDelve.wander; w.gainLoot({ items:['Potion of Healing'] }); w.hero().hp = 2; });
-  await page.keyboard.press('i');
+  await page.keyboard.press('m');
+  await page.locator('#wdMenuBox [data-act="wdPick"]', { hasText:/^The pack/ }).click();
   await expect(page.locator('#wdMenuBox')).toContainText('Potion of Healing');
   await page.locator('#wdMenuBox [data-act="wdPick"]', { hasText:/^Potion of Healing/ }).click();
   await page.locator('#wdMenuBox [data-act="wdPick"]', { hasText:/^Mira/ }).click();
@@ -87,8 +88,10 @@ test('a wanderer\'s quests, a roadside choice, a companion\'s approval and quest
     w.beginFight('none', D.get().tokens.filter(t => t.kind === 'monster').map(t => t.id)); });
   await expect(page.locator('#wdFight')).toBeVisible();
   await expect.poll(() => ev(page, () => window.DreadDelve.wander.myTurn() && !window.DreadDelve.busy()), { timeout:60_000 }).toBe(true);
-  await page.keyboard.press('g');
-  await expect(page.locator('#wdMenuBox')).toContainText('Spells');
+  await page.keyboard.press('f');   // (Ⓧ: the Actions menu, its Spells…)
+  await expect(page.locator('#wdMenuBox')).toContainText('Dodge');
+  await page.locator('#wdMenuBox [data-act="wdPick"]', { hasText:/^Spells…/ }).click();
+  await expect(page.locator('#wdMenuBox')).toContainText('Sacred Flame');
   await page.locator('#wdMenuBox [data-act="wdPick"]', { hasText:/^Sacred Flame/ }).click();
   await expect.poll(() => ev(page, () => window.DreadDelve.wander.rt.cast)).toBe(true);
   await expect(page.locator('#wdFight')).toContainText('cast');

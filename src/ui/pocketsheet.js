@@ -41,7 +41,8 @@ function ensureStyle(){
 .pk-dots span{width:6px;height:6px;border-radius:50%;border:1px solid var(--dim);background:transparent}
 .pk-dots span.on{background:var(--gold);border-color:var(--gold)}
 .pk-body{flex:1;overflow-y:auto;overflow-x:hidden;padding:2px 10px 10px;scrollbar-width:thin;min-height:0}
-.pk-foot{flex:0 0 auto;padding:5px 10px 7px;border-top:1px solid var(--line);font-size:10.5px;color:var(--dim);text-align:center;letter-spacing:.04em}
+.pk-foot{flex:0 0 auto;padding:5px 10px 7px;border:0;border-top:1px solid var(--line);background:transparent;font:inherit;font-size:10.5px;color:var(--dim);text-align:center;letter-spacing:.04em;cursor:pointer;width:100%}
+.pk-x{margin-left:4px}
 .pk-h{font-variant:small-caps;letter-spacing:.12em;font-size:12px;color:var(--gold);border-bottom:1px solid var(--line);padding:8px 0 3px;margin:2px 0 2px}
 .pk-h small{float:right;color:var(--dim);letter-spacing:.02em;text-transform:none;font-variant:normal}
 .pk-row{display:flex;align-items:baseline;gap:8px;width:100%;padding:6px 7px;border:0;border-left:2px solid transparent;background:transparent;color:var(--ink);font:inherit;font-size:13px;text-align:left;cursor:pointer;border-radius:4px}
@@ -236,7 +237,7 @@ function render(dir = 0){
     bodyEl.scrollTop = 0;
     paintHi();
   }
-  footEl.textContent = cur.detail ? 'B — back to the page' : 'L · R turn the page · A opens · B closes';
+  footEl.textContent = cur.detail ? 'B — back to the page (or tap here)' : 'L · R turn the page · A opens · B closes (or tap here)';
   if (dir){ bodyEl.classList.remove('pk-turn', 'pk-turn-b'); void bodyEl.offsetWidth; bodyEl.classList.add(dir > 0 ? 'pk-turn' : 'pk-turn-b'); }
 }
 function paintHi(){
@@ -259,6 +260,9 @@ function stepHi(d){
 }
 function onClick(e){
   const nav = e.target.closest('[data-pk]');
+  // (touch: the ✕ closes it; the line at the foot does what B would)
+  if (nav?.dataset.pk === 'close'){ closePocketSheet(); return; }
+  if (nav?.dataset.pk === 'back'){ if (cur?.detail){ cur.detail = null; render(); } else closePocketSheet(); return; }
   if (nav){ turn(nav.dataset.pk === 'next' ? 1 : -1); return; }
   const row = e.target.closest('[data-i]');
   if (!row || !cur) return;
@@ -276,8 +280,8 @@ export function openPocketSheet({ token, sheet = null, extras = {}, onClose } = 
   ensureStyle();
   el = document.createElement('div');
   el.id = 'pocketSheet'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', "Your hero's sheet");
-  el.innerHTML = `<div class="pk-head"><button class="pk-arrow" data-pk="prev" aria-label="Previous page">◀</button><div class="pk-title"></div><button class="pk-arrow" data-pk="next" aria-label="Next page">▶</button></div>
-    <div class="pk-dots" aria-hidden="true"></div><div class="pk-body" tabindex="-1"></div><div class="pk-foot"></div>`;
+  el.innerHTML = `<div class="pk-head"><button class="pk-arrow" data-pk="prev" aria-label="Previous page">◀</button><div class="pk-title"></div><button class="pk-arrow" data-pk="next" aria-label="Next page">▶</button><button class="pk-arrow pk-x" data-pk="close" aria-label="Close the sheet">✕</button></div>
+    <div class="pk-dots" aria-hidden="true"></div><div class="pk-body" tabindex="-1"></div><button class="pk-foot" data-pk="back"></button>`;
   el.addEventListener('click', onClick);
   document.body.appendChild(el);
   titleEl = el.querySelector('.pk-title'); dotsEl = el.querySelector('.pk-dots');
