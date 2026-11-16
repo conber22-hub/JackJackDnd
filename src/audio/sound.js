@@ -130,6 +130,12 @@ const FX = {
   // 🕹 the Wanderer's handheld (ui/handheld.js): a button's click, the chime it boots with, and the hero's heartbeat near death
   tick(){ const t = now(); const n = noise(.02, 'highpass', 3200, 1, .2, t); env(n.g, t, .001, .14, .016); const o = tone('triangle', 1900, .03, .1, t); env(o.g, t, .001, .05, .025); },
   chime(){ const t = now(); [[659.25, 0], [987.77, .12]].forEach(([f, d]) => { const o = tone('sine', f, 1, .2, t + d); env(o.g, t + d, .02, .16, .9); }); },
+  // 👣 the Wanderer's feet (render/stepfx.js says what's underfoot): a scuff, a crunch of snow, a splash, a rustle; a bump into a wall
+  step(){ const t = now(); const n = noise(.07, 'bandpass', 900 + Math.random() * 500, 1.2, .14, t); env(n.g, t, .004, .09, .06); },
+  crunch(){ const t = now(); for (let i = 0; i < 3; i++){ const at = t + i * .018; const n = noise(.04, 'highpass', 2200 + Math.random() * 1200, .8, .1, at); env(n.g, at, .002, .07, .035); } },
+  splash(){ const t = now(); const n = noise(.3, 'bandpass', 1400, .9, .25, t); n.f.frequency.setValueAtTime(2200, t); n.f.frequency.exponentialRampToValueAtTime(600, t + .25); env(n.g, t, .006, .14, .25); },
+  rustle(){ const t = now(); for (let i = 0; i < 4; i++){ const at = t + i * (.03 + Math.random() * .03); const n = noise(.06, 'highpass', 3000 + Math.random() * 2500, .6, .08, at); env(n.g, at, .003, .05, .05); } },
+  bump(){ const t = now(); const o = tone('sine', 85, .16, .4, t); o.o.frequency.exponentialRampToValueAtTime(50, t + .12); env(o.g, t, .002, .35, .13); const n = noise(.06, 'lowpass', 700, 1, .2, t); env(n.g, t, .002, .18, .05); },
   thump(){ const t = now(); [0, .2].forEach((d, i) => { const o = tone('sine', i ? 52 : 60, .25, .5, t + d); o.o.frequency.exponentialRampToValueAtTime(38, t + d + .18); env(o.g, t + d, .01, i ? .32 : .45, .2); }); },
 };
 export const SFX_NAMES = Object.keys(FX);

@@ -30,6 +30,10 @@ import { canCast, slotLevels, left } from '../game/resources.js';
 import { playerAnswer } from '../game/moves.js';
 import { tune, coachTick, coachLearn, coachDone } from './hhlife.js';
 import { uncover, banner } from './passage.js';
+import { underfoot } from '../engine/underfoot.js';
+import { sfx } from '../audio/sound.js';
+import { stepFx, tickStepFx } from '../render/stepfx.js';
+import { groundWeather } from '../render/floors.js';
 import { askD20 } from '../game/night.js';
 import { sendHost } from '../net/table.js';
 import { cardAct } from './cards.js';
@@ -374,9 +378,23 @@ function frame(now){
   try { camFrame(dt, pad, { focus:miniFocus(t), me:t, other:lk || (cur && cur.id !== t.id ? cur : null), otherRate:lk ? 4 : 3 }); } catch (e){ console.warn(e); }
   try { lookThrough(t, now); } catch (e){ console.warn(e); }
   feelHits(t, gp);
-  moments(t); surgeWatch(t); placeWatch(t);
+  moments(t); surgeWatch(t); placeWatch(t); feelMine(t, now);
   try { coachTick(() => snapshot(t)); } catch (e){ console.warn(e); }
   if (now - lastHud > 180){ lastHud = now; renderHud(); }
+}
+// 👣 Their own hero's steps: a puff, a splash, a print, a rustle, and the sound of it (as in the Wanderer)
+let stoodAt = '';
+function feelMine(t, now){
+  const k = `${state.meta.mapId || ''}:${t.floor}:${t.x}:${t.y}`, was = stoodAt; stoodAt = k;
+  if (was && was !== k){
+    const [m, fl, px, py] = was.split(':');
+    if (m === (state.meta.mapId || '') && +fl === t.floor && Math.max(Math.abs(+px - t.x), Math.abs(+py - t.y)) <= 1){
+      const kind = underfoot(state.floors[t.floor], t.x, t.y, { indoors:state.meta.template === 'interior', ...groundWeather() });
+      stepFx(t.floor, t.x, t.y, kind, t.x - +px, t.y - +py);
+      sfx({ snow:'crunch', splash:'splash', mud:'splash', rustle:'rustle' }[kind] || 'step', false);
+    }
+  }
+  tickStepFx(now);
 }
 // The DM moved the party to another map (or the road went on): the fog clears and the name slides in (ui/passage.js)
 let placeWas = '';

@@ -22,6 +22,9 @@ import { passage, tapTarget } from '../game/ways.js';
 import { veil, banner } from './passage.js';
 import { glintsSeen, pagesFound } from '../game/finds.js';
 import { showGlints, clearGlints, tickGlints } from '../render/glints.js';
+import { underfoot } from '../engine/underfoot.js';
+import { stepFx, tickStepFx, clearStepFx, fordStones } from '../render/stepfx.js';
+import { groundWeather } from '../render/floors.js';
 import { sfx } from '../audio/sound.js';
 import { loyalty } from '../engine/wander-life.js';
 import { hh, hhOn, hhHost, hhPad, addHost, setHandheld, skipBoot, shellItem } from './handheld.js';
@@ -275,10 +278,37 @@ function step(dx, dy){
    Where to look: where the game says (game/wander.js follow); with someone else to frame (what the hero just struck
    or cast at, or whoever else is acting in a fight), halfway between the two. */
 export { camTurn, camView, camCrane };
+/* The camera leans a little ahead of the hero while they walk (back to them when they stop), and gives a small shake
+   when they walk into a wall. */
+const lead = { x:0, z:0 };
 function wanderCam(dt, pad){
-  const h = hero(), ct = state.combat.active && currentTurn();
-  const lk = rt.look && performance.now() < rt.look.until && tokById(rt.look.id);
-  camFrame(dt, pad, { focus:rt.focus, me:h, other:lk || (ct && ct.id !== h?.id ? ct : null), otherRate:lk ? 4 : 3 });
+  const h = hero(), ct = state.combat.active && currentTurn(), now = performance.now();
+  const lk = rt.look && now < rt.look.until && tokById(rt.look.id);
+  const going = !state.combat.active && now - feet.at < 650, k = 1 - Math.exp(-dt * 2.5);
+  lead.x += ((going ? feet.dx * .9 : 0) - lead.x) * k; lead.z += ((going ? feet.dy * .9 : 0) - lead.z) * k;
+  const b = rt.bump, shake = b && now - b.at < 200 ? Math.sin((now - b.at) * .09) * .06 * (1 - (now - b.at) / 200) : 0;
+  const focus = rt.focus && { ...rt.focus, x:rt.focus.x + lead.x + shake * (b?.dx || 0), z:rt.focus.z + lead.z + shake * (b?.dy || 0) };
+  camFrame(dt, pad, { focus, me:h, other:lk || (ct && ct.id !== h?.id ? ct : null), otherRate:lk ? 4 : 3 });
+}
+/* 👣 Each step the party takes: what it leaves (a puff, a splash, a print, a rustle: render/stepfx.js) and, for the hero,
+   what it sounds like; a bump into a wall is heard too. */
+const feet = { at:0, dx:0, dy:0, bumpSeen:0 }, stood = new Map();
+const STEP_SOUND = { snow:'crunch', splash:'splash', mud:'splash', rustle:'rustle' };
+function feelSteps(now){
+  const h = hero(); if (!h) return;
+  const gw = groundWeather(), indoors = state.meta.template === 'interior';
+  for (const m of members()){
+    if (!m || m.dead) continue;
+    const k = `${m.floor}:${m.x}:${m.y}`, was = stood.get(m.id); stood.set(m.id, k);
+    if (!was || was === k) continue;
+    const [fl, px, py] = was.split(':').map(Number);
+    if (fl !== m.floor || Math.max(Math.abs(px - m.x), Math.abs(py - m.y)) > 1) continue;   // (a crossing, or put down elsewhere: no step)
+    const kind = underfoot(state.floors[m.floor], m.x, m.y, { indoors, ...gw });
+    stepFx(m.floor, m.x, m.y, kind, m.x - px, m.y - py);
+    if (m === h){ sfx(STEP_SOUND[kind] || 'step', false); Object.assign(feet, { at:now, dx:m.x - px, dy:m.y - py }); }
+  }
+  if (rt.bump && rt.bump.at > feet.bumpSeen){ feet.bumpSeen = rt.bump.at; sfx('bump', false); }
+  fordStones(h.floor, state.floors[h.floor], state.meta.mapId || state.meta.seed);
 }
 /* ---------- the handheld's buttons ----------
    One button, one job, whatever's going on (the line on the screen says what A does just now). */
@@ -318,7 +348,7 @@ function frame(now){
   requestAnimationFrame(frame);
   const dt = Math.min(.1, (now - (lastFrame || now)) / 1000); lastFrame = now;
   const gp = [...(navigator.getGamepads?.() || [])].find(g => g && g.connected);
-  if (!wandering()){ if (hudOn){ hudOn = false; show('wanderHud', false); closeLook(); feelHits(null); coachHide(); clearGlints(); } return; }
+  if (!wandering()){ if (hudOn){ hudOn = false; show('wanderHud', false); closeLook(); feelHits(null); coachHide(); clearGlints(); clearStepFx(); } return; }
   hudOn = true;
   let pad = null;
   if (gp){
@@ -330,6 +360,8 @@ function frame(now){
   // ✨ the glints the hero has noticed (game/finds.js), twinkling; the bubbles over heads
   if (now - glintAt > 250){ glintAt = now; try { const h = hero(); showGlints(h.floor, glintsSeen()); } catch (e){ console.warn(e); } }
   tickGlints(now);
+  try { feelSteps(now); } catch (e){ console.warn(e); }
+  tickStepFx(now);
   try { lookThrough(hero(), now); } catch (e){ console.warn(e); }
   feelHits(hero(), gp);
   try { wanderMoments(); coachTick(wanderSnapshot); } catch (e){ console.warn(e); }

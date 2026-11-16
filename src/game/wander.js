@@ -42,7 +42,7 @@ import { ensureWays, wayAfterStep, wayOnBump, arriveThere, crossingNow, readSign
 import { longRest, shortRest, canCast, useFeature, left } from './resources.js';
 import { loadState, changed, flushSave, loadWanderSave, wanderCheckpoint, deserialize, wanderSlot, saveWanderSlot, WANDER_SLOTS } from './session.js';
 import { showCard, toast } from '../ui/hud.js';
-import { syncTokens, tokenViews } from '../render/minis.js';
+import { syncTokens, tokenViews, faceStep } from '../render/minis.js';
 import { camTo, wx, wz, floorY } from '../render/scene.js';
 import * as THREE from 'three';
 
@@ -434,6 +434,8 @@ export function stepHero(dx, dy){
   }
   // (a step that didn't go: into a front door, out of a doorway, on off the end of the road: game/ways.js)
   if (!state.combat.active && wayOnBump(t, dx, dy)) return true;
+  // a step into a wall: a bump (ui/wander.js plays it), facing the way they tried
+  if (performance.now() - (rt.bump?.at || 0) > 280){ rt.bump = { at:performance.now(), dx, dy }; faceStep(t.id, dx, dy); }
   return false;
 }
 // Walk to a tapped square (the touch way): the shortest path, then the same checks as a step.
