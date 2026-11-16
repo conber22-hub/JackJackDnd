@@ -5,7 +5,7 @@ import { SONGS } from '../src/data/chiptune.js';
 import { validate, events, duration, parseVoice } from '../src/engine/chiptune.js';
 import { regionLoop, handover, loopLength, variantFor } from '../src/engine/region-music.js';
 const near = (a,b) => assert.ok(Math.abs(a-b)<1e-9, `${a} != ${b}`);
-test('fourteen distinct original scores fit quiet eight-bar loops', () => {
+test('regional scores include all fourteen required themes and fit quiet eight-bar loops', () => {
   const ids = 'village villageNight vallaki krezk road roadNight woods church tavern house crypt vistani mists castle'.split(' ');
   for (const id of ids) assert.ok(LOOPS.some(s => s.id === id));
   assert.equal(new Set(LOOPS.map(s => s.id)).size, LOOPS.length);
@@ -62,4 +62,27 @@ test('gaze is bounded, deterministic, and does not mutate scores or options', ()
   }
   assert.equal(JSON.stringify(LOOPS),saved);
   assert.equal(regionLoop({}),regionLoop({}));
+});
+test('lake and mill have their own identities without overriding indoor scenes or combat',()=>{
+  for(const hour of [3,12,23]){
+    assert.equal(regionLoop({place:'lake',hour}),'lake');
+    assert.equal(regionLoop({place:'bonegrinder',hour}),'windmill');
+    assert.equal(regionLoop({place:'lake',inside:'house',hour}),'house');
+    assert.equal(regionLoop({place:'bonegrinder',inside:'cellar',hour}),'crypt');
+  }
+  assert.equal(regionLoop({inside:'mill'}),'windmill');
+  assert.equal(regionLoop({place:'lake',fight:true}),null);
+  assert.equal(regionLoop({place:'vallaki',kind:'camp'}),'vallaki');
+  assert.equal(regionLoop({place:'argyn',kind:'woods'}),'castle');
+  for(const s of LOOPS){const opts=variantFor(s.id,{gaze:10});near(duration(s,opts),loopLength(s.id)/opts.tempo);}
+});
+test('two consecutive cycles meet at the bar boundary without overlapping notes',()=>{
+  for(const s of LOOPS) for(const gaze of [1,5,10]){
+    const opts=variantFor(s.id,{gaze}),length=duration(s,opts),ev=events(s,opts);
+    for(const voice of Object.keys(s.voices)){
+      const notes=ev.filter(e=>e.voice===voice);if(!notes.length)continue;
+      assert.ok(notes.at(-1).t+notes.at(-1).dur<=length+notes[0].t+1e-9);
+    }
+    near(length*s.bpm*opts.tempo/60,32);
+  }
 });

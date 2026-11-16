@@ -340,5 +340,47 @@ export const LOOPS = [
         "notes": "B3/1 F#3/1 G3/1 F#3/1 C4/1 E3/1 A3/1 F#3/1"
       }
     }
+  },
+  {
+    "id": "lake",
+    "title": "A shore without an answer",
+    "bpm": 62,
+    "loop": true,
+    "bars": 8,
+    "beatsPerBar": 4,
+    "voices": {
+      "pulse1": {
+        "wave": "square",
+        "duty": 0.5,
+        "vol": 0.16,
+        "notes": "A3/2 E4/4 r/4 G4/2 E4/2 F4/4 D4/2 r/4 E4/2 B3/2 C4/2 G4/4 E4/4 D4/2 F4/2 B3/4 D4/4 C4/2 E4/2 G#3/2"
+      },
+      "tri": {
+        "wave": "triangle",
+        "vol": 0.18,
+        "notes": "A2/1 G2/1 D3/1 E2/1 C3/1 D3/1 B2/1 E2/1"
+      }
+    }
+  },
+  {
+    "id": "windmill",
+    "title": "Flour on the stair",
+    "bpm": 78,
+    "loop": true,
+    "bars": 8,
+    "beatsPerBar": 4,
+    "voices": {
+      "pulse1": {
+        "wave": "square",
+        "duty": 0.5,
+        "vol": 0.16,
+        "notes": "D4/8 A3/8 D4/4 F4/2 E4/8 A3/8 E4/4 C#4/2 F4/8 C4/8 F4/4 A4/2 E4/4 D4/4 C#4/2 D4/8 A3/8 F4/4 E4/2 G4/8 D4/8 Bb4/4 A4/2 G4/4 E4/4 F4/4 D4/4 C#4/2 A3/2"
+      },
+      "tri": {
+        "wave": "triangle",
+        "vol": 0.18,
+        "notes": "D2/1 A2/1 F2/1 A2/1 D2/1 G2/1 Bb2/1 A2/1"
+      }
+    }
   }
 ];

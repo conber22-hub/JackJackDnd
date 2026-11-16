@@ -12,17 +12,21 @@ export function regionLoop({ place = null, kind = '', inside = null, room = '', 
     if (/^(church|shrine|chapel|abbey)$/i.test(inside)) return 'church';
     if (/^(tavern|inn)$/i.test(inside)) return 'tavern';
     if (inside === 'castle' || place === 'castle') return 'castle';
+    if (inside === 'mill') return 'windmill';
     return 'house';
   }
   if (place === 'castle' || kind === 'castle') return 'castle';
   if (place === 'mists' || (mist && (kind === 'road' || !place))) return 'mists';
   const h = Number.isFinite(hour) ? ((hour % 24) + 24) % 24 : 12, night = h >= 20 || h < 6;
-  if (place === 'tser' || kind === 'camp') return 'vistani';
+  if (place === 'tser') return 'vistani';
   if (place === 'vallaki') return 'vallaki';
   if (place === 'krezk') return 'krezk';
+  if (place === 'lake') return 'lake';
+  if (place === 'bonegrinder') return 'windmill';
+  if (place === 'argyn') return 'castle';
+  if (kind === 'camp') return 'vistani';
   if (place === 'village' || kind === 'village' || kind === 'town') return night ? 'villageNight' : 'village';
   if (kind === 'woods' || ['yester','berez'].includes(place)) return 'woods';
-  if (place === 'argyn') return 'castle';
   return night ? 'roadNight' : 'road';
 }
 // With gap=0 start the two fades together; otherwise finish out, wait gap, then start in.
