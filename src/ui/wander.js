@@ -20,6 +20,8 @@ import { W, rt, hero, members, wandering, startWander, continueWander, leaveWand
   SLOTS, slotMeta, canSaveSlot, saveToSlot, loadFromSlot } from '../game/wander.js';
 import { passage, tapTarget } from '../game/ways.js';
 import { veil, banner } from './passage.js';
+import { glintsSeen, pagesFound } from '../game/finds.js';
+import { showGlints, clearGlints, tickGlints } from '../render/glints.js';
 import { sfx } from '../audio/sound.js';
 import { loyalty } from '../engine/wander-life.js';
 import { hh, hhOn, hhHost, hhPad, addHost, setHandheld, skipBoot, shellItem } from './handheld.js';
@@ -122,7 +124,8 @@ function pageInfo(){
     const q = journal(), w = W();
     const quests = q.length ? q.map(j => `<div class="wd-q${j.done ? ' done' : ''}"><b>${j.done ? '✓ ' : '📜 '}${esc(j.title)}</b><span>${esc(j.step)}</span></div>`).join('') : '<div class="muted">No quests yet.</div>';
     const pals = w.party.map(p => { const n = approvalOf(p.id); return `<div class="wd-q"><b>${esc(companionById(p.id)?.name || p.id)}</b><span>${loyalty(n).label} (${n > 0 ? '+' : ''}${n})</span></div>`; }).join('');
-    return { sub:`Level ${partyLevel()} · ${w.xp} XP${nextLevelXp() ? ` · next at ${nextLevelXp()}` : ''}`, html:quests + (pals ? `<div class="wd-sep">Companions</div>${pals}` : '') };
+    const pages = pagesFound().map(p => `<div class="wd-q"><b>📜 ${esc(p.title)}</b><span>${esc(p.text)}</span></div>`).join('');
+    return { sub:`Level ${partyLevel()} · ${w.xp} XP${nextLevelXp() ? ` · next at ${nextLevelXp()}` : ''}`, html:quests + (pals ? `<div class="wd-sep">Companions</div>${pals}` : '') + (pages ? `<div class="wd-sep">Pages found</div>${pages}` : '') };
   }
   if (menu.page === 'level'){ const s = sheetOf(); return { html:`${esc(s?.name || '')} can reach level ${partyLevel()}. Let the game make the choices (an ability increase into what you're best at, new spells), or make them yourself on the character sheet.` }; }
   if (menu.page === 'spells'){ const t = hero(); return { sub:t ? (t.resources || []).filter(r => r.slot).map(r => `L${r.slot} ${t.res?.[r.id] ?? r.max}/${r.max}`).join(' · ') : '' }; }
@@ -284,7 +287,7 @@ function hhLegend(){
     select:{ label:'Hero' }, view:{ label:'Camera' }, start:{ label:'Menu' } };
 }
 const HH_HELP = 'Each button does one thing. D-pad: walk (slide your thumb round it for the diagonals), or move through a menu. A: do what the line on the screen says (talk, climb, look, strike, end your turn), or choose. B: back, or put a card away. X: Actions: each weapon, spells, Dash, Disengage, Dodge, features like Action Surge, a potion, End turn. Y: the next target. L and R: turn the camera. Select: your hero. View: the next camera view. Start: this menu. Select and Start together: the save states. Touch works too: drag on the screen to turn the camera, pinch to zoom, tap to walk or pick a foe, tap any line of a menu.';
-let pending = null, padMem = {}, hhMem = {}, lastTick = 0, lastFrame = 0;
+let pending = null, padMem = {}, hhMem = {}, lastTick = 0, lastFrame = 0, glintAt = 0;
 const padHeld = { back:false };   // (Back held while Start goes down: the save states)
 const yaw = camYaw;   // (which way "up on the stick" walks)
 let hudOn = false;
@@ -315,7 +318,7 @@ function frame(now){
   requestAnimationFrame(frame);
   const dt = Math.min(.1, (now - (lastFrame || now)) / 1000); lastFrame = now;
   const gp = [...(navigator.getGamepads?.() || [])].find(g => g && g.connected);
-  if (!wandering()){ if (hudOn){ hudOn = false; show('wanderHud', false); closeLook(); feelHits(null); coachHide(); } return; }
+  if (!wandering()){ if (hudOn){ hudOn = false; show('wanderHud', false); closeLook(); feelHits(null); coachHide(); clearGlints(); } return; }
   hudOn = true;
   let pad = null;
   if (gp){
@@ -324,6 +327,9 @@ function frame(now){
   }
   if (hhOn() && hhHost() === 'wander'){ const r = padIntents(hhPad(), now, hhMem, { yaw:yaw() }); hhMem = r.mem; for (const it of r.intents) if (it.k === 'step') step(it.dx, it.dy); }
   try { wanderCam(dt, pad); } catch (e){ console.warn(e); }
+  // ✨ the glints the hero has noticed (game/finds.js), twinkling; the bubbles over heads
+  if (now - glintAt > 250){ glintAt = now; try { const h = hero(); showGlints(h.floor, glintsSeen()); } catch (e){ console.warn(e); } }
+  tickGlints(now);
   try { lookThrough(hero(), now); } catch (e){ console.warn(e); }
   feelHits(hero(), gp);
   try { wanderMoments(); coachTick(wanderSnapshot); } catch (e){ console.warn(e); }
@@ -384,7 +390,7 @@ export function ensureWander(){
     health:() => { const h = hero(); return h ? Math.max(0, h.hp) / Math.max(1, h.maxHp) : 1; }, fight:() => !!state.combat.active });
   ui.wanderTap = null;
   // a crossing between maps (game/ways.js): the fog, the name, the sound
-  passage.veil = veil; passage.banner = banner; passage.sting = id => tune(id === 'door' ? 'door' : 'stairs');
+  passage.veil = veil; passage.banner = banner; passage.sting = id => tune({ door:'door', spotted:'gazeRises' }[id] || 'stairs');
   addEventListener('keydown', onKey, { capture:true });
   document.addEventListener('click', onClick, true);
   addEventListener('gamepadconnected', e => { if (wandering()) toast(`🎮 ${e.gamepad.id.split('(')[0].trim() || 'Controller'} ready.`); });

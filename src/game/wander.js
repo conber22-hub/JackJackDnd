@@ -36,6 +36,8 @@ import { turnAction, pausedMover, autoAnswer } from './moves.js';
 import { moveAllowance } from './rules.js';
 import { travel, arrive, enterPlace, valley, passTime, clockText, springEvent } from './overworld.js';
 import { court } from './court.js';
+import { findNear, findLabel, useFind } from './finds.js';
+import { bubble } from '../render/glints.js';
 import { ensureWays, wayAfterStep, wayOnBump, arriveThere, crossingNow, readSignpost, signpostNear, roadsOutOf, passage, bannerHere, doorwayHere, goOutside } from './ways.js';
 import { longRest, shortRest, canCast, useFeature, left } from './resources.js';
 import { loadState, changed, flushSave, loadWanderSave, wanderCheckpoint, deserialize, wanderSlot, saveWanderSlot, WANDER_SLOTS } from './session.js';
@@ -50,13 +52,22 @@ export const hero = () => { const w = W(); return w && tokById(w.heroTok); };
 export const members = () => { const w = W(); return w ? [hero(), ...w.party.map(p => tokById(p.tok))].filter(Boolean) : []; };
 const foes = () => { const h = hero(); return h ? state.tokens.filter(o => o.kind === 'monster' && o.floor === h.floor && !o.dead && o.hp > 0 && !o.flags?.gone) : []; };
 const cheb = (a, b) => Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
+/* How much cover there is round a square for something to come out of (×0.35 out on the open road, up to ×2 among
+   trees, brush and fog): the trees and rock within two squares, brush and dead trees, and banks of mist. */
+function coverAround(f, t){
+  let n = 0;
+  for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++){ const x = t.x + dx, y = t.y + dy; if (x < 0 || y < 0 || x >= f.W || y >= f.H || !walk(f.grid[y * f.W + x])) n++; }
+  n += (f.props || []).filter(p => ['bush', 'deadtree', 'pine', 'mist', 'hay'].includes(p.k) && cheb(p, t) <= 2).length * 2;
+  n += (f.mists || []).filter(([x, y]) => Math.max(Math.abs(x - t.x), Math.abs(y - t.y)) <= 2).length;
+  return .35 + Math.min(1.65, n / 8);
+}
 const night = () => { const h = valley().hour; return h >= 20 || h < 6; };
 const onRoad = () => state.meta.template === 'journey';
 
 // What only this device keeps while playing (never saved): the hero's trail, the aim, whose turn was whose.
-export const rt = { walkN:0, tapTo:null, step:null, trail:[], target:null, atk:null, heroKey:'', attacks:0, cast:false, bonus:false, acting:'', actAt:0, lastBusy:0, endAt:0, talk:null, seen:new Set(), round:0, unseen:0, hpWas:null, focus:null, look:null };
+export const rt = { walkN:0, tapTo:null, step:null, spotted:0, heard:new Set(), trail:[], target:null, atk:null, heroKey:'', attacks:0, cast:false, bonus:false, acting:'', actAt:0, lastBusy:0, endAt:0, talk:null, seen:new Set(), round:0, unseen:0, hpWas:null, focus:null, look:null };
 export const freshRun = () => fresh();
-const fresh = () => Object.assign(rt, { trail:[], target:null, atk:null, heroKey:'', attacks:0, cast:false, bonus:false, acting:'', actAt:0, lastBusy:0, endAt:0, talk:null, round:0, unseen:0, hpWas:null });
+const fresh = () => Object.assign(rt, { spotted:0, heard:new Set(), trail:[], target:null, atk:null, heroKey:'', attacks:0, cast:false, bonus:false, acting:'', actAt:0, lastBusy:0, endAt:0, talk:null, round:0, unseen:0, hpWas:null });
 
 /* ---------- starting and leaving ---------- */
 // The look that goes with playing: the players' fog, the DM's desk away, the camera low behind the hero.
@@ -396,7 +407,7 @@ export function heroCast(entry){
 }
 
 /* ---------- walking ---------- */
-const heroBusy = () => { const h = hero(); return !h || crossingNow() || !!tokenViews.get(h.id)?.anim || pausedMover(h.id); };
+const heroBusy = () => { const h = hero(); return !h || crossingNow() || rt.spotted || !!tokenViews.get(h.id)?.anim || pausedMover(h.id); };
 const anyBusy = () => [...tokenViews.values()].some(tv => tv.anim) || state.tokens.some(t => pausedMover(t.id));
 export const myTurn = () => state.combat.active && currentTurn()?.id === W()?.heroTok;
 // The camera glides after the hero, keeping however the player has turned it: this only says where to look, and the
@@ -462,11 +473,21 @@ function afterStep(t){
 }
 
 /* ---------- the director: what happens after a step ---------- */
+// They've been seen: a "!" over each creature that saw them, a sting, a held breath, then the fight
+function spotted(seen){
+  rt.spotted = performance.now();
+  for (const m of seen) bubble(m.id, '!');
+  passage.sting?.('spotted');
+  setTimeout(() => { rt.spotted = 0; if (!state.combat.active) beginFight('none'); }, 750);
+}
 function direct(t){
   const w = W(), L = t.floor, f = state.floors[L];
   // a creature that has seen them (or they it), near enough: a fight
   const seen = foes().filter(m => cheb(m, t) <= 10 && partySees(m));
-  if (seen.length){ beginFight('none'); return; }
+  if (seen.length){ spotted(seen); return; }
+  // something close that can't be seen: a "?" over the hero, once for each
+  const heard = foes().filter(m => cheb(m, t) <= 6 && !rt.heard.has(m.id));
+  if (heard.length){ heard.forEach(m => rt.heard.add(m.id)); bubble(t.id, '?'); toast('Something moves, close by. You can\'t see what.'); }
   // what's on the road here: read out once; one with creatures springs
   for (const e of f.events || []){
     if (e.done || e.sprung || cheb(e, t) > 3) continue;
@@ -480,7 +501,8 @@ function direct(t){
     // the last stretch's end: there
     const end = roadEnd(f), last = !f.down;
     if (last && end && cheb(end, t) <= 1){ arriveThere(); return; }
-    if (Math.random() < ambushChance({ quiet:w.quiet, gaze:state.dread || 1, night:night(), ambushes:w.ambushes })){ ambush(t); return; }
+    const chance = ambushChance({ quiet:w.quiet, gaze:state.dread || 1, night:night(), ambushes:w.ambushes });
+    if (Math.random() < (chance >= 1 ? 1 : chance * coverAround(f, t))){ ambush(t); return; }
     const m = Math.random() < momentChance({ quiet:w.quiet, had:w.momentAt === `${state.meta.mapId}:${L}` }) && nextMoment(MOMENTS, w.moments);
     if (m){ startMoment(m); return; }
   }
@@ -636,7 +658,9 @@ export function hereAction(){
   if (st && !onRoad()) return { label:st === 'down' ? `Go down to ${state.floors[L + 1].name}` : `Go up to ${state.floors[L - 1].name}`, run:() => { takeStairs(t); rt.trail = []; goFloor(t.floor, false); follow(t, .8); saveNow(); } };
   const ev = (f.events || []).find(e => !e.done && cheb(e, t) <= 1);
   if (ev) return { label:`Look: ${ev.label}`, run:() => showCard({ kind:'', title:ev.label, flair:ev.text }, false) };
+  const fd = findNear(t); if (fd && fd.kind !== 'read') return { label:findLabel(fd), run:() => useFind(fd) };
   if (signpostNear(t)) return { label:'Read the signpost', run:() => readSignpost(t) };
+  if (fd) return { label:findLabel(fd), run:() => useFind(fd) };
   const out = doorwayHere(t); if (out) return { label:out, run:() => goOutside(t) };
   if (pal) return { label:`Talk to ${pal.name}`, run:() => talkTo(pal.flags.companion) };
   return null;
