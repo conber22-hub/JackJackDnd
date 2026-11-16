@@ -54,7 +54,11 @@ test('a hero walks the valley alone: a companion won over, an ambush on the road
   await expect(page.locator('#wdClock')).toContainText('stretch 1 of');
 
   // the director: long enough on the road, and something comes (tough heroes, so the fight is won)
-  await page.evaluate(() => { const w = window.DreadDelve.wander; w.W().quiet = 45; for (const m of w.members()){ m.maxHp = m.hp = 300; } });
+  // (and nothing already waiting on this road: the roads are laid out afresh, and a roadside event with creatures would
+  // start a fight of its own before the ambush)
+  await page.evaluate(() => { const D = window.DreadDelve, w = D.wander; w.W().quiet = 45; for (const m of w.members()){ m.maxHp = m.hp = 300; }
+    for (const f of D.get().floors) f.events = (f.events || []).filter(e => !e.enc);
+    const ts = D.get().tokens; for (let i = ts.length - 1; i >= 0; i--) if (ts[i].kind === 'monster') ts.splice(i, 1); D.syncTokens(); });
   await expect.poll(async () => { const s = await st(page); if (s.fight) return true;
     await page.evaluate(() => { const D = window.DreadDelve, w = D.wander, h = w.hero(), f = D.get().floors[h.floor], r = f.rooms.at(-1);
       w.walkTo(f.down ? f.down.x : r.cx, f.down ? f.down.y : r.cy); });

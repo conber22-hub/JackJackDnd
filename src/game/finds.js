@@ -6,6 +6,7 @@
 import { state } from '../engine/state.js';
 import { placeFinds, noticed, outcome, pageById } from '../engine/finds-lite.js';
 import { frontDoor } from '../engine/ways.js';
+import { doorwayOut } from './ways.js';
 import { walk, T } from '../engine/tiles.js';
 import { placeById } from '../engine/overland.js';
 import { valley } from './overworld.js';
@@ -25,7 +26,10 @@ function kindOf(L){
 // The floor as the finds engine reads it
 function floorFor(L){
   const f = state.floors[L], open = [], path = [];
-  for (let i = 0; i < f.grid.length; i++){ if (!walk(f.grid[i])) continue; const x = i % f.W, y = (i / f.W) | 0; open.push([x, y]); if (f.grid[i] === T.HALL) path.push([x, y]); }
+  // (nothing lies right where they come in or go out: the stairs, a house's doorway, the ways out)
+  const door = doorwayOut(), ends = [f.up, f.down, door?.floor === L && door, ...(f.ways || [])].filter(p => p && Number.isInteger(p.x));
+  const atEnd = (x, y) => ends.some(p => Math.max(Math.abs(p.x - x), Math.abs(p.y - y)) <= 1);
+  for (let i = 0; i < f.grid.length; i++){ if (!walk(f.grid[i])) continue; const x = i % f.W, y = (i / f.W) | 0; if (!atEnd(x, y)) open.push([x, y]); if (f.grid[i] === T.HALL) path.push([x, y]); }
   const props = (f.props || []).filter(p => !p.broken).map(p => ({ kind:p.k, x:p.x, y:p.y }));
   // (a building's doorstep, for a notice on its door)
   for (const b of f.buildings || []){ if (b.decay === 'abandoned' || b.decay === 'infested') continue; const s = frontDoor(b).steps[0]; if (s && walk(f.grid[s.y * f.W + s.x])) props.push({ kind:'house', x:s.x, y:s.y }); }

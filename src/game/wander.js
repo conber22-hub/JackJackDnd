@@ -426,11 +426,11 @@ export function stepHero(dx, dy){
     const x = t.x + ax, y = t.y + ay, way = resolvePath(t, x, y);
     if (!way || way.path.length !== 1) continue;
     if (state.combat.active && (way.dash || way.cost > moveAllowance(t))){ toast('No movement left this turn.'); return false; }
-    const from = { x:t.x, y:t.y };
-    if (!doMove(t, x, y, { path:way.path })) continue;
+    const from = { x:t.x, y:t.y }, map = state.meta.mapId;
+    // (what happens next waits for the step to land: who they see from the new square, the way out they stepped onto)
+    if (!doMove(t, x, y, { path:way.path, then:() => { if (!state.combat.active && map === state.meta.mapId) afterStep(t); } })) continue;
     rt.trail = pushTrail(rt.trail, from, 6);
     follow(t);
-    if (!state.combat.active) afterStep(t);
     return true;
   }
   // (a step that didn't go: into a front door, out of a doorway, on off the end of the road: game/ways.js)

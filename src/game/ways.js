@@ -182,7 +182,7 @@ function enterBuilding(L, i){
   }, 'door');
 }
 // Where the doorway out of this inside is, and which way is out
-function doorwayOut(){
+export function doorwayOut(){
   const it = state.meta.interior; if (!it) return null;
   const plan = interiorPlan(it), g = interiorGround(it), out = plan.floors[g]?.out || plan.floors[g]?.front; if (!out) return null;
   return { floor:g, x:out[0], y:out[1] };

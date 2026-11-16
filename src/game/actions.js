@@ -126,6 +126,7 @@ export function doMove(t, x, y, opts = {}){
     if (oa) offerOpportunity(t, oa.by, rest, [...(opts.skip || []), oa.by]);
     if (ui.selected === t.id && !oa) showReach(t);
     changed();
+    opts.then?.();   // (once they're there and see what's there: the Wanderer's step, game/wander.js)
   };
   if (!path.length){ finish(); return true; }
   const go = () => {

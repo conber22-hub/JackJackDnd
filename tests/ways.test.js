@@ -73,3 +73,14 @@ test('signpost lines: west on the left with its arrow first, east with it last',
   const lines = signLines([{ to:'Krezk', dir:'e', far:'a day' }, { to:'Vallaki', dir:'w' }, { to:'the Tser Pool', dir:'nw' }]);
   assert.deepEqual(lines, ['↖ the Tser Pool', '← Vallaki', 'Krezk · a day →']);
 });
+
+test('a road three wide to the edge still gets its signpost, on the verge', () => {
+  const W = 20, H = 20, grid = new Array(W * H).fill(0);
+  for (let y = 1; y < H - 1; y++) for (let x = 6; x < 14; x++) grid[y * W + x] = 1;   // (a village in the middle)
+  for (let y = 9; y <= 11; y++) for (let x = 1; x < 14; x++) grid[y * W + x] = 2;     // (the road west, three wide)
+  const [w] = placeWays({ W, H, grid }, [{ to:'west', dx:-10, dy:0 }]);
+  assert.equal(w.x, 1);
+  assert.ok(w.sign, 'a signpost');
+  assert.notEqual(w.sign.y, 10, 'not in the middle of the road');
+  assert.ok(w.sign.x !== w.x || w.sign.y !== w.y);
+});

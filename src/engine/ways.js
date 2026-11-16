@@ -47,8 +47,10 @@ export function placeWays(f, ways, blocked = () => false){
     for (let r = 1; r <= 3; r++) for (let oy = -r; oy <= r; oy++) for (let ox = -r; ox <= r; ox++){
       if (Math.max(Math.abs(ox), Math.abs(oy)) !== r) continue;
       const x = best.x + ox, y = best.y + oy, back = -(ox * sx + oy * sy);   // (how far back in from the way)
-      if (back < 0 || !open(x, y) || grid[y * W + x] === 2) continue;
-      signs.push({ x, y, k:r * 10 - back * 3 + Math.abs(ox * sy - oy * sx) });
+      if (back < 0 || !open(x, y) || (x === best.x && y === best.y)) continue;
+      const road = grid[y * W + x] === 2;   // (on the road only when there's no ground beside it: a wide road to the edge)
+      const edge = road && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => !open(x + a, y + b));   // (its verge, not its middle)
+      signs.push({ x, y, k:r * 10 - back * 3 + Math.abs(ox * sy - oy * sx) + (road ? (edge ? 100 : 200) : 0) });
     }
     signs.sort((a, b) => a.k - b.k);
     const sign = signs[0] ? { x:signs[0].x, y:signs[0].y } : null;
