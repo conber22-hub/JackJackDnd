@@ -23,8 +23,11 @@ test('walking out of a place onto the road, back again, and in and out of a hous
   expect(await page.evaluate(() => window.DreadDelve.get().floors[0].props.filter(p => p.k === 'signpost' && p.way).length)).toBe(2);
 
   // walk (tap the way out) until the road takes over: its name slides in
-  await expect.poll(async () => { const q = await st(page); if (q.tpl === 'journey') return true;
-    if (await page.evaluate(() => !window.DreadDelve.busy())) await page.evaluate(w => window.DreadDelve.wander.walkTo(w.x, w.y), west); return false; }, { timeout:60_000, intervals:[2500] }).toBe(true);
+  // (the villagers sent indoors: one walking up would start a talk instead of a step)
+  const shoo = () => page.evaluate(() => { document.querySelectorAll('#cardLayer .pop').forEach(c => c.remove()); for (const p of window.DreadDelve.get().floors[0].folk || []) p.gone = true; window.DreadDelve.wander.rt.talk = null; });
+  await expect.poll(async () => { const q = await st(page); if (q.tpl === 'journey') return true; await shoo();
+    // (checked and tapped in one go: a tap meant for the village mustn't land on the road)
+    await page.evaluate(w => { const D = window.DreadDelve; if (D.get().meta.template !== 'journey' && !D.busy()) D.wander.walkTo(w.x, w.y); }, west); return false; }, { timeout:60_000, intervals:[2500] }).toBe(true);
   await expect(page.locator('#wdBanner')).toContainText('Old Svalich Road');
   s = await st(page);
   expect(s.name).toBe('The road to The Gallows Crossroads');

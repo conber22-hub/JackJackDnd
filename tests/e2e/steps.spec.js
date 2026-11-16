@@ -9,9 +9,11 @@ test('footprints in the snow, and a bump against a wall', async ({ page }) => {
   await page.reload(); await page.waitForFunction(() => !!window.DreadDelve);
   await page.locator('[data-act="thRole"][data-k="wander"]').click();
   await page.locator('[data-act="wdBegin"][data-id="vasha-steps"]').click();
-  await page.evaluate(() => { document.querySelectorAll('#cardLayer .pop').forEach(c => c.remove()); const s = window.DreadDelve.get(); s.campaign.wx = { ...(s.campaign.wx || {}), ground:'deep snow' }; });
+  // (the villagers sent indoors: one walking up would start a talk instead of a step)
+  const clear = () => page.evaluate(() => { document.querySelectorAll('#cardLayer .pop').forEach(c => c.remove()); for (const f of window.DreadDelve.get().floors) for (const p of f.folk || []) p.gone = true; window.DreadDelve.wander.rt.talk = null; });
+  await clear(); await page.evaluate(() => { const s = window.DreadDelve.get(); s.campaign.wx = { ...(s.campaign.wx || {}), ground:'deep snow' }; });
   const x0 = await page.evaluate(() => window.DreadDelve.wander.hero().x);
-  await expect.poll(async () => { await page.keyboard.press('a'); return page.evaluate(() => window.DreadDelve.wander.hero().x); }, { timeout:20_000, intervals:[260] }).toBeLessThan(x0 - 2);
+  await expect.poll(async () => { await clear(); await page.keyboard.press('a'); return page.evaluate(() => window.DreadDelve.wander.hero().x); }, { timeout:20_000, intervals:[260] }).toBeLessThan(x0 - 2);
   await expect.poll(() => page.evaluate(() => window.DreadDelve.stepFxCount().prints)).toBeGreaterThanOrEqual(2);
   // into a wall: push north until the hero stops, then once more
   let last = '';
