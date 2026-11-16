@@ -654,6 +654,8 @@ export function buildFloor(L, opt = {}){
     const r = new THREE.Mesh(G.rune, new THREE.MeshBasicMaterial({ color:'#e9a54a', transparent:true, opacity:.85 })); r.position.y = .02; s.add(r); r.userData.spin = 1;
     fv.built.add(s);
   }
+  // a place's ways out (the Wanderer, game/ways.js): a road leaving the map
+  for (const w of f.ways || []) if (showTile(w.y * f.W + w.x)) fv.built.add(exitMarker(w, '#e9a54a'));
   if (f.up && showTile(f.up.y * f.W + f.up.x) && f.exits?.up) fv.built.add(exitMarker(f.up, '#c8cbd6'));
   else if (f.up && showTile(f.up.y * f.W + f.up.x)){
     const s = new THREE.Group(); s.position.set(wx(f.up.x), 0, wz(f.up.y));

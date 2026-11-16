@@ -40,7 +40,7 @@ for (const p of VALLEY_PLACES.filter(p => p.id !== 'mists')) test(`journey to ${
     s.floors.forEach((f, L) => {
       const start = f.up || { x:f.rooms[0].cx, y:f.rooms[0].cy }, seen = reachable(f, start);
       for (const r of f.rooms) assert.ok(seen.has(r.cy * f.W + r.cx) || [...seen].some(i => { const x = i % f.W, y = (i / f.W) | 0; return x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h; }), `${p.id}/${seed} floor ${L}: ${r.name} unreachable`);
-      if (L < s.floors.length - 1){ assert.ok(f.down && seen.has(f.down.y * f.W + f.down.x), `${p.id}/${seed} floor ${L}: the way on is unreachable`); assert.deepEqual(f.down, s.floors[L + 1].up); }
+      if (L < s.floors.length - 1){ assert.ok(f.down && seen.has(f.down.y * f.W + f.down.x), `${p.id}/${seed} floor ${L}: the way on is unreachable`); const up = s.floors[L + 1].up; assert.equal(up.y, f.down.y); assert.equal(up.x, f.down.x <= 2 ? f.W - 3 : 2, 'the next stretch comes in at the opposite edge'); }
       for (const b of f.buildings) for (let y = b.y; y < b.y + b.h; y++) for (let x = b.x; x < b.x + b.w; x++){
         assert.ok(x >= 0 && y >= 0 && x < f.W && y < f.H, `${p.id}: ${b.name} off the map`);
         assert.ok(!walk(f.grid[y * f.W + x]), `${p.id}/${seed} floor ${L}: ${b.name} covers floor at ${x},${y}`);

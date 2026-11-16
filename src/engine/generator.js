@@ -197,7 +197,7 @@ export function layoutFloor(L, W, H, spec, anchor, isLast = true){
     f.corridors.push({ id:f.nextObj++, tiles:[...tiles] });
   }
   const xy = a => a ? { x:a[0], y:a[1] } : null;
-  f.up = anchor ? { ...anchor } : xy(lay.up); f.down = xy(lay.down);
+  f.up = lay.upOwn && lay.up ? xy(lay.up) : anchor ? { ...anchor } : xy(lay.up); f.down = xy(lay.down);   // (upOwn: a road's next stretch comes in at its own edge)
   if (!f.down && !isLast){
     // more floors were asked for than the layout has: the way on is in the room farthest from the way in
     const from = f.up || { x:f.rooms[0].cx, y:f.rooms[0].cy };

@@ -208,6 +208,9 @@ export function genStretch(spec){
   }
   pts.push(exit.x, exit.y);
   lay.paths.push({ w:width, pts });
+  // (and on past both ends to the map's edge: the road comes out of the trees and goes on into them)
+  if (!spec.entry || spec.entry.x <= 2 || spec.entry.x >= N - 3) lay.paths.push({ w:width, pts:[side === 'e' ? N - 2 : 1, entry.y, entry.x, entry.y] });
+  if (!arrive) lay.paths.push({ w:width, pts:[exit.x, exit.y, toX === 2 ? 1 : N - 2, exit.y] });
   const center = []; for (let k = 0; k + 3 < pts.length; k += 2){ let x = pts[k], yy = pts[k + 1]; center.push([x, yy]); while (x !== pts[k + 2] || yy !== pts[k + 3]){ if (x !== pts[k + 2]) x += Math.sign(pts[k + 2] - x); else yy += Math.sign(pts[k + 3] - yy); center.push([x, yy]); } }
   for (const [x, yy] of center) take({ x:x - 1, y:yy - 1, w:3, h:3 }, 1);
   // where they come in: a little clearing so there is always somewhere to stand
@@ -293,6 +296,7 @@ export function genStretch(spec){
       for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (dx * dx + dy * dy <= 5 && gm() < .85) lay.mists.push([cx + dx, cy + dy]); } }
   if (spec.passing) lay.props.push(P('signpost', clamp(exit.x + (side === 'e' ? 2 : -2), 2, N - 3), clamp(exit.y + 2, 2, N - 3)));
   if (!arrive) lay.down = [exit.x, exit.y];
+  if (spec.exits?.up){ lay.up = [entry.x, entry.y]; lay.upOwn = true; }   // (where it comes in, the way back: its own square, not the last stretch's way on)
   if (lay.riverNote && lay.rooms[0]) lay.rooms[0][6] = [lay.rooms[0][6], lay.riverNote].filter(Boolean).join(' ');   // the DM hears about the water at the start
   // keep props off water and inside the map
   lay.props = lay.props.filter(p => p[1] >= 1 && p[2] >= 1 && p[1] < N - 1 && p[2] < N - 1);
@@ -322,11 +326,11 @@ export function journeySpecs(j){
     const er = mulberry32(hashSeed(`${i}~${j.n}~${j.seed}~${j.from}>${j.to}`)); er(); er();   // (warm the dice: neighbouring seeds start alike)
     const ev = rollEvents(er, { gaze:j.gaze, bloom:j.bloom, avoid:used }); used.push(...ev.map(e => e.label));
     const name = st.of > 1 ? `${road.name} · ${st.k + 1} of ${st.of}` : road.name;
-    const exits = { up:i ? 'Back along the road' : null, down:last ? null : st.end ? `On toward ${placeById(plan.stretches[i + 1].to).name}` : `On along ${road.name}` };
+    const exits = { up:i ? 'Back along the road' : `Back to ${from.name}`, down:last ? null : st.end ? `On toward ${placeById(plan.stretches[i + 1].to).name}` : `On along ${road.name}` };
     const { layout, exit } = genStretch({ seed:`${road.id}|${st.from}>${st.to}|${st.k}|${entry ? entry.x + ',' + entry.y : 'start'}`, eventSeed:`${j.seed}|${j.n}|${i}`,
       road, entry, side, arrive:last ? to : null, passing:st.end && !last ? to : null, events:ev, name, exits,
       startName:i === 0 ? `Leaving ${from.name}` : road.name, startNotes:i === 0 ? `The road out of ${from.name}.` : '' });
-    if (!last){ entry = { ...exit }; side = side === 'e' ? 'w' : 'e'; }
+    if (!last) entry = { x:exit.x <= 2 ? N - 3 : 2, y:exit.y };   // (the next comes in at the opposite edge, level with this one's end: the road goes on the same way)
     return { theme:last && ['village', 'town'].includes(to.kind) ? 'village' : 'woods', layout, road:road.id, gaze:j.gaze, bloom:!!j.bloom };   // (road, gaze, bloom: the roadside horrors, engine/horror-roads.js)
   });
 }

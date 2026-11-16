@@ -25,7 +25,8 @@ export function goInside(L, i){
   const b = state.floors[L]?.buildings?.[i]; if (!b){ toast('No such building.'); return; }
   const it = interiorOf(L, i), plan = interiorPlan(it), ground = interiorGround(it);
   const size = Math.max(...plan.floors.map(f => Math.max(f.W, f.H)));
-  const out = plan.floors[ground].out || plan.floors[ground].down || [plan.floors[ground].rooms[0][0] + 1, plan.floors[ground].rooms[0][1] + 1];
+  const out = plan.floors[ground].out || plan.floors[ground].front || plan.floors[ground].down ||   // (in at the front doorway)
+    [plan.floors[ground].rooms[0][0] + 1, plan.floors[ground].rooms[0][1] + 1];
   goToMap({ meta:{ name:b.name || plan.name, seed:it.seed, floors:plan.floors.length, size, template:'interior', interior:it },
     key:`inside:${state.meta.mapId || state.meta.seed}:${L}:${i}`, kind:'place', at:{ floor:ground, x:out[0], y:out[1] } });
   ui.floor = ground;

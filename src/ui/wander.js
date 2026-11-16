@@ -15,9 +15,11 @@ import { currentTurn } from '../game/combat.js';
 import { moveAllowance } from '../game/rules.js';
 import { rangeCheck } from '../engine/targeting.js';
 import { W, rt, hero, members, wandering, startWander, continueWander, leaveWander, stepHero, walkTo, hereAction, talkView, chooseTalk, talkTo,
-  heroAttack, heroDodge, heroTurnAct, heroFeatures, heroFeature, endHeroTurn, aim, target, targets, attackFor, nextWeapon, attacksLeft, myTurn, fightTick, destinations, setOut, rest, saveNow,
+  heroAttack, heroDodge, heroTurnAct, heroFeatures, heroFeature, endHeroTurn, aim, target, targets, attackFor, nextWeapon, attacksLeft, myTurn, fightTick, destinations, setOut, travelTo, rest, saveNow,
   pack, toggleEquip, usePotion, coinsGp, shopHere, buyPotion, journal, approvalOf, levelReady, partyLevel, nextLevelXp, levelUpHero, sheetOf, spellList, heroCast,
   SLOTS, slotMeta, canSaveSlot, saveToSlot, loadFromSlot } from '../game/wander.js';
+import { passage, tapTarget } from '../game/ways.js';
+import { veil, banner } from './passage.js';
 import { sfx } from '../audio/sound.js';
 import { loyalty } from '../engine/wander-life.js';
 import { hh, hhOn, hhHost, hhPad, addHost, setHandheld, skipBoot, shellItem } from './handheld.js';
@@ -136,7 +138,7 @@ const go = page => () => { menu.page = page; menu.i = 0; };
 let giving = null;   // the potion being given (the pack's 'give' page)
 function menuItems(){
   const road = state.meta.template === 'journey', fight = state.combat.active;
-  if (menu.page === 'travel') return [...destinations().slice(0, 9).map(d => ({ label:d.name, sub:`${d.stretches} stretch${d.stretches === 1 ? '' : 'es'} of road${d.via.length ? ` · by ${d.via.join(', ')}` : ''}`, run:() => { closeMenu(); setOut(d.id); } })), back()];
+  if (menu.page === 'travel') return [...destinations().slice(0, 9).map(d => ({ label:d.name, sub:`${d.stretches} stretch${d.stretches === 1 ? '' : 'es'} of road${d.via.length ? ` · by ${d.via.join(', ')}` : ''}`, run:() => { closeMenu(); travelTo(d.id); } })), back()];
   if (menu.page === 'keys' || menu.page === 'journal') return [back()];
   if (menu.page === 'states'){ const out = [], can = canSaveSlot();
     for (let n = 0; n < SLOTS; n++){ const m = slotMeta(n);
@@ -366,7 +368,12 @@ function onTap(tile, tokId){
   if (o?.kind === 'monster' && state.combat.active){ if (rt.target === o.id) heroAttack(); else rt.target = o.id; return; }
   if (o?.flags?.companion && o.kind === 'npc' && Math.max(Math.abs(o.x - t.x), Math.abs(o.y - t.y)) <= 1){ talkTo(o.flags.companion); return; }
   if (o?.id === t.id){ press('a'); return; }
-  if (tile && tile.floor === t.floor) walkTo(tile.x, tile.y);
+  if (tile && tile.floor === t.floor){
+    // a building: to its doorstep and in (game/ways.js)
+    const door = tapTarget(tile.x, tile.y);
+    if (door){ if (door.x === t.x && door.y === t.y) door.then(); else if (walkTo(door.x, door.y)) setTimeout(() => { const h = hero(); if (h && h.x === door.x && h.y === door.y) door.then(); }, 900); return; }
+    walkTo(tile.x, tile.y);
+  }
 }
 
 let ready = false;
@@ -376,6 +383,8 @@ export function ensureWander(){
   addHost({ id:'wander', active:wandering, press:b => { if (!b || !wandering()) return; press(b); renderHud(); }, legend:hhLegend,
     health:() => { const h = hero(); return h ? Math.max(0, h.hp) / Math.max(1, h.maxHp) : 1; }, fight:() => !!state.combat.active });
   ui.wanderTap = null;
+  // a crossing between maps (game/ways.js): the fog, the name, the sound
+  passage.veil = veil; passage.banner = banner; passage.sting = id => tune(id === 'door' ? 'door' : 'stairs');
   addEventListener('keydown', onKey, { capture:true });
   document.addEventListener('click', onClick, true);
   addEventListener('gamepadconnected', e => { if (wandering()) toast(`🎮 ${e.gamepad.id.split('(')[0].trim() || 'Controller'} ready.`); });

@@ -202,6 +202,8 @@ export function takeStairs(t){
   const dir = onStairs(t); if (!dir) return;
   const from = t.floor;
   t.floor += dir === 'down' ? 1 : -1;
+  // where the stairs come out (a dungeon's line up; a road's next stretch begins at its own edge)
+  { const to = state.floors[t.floor], land = dir === 'down' ? to?.up : to?.down; if (land && (land.x !== t.x || land.y !== t.y)){ t.x = land.x; t.y = land.y; } }
   const occ = tokenAt(t.floor, t.x, t.y); if (occ && occ.id !== t.id){ const free = nearestOpen(t.floor, t.x, t.y); if (free){ t.x = free.x; t.y = free.y; } }
   log(`${t.name} ${dir === 'down' ? 'descends to' : 'climbs to'} ${state.floors[t.floor].name}.`);
   // outside a fight, the rest of the party nearby goes with them (🚩 Stays keeps one behind), gathering round the stairs

@@ -81,6 +81,7 @@ export { setDecay, decayOf, decayLines } from './game/decay.js';
 export { setBloom, bloomOf } from './game/bloom.js';   // 🌿 the Bloom in the woods
 export { horrorHere, showHorror, readHorror } from './game/horror.js';
 export * as wander from './game/wander.js';   // 🗡 the Wanderer (game/wander.js): playing with the game as the DM
+export * as ways from './game/ways.js';   // 🚪 the ways between places (game/ways.js): way outs, the road's ends, doors
 export * as handheld from './ui/handheld.js';   // 🕹 the handheld skin: the phone as the controller
 export * as pocket from './ui/pocketsheet.js';   // 📖 the pocket sheet (ui/pocketsheet.js): the hero's sheet on the handheld's screen
 export * as shells from './ui/shells.js';   // 🎨 the shells and stickers (ui/shells.js): the pack and the sticker book

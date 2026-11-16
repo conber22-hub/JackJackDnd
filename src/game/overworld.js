@@ -34,7 +34,7 @@ export function valley(){
 export const bloomLoose = () => (state.campaign.session || 0) >= 3 || (state.campaign.clocks?.bloom || 0) > 1;
 
 // Set out: builds the road from here to there (keeps the party, the campaign and their characters).
-export function travel(to){
+export function travel(to, { quiet = false } = {}){   // (quiet: the Wanderer slides the road's name in itself)
   const V = valley(), dest = placeById(to), plan = planJourney(V.at, to);
   if (!dest || !plan){ toast('No road goes there from here.'); return; }
   V.journeys++;
@@ -54,18 +54,18 @@ export function travel(to){
   if (plantAmbushes(plan.path).length) state.floors.forEach((_, L) => buildFloor(L));   // the Count's court waits on the road
   ui.tab = 'valley';
   log(`🧭 The party sets out for ${dest.name} (${plan.path.map(id => placeById(id).name).join(' → ')}).`);
-  toast(`${plan.stretches.length} stretch${plan.stretches.length === 1 ? '' : 'es'} of road to ${dest.name}.`);
+  if (!quiet) toast(`${plan.stretches.length} stretch${plan.stretches.length === 1 ? '' : 'es'} of road to ${dest.name}.`);
   changed();
 }
 
 // They are there: the map marks it, and the DM gets the place's read-aloud.
-export function arrive(){
+export function arrive({ quiet = false } = {}){   // (quiet: the Wanderer slides the name in itself)
   const V = valley(); if (!V.journey) return;
   const p = placeById(V.journey.to);
   passTime(V.journey.hours || 0);
   V.at = p.id; if (!V.visited.includes(p.id)) V.visited.push(p.id); V.journey = null;
   ui.valleySel = p.id;
-  showCard({ kind:'', title:p.name, sub:clockText(), flair:p.blurb, lines:V.hour >= 21 || V.hour < 5 ? ['<span class="muted">They arrive after dark. Doors stay shut; something is always awake.</span>'] : [] });
+  if (!quiet) showCard({ kind:'', title:p.name, sub:clockText(), flair:p.blurb, lines:V.hour >= 21 || V.hour < 5 ? ['<span class="muted">They arrive after dark. Doors stay shut; something is always awake.</span>'] : [] });
   log(`🧭 The party reaches ${p.name} (${clockText()}).`);
   changed(); renderPanel();
 }

@@ -29,6 +29,7 @@ import { currentTurn, moveAllowance } from '../game/rules.js';
 import { canCast, slotLevels, left } from '../game/resources.js';
 import { playerAnswer } from '../game/moves.js';
 import { tune, coachTick, coachLearn, coachDone } from './hhlife.js';
+import { uncover, banner } from './passage.js';
 import { askD20 } from '../game/night.js';
 import { sendHost } from '../net/table.js';
 import { cardAct } from './cards.js';
@@ -373,9 +374,18 @@ function frame(now){
   try { camFrame(dt, pad, { focus:miniFocus(t), me:t, other:lk || (cur && cur.id !== t.id ? cur : null), otherRate:lk ? 4 : 3 }); } catch (e){ console.warn(e); }
   try { lookThrough(t, now); } catch (e){ console.warn(e); }
   feelHits(t, gp);
-  moments(t); surgeWatch(t);
+  moments(t); surgeWatch(t); placeWatch(t);
   try { coachTick(() => snapshot(t)); } catch (e){ console.warn(e); }
   if (now - lastHud > 180){ lastHud = now; renderHud(); }
+}
+// The DM moved the party to another map (or the road went on): the fog clears and the name slides in (ui/passage.js)
+let placeWas = '';
+function placeWatch(t){
+  const f = state.floors[t.floor], key = `${state.meta.mapId || state.meta.name}:${state.meta.template === 'journey' || state.meta.template === 'interior' ? t.floor : ''}`;
+  if (key === placeWas) return;
+  const first = !placeWas; placeWas = key; if (first) return;
+  uncover(); tune('stairs');
+  banner({ title:state.meta.template === 'journey' ? f?.name || state.meta.name : state.meta.name, sub:state.campaign?.day || '' });
 }
 // The turn coming round, a fight ending, a hurt or a heal, a reaction to take: a buzz and a tune
 function moments(t){

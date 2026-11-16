@@ -36,6 +36,7 @@ import { turnAction, pausedMover, autoAnswer } from './moves.js';
 import { moveAllowance } from './rules.js';
 import { travel, arrive, enterPlace, valley, passTime, clockText, springEvent } from './overworld.js';
 import { court } from './court.js';
+import { ensureWays, wayAfterStep, wayOnBump, arriveThere, crossingNow, readSignpost, signpostNear, roadsOutOf, passage, bannerHere, doorwayHere, goOutside } from './ways.js';
 import { longRest, shortRest, canCast, useFeature, left } from './resources.js';
 import { loadState, changed, flushSave, loadWanderSave, wanderCheckpoint, deserialize, wanderSlot, saveWanderSlot, WANDER_SLOTS } from './session.js';
 import { showCard, toast } from '../ui/hud.js';
@@ -53,7 +54,8 @@ const night = () => { const h = valley().hour; return h >= 20 || h < 6; };
 const onRoad = () => state.meta.template === 'journey';
 
 // What only this device keeps while playing (never saved): the hero's trail, the aim, whose turn was whose.
-export const rt = { trail:[], target:null, atk:null, heroKey:'', attacks:0, cast:false, bonus:false, acting:'', actAt:0, lastBusy:0, endAt:0, talk:null, seen:new Set(), round:0, unseen:0, hpWas:null, focus:null, look:null };
+export const rt = { walkN:0, tapTo:null, step:null, trail:[], target:null, atk:null, heroKey:'', attacks:0, cast:false, bonus:false, acting:'', actAt:0, lastBusy:0, endAt:0, talk:null, seen:new Set(), round:0, unseen:0, hpWas:null, focus:null, look:null };
+export const freshRun = () => fresh();
 const fresh = () => Object.assign(rt, { trail:[], target:null, atk:null, heroKey:'', attacks:0, cast:false, bonus:false, acting:'', actAt:0, lastBusy:0, endAt:0, talk:null, round:0, unseen:0, hpWas:null });
 
 /* ---------- starting and leaving ---------- */
@@ -63,6 +65,7 @@ export function enterView(){
   autoAnswer.on = true;
   document.body.classList.add('wander');
   const h = hero(); if (!h) return;
+  ensureWays();   // (a place's ways out, with their signposts: game/ways.js)
   goFloor(h.floor, false);
   // low and close behind the hero (after the load's own camera move has finished)
   const close = () => camTo(new THREE.Vector3(wx(h.x), floorY(h.floor), wz(h.y)), new THREE.Vector3(0, 10.5, 8.5), .8);
@@ -393,7 +396,7 @@ export function heroCast(entry){
 }
 
 /* ---------- walking ---------- */
-const heroBusy = () => { const h = hero(); return !h || !!tokenViews.get(h.id)?.anim || pausedMover(h.id); };
+const heroBusy = () => { const h = hero(); return !h || crossingNow() || !!tokenViews.get(h.id)?.anim || pausedMover(h.id); };
 const anyBusy = () => [...tokenViews.values()].some(tv => tv.anim) || state.tokens.some(t => pausedMover(t.id));
 export const myTurn = () => state.combat.active && currentTurn()?.id === W()?.heroTok;
 // The camera glides after the hero, keeping however the player has turned it: this only says where to look, and the
@@ -406,6 +409,7 @@ export function stepHero(dx, dy){
   const t = hero(); if (!t || t.dead || t.hp <= 0 || rt.talk || heroBusy()) return false;
   if (state.combat.active && !myTurn()) return false;
   const tries = dx && dy ? [[dx, dy], [dx, 0], [0, dy]] : [[dx, dy]];
+  rt.step = [dx, dy]; rt.walkN++;   // (a step drops any tap's walk still finishing)
   for (const [ax, ay] of tries){
     const x = t.x + ax, y = t.y + ay, way = resolvePath(t, x, y);
     if (!way || way.path.length !== 1) continue;
@@ -417,6 +421,8 @@ export function stepHero(dx, dy){
     if (!state.combat.active) afterStep(t);
     return true;
   }
+  // (a step that didn't go: into a front door, out of a doorway, on off the end of the road: game/ways.js)
+  if (!state.combat.active && wayOnBump(t, dx, dy)) return true;
   return false;
 }
 // Walk to a tapped square (the touch way): the shortest path, then the same checks as a step.
@@ -433,9 +439,14 @@ export function walkTo(x, y){
   x = way.path.at(-1).x; y = way.path.at(-1).y;
   const from = { x:t.x, y:t.y };
   if (!doMove(t, x, y, { path:way.path })) return false;
+  rt.step = null; rt.tapTo = { x, y, map:state.meta.mapId };   // (a tap's walk: the square tapped counts, not the way it was walked)
   rt.trail = pushTrail(rt.trail, way.path.length > 1 ? way.path[way.path.length - 2] : from, 6);
   follow(t, .6);
-  if (!state.combat.active) setTimeout(() => afterStep(t), 120 * way.path.length);
+  // (once the walk is done: where they end up is what counts)
+  // (only the latest walk counts, and only on the map it began on)
+  if (!state.combat.active){ const t0 = performance.now(), n = ++rt.walkN, map = state.meta.mapId;
+    const done = () => { if (n !== rt.walkN || map !== state.meta.mapId) return; if (tokenViews.get(t.id)?.anim && performance.now() - t0 < 15000) setTimeout(done, 90); else afterStep(t); };
+    setTimeout(done, 120); }
   return true;
 }
 function afterStep(t){
@@ -463,26 +474,16 @@ function direct(t){
     if (e.enc){ springEvent(L, e.id); showCard({ kind:'seep', title:e.label, flair:e.text }, false); beginFight('none'); return; }
     if (!rt.seen.has(key) && !w.seen.includes(key)){ rt.seen.add(key); w.seen.push(key); showCard({ kind:'', title:e.label, flair:e.text }, false); }
   }
+  // off the end of the road, back off its start, or out of a place by one of its ways (game/ways.js)
+  if (wayAfterStep(t, rt.step)) return;
   if (onRoad()){
-    // the end of the stretch: on along the road, or there
+    // the last stretch's end: there
     const end = roadEnd(f), last = !f.down;
-    if (!last && onStairs(t) === 'down'){ downTheRoad(t); return; }
     if (last && end && cheb(end, t) <= 1){ arriveThere(); return; }
     if (Math.random() < ambushChance({ quiet:w.quiet, gaze:state.dread || 1, night:night(), ambushes:w.ambushes })){ ambush(t); return; }
     const m = Math.random() < momentChance({ quiet:w.quiet, had:w.momentAt === `${state.meta.mapId}:${L}` }) && nextMoment(MOMENTS, w.moments);
     if (m){ startMoment(m); return; }
   }
-}
-function downTheRoad(t){
-  takeStairs(t); W().quiet = 0; rt.trail = [];
-  goFloor(t.floor, false); follow(t, .8);
-  toast(state.floors[t.floor].name);
-  saveNow();
-}
-function arriveThere(){
-  const V = valley(), to = V.journey?.to; if (!to) return;
-  arrive(); enterPlace(to); W().quiet = 0; rt.trail = []; fresh();
-  placeCompanions(); enterView(); questEvent({ k:'arrive', place:to }); changed(); saveNow();
 }
 // Something comes out of the trees: a pack the party can take (or not quite), ahead and to the sides.
 function ambush(t){
@@ -635,6 +636,8 @@ export function hereAction(){
   if (st && !onRoad()) return { label:st === 'down' ? `Go down to ${state.floors[L + 1].name}` : `Go up to ${state.floors[L - 1].name}`, run:() => { takeStairs(t); rt.trail = []; goFloor(t.floor, false); follow(t, .8); saveNow(); } };
   const ev = (f.events || []).find(e => !e.done && cheb(e, t) <= 1);
   if (ev) return { label:`Look: ${ev.label}`, run:() => showCard({ kind:'', title:ev.label, flair:ev.text }, false) };
+  if (signpostNear(t)) return { label:'Read the signpost', run:() => readSignpost(t) };
+  const out = doorwayHere(t); if (out) return { label:out, run:() => goOutside(t) };
   if (pal) return { label:`Talk to ${pal.name}`, run:() => talkTo(pal.flags.companion) };
   return null;
 }
@@ -643,18 +646,27 @@ export function hereAction(){
 // Where the party can set out for from here (the valley's roads): [{ id, name, stretches, hours }]
 // Every place the valley's roads reach from here, nearest first; the Mists and the castle are not for walking up to.
 export function destinations(){
-  const at = valley().at;
-  return VALLEY_PLACES.filter(p => p.id !== at && !['mists', 'castle'].includes(p.id))
+  const at = valley().at, near = roadsOutOf(at), been = valley().visited || [];
+  return VALLEY_PLACES.filter(p => p.id !== at && !['mists', 'castle'].includes(p.id) && (near.includes(p.id) || been.includes(p.id)))
     .map(p => { const plan = planJourney(at, p.id); return plan ? { id:p.id, name:p.name, stretches:plan.stretches.length, via:plan.path.slice(1, -1).map(id => placeById(id)?.name).filter(Boolean) } : null; })
     .filter(Boolean).sort((a, b) => a.stretches - b.stretches);
 }
-export function setOut(to){
+export function setOut(to, { quiet = false } = {}){
   if (state.combat.active || onRoad()) return false;
-  travel(to);
+  travel(to, { quiet });
   if (!onRoad()) return false;
   W().quiet = 0; fresh(); enterView();
-  const p = placeById(to); showCard({ kind:'', title:`The road to ${p.name}`, sub:clockText(), flair:'The last house falls behind. The fog closes in, and the trees come right down to the road.' }, false);
+  const p = placeById(to);
+  if (!quiet) showCard({ kind:'', title:`The road to ${p.name}`, sub:clockText(), flair:'The last house falls behind. The fog closes in, and the trees come right down to the road.' }, false);
   changed(); saveNow(); return true;
+}
+// The menu's Travel, as a crossing (the screen fogs over, the road's name slides in)
+export function travelTo(to){
+  if (state.combat.active || onRoad() || crossingNow()) return false;
+  if (!passage.veil) return setOut(to);
+  passage.sting?.('stairs');
+  passage.veil(() => { if (setOut(to, { quiet:true })) passage.banner?.(bannerHere(`On the road to ${placeById(to)?.name || to}.`)); });
+  return true;
 }
 // Rest: in a place, the night (everyone whole again, the clock on eight hours); on the road, an hour (and a risk).
 export function rest(){
