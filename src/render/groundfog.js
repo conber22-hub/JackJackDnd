@@ -22,6 +22,8 @@ export function mistWanted(){
     k = /thick fog|dense fog|heavy fog/.test(w) ? 1 : /fog/.test(w) ? .75 : /mist|haze/.test(w) ? .5 : 0; }
   // a still dawn: mist in the low places, gone by mid-morning
   if (!k && hour != null && hour >= 4 && hour < 8 && wind.force.value < .4 && !/rain|snow|storm|sleet|pour|blizzard/.test(wx?.kind || '')) k = hour < 7 ? .4 : .2;
+  // night on the road: the mist comes up out of the trees and lies along it
+  if (hour != null && (hour >= 21 || hour < 4) && state?.meta?.template === 'journey') k = Math.max(k, .45);
   return k;
 }
 

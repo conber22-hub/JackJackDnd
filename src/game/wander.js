@@ -34,7 +34,8 @@ import { doMove, resolvePath, takeStairs, onStairs, goFloor, nearestOpen, setDre
 import { rollInitiative, nextTurn, autoTurn, endCombat, doAttack, currentTurn, partySees, riseFrom, removeToken, castSpell, heal } from './combat.js';
 import { turnAction, pausedMover, autoAnswer } from './moves.js';
 import { moveAllowance } from './rules.js';
-import { travel, arrive, enterPlace, valley, passTime, clockText, springEvent } from './overworld.js';
+import { travel, arrive, enterPlace, valley, passTime, clockText, springEvent, hourHooks } from './overworld.js';
+import { sfx } from '../audio/sound.js';
 import { court } from './court.js';
 import { findNear, findLabel, useFind } from './finds.js';
 import { bubble } from '../render/glints.js';
@@ -702,3 +703,16 @@ export function rest(){
   else { for (const m of list){ m.dead = false; if (m.hp <= 0) m.hp = 1; } longRest(list); passTime(8); questEvent({ k:'rest', place:valley().at }); }
   syncTokens(); changed(); saveNow(); return true;
 }
+
+/* ---------- 🔔 the valley's hours, heard ----------
+   In a village or a town, when the clock passes seven in the evening, the church bell tolls three times and the
+   shutters close all along the street (the windows and the lamps light with the hour: render/props.js windowGlow). */
+let bellWas = null;
+hourHooks.push(() => {
+  const V = valley(), was = bellWas; bellWas = { day:V.day, hour:V.hour };
+  if (!wandering() || !was || onRoad()) return;
+  const passed = V.day > was.day ? V.hour >= 19 || was.hour < 19 : was.hour < 19 && V.hour >= 19;
+  if (!passed || !['village', 'town'].includes(placeById(V.at)?.kind)) return;
+  [0, 1700, 3400].forEach(ms => setTimeout(() => sfx('toll', false), ms));
+  toast('🔔 The church bell tolls for dusk. All along the street, the shutters close.');
+});

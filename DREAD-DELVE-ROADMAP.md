@@ -16,6 +16,23 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.29 — the world joined up: ways between places, things to find, how walking feels, the valley's hours
+
+The valley played like a set of separate boards. Now it plays like one place you walk through, the way the old pocket-console adventures joined their towns and routes. All of it in the Wanderer; the table's handhelds get the crossings, the names and the footsteps too.
+- **🚪 The ways between places** (`game/ways.js`, pure `engine/ways.js`, `ui/passage.js`):
+  - **Ways out:** every road that leaves a place has its way out on the side of the map it goes (`placeWays`: the walkable square farthest that way, a road out preferred), drawn as a way-out light, with a signpost beside it to read (Ⓐ: the roads out and how far). Step onto it and the road begins.
+  - **The road:** a journey's stretches now join edge to edge and carry on the same way (`journeySpecs`: the next stretch comes in at the opposite edge, level with where the last ran off; `layoutFloor` honours a stretch's own way in, `lay.upOwn`). Walk off the end and the next stretch is there; walk back off its start and the last one is (`offTheEdge`); back off the first and you are home beside the way you left by, the journey called off. Stairs between floors now land on the next floor's own way in when it isn't directly below (`takeStairs`), so DM nights travel the same roads.
+  - **Arriving:** in at the way that road comes by, a step or two in, the companions behind (`inAtWay`).
+  - **Buildings:** walk into a front door from its doorstep and the party is inside (`frontDoor`, `doorWalkedInto`; the house's inside from `engine/interiors.js`, arriving at its front doorway); step out of the doorway (`outOfDoorway`), or Ⓐ **Go outside**, and they're back on the doorstep. A tap on a house walks to its door and in. Boarded-up houses stay shut.
+  - **Each crossing:** the fog closes in from the edges and clears (`veil`), the place's name, the hour and the weather slide in at the top (`banner`, with a line on the first visit), and a sound. A player's handheld at the table gets the clearing and the name when the DM moves the party (`placeWatch` in `ui/tablehh.js`).
+  - The menu's **Travel** lists the roads out of here and anywhere already walked to.
+- **✨ Finding things** (`game/finds.js`, `engine/finds-lite.js`, `data/finds-lite.js`, `render/glints.js`): **glints** on the ground (some seen only up close by a sharp-eyed hero, against their passive Perception) to pick up: coins, keepsakes, a healing draught, or **torn pages** for the journal (**Pages found**, a writer's pages in order); **gravestones, shrines, statues, wells, milestones, notices and carvings** to read; **barrels, crates, sacks, chests, desks** and the like worth one search (mostly nothing, said in a way worth reading). Placed once a floor, kept with the map. A first, small set of words; ChatGPT's fuller pack (`docs/chatgpt/finds.md`) will take over through the same three calls.
+  - **A "!"** over a creature that sees the party, and a held breath before the fight; **a "?"** over the hero when something unseen is close.
+  - **Danger has a place:** ambushes on the road come out of cover (`coverAround`: trees, brush, dead trees and fog round the hero make them up to twice as likely; the open road a third as likely). A new hero's first ambush still comes.
+- **👣 How walking feels** (`engine/underfoot.js`, `render/stepfx.js`, sounds in `audio/sound.js`): each step leaves what's underfoot (a puff off a dry road, a spatter in the wet, droplets and a ring in a ford or a puddle, footprints in the snow that fade over a while, leaves flicked up from brush and crops) with its own sound; walking into a wall is a bump, heard, with a small shake, the hero facing the way they tried; the camera leans a little ahead of the walk; stepping stones lie across the fords. The table's handhelds too, for the player's own hero.
+- **🔔 The valley's hours:** in a village or a town the church bell tolls for dusk and the shutters close; the lampposts are lit with the windows at dusk and put out at dawn; on the road at night the mist comes up out of the trees.
+- **Coming from the others:** ChatGPT's region music (`docs/chatgpt/region-music.md`: a loop for each part of the valley) and fuller finds pack; Muse's animals (`docs/muse/brief-12.md`: dogs, cats, ravens, rats, bats, sheep and a crow that follows the party).
+
 ## v1.28 — one button, one job; touch; Action Surge; clear doorways
 
 From the first table night on the handhelds.

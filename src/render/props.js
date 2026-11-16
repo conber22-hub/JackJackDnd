@@ -94,7 +94,9 @@ const BUILD = {
       box(g, .23 + Math.round(r() * 4) * .02, .15, .34 - row * .05, greys[Math.floor(r() * 4)], -.375 + k * .25 + (row % 2) * .12, .075 + row * .145, (r() - .5) * .05);
   },
   fence(g){ for (const x of [-.45, .45]) box(g, .08, .7, .08, DARK, x, .35, 0); for (const y of [.3, .58]) box(g, 1, .06, .05, WOOD, 0, y, 0); },
-  lamppost(g){ cyl(g, .04, .06, 1.7, IRON, 0, .85, 0, METAL); box(g, .3, .04, .04, IRON, .12, 1.65, 0, METAL); box(g, .14, .2, .14, '#ffcf7a', .24, 1.5, 0, GLOW); },
+  lamppost(g){ cyl(g, .04, .06, 1.7, IRON, 0, .85, 0, METAL); box(g, .3, .04, .04, IRON, .12, 1.65, 0, METAL);
+    // (its lamp is lit at dusk and put out at dawn, with the windows: windowGlow, from the valley's clock)
+    const lamp = box(g, .14, .2, .14, '#ffcf7a', .24, 1.5, 0, { e:'#ffb060', ei:1.6, r:1, lamp:1 }); if (lamp?.material && !WINDOWS.has(lamp.material)){ WINDOWS.add(lamp.material); windowK = -1; } },
   signpost(g){ box(g, .08, 1.4, .08, DARK, 0, .7, 0); const a = box(g, .7, .14, .04, LIGHT, .25, 1.2, 0); a.rotation.z = .05; const b = box(g, .6, .14, .04, LIGHT, -.2, .95, 0); b.rotation.y = .5; },
   trough(g){ box(g, .55, .35, 1.6, WOOD, 0, .18, 0); box(g, .44, .02, 1.48, '#1d2a30', 0, .34, 0, { r:.2 }); },
   gravestone(g){ box(g, .45, .55, .1, '#8a8780', 0, .28, 0); cyl(g, .225, .225, .1, '#8a8780', 0, .55, 0).rotation.x = Math.PI / 2; box(g, .5, .05, .7, '#3a3a2a', 0, .03, .3); },
