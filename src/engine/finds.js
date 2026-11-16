@@ -9,13 +9,18 @@ const inside = (x, y, r) => r && x >= r.x && y >= r.y && x < r.x + r.w && y < r.
 export function placeFinds(floor, { seed = '', gaze = 1, taken = [] } = {}){
   if (!floor || !Number.isInteger(floor.W) || !Number.isInteger(floor.H) || floor.W <= 0 || floor.H <= 0) return [];
   const valid = (x, y) => Number.isInteger(x) && Number.isInteger(y) && x >= 0 && y >= 0 && x < floor.W && y < floor.H;
-  const props = (floor.props || []).filter(p => valid(p.x, p.y));
-  const open = [...new Set((floor.open || []).filter(p => Array.isArray(p) && valid(...p)).map(p => key(...p)))].map(k => k.split(',').map(Number));
-  const opens = new Set(open.map(p => key(...p))), paths = new Set((floor.path || []).map(p => key(...p))), occupied = new Set(props.map(p => key(p.x, p.y)));
+  // Canonical geometry: adapter ordering, duplicate cells and rendering metadata are not map changes.
+  const cells = list => [...new Set((list || []).filter(p => Array.isArray(p) && valid(...p)).map(p => key(...p)))].map(k => k.split(',').map(Number)).sort((a,b) => a[1]-b[1] || a[0]-b[0]);
+  const compareProps = (a,b) => a.y-b.y || a.x-b.x || (a.kind < b.kind ? -1 : a.kind > b.kind ? 1 : 0);
+  // All props obstruct glints, including ones without content. Their extra fields do not enter the seed.
+  const props = [...new Map((floor.props || []).filter(p => p && valid(p.x,p.y)).map(p => [JSON.stringify([p.kind,p.x,p.y]), {kind:p.kind,x:p.x,y:p.y}])).values()].sort(compareProps);
+  const open = cells(floor.open), path = cells(floor.path);
+  const rooms = (floor.rooms || []).map(r => ({x:r.x,y:r.y,w:r.w,h:r.h,name:r.name || ''}));
+  const opens = new Set(open.map(p => key(...p))), paths = new Set(path.map(p => key(...p))), occupied = new Set(props.map(p => key(p.x, p.y))), reserved = new Set();
   // Gaze and collected ids must not influence the layout or its pre-rolled rewards.
-  const stamp = JSON.stringify([seed, floor.W, floor.H, floor.kind, open, floor.path || [], props, floor.rooms || [], floor.place || floor.name || '']);
-  const rng = random(stamp), prefix = hash(stamp).toString(36), finds = [], usedText = new Set();
-  const add = f => finds.push({ id:`find-${prefix}-${finds.length}`, hidden:false, dc:0, ...f });
+  const stamp = JSON.stringify([seed, floor.W, floor.H, floor.kind, open, path, props, rooms, floor.place || floor.name || '']);
+  const rng = random(stamp), prefix = hash(stamp).toString(36), finds = [], usedText = new Set(), usedPages = new Set();
+  const add = f => { reserved.add(key(f.x,f.y)); finds.push({ id:`find-${prefix}-${f.kind}-${f.on || 'ground'}-${f.x}-${f.y}`, hidden:false, dc:0, ...f }); };
   const read = (type, prop, position = [prop.x, prop.y]) => {
     const location = String(floor.place || floor.name || (floor.rooms || []).find(r => inside(prop.x, prop.y, r))?.name || '').toLowerCase();
     const where = location.includes('vallaki') ? 'vallaki' : location.includes('krezk') ? 'krezk' : floor.kind === 'village' ? 'village' : 'any';
@@ -29,8 +34,8 @@ export function placeFinds(floor, { seed = '', gaze = 1, taken = [] } = {}){
     const raw = roll(list, rng), out = { say:raw.say, gp:raw.gp || 0, trinket:null, page:null, potion:raw.potion || null };
     if (raw.trinket) out.trinket = clone(TRINKETS[Math.floor(rng() * TRINKETS.length)]);
     if (raw.page){
-      const pages = PAGES.filter(p => p.where.includes(floor.kind));
-      if (pages.length) out.page = clone(pages[Math.floor(rng() * pages.length)]);
+      const pages = PAGES.filter(p => p.where.includes(floor.kind) && !usedPages.has(p.id));
+      if (pages.length){ out.page = clone(pages[Math.floor(rng() * pages.length)]); usedPages.add(out.page.id); }
       else out.say = 'The paper has washed blank. Nothing remains to read.';
     }
     return out;
@@ -38,7 +43,7 @@ export function placeFinds(floor, { seed = '', gaze = 1, taken = [] } = {}){
   for (const p of props){
     if (['gravestone','statue','shrine','well','milestone'].includes(p.kind)) read(p.kind, p);
     if (['village','town'].includes(floor.kind) && ['cottage','house','hall','signpost'].includes(p.kind) && rng() < .65){
-      const at = [[0,-1],[1,0],[0,1],[-1,0]].map(([dx,dy]) => [p.x+dx,p.y+dy]).find(q => opens.has(key(...q)) && !occupied.has(key(...q)));
+      const at = [[0,-1],[1,0],[0,1],[-1,0]].map(([dx,dy]) => [p.x+dx,p.y+dy]).find(q => opens.has(key(...q)) && !occupied.has(key(...q)) && !reserved.has(key(...q)));
       if (at) read('notice', p, at);
     }
     if (['deadtree','boulder','stump','gallows'].includes(p.kind) && rng() < .6) read('carving', p);
@@ -47,7 +52,7 @@ export function placeFinds(floor, { seed = '', gaze = 1, taken = [] } = {}){
   const limits = HOW_MANY[floor.kind], table = GLINT[floor.kind];
   if (limits && table){
     const wanted = limits.min + Math.floor(rng() * (limits.max - limits.min + 1)), placed = [];
-    const candidates = shuffle(open.filter(([x,y]) => !paths.has(key(x,y)) && !occupied.has(key(x,y)) && !inside(x,y,floor.rooms?.[0])), rng);
+    const candidates = shuffle(open.filter(([x,y]) => !paths.has(key(x,y)) && !occupied.has(key(x,y)) && !reserved.has(key(x,y)) && !inside(x,y,floor.rooms?.[0])), rng);
     for (const [x,y] of candidates){
       if (placed.length === wanted) break;
       if (placed.some(p => Math.hypot(x-p.x, y-p.y) < 4)) continue;
@@ -68,7 +73,7 @@ export function noticed(find, { passive = 0, dist = Infinity } = {}){
 }
 export function outcome(find){
   const out = find?.out;
-  return { say:out?.say || find?.text || 'Nothing remains.', gp:Math.max(0, Math.min(25, Math.floor(out?.gp || 0))),
+  return { say:out?.say || find?.text || 'Nothing remains.', gp:Number.isFinite(out?.gp) ? Math.max(0, Math.min(25, Math.floor(out.gp))) : 0,
     trinket:out?.trinket ? clone(out.trinket) : null, page:out?.page ? clone(out.page) : null, potion:out?.potion || null };
 }
 export function signpost(here, ways = []){

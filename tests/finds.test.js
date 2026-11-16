@@ -69,3 +69,33 @@ test('frozen inputs and independent rewards keep callers and catalogues untouche
   const opts=freeze({seed:'fixed',taken:[]}),a=placeFinds(floor,opts);assert.deepEqual(a,JSON.parse(JSON.stringify(placeFinds(floor,opts))));
   const f={out:{say:'Found',trinket:{n:'pin',gp:1},page:{id:'p'}}};const o=outcome(f);o.trinket.n='changed';o.page.id='changed';assert.equal(f.out.trinket.n,'pin');assert.equal(f.out.page.id,'p');assert.equal(JSON.stringify([READ,PAGES,TRINKETS,SEARCH,GLINT,HOW_MANY]),saved);
 });
+test('equivalent adapter geometry keeps ids and rewards despite ordering or render metadata',()=>{
+  const a=placeFinds(floor,{seed:'stable-save'});
+  const reordered={...floor,open:[...floor.open].reverse().concat([floor.open[0]]),path:[...floor.path].reverse(),
+    props:[...floor.props].reverse().map(p=>({colour:'red',y:p.y,x:p.x,kind:p.kind})),rooms:floor.rooms.map(r=>({...r,lighting:'blue'}))};
+  assert.deepEqual(placeFinds(reordered,{seed:'stable-save'}),a);
+  assert.deepEqual(placeFinds({...reordered,props:[...reordered.props,reordered.props[0]]},{seed:'stable-save'}),a);
+  const taken=a.slice(0,3).map(f=>f.id);
+  assert.deepEqual(placeFinds(reordered,{seed:'stable-save',taken}),a.slice(3));
+});
+test('dense notices and glints never compete for an interaction square',()=>{
+  const village={...floor,props:Array.from({length:80},(_,i)=>({kind:'house',x:2+(i%20)*2,y:6+Math.floor(i/20)*2}))};
+  for(let seed=0;seed<30;seed++){
+    const finds=placeFinds(village,{seed});assert.equal(new Set(finds.map(coord)).size,finds.length);
+    assert.equal(new Set(finds.map(f=>f.id)).size,finds.length);
+  }
+});
+test('lore cannot duplicate on the same map, even among hundreds of containers',()=>{
+  const archive={...floor,kind:'interior',props:Array.from({length:500},(_,i)=>({kind:'desk',x:i%40,y:Math.floor(i/40)}))};
+  let found=0;
+  for(let seed=0;seed<10;seed++){
+    const pages=placeFinds(archive,{seed}).map(outcome).filter(o=>o.page).map(o=>o.page.id);
+    assert.equal(new Set(pages).size,pages.length);found+=pages.length;
+  }
+  assert.ok(found>30);
+});
+test('loot normalisation never emits NaN or an invalid gold amount',()=>{
+  for(const gp of [null,undefined,'bad',Infinity,NaN,-3,3.9,80]){
+    const out=outcome({out:{say:'Dust.',gp}});assert.ok(Number.isInteger(out.gp)&&out.gp>=0&&out.gp<=25);
+  }
+});
