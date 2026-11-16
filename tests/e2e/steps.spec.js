@@ -13,7 +13,9 @@ test('footprints in the snow, and a bump against a wall', async ({ page }) => {
   const clear = () => page.evaluate(() => { document.querySelectorAll('#cardLayer .pop').forEach(c => c.remove()); for (const f of window.DreadDelve.get().floors) for (const p of f.folk || []) p.gone = true; window.DreadDelve.wander.rt.talk = null; });
   await clear(); await page.evaluate(() => { const s = window.DreadDelve.get(); s.campaign.wx = { ...(s.campaign.wx || {}), ground:'deep snow' }; });
   const x0 = await page.evaluate(() => window.DreadDelve.wander.hero().x);
-  await expect.poll(async () => { await clear(); await page.keyboard.press('a'); return page.evaluate(() => window.DreadDelve.wander.hero().x); }, { timeout:20_000, intervals:[260] }).toBeLessThan(x0 - 2);
+  // (west, or east if the village happens to wall the west off: the layout is new each game)
+  let n = 0;
+  await expect.poll(async () => { await clear(); await page.keyboard.press(++n > 30 ? 'd' : 'a'); return Math.abs(await page.evaluate(() => window.DreadDelve.wander.hero().x) - x0); }, { timeout:40_000, intervals:[260] }).toBeGreaterThan(2);
   await expect.poll(() => page.evaluate(() => window.DreadDelve.stepFxCount().prints)).toBeGreaterThanOrEqual(2);
   // into a wall: push north until the hero stops, then once more
   let last = '';

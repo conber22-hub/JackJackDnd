@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { state, ui, tokById, tokenAt, log, isDM, viewAsPlayer, dreadLevel } from '../engine/state.js';
 import { makeNoise } from './noise.js';
 import { enteredRoom } from './rooms.js';
-import { reach, pathTo, pathCost, updateVision, detectHidden, vision, passMove, canSeeTile, seenNow, standHeight } from '../engine/grid.js';
+import { reach, pathTo, pathCost, updateVision, detectHidden, vision, passMove, canSeeTile, seenNow, standHeight, groundY } from '../engine/grid.js';
 import { trapAt } from '../engine/generator.js';
 import { SEARCHABLE } from '../data/loot.js';
 import { reveal, searchStashes } from './objects.js';
@@ -171,10 +171,14 @@ export function animatePath(id, path, onStep, onDone, follow){
     if (i >= path.length){ tv.anim = null; onDone && onDone(); return; }
     const from = tv.group.position.clone(), to = new THREE.Vector3(wx(path[i].x + s), standHeight(f, path[i].x, path[i].y, t.size || 1), wz(path[i].y + s));
     faceStep(id, to.x - from.x, to.z - from.z);
-    // a little bob each step; a hop up onto a table (or down off it) gets a proper jump and a beat longer
-    const climb = Math.abs(to.y - from.y), arc = .15 + climb * .5;
+    // a walk, not a run of hops: on level ground the figure glides (its own stride bobs it: render/forge/anim.js) and
+    // up or down a rise it walks the slope; only a hop up onto a table or a crate (or down off one) is a jump
+    const p0 = i ? path[i - 1] : { x:t.x, y:t.y }, ground = groundY(f, path[i].x, path[i].y) - groundY(f, p0.x, p0.y);
+    const climb = Math.abs(to.y - from.y - ground), hop = climb > .05, arc = hop ? .15 + climb * .5 : .012;
+    // (the Wanderer walks at a walker's pace; at the table a move is quicker to watch)
+    const sec = hop ? .24 : ui.wander ? .2 : .13;
     let last = from.clone();
-    tween(climb > .05 ? .22 : .13, k => {
+    tween(sec, k => {
       tv.group.position.lerpVectors(from, to, k); tv.group.position.y = from.y + (to.y - from.y) * k + Math.sin(k * Math.PI) * arc;
       if (follow){ const dx = tv.group.position.x - last.x, dz = tv.group.position.z - last.z; controls.target.x += dx; controls.target.z += dz; camera.position.x += dx; camera.position.z += dz; }
       last = tv.group.position.clone();

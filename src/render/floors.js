@@ -6,7 +6,6 @@ import { witherLevel } from './omens.js';
 import { wallSet, doorOrientation } from '../engine/generator.js';
 import { THEMES } from '../data/themes.js';
 import { ROOM_TYPES, TRAP_KINDS } from '../data/rooms.js';
-import { mulberry32 } from '../util/core.js';
 import { scene, G, mat4, col, wx, wz, floorY, WALL_H, makeLabel, tween, ease, fx } from './scene.js';
 import { surfaceTextures, groundTexture, groundMaps, SURFACES } from './textures.js';
 import { shadowsOn, gfx } from './gfx.js';
@@ -263,7 +262,9 @@ export function buildFloor(L, opt = {}){
   for (let i = 0; i < g.length; i++) if (walk(g[i]) && g[i] !== T.DOWN && showTile(i) && !spans.has(i) && !decked.has(i)) tiles.push(i);
   for (const [i, w] of wedges) if (!pv || w.near.some(j => exp.has(j))) tiles.push(i);
   const kitFloor = kitFor('floor'), kitWall0 = kitFor('wall');
-  const rng = mulberry32(L * 999 + 7);
+  // each square's own dice (its turn, its shade): the same however much of the map has been seen, so the ground
+  // doesn't reshuffle as the hero walks and the fog draws back
+  const hr = (i, k) => { let h = Math.imul(i ^ Math.imul(k + 1, 0x9e3779b1), 2654435761) ^ Math.imul(L + 1, 40503); h ^= h >>> 15; h = Math.imul(h, 2246822519); h ^= h >>> 13; return (h >>> 0) / 4294967296; };
   const base = new THREE.Color(th.floor), hall = new THREE.Color(th.hall);
   const roomOf = new Map(); for (const r of f.rooms) for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++) roomOf.set(y * f.W + x, r);
   // a cavern's wide places have boxes that overlap: each square belongs to the nearest one's middle (engine/caverns.js)
@@ -289,11 +290,11 @@ export function buildFloor(L, opt = {}){
       const x = i % f.W, y = (i / f.W) | 0;
       // outdoor squares are turned a random quarter so the grass and the dirt don't repeat in a grid
       // (furrows all run one way: only a half turn for them) · a square on a rise is a taller block, its top on the rise
-      const hh = groundY(f, x, y), turn = own ? 0 : Math.floor(rng() * 4) * (kind === 'furrow' ? Math.PI : Math.PI / 2);
+      const hh = groundY(f, x, y), turn = own ? 0 : Math.floor(hr(i, 201) * 4) * (kind === 'furrow' ? Math.PI : Math.PI / 2);
       tq.setFromAxisAngle(yAxis, turn); tp.set(wx(x), (hh - .2) / 2, wz(y)); ts.set(1, (.2 + hh) / .2, 1); mat4.compose(tp, tq, ts);
       fm.setMatrixAt(n, mat4);
-      col.copy(tone || (g[i] === T.HALL ? (under ? hallUnder : hall) : base)).multiplyScalar(.82 + rng() * .3);
-      if (!own && kind !== 'plank' && kind !== 'flag'){ if (wither && kind !== 'cobble') col.lerp(WITHERED, Math.min(.6, wither * .1)); if (snow) col.lerp(SNOW, snow * (.7 + rng() * .25)); if (wet) col.multiplyScalar(1 - wet * .22); }
+      col.copy(tone || (g[i] === T.HALL ? (under ? hallUnder : hall) : base)).multiplyScalar(.82 + hr(i, 202) * .3);
+      if (!own && kind !== 'plank' && kind !== 'flag'){ if (wither && kind !== 'cobble') col.lerp(WITHERED, Math.min(.6, wither * .1)); if (snow) col.lerp(SNOW, snow * (.7 + hr(i, 203) * .25)); if (wet) col.multiplyScalar(1 - wet * .22); }
       // raised ground catches more light the higher it is, and its slopes are a shade darker, so a rise reads like contours
       if (f.height?.[i]) col.multiplyScalar((1 + f.height[i] * .2) * (slopes.has(i) ? .72 : 1));
       const r = roomOf.get(i);
@@ -324,7 +325,6 @@ export function buildFloor(L, opt = {}){
   // 🌲 the ground pass (engine/terrain-dress.js): the pack's reeds, graves, scree, fences and shrines in glades at the treeline
   const dress = outdoor && !opt.walls && gfx.quality !== 'low' ? dressingFor(f, L, snow >= .4).filter(d => dressModel(d.id)) : [];
   for (const d of dress) for (const i of d.cells) bare.add(i);
-  const hr = (i, k) => { let h = Math.imul(i ^ Math.imul(k + 1, 0x9e3779b1), 2654435761) ^ Math.imul(L + 1, 40503); h ^= h >>> 15; h = Math.imul(h, 2246822519); h ^= h >>> 13; return (h >>> 0) / 4294967296; };
   for (const i of all){
     if (water.has(i) || bare.has(i) || inBuilding(f, i % f.W, (i / f.W) | 0) || !seen(i)) continue;
     if (outdoor && !isBuildingWall(i) && !masonry.has(i)) trees.push(i); else wl.push(i);
@@ -355,8 +355,8 @@ export function buildFloor(L, opt = {}){
       mat4.compose(bp, bq, bs);
     } else mat4.makeTranslation(wx(x), WALL_H / 2, wz(y));
     wm.setMatrixAt(n, mat4);
-    if (cave) col.copy(rockc).lerp(trim, .08).multiplyScalar(1.35 + rng() * .5);   // the boulders are the lip of the cut, lighter than the rock
-    else { col.copy(wc).multiplyScalar(.75 + rng() * .45); if (rng() < .06) col.lerp(trim, .35); }
+    if (cave) col.copy(rockc).lerp(trim, .08).multiplyScalar(1.35 + hr(i, 204) * .5);   // the boulders are the lip of the cut, lighter than the rock
+    else { col.copy(wc).multiplyScalar(.75 + hr(i, 205) * .45); if (hr(i, 206) < .06) col.lerp(trim, .35); }
     wm.setColorAt(n, col);
   });
   if (wm.instanceColor) wm.instanceColor.needsUpdate = true;
@@ -364,15 +364,15 @@ export function buildFloor(L, opt = {}){
   const cm = new THREE.InstancedMesh(G.cap, fv.mats.cap, Math.max(1, kitWall || cave ? 0 : wl.length)); cm.count = kitWall || cave ? 0 : wl.length;
   // in the deep places the wall tops are the lip of the cut, a shade lighter than the rock round them
   const capc = under ? rockc.clone().lerp(trim, .1).multiplyScalar(1.3) : new THREE.Color(th.wall).lerp(trim, .28).multiplyScalar(1.5);
-  wl.forEach((i, n) => { mat4.makeTranslation(wx(i % f.W), WALL_H + .03, wz((i / f.W) | 0)); cm.setMatrixAt(n, mat4); cm.setColorAt(n, col.copy(capc).multiplyScalar(.85 + rng() * .25)); });
+  wl.forEach((i, n) => { mat4.makeTranslation(wx(i % f.W), WALL_H + .03, wz((i / f.W) | 0)); cm.setMatrixAt(n, mat4); cm.setColorAt(n, col.copy(capc).multiplyScalar(.85 + hr(i, 207) * .25)); });
   if (cm.instanceColor) cm.instanceColor.needsUpdate = true;
   fv.built.add(cm);
   if (slant.length){
     const sm = new THREE.InstancedMesh(wedgeGeometry(WALL_H), fv.mats.wall, slant.length), sc = new THREE.InstancedMesh(wedgeGeometry(.06, 1.02), fv.mats.cap, slant.length);
     slant.forEach((i, n) => {
       mat4.makeRotationY(wedges.get(i).turn * Math.PI / 2); mat4.setPosition(wx(i % f.W), WALL_H / 2, wz((i / f.W) | 0)); sm.setMatrixAt(n, mat4);
-      sm.setColorAt(n, col.copy(wc).multiplyScalar(.75 + rng() * .45));
-      mat4.setPosition(wx(i % f.W), WALL_H + .03, wz((i / f.W) | 0)); sc.setMatrixAt(n, mat4); sc.setColorAt(n, col.copy(capc).multiplyScalar(.85 + rng() * .25));
+      sm.setColorAt(n, col.copy(wc).multiplyScalar(.75 + hr(i, 205) * .45));
+      mat4.setPosition(wx(i % f.W), WALL_H + .03, wz((i / f.W) | 0)); sc.setMatrixAt(n, mat4); sc.setColorAt(n, col.copy(capc).multiplyScalar(.85 + hr(i, 207) * .25));
     });
     for (const m of [sm, sc]){ if (m.instanceColor) m.instanceColor.needsUpdate = true; m.castShadow = m.receiveShadow = shadows; fv.built.add(m); }
   }

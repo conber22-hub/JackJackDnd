@@ -408,7 +408,7 @@ export function heroCast(entry){
 }
 
 /* ---------- walking ---------- */
-const heroBusy = () => { const h = hero(); return !h || crossingNow() || rt.spotted || !!tokenViews.get(h.id)?.anim || pausedMover(h.id); };
+export const heroBusy = () => { const h = hero(); return !h || crossingNow() || rt.spotted || !!tokenViews.get(h.id)?.anim || pausedMover(h.id); };
 const anyBusy = () => [...tokenViews.values()].some(tv => tv.anim) || state.tokens.some(t => pausedMover(t.id));
 export const myTurn = () => state.combat.active && currentTurn()?.id === W()?.heroTok;
 // The camera glides after the hero, keeping however the player has turned it: this only says where to look, and the

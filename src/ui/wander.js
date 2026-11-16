@@ -14,7 +14,7 @@ import { valley, clockText } from '../game/overworld.js';
 import { currentTurn } from '../game/combat.js';
 import { moveAllowance } from '../game/rules.js';
 import { rangeCheck } from '../engine/targeting.js';
-import { W, rt, hero, members, wandering, startWander, continueWander, leaveWander, stepHero, walkTo, hereAction, talkView, chooseTalk, talkTo,
+import { W, rt, hero, members, wandering, startWander, continueWander, leaveWander, stepHero, heroBusy, walkTo, hereAction, talkView, chooseTalk, talkTo,
   heroAttack, heroDodge, heroTurnAct, heroFeatures, heroFeature, endHeroTurn, aim, target, targets, attackFor, nextWeapon, attacksLeft, myTurn, fightTick, destinations, setOut, travelTo, rest, saveNow,
   pack, toggleEquip, usePotion, coinsGp, shopHere, buyPotion, journal, approvalOf, levelReady, partyLevel, nextLevelXp, levelUpHero, sheetOf, spellList, heroCast,
   SLOTS, slotMeta, canSaveSlot, saveToSlot, loadFromSlot } from '../game/wander.js';
@@ -31,7 +31,7 @@ import { musicTick, musicStop } from './regionmusic.js';
 import { sfx } from '../audio/sound.js';
 import { loyalty } from '../engine/wander-life.js';
 import { hh, hhOn, hhHost, hhPad, addHost, setHandheld, skipBoot, shellItem } from './handheld.js';
-import { camTurn, camView, camCrane, camYaw, camFrame, lookThrough, closeLook, feelHits } from './followcam.js';
+import { camTurn, camView, camCrane, camYaw, camFrame, miniFocus, lookThrough, closeLook, feelHits } from './followcam.js';
 import { tune, coachTick, coachLearn, coachDone, coachHide } from './hhlife.js';
 import { openPocketSheet, pocketPress, pocketOpen, closePocketSheet } from './pocketsheet.js';
 import { toast } from './hud.js';
@@ -290,7 +290,10 @@ function wanderCam(dt, pad){
   const going = !state.combat.active && now - feet.at < 650, k = 1 - Math.exp(-dt * 2.5);
   lead.x += ((going ? feet.dx * .9 : 0) - lead.x) * k; lead.z += ((going ? feet.dy * .9 : 0) - lead.z) * k;
   const b = rt.bump, shake = b && now - b.at < 200 ? Math.sin((now - b.at) * .09) * .06 * (1 - (now - b.at) / 200) : 0;
-  const focus = rt.focus && { ...rt.focus, x:rt.focus.x + lead.x + shake * (b?.dx || 0), z:rt.focus.z + lead.z + shake * (b?.dy || 0) };
+  // (it follows the figure where it is, mid-step too, not the square it's headed for: chasing each square as it was
+  // chosen made the view surge and settle with every step)
+  const at = (h && miniFocus(h, rt.focus?.rate || 7)) || rt.focus;
+  const focus = at && { ...at, x:at.x + lead.x + shake * (b?.dx || 0), z:at.z + lead.z + shake * (b?.dy || 0) };
   camFrame(dt, pad, { focus, me:h, other:lk || (ct && ct.id !== h?.id ? ct : null), otherRate:lk ? 4 : 3 });
 }
 /* 👣 Each step the party takes: what it leaves (a puff, a splash, a print, a rustle: render/stepfx.js) and, for the hero,
@@ -382,7 +385,14 @@ function frame(now){
   feelHits(hero(), gp);
   try { wanderMoments(); coachTick(wanderSnapshot); } catch (e){ console.warn(e); }
   if (pending){ if (now > pending.until) pending = null; else if (stepHero(pending.dx, pending.dy)) pending = null; }
+  walkHeld();
   if (now - lastTick > 180){ lastTick = now; try { fightTick(now); } catch (e){ console.warn(e); } renderHud(); }
+}
+let held = null;   // (the walking key held down, if one is)
+function onKeyUp(e){ if (held && e.key.toLowerCase() === held.key) held = null; }
+function walkHeld(){
+  if (!held || pending || state.combat.active || menu.open || pocketOpen() || talkView() || heroBusy()) return;
+  const it = keyIntent(held.key, { shift:held.shift, yaw:yaw() }); if (it?.k === 'step') step(it.dx, it.dy);
 }
 function onKey(e){
   if (!wandering() || e.ctrlKey || e.metaKey || e.altKey) return;
@@ -390,6 +400,9 @@ function onKey(e){
   if (menu.open || talkView()){ if (/^[1-9]$/.test(e.key)){ const k = +e.key - 1; if (menu.open){ menu.i = k; press('a'); } else { talkSel.i = k; press('a'); } e.preventDefault(); e.stopPropagation(); return; } }
   const it = keyIntent(e.key, { shift:e.shiftKey, yaw:yaw() }); if (!it) return;
   e.preventDefault(); e.stopPropagation();
+  // a held key walks on, square after square, from the first step (the frame keeps it going: no wait for the
+  // keyboard's own repeat to start, and no extra steps from it)
+  if (it.k === 'step'){ if (e.repeat && held) return; held = { key:e.key.toLowerCase(), shift:e.shiftKey }; }
   it.k === 'step' ? step(it.dx, it.dy) : press(it.b);
   renderHud();
 }
@@ -440,6 +453,7 @@ export function ensureWander(){
   // a crossing between maps (game/ways.js): the fog, the name, the sound
   passage.veil = veil; passage.banner = banner; passage.sting = id => tune({ door:'door', spotted:'gazeRises' }[id] || 'stairs');
   addEventListener('keydown', onKey, { capture:true });
+  addEventListener('keyup', onKeyUp, { capture:true }); addEventListener('blur', () => { held = null; });
   document.addEventListener('click', onClick, true);
   addEventListener('gamepadconnected', e => { if (wandering()) toast(`🎮 ${e.gamepad.id.split('(')[0].trim() || 'Controller'} ready.`); });
   // the tap hook (ui/input.js) only while playing
