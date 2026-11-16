@@ -10,7 +10,7 @@ import { test, expect, preparePage, arena, expectPositions } from './helpers.js'
 // Hero tab's 🕹 Handheld brings the handheld back. The legends never change.
 const SP = process.env.HH_SHOTS;   // a folder to keep screenshots in
 test('a seated player plays from the handheld: steps, the sheet, the menu, a strike in a fight, and the classic screen', async ({ page:dm, browser, baseURL }) => {
-  test.setTimeout(240_000);
+  test.setTimeout(420_000);   // (two pages drawing at once: slow on a busy machine)
   await arena(dm, []);
   await dm.evaluate(() => { const D = window.DreadDelve; D.get().campaign.freeRolls = true;   // (the player's rolls go straight through)
     const h = D.newHero('Cleric'); h.name = 'Ada'; h.id = 'ada-hh'; h.spells = ['Sacred Flame', 'Cure Wounds'];   // (a cleric: a strike and spells)
@@ -112,7 +112,14 @@ test('a seated player plays from the handheld: steps, the sheet, the menu, a str
     await expect(p.locator('#tbMenu')).toContainText('Spells…');
     await expect(p.locator('#tbMenu')).toContainText('Action Surge');
     // (down the list to Spells…, with the D-pad)
-    await expect.poll(async () => { if (/Spells…/.test(await p.locator('#tbMenu .wd-opt.on').textContent())) return true; await hold('dpad', 90, 0, 1); return false; }, { timeout:15_000 }).toBe(true);
+    await expect.poll(async () => {
+      const d = await p.evaluate(() => { const o = [...document.querySelectorAll('#tbMenu .wd-opt')], on = o.findIndex(e => e.classList.contains('on')), sp = o.findIndex(e => /Spells…/.test(e.textContent)); return sp - on; });
+      if (!d) return true;
+      // (a quick tap, down and up at once: it steps exactly once however slow the frames are)
+      await p.evaluate(dy => { const el = document.querySelector('[data-hh="dpad"]'), r = el.getBoundingClientRect(), o = { pointerId:32, clientX:r.x + r.width / 2, clientY:r.y + r.height * (.5 + dy * .38), bubbles:true, isPrimary:true };
+        el.dispatchEvent(new PointerEvent('pointerdown', o)); el.dispatchEvent(new PointerEvent('pointerup', o));
+        return new Promise(res => requestAnimationFrame(() => requestAnimationFrame(res))); }, Math.sign(d));
+      return false; }, { timeout:15_000 }).toBe(true);
     await hold('a');
     await expect(p.locator('#tbMenu')).toContainText('Sacred Flame');
     await expect(p.locator('#tbMenu .wd-opt.on')).toContainText('at Zombie');

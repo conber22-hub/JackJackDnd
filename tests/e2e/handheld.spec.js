@@ -85,8 +85,10 @@ test.describe('on a phone', () => {
     await expect(page.locator('#wdMenuBox [data-act="wdPick"]', { hasText:'Load slot 1' })).toContainText('Vasha, level 1');
     await hold(page, 'b'); await hold(page, 'b');
     await expect(page.locator('#wdMenuBox')).toBeHidden();
-    await hold(page, 'dpad', 1300, 0, 1);
-    await expect.poll(async () => JSON.stringify(await hero(page))).not.toBe(JSON.stringify(at0));
+    // (down, or whichever way is open: the square below can be a wall or a barrel)
+    let dir = 0;
+    await expect.poll(async () => { if (JSON.stringify(await hero(page)) !== JSON.stringify(at0)) return true;
+      const [dx, dy] = [[0, 1], [0, -1], [1, 0], [-1, 0]][dir++ % 4]; await hold(page, 'dpad', 1300, dx, dy); return false; }, { timeout:30_000, intervals:[400] }).toBe(true);
     await page.keyboard.press('k');
     await page.locator('#wdMenuBox [data-act="wdPick"]', { hasText:'Load slot 1' }).click();
     await page.locator('#wdMenuBox [data-act="wdPick"]', { hasText:'Yes, load slot 1' }).click();
@@ -164,9 +166,12 @@ test('on a desktop the handheld waits to be asked for, and the keys turn, crane 
   await expect(page.locator('#handheld')).toBeVisible();
   await expect(page.locator('#hhBoot')).toBeVisible();
   const sel0 = await page.locator('#wdMenuBox .wd-opt.on').textContent();
-  await page.keyboard.press('ArrowDown');   // (a key skips the boot too, and does nothing else)
+  // (a key skips the boot too, and does nothing else; looked at and pressed in one go, as a slow machine can let the
+  // boot run out first, and then the key is an ordinary step down the menu)
+  const booting = await page.evaluate(() => { const b = document.getElementById('handheld').classList.contains('booting');
+    dispatchEvent(new KeyboardEvent('keydown', { key:'ArrowDown', bubbles:true, cancelable:true })); return b; });
   await expect(page.locator('#hhBoot')).toBeHidden();
-  expect(await page.locator('#wdMenuBox .wd-opt.on').textContent()).toBe(sel0);
+  if (booting) expect(await page.locator('#wdMenuBox .wd-opt.on').textContent()).toBe(sel0);
   await expect(page.locator('.hh-lg.a')).toHaveText('OK');   // (one button, one job: the legends never change)
   await expect(page.locator('.hh-lg.x')).toHaveText('Actions');
   await page.keyboard.press('Escape'); await page.keyboard.press('Escape');

@@ -36,6 +36,7 @@ export function setHandheld(patch){
 const NOHOST = { id:'', active:() => false, press:() => {}, legend:() => ({}), health:() => 1, fight:() => false };
 let api = NOHOST, on = false, el = null, boot = null, askedFull = false, wentFull = false;
 const stick = { x:0, y:0 };
+let tapped = null;   // where a finger first came down on the D-pad, kept until a frame has read it (a tap shorter than a frame still steps)
 const fingers = new Map();   // pointerId → the control it went down on
 const mq = typeof matchMedia !== 'undefined' ? matchMedia('(pointer:coarse)') : null, coarse = () => !!mq?.matches;
 export const hhOn = () => on;
@@ -50,7 +51,7 @@ export function shellItem(){
 export const skinWantedHere = () => skinWanted(hh.mode, { coarse:coarse(), pad:padIn() });
 export const hhHost = () => on ? api.id : '';   // which is holding it: 'wander' | 'table' | ''
 // The D-pad as a stick (for padIntents): { x, y, rx, ry, b }
-export const hhPad = () => ({ x:stick.x, y:stick.y, rx:0, ry:0, b:{} });
+export const hhPad = () => { const s = stick.x || stick.y ? stick : tapped || stick; tapped = null; return { x:s.x, y:s.y, rx:0, ry:0, b:{} }; };
 
 // What each of the shell's buttons sends (ui/wander.js press). X and Y change with the moment: legend() names them.
 const SEND = { a:'a', b:'b', l:'lb', r:'rb', select:'back', view:'rs', start:'start' };
@@ -98,7 +99,7 @@ function down(e){
   coachDone();
   goFull();
   if (endBoot()){ if (k !== 'dpad'){ c.classList.add('down'); buzz(); } return; }   // (the press that skips the boot does only that)
-  if (k === 'dpad'){ thumb(c, e); return; }
+  if (k === 'dpad'){ thumb(c, e); tapped = stick.x || stick.y ? { x:stick.x, y:stick.y } : null; return; }
   c.classList.add('down'); buzz(); sfx('tick', false);
   // Select and Start together: the save states
   const other = k === 'start' ? 'select' : k === 'select' ? 'start' : null;
@@ -148,7 +149,7 @@ function show(v){
   el.classList.toggle('hidden', !v); document.body.classList.toggle('hh', v); document.body.classList.toggle('hh-table', v && api.id === 'table');
   keepAwake(v);
   if (v){ askedFull = false; relayout(); startBoot(); }
-  else { stick.x = stick.y = 0; fingers.clear(); endBoot(); document.body.classList.remove('hh-lcd', 'hh-subon'); el.classList.remove('fight'); setViewRect(null); fit(null); if (wentFull) leaveFull(); }
+  else { stick.x = stick.y = 0; tapped = null; fingers.clear(); endBoot(); document.body.classList.remove('hh-lcd', 'hh-subon'); el.classList.remove('fight'); setViewRect(null); fit(null); if (wentFull) leaveFull(); }
 }
 
 /* ---------- switching on ---------- */
