@@ -25,6 +25,9 @@ import { showGlints, clearGlints, tickGlints } from '../render/glints.js';
 import { underfoot } from '../engine/underfoot.js';
 import { stepFx, tickStepFx, clearStepFx, fordStones } from '../render/stepfx.js';
 import { groundWeather } from '../render/floors.js';
+import { setCritters, updateCritters, clearCritters } from '../render/critters.js';
+import { kindOf } from '../game/finds.js';
+import { musicTick, musicStop } from './regionmusic.js';
 import { sfx } from '../audio/sound.js';
 import { loyalty } from '../engine/wander-life.js';
 import { hh, hhOn, hhHost, hhPad, addHost, setHandheld, skipBoot, shellItem } from './handheld.js';
@@ -310,6 +313,17 @@ function feelSteps(now){
   if (rt.bump && rt.bump.at > feet.bumpSeen){ feet.bumpSeen = rt.bump.at; sfx('bump', false); }
   fordStones(h.floor, state.floors[h.floor], state.meta.mapId || state.meta.seed);
 }
+/* 🐈 The valley's animals (Muse's render/critters.js): put down when the hero comes to a floor (the same map, the same
+   animals), moving and minding the party every frame, gone when the Wanderer is put away. Scenery only. */
+const CRITTERS = { village:'village', town:'town', road:'road', woods:'woods', camp:'camp', interior:'interior', church:'interior', crypt:'crypt', castle:'crypt' };
+let critKey = '';
+function animals(dt){
+  const h = hero(); if (!h) return;
+  const key = `${state.meta.mapId || state.meta.seed}:${h.floor}`;
+  if (key !== critKey){ critKey = key; let n = 7; for (const c of key) n = (n * 31 + c.charCodeAt(0)) >>> 0;
+    setCritters(h.floor, { kind:state.meta.template === 'journey' ? 'road' : CRITTERS[kindOf(h.floor)] || 'village', seed:n }); }
+  updateCritters(dt, { party:members().filter(m => m && !m.dead).map(m => ({ x:m.x, y:m.y, floor:m.floor })), hour:valley().hour ?? 12, rain:!!groundWeather().wet });
+}
 /* ---------- the handheld's buttons ----------
    One button, one job, whatever's going on (the line on the screen says what A does just now). */
 function hhLegend(){
@@ -317,7 +331,7 @@ function hhLegend(){
     select:{ label:'Hero' }, view:{ label:'Camera' }, start:{ label:'Menu' } };
 }
 const HH_HELP = 'Each button does one thing. D-pad: walk (slide your thumb round it for the diagonals), or move through a menu. A: do what the line on the screen says (talk, climb, look, strike, end your turn), or choose. B: back, or put a card away. X: Actions: each weapon, spells, Dash, Disengage, Dodge, features like Action Surge, a potion, End turn. Y: the next target. L and R: turn the camera. Select: your hero. View: the next camera view. Start: this menu. Select and Start together: the save states. Touch works too: drag on the screen to turn the camera, pinch to zoom, tap to walk or pick a foe, tap any line of a menu.';
-let pending = null, padMem = {}, hhMem = {}, lastTick = 0, lastFrame = 0, glintAt = 0;
+let pending = null, padMem = {}, hhMem = {}, lastTick = 0, lastFrame = 0, glintAt = 0, musicAt = 0;
 const padHeld = { back:false };   // (Back held while Start goes down: the save states)
 const yaw = camYaw;   // (which way "up on the stick" walks)
 let hudOn = false;
@@ -348,7 +362,7 @@ function frame(now){
   requestAnimationFrame(frame);
   const dt = Math.min(.1, (now - (lastFrame || now)) / 1000); lastFrame = now;
   const gp = [...(navigator.getGamepads?.() || [])].find(g => g && g.connected);
-  if (!wandering()){ if (hudOn){ hudOn = false; show('wanderHud', false); closeLook(); feelHits(null); coachHide(); clearGlints(); clearStepFx(); } return; }
+  if (!wandering()){ if (hudOn){ hudOn = false; show('wanderHud', false); closeLook(); feelHits(null); coachHide(); clearGlints(); clearStepFx(); clearCritters(); critKey = ''; musicStop(); } return; }
   hudOn = true;
   let pad = null;
   if (gp){
@@ -362,6 +376,8 @@ function frame(now){
   tickGlints(now);
   try { feelSteps(now); } catch (e){ console.warn(e); }
   tickStepFx(now);
+  try { animals(dt); } catch (e){ console.warn(e); }
+  if (now - musicAt > 1000){ musicAt = now; try { musicTick(hero()); } catch (e){ console.warn(e); } }   // (🎼 ui/regionmusic.js)
   try { lookThrough(hero(), now); } catch (e){ console.warn(e); }
   feelHits(hero(), gp);
   try { wanderMoments(); coachTick(wanderSnapshot); } catch (e){ console.warn(e); }

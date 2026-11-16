@@ -7,7 +7,7 @@
    audio after a tap, so nothing plays until the first click. */
 import { gfx, onGfx } from '../render/gfx.js';
 
-let ctx = null, master = null, droneBus = null, sfxBus = null, noiseBuf = null;
+let ctx = null, master = null, droneBus = null, sfxBus = null, musicBus = null, noiseBuf = null;
 const drone = { nodes:null, dread:1 };
 let sender = null;
 export function onSfx(fn){ sender = fn; }            // the net layer forwards DM sounds to players
@@ -20,13 +20,14 @@ function init(){
   const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -18; comp.connect(master);
   droneBus = ctx.createGain(); droneBus.gain.value = gfx.music ? 1 : 0; droneBus.connect(comp);
   sfxBus = ctx.createGain(); sfxBus.gain.value = gfx.sfx ? 1 : 0; sfxBus.connect(comp);
+  musicBus = ctx.createGain(); musicBus.gain.value = gfx.music ? 1 : 0; musicBus.connect(comp);   // (the region loops: loopTune)
   noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
   const d = noiseBuf.getChannelData(0); let b = 0;
   for (let i = 0; i < d.length; i++){ const w = Math.random() * 2 - 1; b = (b + .02 * w) / 1.02; d[i] = b * 3.5; }    // brown-ish noise
   return ctx;
 }
 export function unlock(){ if (!init()) return; if (ctx.state === 'suspended') ctx.resume(); if (!drone.nodes) startDrone(); }
-onGfx(g => { if (!ctx) return; master.gain.setTargetAtTime(g.volume, ctx.currentTime, .1); droneBus.gain.setTargetAtTime(g.music ? 1 : 0, ctx.currentTime, .3); sfxBus.gain.setTargetAtTime(g.sfx ? 1 : 0, ctx.currentTime, .1); });
+onGfx(g => { if (!ctx) return; master.gain.setTargetAtTime(g.volume, ctx.currentTime, .1); droneBus.gain.setTargetAtTime(g.music ? 1 : 0, ctx.currentTime, .3); musicBus.gain.setTargetAtTime(g.music ? 1 : 0, ctx.currentTime, .3); sfxBus.gain.setTargetAtTime(g.sfx ? 1 : 0, ctx.currentTime, .1); });
 
 const now = () => ctx.currentTime;
 function noise(dur, filterType, freq, q = 1, gain = .5, at = now()){
@@ -159,15 +160,15 @@ function pulseWave(duty){
   for (let n = 1; n < N; n++){ re[n] = Math.sin(2 * Math.PI * n * k) / (n * Math.PI); im[n] = (1 - Math.cos(2 * Math.PI * n * k)) / (n * Math.PI); }
   const w = ctx.createPeriodicWave(re, im); pulses.set(k, w); return w;
 }
-export function playTune(evts, { gain = .5, at = 0 } = {}){
-  if (!gfx.sfx || !evts?.length) return () => {};
+export function playTune(evts, { gain = .5, at = 0, bus = null } = {}){
+  if ((!bus && !gfx.sfx) || !evts?.length) return () => {};
   if (!init() || ctx.state !== 'running') return () => {};
   const t0 = ctx.currentTime + .03 + at, nodes = [];
   try {
     for (const e of evts){
       const s = t0 + e.t, end = s + Math.max(.02, e.dur), v = Math.max(.0002, (e.vol ?? 1) * gain * .22);
       const g = ctx.createGain(); g.gain.setValueAtTime(.0001, s); g.gain.exponentialRampToValueAtTime(v, s + .006);
-      g.gain.setValueAtTime(v, Math.max(s + .007, end - .03)); g.gain.exponentialRampToValueAtTime(.0001, end); g.connect(sfxBus);
+      g.gain.setValueAtTime(v, Math.max(s + .007, end - .03)); g.gain.exponentialRampToValueAtTime(.0001, end); g.connect(bus || sfxBus);
       if (e.wave === 'noise'){
         const src = ctx.createBufferSource(); src.buffer = noiseBuf; src.loop = true;
         const f = ctx.createBiquadFilter(); f.type = e.drum === 'h' ? 'highpass' : 'bandpass'; f.frequency.value = e.drum === 'h' ? 6000 : e.drum === 'X' ? 900 : 1800; f.Q.value = .8;
@@ -181,6 +182,26 @@ export function playTune(evts, { gain = .5, at = 0 } = {}){
     }
   } catch {}
   return () => { for (const n of nodes) try { n.stop(); } catch {} };
+}
+/* ---------- 🎼 a looping tune: the region music (ChatGPT's data/region-music.js, played by ui/regionmusic.js) ----------
+   evts: one pass of the loop (as for playTune); len: its length in seconds. The loop is laid down a few seconds ahead
+   on a bus of its own (under the music setting), fading in; stop(fade) fades it out and lets it go.
+   → { stop(fade) } or null (no sound yet: before the first tap, or music off). */
+export function loopTune(evts, len, { gain = .32, fadeIn = 3 } = {}){
+  if (!gfx.music || !evts?.length || !(len > .5)) return null;
+  if (!init() || ctx.state !== 'running') return null;
+  const bus = ctx.createGain(), t0 = ctx.currentTime;
+  bus.gain.setValueAtTime(0, t0); bus.gain.linearRampToValueAtTime(1, t0 + Math.max(.05, fadeIn)); bus.connect(musicBus);
+  let next = t0 + .05, stops = [], timer = null, dead = false;
+  const lay = () => { if (dead) return;
+    while (next < ctx.currentTime + 6){ stops.push(playTune(evts, { gain, at:next - ctx.currentTime - .03, bus })); next += len; }
+    stops = stops.slice(-4); timer = setTimeout(lay, 1500); };
+  lay();
+  return { stop(fade = 2){
+    if (dead) return; dead = true; clearTimeout(timer);
+    const t = ctx.currentTime; bus.gain.cancelScheduledValues(t); bus.gain.setValueAtTime(bus.gain.value, t); bus.gain.linearRampToValueAtTime(0, t + Math.max(.05, fade));
+    setTimeout(() => { for (const s of stops) s(); try { bus.disconnect(); } catch {} }, Math.max(.05, fade) * 1000 + 150);
+  } };
 }
 addEventListener('pointerdown', unlock, { once:false, passive:true });
 addEventListener('keydown', unlock, { once:false });

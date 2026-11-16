@@ -1,6 +1,6 @@
 import { test, expect } from './helpers.js';
 
-// ✨ Finding things (game/finds.js, engine/finds-lite.js, render/glints.js): in the Village of Barovia a glint is picked
+// ✨ Finding things (game/finds.js, ChatGPT's engine/finds.js, render/glints.js): in the Village of Barovia a glint is picked
 // up with Ⓐ (coins or a keepsake into the pack), a gravestone is read, and a wolf that sees the hero gets a "!" over its
 // head a beat before the fight.
 test('a glint picked up, a gravestone read, and a "!" before a fight', async ({ page }) => {
