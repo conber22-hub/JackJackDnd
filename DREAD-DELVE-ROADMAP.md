@@ -16,6 +16,14 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.30 — a fight you see start, and a blow you choose
+
+A fight used to arrive as a bar at the bottom of the screen, and Ⓐ, still held from walking or closing a card, struck at once with whatever weapon reached, its card popping up over the very swing it described.
+- **⚔ A fight breaks out** (`game/wander.js` `beginFight` / `opening`, `ui/wander.js`): two seconds of its own before anyone acts. Bars close in at the top and bottom, a red slash crosses the screen with what started it (**Ambush!**, **Seen!**, a road event's name) and a line of why, who's there, the order they'll go in and who goes first, with a sting (`fightBegins`). The camera rises and draws back over the ground it's fought over, then comes back to the hero. Presses in that moment (Ⓐ, Ⓧ, Ⓨ, the triggers) do nothing; whatever card was up is put away.
+- **The ground it's fought over** (`render/fightzone.js`): the squares round the fight take on a faint grid, a red line pulses round its edge, and the ground outside goes dark, sweeping out from the middle. It grows if someone goes past its edge. On the hero's turn the squares they can still walk to are lit.
+- **Choosing the blow:** on the hero's turn Ⓐ (*Attack Wolf…*) opens **Strike**: each attack the hero has, with its bonus, its damage and whether it reaches from here (*in reach*, *in range*, *long range: at disadvantage*, *out of reach (5 ft.; it's 15 ft. away)*), the one that would be used at the top. Ⓐ again strikes with it; *Another target* changes who; Ⓑ puts it away with nothing spent. A tap on a foe aims; a second tap opens the choice. The fight bar shows the weapon to hand (⚔ Javelin +5 to hit · 1d6+3 piercing · in range). The same on the table's handhelds (`ui/tablehh.js`).
+- **Seeing it land:** the damage rises over whoever took it (*−7*, a gold *CRIT −14*, or *MISS*), for every blow in the fight, theirs too; a throw, a shot or a spell crosses to its target as a streak (a spell in its own colour); the hero's own blows, and those on the hero, jolt the camera. In the Wanderer the card waits until the blow has landed and sits at the top of the screen, smaller, clear of the two of them.
+
 ## v1.29 — the world joined up: ways between places, things to find, how walking feels, the valley's hours
 
 The valley played like a set of separate boards. Now it plays like one place you walk through, the way the old pocket-console adventures joined their towns and routes. All of it in the Wanderer; the table's handhelds get the crossings, the names and the footsteps too.

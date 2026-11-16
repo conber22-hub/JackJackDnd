@@ -592,6 +592,37 @@ body.wander #modeHint, body.wander #moveTip, body.wander #btnPanel, body.wander 
 .wd-act b{font-family:Cinzel,Georgia,serif;color:var(--candle)}
 .wd-fight{position:absolute;left:50%;transform:translateX(-50%);bottom:max(16px,env(safe-area-inset-bottom));width:min(760px,calc(100vw - 32px));padding:12px 16px;border-radius:22px;background:linear-gradient(rgba(30,16,22,.8),rgba(10,6,9,.88));border:1px solid var(--line);box-shadow:var(--spec),0 20px 60px rgba(0,0,0,.6);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);display:flex;flex-direction:column;gap:8px}
 .wd-fight.hidden,.wd-talk.hidden,.wd-menu.hidden{display:none}
+/* ⚔ a fight in the Wanderer: the weapon line on the fight bar; the choice of blow sits low, clear of the figures; the cards wait at the top */
+.wd-weap{font-size:14px;color:#efe1c8}.wd-weap .near{color:#bfe3a0}.wd-weap .far{color:#ffb08a}
+.wd-menu.wd-strike{top:auto;left:auto;right:16px;bottom:calc(max(16px,env(safe-area-inset-bottom)) + 182px);transform:none;width:min(360px,calc(100vw - 32px));padding:12px 14px}
+.wd-menu.wd-strike .wd-opt{padding:7px 12px}.wd-menu.wd-strike .wd-tt b{font-size:20px}
+@media (max-width:640px){.wd-menu.wd-strike{right:auto;left:50%;transform:translateX(-50%)}}
+body.wd-fighting #cardLayer{justify-content:flex-start;padding-top:86px}
+body.wd-fighting #cardLayer .pop{width:min(380px,calc(100vw - 32px));padding:12px 16px}
+body.wd-fighting #cardLayer .pop .t{font-size:20px}body.wd-fighting #cardLayer .pop .f{font-size:15px;margin:4px 0}body.wd-fighting #cardLayer .pop .big{font-size:26px}
+/* ⚔ a fight breaks out: bars close in, a red slash, what started it and who goes when */
+.wd-open{position:absolute;inset:0;pointer-events:none;overflow:hidden;animation:wdOpenOut .45s ease-in 1.8s forwards}
+.wd-open.hidden{display:none}
+.wd-open .bar{position:absolute;left:0;right:0;height:11%;background:#050204;animation:wdBar .35s cubic-bezier(.2,.9,.3,1) both}
+.wd-open .bar.top{top:0;transform-origin:top}.wd-open .bar.bot{bottom:0;transform-origin:bottom}
+.wd-open .slash{position:absolute;left:-10%;right:-10%;top:calc(50% - 70px);height:120px;background:linear-gradient(90deg,transparent,rgba(120,10,16,.78) 18%,rgba(150,18,24,.86) 50%,rgba(120,10,16,.78) 82%,transparent);transform:skewY(-4deg) scaleX(0);transform-origin:left;animation:wdSlash .42s cubic-bezier(.2,.9,.25,1) .08s forwards;box-shadow:0 0 60px rgba(160,20,30,.5)}
+.wd-open .box{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(640px,calc(100% - 24px));text-align:center;text-shadow:0 2px 10px #000}
+.wd-open .k{font-size:12px;letter-spacing:.32em;text-transform:uppercase;color:#f3c9a0;opacity:0;animation:wdIn .3s ease-out .18s forwards}
+.wd-open .ttl{font-family:var(--serif);font-size:clamp(34px,7vw,64px);font-weight:700;color:#fff2dc;letter-spacing:.04em;line-height:1;opacity:0;animation:wdTtl .5s cubic-bezier(.2,.9,.3,1.2) .2s forwards}
+.wd-open .fl{font-style:italic;font-size:17px;color:#f0dcc4;margin-top:6px;opacity:0;animation:wdIn .3s ease-out .4s forwards}
+.wd-open .foes{font-size:14px;color:#ffc8b0;margin-top:10px;opacity:0;animation:wdIn .3s ease-out .45s forwards}
+.wd-open .ord{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px}
+.wd-open .ord span{font-size:13px;padding:3px 10px;border-radius:99px;background:rgba(10,6,9,.8);border:1px solid rgba(240,210,160,.35);opacity:0;animation:wdIn .25s ease-out forwards}
+.wd-open .ord .foe{border-color:rgba(255,110,90,.55);color:#ffc0b0}.wd-open .ord .pal{color:#f6e2bf}
+.wd-open .go{margin-top:10px;font-size:15px;font-weight:600;color:#ffe3a6;opacity:0;animation:wdIn .3s ease-out 1s forwards}
+@keyframes wdBar{from{transform:scaleY(0)}to{transform:none}}
+@keyframes wdSlash{to{transform:skewY(-4deg) scaleX(1)}}
+@keyframes wdTtl{from{opacity:0;transform:scale(1.5);letter-spacing:.3em}to{opacity:1;transform:none;letter-spacing:.04em}}
+@keyframes wdIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes wdOpenOut{to{opacity:0}}
+body.hh .wd-open .ttl{font-size:30px}body.hh .wd-open .fl{font-size:12px}body.hh .wd-open .slash{height:70px;top:calc(50% - 35px)}body.hh .wd-open .ord span{font-size:10px;padding:1px 6px}
+body.hh .wd-menu.wd-strike{bottom:auto;top:50%;transform:translate(-50%,-50%)}
+body.hh.wd-fighting #cardLayer{padding-top:8px}
 .wd-order{display:flex;flex-wrap:wrap;gap:6px;font-size:13px}
 .wd-order span{padding:2px 10px;border-radius:999px;border:1px solid var(--line);color:var(--dim)}
 .wd-order .foe{color:#e39a9a}.wd-order .pal{color:#bfe3a3}.wd-order .now{border-color:var(--candle);color:var(--ink)}.wd-order .down{text-decoration:line-through;opacity:.5}

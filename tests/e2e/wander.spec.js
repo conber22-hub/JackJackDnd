@@ -69,11 +69,13 @@ test('a hero walks the valley alone: a companion won over, an ambush on the road
   let turns = 0;
   await expect.poll(async () => {
     const s = await st(page); if (!s.fight) return 'over';
-    if (await page.evaluate(() => window.DreadDelve.wander.myTurn() && !window.DreadDelve.busy())){
+    if (await page.evaluate(() => window.DreadDelve.wander.myTurn() && !window.DreadDelve.wander.opening() && !window.DreadDelve.busy())){
       turns++;
       await page.evaluate(() => { const D = window.DreadDelve, w = D.wander, h = w.hero(), tg = w.target(); if (tg && w.attackFor(h, tg) < 0) w.walkTo(tg.x, tg.y); });
       await page.waitForTimeout(1200);
-      // Ⓐ strikes; Ⓐ again (once the strike has landed) ends the turn; N ends it whatever happened
+      // Ⓐ opens the choice of blow (each weapon, its bonus and reach), Ⓐ again strikes with the one at the top;
+      // Ⓐ once more (once the strike has landed) ends the turn; N ends it whatever happened
+      await page.keyboard.press('Space'); await expect(page.locator('#wdMenuBox')).toContainText('to hit');
       await page.keyboard.press('Space'); await page.waitForTimeout(1500); await page.keyboard.press('Space'); await page.waitForTimeout(400);
       if (await page.evaluate(() => window.DreadDelve.wander.myTurn())) await page.keyboard.press('n');
     }

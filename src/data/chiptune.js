@@ -55,6 +55,9 @@ export const SONGS = [
   { id:'crit', title:'The raven strikes', bpm:144, loop:false, voices:{
     pulse1:pulse('B6/32 G6/32 E6/8', .28, .125), pulse2:pulse('G5/16 B5/8', .18, .5),
     tri:bass('E3/8.', .30), noise:drum('X/16 h/32', .22) } },
+  { id:'fightBegins', title:'Steel out of the trees', bpm:150, loop:false, voices:{
+    pulse1:pulse('E5/16 r/32 E5/32 D#5/16 E5/16 B4/8 r/16 G5/16 F5/8 E5/4', .22, .125), pulse2:pulse('B3/8 B3/8 C4/8 B3/8 r/8 D#4/8 E4/4', .12, .5),
+    tri:bass('E2/8 E2/8 F2/8 E2/8 r/8 B1/8 E2/4', .30), noise:drum('X/16 x/16 h/16 x/16 X/16 x/16 h/16 x/16 X/8 r/8 X/4', .2) } },
   { id:'door', title:'The reluctant hinge', bpm:100, loop:false, voices:{
     pulse1:pulse('B2/16 C3/16 B2/8', .08, .125), tri:bass('E2/4', .12),
     noise:drum('x/32 h/16 x/32 X/8', .14) } },

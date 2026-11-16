@@ -18,7 +18,7 @@
    Yard), and the device wants it: on a touch screen with no controller, unless the menu's "The classic screen" is
    chosen (kept per device). A controller plugged in plays it too. */
 import { state, ui, tokById } from '../engine/state.js';
-import { esc } from '../util/core.js';
+import { esc, signed } from '../util/core.js';
 import { readPad, padIntents, keyIntent } from '../engine/pad.js';
 import { rangeCheck, coverOf, areaOf, areaSquares, spellReach } from '../engine/targeting.js';
 import { tokGap } from '../engine/movement.js';
@@ -97,8 +97,9 @@ function doorNear(){ const t = me(); if (!t) return null; const f = state.floors
   return d ? { L:t.floor, id:d.d.id, open:d.d.state === 'open', locked:d.d.state === 'locked' } : null; }
 
 /* ---------- doing ---------- */
-function strike(tg = target()){
+function strike(tg = target(), pick = null){
   const t = me(); if (!t) return;
+  if (pick !== null && t.attacks?.[pick]) rt.atk = pick;
   if (fight() && !myTurn()) return toast('Not your turn yet.');
   if (!tg) return toast('Nobody to strike.');
   if (fight() && !strikesLeft(t)) return toast(usedNow().acted ? 'Your action is spent this turn: A again ends your turn.' : 'You\'ve struck this turn: A again ends your turn.');
@@ -108,6 +109,31 @@ function strike(tg = target()){
   coachLearn('strike');
   const a = t.attacks[i], send = d20 => requestAct({ kind:'attack', id:t.id, i, target:tg.id, mode:ui.atkMode, ...(d20 ? { d20 } : {}) });
   if (state.realDice) askD20(`${t.name}: ${a.n} → ${tg.name}`, send); else send(null);
+}
+/* ---------- ⚔ the choice of blow ----------
+   A, with a target, doesn't strike straight away: it opens the choice of what to strike with, each attack with its
+   bonus, damage and whether it reaches from here (the one that would be used at the top); A again strikes with it,
+   B puts it away with nothing spent. (A tap on a foe aims; a second tap opens it too.) */
+function openStrike(tg = target()){
+  const t = me(); if (!t) return;
+  if (fight() && !myTurn()) return toast('Not your turn yet.');
+  if (!tg) return toast('Nobody in sight.');
+  if (fight() && !strikesLeft(t)) return toast(usedNow().acted ? 'Your action is spent this turn.' : 'You\'ve struck this turn.');
+  openMenu('strike');
+}
+function reachWords(t, tg, a){
+  if (!a || !tg) return '';
+  let r; try { r = rangeCheck(t, tg, a); } catch { return ''; }
+  if (r.ok && coverOf(t, tg).cover === 'total') return 'behind total cover';
+  if (!r.ok) return r.why || 'out of reach';
+  return r.kind === 'ranged' ? (r.long ? 'long range: at disadvantage' : r.close ? 'a foe at your elbow: at disadvantage' : 'in range') : 'in reach';
+}
+function strikeItems(t){
+  const tg = target(), best = tg ? attackFor(t, tg) : -1, ok = a => { try { return !!tg && rangeCheck(t, tg, a).ok && coverOf(t, tg).cover !== 'total'; } catch { return false; } };
+  const list = (t.attacks || []).map((a, i) => ({ a, i, r:ok(a) })).sort((x, y) => (y.i === best) - (x.i === best) || y.r - x.r);
+  return [...list.map(({ a, i, r }) => ({ label:a.n, sub:`${signed(a.b)} to hit · ${a.d} ${a.t || ''} · ${reachWords(t, tg, a)}`,
+      off:!r || (fight() && (!myTurn() || !strikesLeft(t))) || (a.l && !canCast(t, a.l, a.sn || a.n, a.again)), run:() => { menu.open = false; strike(tg, i); } })),
+    { label:'Back', sub:'Nothing is spent', run:() => { menu.open = false; } }];
 }
 /* ---------- a spell from the buttons ----------
    At the target (an area aimed at its square), on yourself, or for healing and help a friend chosen on the screen;
@@ -197,8 +223,9 @@ function fightAction(){
   const t = me(); if (!t) return null;
   if (!myTurn()){ const cur = currentTurn(); return { label:cur ? `${cur.name}'s turn…` : 'Wait for your turn', run:() => toast('Not your turn yet.'), idle:true }; }
   const tg = target(), u = usedNow();
-  if (strikesLeft(t) && tg && attackFor(t, tg) >= 0) return { label:`Strike ${tg.name}`, run:() => strike(tg) };
-  if (strikesLeft(t)) return { label:tg ? `${tg.name} is out of reach: walk closer` : 'Nobody in reach', run:() => toast(tg ? `${tg.name} is out of reach: walk closer, or X for more.` : 'Nobody in sight. X for more.'), idle:true };
+  if (strikesLeft(t) && tg && attackFor(t, tg) >= 0) return { label:`Attack ${tg.name}…`, run:() => openStrike(tg) };
+  if (strikesLeft(t) && tg) return { label:`Attack ${tg.name}… (out of reach: walk closer)`, run:() => openStrike(tg) };
+  if (strikesLeft(t)) return { label:'Nobody in reach', run:() => toast(tg ? `${tg.name} is out of reach: walk closer, or X for more.` : 'Nobody in sight. X for more.'), idle:true };
   return { label:'End your turn', run:() => { if (performance.now() - (rt.aAt || 0) < 1200) return toast(u.acted ? 'Your action is spent this turn: A again ends your turn.' : 'You\'ve struck this turn: A again ends your turn.'); endTurn(); } };
 }
 // What A would do out of a fight: { label, run } | null
@@ -206,7 +233,7 @@ function hereAction(){
   const t0 = me(), st = t0 && onStairs(t0);
   if (st) return { label:exitLabel(state.floors[t0.floor], st), run:() => { takeStairs(me()); tune('stairs'); coachLearn('stairs'); } };
   const dn = doorNear(); if (dn) return { label:dn.locked ? 'Try the locked door' : dn.open ? 'Close the door' : 'Open the door', run:() => { doorAction(me(), dn.L, dn.id, 'toggle'); tune('door'); coachLearn('door'); } };
-  const tg = target(), t = me(); if (tg && attackFor(t, tg) >= 0) return { label:`Strike ${tg.name}`, run:() => strike(tg) };
+  const tg = target(), t = me(); if (tg && attackFor(t, tg) >= 0) return { label:`Attack ${tg.name}…`, run:() => openStrike(tg) };
   return null;
 }
 // A tap on the screen (ui/input.js): a foe aims (again: strike), the hero is A, the ground walks there. Doors and
@@ -216,7 +243,7 @@ function onTap(tile, tokId){
   if (skipBoot()) return true;
   if (menu.open){ menu.open = false; renderHud(); return true; }
   const o = tokId && tokById(tokId), t = me(); if (!t) return false;
-  if (o?.kind === 'monster'){ if (rt.target === o.id) strike(o); else { rt.target = o.id; rt.look = { id:o.id, until:performance.now() + 900 }; } renderHud(); return true; }
+  if (o?.kind === 'monster'){ if (rt.target === o.id) openStrike(o); else { rt.target = o.id; rt.look = { id:o.id, until:performance.now() + 900 }; } renderHud(); return true; }
   if (o?.id === t.id){ press('a'); return true; }
   if (o) return false;
   if (tile && tile.floor === t.floor && !(tile.x === t.x && tile.y === t.y)){ if (fight() && !myTurn()){ toast('Wait for your turn.'); return true; } requestMove(t, tile.x, tile.y); return true; }
@@ -242,11 +269,12 @@ function closeSheet(){ closePocketSheet(); document.body.classList.remove('hh-sh
 const openMenu = page => { menu.open = true; menu.page = page; menu.from = page; menu.i = 0; renderHud(); };
 const go = page => () => { menu.page = page; menu.i = 0; };
 const back = { label:'Back', run:() => { if (menu.page === menu.from) menu.open = false; else { menu.page = 'main'; menu.i = 0; } } };
-const TITLE = { main:'At the table', spells:'Spells', actions:'Actions', handheld:'Handheld & camera', help:'How to play', allies:'On whom?', slot:'Which slot?' };
-const HELP = 'Each button does one thing. D-pad: walk a step a press (hold it to keep walking; up is away from the camera), or move through a menu. A: do what the line on the screen says (strike your target, end your turn, take the stairs, open a door), or choose in a menu. B: back, or put a card away. X: Actions: your attacks, spells, Dash, Disengage, Dodge, features like Action Surge, Search, End turn. Y: the next target. L and R: turn the camera. Select: your hero\'s sheet. View: the next camera view. Start: this menu. Or touch the screen: a foe to aim (again to strike), the ground to walk, a door or a thing to use it, any line of a menu. The DM still decides everything, as before.';
+const TITLE = { strike:'Strike', main:'At the table', spells:'Spells', actions:'Actions', handheld:'Handheld & camera', help:'How to play', allies:'On whom?', slot:'Which slot?' };
+const HELP = 'Each button does one thing. D-pad: walk a step a press (hold it to keep walking; up is away from the camera), or move through a menu. A: do what the line on the screen says (attack your target: the choice of what to strike with, then A again strikes; end your turn, take the stairs, open a door), or choose in a menu. B: back, or put a card away. X: Actions: your attacks, spells, Dash, Disengage, Dodge, features like Action Surge, Search, End turn. Y: the next target. L and R: turn the camera. Select: your hero\'s sheet. View: the next camera view. Start: this menu. Or touch the screen: a foe to aim (again: the choice of blow), the ground to walk, a door or a thing to use it, any line of a menu. The DM still decides everything, as before.';
 function menuItems(){
   const t = me(); if (!t) return [back];
   const turnOk = !fight() || myTurn();
+  if (menu.page === 'strike') return strikeItems(t);
   if (menu.page === 'spells') return [...(t.casts || []).map((s, i) => ({ label:s.n,
     sub:`${s.l ? `level ${s.l}` : 'cantrip'}${s.k === 'heal' ? ' · heals' : s.k === 'buff' ? ' · helps' : areaOf(s) ? ' · an area' : ''}${s.k === 'heal' || s.k === 'buff' || s.k === 'util' ? '' : target() ? ` · at ${target().name}` : ''}`,
     off:!turnOk || !canCast(t, s.l, s.n, s.again) || (fight() && !actionLeft(t)), run:() => { menu.open = false; castFromList(i); } })), back];
@@ -341,7 +369,8 @@ export function renderHud(){
     const tg = target(), i = attackFor(t, tg);
     const body = myTurn()
       ? `<div class="wd-fl"><b>Your turn</b> · ${Math.max(0, moveAllowance(t)) * 5} ft. to move · ${usedNow().acted ? 'action spent' : strikesLeft(t) ? `${strikesLeft(t)} strike${strikesLeft(t) === 1 ? '' : 's'} left` : 'struck'}</div>
-        <div class="wd-fl">${tg ? `🎯 <b>${esc(tg.name)}</b>${tg.maxHp ? ` ${bar(tg.hp, tg.maxHp)}` : ''}${i >= 0 ? ` · ${esc(t.attacks[i].n)}` : ' <span class="muted">(out of reach)</span>'}` : 'Nobody in sight'}</div>
+        <div class="wd-fl">${tg ? `🎯 <b>${esc(tg.name)}</b>${tg.maxHp ? ` ${bar(tg.hp, tg.maxHp)}` : ''}${i < 0 ? ' <span class="muted">(out of reach)</span>' : ''}` : 'Nobody in sight'}</div>
+        ${tg && i >= 0 && strikesLeft(t) ? `<div class="wd-fl wd-weap">⚔ <b>${esc(t.attacks[i].n)}</b> ${signed(t.attacks[i].b)} to hit · ${esc(t.attacks[i].d)} ${esc(t.attacks[i].t || '')} · <span class="near">${esc(reachWords(t, tg, t.attacks[i]))}</span></div>` : ''}
         <div class="wd-acts"><button class="wd-act" data-tb="x"><b>X</b> Actions</button><button class="wd-act" data-tb="y"><b>Y</b> Next target</button><button class="wd-act" data-tb="endturn">End turn</button></div>`
       : `<div class="wd-fl">${cur ? `<b>${esc(cur.name)}</b>'s turn…` : '…'}</div>${tg ? `<div class="wd-fl">🎯 ${esc(tg.name)}</div>` : ''}`;
     put('tbFight', `<div class="wd-order">${order}</div>${body}`);

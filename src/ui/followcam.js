@@ -23,6 +23,13 @@ export function camView(){ const v = nextView(cam.goal || toOrbit(offset())); ca
 // Ease into the first view (Close), the way a run begins: when the table's handheld takes over a camera set for the map.
 export function camStart(){ cam.goal = { pitch:VIEWS[0].pitch, dist:VIEWS[0].dist }; }
 export function camCrane(k){ const o = crane(cam.goal ? { yaw:0, ...cam.goal } : toOrbit(offset()), k * 1.4); cam.goal = { pitch:o.pitch, dist:o.dist }; }
+/* A fight breaks out: the camera rises and draws back to take in the ground it's fought over (radius: in squares), then,
+   once the moment's past, eases back to where the player had it. */
+let heldView = null;
+export function camWide(radius){ const o = toOrbit(offset()), was = { pitch:cam.goal?.pitch ?? o.pitch, dist:cam.goal?.dist ?? o.dist };
+  if (!heldView) heldView = was;
+  const w = clampOrbit({ yaw:o.yaw, pitch:Math.max(was.pitch, 52 * Math.PI / 180), dist:Math.max(was.dist * 1.3, radius * 2.2) }); cam.goal = { pitch:w.pitch, dist:w.dist }; }
+export function camBack(){ if (heldView){ cam.goal = heldView; heldView = null; } }
 // the camera's yaw: which way "up on the stick" walks
 export const camYaw = () => { const o = camera.position.clone().sub(controls.target); return Math.atan2(o.x, o.z); };
 

@@ -83,6 +83,7 @@ export { horrorHere, showHorror, readHorror } from './game/horror.js';
 export * as wander from './game/wander.js';   // 🗡 the Wanderer (game/wander.js): playing with the game as the DM
 export * as ways from './game/ways.js';   // 🚪 the ways between places (game/ways.js): way outs, the road's ends, doors
 export { stepFxCount } from './render/stepfx.js';   // 👣 what the steps have left (render/stepfx.js)
+export { fightFxCount, fightZone } from './render/fightzone.js';   // ⚔ what a fight draws (render/fightzone.js)
 export * as handheld from './ui/handheld.js';   // 🕹 the handheld skin: the phone as the controller
 export * as pocket from './ui/pocketsheet.js';   // 📖 the pocket sheet (ui/pocketsheet.js): the hero's sheet on the handheld's screen
 export * as shells from './ui/shells.js';   // 🎨 the shells and stickers (ui/shells.js): the pack and the sticker book

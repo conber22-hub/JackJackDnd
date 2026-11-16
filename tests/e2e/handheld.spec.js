@@ -131,9 +131,11 @@ test.describe('on a phone held upright', () => {
     await expect(page.locator('body')).toHaveClass(/hh-subon/);
     const [scr, bar] = await Promise.all([page.locator('#hhScreen').boundingBox(), page.locator('#wdFight').boundingBox()]);
     expect(bar.y).toBeGreaterThanOrEqual(scr.y + scr.height);   // under the screen, not over it
-    await expect.poll(() => page.evaluate(() => window.DreadDelve.wander.myTurn() && !window.DreadDelve.busy()), { timeout:60_000 }).toBe(true);
-    await expect(page.locator('#wdPrompt')).toContainText('Strike Wolf');   // (A does what the line says)
+    await expect.poll(() => page.evaluate(() => window.DreadDelve.wander.myTurn() && !window.DreadDelve.wander.opening() && !window.DreadDelve.busy()), { timeout:60_000 }).toBe(true);
+    await expect(page.locator('#wdPrompt')).toContainText('Attack Wolf');   // (A does what the line says: the choice of blow)
     await hold(page, 'a');
+    await expect(page.locator('#wdMenuBox')).toContainText('to hit');
+    await hold(page, 'a');   // (A again: strike with the one at the top)
     await expect.poll(() => page.evaluate(() => { const w = window.DreadDelve.wander; return !!w.rt.look && w.rt.look.id === w.target()?.id; })).toBe(true);
     // the action spent: the line says A ends the turn; touch: the fight bar's Actions, its lines, Back
     await expect(page.locator('#wdPrompt')).toContainText('End your turn');

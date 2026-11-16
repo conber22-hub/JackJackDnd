@@ -87,7 +87,7 @@ test('a wanderer\'s quests, a roadside choice, a companion\'s approval and quest
     for (const t of D.get().tokens.filter(t => t.kind === 'monster')) t.hp = t.maxHp = 200;   // (one Sacred Flame mustn't end the fight before it's looked at)
     w.beginFight('none', D.get().tokens.filter(t => t.kind === 'monster').map(t => t.id)); });
   await expect(page.locator('#wdFight')).toBeVisible();
-  await expect.poll(() => ev(page, () => window.DreadDelve.wander.myTurn() && !window.DreadDelve.busy()), { timeout:60_000 }).toBe(true);
+  await expect.poll(() => ev(page, () => window.DreadDelve.wander.myTurn() && !window.DreadDelve.wander.opening() && !window.DreadDelve.busy()), { timeout:60_000 }).toBe(true);
   await page.keyboard.press('f');   // (Ⓧ: the Actions menu, its Spells…)
   await expect(page.locator('#wdMenuBox')).toContainText('Dodge');
   await page.locator('#wdMenuBox [data-act="wdPick"]', { hasText:/^Spells…/ }).click();

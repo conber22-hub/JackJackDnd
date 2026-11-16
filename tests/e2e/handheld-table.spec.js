@@ -3,7 +3,7 @@ import { test, expect, preparePage, arena, expectPositions } from './helpers.js'
 // 🕹 The handheld at the table (ui/tablehh.js): a player's phone, seated at the DM's table, is the pocket console by
 // default. The map in the shell's screen with the classic screen's furniture away; the D-pad steps the hero (the DM's
 // app moves it, both screens agree); Select opens the hero's sheet over everything; Start the menu. One button, one
-// job: in a fight on their turn, A does what the line on the screen says: it strikes the target through the usual
+// job: in a fight on their turn, A does what the line on the screen says: it opens the choice of blow, then strikes the target through the usual
 // request (once: the handheld counts the turn's action), then ends the turn (not on a double tap); X is the Actions
 // menu, its Spells… casting at the target from the buttons, its Action Surge giving the action back; a foe getting away
 // asks for her reaction on the screen (A strikes); the menu's "The classic screen" puts the old phone back, and the
@@ -93,6 +93,10 @@ test('a seated player plays from the handheld: steps, the sheet, the menu, a str
     if (SP) await p.screenshot({ path:`${SP}/table-fight.png` });
     const logLen = await dm.evaluate(() => window.DreadDelve.get().log.length);
     await expect(p.locator('#tbFight')).toContainText('1 strike left');
+    await expect(p.locator('#tbFight .wd-weap')).toContainText('to hit');   // (what she'd strike with, on the bar)
+    await expect(p.locator('#tbPrompt')).toContainText('Attack Zombie');
+    await hold('a');   // (A: the choice of blow, each attack with its bonus, damage and reach; A again strikes)
+    await expect(p.locator('#tbMenu')).toContainText('to hit');
     await hold('a');
     await expect.poll(() => dm.evaluate(n => window.DreadDelve.get().log.slice(n).some(l => /Ada/.test(typeof l === 'string' ? l : JSON.stringify(l))), logLen), { timeout:20_000 }).toBe(true);
     // the turn's action is spent: A, straight away, doesn't throw the turn away; a moment later it ends it

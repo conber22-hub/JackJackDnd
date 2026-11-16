@@ -66,9 +66,9 @@ const night = () => { const h = valley().hour; return h >= 20 || h < 6; };
 const onRoad = () => state.meta.template === 'journey';
 
 // What only this device keeps while playing (never saved): the hero's trail, the aim, whose turn was whose.
-export const rt = { walkN:0, tapTo:null, step:null, spotted:0, heard:new Set(), trail:[], target:null, atk:null, heroKey:'', attacks:0, cast:false, bonus:false, acting:'', actAt:0, lastBusy:0, endAt:0, talk:null, seen:new Set(), round:0, unseen:0, hpWas:null, focus:null, look:null };
+export const rt = { walkN:0, tapTo:null, step:null, spotted:0, heard:new Set(), trail:[], target:null, atk:null, heroKey:'', attacks:0, cast:false, bonus:false, acting:'', actAt:0, lastBusy:0, endAt:0, talk:null, seen:new Set(), round:0, unseen:0, hpWas:null, focus:null, look:null, opening:null };
 export const freshRun = () => fresh();
-const fresh = () => Object.assign(rt, { spotted:0, heard:new Set(), trail:[], target:null, atk:null, heroKey:'', attacks:0, cast:false, bonus:false, acting:'', actAt:0, lastBusy:0, endAt:0, talk:null, round:0, unseen:0, hpWas:null });
+const fresh = () => Object.assign(rt, { opening:null, spotted:0, heard:new Set(), trail:[], target:null, atk:null, heroKey:'', attacks:0, cast:false, bonus:false, acting:'', actAt:0, lastBusy:0, endAt:0, talk:null, round:0, unseen:0, hpWas:null });
 
 /* ---------- starting and leaving ---------- */
 // The look that goes with playing: the players' fog, the DM's desk away, the camera low behind the hero.
@@ -481,7 +481,7 @@ function spotted(seen){
   rt.spotted = performance.now();
   for (const m of seen) bubble(m.id, '!');
   passage.sting?.('spotted');
-  setTimeout(() => { rt.spotted = 0; if (!state.combat.active) beginFight('none'); }, 750);
+  setTimeout(() => { rt.spotted = 0; if (!state.combat.active) beginFight('none', [], { title:'Seen!', flair:seen.length === 1 ? `${seen[0].name} has seen you.` : 'They have seen you.' }); }, 750);
 }
 function direct(t){
   const w = W(), L = t.floor, f = state.floors[L];
@@ -495,7 +495,7 @@ function direct(t){
   for (const e of f.events || []){
     if (e.done || e.sprung || cheb(e, t) > 3) continue;
     const key = `${state.meta.mapId}:${L}:${e.id}`;
-    if (e.enc){ springEvent(L, e.id); showCard({ kind:'seep', title:e.label, flair:e.text }, false); beginFight('none'); return; }
+    if (e.enc){ springEvent(L, e.id); beginFight('none', [], { title:e.label, flair:e.text }); return; }
     if (!rt.seen.has(key) && !w.seen.includes(key)){ rt.seen.add(key); w.seen.push(key); showCard({ kind:'', title:e.label, flair:e.text }, false); }
   }
   // off the end of the road, back off its start, or out of a place by one of its ways (game/ways.js)
@@ -527,21 +527,30 @@ function ambush(t){
   for (const g of plan.group) for (let k = 0; k < g.n && spots.length; k++){ const s = spots.shift(); const m = makeMonster(g.bid, L, s.x, s.y); state.tokens.push(m); placed.push(m); }
   if (!placed.length) return;
   w.ambushes++; syncTokens(); placed.forEach(riseFrom); updateVision();
-  showCard({ kind:'seep', title:'Ambush!', flair:pick(AMBUSH), lines:[`${placed.length} ${placed.length === 1 ? 'creature' : 'creatures'}: ${[...new Set(placed.map(m => BEST[m.bid].name))].join(', ')}`] }, false);
   log(`🗡 Ambush on ${f.name}: ${placed.map(m => m.name).join(', ')}.`);
   // do they see it coming? the party's best Perception against the pack's stealth
   const watch = Math.max(...members().map(m => m.passive || 10)), sneak = 1 + Math.floor(Math.random() * 20) + 2;
-  beginFight(sneak > watch ? 'party' : 'none', placed.map(m => m.id));
+  beginFight(sneak > watch ? 'party' : 'none', placed.map(m => m.id), { title:'Ambush!', flair:pick(AMBUSH) });
 }
 
 /* ---------- fighting ---------- */
-export function beginFight(surprise = 'none', extra = []){
+/* A fight breaks out: a moment for it (ui/wander.js draws it: what started it, who's there, the order they'll go in,
+   and the ring of ground it's fought over), and nobody acts, the hero included, until it's past. Presses made in it
+   (Ⓐ still down from walking or talking) do nothing, so no blow is struck before the player has seen the fight. */
+export const OPENING_MS = 2200;
+export const opening = () => rt.opening && performance.now() < rt.opening.until ? rt.opening : null;
+export function beginFight(surprise = 'none', extra = [], why = {}){
   const t = hero(); if (!t || state.combat.active) return;
   ui.floor = t.floor;
   const near = foes().filter(m => cheb(m, t) <= 14 && (partySees(m) || extra.includes(m.id)));
   if (!near.length) return;
   rollInitiative({ ids:[...members().filter(m => !m.dead && m.floor === t.floor).map(m => m.id), ...near.map(m => m.id)], surprise });
   Object.assign(rt, { heroKey:'', attacks:0, acting:'', endAt:0, round:0, unseen:0, hpWas:null, target:null }); aim(1);
+  const kinds = [...new Set(near.map(m => BEST[m.bid]?.name || m.name))], now = performance.now();
+  rt.opening = { at:now, until:now + OPENING_MS, title:why.title || 'A fight!', flair:why.flair || '',
+    foes:`${near.length} ${near.length === 1 ? 'foe' : 'foes'}: ${kinds.join(', ')}`, surprise };
+  passage.sting?.('fight');
+  log(`⚔ A fight on ${state.floors[t.floor]?.name || 'the road'}: ${near.map(m => m.name).join(', ')}.`);
   W().fights++;
 }
 const maxAttacks = t => /Extra Attack/.test(String(heroStats(state.characters[t.charId] || {}).features || '')) ? 2 : 1;
@@ -560,9 +569,11 @@ export function attackFor(t, tg){
   return (melee || ranged || ok[0] || [-1])[0];
 }
 export function nextWeapon(){ const t = hero(); if (!t?.attacks?.length) return null; rt.atk = rt.atk === null ? 0 : (rt.atk + 1) % t.attacks.length; return t.attacks[rt.atk]; }
-export function heroAttack(){
+export function heroAttack(pick = null){
   const t = hero(), tg = target();
+  if (opening()) return;
   if (!myTurn()) return toast('Not your turn yet.');
+  if (pick !== null && t?.attacks?.[pick]) rt.atk = pick;
   if (!tg) return toast('Nobody to strike.');
   if (!attacksLeft()) return toast(rt.cast ? 'You have cast this turn: Ⓐ again ends your turn.' : 'You have struck this turn: Ⓐ again ends your turn.');
   const i = attackFor(t, tg); if (i < 0) return toast(`${tg.name} is out of reach: walk closer.`);
@@ -597,6 +608,7 @@ export function endHeroTurn(){ if (myTurn()){ rt.heroKey = ''; nextTurn(); } }
    for the player. When it's won, or lost, wind it up. */
 export function fightTick(now = performance.now()){
   const c = state?.combat; if (!c?.active || !W()) return;
+  if (rt.opening && now < rt.opening.until){ rt.lastBusy = now; return; }   // (the fight's moment: nobody moves yet)
   if (anyBusy()){ rt.lastBusy = now; return; }
   // a standoff: three whole rounds and nobody on either side hurt (the rest run off into the trees, keep out of reach,
   // or won't come out): they withdraw, and it's over

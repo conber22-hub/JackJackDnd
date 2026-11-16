@@ -304,9 +304,12 @@ export function doAttack(aId, tId, i, mode = 'normal', { d20 = null, at = null }
   endOn(a, 'attack');   // Invisibility: it ends when you attack
   if (hits.length && atk.latch && !tg.dead && tg.kind !== 'monster'){ tg.flags.latchedBy = a.id; lines.push(`<span class="fam-seep">${esc(a.name)} is latched on.</span>`); }
   sfx(crit ? 'crit' : hits.length ? 'hit' : 'miss');
-  bus.emit('acted', { actor:a, target:tg, trigger:crit ? 'critical' : hits.length ? 'hit' : 'miss', action:atk.n });   // 🗣 a voice line (ui/voices.js)
+  // 🗣 a voice line (ui/voices.js); ⚔ the blow seen to land: the number over them, a streak for a throw, a shot or a spell (ui/wander.js)
+  bus.emit('acted', { actor:a, target:tg, trigger:crit ? 'critical' : hits.length ? 'hit' : 'miss', action:atk.n, dmg:total, ranged:rc.kind === 'ranged' && a.id !== tg.id, spell:atk.t && !!(atk.l !== undefined || / casts /.test(atk.f || '')) ? atk.t : null });
   animate(a.id, 'attack', tg.id); if (hits.length) setTimeout(() => animate(tg.id, 'hit', a.id), 330);
-  showCard({ kind:crit ? 'crit' : hits.length ? '' : 'miss', title:`${a.name} → ${tg.name}`, sub:atk.n, flair, lines, big:hits.length ? `${total} ${atk.t}` : '', die });
+  // (the Wanderer's card waits for the blow to land, so it doesn't cover the swing: one hero, one camera, on them)
+  const card = { kind:crit ? 'crit' : hits.length ? '' : 'miss', title:`${a.name} → ${tg.name}`, sub:atk.n, flair, lines, big:hits.length ? `${total} ${atk.t}` : '', die };
+  if (ui.wander) setTimeout(() => showCard(card), 700); else showCard(card);
   log(`${a.name} ${atk.n} → ${tg.name}: ${hits.length ? `${total} ${atk.t}${crit ? ' (crit)' : ''}` : 'miss'}`);
   for (const x of hits) applyDamage(tg, x.dmg, atk.t, a, true);   // already through its defences (above)
   changed(); return true;
@@ -330,6 +333,7 @@ export function applyDamage(t, n, type = '', by = null, defended = false){
     if (hooks){ showCard({ kind:'seep', title:`${t.name} is bloodied`, flair:'Something changes in the way it holds itself.' }); for (const fx of hooks) runFx(t, fx); }
   }
   if (t.hp <= 0 && !(t.nem && nemesisHolds(t))){ kill(t, type, by); setTimeout(checkVictory, 600); }
+  bus.emit('hurt', { t, n, type });   // (⚔ the number rising over them: ui/wander.js)
   if (t.kind === 'pc') bus.emit('acted', { actor:t, trigger:t.hp <= 0 ? 'down' : 'hurt', action:'' });   // 🗣 a hero hurt or down says so (ui/voices.js)
   const dealt = n;
   // being hurt ends some holds (Charm Person: hurt by the caster or their friends); hurting someone ends Invisibility

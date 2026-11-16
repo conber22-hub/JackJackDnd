@@ -3,7 +3,7 @@
    turn, a conversation, and the menu (travel, rest, save, leave). Input: a gamepad (engine/pad.js; the loop below
    reads it every frame), the keyboard, the handheld skin's touch buttons (ui/handheld.js), or taps on the map.
    The follow camera (below) eases after the hero and turns, cranes and cycles views with the right stick, L / R, [ ] - = V. */
-import { state, ui, tokById } from '../engine/state.js';
+import { state, ui, tokById, tokenAt } from '../engine/state.js';
 import { readPad, padIntents, keyIntent } from '../engine/pad.js';
 import { companionById } from '../data/wander.js';
 import { placeById } from '../engine/overland.js';
@@ -17,7 +17,11 @@ import { rangeCheck } from '../engine/targeting.js';
 import { W, rt, hero, members, wandering, startWander, continueWander, leaveWander, stepHero, heroBusy, walkTo, hereAction, talkView, chooseTalk, talkTo,
   heroAttack, heroDodge, heroTurnAct, heroFeatures, heroFeature, endHeroTurn, aim, target, targets, attackFor, nextWeapon, attacksLeft, myTurn, fightTick, destinations, setOut, travelTo, rest, saveNow,
   pack, toggleEquip, usePotion, coinsGp, shopHere, buyPotion, journal, approvalOf, levelReady, partyLevel, nextLevelXp, levelUpHero, sheetOf, spellList, heroCast,
-  SLOTS, slotMeta, canSaveSlot, saveToSlot, loadFromSlot } from '../game/wander.js';
+  SLOTS, slotMeta, canSaveSlot, saveToSlot, loadFromSlot, opening } from '../game/wander.js';
+import { setFightZone, clearFightFx, showMoveSquares, clearMoveSquares, floatText, streak, tickFightFx } from '../render/fightzone.js';
+import { reach } from '../engine/grid.js';
+import { bus, signed } from '../util/core.js';
+import { wx, wz, floorY } from '../render/scene.js';
 import { passage, tapTarget } from '../game/ways.js';
 import { veil, banner } from './passage.js';
 import { glintsSeen, pagesFound } from '../game/finds.js';
@@ -31,7 +35,7 @@ import { musicTick, musicStop } from './regionmusic.js';
 import { sfx } from '../audio/sound.js';
 import { loyalty } from '../engine/wander-life.js';
 import { hh, hhOn, hhHost, hhPad, addHost, setHandheld, skipBoot, shellItem } from './handheld.js';
-import { camTurn, camView, camCrane, camYaw, camFrame, miniFocus, lookThrough, closeLook, feelHits } from './followcam.js';
+import { camTurn, camView, camCrane, camYaw, camFrame, miniFocus, lookThrough, closeLook, feelHits, camWide, camBack } from './followcam.js';
 import { tune, coachTick, coachLearn, coachDone, coachHide } from './hhlife.js';
 import { openPocketSheet, pocketPress, pocketOpen, closePocketSheet } from './pocketsheet.js';
 import { toast } from './hud.js';
@@ -65,7 +69,7 @@ function ensureHud(){
   const el = document.createElement('div'); el.id = 'wanderHud'; el.className = 'hidden';
   el.innerHTML = `<div class="wd-top"><div class="wd-where"><b id="wdPlace"></b><span id="wdClock"></span></div><span id="wdLvl"></span><button class="wd-btn" data-act="wdMenu" aria-label="Menu">☰</button></div>
     <div class="wd-party" id="wdParty"></div><div class="wd-prompt" id="wdPrompt"></div><div class="wd-fight hh-fightbar hidden" id="wdFight"></div>
-    <div class="wd-talk hidden" id="wdTalk"></div><div class="wd-menu hidden" id="wdMenuBox"></div>`;
+    <div class="wd-talk hidden" id="wdTalk"></div><div class="wd-menu hidden" id="wdMenuBox"></div><div class="wd-open hidden" id="wdOpen"></div>`;
   document.body.appendChild(el);
 }
 // A button's name as the player holds it: a pad's, or the handheld's.
@@ -79,7 +83,8 @@ const put = (id, html) => { if (last[id] === html) return; last[id] = html; cons
 const show = (id, on) => document.getElementById(id)?.classList.toggle('hidden', !on);
 export function renderHud(){
   ensureHud();
-  const on = wandering(); show('wanderHud', on); if (!on) return;
+  const on = wandering(); show('wanderHud', on); document.body.classList.toggle('wd-fighting', on && !!state.combat.active); if (!on) return;
+  renderOpening();
   const t = hero(), V = valley(), j = V.journey, f = state.floors[t?.floor ?? 0];
   put('wdPlace', esc(j ? `${f?.name || 'The road'}` : f?.name || state.meta.name));
   put('wdClock', esc(`${clockText()}${j ? ` · to ${placeById(j.to)?.name || ''}, stretch ${(t?.floor ?? 0) + 1} of ${state.floors.length}` : ''}`));
@@ -98,7 +103,8 @@ export function renderHud(){
     if (myTurn()){
       const tg = target(), i = attackFor(t, tg), atk = t.attacks[i] || t.attacks[rt.atk ?? 0];
       body = `<div class="wd-fl"><b>Your turn</b> · ${moveAllowance(t) * 5} ft. to move · ${attacksLeft() ? `${attacksLeft()} strike${attacksLeft() === 1 ? '' : 's'} left` : rt.cast ? 'cast' : 'struck'}</div>
-        <div class="wd-fl">${tg ? `🎯 <b>${esc(tg.name)}</b> ${bar(tg.hp, tg.maxHp)}` : 'Nobody in sight'}${atk ? ` · ${esc(atk.n)}${i < 0 && tg ? ' <span class="muted">(out of reach)</span>' : ''}` : ''}</div>
+        <div class="wd-fl">${tg ? `🎯 <b>${esc(tg.name)}</b> ${bar(tg.hp, tg.maxHp)}` : 'Nobody in sight'}</div>
+        ${atk && attacksLeft() ? `<div class="wd-fl wd-weap">⚔ <b>${esc(atk.n)}</b> ${signed(atk.b)} to hit · ${esc(atk.d)} ${esc(atk.t || '')}${tg ? ` · <span class="${i < 0 ? 'far' : 'near'}">${esc(reachWords(t, tg, t.attacks.indexOf(atk)))}</span>` : ''}</div>` : ''}
         <div class="wd-acts"><button class="wd-act" data-act="wdX">${K('x')} Actions</button><button class="wd-act" data-act="wdAim" data-k="1">${K('y')} Next target</button><button class="wd-act" data-act="wdEnd">End turn</button></div>`;
     } else body = `<div class="wd-fl">${turn ? `<b>${esc(turn.name)}</b>'s turn…` : '…'}</div>`;
     put('wdFight', `<div class="wd-order">${order}</div>${body}`);
@@ -109,7 +115,7 @@ export function renderHud(){
     put('wdTalk', `<div class="wd-tt"><b>${esc(tv.title)}</b>${tv.sub ? `<span>${esc(tv.sub)}</span>` : ''}</div><div class="wd-tx">${esc(tv.text)}</div>
       <div class="wd-opts">${tv.options.map((o, k) => `<button class="wd-opt${k === talkSel.i ? ' on' : ''}${o.off ? ' off' : ''}" data-act="wdSay" data-k="${o.k}">${k + 1}. ${esc(o.label)}</button>`).join('')}</div>`);  keepInView('wdTalk'); }
   // the menu
-  show('wdMenuBox', menu.open);
+  show('wdMenuBox', menu.open); $('#wdMenuBox')?.classList.toggle('wd-strike', menu.open && menu.page === 'strike');
   if (menu.open){ const items = menuItems(); menu.i = Math.min(menu.i, items.length - 1);
     const info = pageInfo();
     put('wdMenuBox', `<div class="wd-tt"><b>${esc(PAGE_TITLE[menu.page] || 'The valley waits')}</b>${info.sub ? `<span>${info.sub}</span>` : ''}</div>
@@ -117,10 +123,11 @@ export function renderHud(){
       <div class="wd-opts">${items.map((o, k) => `<button class="wd-opt${k === menu.i ? ' on' : ''}${o.off ? ' off' : ''}" data-act="wdPick" data-k="${k}">${esc(o.label)}${o.sub ? `<small>${esc(o.sub)}</small>` : ''}</button>`).join('')}</div>`); 
     keepInView('wdMenuBox'); }
 }
-const KEYS_HELP = 'Each button does one thing. Left stick, D-pad, WASD or the arrows: walk (Q E Z C for the diagonals), or move through a menu. Ⓐ / Space: do what the line on the screen says (talk, climb, look, strike, end your turn), or choose. Ⓑ / Esc: back, or put a card away. Ⓧ / F: Actions (each weapon, spells, Dash, Disengage, Dodge, features like Action Surge, a potion, End turn). Ⓨ / Tab: the next target. LB RB / [ ]: turn the camera; right stick or - = crane it; right stick click / V: the next view. View / I: your hero. ☰ Start / M: this menu. View + Start / K: the save states. Shortcuts: LT / G spells, RT / H a potion, left stick click / J the journal, N end your turn. Or tap where to walk.';
-const PAGE_TITLE = { states:'Save states', load:'Load this one?', handheld:'Handheld & camera', main:'The valley waits', travel:'Set out for…', keys:'Controls', pack:'The pack', give:'Who drinks it?', journal:'The journal', level:'Level up', spells:'Spells', actions:'Actions' };
+const KEYS_HELP = 'Each button does one thing. Left stick, D-pad, WASD or the arrows: walk (Q E Z C for the diagonals), or move through a menu. Ⓐ / Space: do what the line on the screen says (talk, climb, look, end your turn), or choose; in a fight it opens the choice of what to strike with, each weapon with its bonus, damage and reach, and Ⓐ again strikes. Ⓑ / Esc: back, or put a card away. Ⓧ / F: Actions (each weapon, spells, Dash, Disengage, Dodge, features like Action Surge, a potion, End turn). Ⓨ / Tab: the next target. LB RB / [ ]: turn the camera; right stick or - = crane it; right stick click / V: the next view. View / I: your hero. ☰ Start / M: this menu. View + Start / K: the save states. Shortcuts: LT / G spells, RT / H a potion, left stick click / J the journal, N end your turn. Or tap where to walk.';
+const PAGE_TITLE = { strike:'Strike', states:'Save states', load:'Load this one?', handheld:'Handheld & camera', main:'The valley waits', travel:'Set out for…', keys:'Controls', pack:'The pack', give:'Who drinks it?', journal:'The journal', level:'Level up', spells:'Spells', actions:'Actions' };
 // The words above a page's choices: { sub, html }
 function pageInfo(){
+  if (menu.page === 'strike'){ const tg = target(); return { sub:tg ? `at ${esc(tg.name)} · ${Math.max(0, tg.hp)} / ${tg.maxHp} HP` : 'Nobody in sight' }; }
   if (menu.page === 'keys') return { html:hhOn() ? HH_HELP : KEYS_HELP };
   if (menu.page === 'states') return { html:`Three places to keep the run as it is now, apart from its own autosave: save before a door you're not sure of, and come back to it. ${hhOn() ? 'Select and Start together open this page.' : 'K opens this page (Back and Start together on a controller).'}` };
   if (menu.page === 'load'){ const m = slotMeta(loading); return { html:m ? `${esc(slotLabel(m))}. Where you are now is kept only if it's saved.` : '' }; }
@@ -185,6 +192,7 @@ function menuItems(){
     back()];
   if (menu.page === 'spells') return [...spellList().map(e => ({ label:`${e.n}${e.l ? ` (level ${e.l})` : e.l === 0 ? ' (cantrip)' : ''}`, sub:e.why ? `Only ${e.why}` : e.k === 'heal' ? 'On the most hurt of you, within reach' : e.kind === 'atk' ? 'An attack roll, at the target' : '',
     off:!e.ok, run:() => { closeMenu(); heroCast(e); } })), { label:'Back', run:() => { if (menu.from === 'actions'){ menu.page = 'actions'; menu.i = 0; } else closeMenu(); } }];
+  if (menu.page === 'strike') return strikeItems();
   if (menu.page === 'actions'){
     const t = hero(), fight = !!state.combat.active, mine = myTurn(), tg = fight ? target() : null, spent = fight && mine && !attacksLeft();
     const end = fight ? [{ label:'End your turn', sub:spent ? 'Your action is spent' : 'Done for this round', off:!mine, run:() => { closeMenu(); endHeroTurn(); } }] : [];
@@ -225,8 +233,10 @@ function press(b){
   if (skipBoot()) return;   // (the press that skips the handheld's boot does only that)
   if (b === 'states' && pocketOpen()) closePocketSheet();   // (Select, then Start with it: the save states, not the sheet)
   if (pocketOpen()){ pocketPress(b === 'ls' ? 'back' : b); renderHud(); return; }   // (Muse's pocket sheet takes every press while it's open)
+  // the moment a fight breaks out: the fight's buttons wait (a press still down from walking or talking strikes nothing)
+  if (opening() && ['a', 'x', 'y', 'yprev', 'endturn', 'lt', 'rt'].includes(b)) return;
   coachDone();
-  coachLearn({ a:state.combat.active ? 'strike' : null, lt:'cast', y:'aim', yprev:'aim', x:'actions', start:'menu', rs:'camera', turnl:'camera', turnr:'camera', lb:'camera', rb:'camera', back:'sheet', endturn:'endTurn' }[b]);
+  coachLearn({ a:state.combat.active && menu.page === 'strike' && menu.open ? 'strike' : null, lt:'cast', y:'aim', yprev:'aim', x:'actions', start:'menu', rs:'camera', turnl:'camera', turnr:'camera', lb:'camera', rb:'camera', back:'sheet', endturn:'endTurn' }[b]);
   if (b === 'states' || (b === 'start' && padHeld.back)){ openMenu('states'); return; }
   if (b === 'rs'){ camView(); return; }
   if (b === 'turnl' || b === 'turnr' || b === 'lb' || b === 'rb'){ camTurn(b === 'turnl' || b === 'lb' ? 1 : -1); return; }   // (L and R: the camera, always)
@@ -264,9 +274,98 @@ function fightAction(){
   const t = hero(); if (!t) return null;
   if (!myTurn()){ const c = currentTurn(); return { label:c ? `${c.name}'s turn…` : '…', run:() => {}, idle:true }; }
   const tg = target();
-  if (attacksLeft() && tg && attackFor(t, tg) >= 0) return { label:`Strike ${tg.name}`, run:heroAttack };
-  if (attacksLeft()) return { label:tg ? `${tg.name} is out of reach: walk closer` : 'Nobody in reach', run:() => toast(tg ? `${tg.name} is out of reach: walk closer, or Ⓧ for more.` : 'Nobody in sight.'), idle:true };
+  if (opening()) return { label:'…', run:() => {}, idle:true };
+  if (attacksLeft() && tg && attackFor(t, tg) >= 0) return { label:`Attack ${tg.name}…`, run:() => openStrike() };
+  if (attacksLeft() && tg) return { label:`Attack ${tg.name}… (out of reach: walk closer)`, run:() => openStrike() };
+  if (attacksLeft()) return { label:'Nobody in sight', run:() => toast('Nobody in sight.'), idle:true };
   return { label:'End your turn', run:() => { if (performance.now() - aAt < 1200) return toast(rt.cast ? 'You have cast this turn: Ⓐ again ends your turn.' : 'You have struck this turn: Ⓐ again ends your turn.'); endHeroTurn(); } };
+}
+/* ---------- ⚔ choosing the blow ----------
+   Ⓐ on your turn doesn't strike straight away: it opens the choice of what to strike with, each attack with its
+   bonus, its damage and whether it reaches the target from here (the one that would be used at the top). Ⓐ again
+   strikes with it; Ⓑ puts the choice away and nothing is spent. A tap on a foe aims; a second tap opens the choice. */
+function openStrike(){
+  if (opening()) return;
+  if (!myTurn()) return toast('Not your turn yet.');
+  if (!attacksLeft()) return toast(rt.cast ? 'You have cast this turn.' : 'You have struck this turn.');
+  if (!target()) return toast('Nobody in sight.');
+  openMenu('strike'); menu.i = 0;
+}
+// How the attack i reaches the target from where the hero stands, in words
+function reachWords(t, tg, i){
+  const a = t?.attacks?.[i]; if (!a || !tg) return '';
+  let r; try { r = rangeCheck(t, tg, a); } catch { return ''; }
+  if (!r.ok) return r.why || 'out of reach';
+  if (r.kind === 'ranged') return r.long ? 'long range: at disadvantage' : r.close ? 'a foe at your elbow: at disadvantage' : 'in range';
+  return 'in reach';
+}
+function strikeItems(){
+  const t = hero(), tg = target(); if (!t) return [{ label:'Back', run:closeMenu }];
+  const best = tg ? attackFor(t, tg) : -1, ok = i => { try { return !!tg && rangeCheck(t, tg, t.attacks[i]).ok; } catch { return false; } };
+  const list = (t.attacks || []).map((a, i) => ({ a, i, r:ok(i) })).sort((x, y) => (y.i === best) - (x.i === best) || y.r - x.r);
+  const others = targets().length;
+  return [...list.map(({ a, i, r }) => ({ label:`${a.n}${/ casts /.test(a.f || '') ? ' ✦' : ''}`, sub:`${signed(a.b)} to hit · ${a.d} ${a.t || ''} · ${reachWords(t, tg, i)}`,
+      off:!r || !myTurn() || !attacksLeft(), run:() => { closeMenu(); heroAttack(i); } })),
+    { label:'Another target', sub:others > 1 ? `${others} in sight (${hhOn() ? 'Y' : 'Ⓨ / Tab'} changes it too)` : 'Nobody else in sight', off:others < 2, run:() => { aim(1); menu.i = 0; } },
+    { label:'Back', sub:'Nothing is spent', run:closeMenu }];
+}
+
+/* ---------- ⚔ a fight breaks out ----------
+   A moment for it before anyone acts (game/wander.js opening): bars close in at the top and bottom, a red slash, what
+   started it and who's there, the order they'll go in; the ground it's fought over darkens round its edge
+   (render/fightzone.js) and the camera draws back to take it in, then comes back to the hero. */
+let openedAt = 0;
+function renderOpening(){
+  const o = opening(), el = $('#wdOpen'); if (!el) return;
+  if (!o){ if (!el.classList.contains('hidden')){ el.classList.add('hidden'); el.innerHTML = ''; } document.body.classList.remove('wd-opening'); return; }
+  if (openedAt === o.at) return; openedAt = o.at;
+  document.querySelectorAll('#cardLayer .pop').forEach(c => c.remove());   // (what was up before is put away: the fight has the screen)
+  const order = (state.combat.order || []).map(tokById).filter(x => x && !x.flags?.gone), first = order[0], me = hero();
+  el.innerHTML = `<div class="bar top"></div><div class="bar bot"></div><div class="slash"></div>
+    <div class="box"><div class="k">⚔ To arms</div><div class="ttl">${esc(o.title)}</div>${o.flair ? `<div class="fl">${esc(o.flair)}</div>` : ''}<div class="foes">${esc(o.foes)}</div>
+    <div class="ord">${order.map((x, n) => `<span class="${x.kind === 'monster' ? 'foe' : 'pal'}" style="animation-delay:${(.55 + n * .1).toFixed(2)}s">${n + 1}. ${esc(x.name)}</span>`).join('')}</div>
+    <div class="go">${!first ? '' : first.id === me?.id ? 'You go first.' : o.surprise === 'party' ? `Caught off guard: ${esc(first.name)} goes first.` : `${esc(first.name)} goes first.`}</div></div>`;
+  el.classList.remove('hidden'); document.body.classList.add('wd-opening');
+}
+// The ground it's fought over, and on the hero's turn where they can still walk (from the frame, a few times a second)
+let zoneOf = null;
+function fightGround(){
+  const h = hero(), c = state.combat;
+  if (!c?.active || !h){ if (zoneOf){ zoneOf = null; clearFightFx(); camBack(); } return; }
+  const all = (c.order || []).map(tokById).filter(o => o && o.floor === h.floor && !o.flags?.gone && !((o.dead || o.hp <= 0) && o.kind === 'monster'));
+  if (!all.length) return;
+  // round the middle of them, far enough out to hold them all (it grows if one goes past its edge)
+  if (!zoneOf || zoneOf.L !== h.floor || all.some(o => Math.hypot(o.x - zoneOf.cx, o.y - zoneOf.cy) > zoneOf.r - 1)){
+    const cx = Math.round(all.reduce((n, o) => n + o.x, 0) / all.length), cy = Math.round(all.reduce((n, o) => n + o.y, 0) / all.length);
+    const r = Math.min(14, Math.max(5, Math.ceil(Math.max(...all.map(o => Math.hypot(o.x - cx, o.y - cy)))) + 3));
+    const fresh = !zoneOf; zoneOf = { L:h.floor, cx, cy, r, wide:fresh || zoneOf.wide };
+    setFightZone(h.floor, cx, cy, r, { fresh });
+    if (fresh) camWide(r);
+  }
+  if (zoneOf.wide && !opening()){ zoneOf.wide = false; camBack(); }
+  // the hero's turn: the squares they can still walk to
+  const left = myTurn() && !opening() && !heroBusy() ? moveAllowance(h) : 0;
+  if (left > 0){ const f = state.floors[h.floor], R = reach(h.floor, h.x, h.y, left, h.id);
+    showMoveSquares(h.floor, [...R.dist.keys()].filter(i => R.dist.get(i) <= left && i !== h.y * f.W + h.x && !tokenAt(h.floor, i % f.W, (i / f.W) | 0)), `${h.floor}:${h.x}:${h.y}:${left}`); }
+  else clearMoveSquares();
+}
+// ⚔ A blow seen to land: a throw, a shot or a spell crosses to its target; a miss says so over them; the hero's own
+// blows, and those on the hero, are felt (a jolt of the camera). The damage itself rises from whoever took it.
+const SPELL_COL = { fire:'#ff8a3a', cold:'#9fd8ff', radiant:'#ffe9a0', necrotic:'#9dff8a', lightning:'#bfe0ff', force:'#c9a0ff', acid:'#b8ff6a', poison:'#8fe36a', thunder:'#d8d8ff', psychic:'#ff9ae0' };
+const critAt = new Map();
+function blowSeen(e){
+  if (!e?.actor || !e.target || !['hit', 'miss', 'critical'].includes(e.trigger)) return;
+  if (e.ranged) streak(e.actor.id, e.target.id, { spell:e.spell ? SPELL_COL[e.spell] || '#c9a0ff' : null });
+  if (e.trigger === 'critical') critAt.set(e.target.id, performance.now());
+  if (e.trigger === 'miss') setTimeout(() => floatText(e.target.id, 'MISS', '#d9d2c4'), 330);
+  const h = hero(); if (h && wandering() && e.trigger !== 'miss' && (e.actor.id === h.id || e.target.id === h.id)) rt.jolt = { at:performance.now() + 330, k:e.trigger === 'critical' ? 1.7 : 1 };
+}
+let hurtLast = 0, hurtN = 0;
+function hurtSeen(e){
+  if (!e?.t || !(e.n > 0)) return;
+  const now = performance.now(); hurtN = now - hurtLast < 80 ? hurtN + 1 : 0; hurtLast = now;
+  const crit = now - (critAt.get(e.t.id) || -1e9) < 80;
+  setTimeout(() => floatText(e.t.id, `${crit ? 'CRIT ' : ''}−${e.n}`, crit ? '#ffd45a' : e.t.kind === 'monster' ? '#ff7a52' : '#ff3b3b', { big:crit }), 330 + hurtN * 160);
 }
 function say(k){ if (!k) return; const r = chooseTalk(k); talkSel.i = 0; if (r === 'joined') toast('A companion follows you now.'); }
 function dismissCard(){ const c = document.querySelector('#cardLayer .pop:last-child'); if (c) c.remove(); return !!c; }
@@ -292,9 +391,11 @@ function wanderCam(dt, pad){
   const b = rt.bump, shake = b && now - b.at < 200 ? Math.sin((now - b.at) * .09) * .06 * (1 - (now - b.at) / 200) : 0;
   // (it follows the figure where it is, mid-step too, not the square it's headed for: chasing each square as it was
   // chosen made the view surge and settle with every step)
-  const at = (h && miniFocus(h, rt.focus?.rate || 7)) || rt.focus;
-  const focus = at && { ...at, x:at.x + lead.x + shake * (b?.dx || 0), z:at.z + lead.z + shake * (b?.dy || 0) };
-  camFrame(dt, pad, { focus, me:h, other:lk || (ct && ct.id !== h?.id ? ct : null), otherRate:lk ? 4 : 3 });
+  const j = rt.jolt, jt = j ? now - j.at : -1, jolt = jt >= 0 && jt < 260 ? Math.sin(jt * .11) * .09 * j.k * (1 - jt / 260) : 0;   // (a blow felt)
+  // (a fight breaking out: the middle of the ground it's fought over, from further back: fightGround)
+  const op = opening() && zoneOf, at = op ? { x:wx(zoneOf.cx), y:floorY(zoneOf.L), z:wz(zoneOf.cy), rate:2.5 } : (h && miniFocus(h, rt.focus?.rate || 7)) || rt.focus;
+  const focus = at && { ...at, x:at.x + lead.x + shake * (b?.dx || 0) + jolt, z:at.z + lead.z + shake * (b?.dy || 0) + jolt * .6 };
+  camFrame(dt, pad, { focus, me:h, other:op ? null : lk || (ct && ct.id !== h?.id ? ct : null), otherRate:lk ? 4 : 3 });
 }
 /* 👣 Each step the party takes: what it leaves (a puff, a splash, a print, a rustle: render/stepfx.js) and, for the hero,
    what it sounds like; a bump into a wall is heard too. */
@@ -333,7 +434,7 @@ function hhLegend(){
   return { a:{ label:'OK' }, b:{ label:'Back' }, x:{ b:'x', label:'Actions' }, y:{ b:'y', label:targets().length ? 'Target' : '' },
     select:{ label:'Hero' }, view:{ label:'Camera' }, start:{ label:'Menu' } };
 }
-const HH_HELP = 'Each button does one thing. D-pad: walk (slide your thumb round it for the diagonals), or move through a menu. A: do what the line on the screen says (talk, climb, look, strike, end your turn), or choose. B: back, or put a card away. X: Actions: each weapon, spells, Dash, Disengage, Dodge, features like Action Surge, a potion, End turn. Y: the next target. L and R: turn the camera. Select: your hero. View: the next camera view. Start: this menu. Select and Start together: the save states. Touch works too: drag on the screen to turn the camera, pinch to zoom, tap to walk or pick a foe, tap any line of a menu.';
+const HH_HELP = 'Each button does one thing. D-pad: walk (slide your thumb round it for the diagonals), or move through a menu. A: do what the line on the screen says (talk, climb, look, end your turn), or choose; in a fight it opens the choice of what to strike with, and A again strikes. B: back, or put a card away. X: Actions: each weapon, spells, Dash, Disengage, Dodge, features like Action Surge, a potion, End turn. Y: the next target. L and R: turn the camera. Select: your hero. View: the next camera view. Start: this menu. Select and Start together: the save states. Touch works too: drag on the screen to turn the camera, pinch to zoom, tap to walk or pick a foe, tap any line of a menu.';
 let pending = null, padMem = {}, hhMem = {}, lastTick = 0, lastFrame = 0, glintAt = 0, musicAt = 0;
 const padHeld = { back:false };   // (Back held while Start goes down: the save states)
 const yaw = camYaw;   // (which way "up on the stick" walks)
@@ -365,7 +466,7 @@ function frame(now){
   requestAnimationFrame(frame);
   const dt = Math.min(.1, (now - (lastFrame || now)) / 1000); lastFrame = now;
   const gp = [...(navigator.getGamepads?.() || [])].find(g => g && g.connected);
-  if (!wandering()){ if (hudOn){ hudOn = false; show('wanderHud', false); closeLook(); feelHits(null); coachHide(); clearGlints(); clearStepFx(); clearCritters(); critKey = ''; musicStop(); } return; }
+  if (!wandering()){ if (hudOn){ hudOn = false; show('wanderHud', false); clearFightFx(); camBack(); document.body.classList.remove('wd-fighting'); closeLook(); feelHits(null); coachHide(); clearGlints(); clearStepFx(); clearCritters(); critKey = ''; musicStop(); } return; }
   hudOn = true;
   let pad = null;
   if (gp){
@@ -378,7 +479,7 @@ function frame(now){
   if (now - glintAt > 250){ glintAt = now; try { const h = hero(); showGlints(h.floor, glintsSeen()); } catch (e){ console.warn(e); } }
   tickGlints(now);
   try { feelSteps(now); } catch (e){ console.warn(e); }
-  tickStepFx(now);
+  tickStepFx(now); tickFightFx(now);
   try { animals(dt); } catch (e){ console.warn(e); }
   if (now - musicAt > 1000){ musicAt = now; try { musicTick(hero()); } catch (e){ console.warn(e); } }   // (🎼 ui/regionmusic.js)
   try { lookThrough(hero(), now); } catch (e){ console.warn(e); }
@@ -386,7 +487,7 @@ function frame(now){
   try { wanderMoments(); coachTick(wanderSnapshot); } catch (e){ console.warn(e); }
   if (pending){ if (now > pending.until) pending = null; else if (stepHero(pending.dx, pending.dy)) pending = null; }
   walkHeld();
-  if (now - lastTick > 180){ lastTick = now; try { fightTick(now); } catch (e){ console.warn(e); } renderHud(); }
+  if (now - lastTick > 180){ lastTick = now; try { fightTick(now); } catch (e){ console.warn(e); } try { fightGround(now); } catch (e){ console.warn(e); } renderHud(); }
 }
 let held = null;   // (the walking key held down, if one is)
 function onKeyUp(e){ if (held && e.key.toLowerCase() === held.key) held = null; }
@@ -432,7 +533,7 @@ function onClick(e){
 function onTap(tile, tokId){
   if (menu.open || talkView()) return;
   const o = tokId && tokById(tokId), t = hero(); if (!t) return;
-  if (o?.kind === 'monster' && state.combat.active){ if (rt.target === o.id) heroAttack(); else rt.target = o.id; return; }
+  if (o?.kind === 'monster' && state.combat.active){ if (rt.target === o.id && !opening()) openStrike(); else rt.target = o.id; return; }
   if (o?.flags?.companion && o.kind === 'npc' && Math.max(Math.abs(o.x - t.x), Math.abs(o.y - t.y)) <= 1){ talkTo(o.flags.companion); return; }
   if (o?.id === t.id){ press('a'); return; }
   if (tile && tile.floor === t.floor){
@@ -451,7 +552,8 @@ export function ensureWander(){
     health:() => { const h = hero(); return h ? Math.max(0, h.hp) / Math.max(1, h.maxHp) : 1; }, fight:() => !!state.combat.active });
   ui.wanderTap = null;
   // a crossing between maps (game/ways.js): the fog, the name, the sound
-  passage.veil = veil; passage.banner = banner; passage.sting = id => tune({ door:'door', spotted:'gazeRises' }[id] || 'stairs');
+  passage.veil = veil; passage.banner = banner; passage.sting = id => tune({ door:'door', spotted:'gazeRises', fight:'fightBegins' }[id] || 'stairs');
+  bus.on('acted', blowSeen); bus.on('hurt', hurtSeen);
   addEventListener('keydown', onKey, { capture:true });
   addEventListener('keyup', onKeyUp, { capture:true }); addEventListener('blur', () => { held = null; });
   document.addEventListener('click', onClick, true);
