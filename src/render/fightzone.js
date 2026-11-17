@@ -8,7 +8,7 @@
 import * as THREE from 'three';
 import { state, tokById } from '../engine/state.js';
 import { groundY } from '../engine/grid.js';
-import { G, wx, wz } from './scene.js';
+import { G, wx, wz, camera } from './scene.js';
 import { floorViews } from './floors.js';
 import { tokenViews } from './minis.js';
 
@@ -182,6 +182,9 @@ const oddsShown = [];
 const at = new THREE.Vector3(), ahead = new THREE.Vector3();
 export function tickFightFx(now = performance.now()){
   zoneMat.uniforms.uTime.value = now / 1000;
+  // the odds keep their size on the screen however close the camera comes (as the name plates do: main.js)
+  if (odds.s?.parent){ const b = odds.s.userData.base || (odds.s.userData.base = odds.s.scale.clone()); odds.s.getWorldPosition(at);
+    const k = Math.max(.28, Math.min(1, camera.position.distanceTo(at) / 13)); odds.s.scale.set(b.x * k, b.y * k, 1); }
   for (const m of marks.list){ if (m.k === 'target' || m.k === 'far') m.g.rotation.y = now / 1400; else if (m.k === 'caught' || m.k === 'friend') m.g.children[0].material.opacity = .55 + .3 * Math.sin(now / 220); }
   areaMat.opacity = .2 + .08 * Math.sin(now / 300);
   if (hover.g) for (const m of hover.g.children){ const a = ((now / 900) + m.userData.n / 3) % 1; m.position.y = .05 + a * 1.4; m.scale.setScalar(1 - a * .25); m.material.opacity = (1 - a) * .7; }

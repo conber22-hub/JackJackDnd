@@ -75,3 +75,23 @@ export const SHELLS = [
   { k:'moss', label:'Bog moss' },
   { k:'smoke', label:'Smoke glass' },
 ];
+
+/* ⚔ OVER THE SHOULDER: in a fight the camera stands low behind the hero, just off their right shoulder, looking past
+   them at what they face (the foe they aim at, or whoever is coming for them), the way their own eyes would see the
+   fight: the hero big in the near corner of the screen, the foe beyond. Positions in the world (x, z: one per square).
+     h: the hero's feet { x, z }; s: what they face { x, z }
+     room: how far behind the hero the camera can stand before a wall (squares; it creeps in closer and higher)
+     side: +1 the right shoulder, −1 the left
+   → { look:{ x, y, z } where to look (y above the floor), orbit:{ yaw, pitch, dist } the camera from there } */
+export const SHOULDER = { back:3.3, up:2.15, side:1.25, ahead:.5, maxAhead:3.2, lookUp:.85, minBack:1.4 };
+export function shoulderShot(h, s, { room = Infinity, side = 1 } = {}){
+  let dx = s.x - h.x, dz = s.z - h.z, l = Math.hypot(dx, dz);
+  if (l < .01){ dx = 0; dz = -1; l = 1; }
+  const fx = dx / l, fz = dz / l, rx = -fz * side, rz = fx * side;   // facing, and the shoulder's side of it
+  const back = clamp(room - .35, SHOULDER.minBack, SHOULDER.back), tight = (SHOULDER.back - back) / (SHOULDER.back - SHOULDER.minBack);
+  const up = SHOULDER.up + tight * .9;   // backed against a wall: over their head instead
+  const ahead = Math.min(SHOULDER.maxAhead, l * SHOULDER.ahead);
+  const look = { x:h.x + fx * ahead + rx * .75, y:SHOULDER.lookUp, z:h.z + fz * ahead + rz * .75 };   // (the hero to one side, the foe clear of them)
+  const cam = [h.x - fx * back + rx * SHOULDER.side, up, h.z - fz * back + rz * SHOULDER.side];
+  return { look, orbit:toOrbit([cam[0] - look.x, cam[1] - look.y, cam[2] - look.z]) };
+}

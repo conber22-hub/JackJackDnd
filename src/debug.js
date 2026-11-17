@@ -86,6 +86,7 @@ export { stepFxCount } from './render/stepfx.js';   // 👣 what the steps have 
 export { fightFxCount, fightZone } from './render/fightzone.js';   // ⚔ what a fight draws (render/fightzone.js)
 export { punchCount, worldSpeed } from './render/punch.js';   // 💥 a blow felt: the hit-stop, knocks, splashes (render/punch.js)
 export { actOn, holdFall } from './render/minis.js';   // (a swing, a blow, a miss on a figure, for poking: actOn(id, 'hit', fromId, { r, crit, kill }))
+export { shoulderNow } from './ui/followcam.js';   // ⚔ is the fight seen over the hero's shoulder (ui/followcam.js)
 export { diceSeen } from './ui/dicemoment.js';
 export { facesMade } from './ui/orderstrip.js';   // ⏳ how many turn-order portraits have been made (ui/orderstrip.js)   // 🎲 what the last dice moments said (ui/dicemoment.js)
 export * as handheld from './ui/handheld.js';   // 🕹 the handheld skin: the phone as the controller

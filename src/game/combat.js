@@ -317,7 +317,7 @@ export function doAttack(aId, tId, i, mode = 'normal', { d20 = null, at = null }
   if (hits.length && atk.latch && !tg.dead && tg.kind !== 'monster'){ tg.flags.latchedBy = a.id; lines.push(`<span class="fam-seep">${esc(a.name)} is latched on.</span>`); }
   sfx(crit ? 'crit' : hits.length ? 'hit' : 'miss');
   // 🗣 a voice line (ui/voices.js); ⚔ the blow seen to land: the number over them, a streak for a throw, a shot or a spell (ui/wander.js)
-  bus.emit('acted', { actor:a, target:tg, trigger:crit ? 'critical' : hits.length ? 'hit' : 'miss', action:atk.n, dmg:total, ranged:rc.kind === 'ranged' && a.id !== tg.id, spell:atk.t && !!(atk.l !== undefined || / casts /.test(atk.f || '')) ? atk.t : null, die });
+  bus.emit('acted', { actor:a, target:tg, trigger:crit ? 'critical' : hits.length ? 'hit' : 'miss', action:atk.n, dmgType:atk.t, dmg:total, ranged:rc.kind === 'ranged' && a.id !== tg.id, spell:atk.t && !!(atk.l !== undefined || / casts /.test(atk.f || '')) ? atk.t : null, die });
   // 💥 the blow felt (render/punch.js): how much of them it took (a share, never the HP), a crit, a kill; a miss sways aside
   const ranged = rc.kind === 'ranged', self = a.id === tg.id;
   if (!self) animate(a.id, 'attack', tg.id, { ranged });

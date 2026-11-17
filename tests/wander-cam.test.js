@@ -63,3 +63,24 @@ test('the handheld shows on a touch screen with no controller, or when asked', (
 test('the camera\'s keys: [ ] , . turn, - = + crane, V the next view; K the save states', () => {
   for (const [k, b] of [['[', 'turnl'], [']', 'turnr'], [',', 'turnl'], ['.', 'turnr'], ['-', 'out'], ['=', 'in'], ['+', 'in'], ['v', 'rs'], ['V', 'rs'], ['k', 'states']]) assert.deepEqual(keyIntent(k), { k:'press', b });
 });
+
+test('over the shoulder: behind the hero, looking past them at the foe, low, close, off the right shoulder', async () => {
+  const { shoulderShot, fromOrbit, SHOULDER } = await import('../src/engine/wander-cam.js');
+  const h = { x:0, z:0 }, foe = { x:0, z:-4 };   // the foe to the north
+  const s = shoulderShot(h, foe), [ox, oy, oz] = fromOrbit(s.orbit), cam = { x:s.look.x + ox, y:s.look.y + oy, z:s.look.z + oz };
+  assert.ok(cam.z > 2.5, 'the camera is behind the hero (south, away from the foe)');
+  assert.ok(cam.x > .5, 'off the right shoulder');
+  assert.ok(s.look.z < 0 && s.look.z > -4, 'it looks past the hero, toward the foe');
+  assert.ok(cam.y < 2.6 && s.orbit.pitch < .35, 'low, near the hero\'s eye line');
+  assert.ok(s.orbit.dist < 6, 'close: nearer than any of the roaming views');
+  // turned round with the foe: the camera follows round behind
+  const w = shoulderShot(h, { x:5, z:0 }), [wx] = fromOrbit(w.orbit);
+  assert.ok(w.look.x + wx < -2, 'a foe to the east puts the camera to the west');
+  // a wall close behind: it creeps in, and rises over their head
+  const t = shoulderShot(h, foe, { room:1 }), [, ty, tz] = fromOrbit(t.orbit);
+  assert.ok(t.look.z + tz < cam.z && t.look.y + ty > cam.y);
+  assert.ok(t.look.z + tz >= SHOULDER.minBack - .01 - 2);
+  // the left shoulder mirrors it; a foe on the hero's own square doesn't break it
+  const l = shoulderShot(h, foe, { side:-1 }), [lx] = fromOrbit(l.orbit); assert.ok(l.look.x + lx < -.5);
+  assert.ok(Number.isFinite(shoulderShot(h, h).orbit.yaw));
+});

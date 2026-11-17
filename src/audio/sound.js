@@ -142,10 +142,13 @@ const FX = {
 export const SFX_NAMES = Object.keys(FX);
 // share = true: the DM's sound is sent to everyone at the table too
 const last = {};
+// sounds this screen plays its own way (ui/fightsfx.js: a fight's chiptune sounds), still sent on to the table
+const quiet = new Set();
+export function quietHere(names){ for (const n of names) quiet.add(n); }
 export function sfx(name, share = true){
   const t = performance.now(); if (last[name] && t - last[name] < 120) return; last[name] = t;
   if (share && sender) sender(name);
-  if (!gfx.sfx || !FX[name]) return;
+  if (!gfx.sfx || !FX[name] || (share && quiet.has(name))) return;   // (a sound sent from the DM (share false) still plays)
   if (!init() || ctx.state !== 'running') return;
   try { FX[name](); } catch {}
 }

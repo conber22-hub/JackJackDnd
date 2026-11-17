@@ -421,7 +421,9 @@ function frame(now){
   if (gp){ pad = readPad(gp); const r = padIntents(pad, now, padMem, { yaw:camYaw() }); padMem = r.mem; for (const it of r.intents) it.k === 'step' ? step(it.dx, it.dy) : press(it.b); }
   { const r = padIntents(hhPad(), now, hhMem, { yaw:camYaw() }); hhMem = r.mem; for (const it of r.intents) if (it.k === 'step') step(it.dx, it.dy); }
   const cur = fight() && currentTurn(), lk = rt.look && now < rt.look.until && tokById(rt.look.id);
-  try { camFrame(dt, pad, { focus:miniFocus(t), me:t, other:lk || (cur && cur.id !== t.id ? cur : null), otherRate:lk ? 4 : 3 }); } catch (e){ console.warn(e); }
+  // ⚔ in a fight, over their hero's shoulder at what they face (ui/followcam.js)
+  const subject = fight() && !t.dead ? (lk || (cur && cur.kind === 'monster' ? cur : target())) : null;
+  try { camFrame(dt, pad, { focus:miniFocus(t), me:t, other:lk || (cur && cur.id !== t.id ? cur : null), otherRate:lk ? 4 : 3, fight:fight() ? { subject } : null }); } catch (e){ console.warn(e); }
   try { lookThrough(t, now); } catch (e){ console.warn(e); }
   feelHits(t, gp);
   moments(t); surgeWatch(t); placeWatch(t); feelMine(t, now);

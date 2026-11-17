@@ -442,7 +442,10 @@ function wanderCam(dt, pad){
   // (a fight breaking out: the middle of the ground it's fought over, from further back: fightGround)
   const op = opening() && zoneOf, at = op ? { x:wx(zoneOf.cx), y:floorY(zoneOf.L), z:wz(zoneOf.cy), rate:2.5 } : (h && miniFocus(h, rt.focus?.rate || 7)) || rt.focus;
   const focus = at && { ...at, x:at.x + lead.x + shake * (b?.dx || 0) + jolt, z:at.z + lead.z + shake * (b?.dy || 0) + jolt * .6 };
-  camFrame(dt, pad, { focus, me:h, other:op ? null : lk || (ct && ct.id !== h?.id ? ct : null), otherRate:lk ? 4 : 3 });
+  // ⚔ in a fight (past its opening), over the hero's shoulder at what they face: a face pointed at in the turn order,
+  // a foe on its turn, or the one aimed at (ui/followcam.js)
+  const subject = state.combat.active && !op && h && !h.dead ? (lk || (ct && ct.kind === 'monster' ? ct : target())) : null;
+  camFrame(dt, pad, { focus, me:h, other:op ? null : lk || (ct && ct.id !== h?.id ? ct : null), otherRate:lk ? 4 : 3, fight:state.combat.active && !op ? { subject } : null });
 }
 /* 👣 Each step the party takes: what it leaves (a puff, a splash, a print, a rustle: render/stepfx.js) and, for the hero,
    what it sounds like; a bump into a wall is heard too. */

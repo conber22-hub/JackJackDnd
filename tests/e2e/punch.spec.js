@@ -48,3 +48,15 @@ test('a blow lands with a lunge, a hold, a knock and a splash; a miss sways asid
   await expect.poll(() => page.evaluate(() => window.DreadDelve.punchCount().kills)).toBeGreaterThan(k0);
   await page.screenshot({ path:'test-results/punch-kill.png' });
 });
+
+// ⚔ Over the shoulder (ui/followcam.js): in a fight the camera stands low and close behind the hero, looking past them
+// at the foe; V goes up above the fight and V again comes back down.
+test('a fight is seen over the hero\'s shoulder, close; V looks from above and back', async ({ page }) => {
+  test.setTimeout(180_000);
+  await fight(page);
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.shoulderNow())).toBe(true);
+  await page.keyboard.press('v');
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.shoulderNow())).toBe(false);
+  await page.keyboard.press('v');
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.shoulderNow())).toBe(true);
+});

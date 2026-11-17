@@ -25,6 +25,7 @@ import { selRing, updatePings, updateGroupRings } from './render/effects.js';
 import { tickFightFx } from './render/fightzone.js';
 import { tickPunch, worldSpeed } from './render/punch.js';
 import { wireFightFx } from './ui/fightfx.js';
+import { wireFightSfx } from './ui/fightsfx.js';
 import { wireDice } from './ui/dicemoment.js';
 import { updateAmbience, weatherKind } from './render/ambience.js';
 import { updateWind, wind as windNow_ } from './render/wind.js';
@@ -84,6 +85,7 @@ function sunShadow(DL){
   moon.target.position.copy(controls.target); moon.target.updateMatrixWorld();
   moon.position.copy(controls.target).add(sunAim);
 }
+const lblAt = new THREE.Vector3();
 function frame(){
   requestAnimationFrame(frame);
   const raw = clock.getDelta(), dt = Math.min(raw, .05), now = performance.now(), t = now / 1000;
@@ -124,6 +126,10 @@ function frame(){
     for (const tv of tokenViews.values()){
       const g = tv.group, u = g.userData, fig = u.fig;
       if (u.light){ u.light.intensity = u.light.userData.base * (1 - D.flick * (.5 + .5 * Math.sin(t * 13 + g.id) * Math.sin(t * 7.3 + g.id * 2))); if (u.light.userData.torch) u.light.color.lerp(hue, .05); }
+      // name plates keep their size on the screen however close the camera comes (over the shoulder in a fight), and
+      // the hero whose shoulder it is loses theirs (ui/followcam.js)
+      if (tv.label){ const L = tv.label, b = L.userData.base || (L.userData.base = L.scale.clone()); g.getWorldPosition(lblAt);
+        const k = Math.max(.28, Math.min(1, camera.position.distanceTo(lblAt) / 13)); L.scale.set(b.x * k, b.y * k, 1); L.visible = g.userData.tokenId !== ui.shoulderOf; }
       if (!fig || !g.visible) continue;
       if (g.userData.wasDead && !fig.userData.rig?.clip) continue;   // the dead rest — unless a death clip is playing, which poseRig drives
       if (fig.userData.rig){ const rg = fig.userData.rig; if (ws < 1){ const h = dt * (1 - ws); if (rg.action) rg.action.t0 += h; if (rg.clip) rg.clip.t0 += h; } poseRig(fig, t, adt, !!tv.anim); continue; }   // forged figures animate themselves
@@ -193,6 +199,6 @@ if (scr !== null){
 initCardOnly();   // a player's phone at an in-person game: no 3D (ui/cards.js)
 setScreenNow(nightNow); listenForScreens();
 onAskChange(() => { if (ui.tab === 'night') renderPanel(); });
-wireFightFx(); wireDice();
+wireFightFx(); wireFightSfx(); wireDice();
 frame();
 window.DreadDelve = api;   // handy for debugging in the console: DreadDelve.state, DreadDelve.shiftFloor(0), …

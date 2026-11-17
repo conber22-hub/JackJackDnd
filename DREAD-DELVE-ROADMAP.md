@@ -16,7 +16,7 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
-## v1.34 — a blow you feel
+## v1.34 — a blow you feel, from over your shoulder
 
 - **💥 Every blow lands on the map** (`render/punch.js`, the numbers in `engine/punch.js`; on every screen: the Wanderer, the DM, the table's handhelds and phones). Every figure feels it, whatever it's made of: forged, a model, a paper standee, an old shape.
   - **The attacker lunges** in to meet the blow (a shot or a spell kicks back a touch instead).
@@ -27,6 +27,12 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
   - **A miss:** they sway aside, away from the blow, and back.
   - A spell's area, a trap or a burst lands the same way, with no line to be knocked along (for now on the DM's screen and the Wanderer's, not yet the players').
   - Players' screens get the share of hit points a blow took, rounded to an eighth, never the hit points themselves.
+- **⚔ The fight over your shoulder** (`ui/followcam.js`, the shot in `engine/wander-cam.js` `shoulderShot`; the Wanderer and every handheld at the table). Once a fight's opening is past, the camera comes down low behind your hero, just off their right shoulder, and looks past them at what they face: the foe you're aiming at, a foe on its turn, or a face you point at in the turn order. Your hero is big in the near corner of the screen and the fight is beyond them. It swings round behind them as they turn to a new foe.
+  - **L / R** swap shoulders. The right stick sideways peeks round, and eases back when let go. **V** (the right stick's click, View) or craning out goes up above the fight; **V** again comes back down behind them. When the fight ends, the camera goes back to the view you had before it.
+  - Backed against a wall, the camera creeps in closer and rises over their head. Walls and trees between it and the hero are thinned away as they already were.
+  - Name plates and the odds over a foe keep the same size on screen however close the camera comes, and your own hero's plate is hidden while you're looking over their shoulder.
+- **🔊 A little sound for everything in a fight** (ChatGPT's `engine/fight-sfx.js` and `data/fight-sfx.js`, wired in `ui/fightsfx.js`): a swing as the blow is thrown (steel, a club, a bowstring, a claw, a bite, a spell in its element's colour), then as it lands the hit by what it hit: bare skin, leather, hide, mail, plate or bone; a parry or a whiff on a miss; a crit on top. Healing, a spell cast by its school, Dash, Dodge, Disengage, getting up, a feature, a condition, a kill and a hero down each have their own. They play where the fight is run (the DM's app, the Wanderer); players' screens still hear the plain hit, miss and crit.
+- **Merged from ChatGPT, not yet on screen:** the fight summary (`engine/fight-summary.js`: scorecards, highlights, awards), achievements (`engine/achievements.js`, 46 of them) and bestiary lore (`engine/bestiary-lore.js`: what the party knows of 40 creatures, unlocked by seeing, fighting and killing them). They wait for Muse's victory, trophy and bestiary screens.
 
 ## v1.33 — the dice, and who's next
 
@@ -1008,6 +1014,10 @@ src/engine/             pure logic: no DOM, no Three.js, unit-tested
   encounter.js          XP budgets and the encounter generator
   look.js               a figure's recipe: from a sheet, a creature's preset (varied), an NPC roll; describeLook
   targeting.js          reach and range, cover (grid corner rule), area templates and who they catch
+  fight-sfx.js          (ChatGPT) a fight's chiptune sounds: which one for a swing, a landing by armour, a spell, a heal, an act
+  fight-summary.js      (ChatGPT) a fight's scorecard, highlights and awards (not yet shown)
+  achievements.js       (ChatGPT) 46 achievements and their progress (not yet shown)
+  bestiary-lore.js      (ChatGPT) what the party knows of each creature, by sightings, fights and kills (not yet shown)
   punch.js              how hard a blow lands: hit-stop, slow motion, knockback, camera kick (impactOf, speedAt, moveAt), what bleeds out (bloodOf)
   odds.js               the odds of a blow before it's struck: chance to hit and to crit (advantage, a 1 and a 20), damage on average, the edge in words
   movement.js           dragged routes, threat & opportunity attacks, following in marching order, formations, Close in
@@ -1084,7 +1094,8 @@ src/engine/pad.js          🎮 a gamepad (or the keys) read as steps and presse
 src/engine/wander-cam.js   🎥 the follow camera's numbers (orbit, eighth turns, crane, views, glide), the touch D-pad, when the handheld shows
 src/ui/handheld.js         🕹 the handheld skin: the shell, its touch D-pad and buttons, the world drawn into its screen, the boot, the Lantern light, its hosts
 src/ui/tablehh.js          🕹 the handheld at the table: a seated player's phone as the controller (HUD, D-pad steps, strikes, menu, sheet)
-src/ui/followcam.js        🎥 the follow camera, seeing through walls and a hit felt, for one hero (the Wanderer's and the table's)
+src/ui/followcam.js        🎥 the follow camera (over the shoulder in a fight), seeing through walls and a hit felt, for one hero (the Wanderer's and the table's)
+src/ui/fightsfx.js         🔊 a fight's chiptune sounds, played from the bus (ChatGPT's engine/fight-sfx.js)
 src/ui/hhlife.js           🕹 the handheld's tunes (engine/chiptune.js) and its coach's tips (engine/coach.js)
 src/ui/pocketsheet.js      📖 Muse's pocket sheet: the hero's sheet as pages on the handheld's screen (Select)
 src/ui/shells.js           🎨 Muse's shells pack and the sticker book
