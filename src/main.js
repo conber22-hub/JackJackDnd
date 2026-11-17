@@ -24,6 +24,7 @@ import { poseRig } from './render/forge/anim.js';
 import { selRing, updatePings, updateGroupRings } from './render/effects.js';
 import { tickFightFx } from './render/fightzone.js';
 import { wireFightFx } from './ui/fightfx.js';
+import { wireDice } from './ui/dicemoment.js';
 import { updateAmbience, weatherKind } from './render/ambience.js';
 import { updateWind, wind as windNow_ } from './render/wind.js';
 const windNow = () => windNow_.force.value;
@@ -188,6 +189,6 @@ if (scr !== null){
 initCardOnly();   // a player's phone at an in-person game: no 3D (ui/cards.js)
 setScreenNow(nightNow); listenForScreens();
 onAskChange(() => { if (ui.tab === 'night') renderPanel(); });
-wireFightFx();
+wireFightFx(); wireDice();
 frame();
 window.DreadDelve = api;   // handy for debugging in the console: DreadDelve.state, DreadDelve.shiftFloor(0), …

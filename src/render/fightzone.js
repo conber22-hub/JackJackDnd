@@ -164,6 +164,17 @@ export function showAreaSquares(L, squares, key){
   squares.forEach((i, n) => { const x = i % f.W, y = (i / f.W) | 0; m4.makeTranslation(wx(x), .05 + groundY(f, x, y), wz(y)); m4.scale(sc); mesh.setMatrixAt(n, m4); });
   mesh.renderOrder = 4; fv.group.add(mesh); area.mesh = mesh;
 }
+// a face pointed at in the turn order (ui/orderstrip.js): its figure lit, a ring rising round it
+const hover = { g:null, id:null };
+export function showHover(id){
+  if (id === hover.id && (!id || hover.g?.parent)) return;
+  if (hover.g){ hover.g.parent?.remove(hover.g); hover.g.children.forEach(c => c.material.dispose()); hover.g = null; }
+  hover.id = id; const tv = id && tokenViews.get(id); if (!tv?.group?.parent) return;
+  const g = new THREE.Group(), col = tokById(id)?.kind === 'monster' ? '#ff8a6a' : '#9fd8ff';
+  for (let n = 0; n < 3; n++){ const m = new THREE.Mesh(markGeo, new THREE.MeshBasicMaterial({ color:col, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending })); m.userData.n = n; g.add(m); }
+  g.scale.setScalar(tokById(id)?.size || 1); g.renderOrder = 6; tv.group.add(g); hover.g = g;
+}
+export const hoverOn = () => hover.g?.parent ? hover.id : null;
 export function clearAim(){ clearMarks(); showOdds(null, ''); showAreaSquares(0, [], ''); }
 const oddsShown = [];
 
@@ -173,6 +184,7 @@ export function tickFightFx(now = performance.now()){
   zoneMat.uniforms.uTime.value = now / 1000;
   for (const m of marks.list){ if (m.k === 'target' || m.k === 'far') m.g.rotation.y = now / 1400; else if (m.k === 'caught' || m.k === 'friend') m.g.children[0].material.opacity = .55 + .3 * Math.sin(now / 220); }
   areaMat.opacity = .2 + .08 * Math.sin(now / 300);
+  if (hover.g) for (const m of hover.g.children){ const a = ((now / 900) + m.userData.n / 3) % 1; m.position.y = .05 + a * 1.4; m.scale.setScalar(1 - a * .25); m.material.opacity = (1 - a) * .7; }
   if (zone.mesh) zoneMat.uniforms.uReveal.value = Math.min(zone.r + 7, (now - zone.t0) / 1000 * 11);
   for (let i = floats.length - 1; i >= 0; i--){
     const f = floats[i], a = (now - f.t0) / f.ms;
@@ -192,9 +204,9 @@ export function tickFightFx(now = performance.now()){
     p(a); s.grp.position.copy(at); ahead.copy(p(Math.min(1, a + .05))); s.grp.lookAt(s.grp.parent.localToWorld(ahead.clone()));
   }
 }
-export function clearFightFx(){ clearFightZone(); clearMoveSquares(); clearAim(); }
+export function clearFightFx(){ clearFightZone(); clearMoveSquares(); clearAim(); showHover(null); }
 // (for the tests: what's drawn now, and how many numbers and streaks have been shown since the page loaded)
 let madeFloats = 0, madeStreaks = 0;
 export const fightFxCount = () => ({ zone:!!zone.mesh, moves:moves.mesh?.count || 0, floats:madeFloats, streaks:madeStreaks, texts:floatsSeen.slice(-6),
-  marks:marks.list.map(m => ({ id:m.id, k:m.k })), odds:odds.key ? oddsShown[oddsShown.length - 1] : '', area:area.mesh?.count || 0 });
+  marks:marks.list.map(m => ({ id:m.id, k:m.k })), odds:odds.key ? oddsShown[oddsShown.length - 1] : '', area:area.mesh?.count || 0, hover:hoverOn() });
 const floatsSeen = [];

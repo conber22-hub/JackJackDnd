@@ -84,6 +84,8 @@ export * as wander from './game/wander.js';   // 🗡 the Wanderer (game/wander.
 export * as ways from './game/ways.js';   // 🚪 the ways between places (game/ways.js): way outs, the road's ends, doors
 export { stepFxCount } from './render/stepfx.js';   // 👣 what the steps have left (render/stepfx.js)
 export { fightFxCount, fightZone } from './render/fightzone.js';   // ⚔ what a fight draws (render/fightzone.js)
+export { diceSeen } from './ui/dicemoment.js';
+export { facesMade } from './ui/orderstrip.js';   // ⏳ how many turn-order portraits have been made (ui/orderstrip.js)   // 🎲 what the last dice moments said (ui/dicemoment.js)
 export * as handheld from './ui/handheld.js';   // 🕹 the handheld skin: the phone as the controller
 export * as pocket from './ui/pocketsheet.js';   // 📖 the pocket sheet (ui/pocketsheet.js): the hero's sheet on the handheld's screen
 export * as shells from './ui/shells.js';   // 🎨 the shells and stickers (ui/shells.js): the pack and the sticker book

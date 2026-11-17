@@ -18,8 +18,9 @@ import { W, rt, hero, members, wandering, startWander, continueWander, leaveWand
   heroAttack, heroDodge, heroTurnAct, heroFeatures, heroFeature, endHeroTurn, aim, target, targets, attackFor, nextWeapon, attacksLeft, myTurn, fightTick, destinations, setOut, travelTo, rest, saveNow,
   pack, toggleEquip, usePotion, coinsGp, shopHere, buyPotion, journal, approvalOf, levelReady, partyLevel, nextLevelXp, levelUpHero, sheetOf, spellList, heroCast,
   SLOTS, slotMeta, canSaveSlot, saveToSlot, loadFromSlot, opening, economy, strikeOdds } from '../game/wander.js';
-import { setFightZone, clearFightFx, showMoveSquares, clearMoveSquares, showMarks, showOdds, showAreaSquares, clearAim } from '../render/fightzone.js';
+import { setFightZone, clearFightFx, showMoveSquares, clearMoveSquares, showMarks, showOdds, showAreaSquares, clearAim, showHover } from '../render/fightzone.js';
 import { pipsHtml, markSpent, oddsBits, oddsTone, ODDS_COL } from './turnpips.js';
+import { orderStrip, wireStrip } from './orderstrip.js';
 import { areaOf, areaSquares, caughtIn } from '../engine/targeting.js';
 import { reach } from '../engine/grid.js';
 import { bus, signed } from '../util/core.js';
@@ -72,7 +73,7 @@ function ensureHud(){
   if ($('#wanderHud')) return;
   const el = document.createElement('div'); el.id = 'wanderHud'; el.className = 'hidden';
   el.innerHTML = `<div class="wd-top"><div class="wd-where"><b id="wdPlace"></b><span id="wdClock"></span></div><span id="wdLvl"></span><button class="wd-btn" data-act="wdMenu" aria-label="Menu">☰</button></div>
-    <div class="wd-party" id="wdParty"></div><div class="wd-prompt" id="wdPrompt"></div><div class="wd-fight hh-fightbar hidden" id="wdFight"></div>
+    <div class="wd-party" id="wdParty"></div><div class="wd-prompt" id="wdPrompt"></div><div class="wd-fight hh-fightbar hidden" id="wdFight"></div><div class="os-top hidden" id="wdOrder"></div>
     <div class="wd-talk hidden" id="wdTalk"></div><div class="wd-menu hidden" id="wdMenuBox"></div><div class="wd-open hidden" id="wdOpen"></div>`;
   document.body.appendChild(el);
 }
@@ -100,9 +101,10 @@ export function renderHud(){
   const here = !rt.talk && !menu.open && (state.combat.active ? fightAction() : hereAction());
   put('wdPrompt', here ? (here.idle ? `<div class="wd-tx">${esc(here.label)}</div>` : `<button class="wd-act" data-act="wdA">${K('a')} ${esc(here.label)}</button>`) : '');
   // the fight bar
-  show('wdFight', state.combat.active);
+  show('wdFight', state.combat.active); show('wdOrder', !!state.combat.active && !hhOn() && !opening());
   if (state.combat.active){
-    const order = state.combat.order.map(tokById).filter(o => o && !o.flags?.gone).map(o => `<span class="${o.kind === 'monster' ? 'foe' : 'pal'}${o.id === turn?.id ? ' now' : ''}${o.dead || o.hp <= 0 ? ' down' : ''}">${esc(o.name)}</span>`).join('');
+    // ⏳ the turn order as faces (ui/orderstrip.js): across the top, or in the handheld's panel
+    const order = orderStrip({ order:state.combat.order, cur:turn?.id, me:t?.id, round:state.combat.round || 1, act:'osWd', onFace:() => renderHud() });
     let body;
     if (myTurn()){
       const tg = target(), i = attackFor(t, tg), atk = t.attacks[i] || t.attacks[rt.atk ?? 0];
@@ -113,7 +115,8 @@ export function renderHud(){
         ${od?.edge.text ? `<div class="wd-fl wd-edge">${esc(od.edge.mark)} ${esc(od.edge.text)}</div>` : ''}` : ''}
         <div class="wd-acts"><button class="wd-act" data-act="wdX">${K('x')} Actions</button><button class="wd-act" data-act="wdAim" data-k="1">${K('y')} Next target</button><button class="wd-act" data-act="wdEnd">End turn</button></div>`;
     } else body = `<div class="wd-fl">${turn ? `<b>${esc(turn.name)}</b>'s turn…` : '…'}</div>`;
-    put('wdFight', `<div class="wd-order">${order}</div>${body}`);
+    put('wdFight', `${hhOn() ? `<div class="wd-order">${order}</div>` : ''}${body}`);
+    if (!hhOn()) put('wdOrder', order);
   }
   // a conversation
   const tv = talkView(); show('wdTalk', !!tv);
@@ -598,6 +601,8 @@ export function ensureWander(){
   // a crossing between maps (game/ways.js): the fog, the name, the sound
   passage.veil = veil; passage.banner = banner; passage.sting = id => tune({ door:'door', spotted:'gazeRises', fight:'fightBegins' }[id] || 'stairs');
   bus.on('acted', blowFelt);
+  // ⏳ a face in the turn order: pointed at, its figure lights; a foe tapped is aimed at
+  wireStrip('osWd', { hover:id => showHover(id), pick:id => { const o = tokById(id); if (o?.kind === 'monster' && !o.dead && o.hp > 0){ rt.target = id; rt.look = { id, until:performance.now() + 900 }; renderHud(); } } });
   addEventListener('keydown', onKey, { capture:true });
   addEventListener('keyup', onKeyUp, { capture:true }); addEventListener('blur', () => { held = null; });
   document.addEventListener('click', onClick, true);

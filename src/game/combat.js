@@ -288,11 +288,14 @@ export function doAttack(aId, tId, i, mode = 'normal', { d20 = null, at = null }
     const r1 = d(20), r2 = d(20), r = real ?? (useBoth ? (adv ? Math.max(r1, r2) : Math.min(r1, r2)) : r1);
     const tot = r + bonus, hit = r === 20 || (r !== 1 && tot >= ac), crit = r === 20 || (hit && cm.autoCrit);   // (a hit first: helpless isn't unmissable)
     const raw = hit ? rollDice(atk.d, crit).total + rage : 0, df = defend(tg, raw, atk.t), dmg = df.n;   // its resistances, immunities, Rage
-    rolls.push({ hit, crit, dmg, raw, why:df.why, r });
+    rolls.push({ hit, crit, dmg, raw, why:df.why, r, other:!real && useBoth ? (r === r1 ? r2 : r1) : null, tot, real:!!real });
     lines.push(`${atk.rays > 1 ? `#${k + 1} · ` : ''}${real ? '🎲 at the table ' : `d20 ${useBoth ? `(${r1}, ${r2} → ${adv ? 'adv' : 'dis'}) ` : ''}`}<b>${r}</b> ${signed(bonus)} = <b>${tot}</b> vs AC ${ac}${cov.ac ? ` <span class="muted">(${cov.cover === 'half' ? 'half' : '¾'} cover)</span>` : ''} — <b>${crit ? 'CRITICAL' : hit ? 'HIT' : r === 1 ? 'FUMBLE' : 'MISS'}</b>${atk.rays > 1 && hit ? ` → ${dmg}` : ''}`);
   }
   const hits = rolls.filter(x => x.hit), crit = rolls.some(x => x.crit), total = hits.reduce((n, x) => n + x.dmg, 0);
-  const die = { n:rolls[0]?.r, crit:rolls[0]?.crit, hit:rolls[0]?.hit };   // the TV spins a d20 to it (ui/screen.js)
+  // the TV spins a d20 to it (ui/screen.js); every other screen pops it up (ui/dicemoment.js): the die, the one it
+  // beat or lost to with advantage or disadvantage, the bonus, the total and what it had to reach
+  const R0 = rolls[0], die = { n:R0?.r, crit:R0?.crit, hit:R0?.hit, other:R0?.other ?? null, mode:useBoth ? (adv ? 'adv' : 'dis') : '', bonus, tot:R0?.tot, ac, real:!!R0?.real, rays:rolls.length,
+    hits:hits.length, by:a.kind, at:tg.kind };
   const flair = (atk.f || '{A} strikes at {T}.').replace(/\{A\}/g, a.name).replace(/\{T\}/g, tg.name);
   if (why.length) lines.push(`<span class="muted">${esc(why.join(' · '))}</span>`);
   if (slot) lines.push(`<span class="muted">${esc(slot)}${extra > 0 ? ` · cast at level ${level}` : ''}</span>`);
@@ -313,7 +316,7 @@ export function doAttack(aId, tId, i, mode = 'normal', { d20 = null, at = null }
   if (hits.length && atk.latch && !tg.dead && tg.kind !== 'monster'){ tg.flags.latchedBy = a.id; lines.push(`<span class="fam-seep">${esc(a.name)} is latched on.</span>`); }
   sfx(crit ? 'crit' : hits.length ? 'hit' : 'miss');
   // 🗣 a voice line (ui/voices.js); ⚔ the blow seen to land: the number over them, a streak for a throw, a shot or a spell (ui/wander.js)
-  bus.emit('acted', { actor:a, target:tg, trigger:crit ? 'critical' : hits.length ? 'hit' : 'miss', action:atk.n, dmg:total, ranged:rc.kind === 'ranged' && a.id !== tg.id, spell:atk.t && !!(atk.l !== undefined || / casts /.test(atk.f || '')) ? atk.t : null });
+  bus.emit('acted', { actor:a, target:tg, trigger:crit ? 'critical' : hits.length ? 'hit' : 'miss', action:atk.n, dmg:total, ranged:rc.kind === 'ranged' && a.id !== tg.id, spell:atk.t && !!(atk.l !== undefined || / casts /.test(atk.f || '')) ? atk.t : null, die });
   animate(a.id, 'attack', tg.id); if (hits.length) setTimeout(() => animate(tg.id, 'hit', a.id), 330);
   // (the Wanderer's card waits for the blow to land, so it doesn't cover the swing: one hero, one camera, on them)
   const card = { kind:crit ? 'crit' : hits.length ? '' : 'miss', title:`${a.name} → ${tg.name}`, sub:atk.n, flair, lines, big:hits.length ? `${total} ${atk.t}` : '', die };

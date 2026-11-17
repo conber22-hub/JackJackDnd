@@ -16,6 +16,15 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.33 — the dice, and who's next
+
+- **🎲 The dice moment** (`ui/dicemoment.js`): every attack's d20 tumbles for a breath at the top of the screen and lands. With advantage or disadvantage, the die it beat or lost to sits dimmed beside it. Then comes the sum (*14 +5 = 19 vs AC 13*) and the word: **HIT** in green, **MISS** in grey, a gold **CRITICAL** with rays bursting from the die on a 20, and a cracked red **FUMBLE** on a 1. A blow that lands on the party reads red, so a hit on you never looks like good news. Scorching Ray and the like say how many of their rays hit, and a roll made with real dice at the table says so.
+  - It comes from the roll itself: `game/combat.js` puts the whole roll on the card's die and the `acted` event. The Wanderer and the DM's app show it from the event, and a player's phone from the card the DM sends (`net/table.js`). The TV keeps its own, bigger d20 (`ui/screen.js`). Blows close together queue and play quicker instead of landing on top of each other.
+- **⏳ The turn order as faces** (`ui/orderstrip.js`): portraits in the order they'll act, starting with whoever's acting now (larger, in a gold ring). The next one is marked *NEXT*, and *↻ 2* shows where the next round starts. Under each face is a health bar and over it what they're under (⤓ prone, ☠ poisoned, 🛡 dodging, 🌀 concentrating…). The fallen are greyed with a ✝.
+  - The faces are each figure's own portrait (`game/night.js` `faceOf`: art, a forged face, or a portrait of its mini). They're made one at a time after the strip first draws, so a fight breaking out doesn't stutter, with a letter in the meantime.
+  - Pointing at a face lights its figure on the map with rings rising round it (`render/fightzone.js` `showHover`), and a tap on a foe aims at it.
+  - In the Wanderer it runs across the top of the screen. On the handhelds (the Wanderer's and the table's) it sits small in the fight panel, and at the table a monster's health isn't shown, because the players don't know it.
+
 ## v1.32 — know before you commit
 
 - **◆ What's left of your turn** (`ui/turnpips.js`, on the Wanderer's fight bar and the table handheld's): four pips, **◆ Action** (with the strikes left in it), **▲ Bonus**, **👣 the feet still to walk** and **⟲ Reaction**, each going dim when it's spent. The cost tags on the choices dim with them, so once the bonus action is gone, Second Wind's **Bonus** tag is struck through too.

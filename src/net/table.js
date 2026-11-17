@@ -17,6 +17,7 @@ import { serialize, deserialize, resetScene, changed } from '../game/session.js'
 import { doMove, takeStairs, doPing, goFloor, select, animatePath, doorAction, search, disarmTrap } from '../game/actions.js';
 import { propAction } from '../game/objects.js';
 import { screenMsg, afterScreenState, screenDie, upNext, showHandoutHere } from '../ui/screen.js';
+import { diceMoment } from '../ui/dicemoment.js';
 import { answerAsk, askPrompt, askClosed, notePrompt } from '../game/asks.js';
 import { currentTurn, canAct, endConc } from '../game/rules.js';
 import { nextTurn } from '../game/combat.js';
@@ -521,7 +522,7 @@ export function onClientMsg(m){
   else if (m.t === 'bye'){ net.status = 'closed'; clearTimeout(net.retryTimer); toast('The DM closed the table.'); renderNetStatus(); }
   else if (m.t === 'denied'){ waiting(null); toast(m.text); if (ui.myHeroId && !tokById(ui.myToken)) ui.myHeroId = null; const me = tokById(ui.myToken); if (me && ui.selected === me.id) showReach(me); renderPanel(); }
   // (waiting(null): something came back, so the player's 'with the DM' sign goes)
-  else if (m.t === 'card'){ if (ui.screen && m.c?.ask) return; waiting(null); if (ui.screen && m.c?.die?.n) screenDie(m.c, () => showCard(m.c, false)); else showCard(m.c, false); }
+  else if (m.t === 'card'){ if (ui.screen && m.c?.ask) return; waiting(null); if (ui.screen && m.c?.die?.n) screenDie(m.c, () => showCard(m.c, false)); else { if (m.c?.die?.n){ const [a, t] = String(m.c.title || '').split(' → '); diceMoment(m.c.die, { a, t }); } showCard(m.c, false); } }
   else if (m.t === 'ping'){ spawnPing(m.floor, m.x, m.y, m.color); toast(`${m.who} pings the map`); }
   else if (m.t === 'whisper') showWhisper(m.text);
   else if (m.t === 'letter') net.onLetter?.(m.letter);   // the Count's letters (ui/letters.js sets the receiver)

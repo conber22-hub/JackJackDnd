@@ -92,7 +92,9 @@ test('the turn pips, the odds of a blow, and who it would reach', async ({ page 
   // the rows say it too, and the detail line says what it needs on the die
   await page.keyboard.press('f');
   const box = page.locator('#wdMenuBox');
-  await expect(box.locator('.wd-opt', { hasText:/^Longsword/ }).locator('.wd-tags')).toContainText(/\d+%/);
+  // (whichever of the attacks reaches the wolf from here: the sword if it's close, else the javelin)
+  await expect(box.locator('.wd-opt .wd-tags', { hasText:/\d+%/ }).first()).toBeVisible();
+  await expect.poll(async () => { if (await box.locator('.wd-opt.on .wd-tags', { hasText:/\d+%/ }).count()) return true; await page.keyboard.press('ArrowDown'); return false; }, { timeout:20_000 }).toBe(true);
   await expect(box.locator('.wd-info')).toContainText(/to hit \(a \d+ or better/);
   // Second Wind spends the bonus action: the pip goes dim, and its Bonus tag with it
   await box.locator('[data-act="wdPick"]', { hasText:/^Second Wind/ }).click();

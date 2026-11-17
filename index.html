@@ -666,6 +666,56 @@ body.hh.wd-fighting #cardLayer{padding-top:8px}
 .wd-pips .pip.used{opacity:.38;filter:grayscale(.75);background:transparent}
 .wd-odds{font-family:system-ui,sans-serif;padding:0 6px;border-radius:6px}.wd-odds.o-good{color:#9ff5b4;background:rgba(90,210,130,.15)}.wd-odds.o-even{color:#ffe0a0;background:rgba(255,200,100,.13)}.wd-odds.o-poor{color:#ffad95;background:rgba(255,110,80,.13)}
 .wd-edge{font-size:12px;color:#d9cbe8;font-style:italic}
+/* ⏳ the turn order as faces (ui/orderstrip.js) */
+.os-top{position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:30;max-width:min(64vw,760px);pointer-events:auto}
+.os-top.hidden{display:none}
+.os-strip{display:flex;align-items:flex-end;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 6px 4px}
+.os-strip::-webkit-scrollbar{display:none}
+.os-p{position:relative;flex:none;display:flex;flex-direction:column;align-items:center;gap:2px;width:54px;padding:0;background:none;border:0;cursor:pointer;color:inherit;font:inherit}
+.os-face{width:42px;height:42px;border-radius:50%;background:#1d141a center/cover no-repeat;border:2px solid rgba(239,225,200,.25);box-shadow:0 3px 10px rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;font:700 18px Georgia,serif;color:#cdbfa8;transition:transform .2s,border-color .2s}
+.os-p.foe .os-face{border-color:rgba(255,120,110,.55)}.os-p.pal .os-face{border-color:rgba(150,220,160,.55)}.os-p.me .os-face{border-color:rgba(159,216,255,.8)}
+.os-p.now{width:66px}.os-p.now .os-face{width:56px;height:56px;border:3px solid #ffd27a;box-shadow:0 0 18px rgba(255,200,100,.55),0 3px 10px rgba(0,0,0,.6)}
+.os-p:hover .os-face{transform:translateY(-3px) scale(1.06)}
+.os-p.down{opacity:.38;filter:grayscale(1)}.os-p.down .os-face::after{content:'✝';position:absolute;top:10px;font-size:20px;color:#efe1c8}
+.os-hp{width:38px;height:4px;border-radius:3px;background:rgba(0,0,0,.6);overflow:hidden}.os-p.now .os-hp{width:50px}
+.os-hp i{display:block;height:100%;background:#7dd38a}.os-hp i.mid{background:#e8c25a}.os-hp i.low{background:#e0553f}.os-p.foe .os-hp i{background:#e0553f}
+.os-cond{position:absolute;top:-4px;right:-2px;display:flex;gap:1px;font-size:11px;font-style:normal}.os-cond i{font-style:normal;background:rgba(14,9,12,.85);border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;font-size:10px}
+.os-nm{max-width:100%;font:600 10px/1.15 system-ui,sans-serif;color:#efe1c8;text-shadow:0 1px 3px #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.os-p.foe .os-nm{color:#ffb3a8}.os-p.now .os-nm{color:#ffe0a0}
+.os-next{position:absolute;top:30px;left:50%;transform:translateX(-50%);font:700 8px system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#14100c;background:#efe1c8;border-radius:99px;padding:0 5px}
+.os-round{flex:none;align-self:center;font:700 10px system-ui,sans-serif;color:#cdbfa8;padding:0 2px;opacity:.75}
+.wd-order .os-strip{padding:0;gap:3px}
+body.hh .os-p{width:40px}body.hh .os-p.now{width:44px}body.hh .os-face{width:22px;height:22px;font-size:10px;border-width:1px}body.hh .os-p.now .os-face{width:28px;height:28px;border-width:2px}
+body.hh .os-hp{width:22px;height:2px}body.hh .os-p.now .os-hp{width:28px}body.hh .os-nm{font-size:7px}body.hh .os-next{top:16px;font-size:6px;padding:0 3px}body.hh .os-cond{top:-3px;right:-3px}body.hh .os-cond i{width:10px;height:10px;font-size:7px}body.hh .os-round{font-size:7px}
+body.hh .os-p.down .os-face::after{top:4px;font-size:11px}
+/* 🎲 the dice moment (ui/dicemoment.js) */
+.dm{position:fixed;left:50%;top:104px;transform:translateX(-50%);z-index:40;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 18px 9px;border-radius:16px;background:radial-gradient(ellipse at 50% 40%,rgba(30,20,26,.9),rgba(14,9,12,.78) 70%);border:1px solid rgba(201,162,70,.35);box-shadow:0 10px 30px rgba(0,0,0,.55);transition:opacity .26s,transform .26s}
+.dm.hidden{display:none}.dm.out{opacity:0;transform:translateX(-50%) translateY(-8px) scale(.96)}
+.dm-who{font:600 11px/1.2 system-ui,sans-serif;letter-spacing:.06em;color:#cdbfa8;text-transform:uppercase}.dm-who i{font-style:normal;text-transform:none;color:#ffe0a0}
+.dm-row{display:flex;align-items:center;gap:10px}
+.dm-d{position:relative;width:62px;height:62px;display:flex;align-items:center;justify-content:center}
+.dm-d svg{position:absolute;inset:0;width:100%;height:100%;filter:drop-shadow(0 0 8px #000)}
+.dm-d polygon{fill:#2a1d16;stroke:#c9a246;stroke-width:3}.dm-d polygon.in{fill:#3a2818}.dm-d .ln{stroke:#c9a24688;stroke-width:1.6;fill:none}
+.dm-d b{position:relative;top:4px;font:700 25px/1 "Cormorant Garamond",Georgia,serif;color:#efe1c8;text-shadow:0 0 8px #000}
+.dm-d.other{width:40px;height:40px;opacity:.45;filter:grayscale(.6)}.dm-d.other b{font-size:16px;top:3px}
+.dm.roll .main{animation:dmtumble .32s linear infinite}
+@keyframes dmtumble{0%{transform:rotate(0) scale(.9)}50%{transform:rotate(180deg) scale(1.05)}100%{transform:rotate(360deg) scale(.9)}}
+.dm.land .main{animation:dmland .38s cubic-bezier(.3,1.6,.5,1)}
+@keyframes dmland{0%{transform:scale(1.45)}100%{transform:scale(1)}}
+.dm.roll .dm-sum,.dm.roll .dm-verdict,.dm.roll .other{visibility:hidden}
+.dm-sum{font:600 14px/1.2 system-ui,sans-serif;color:#efe1c8;letter-spacing:.02em}.dm-sum i{font-style:normal;font-size:11px;color:#d9cbe8;margin-left:4px}
+.dm-verdict{font:900 20px/1.1 Georgia,serif;letter-spacing:.14em}.dm-verdict small{font:600 11px system-ui,sans-serif;letter-spacing:.02em;color:#cdbfa8}
+.dm.hit .dm-verdict{color:#9ff5b4}.dm.miss .dm-verdict{color:#bdb3a6}.dm.hurt .dm-verdict{color:#ff6a5a}
+.dm.crit .dm-verdict,.dm.crit-bad .dm-verdict{color:#ffd45a;text-shadow:0 0 14px rgba(255,200,80,.7)}.dm.crit-bad .dm-verdict{color:#ff8a5a}
+.dm.fumble .dm-verdict{color:#ff8a8a}
+.dm.n20{border-color:#ffd66a;box-shadow:0 0 34px rgba(255,200,90,.55),0 10px 30px rgba(0,0,0,.55)}
+.dm.n20 .main polygon{fill:#4a3608;stroke:#ffd66a}.dm.n20 .main svg{filter:drop-shadow(0 0 16px #ffd66a)}.dm.n20 .main b{color:#ffe59a}
+.dm.n20.land .rays{position:absolute;inset:-34px;border-radius:50%;background:repeating-conic-gradient(rgba(255,214,106,.55) 0 6deg,transparent 6deg 24deg);mask:radial-gradient(circle,transparent 30%,#000 42%,transparent 72%);-webkit-mask:radial-gradient(circle,transparent 30%,#000 42%,transparent 72%);animation:dmrays 1.2s ease-out both;z-index:-1}
+@keyframes dmrays{0%{transform:scale(.4) rotate(0);opacity:0}25%{opacity:1}100%{transform:scale(1.25) rotate(40deg);opacity:0}}
+.dm.n1{border-color:#b3303a}.dm.n1 .main polygon{fill:#3a0c10;stroke:#e46a6a}.dm.n1 .main svg{filter:drop-shadow(0 0 14px #b3303a)}.dm.n1 .main b{color:#ff9a9a}
+.dm.n1.land .main{animation:dmcrack .45s ease-out}
+@keyframes dmcrack{0%{transform:translateX(0)}20%{transform:translateX(-5px) rotate(-6deg)}40%{transform:translateX(5px) rotate(5deg)}60%{transform:translateX(-3px)}100%{transform:none}}
+body.hh .dm{top:46px;padding:4px 10px 5px;border-radius:10px;gap:0}body.hh .dm-d{width:38px;height:38px}body.hh .dm-d b{font-size:16px;top:2px}body.hh .dm-d.other{width:26px;height:26px}body.hh .dm-d.other b{font-size:11px}
+body.hh .dm-who{font-size:8px}body.hh .dm-sum{font-size:10px}body.hh .dm-sum i{font-size:8px}body.hh .dm-verdict{font-size:13px}
 .wd-tags{position:absolute;right:10px;top:7px;display:flex;gap:4px;pointer-events:none}
 .wd-tags i{font-style:normal;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:1px 7px;border-radius:99px;border:1px solid;font-family:system-ui,sans-serif}
 .wd-tags .t-act{color:#ffd9a0;border-color:rgba(255,190,110,.45);background:rgba(255,170,80,.1)}

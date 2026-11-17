@@ -22,6 +22,8 @@ import { esc, signed } from '../util/core.js';
 import { optList, optInfo, tag } from './optrow.js';
 import { attackBits, spellBits, actBits, featBits, spellOf } from './actrows.js';
 import { pipsHtml, markSpent } from './turnpips.js';
+import { orderStrip, wireStrip } from './orderstrip.js';
+import { showHover } from '../render/fightzone.js';
 import { edgeWords } from '../engine/odds.js';
 import { attackEdge } from '../game/combat.js';
 import { readPad, padIntents, keyIntent } from '../engine/pad.js';
@@ -349,6 +351,8 @@ function ensureHud(){
     <div class="wd-party" id="tbParty"></div><div class="wd-prompt" id="tbPrompt"></div><div class="wd-fight hh-fightbar hidden" id="tbFight"></div>
     <div class="wd-menu hidden" id="tbMenu"></div>`;
   document.body.appendChild(el);
+  // ⏳ a face in the turn order: pointed at, its figure lights; a foe tapped is aimed at
+  wireStrip('osTb', { hover:id => showHover(id), pick:id => { const o = tokById(id); if (o?.kind === 'monster' && !o.dead){ rt.target = id; rt.look = { id, until:performance.now() + 900 }; renderHud(); } } });
   el.addEventListener('click', e => {
     const b = e.target.closest('[data-tb]'); if (!b) return; e.stopPropagation();
     const k = b.dataset.tb;
@@ -377,7 +381,8 @@ export function renderHud(){
     : here ? (here.idle ? `<div class="wd-tx">${esc(here.label)}</div>` : `<button class="wd-act" data-tb="a"><b>A</b> ${esc(here.label)}</button>`) : '');
   show('tbFight', fight());
   if (fight()){
-    const order = state.combat.order.map(tokById).filter(o => o && !o.flags?.gone).map(o => `<span class="${o.kind === 'monster' ? 'foe' : 'pal'}${o.id === cur?.id ? ' now' : ''}${o.dead || o.hp <= 0 ? ' down' : ''}">${esc(o.name)}</span>`).join('');
+    // ⏳ the turn order as faces (ui/orderstrip.js); a monster's health isn't for the players to see
+    const order = orderStrip({ order:state.combat.order, cur:cur?.id, me:t.id, round:state.combat.round || 1, act:'osTb', seeHp:o => o.kind !== 'monster', onFace:() => renderHud() });
     const tg = target(), i = attackFor(t, tg);
     const body = myTurn()
       ? `<div class="wd-fl wd-turn"><b>Your turn</b>${pipsHtml(economy(t))}</div>
