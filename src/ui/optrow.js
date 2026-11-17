@@ -15,7 +15,7 @@ export function optRow(o, on, attrs){
   const tw = (o.tags || []).reduce((n, t) => n + String(t.t).length * 6.4 + 22, 0);
   return `<button class="wd-opt${on ? ' on' : ''}${o.off ? ' off' : ''}${o.icon ? ' has-ic' : ''}${tw ? ' has-tg' : ''}"${tw ? ` style="--tw:${Math.round(tw)}px"` : ''}${o.icon ? ` data-ic="${esc(o.icon)}"` : ''}${o.tone ? ` data-tone="${esc(o.tone)}"` : ''} ${attrs}>`
     + `${esc(o.label)}${o.sub ? `<small>${esc(o.sub)}</small>` : ''}`
-    + `${o.tags?.length ? `<span class="wd-tags">${o.tags.map(t => `<i class="t-${esc(t.k)}">${esc(t.t)}</i>`).join('')}</span>` : ''}</button>`;
+    + `${o.tags?.length ? `<span class="wd-tags">${o.tags.map(t => `<i class="t-${esc(t.k)}${t.spent ? ' spent' : ''}"${t.spent ? ' title="spent this turn"' : ''}>${esc(t.t)}</i>`).join('')}</span>` : ''}</button>`;
 }
 // A whole list: a header wherever the group changes; attrsAt(k): the attributes of choice k
 export function optList(items, sel, attrsAt){

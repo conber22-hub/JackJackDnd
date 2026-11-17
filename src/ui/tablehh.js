@@ -20,7 +20,10 @@
 import { state, ui, tokById } from '../engine/state.js';
 import { esc, signed } from '../util/core.js';
 import { optList, optInfo, tag } from './optrow.js';
-import { attackBits, spellBits, actBits, featBits } from './actrows.js';
+import { attackBits, spellBits, actBits, featBits, spellOf } from './actrows.js';
+import { pipsHtml, markSpent } from './turnpips.js';
+import { edgeWords } from '../engine/odds.js';
+import { attackEdge } from '../game/combat.js';
 import { readPad, padIntents, keyIntent } from '../engine/pad.js';
 import { rangeCheck, coverOf, areaOf, areaSquares, spellReach } from '../engine/targeting.js';
 import { tokGap } from '../engine/movement.js';
@@ -28,7 +31,7 @@ import { requestAct } from '../game/requests.js';
 import { requestMove, doorAction, onStairs, takeStairs, search } from '../game/actions.js';
 import { exitLabel } from '../engine/generator.js';
 import { currentTurn, moveAllowance } from '../game/rules.js';
-import { canCast, slotLevels, left } from '../game/resources.js';
+import { canCast, slotLevels, left, BONUS_FEATS } from '../game/resources.js';
 import { playerAnswer } from '../game/moves.js';
 import { tune, coachTick, coachLearn, coachDone } from './hhlife.js';
 import { uncover, banner } from './passage.js';
@@ -62,8 +65,8 @@ const rt = { target:null, atk:null, aAt:0, surgeWas:null, look:null, sentAt:0, s
    Fighters three at 11 and four at 20), or one spell; Action Surge gives the action back (once a turn); then A, or
    X's End turn, ends the turn. */
 const turnKey = () => fight() ? `${state.combat.round}:${state.combat.idx}` : '';
-const used = { key:'', strikes:0, acted:false, surged:false };
-const usedNow = () => { const k = turnKey(); if (used.key !== k){ used.key = k; used.strikes = 0; used.acted = false; used.surged = false; } return used; };
+const used = { key:'', strikes:0, acted:false, surged:false, bonus:false, did:'' };
+const usedNow = () => { const k = turnKey(); if (used.key !== k){ used.key = k; used.strikes = 0; used.acted = false; used.surged = false; used.bonus = false; used.did = ''; } return used; };
 // Action Surge spent on the hero's turn (from the handheld, the classic card or the DM's app: its count going down
 // is what tells): one more action, strikes and all
 function surgeWatch(t){
@@ -80,6 +83,13 @@ function maxStrikes(t){
 }
 const strikesLeft = t => { const u = usedNow(); return u.acted ? 0 : Math.max(0, maxStrikes(t) - u.strikes); };
 const actionLeft = t => !fight() || (!usedNow().acted && usedNow().strikes === 0);
+// A spell cast as a bonus action (Healing Word, Misty Step…): it spends the bonus action, not the action
+const bonusSpell = sp => !!sp && /bonus/i.test(spellOf(sp.sn || sp.n)?.time || '');
+// What's left of the turn, for the pips (ui/turnpips.js)
+const economy = t => { if (!fight() || !t) return null; const u = usedNow(), n = strikesLeft(t);
+  return { mine:myTurn(), strikes:n, of:maxStrikes(t), action:n > 0, did:u.acted ? u.did : u.strikes ? 'strike' : '', bonus:!u.bonus, moveFt:Math.max(0, moveAllowance(t)) * 5, reaction:!t.reacted }; };
+// For and against a blow, in words (players don't see a foe's AC, so no odds: only the advantage and why)
+const edgeOf = (t, tg, a) => { try { const E = attackEdge(t, tg, a); return edgeWords({ adv:E.advWhy, dis:E.disWhy }); } catch { return { mark:'', text:'' }; } };
 const menu = { open:false, page:'main', i:0 };
 
 /* ---------- who to aim at ---------- */
@@ -166,7 +176,7 @@ function slotThen(t, sp, cb){
 function sendCast(t, i, sp, tg, at){
   menu.open = false; rt.cast = null;
   requestAct({ kind:'cast', id:t.id, i, target:tg.id, ...(tg.aim ? { aim:tg.aim } : {}), ...(at ? { at } : {}) });
-  if (fight()) usedNow().acted = true;
+  if (fight()){ if (bonusSpell(sp)) usedNow().bonus = true; else { usedNow().acted = true; usedNow().did = 'cast'; } }
   if (tg.id !== t.id) rt.look = { id:tg.id, until:performance.now() + 1700 };
   coachLearn('cast');
 }
@@ -279,7 +289,7 @@ function menuItems(){
   if (menu.page === 'strike') return strikeItems(t);
   if (menu.page === 'spells') return [...(t.casts || []).map((s, i) => [s, i]).sort((a, b) => (a[0].l || 0) - (b[0].l || 0)).map(([s, i]) => ({ label:s.n, group:s.l ? `Level ${s.l}` : 'Cantrips', ...spellBits(s), ...(areaOf(s) ? { icon:'✺' } : {}),
     sub:`${spellBits(s).sub}${s.k === 'heal' || s.k === 'buff' || s.k === 'util' ? '' : target() ? ` · at ${target().name}` : ''}`,
-    off:!turnOk || !canCast(t, s.l, s.n, s.again) || (fight() && !actionLeft(t)), run:() => { menu.open = false; castFromList(i); } })), back];
+    off:!turnOk || !canCast(t, s.l, s.n, s.again) || (fight() && (bonusSpell(s) ? usedNow().bonus : !actionLeft(t))), run:() => { menu.open = false; castFromList(i); } })), back];
   if (menu.page === 'allies'){ const i = rt.cast?.i, sp = t.casts?.[i]; if (!sp) return [back];
     return [...alliesFor(t, sp).map(({ o, ok }) => ({ label:o.id === t.id ? `${o.name} (you)` : o.name, sub:`${Math.max(0, o.hp)} / ${o.maxHp} HP${ok ? '' : ' · out of reach'}`, off:!ok,
       run:() => slotThen(t, sp, at => sendCast(t, i, sp, { id:o.id }, at)) })), { label:'Back', run:() => { rt.cast = null; menu.page = 'spells'; menu.i = 0; } }]; }
@@ -287,7 +297,7 @@ function menuItems(){
     return [...c.levels.map(l => ({ label:`Level ${l}${l === c.base ? ' (its own)' : ''}`, sub:(t.resources || []).filter(r => r.slot === l).map(r => `${left(t, r.id)} left`).join(' · '),
       run:() => c.cb(l === c.base ? null : l) })), { label:'Back', run:() => { rt.cast = null; menu.open = false; } }]; }
   if (menu.page === 'actions'){
-    const ta = k => () => { menu.open = false; sendHost({ t:'turnAct', id:t.id, k }); if (k === 'dash' || k === 'dodge' || k === 'disengage'){ if (fight()) usedNow().acted = true; coachLearn(k); } };
+    const ta = k => () => { menu.open = false; sendHost({ t:'turnAct', id:t.id, k }); if (k === 'dash' || k === 'dodge' || k === 'disengage'){ if (fight()){ usedNow().acted = true; usedNow().did = k; } coachLearn(k); } };
     const tg = target(), spent = fight() && myTurn() && !strikesLeft(t);
     const end = fight() ? [{ label:'End your turn', group:' ', icon:'⏭', sub:spent ? 'Your action is spent' : 'Done for this round', off:!myTurn(), run:() => { menu.open = false; endTurn(); } }] : [];
     // an attack: at the target, if it reaches (and from now on, A strikes with it); else choose who on the screen
@@ -301,7 +311,7 @@ function menuItems(){
       ...(fight() ? [{ label:'Dash', group:'Move & defend', ...actBits('dash'), off:!myTurn(), run:ta('dash') }, { label:'Disengage', group:'Move & defend', ...actBits('disengage'), off:!myTurn(), run:ta('disengage') },
         { label:'Dodge', group:'Move & defend', ...actBits('dodge'), off:!myTurn(), run:ta('dodge') }, ...(t.conds?.some(c => c.n === 'prone') ? [{ label:'Stand up', group:'Move & defend', ...actBits('stand'), off:!myTurn(), run:ta('stand') }] : [])] : []),
       ...(t.resources || []).filter(r => !r.slot).map(r => ({ label:r.id === 'hd' ? 'Hit Die' : r.n, group:'Your gifts', ...featBits({ id:r.id, n:r.n, left:left(t, r.id), max:r.max, text:r.text }), sub:`${left(t, r.id)} of ${r.max} left${r.id === 'surge' && usedNow().surged ? ' · used this turn' : ''}`,
-        off:!turnOk || !left(t, r.id) || (r.id === 'surge' && (!fight() || usedNow().surged)), run:() => { menu.open = false; cardAct('feat', 0, r.id); } })),
+        off:!turnOk || !left(t, r.id) || (r.id === 'surge' && (!fight() || usedNow().surged)) || (fight() && BONUS_FEATS.has(r.id) && usedNow().bonus), run:() => { menu.open = false; cardAct('feat', 0, r.id); if (fight() && BONUS_FEATS.has(r.id)) usedNow().bonus = true; } })),
       { label:'Search', group:' ', icon:'🔍', tags:[tag('act')], sub:'Look around for what\'s hidden', info:'Look over everything near you for what\'s hidden: a door, a trap, a thing put away.', off:!turnOk, run:() => { menu.open = false; search(me()); } },
       ...(spent ? [] : end),
       back];
@@ -370,15 +380,15 @@ export function renderHud(){
     const order = state.combat.order.map(tokById).filter(o => o && !o.flags?.gone).map(o => `<span class="${o.kind === 'monster' ? 'foe' : 'pal'}${o.id === cur?.id ? ' now' : ''}${o.dead || o.hp <= 0 ? ' down' : ''}">${esc(o.name)}</span>`).join('');
     const tg = target(), i = attackFor(t, tg);
     const body = myTurn()
-      ? `<div class="wd-fl"><b>Your turn</b> · ${Math.max(0, moveAllowance(t)) * 5} ft. to move · ${usedNow().acted ? 'action spent' : strikesLeft(t) ? `${strikesLeft(t)} strike${strikesLeft(t) === 1 ? '' : 's'} left` : 'struck'}</div>
+      ? `<div class="wd-fl wd-turn"><b>Your turn</b>${pipsHtml(economy(t))}</div>
         <div class="wd-fl">${tg ? `🎯 <b>${esc(tg.name)}</b>${tg.maxHp ? ` ${bar(tg.hp, tg.maxHp)}` : ''}${i < 0 ? ' <span class="muted">(out of reach)</span>' : ''}` : 'Nobody in sight'}</div>
-        ${tg && i >= 0 && strikesLeft(t) ? `<div class="wd-fl wd-weap">⚔ <b>${esc(t.attacks[i].n)}</b> ${signed(t.attacks[i].b)} to hit · ${esc(t.attacks[i].d)} ${esc(t.attacks[i].t || '')} · <span class="near">${esc(reachWords(t, tg, t.attacks[i]))}</span></div>` : ''}
+        ${tg && i >= 0 && strikesLeft(t) ? `<div class="wd-fl wd-weap">⚔ <b>${esc(t.attacks[i].n)}</b> ${signed(t.attacks[i].b)} to hit · ${esc(t.attacks[i].d)} ${esc(t.attacks[i].t || '')} · <span class="near">${esc(reachWords(t, tg, t.attacks[i]))}</span></div>${(e => e.text ? `<div class="wd-fl wd-edge">${esc(e.mark)} ${esc(e.text)}</div>` : '')(edgeOf(t, tg, t.attacks[i]))}` : ''}
         <div class="wd-acts"><button class="wd-act" data-tb="x"><b>X</b> Actions</button><button class="wd-act" data-tb="y"><b>Y</b> Next target</button><button class="wd-act" data-tb="endturn">End turn</button></div>`
       : `<div class="wd-fl">${cur ? `<b>${esc(cur.name)}</b>'s turn…` : '…'}</div>${tg ? `<div class="wd-fl">🎯 ${esc(tg.name)}</div>` : ''}`;
     put('tbFight', `<div class="wd-order">${order}</div>${body}`);
   }
   show('tbMenu', menu.open);
-  if (menu.open){ const items = menuItems(); menu.i = Math.min(menu.i, items.length - 1);
+  if (menu.open){ const items = markSpent(menuItems(), economy(t)); menu.i = Math.min(menu.i, items.length - 1);
     put('tbMenu', `<div class="wd-tt"><b>${esc(TITLE[menu.page] || '')}</b></div>${menu.page === 'help' ? `<div class="wd-tx">${esc(HELP)}</div>` : ''}<div class="wd-opts">${optList(items, menu.i, k => `data-tb="pick" data-i="${k}"`)}</div>${optInfo(items[menu.i])}`);
     // keep the highlight in sight when it moves (only then: a finger scrolling the list isn't pulled back)
     const key = `${menu.page}:${menu.i}`; if (key !== scrolledTo){ scrolledTo = key; document.querySelector('#tbMenu .wd-opt.on')?.scrollIntoView({ block:'nearest' }); } }

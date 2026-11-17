@@ -20,7 +20,8 @@ import { migrateSheet, itemInfo, canEquip } from '../engine/inventory.js';
 import { mirrorGear } from '../engine/gear.js';
 import { TEMPLATES } from '../data/themes.js';
 import { BEST } from '../data/bestiary.js';
-import { newHero, heroStats } from '../engine/hero.js';
+import { newHero, heroStats, SP } from '../engine/hero.js';
+import { hitOdds, expectedDamage, pct, edgeWords } from '../engine/odds.js';
 import { greet, rumourFor } from '../engine/folk.js';
 import { rangeCheck, coverOf } from '../engine/targeting.js';
 import { xpOf } from '../engine/encounter.js';
@@ -31,7 +32,7 @@ import { VALLEY_PLACES } from '../data/barovia-map.js';
 import { pick, uid, rollDice, esc } from '../util/core.js';
 import { applyCharacter } from './heroes.js';
 import { doMove, resolvePath, takeStairs, onStairs, goFloor, nearestOpen, setDread } from './actions.js';
-import { rollInitiative, nextTurn, autoTurn, endCombat, doAttack, currentTurn, partySees, riseFrom, removeToken, castSpell, heal } from './combat.js';
+import { rollInitiative, nextTurn, autoTurn, endCombat, doAttack, attackEdge, currentTurn, partySees, riseFrom, removeToken, castSpell, heal } from './combat.js';
 import { turnAction, pausedMover, autoAnswer } from './moves.js';
 import { moveAllowance } from './rules.js';
 import { travel, arrive, enterPlace, valley, passTime, clockText, springEvent, hourHooks } from './overworld.js';
@@ -40,7 +41,7 @@ import { court } from './court.js';
 import { findNear, findLabel, useFind } from './finds.js';
 import { bubble } from '../render/glints.js';
 import { ensureWays, wayAfterStep, wayOnBump, arriveThere, crossingNow, readSignpost, signpostNear, roadsOutOf, passage, bannerHere, doorwayHere, goOutside } from './ways.js';
-import { longRest, shortRest, canCast, useFeature, left } from './resources.js';
+import { longRest, shortRest, canCast, useFeature, left, BONUS_FEATS } from './resources.js';
 import { loadState, changed, flushSave, loadWanderSave, wanderCheckpoint, deserialize, wanderSlot, saveWanderSlot, WANDER_SLOTS } from './session.js';
 import { showCard, toast } from '../ui/hud.js';
 import { syncTokens, tokenViews, faceStep } from '../render/minis.js';
@@ -383,7 +384,8 @@ export function spellList(){
   const t = hero(); if (!t) return [];
   const fight = state.combat.active;
   const casts = (t.casts || []).map((c, i) => { const can = canCast(t, c.l, c.n, !!c.again), peace = ['heal', 'buff', 'util'].includes(c.k);
-    return { i, n:c.n, l:c.l, k:c.k, kind:'cast', ok:can && (fight || peace), why:!can ? 'no slot left' : !fight && !peace ? 'in a fight' : '' }; });
+    const quick = bonusSpell(c), spent = fight && myTurn() && (quick ? rt.bonus : rt.cast || rt.attacks > 0);
+    return { i, n:c.n, l:c.l, k:c.k, kind:'cast', ok:can && (fight || peace) && !spent, why:!can ? 'no slot left' : !fight && !peace ? 'in a fight' : spent ? (quick ? 'with a bonus action left' : 'with your action left') : '' }; });
   const atks = (t.attacks || []).map((a, i) => ({ i, n:a.n, l:null, k:'atk', kind:'atk', spell:/ casts /.test(a.f || '') })).filter(a => a.spell).map(a => ({ ...a, ok:fight, why:fight ? '' : 'in a fight' }));
   return [...casts, ...atks];
 }
@@ -391,7 +393,9 @@ export function spellList(){
 function healTarget(t, reachSq){ return members().filter(m => !m.flags?.gone && m.hp < m.maxHp && m.floor === t.floor && cheb(m, t) <= reachSq).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0] || null; }
 export function heroCast(entry){
   const t = hero(); if (!t || !entry) return false;
-  if (state.combat.active){ if (!myTurn()){ toast('Not your turn yet.'); return false; } if (rt.cast || rt.attacks){ toast('You have used your action this turn.'); return false; } }
+  const quick = entry.kind === 'cast' && bonusSpell(t.casts?.[entry.i]);
+  if (state.combat.active){ if (!myTurn()){ toast('Not your turn yet.'); return false; }
+    if (quick ? rt.bonus : rt.cast || rt.attacks){ toast(quick ? 'You have used your bonus action this turn.' : 'You have used your action this turn.'); return false; } }
   if (!entry.ok){ toast(`${entry.n}: ${entry.why}.`); return false; }
   if (entry.kind === 'atk'){ rt.atk = entry.i; heroAttack(); return true; }
   const sp = t.casts[entry.i], reachSq = Math.max(1, Math.ceil((sp.r ?? 60) / 5));
@@ -403,9 +407,11 @@ export function heroCast(entry){
     else if (cheb(t, tg) > reachSq){ toast(`${tg.name} is out of range of ${sp.n}: walk closer.`); return false; } }
   if (tg !== t) rt.look = { id:tg.id, until:performance.now() + 1700 };
   if (castSpell(t.id, tg.id, entry.i, aimAt) === false) return false;
-  if (state.combat.active){ rt.cast = true; rt.did = 'cast'; }
+  if (state.combat.active){ if (quick) rt.bonus = true; else { rt.cast = true; rt.did = 'cast'; } }
   changed(); return true;
 }
+// A spell cast as a bonus action (Healing Word, Misty Step…): it spends the bonus action, not the action
+export const bonusSpell = c => !!c && /bonus/i.test(SP(c.sn || c.n)?.time || '');
 
 /* ---------- walking ---------- */
 export const heroBusy = () => { const h = hero(); return !h || crossingNow() || rt.spotted || !!tokenViews.get(h.id)?.anim || pausedMover(h.id); };
@@ -594,15 +600,36 @@ export function heroTurnAct(k){
 // The hero's features (Second Wind, Action Surge, Rage, Lay on Hands on themselves…): engine-side, game/resources.js.
 // Action Surge gives the turn's action back, strikes and all (once a turn).
 export const heroFeatures = () => { const t = hero(); return t ? (t.resources || []).filter(r => !r.slot && r.id !== 'hd').map(r => ({ id:r.id, n:r.n, left:left(t, r.id), max:r.max, text:r.text || '',
-  why:!left(t, r.id) ? 'none left: a rest brings it back' : r.id === 'surge' && !state.combat.active ? 'in a fight' : r.id === 'surge' && rt.surged ? 'once a turn' : state.combat.active && !myTurn() ? 'on your turn' : '' })) : []; };
+  why:!left(t, r.id) ? 'none left: a rest brings it back' : r.id === 'surge' && !state.combat.active ? 'in a fight' : r.id === 'surge' && rt.surged ? 'once a turn' : state.combat.active && !myTurn() ? 'on your turn'
+    : state.combat.active && BONUS_FEATS.has(r.id) && rt.bonus ? 'your bonus action is spent' : '' })) : []; };
 export function heroFeature(id){
   const t = hero(), f = heroFeatures().find(x => x.id === id); if (!t || !f) return false;
   if (f.why) return toast(`${f.n}: ${f.why}.`), false;
   if (!useFeature(t, id, t)) return false;
+  if (state.combat.active && BONUS_FEATS.has(id)) rt.bonus = true;
   if (id === 'surge'){ rt.surged = true; rt.attacks = 0; rt.cast = false; toast('⚡ Action Surge: one more action this turn.'); }
   changed(); return true;
 }
 export function endHeroTurn(){ if (myTurn()){ rt.heroKey = ''; nextTurn(); } }
+
+/* 🎯 What's left of the hero's turn, for the pips on the fight bar (ui/turnpips.js): the action (and how many strikes
+   are in it), the bonus action, the move in feet, the reaction. */
+export function economy(){
+  const t = hero(); if (!t || !state.combat.active) return null;
+  const n = maxAttacks(t), struck = rt.attacks > 0 && !rt.cast && !rt.did?.match(/dodge|dash|disengage/);
+  return { mine:myTurn(), strikes:attacksLeft(), of:n, action:attacksLeft() > 0, partway:struck && attacksLeft() > 0, did:rt.did || (rt.cast ? 'cast' : rt.attacks ? 'strike' : ''),
+    bonus:!rt.bonus, moveFt:Math.max(0, moveAllowance(t)) * 5, reaction:!t.reacted };
+}
+/* The odds of the hero's attack i at a target, before it's struck: { hit, crit, pct, need, avg, edge:{ mark, text },
+   cover, ok } (game/combat.js attackEdge: the same reasons the roll will use; engine/odds.js the chances). */
+export function strikeOdds(i, tg = target()){
+  const t = hero(), a = t?.attacks?.[i]; if (!a || !tg) return null;
+  let E; try { E = attackEdge(t, tg, a); } catch { return null; }
+  const o = hitOdds(E.bonus, E.ac, { adv:E.adv, dis:E.dis, autoCrit:E.cm.autoCrit });
+  const rage = a.m && (t.conds || []).some(c => c.n === 'raging') ? t.rageDmg || 2 : 0;
+  return { ...o, pct:pct(o.hit), avg:Math.round(expectedDamage(a.d, o, rage) * (a.rays || 1) * 10) / 10, edge:edgeWords({ adv:E.advWhy, dis:E.disWhy }),
+    cover:E.cov.cover, ok:E.rc.ok && E.cov.cover !== 'total' };
+}
 
 /* A tick of the fight (from the frame loop): wait while anyone is walking, then the next one's turn; the hero waits
    for the player. When it's won, or lost, wind it up. */

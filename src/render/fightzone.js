@@ -119,10 +119,60 @@ export function streak(fromId, toId, { spell = null, ms = 300 } = {}){
   madeStreaks++; streaks.push({ grp, a, b, t0:performance.now(), ms, arc:spell ? .15 : Math.min(1.2, a.distanceTo(b) * .08) });
 }
 
+/* ---------- 🎯 before a blow or a spell: who it would reach, the odds, the ground it would cover ----------
+   marks: [{ id, k }] where k is 'target' (the one aimed at: bright, turning), 'reach' (another it would reach),
+   'far' (aimed at but out of reach), 'caught' (a foe inside a spell's area), 'friend' (a friend inside it: mind it) */
+const MARK_COL = { target:'#ffd27a', reach:'#f4c46a', far:'#ff6a4a', caught:'#c48cff', friend:'#ff9a3a' };
+const markGeo = new THREE.RingGeometry(.4, .5, 48).rotateX(-Math.PI / 2), tickGeo = new THREE.RingGeometry(.52, .58, 6, 1, 0, Math.PI / 5).rotateX(-Math.PI / 2);
+const marks = { list:[], key:'' };
+function clearMarks(){ for (const m of marks.list){ m.g.parent?.remove(m.g); m.g.children.forEach(c => c.material.dispose()); } marks.list = []; marks.key = ''; }
+export function showMarks(list){
+  const key = list.map(m => `${m.id}:${m.k}`).join('|');
+  if (key === marks.key && marks.list.every(m => m.g.parent)) return;
+  clearMarks(); marks.key = key;
+  for (const { id, k } of list){
+    const tv = tokenViews.get(id); if (!tv?.group?.parent) continue;
+    const col = MARK_COL[k] || '#f4c46a', g = new THREE.Group(), sz = tokById(id)?.size || 1;
+    const mat = () => new THREE.MeshBasicMaterial({ color:col, transparent:true, depthWrite:false, opacity:k === 'reach' ? .45 : .8 });
+    g.add(new THREE.Mesh(markGeo, mat()));
+    if (k === 'target' || k === 'far') for (let n = 0; n < 4; n++){ const t = new THREE.Mesh(tickGeo, mat()); t.rotation.y = n * Math.PI / 2; g.add(t); }
+    g.position.set(0, .05, 0); g.scale.setScalar(sz); g.renderOrder = 5; tv.group.add(g); marks.list.push({ g, k, id });
+  }
+}
+// the odds over the one aimed at ("65%", "⇈ 84%"), standing still above their head
+const odds = { s:null, key:'' };
+export function showOdds(id, text, color = '#ffd27a'){
+  const key = id && text ? `${id}:${text}:${color}` : '';
+  if (key === odds.key && (!odds.s || odds.s.parent)) return;
+  if (odds.s){ odds.s.parent?.remove(odds.s); odds.s.material.map.dispose(); odds.s.material.dispose(); odds.s = null; }
+  odds.key = key; if (!key) return;
+  const tv = tokenViews.get(id); if (!tv?.group?.parent) return;
+  const { t, aspect } = textTex(text, color, true);
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map:t, transparent:true, depthTest:false, depthWrite:false }));
+  // just over their name plate (render/minis.js puts it at 1.25, in the figure's own scale), so it reads as theirs
+  const k = 1 / (tv.group.scale.x || 1);
+  s.renderOrder = 29; s.position.set(0, (tv.label?.position.y ?? 1.25 * k) + .36 * k, 0); s.scale.set(.4 * aspect * k, .4 * k, 1); tv.group.add(s); odds.s = s; oddsShown.push(text);
+}
+// the squares a spell would cover, violet
+const areaMat = new THREE.MeshBasicMaterial({ color:'#b07cff', transparent:true, opacity:.26, depthWrite:false, polygonOffset:true, polygonOffsetFactor:-4, polygonOffsetUnits:-4 });
+const area = { mesh:null, key:'' };
+export function showAreaSquares(L, squares, key){
+  if (key === area.key && (area.mesh?.parent || !squares.length)) return;
+  if (area.mesh){ area.mesh.parent?.remove(area.mesh); area.mesh.dispose(); area.mesh = null; } area.key = key;
+  const f = state?.floors?.[L], fv = floorViews[L]; if (!f || !fv || !squares.length) return;
+  const mesh = new THREE.InstancedMesh(G.plane, areaMat, squares.length), m4 = new THREE.Matrix4(), sc = new THREE.Vector3(.94, 1, .94);
+  squares.forEach((i, n) => { const x = i % f.W, y = (i / f.W) | 0; m4.makeTranslation(wx(x), .05 + groundY(f, x, y), wz(y)); m4.scale(sc); mesh.setMatrixAt(n, m4); });
+  mesh.renderOrder = 4; fv.group.add(mesh); area.mesh = mesh;
+}
+export function clearAim(){ clearMarks(); showOdds(null, ''); showAreaSquares(0, [], ''); }
+const oddsShown = [];
+
 /* Every frame: the edge pulses, the ground sweeps out, the numbers rise, the streaks fly. */
 const at = new THREE.Vector3(), ahead = new THREE.Vector3();
 export function tickFightFx(now = performance.now()){
   zoneMat.uniforms.uTime.value = now / 1000;
+  for (const m of marks.list){ if (m.k === 'target' || m.k === 'far') m.g.rotation.y = now / 1400; else if (m.k === 'caught' || m.k === 'friend') m.g.children[0].material.opacity = .55 + .3 * Math.sin(now / 220); }
+  areaMat.opacity = .2 + .08 * Math.sin(now / 300);
   if (zone.mesh) zoneMat.uniforms.uReveal.value = Math.min(zone.r + 7, (now - zone.t0) / 1000 * 11);
   for (let i = floats.length - 1; i >= 0; i--){
     const f = floats[i], a = (now - f.t0) / f.ms;
@@ -142,8 +192,9 @@ export function tickFightFx(now = performance.now()){
     p(a); s.grp.position.copy(at); ahead.copy(p(Math.min(1, a + .05))); s.grp.lookAt(s.grp.parent.localToWorld(ahead.clone()));
   }
 }
-export function clearFightFx(){ clearFightZone(); clearMoveSquares(); }
+export function clearFightFx(){ clearFightZone(); clearMoveSquares(); clearAim(); }
 // (for the tests: what's drawn now, and how many numbers and streaks have been shown since the page loaded)
 let madeFloats = 0, madeStreaks = 0;
-export const fightFxCount = () => ({ zone:!!zone.mesh, moves:moves.mesh?.count || 0, floats:madeFloats, streaks:madeStreaks, texts:floatsSeen.slice(-6) });
+export const fightFxCount = () => ({ zone:!!zone.mesh, moves:moves.mesh?.count || 0, floats:madeFloats, streaks:madeStreaks, texts:floatsSeen.slice(-6),
+  marks:marks.list.map(m => ({ id:m.id, k:m.k })), odds:odds.key ? oddsShown[oddsShown.length - 1] : '', area:area.mesh?.count || 0 });
 const floatsSeen = [];

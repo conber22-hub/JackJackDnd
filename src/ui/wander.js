@@ -3,7 +3,7 @@
    turn, a conversation, and the menu (travel, rest, save, leave). Input: a gamepad (engine/pad.js; the loop below
    reads it every frame), the keyboard, the handheld skin's touch buttons (ui/handheld.js), or taps on the map.
    The follow camera (below) eases after the hero and turns, cranes and cycles views with the right stick, L / R, [ ] - = V. */
-import { state, ui, tokById, tokenAt } from '../engine/state.js';
+import { state, ui, tokById, tokenAt, side } from '../engine/state.js';
 import { readPad, padIntents, keyIntent } from '../engine/pad.js';
 import { companionById } from '../data/wander.js';
 import { placeById } from '../engine/overland.js';
@@ -17,8 +17,10 @@ import { rangeCheck } from '../engine/targeting.js';
 import { W, rt, hero, members, wandering, startWander, continueWander, leaveWander, stepHero, heroBusy, walkTo, hereAction, talkView, chooseTalk, talkTo,
   heroAttack, heroDodge, heroTurnAct, heroFeatures, heroFeature, endHeroTurn, aim, target, targets, attackFor, nextWeapon, attacksLeft, myTurn, fightTick, destinations, setOut, travelTo, rest, saveNow,
   pack, toggleEquip, usePotion, coinsGp, shopHere, buyPotion, journal, approvalOf, levelReady, partyLevel, nextLevelXp, levelUpHero, sheetOf, spellList, heroCast,
-  SLOTS, slotMeta, canSaveSlot, saveToSlot, loadFromSlot, opening } from '../game/wander.js';
-import { setFightZone, clearFightFx, showMoveSquares, clearMoveSquares } from '../render/fightzone.js';
+  SLOTS, slotMeta, canSaveSlot, saveToSlot, loadFromSlot, opening, economy, strikeOdds } from '../game/wander.js';
+import { setFightZone, clearFightFx, showMoveSquares, clearMoveSquares, showMarks, showOdds, showAreaSquares, clearAim } from '../render/fightzone.js';
+import { pipsHtml, markSpent, oddsBits, oddsTone, ODDS_COL } from './turnpips.js';
+import { areaOf, areaSquares, caughtIn } from '../engine/targeting.js';
 import { reach } from '../engine/grid.js';
 import { bus, signed } from '../util/core.js';
 import { optList, optInfo, tag } from './optrow.js';
@@ -104,9 +106,11 @@ export function renderHud(){
     let body;
     if (myTurn()){
       const tg = target(), i = attackFor(t, tg), atk = t.attacks[i] || t.attacks[rt.atk ?? 0];
-      body = `<div class="wd-fl"><b>Your turn</b> · ${moveAllowance(t) * 5} ft. to move · ${attacksLeft() ? `${attacksLeft()} strike${attacksLeft() === 1 ? '' : 's'} left` : ({ dodge:'🛡 dodging', dash:'💨 dashing', disengage:'↩ disengaged', cast:'✦ cast' }[rt.did] || (rt.cast ? 'cast' : 'struck'))}</div>
+      const ai = t.attacks.indexOf(atk), od = tg && ai >= 0 && i >= 0 ? strikeOdds(ai, tg) : null;
+      body = `<div class="wd-fl wd-turn"><b>Your turn</b>${pipsHtml(economy())}</div>
         <div class="wd-fl">${tg ? `🎯 <b>${esc(tg.name)}</b> ${bar(tg.hp, tg.maxHp)}` : 'Nobody in sight'}</div>
-        ${atk && attacksLeft() ? `<div class="wd-fl wd-weap">⚔ <b>${esc(atk.n)}</b> ${signed(atk.b)} to hit · ${esc(atk.d)} ${esc(atk.t || '')}${tg ? ` · <span class="${i < 0 ? 'far' : 'near'}">${esc(reachWords(t, tg, t.attacks.indexOf(atk)))}</span>` : ''}</div>` : ''}
+        ${atk && attacksLeft() ? `<div class="wd-fl wd-weap">⚔ <b>${esc(atk.n)}</b> ${signed(atk.b)} to hit · ${esc(atk.d)} ${esc(atk.t || '')}${tg ? ` · <span class="${i < 0 ? 'far' : 'near'}">${esc(reachWords(t, tg, ai))}</span>` : ''}${od ? ` · <b class="wd-odds o-${oddsTone(od.hit)}">${esc(od.edge.mark)}${od.pct}</b>` : ''}</div>
+        ${od?.edge.text ? `<div class="wd-fl wd-edge">${esc(od.edge.mark)} ${esc(od.edge.text)}</div>` : ''}` : ''}
         <div class="wd-acts"><button class="wd-act" data-act="wdX">${K('x')} Actions</button><button class="wd-act" data-act="wdAim" data-k="1">${K('y')} Next target</button><button class="wd-act" data-act="wdEnd">End turn</button></div>`;
     } else body = `<div class="wd-fl">${turn ? `<b>${esc(turn.name)}</b>'s turn…` : '…'}</div>`;
     put('wdFight', `<div class="wd-order">${order}</div>${body}`);
@@ -118,7 +122,7 @@ export function renderHud(){
       <div class="wd-opts">${optList(tv.options.map(talkRow), talkSel.i, k => `data-act="wdSay" data-k="${esc(tv.options[k].k)}"`)}</div>`);  keepInView('wdTalk'); }
   // the menu
   show('wdMenuBox', menu.open); $('#wdMenuBox')?.classList.toggle('wd-dock', menu.open && !!state.combat.active && ['strike', 'actions', 'spells'].includes(menu.page));
-  if (menu.open){ const items = menuItems(); menu.i = Math.min(menu.i, items.length - 1);
+  if (menu.open){ const items = markSpent(menuItems(), state.combat.active ? economy() : null); menu.i = Math.min(menu.i, items.length - 1);
     const info = pageInfo();
     put('wdMenuBox', `<div class="wd-tt"><b>${esc(PAGE_TITLE[menu.page] || 'The valley waits')}</b>${info.sub ? `<span>${info.sub}</span>` : ''}</div>
       ${info.html ? `<div class="wd-tx">${info.html}</div>` : ''}
@@ -195,8 +199,11 @@ function menuItems(){
   if (menu.page === 'spells'){ const t = hero(), lvl = e => e.kind === 'atk' ? (t?.attacks?.[e.i]?.l || 0) : e.l || 0;
     const slotsAt = l => (t?.resources || []).filter(r => r.slot === l).map(r => `${t.res?.[r.id] ?? 0} of ${r.max} slots`).join(', ');
     return [...spellList().map(e => ({ e, l:lvl(e) })).sort((a, b) => a.l - b.l).map(({ e, l }) => {
-      const b = e.kind === 'atk' ? { ...attackBits(t.attacks[e.i], target() ? reachWords(t, target(), e.i) : ''), ...(e.why ? { sub:`Only ${e.why}` } : {}) } : spellBits(e, e.why);
-      return { label:e.n, group:l ? `Level ${l}${slotsAt(l) ? ` · ${slotsAt(l)}` : ''}` : 'Cantrips', ...b, ...(e.k === 'heal' && !e.why ? { sub:`${b.sub} · the most hurt of you` } : {}), off:!e.ok, run:() => { closeMenu(); heroCast(e); } }; }),
+      const b = e.kind === 'atk' ? { ...attackBits(t.attacks[e.i], target() ? reachWords(t, target(), e.i) : '', state.combat.active ? oddsBits(strikeOdds(e.i)) : null), ...(e.why ? { sub:`Only ${e.why}` } : {}) } : spellBits(e, e.why);
+      const caught = e.kind === 'cast' && state.combat.active ? areaCatch(t, t.casts[e.i]) : null;
+      return { label:e.n, group:l ? `Level ${l}${slotsAt(l) ? ` · ${slotsAt(l)}` : ''}` : 'Cantrips', ...b, ...(e.k === 'heal' && !e.why ? { sub:`${b.sub} · the most hurt of you` } : {}),
+        ...(caught ? { sub:`${caught.words}${e.why ? '' : ` · ${b.sub}`}`, info:`${caught.info}<br>${b.info || ''}`, tone:caught.friends.length ? 'warn' : undefined } : {}),
+        aim:e.kind === 'atk' ? { atk:e.i } : { cast:e.i }, off:!e.ok, run:() => { closeMenu(); heroCast(e); } }; }),
       { label:'Back', group:' ', icon:'←', run:() => { if (menu.from === 'actions'){ menu.page = 'actions'; menu.i = 0; } else closeMenu(); } }]; }
   if (menu.page === 'strike') return strikeItems();
   if (menu.page === 'actions'){
@@ -207,8 +214,8 @@ function menuItems(){
     const potions = pack().filter(i => i.potion).reduce((n, i) => n + i.qty, 0);
     return [
       ...(spent ? end : []),
-      ...(fight ? (t?.attacks || []).map((a, i) => ({ label:a.n, group:'Strike', ...attackBits(a, tg ? `${reachWords(t, tg, i)}${attackForWith(t, tg, i) ? ` (${tg.name})` : ''}` : ''),
-        off:!mine || !attacksLeft(), run:() => { closeMenu(); rt.atk = i; heroAttack(); } })) : []),
+      ...(fight ? (t?.attacks || []).map((a, i) => ({ label:a.n, group:'Strike', ...attackBits(a, tg ? `${reachWords(t, tg, i)}${attackForWith(t, tg, i) ? ` (${tg.name})` : ''}` : '', tg && attackForWith(t, tg, i) ? oddsBits(strikeOdds(i, tg)) : null),
+        aim:{ atk:i }, off:!mine || !attacksLeft(), run:() => { closeMenu(); rt.atk = i; heroAttack(); } })) : []),
       ...(spellList().length ? [{ label:'Spells…', group:'Magic', icon:'✦', sub:fight && (rt.cast || rt.attacks) ? 'Your action is spent' : slots || 'Cantrips', info:'Every spell you know, by level, with what it does and what it costs.', run:() => { menu.page = 'spells'; menu.i = 0; } }] : []),
       ...(fight ? [ta('dash', 'Dash'), ta('disengage', 'Disengage'), ta('dodge', 'Dodge'),
         ...((t?.conds || []).some(c => c.n === 'prone') ? [ta('stand', 'Stand up')] : [])] : []),
@@ -312,8 +319,8 @@ function strikeItems(){
   const best = tg ? attackFor(t, tg) : -1, ok = i => { try { return !!tg && rangeCheck(t, tg, t.attacks[i]).ok; } catch { return false; } };
   const list = (t.attacks || []).map((a, i) => ({ a, i, r:ok(i) })).sort((x, y) => (y.i === best) - (x.i === best) || y.r - x.r);
   const others = targets().length;
-  return [...list.map(({ a, i, r }) => ({ label:a.n, ...attackBits(a, reachWords(t, tg, i)), ...(r ? {} : { tone:'far' }),
-      off:!r || !myTurn() || !attacksLeft(), run:() => { closeMenu(); heroAttack(i); } })),
+  return [...list.map(({ a, i, r }) => ({ label:a.n, ...attackBits(a, reachWords(t, tg, i), r ? oddsBits(strikeOdds(i, tg)) : null), ...(r ? {} : { tone:'far' }),
+      aim:{ atk:i }, off:!r || !myTurn() || !attacksLeft(), run:() => { closeMenu(); heroAttack(i); } })),
     { label:'Another target', group:' ', icon:'🎯', sub:others > 1 ? `${others} in sight (${hhOn() ? 'Y' : 'Ⓨ / Tab'} changes it too)` : 'Nobody else in sight', off:others < 2, run:() => { aim(1); menu.i = 0; } },
     { label:'Back', icon:'←', sub:'Nothing is spent', run:closeMenu }];
 }
@@ -356,6 +363,41 @@ function fightGround(){
   if (left > 0){ const f = state.floors[h.floor], R = reach(h.floor, h.x, h.y, left, h.id);
     showMoveSquares(h.floor, [...R.dist.keys()].filter(i => R.dist.get(i) <= left && i !== h.y * f.W + h.x && !tokenAt(h.floor, i % f.W, (i / f.W) | 0)), `${h.floor}:${h.x}:${h.y}:${left}`); }
   else clearMoveSquares();
+  fightAim();
+}
+/* 🎯 Before a blow or a spell: who it would reach (rings on the ground), the odds over the one aimed at, and the
+   squares a spell's area would cover, tinting who it would catch (friends in it in orange). What's aimed: the
+   choice highlighted in the open menu, else the attack Ⓐ would use. */
+function fightAim(){
+  const h = hero();
+  if (!myTurn() || opening() || heroBusy() || !h){ clearAim(); return; }
+  const tg = target(), items = menu.open ? menuItems() : null, hl = items?.[menu.i]?.aim || null;
+  // a spell (not a strike) highlighted
+  if (hl?.cast !== undefined){
+    const sp = h.casts?.[hl.cast], c = sp && areaCatch(h, sp);
+    showOdds(null, '');
+    if (c){ showAreaSquares(h.floor, [...c.squares], c.key); showMarks([...c.foes.map(o => ({ id:o.id, k:'caught' })), ...c.friends.map(o => ({ id:o.id, k:'friend' }))]); return; }
+    showAreaSquares(0, [], '');
+    if (sp && !['heal', 'buff', 'util'].includes(sp.k) && tg) showMarks([{ id:tg.id, k:Math.max(Math.abs(tg.x - h.x), Math.abs(tg.y - h.y)) <= Math.max(1, Math.ceil((sp.r ?? 60) / 5)) ? 'target' : 'far' }]);
+    else showMarks([]);
+    return;
+  }
+  showAreaSquares(0, [], '');
+  if (!attacksLeft() || !tg){ showMarks([]); showOdds(null, ''); return; }
+  const i = hl?.atk ?? (attackFor(h, tg) >= 0 ? attackFor(h, tg) : rt.atk ?? 0), a = h.attacks?.[i]; if (!a){ clearAim(); return; }
+  const reaches = o => { try { return rangeCheck(h, o, a).ok; } catch { return false; } };
+  const od = reaches(tg) ? strikeOdds(i, tg) : null;
+  showMarks([{ id:tg.id, k:od?.ok ? 'target' : 'far' }, ...targets().filter(o => o.id !== tg.id && reaches(o)).map(o => ({ id:o.id, k:'reach' }))]);
+  showOdds(tg.id, od?.ok ? `${od.edge.mark}${od.pct}` : 'out of reach', od?.ok ? ODDS_COL[oddsTone(od.hit)] : '#ff8a6a');
+}
+// Where a spell's area would fall if cast now (at the target, as game/wander.js heroCast aims it), and who's in it
+function areaCatch(h, sp){
+  const A = sp && areaOf(sp), tg = target(); if (!A || ['heal', 'buff', 'util'].includes(sp.k) || !tg) return null;
+  let R; try { R = areaSquares(h, A, { x:tg.x, y:tg.y }); } catch { return null; }
+  const who = caughtIn(h, A, R.squares).filter(o => !o.dead && o.hp > 0), foes = who.filter(o => side(o) !== side(h)), friends = who.filter(o => side(o) === side(h));
+  const words = `${R.ok ? '' : `${R.why} · `}catches ${foes.length} foe${foes.length === 1 ? '' : 's'}${friends.length ? ` · ⚠ ${friends.map(o => o.id === h.id ? 'you' : o.name).join(', ')} too` : ''}`;
+  return { squares:R.squares, foes, friends, words, key:`${h.floor}:${sp.n}:${h.x},${h.y}>${tg.x},${tg.y}:${R.squares.size}`,
+    info:`✺ <b>${esc(words)}</b> <span class="muted">(aimed at ${esc(tg.name)}; the squares are lit on the ground)</span>` };
 }
 // ⚔ A blow felt: the hero's own, or one on the hero, jolts the camera (what's drawn over them: ui/fightfx.js)
 function blowFelt(e){

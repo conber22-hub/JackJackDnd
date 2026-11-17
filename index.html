@@ -651,6 +651,21 @@ body.hh.wd-fighting #cardLayer{padding-top:8px}
 .wd-opt[data-ic]::before{content:attr(data-ic);position:absolute;left:10px;top:50%;transform:translateY(-50%);width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:14px;line-height:1;background:rgba(233,165,74,.1);border:1px solid rgba(233,165,74,.32);color:var(--gold-hi)}
 .wd-opt.on[data-ic]::before{background:rgba(233,165,74,.28);border-color:var(--candle)}
 .wd-opt[data-tone="far"] small{color:#e8a58a}
+.wd-opt[data-tone="warn"] small{color:#ffb070}
+.wd-tags i.spent{opacity:.32;text-decoration:line-through;filter:grayscale(.7)}
+.wd-tags .t-odds-good{color:#9ff5b4;border-color:rgba(130,240,160,.55);background:rgba(90,210,130,.16);text-transform:none;letter-spacing:0}
+.wd-tags .t-odds-even{color:#ffe0a0;border-color:rgba(255,210,120,.5);background:rgba(255,200,100,.12);text-transform:none;letter-spacing:0}
+.wd-tags .t-odds-poor{color:#ffad95;border-color:rgba(255,140,110,.5);background:rgba(255,110,80,.12);text-transform:none;letter-spacing:0}
+.wd-pips{display:flex;gap:5px;flex-wrap:wrap}
+.wd-pips .pip{display:inline-flex;align-items:center;gap:4px;font:700 11px/1 system-ui,sans-serif;letter-spacing:.03em;padding:3px 8px 3px 6px;border-radius:99px;border:1px solid;transition:opacity .25s,filter .25s}
+.wd-pips .pip b{font-size:10px}
+.wd-pips .p-act{color:#ffd9a0;border-color:rgba(255,190,110,.55);background:rgba(255,170,80,.14)}
+.wd-pips .p-bonus{color:#a8f0c0;border-color:rgba(120,230,160,.5);background:rgba(90,200,130,.12)}
+.wd-pips .p-move{color:#f0e6c8;border-color:rgba(240,230,200,.4);background:rgba(240,230,200,.07)}
+.wd-pips .p-react{color:#ffc0d0;border-color:rgba(255,150,180,.48);background:rgba(255,130,170,.1)}
+.wd-pips .pip.used{opacity:.38;filter:grayscale(.75);background:transparent}
+.wd-odds{font-family:system-ui,sans-serif;padding:0 6px;border-radius:6px}.wd-odds.o-good{color:#9ff5b4;background:rgba(90,210,130,.15)}.wd-odds.o-even{color:#ffe0a0;background:rgba(255,200,100,.13)}.wd-odds.o-poor{color:#ffad95;background:rgba(255,110,80,.13)}
+.wd-edge{font-size:12px;color:#d9cbe8;font-style:italic}
 .wd-tags{position:absolute;right:10px;top:7px;display:flex;gap:4px;pointer-events:none}
 .wd-tags i{font-style:normal;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:1px 7px;border-radius:99px;border:1px solid;font-family:system-ui,sans-serif}
 .wd-tags .t-act{color:#ffd9a0;border-color:rgba(255,190,110,.45);background:rgba(255,170,80,.1)}
@@ -779,7 +794,7 @@ body.hh .wd-prompt{bottom:6px}
 body.hh .wd-act{font-size:12px;padding:5px 11px;gap:5px}
 body.hh .wd-fight{width:calc(100% - 10px);bottom:5px;padding:5px 8px;border-radius:11px;gap:3px}
 body.hh .wd-order{font-size:9px;gap:3px}body.hh .wd-order span{padding:0 6px}
-body.hh .wd-fl{font-size:11px;gap:5px}body.hh .wd-fl .wd-hp{width:60px}
+body.hh .wd-fl{font-size:11px;gap:5px}body.hh .wd-pips{gap:3px}body.hh .wd-pips .pip{font-size:8px;padding:1px 5px 1px 4px;gap:2px}body.hh .wd-pips .pip b{font-size:7px}body.hh .wd-edge{font-size:9px}body.hh .wd-fl .wd-hp{width:60px}
 body.hh .wd-acts{gap:4px}body.hh .wd-acts .wd-act{font-size:10px;padding:3px 8px}
 body.hh .wd-talk,body.hh .wd-menu{width:calc(100% - 14px);max-height:calc(100% - 14px);padding:9px 11px;border-radius:12px}
 body.hh .wd-tt{margin-bottom:5px}body.hh .wd-tt b{font-size:14px}body.hh .wd-tt span{font-size:11px}

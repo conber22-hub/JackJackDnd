@@ -17,13 +17,14 @@ const timeTag = s => /bonus/i.test(s?.time || '') ? tag('bonus') : /reaction/i.t
 
 /* ---------- a weapon (or a spell that strikes like one) ---------- */
 export const isSpellAtk = a => / casts /.test(a?.f || '') || a?.l !== undefined && a?.l !== null && !!spellOf(a.sn || a.n);
-export function attackBits(a, reach = ''){
+// odds: what ui/turnpips.js oddsBits made of the chance at the target (a tag, and words for the detail line)
+export function attackBits(a, reach = '', odds = null){
   const sp = isSpellAtk(a), far = !sp && (() => { try { const p = attackProfile(a); return !p.melee && p.far > 0; } catch { return false; } })();
   const s = sp && spellOf(a.sn || a.n);
   return { icon:sp ? '✦' : far ? '🏹' : '⚔',
     sub:`${signed(a.b)} to hit · ${a.d} ${a.t || ''}${reach ? ` · ${reach}` : ''}`,
-    tags:[tag('act'), ...(a.l ? [tag('slot', `L${a.l}`)] : [])],
-    info:s ? esc(clip(s.text, 220)) : `A strike with your ${esc(a.n.toLowerCase())}: roll ${signed(a.b)} against their armour; on a hit, ${esc(a.d)} ${esc(a.t || '')} damage.` };
+    tags:[...(odds ? [odds.tag] : []), tag('act'), ...(a.l ? [tag('slot', `L${a.l}`)] : [])],
+    info:`${odds ? `${odds.info}<br>` : ''}${s ? esc(clip(s.text, odds ? 140 : 220)) : `A strike with your ${esc(a.n.toLowerCase())}: roll ${signed(a.b)} against their armour; on a hit, ${esc(a.d)} ${esc(a.t || '')} damage.`}` };
 }
 
 /* ---------- a spell ---------- */

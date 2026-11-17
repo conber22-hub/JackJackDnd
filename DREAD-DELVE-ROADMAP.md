@@ -16,6 +16,17 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.32 — know before you commit
+
+- **◆ What's left of your turn** (`ui/turnpips.js`, on the Wanderer's fight bar and the table handheld's): four pips, **◆ Action** (with the strikes left in it), **▲ Bonus**, **👣 the feet still to walk** and **⟲ Reaction**, each going dim when it's spent. The cost tags on the choices dim with them, so once the bonus action is gone, Second Wind's **Bonus** tag is struck through too.
+  - The bonus action is now a thing of its own (`game/resources.js` `BONUS_FEATS`, `game/wander.js`): Second Wind, Rage, Bardic Inspiration, Wild Shape, a potion and bonus-action spells (Healing Word, Misty Step…) spend it, not the action, and only one goes a turn. An action spell and a bonus-action spell can share a turn.
+- **🎯 The odds of a blow** (`engine/odds.js`, pure and tested; `game/combat.js` `attackEdge`): what stands for and against an attack is worked out by the same code that rolls it, before it's rolled. Advantage and disadvantage and why, cover, the bonus against the AC give the chance to hit (a natural 1 always misses and a 20 always hits; advantage keeps the higher of two) and the damage on average, misses counted.
+  - **On the fight bar:** *Longsword +5 to hit · 1d8+3 slashing · in reach · **70%***, and a line under it with the edge in words (*⇈ advantage: prone*, *⇊ disadvantage: long range*, *⇅ they cancel*).
+  - **On every attack row** (Actions, Strike, a spell that strikes like Fire Bolt): the chance as a tag, green, amber or red. Highlighted, it says the number the d20 needs, the chance of a critical, the damage on average and any cover.
+  - **On the map** (`render/fightzone.js` `showOdds` / `showMarks`): the chance floats over the one aimed at, just above its name, with a turning gold ring under it (red and *out of reach* if the blow can't get there); every other foe it would reach gets a softer ring. Whatever's highlighted in the menu is what's shown, so stepping from the longsword to the javelin shows the javelin's reach.
+  - At the table the handheld shows the edge and why but no percentage, because players don't see a monster's AC.
+- **✺ A spell's area before it's cast** (`render/fightzone.js` `showAreaSquares`, `engine/targeting.js`): highlight Burning Hands, Thunderwave or a Fireball and the squares it would cover light violet on the ground, aimed where casting it would aim it. Each foe inside gets a pulsing violet ring and each friend an orange one. The row says *catches 3 foes · ⚠ Ireena too*, and its tone turns to a warning.
+
 ## v1.31 — every choice says what it is, every action shows
 
 - **🎴 Choices that explain themselves** (`ui/optrow.js`, `ui/actrows.js`, on both handhelds): each choice in a list has an icon, a line of what it does and tags for what it costs: **Action**, **Bonus**, **Free**, **½ move**, a spell's slot (**L1**), **Conc.**, a check (**🎲 Persuasion 12**). Lists come in groups with small headers, and the highlighted choice says a little more under the list.
@@ -976,6 +987,7 @@ src/engine/             pure logic: no DOM, no Three.js, unit-tested
   encounter.js          XP budgets and the encounter generator
   look.js               a figure's recipe: from a sheet, a creature's preset (varied), an NPC roll; describeLook
   targeting.js          reach and range, cover (grid corner rule), area templates and who they catch
+  odds.js               the odds of a blow before it's struck: chance to hit and to crit (advantage, a 1 and a 20), damage on average, the edge in words
   movement.js           dragged routes, threat & opportunity attacks, following in marching order, formations, Close in
   castle.js             Castle Ravenloft's five hand-shaped floors (approach, halls, upper keep, dungeons, catacombs)
   dressing.js           furnishing generated rooms (kits in src/data/dressing.js, read-aloud in src/data/descriptions.js); locks, stashes, shelves over secret doors; doorways kept clear on every map

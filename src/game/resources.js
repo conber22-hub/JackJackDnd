@@ -56,6 +56,8 @@ export const canCast = (t, lvl, name = '', again = false) => !lvl || !t.resource
 
 /* ---------- class features ---------- */
 // Use one charge of a feature. Lay on Hands goes to `target` (or the hero), everything else to the hero.
+// The features that take a bonus action (Second Wind, Rage, Bardic Inspiration, Wild Shape): one of them, or a potion, a turn
+export const BONUS_FEATS = new Set(['wind', 'rage', 'inspire', 'wild']);
 export function useFeature(t, id, target = t){
   const r = resOf(t, id); if (!r || r.slot) return false;
   if (left(t, id) <= 0){ toast(`${t.name} has no ${r.n} left — a rest brings it back.`); return false; }

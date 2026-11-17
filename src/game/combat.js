@@ -242,6 +242,28 @@ function animate(id, kind, target){ actOn(id, kind, target); broadcast({ t:'act'
 /* ---------- attacks & saves ---------- */
 const nearSeep = (tg, a) => state.tokens.some(o => o.id !== a.id && o.id !== tg.id && !o.dead && o.floor === tg.floor && hasTag(o, 'seep') && cheb(o.x, o.y, tg.x, tg.y) <= 1);
 // d20: a die rolled at the table (real dice, game/night.js) — used as the attack's d20 (the first, for rays).
+/* What stands for and against a blow, before it's rolled (doAttack rolls it; the hero's screens show it as odds,
+   ui/actrows.js): advantage and disadvantage and why, the target's cover, the bonus and the AC it's rolled against.
+   Reads only: nothing is spent or changed. → { adv, dis, advWhy, disWhy, why, rc, cov, cm, bonus, ac } */
+export function attackEdge(a, tg, atk, mode = 'normal'){
+  const b = BEST[a.bid], D = dreadLevel(), self = a.id === tg.id;
+  const advWhy = mode === 'adv' ? ['the DM\'s call'] : [], disWhy = mode === 'dis' ? ['the DM\'s call'] : [];
+  if (b?.pack && nearSeep(tg, a)) advWhy.push('Pack Tide');
+  // range and cover (engine/targeting.js): long range and an enemy at the archer's elbow mean disadvantage;
+  // cover adds to the target's AC. Beyond reach or behind total cover the DM can still roll it (their call).
+  const rc = self ? { ok:true, d:0, kind:'melee' } : rangeCheck(a, tg, atk), cov = self ? { cover:'none', ac:0 } : coverOf(a, tg);
+  if (rc.long) disWhy.push('long range');
+  if (rc.kind === 'ranged' && rc.close) disWhy.push(`a foe beside ${a.name}`);
+  // what their conditions do (engine/conditions.js, the 2024 rules): prone, restrained, blinded, invisible, unconscious…
+  // on either side; a paralysed or unconscious target hit from 5 ft. is a critical; exhaustion takes 2 a level
+  const cm = self ? { adv:[], dis:[], autoCrit:false, penalty:0 } : attackMods({ attacker:a, target:tg, melee:rc.kind !== 'ranged', within5:rc.d <= 1,
+    attackerSeen:!hasCond(a, 'invisible'), targetSeen:!hasCond(tg, 'invisible') });
+  advWhy.push(...cm.adv); disWhy.push(...cm.dis);
+  if (tg.dodge && !stopped(tg) && !self) disWhy.push(`${tg.name} is dodging`);
+  const why = [...advWhy.filter(w => w !== 'the DM\'s call'), ...disWhy.filter(w => w !== 'the DM\'s call')];
+  return { adv:advWhy.length > 0, dis:disWhy.length > 0, advWhy, disWhy, why, rc, cov, cm,
+    bonus:atk.b + (isHis(a) ? D.hit : 0) - cm.penalty, ac:(tg.ac || 0) + cov.ac };
+}
 export function doAttack(aId, tId, i, mode = 'normal', { d20 = null, at = null } = {}){
   const a = tokById(aId), tg = tokById(tId), atk0 = a?.attacks?.[i]; if (!a || !tg || !atk0) return false;
   const reuse = !!atk0.again && a.sustain === (atk0.sn || atk0.n);   // a sustained spell, used again: not a fresh casting
@@ -251,27 +273,13 @@ export function doAttack(aId, tId, i, mode = 'normal', { d20 = null, at = null }
   const lib = atk0.l ? spellInfo(atk0.sn || atk0.n) : null, level = !atk0.l ? 0 : slot === '' ? Math.max(atk0.l, at || 0) : (a.castAt || atk0.l), extra = level - (atk0.l || 0);
   const atk = extra > 0 ? { ...atk0, ...(upRays(lib) ? { rays:(atk0.rays || 1) + extra } : { d:diceAt({ ...lib, d:atk0.d }, level) }) } : atk0;
   if (lib?.conc && !reuse) startConc(a, lib.n);
-  const b = BEST[a.bid], D = dreadLevel();
-  let adv = mode === 'adv', dis = mode === 'dis';
-  const why = [];
-  if (b?.pack && nearSeep(tg, a)){ adv = true; why.push('Pack Tide'); }
-  // range and cover (engine/targeting.js): long range and an enemy at the archer's elbow mean disadvantage;
-  // cover adds to the target's AC. Beyond reach or behind total cover the DM can still roll it (their call).
-  const rc = a.id === tg.id ? { ok:true, d:0, kind:'melee' } : rangeCheck(a, tg, atk), cov = a.id === tg.id ? { cover:'none', ac:0 } : coverOf(a, tg);
+  const E = attackEdge(a, tg, atk, mode), { rc, cov, cm, adv, dis, why } = E;
   if (!rc.ok) why.push(`${rc.why} — the DM's call`);
   if (cov.cover === 'total') why.push('behind total cover — the DM\'s call');
-  if (rc.long){ dis = true; why.push('long range'); }
-  if (rc.kind === 'ranged' && rc.close){ dis = true; why.push(`a foe beside ${a.name}`); }
-  // what their conditions do (engine/conditions.js, the 2024 rules): prone, restrained, blinded, invisible, unconscious…
-  // on either side; a paralysed or unconscious target hit from 5 ft. is a critical; exhaustion takes 2 a level
-  const cm = a.id === tg.id ? { adv:[], dis:[], autoCrit:false, penalty:0 } : attackMods({ attacker:a, target:tg, melee:rc.kind !== 'ranged', within5:rc.d <= 1,
-    attackerSeen:!hasCond(a, 'invisible'), targetSeen:!hasCond(tg, 'invisible') });
-  if (cm.adv.length){ adv = true; why.push(...cm.adv); }
-  if (cm.dis.length){ dis = true; why.push(...cm.dis); }
   if (cm.penalty) why.push(`exhaustion −${cm.penalty}`);
-  if (tg.dodge && !stopped(tg) && a.id !== tg.id){ dis = true; why.push(`${tg.name} is dodging`); }
+  const D = dreadLevel();
   a.lastMove = null;   // after an attack there's no taking the move back
-  const bonus = atk.b + (isHis(a) ? D.hit : 0) - cm.penalty, useBoth = adv !== dis, ac = tg.ac + cov.ac;
+  const bonus = E.bonus, useBoth = adv !== dis, ac = E.ac;
   const rage = atk.m && hasCond(a, 'raging') ? a.rageDmg || 2 : 0;
   // one roll per ray / beam (Scorching Ray, Eldritch Blast); everything else is one roll
   const rolls = [], lines = [];

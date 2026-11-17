@@ -4,10 +4,11 @@ import { test, expect } from './helpers.js';
 // the Actions list comes in groups (Strike, Move & defend, Your gifts…), each choice with an icon, a line of what it
 // does, a tag for what it costs and a word more when it's highlighted; spells come by level with their slot and
 // Concentration; and Second Wind, Dodge and the like rise over the hero as they're used.
-async function fight(page, cls, id){
-  await page.evaluate(([c, id]) => { const D = window.DreadDelve, h = D.newHero(c); h.name = 'Vasha'; h.id = id;
+async function fight(page, cls, id, spells = null){
+  await page.evaluate(([c, id, sp]) => { const D = window.DreadDelve, h = D.newHero(c); h.name = 'Vasha'; h.id = id;
     if (c === 'Cleric') h.spells = ['Sacred Flame', 'Cure Wounds', 'Bless', 'Guiding Bolt'];
-    localStorage.setItem('dreaddelve.heroes.v1', JSON.stringify([h])); localStorage.removeItem('dreaddelve.role'); }, [cls, id]);
+    if (sp) h.spells = sp;
+    localStorage.setItem('dreaddelve.heroes.v1', JSON.stringify([h])); localStorage.removeItem('dreaddelve.role'); }, [cls, id, spells]);
   await page.reload(); await page.waitForFunction(() => !!window.DreadDelve);
   await page.locator('[data-act="thRole"][data-k="wander"]').click();
   await page.locator(`[data-act="wdBegin"][data-id="${id}"]`).click();
@@ -71,5 +72,50 @@ test('spells come by level, each with what it does, its slot and Concentration',
   await box.locator('[data-act="wdPick"]', { hasText:/^Sacred Flame/ }).click();
   await expect.poll(() => fx(page)).toContain('Sacred Flame');
   await expect(page.locator('#wdFight')).toContainText('cast');
+  expect(errs).toEqual([]);
+});
+
+// 🎯 Before you commit (ui/turnpips.js, game/wander.js strikeOdds, render/fightzone.js): the pips for what's left of
+// the turn, the chance to hit on the bar, the rows and over the one aimed at, rings under the foes a blow would reach,
+// and a spell's area lit on the ground with whoever it would catch.
+test('the turn pips, the odds of a blow, and who it would reach', async ({ page }) => {
+  test.setTimeout(180_000);
+  const errs = []; page.on('pageerror', e => errs.push(e.message));
+  await fight(page, 'Fighter', 'vasha-odds');
+  const bar = page.locator('#wdFight');
+  for (const p of ['strike left', 'Bonus', 'ft.', 'Reaction']) await expect(bar.locator('.wd-pips')).toContainText(p);
+  await expect(bar.locator('.wd-pips .pip.used')).toHaveCount(0);
+  // the odds: on the bar, over the target, and rings under it (and any other foe in reach)
+  await expect(bar.locator('.wd-odds')).toHaveText(/\d+%/);
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.fightFxCount().odds)).toMatch(/\d+%|out of reach/);
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.fightFxCount().marks.some(m => m.k === 'target' || m.k === 'far'))).toBe(true);
+  // the rows say it too, and the detail line says what it needs on the die
+  await page.keyboard.press('f');
+  const box = page.locator('#wdMenuBox');
+  await expect(box.locator('.wd-opt', { hasText:/^Longsword/ }).locator('.wd-tags')).toContainText(/\d+%/);
+  await expect(box.locator('.wd-info')).toContainText(/to hit \(a \d+ or better/);
+  // Second Wind spends the bonus action: the pip goes dim, and its Bonus tag with it
+  await box.locator('[data-act="wdPick"]', { hasText:/^Second Wind/ }).click();
+  await expect(bar.locator('.pip.p-bonus')).toHaveClass(/used/);
+  await page.keyboard.press('f');
+  await expect(box.locator('.wd-opt', { hasText:/^Second Wind/ }).locator('i.spent')).toHaveText('Bonus');
+  expect(errs).toEqual([]);
+});
+
+test('a spell\'s area lights on the ground before it\'s cast, with whoever it would catch', async ({ page }) => {
+  test.setTimeout(180_000);
+  const errs = []; page.on('pageerror', e => errs.push(e.message));
+  await fight(page, 'Wizard', 'vasha-area', ['Fire Bolt', 'Burning Hands', 'Magic Missile']);
+  await page.keyboard.press('g');
+  const box = page.locator('#wdMenuBox');
+  const hands = box.locator('[data-act="wdPick"]', { hasText:/^Burning Hands/ });
+  await expect(hands).toContainText(/catches \d+ foe/);
+  // highlight it (the list starts on the first): down until it's the one
+  await expect.poll(async () => { const on = await box.locator('.wd-opt.on').textContent(); if (/^Burning Hands/.test(on)) return true; await page.keyboard.press('ArrowDown'); return false; }, { timeout:20_000 }).toBe(true);
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.fightFxCount().area), { timeout:15_000 }).toBeGreaterThan(0);
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.fightFxCount().marks.filter(m => m.k === 'caught').length)).toBeGreaterThan(0);
+  await expect(box.locator('.wd-info')).toContainText(/catches \d+ foe/);
+  // Fire Bolt, a spell that strikes: its odds, with the reason when it's at a disadvantage
+  await expect(box.locator('.wd-opt', { hasText:/^Fire Bolt/ }).locator('.wd-tags')).toContainText(/\d+%/);
   expect(errs).toEqual([]);
 });

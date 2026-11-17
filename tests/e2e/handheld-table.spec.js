@@ -130,7 +130,7 @@ test('a seated player plays from the handheld: steps, the sheet, the menu, a str
     const n2 = await dm.evaluate(() => window.DreadDelve.get().log.length);
     await hold('a');
     await expect.poll(() => dm.evaluate(n => window.DreadDelve.get().log.slice(n).some(l => /Sacred Flame/.test(JSON.stringify(l))), n2), { timeout:20_000 }).toBe(true);
-    await expect(p.locator('#tbFight')).toContainText('action spent');
+    await expect(p.locator('#tbFight')).toContainText('cast');
     await p.locator('#tbFight [data-tb="x"]').tap();   // (touch: the fight bar's X, then the menu's line)
     await p.locator('#tbMenu [data-tb="pick"]', { hasText:/^Action Surge/ }).tap();
     await expect.poll(() => dm.evaluate(() => window.DreadDelve.get().tokens.find(o => o.name === 'Ada').res.surge), { timeout:20_000 }).toBe(0);
