@@ -349,7 +349,7 @@ export function applyDamage(t, n, type = '', by = null, defended = false){
     if (hooks){ showCard({ kind:'seep', title:`${t.name} is bloodied`, flair:'Something changes in the way it holds itself.' }); for (const fx of hooks) runFx(t, fx); }
   }
   if (t.hp <= 0 && !(t.nem && nemesisHolds(t))){ kill(t, type, by); setTimeout(checkVictory, 1300); }   // (after the last one has fallen: render/punch.js)
-  bus.emit('hurt', { t, n, type });   // (⚔ the number rising over them: ui/wander.js)
+  bus.emit('hurt', { t, n, type, by:(typeof by === 'string' ? by : by?.id) || null });   // (⚔ the number rising over them: ui/wander.js)
   if (t.kind === 'pc') bus.emit('acted', { actor:t, trigger:t.hp <= 0 ? 'down' : 'hurt', action:'' });   // 🗣 a hero hurt or down says so (ui/voices.js)
   const dealt = n;
   // being hurt ends some holds (Charm Person: hurt by the caster or their friends); hurting someone ends Invisibility

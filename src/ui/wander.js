@@ -40,6 +40,13 @@ import { musicTick, musicStop } from './regionmusic.js';
 import { sfx } from '../audio/sound.js';
 import { loyalty } from '../engine/wander-life.js';
 import { hh, hhOn, hhHost, hhPad, addHost, setHandheld, skipBoot, shellItem } from './handheld.js';
+import { victoryOpen, victoryPress } from './victory.js';
+import { levelUpOpen, levelUpPress } from './levelup.js';
+import { openBestiary, bestiaryOpen, bestiaryPress, setBestiaryFace } from './bestiary.js';
+import { openTrophies, trophiesOpen, trophiesPress } from './trophies.js';
+import { beastBook, trophyShelf } from '../game/record.js';
+import { faceOf } from '../game/night.js';
+import { makeMonster } from '../engine/state.js';
 import { camTurn, camView, camCrane, camYaw, camFrame, miniFocus, lookThrough, closeLook, feelHits, camWide, camBack } from './followcam.js';
 import { tune, coachTick, coachLearn, coachDone, coachHide } from './hhlife.js';
 import { openPocketSheet, pocketPress, pocketOpen, closePocketSheet } from './pocketsheet.js';
@@ -235,6 +242,8 @@ function menuItems(){
     { icon:'🎒', label:'The pack', sub:`${coinsGp()} gp · ${pack().length} things`, run:go('pack') },
     { icon:'📜', label:'The journal', sub:'Quests, and what your companions think', run:go('journal') },
     { icon:'👤', label:'Your hero', sub:'Your sheet, a page at a time (Select)', run:() => { closeMenu(); openHero(); } },
+    { icon:'📕', label:'The bestiary', sub:(() => { const b = beastBook(); return `${b.seen} of ${b.of} seen · ${b.mastered} known well`; })(), run:() => { closeMenu(); openBeasts(); } },
+    { icon:'🏆', label:'Achievements', sub:(() => { const t = trophyShelf().score; return `${t.got} of ${t.of}`; })(), run:() => { closeMenu(); const t = trophyShelf(); openTrophies(t.shelf, t.score); } },
     ...(spellList().length ? [{ icon:'✦', label:'Spells', run:go('spells') }] : []),
     { icon:'💾', label:'Save', run:() => { saveNow(); toast('Saved.'); closeMenu(); } },
     { icon:'🗂', label:'Save states', sub:'Three slots of your own, to come back to', run:go('states') },
@@ -246,11 +255,24 @@ function menuItems(){
 const openMenu = (page = 'main') => { menu.open = true; menu.page = page; menu.from = page; menu.i = 0; };   // (from: a page opened by its own button closes on Ⓑ)
 const closeMenu = () => { menu.open = false; };
 
+// 📕 the bestiary, and each creature's face as it's drawn (one at a time, so the book opens at once)
+function openBeasts(){
+  const b = beastBook(); openBestiary(b);
+  const todo = b.entries.filter(e => e.tier > 0).map(e => e.bid);
+  const next = () => { const bid = todo.shift(); if (!bid || !bestiaryOpen()) return; try { const f = faceOf(makeMonster(bid, 0, 0, 0)); if (f) setBestiaryFace(bid, f); } catch {} setTimeout(next, 30); };
+  setTimeout(next, 60);
+}
 /* ---------- input ---------- */
 function press(b){
   if (skipBoot()) return;   // (the press that skips the handheld's boot does only that)
   if (b === 'states' && pocketOpen()) closePocketSheet();   // (Select, then Start with it: the save states, not the sheet)
   if (pocketOpen()){ pocketPress(b === 'ls' ? 'back' : b); renderHud(); return; }   // (Muse's pocket sheet takes every press while it's open)
+  // 🏆 Muse's screens between the fights take every press while one is open (a real Escape arrives here as Ⓑ)
+  const sb = b === 'ls' || b === 'start' ? 'b' : b;
+  if (victoryOpen()){ victoryPress(sb); renderHud(); return; }
+  if (levelUpOpen()){ levelUpPress(sb); renderHud(); return; }
+  if (bestiaryOpen()){ bestiaryPress(sb); renderHud(); return; }
+  if (trophiesOpen()){ trophiesPress(sb); renderHud(); return; }
   // the moment a fight breaks out: the fight's buttons wait (a press still down from walking or talking strikes nothing)
   if (opening() && ['a', 'x', 'y', 'yprev', 'endturn', 'lt', 'rt'].includes(b)) return;
   coachDone();
@@ -419,6 +441,8 @@ function dismissCard(){ const c = document.querySelector('#cardLayer .pop:last-c
 function step(dx, dy){
   if (skipBoot()) return;
   if (pocketOpen()){ pocketPress(dy < 0 ? 'up' : dy > 0 ? 'down' : dx < 0 ? 'left' : 'right'); return; }
+  { const d = dy < 0 ? 'up' : dy > 0 ? 'down' : dx < 0 ? 'left' : 'right';
+    if (victoryOpen() || levelUpOpen()) return; if (bestiaryOpen()){ bestiaryPress(d); return; } if (trophiesOpen()){ trophiesPress(d); return; } }
   if (menu.open){ if (dy){ const n = Math.max(0, Math.min(menuItems().length - 1, menu.i + dy)); if (n !== menu.i) tune('menuMove'); menu.i = n; } return; }
   const tv = talkView(); if (tv){ if (dy) talkSel.i = Math.max(0, Math.min(tv.options.length - 1, talkSel.i + dy)); return; }
   if (!stepHero(dx, dy)) pending = { dx, dy, until:performance.now() + 260 };
@@ -487,7 +511,9 @@ function hhLegend(){
 const HH_HELP = 'Each button does one thing. D-pad: walk (slide your thumb round it for the diagonals), or move through a menu. A: do what the line on the screen says (talk, climb, look, end your turn), or choose; in a fight it opens the choice of what to strike with, and A again strikes. B: back, or put a card away. X: Actions: each weapon, spells, Dash, Disengage, Dodge, features like Action Surge, a potion, End turn. Y: the next target. L and R: turn the camera. Select: your hero. View: the next camera view. Start: this menu. Select and Start together: the save states. Touch works too: drag on the screen to turn the camera, pinch to zoom, tap to walk or pick a foe, tap any line of a menu.';
 let pending = null, padMem = {}, hhMem = {}, lastTick = 0, lastFrame = 0, glintAt = 0, musicAt = 0;
 const padHeld = { back:false };   // (Back held while Start goes down: the save states)
-const yaw = camYaw;   // (which way "up on the stick" walks)
+// which way "up on the stick" walks: away from the camera; but in a list or a screen, up is up (the shoulder camera in
+// a fight can stand at any angle)
+const yaw = () => menu.open || talkView() || pocketOpen() || victoryOpen() || levelUpOpen() || bestiaryOpen() || trophiesOpen() ? 0 : camYaw();
 let hudOn = false;
 /* ---------- 🕹 the tunes and the coach (ui/hhlife.js) ---------- */
 const was = { turn:false, fight:false, lvl:false, quests:-1, done:-1 };

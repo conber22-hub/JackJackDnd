@@ -44,6 +44,10 @@ import { ensureWays, wayAfterStep, wayOnBump, arriveThere, crossingNow, readSign
 import { longRest, shortRest, canCast, useFeature, left, BONUS_FEATS } from './resources.js';
 import { loadState, changed, flushSave, loadWanderSave, wanderCheckpoint, deserialize, wanderSlot, saveWanderSlot, WANDER_SLOTS } from './session.js';
 import { showCard, toast } from '../ui/hud.js';
+import { fightBegins, fightEnds, achieve, sighted } from './record.js';
+import { openVictory, setVictoryFace } from '../ui/victory.js';
+import { openLevelUp } from '../ui/levelup.js';
+import { faceOf } from './night.js';
 import { syncTokens, tokenViews, faceStep } from '../render/minis.js';
 import { camTo, wx, wz, floorY } from '../render/scene.js';
 import * as THREE from 'three';
@@ -219,6 +223,7 @@ export function questEvent(ev){
     if (rw.gp || rw.item){ gainLoot({ gp:rw.gp || 0, items:rw.item ? [rw.item] : [] }); if (rw.gp) lines.push(`${rw.gp} gp`); if (rw.item) lines.push(esc(rw.item)); }
     for (const [cid, n] of Object.entries(rw.approve || {})){ approve(cid, n); lines.push(`▲ ${esc(companionById(cid)?.name || cid)} thinks more of you`); }
     showCard({ kind:'', title:`Quest done: ${d.title}`, flair:rw.text || '', lines }, false);
+    achieve({ t:'quest', id, done:true });
     log(`🗡 Quest done: ${d.title}.`);
   }
   if (r.done.length) checkLevels();
@@ -371,11 +376,27 @@ export function checkLevels(){
 export function levelUpHero(sheet = null){
   const s = sheetOf(), L = partyLevel(); if (!s || (+s.lvl || 1) >= L && !sheet) return false;
   const next = sheet ? { ...sheet, lvl:Math.min(+sheet.lvl || L, L) } : autoLevel(s, L);
+  const hpWas = hero()?.maxHp ?? 0, from = +s.lvl || 1;
   const t = applyCharacter(next, { place:false }); if (t) t.hp = t.maxHp;
-  showCard({ kind:'', title:`${t.name} is level ${next.lvl}`, sub:t.cls, lines:[`${t.maxHp} HP`] }, false);
+  // ✦ the fanfare (Muse's ui/levelup.js): the new level, the hit points climbing, and what it brings
+  const gains = levelGains(s, next);
+  if (typeof document !== 'undefined') openLevelUp({ name:t.name, face:(() => { try { return faceOf(t); } catch { return null; } })(), from, to:next.lvl, hp:{ before:hpWas, after:t.maxHp }, gains });
+  else showCard({ kind:'', title:`${t.name} is level ${next.lvl}`, sub:t.cls, lines:[`${t.maxHp} HP`] }, false);
+  achieve({ t:'level', n:+next.lvl });
   log(`🗡 ${t.name} reaches level ${next.lvl}.`); syncTokens(); changed(); saveNow(); return true;
 }
 export const nextLevelXp = () => xpForNext(partyLevel());
+/* What a new level brings, for the fanfare: features, spells learned, spell slots, a feat or a raise in an ability.
+   → [{ kind:'feature'|'spell'|'slot'|'feat'|'stat', name, text }] */
+export function levelGains(was, now){
+  const a = heroStats(was), b = heroStats(now), out = [];
+  const strip = f => String(f).replace(/\s*\(\d+\)$/, '');
+  for (const f of b.features || []) if (!(a.features || []).includes(f)) out.push({ kind:'feature', name:strip(f), text:`From level ${String(f).match(/\((\d+)\)$/)?.[1] || now.lvl}.` });
+  const sa = new Set((was.spells || []).map(x => x.n || x)); for (const sp of now.spells || []){ const n = sp.n || sp; if (!sa.has(n)) out.push({ kind:'spell', name:n, text:'A new spell to cast.' }); }
+  (b.slots || []).forEach((n, i) => { const o = (a.slots || [])[i] || 0; if (n > o) out.push({ kind:'slot', name:`Level ${i + 1} slot${n - o > 1 ? 's' : ''}`, text:`${n} in all (${n - o > 1 ? `${n - o} more` : 'one more'}).` }); });
+  for (const k of Object.keys(b.sc || {})) if ((b.sc[k] || 0) > (a.sc?.[k] || 0)) out.push({ kind:'stat', name:`${k} ${b.sc[k]}`, text:`Up from ${a.sc[k]}.` });
+  return out;
+}
 
 /* ---------- spells ---------- */
 /* What the hero can cast: [{ i, n, l, k, kind:'cast'|'atk', ok, why }] (the spells that are attacks, Fire Bolt and
@@ -558,6 +579,7 @@ export function beginFight(surprise = 'none', extra = [], why = {}){
   passage.sting?.('fight');
   log(`⚔ A fight on ${state.floors[t.floor]?.name || 'the road'}: ${near.map(m => m.name).join(', ')}.`);
   W().fights++;
+  fightBegins(near);   // 🏆 the fight's record, the bestiary, the achievements (game/record.js)
 }
 const maxAttacks = t => /Extra Attack/.test(String(heroStats(state.characters[t.charId] || {}).features || '')) ? 2 : 1;
 export const attacksLeft = () => { const t = hero(); return t && !rt.cast ? Math.max(0, maxAttacks(t) - rt.attacks) : 0; };
@@ -660,17 +682,27 @@ export function fightTick(now = performance.now()){
 }
 function finishFight(won){
   const c = state.combat, w = W();
-  if (!won){ endCombat(); fallen(); return; }
+  const order = [...c.order];
+  if (!won){ fightEnds(false, { order }); endCombat(); fallen(); return; }
   const xp = c.order.map(tokById).filter(o => o?.kind === 'monster' && (o.dead || o.hp <= 0)).reduce((s, o) => s + xpOf(BEST[o.bid]), 0);
   const each = shareXp(xp, members().length);
+  const xpWas = w.xp, nextWas = nextLevelXp(), lvlWas = partyLevel();
   w.xp += each; w.quiet = 0;
   endCombat();
   for (const m of members()) if (m.dead || m.hp <= 0){ m.dead = false; m.hp = 1; m.flags.bloodied = true; }
   syncTokens();
   const loot = fightLoot(xp, { level:partyLevel() }), lines = [xp ? `<b>${each} XP</b> each · ${w.xp} in all${nextLevelXp() ? ` (level ${partyLevel() + 1} at ${nextLevelXp()})` : ''}` : 'Nothing worth counting.'];
   if (loot.gp || loot.sp || loot.items.length){ gainLoot(loot); lines.push(`Found: ${[loot.gp && `${loot.gp} gp`, loot.sp && `${loot.sp} sp`, ...loot.items].filter(Boolean).map(esc).join(', ')}`); }
-  if (xp) lines.push(...react(['brave']));
-  showCard({ kind:'', title:'The fight is over', flair:pick(WON), lines }, false);
+  const moods = xp ? react(['brave']) : []; lines.push(...moods);
+  // 🏆 the victory screen (Muse's ui/victory.js) over the fight's scorecard (game/record.js); the plain card if there's no
+  // record (a fight the record didn't see begin)
+  const summary = fightEnds(true, { xp:each, loot, order });
+  const party = members().map(m => m.id), names = Object.fromEntries(order.map(tokById).filter(Boolean).map(o => [o.id, o.name]));
+  if (summary && typeof document !== 'undefined'){
+    openVictory(summary, { party, names, faces:{}, xp:{ before:xpWas, after:w.xp, next:nextWas || w.xp, level:lvlWas },
+      onClose:() => { if (moods.length) showCard({ kind:'', title:'The party', lines:moods }, false); } });   // (how the companions took it)
+    setTimeout(() => { for (const m of members()){ try { const f = faceOf(m); if (f) setVictoryFace(m.id, f); } catch {} } }, 60);
+  } else showCard({ kind:'', title:'The fight is over', flair:pick(WON), lines }, false);
   Object.assign(rt, { endAt:0, acting:'', heroKey:'', target:null, cast:false, bonus:false });
   const V = valley();
   if (xp) questEvent({ k:'win', road:onRoad(), from:V.journey?.from, to:V.journey?.to, place:onRoad() ? null : V.at });

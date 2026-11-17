@@ -16,6 +16,16 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.35 — the screens between the fights
+
+Muse's four screens (round 13) over ChatGPT's fight summary, achievements and bestiary lore, recorded by `game/record.js` from what the fight already says on the game's bus. The Wanderer's run only: never the DM's table.
+- **🏆 The victory screen** (`ui/victory.js`, from `game/wander.js` `finishFight`): a won fight ends on its headline and verdict (*The dust has barely risen. A short fight, cleanly ended.*), the MVP and why, each hero's numbers counting up (dealt, taken, healed, kills, crits), up to four awards flipping in (*The Reaper: Vasha ended 2 foes*), the XP bar filling (and **Level up** if it crosses the line), the loot, and Ⓐ Carry on. Ⓐ finishes a beat and goes on; Ⓑ closes. A lost fight keeps its own card. How the companions took the fight follows on a card of its own.
+- **✦ The level-up fanfare** (`ui/levelup.js`, from `levelUpHero`): the new level, the hit points climbing, and each thing it brings flipping in (features, new spells, spell slots, ability raises), worked out from the sheet before and after (`levelGains`).
+- **📕 The bestiary** (`ui/bestiary.js`; the menu's 📕 line): the 40 creatures the valley's lore tells of, and any other the party has met, by family. Unseen ones are a dark *???*; seen, a face and a name and the first sighting; fought, how it fights and its numbers (AC, roughly its HP, speed, what it shrugs off); killed often enough, its story in someone's voice and a tip. Faces are drawn one at a time once the book is open.
+- **🏆 Achievements** (`ui/trophies.js`; the menu's 🏆 line): 46 of them, counted from fights, kills, natural 20s and 1s, heals, Dodge, arrivals, quests, gold and levels. Each one earned slides a banner in at the top with a chime. The shelf shows them by group, earned ones bright with their bronze, silver or gold rim, the rest with their progress, the hidden ones as *???* with a hint.
+- Kept in the run's save (`w.trophies`, `w.beasts`; older saves start empty: `upgradeWander`). Award lines with a count of one read as one (*1 foe*, *Dodge once*).
+- In a list or one of these screens, the arrow keys and the stick move straight up and down whatever angle the fight camera stands at.
+
 ## v1.34 — a blow you feel, from over your shoulder
 
 - **💥 Every blow lands on the map** (`render/punch.js`, the numbers in `engine/punch.js`; on every screen: the Wanderer, the DM, the table's handhelds and phones). Every figure feels it, whatever it's made of: forged, a model, a paper standee, an old shape.
@@ -32,7 +42,6 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
   - Backed against a wall, the camera creeps in closer and rises over their head. Walls and trees between it and the hero are thinned away as they already were.
   - Name plates and the odds over a foe keep the same size on screen however close the camera comes, and your own hero's plate is hidden while you're looking over their shoulder.
 - **🔊 A little sound for everything in a fight** (ChatGPT's `engine/fight-sfx.js` and `data/fight-sfx.js`, wired in `ui/fightsfx.js`): a swing as the blow is thrown (steel, a club, a bowstring, a claw, a bite, a spell in its element's colour), then as it lands the hit by what it hit: bare skin, leather, hide, mail, plate or bone; a parry or a whiff on a miss; a crit on top. Healing, a spell cast by its school, Dash, Dodge, Disengage, getting up, a feature, a condition, a kill and a hero down each have their own. They play where the fight is run (the DM's app, the Wanderer); players' screens still hear the plain hit, miss and crit.
-- **Merged from ChatGPT, not yet on screen:** the fight summary (`engine/fight-summary.js`: scorecards, highlights, awards), achievements (`engine/achievements.js`, 46 of them) and bestiary lore (`engine/bestiary-lore.js`: what the party knows of 40 creatures, unlocked by seeing, fighting and killing them). They wait for Muse's victory, trophy and bestiary screens.
 
 ## v1.33 — the dice, and who's next
 
@@ -1015,9 +1024,9 @@ src/engine/             pure logic: no DOM, no Three.js, unit-tested
   look.js               a figure's recipe: from a sheet, a creature's preset (varied), an NPC roll; describeLook
   targeting.js          reach and range, cover (grid corner rule), area templates and who they catch
   fight-sfx.js          (ChatGPT) a fight's chiptune sounds: which one for a swing, a landing by armour, a spell, a heal, an act
-  fight-summary.js      (ChatGPT) a fight's scorecard, highlights and awards (not yet shown)
-  achievements.js       (ChatGPT) 46 achievements and their progress (not yet shown)
-  bestiary-lore.js      (ChatGPT) what the party knows of each creature, by sightings, fights and kills (not yet shown)
+  fight-summary.js      (ChatGPT) a fight's scorecard, highlights and awards (the victory screen)
+  achievements.js       (ChatGPT) 46 achievements and their progress
+  bestiary-lore.js      (ChatGPT) what the party knows of each creature, by sightings, fights and kills
   punch.js              how hard a blow lands: hit-stop, slow motion, knockback, camera kick (impactOf, speedAt, moveAt), what bleeds out (bloodOf)
   odds.js               the odds of a blow before it's struck: chance to hit and to crit (advantage, a 1 and a 20), damage on average, the edge in words
   movement.js           dragged routes, threat & opportunity attacks, following in marching order, formations, Close in
@@ -1095,6 +1104,8 @@ src/engine/wander-cam.js   🎥 the follow camera's numbers (orbit, eighth turns
 src/ui/handheld.js         🕹 the handheld skin: the shell, its touch D-pad and buttons, the world drawn into its screen, the boot, the Lantern light, its hosts
 src/ui/tablehh.js          🕹 the handheld at the table: a seated player's phone as the controller (HUD, D-pad steps, strikes, menu, sheet)
 src/ui/followcam.js        🎥 the follow camera (over the shoulder in a fight), seeing through walls and a hit felt, for one hero (the Wanderer's and the table's)
+src/game/record.js         🏆 the Wanderer's record: each fight blow by blow (→ the victory screen), achievements, the bestiary journal
+src/ui/victory.js, levelup.js, bestiary.js, trophies.js   (Muse) the screens between the fights
 src/ui/fightsfx.js         🔊 a fight's chiptune sounds, played from the bus (ChatGPT's engine/fight-sfx.js)
 src/ui/hhlife.js           🕹 the handheld's tunes (engine/chiptune.js) and its coach's tips (engine/coach.js)
 src/ui/pocketsheet.js      📖 Muse's pocket sheet: the hero's sheet as pages on the handheld's screen (Select)

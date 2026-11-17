@@ -1,6 +1,7 @@
 /* THE VALLEY — travelling Barovia. Where the party is on the valley map, journeys along its roads (each one
    built as a chain of road maps by engine/overland.js), the road's happenings, arriving, and entering a
    place's own map. Kept in state.campaign.valley, so it travels with the campaign from delve to delve. */
+import { achieve } from './record.js';
 import { state, ui, makeMonster, log } from '../engine/state.js';
 import { freeTilesNear } from '../engine/grid.js';
 import { walk } from '../engine/tiles.js';
@@ -64,6 +65,7 @@ export function arrive({ quiet = false } = {}){   // (quiet: the Wanderer slides
   const p = placeById(V.journey.to);
   passTime(V.journey.hours || 0);
   V.at = p.id; if (!V.visited.includes(p.id)) V.visited.push(p.id); V.journey = null;
+  achieve({ t:'arrive', place:p.id, day:V.day || 0 });   // 🏆 (the Wanderer's run only: game/record.js)
   ui.valleySel = p.id;
   if (!quiet) showCard({ kind:'', title:p.name, sub:clockText(), flair:p.blurb, lines:V.hour >= 21 || V.hour < 5 ? ['<span class="muted">They arrive after dark. Doors stay shut; something is always awake.</span>'] : [] });
   log(`🧭 The party reaches ${p.name} (${clockText()}).`);

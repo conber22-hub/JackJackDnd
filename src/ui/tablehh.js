@@ -418,8 +418,8 @@ function frame(now){
   const t = me(); if (!t) return;
   const gp = [...(navigator.getGamepads?.() || [])].find(g => g && g.connected);
   let pad = null;
-  if (gp){ pad = readPad(gp); const r = padIntents(pad, now, padMem, { yaw:camYaw() }); padMem = r.mem; for (const it of r.intents) it.k === 'step' ? step(it.dx, it.dy) : press(it.b); }
-  { const r = padIntents(hhPad(), now, hhMem, { yaw:camYaw() }); hhMem = r.mem; for (const it of r.intents) if (it.k === 'step') step(it.dx, it.dy); }
+  if (gp){ pad = readPad(gp); const r = padIntents(pad, now, padMem, { yaw:menu.open ? 0 : camYaw() }); padMem = r.mem; for (const it of r.intents) it.k === 'step' ? step(it.dx, it.dy) : press(it.b); }
+  { const r = padIntents(hhPad(), now, hhMem, { yaw:menu.open ? 0 : camYaw() }); hhMem = r.mem; for (const it of r.intents) if (it.k === 'step') step(it.dx, it.dy); }
   const cur = fight() && currentTurn(), lk = rt.look && now < rt.look.until && tokById(rt.look.id);
   // ⚔ in a fight, over their hero's shoulder at what they face (ui/followcam.js)
   const subject = fight() && !t.dead ? (lk || (cur && cur.kind === 'monster' ? cur : target())) : null;
@@ -481,7 +481,7 @@ function onKey(e){
   if (!on() || e.ctrlKey || e.metaKey || e.altKey) return;
   if (/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName)) return;
   if (document.body.classList.contains('hh-sheet') && e.key !== 'Escape') return;   // (the classic sheet takes its own keys)
-  const it = keyIntent(e.key, { shift:e.shiftKey, yaw:pocketOpen() ? 0 : camYaw() }); if (!it) return;
+  const it = keyIntent(e.key, { shift:e.shiftKey, yaw:pocketOpen() || menu.open ? 0 : camYaw() }); if (!it) return;
   e.preventDefault(); e.stopPropagation();
   it.k === 'step' ? step(it.dx, it.dy) : press(it.b === 'back' ? 'back' : it.b);
 }

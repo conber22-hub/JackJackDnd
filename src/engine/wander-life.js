@@ -127,5 +127,6 @@ export const nextMoment = (moments = [], seen = [], rng = Math.random) => { cons
 export function upgradeWander(w){
   if (!w) return w;
   w.quests ||= []; w.approval ||= {}; w.moments ||= []; w.momentAt ||= ''; w.lvlSeen ||= 1;
+  w.trophies ||= null; w.beasts ||= {};   // 🏆 achievements' progress, 📕 what the party knows of each creature (game/record.js)
   return w;
 }
