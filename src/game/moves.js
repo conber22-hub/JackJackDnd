@@ -18,7 +18,7 @@ import { toast, renderSel } from '../ui/hud.js';
 import { showReach, refreshSelectionRing } from '../render/effects.js';
 import { syncTokens, tokenViews } from '../render/minis.js';
 import { camera } from '../render/scene.js';
-import { $, esc, uid } from '../util/core.js';
+import { $, esc, uid, bus } from '../util/core.js';
 import { sendToSeat, broadcast, sendHost } from '../net/table.js';
 import { sfx } from '../audio/sound.js';
 
@@ -108,6 +108,7 @@ export function turnAction(t, k){
   else if (k === 'disengage'){ if (t.disengaged) return false; t.disengaged = true; log(`🛡 ${t.name} disengages — no opportunity attacks this turn.`); }
   else if (k === 'dodge'){ if (t.dodge) return false; t.dodge = true; log(`🌀 ${t.name} takes the Dodge — attacks against it have disadvantage until its next turn.`); }
   else return false;
+  bus.emit('turnAct', { t, k });   // (what they did, over them: ui/fightfx.js)
   if (t.lastMove) t.lastMove.clean = false;
   if (ui.selected === t.id) showReach(t);
   renderSel(); changed(); return true;

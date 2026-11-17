@@ -1,7 +1,7 @@
 /* RESOURCES & RESTS — spell slots, class features and Hit Dice on a hero's token (t.resources are the
    maxima from the sheet, t.res what is left), spending them, and the party's short and long rests. */
 import { state, log } from '../engine/state.js';
-import { rollDice, esc } from '../util/core.js';
+import { rollDice, esc, bus } from '../util/core.js';
 import { showCard, toast } from '../ui/hud.js';
 import { addCond } from './rules.js';
 import { heal } from './combat.js';
@@ -77,6 +77,7 @@ export function useFeature(t, id, target = t){
   }
   else if (r.text) lines.push(esc(r.text));
   t.res[id] -= cost;
+  bus.emit('feature', { t, id, n:r.n, target });   // (its name over them: ui/fightfx.js)
   showCard({ kind:'', title:`${t.name}: ${r.n}`, sub:`${t.res[id]} of ${r.max} left`, lines });
   log(`${t.name} uses ${r.n}.`);
   changed(); return true;

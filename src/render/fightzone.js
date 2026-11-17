@@ -69,21 +69,35 @@ export function showMoveSquares(L, squares, key){
   mesh.renderOrder = 3; fv.group.add(mesh); moves.mesh = mesh;
 }
 
-/* ---------- the damage, rising ---------- */
+/* ---------- what happened to them, rising ---------- */
 const floats = [];
-function textTex(text, color){
-  const c = document.createElement('canvas'); c.width = 256; c.height = 96; const g = c.getContext('2d');
-  g.font = '900 64px Georgia, serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.lineWidth = 12; g.strokeStyle = 'rgba(12,6,10,.95)'; g.strokeText(text, 128, 50);
-  g.fillStyle = color; g.fillText(text, 128, 50);
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+// the text on a canvas as wide as it needs (a number, or a word like ACTION SURGE): { t, aspect }
+function textTex(text, color, word){
+  const px = word ? 46 : 64, c = document.createElement('canvas'), g = c.getContext('2d'), font = `900 ${px}px Georgia, serif`;
+  g.font = font; const w = Math.ceil(g.measureText(text).width) + 36;
+  c.width = Math.max(128, w); c.height = 96;
+  g.font = font; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.lineWidth = word ? 10 : 12; g.lineJoin = 'round'; g.strokeStyle = 'rgba(12,6,10,.95)'; g.strokeText(text, c.width / 2, 50);
+  g.fillStyle = color; g.fillText(text, c.width / 2, 50);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return { t, aspect:c.width / c.height };
 }
-// text over a token: rising and fading (big: a critical, larger and slower)
-export function floatText(id, text, color = '#ff5a4a', { big = false } = {}){
+// text over a token, rising and fading (big: a critical, larger and slower; word: an action or a condition, smaller).
+// Several at once over the same one stack up rather than sit on each other.
+export function floatText(id, text, color = '#ff5a4a', { big = false, word = false } = {}){
   const tv = tokenViews.get(id); if (!tv?.group?.parent) return;
-  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map:textTex(text, color), transparent:true, depthTest:false, depthWrite:false }));
+  const now = performance.now(), { t, aspect } = textTex(text, color, word);
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map:t, transparent:true, depthTest:false, depthWrite:false }));
+  const above = floats.filter(f => f.id === id && now - f.t0 < 450).length;
   s.renderOrder = 30; s.position.set(0, 1.9, 0); s.scale.set(.01, .01, 1); tv.group.add(s);
-  floats.push({ s, t0:performance.now(), ms:big ? 1700 : 1250, k:big ? 1.5 : 1 }); madeFloats++; floatsSeen.push(text);
+  floats.push({ s, id, t0:now, y0:1.9 + above * .42, ms:big ? 1700 : word ? 1500 : 1250, k:(big ? 1.5 : word ? .78 : 1), aspect }); madeFloats++; floatsSeen.push(text);
+}
+
+/* ---------- a ring on the ground, spreading: something done there ---------- */
+const rings = [], ringGeo = new THREE.RingGeometry(.36, .46, 40).rotateX(-Math.PI / 2);
+export function ringPulse(id, color = '#f4c46a'){
+  const tv = tokenViews.get(id); if (!tv?.group?.parent) return;
+  const m = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending }));
+  m.position.set(0, .06, 0); m.renderOrder = 4; tv.group.add(m); rings.push({ m, t0:performance.now() });
 }
 
 /* ---------- a thrown, shot or cast blow, crossing ---------- */
@@ -114,7 +128,12 @@ export function tickFightFx(now = performance.now()){
     const f = floats[i], a = (now - f.t0) / f.ms;
     if (a >= 1 || !f.s.parent){ f.s.parent?.remove(f.s); f.s.material.map.dispose(); f.s.material.dispose(); floats.splice(i, 1); continue; }
     const pop = Math.min(1, a / .14), k = (1 + .35 * Math.sin(pop * Math.PI)) * f.k;
-    f.s.scale.set(1.3 * k, .49 * k, 1); f.s.position.y = 1.9 + a * .9; f.s.material.opacity = a > .7 ? (1 - a) / .3 : 1;
+    f.s.scale.set(.6 * f.aspect * k, .6 * k, 1); f.s.position.y = f.y0 + a * .9; f.s.material.opacity = a > .7 ? (1 - a) / .3 : 1;
+  }
+  for (let i = rings.length - 1; i >= 0; i--){
+    const r = rings[i], a = (now - r.t0) / 650;
+    if (a >= 1 || !r.m.parent){ r.m.parent?.remove(r.m); r.m.material.dispose(); rings.splice(i, 1); continue; }
+    r.m.scale.setScalar(1 + a * 1.8); r.m.material.opacity = (1 - a) * .85;
   }
   for (let i = streaks.length - 1; i >= 0; i--){
     const s = streaks[i], a = (now - s.t0) / s.ms;

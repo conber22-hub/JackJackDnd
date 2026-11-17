@@ -403,7 +403,7 @@ export function heroCast(entry){
     else if (cheb(t, tg) > reachSq){ toast(`${tg.name} is out of range of ${sp.n}: walk closer.`); return false; } }
   if (tg !== t) rt.look = { id:tg.id, until:performance.now() + 1700 };
   if (castSpell(t.id, tg.id, entry.i, aimAt) === false) return false;
-  if (state.combat.active) rt.cast = true;
+  if (state.combat.active){ rt.cast = true; rt.did = 'cast'; }
   changed(); return true;
 }
 
@@ -578,7 +578,7 @@ export function heroAttack(pick = null){
   if (!attacksLeft()) return toast(rt.cast ? 'You have cast this turn: Ⓐ again ends your turn.' : 'You have struck this turn: Ⓐ again ends your turn.');
   const i = attackFor(t, tg); if (i < 0) return toast(`${tg.name} is out of reach: walk closer.`);
   rt.look = { id:tg.id, until:performance.now() + 1500 };   // (the camera frames the two of them a moment: ui/wander.js)
-  if (doAttack(t.id, tg.id, i) !== false) rt.attacks++;
+  if (doAttack(t.id, tg.id, i) !== false){ rt.attacks++; rt.did = 'strike'; }
   changed();
 }
 export function heroDodge(){ heroTurnAct('dodge'); }
@@ -587,13 +587,13 @@ export function heroTurnAct(k){
   const t = hero(); if (!myTurn()) return toast('Not your turn yet.');
   if (k !== 'stand' && (rt.cast || rt.attacks)) return toast('You have used your action this turn.');
   if (!turnAction(t, k)) return;
-  if (k !== 'stand') rt.attacks = maxAttacks(t);
+  if (k !== 'stand'){ rt.attacks = maxAttacks(t); rt.did = k; }
   toast(k === 'dodge' ? `${t.name} takes the Dodge.` : k === 'dash' ? `${t.name} dashes: twice the move this turn.` : k === 'disengage' ? `${t.name} disengages: no free strikes as they go.` : `${t.name} gets up.`);
   changed();
 }
 // The hero's features (Second Wind, Action Surge, Rage, Lay on Hands on themselves…): engine-side, game/resources.js.
 // Action Surge gives the turn's action back, strikes and all (once a turn).
-export const heroFeatures = () => { const t = hero(); return t ? (t.resources || []).filter(r => !r.slot && r.id !== 'hd').map(r => ({ id:r.id, n:r.n, left:left(t, r.id), max:r.max,
+export const heroFeatures = () => { const t = hero(); return t ? (t.resources || []).filter(r => !r.slot && r.id !== 'hd').map(r => ({ id:r.id, n:r.n, left:left(t, r.id), max:r.max, text:r.text || '',
   why:!left(t, r.id) ? 'none left: a rest brings it back' : r.id === 'surge' && !state.combat.active ? 'in a fight' : r.id === 'surge' && rt.surged ? 'once a turn' : state.combat.active && !myTurn() ? 'on your turn' : '' })) : []; };
 export function heroFeature(id){
   const t = hero(), f = heroFeatures().find(x => x.id === id); if (!t || !f) return false;
@@ -624,7 +624,7 @@ export function fightTick(now = performance.now()){
   const key = `${c.round}:${c.idx}:${t.id}`;
   if (t.id === W().heroTok){
     if (t.dead || t.hp <= 0){ if (rt.acting !== key){ rt.acting = key; rt.actAt = now; } else if (now - rt.actAt > 900) nextTurn(); return; }
-    if (rt.heroKey !== key){ rt.heroKey = key; rt.attacks = 0; rt.cast = false; rt.bonus = false; rt.surged = false; rt.atk = null; if (!target()) aim(1); follow(t); }
+    if (rt.heroKey !== key){ rt.heroKey = key; rt.did = ''; rt.attacks = 0; rt.cast = false; rt.bonus = false; rt.surged = false; rt.atk = null; if (!target()) aim(1); follow(t); }
     if (!attacksLeft() && moveAllowance(t) <= 0 && now - rt.lastBusy > 900) endHeroTurn();
     return;
   }

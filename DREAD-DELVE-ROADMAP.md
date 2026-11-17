@@ -16,6 +16,16 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.31 — every choice says what it is, every action shows
+
+- **🎴 Choices that explain themselves** (`ui/optrow.js`, `ui/actrows.js`, on both handhelds): each choice in a list has an icon, a line of what it does and tags for what it costs: **Action**, **Bonus**, **Free**, **½ move**, a spell's slot (**L1**), **Conc.**, a check (**🎲 Persuasion 12**). Lists come in groups with small headers, and the highlighted choice says a little more under the list.
+  - **Actions** (Ⓧ): *Strike* (each weapon: its bonus, damage and whether it reaches the target), *Magic* (Spells…, with the slots left), *Move & defend* (Dash, Disengage, Dodge, Stand up, each saying what it does), *Your gifts* (Second Wind, Action Surge, Rage…, with what's left), *Items* (a potion), then End your turn.
+  - **Spells** by level (*Cantrips*, *Level 1 · 2 of 2 slots*): each with its damage and save or attack and range (*1d8 radiant · Dex save · 60 ft.*), what it heals, or the first line of what it does; highlighted, the spell's own words and how long it lasts.
+  - In a fight these lists dock at the side, clear of the fight, the list scrolling inside, and the cards go to the top left. On the handheld they fit its screen.
+  - **Talking:** each line has an icon for what kind it is (asking, a favour, a pitch, leaving) and its check as a tag.
+  - The menu (☰) has an icon for each line.
+- **✨ Every action shows on the map** (`ui/fightfx.js`, for every view: the Wanderer, the DM, the table): healing rises green over whoever got it (*+6*) with a green ring on the ground; **DASH**, **DODGE**, **DISENGAGE** and **UP** rise in their colours with a ring; a feature used (**SECOND WIND**, **ACTION SURGE**) in gold; a spell that isn't an attack in violet over the caster (*✦ Bless*), a ring on whoever it's on; a condition taken on (**PRONE**, **POISONED**, **BLESSED**) over them. Several at once stack instead of overlapping. The fight bar says what the turn's action went on (*🛡 dodging*, *💨 dashing*, *✦ cast*).
+
 ## v1.30 — a fight you see start, and a blow you choose
 
 A fight used to arrive as a bar at the bottom of the screen, and Ⓐ, still held from walking or closing a card, struck at once with whatever weapon reached, its card popping up over the very swing it described.

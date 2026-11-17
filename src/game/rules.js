@@ -6,7 +6,7 @@ import { BREAKS_CONC } from '../engine/spellcast.js';
 import { BEST } from '../data/bestiary.js';
 import { applyDefenses, conditionImmune, defensesFor } from '../engine/defenses.js';
 import { saveMods, speedOf, damageMods } from '../engine/conditions.js';
-import { d } from '../util/core.js';
+import { d, bus } from '../util/core.js';
 
 export const currentTurn = () => state.combat.active ? state.tokens.find(t => t.id === state.combat.order[state.combat.idx]) : null;
 export const turnKey = () => `${state.combat.round}:${state.combat.idx}`;
@@ -73,7 +73,7 @@ export function addCond(t, n, rounds = 1, src, force = false, extra = null){
   if (t.conc && BREAKS_CONC.has(n)) endConc(t, `is ${n}`);
   const c = t.conds.find(c => c.n === n), x = extra ? { ...extra, ...(extra.exp?.who === 'self' ? { exp:{ ...extra.exp, who:t.id } } : {}) } : null;
   if (c){ c.r = rounds < 0 || c.r < 0 ? -1 : Math.max(c.r, rounds); if (x) Object.assign(c, x); }
-  else t.conds.push({ n, r:rounds, at:state.combat.active ? turnKey() : null, ...(src ? { src } : {}), ...(x || {}) });
+  else { t.conds.push({ n, r:rounds, at:state.combat.active ? turnKey() : null, ...(src ? { src } : {}), ...(x || {}) }); bus.emit('cond', { t, n }); }   // (its name over them: ui/fightfx.js)
   return true;
 }
 export function removeCond(t, n){ t.conds = (t.conds || []).filter(c => c.n !== n); }

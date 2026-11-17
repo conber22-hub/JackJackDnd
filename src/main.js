@@ -22,6 +22,8 @@ import { floorViews, mist } from './render/floors.js';
 import { tokenViews } from './render/minis.js';
 import { poseRig } from './render/forge/anim.js';
 import { selRing, updatePings, updateGroupRings } from './render/effects.js';
+import { tickFightFx } from './render/fightzone.js';
+import { wireFightFx } from './ui/fightfx.js';
 import { updateAmbience, weatherKind } from './render/ambience.js';
 import { updateWind, wind as windNow_ } from './render/wind.js';
 const windNow = () => windNow_.force.value;
@@ -151,7 +153,7 @@ function frame(){
     const mp = mist.geometry.attributes.position; for (let i = 0; i < mp.count; i++){ mp.array[i*3] += Math.sin(t * .2 + i) * .004; mp.array[i*3+2] += .006; if (mp.array[i*3+2] > 30) mp.array[i*3+2] = -30; } mp.needsUpdate = true;
     mist.material.opacity = .08 + state.dread * .018; mist.material.color.lerp(new THREE.Color((THEMES[state.floors[ui.floor]?.theme] || THEMES[0]).mist), .02);
     if (state.dread >= 8) mist.material.color.lerp(redMist, .01);
-    updatePings(now);
+    updatePings(now); tickFightFx(now);   // (⚔ what each action leaves over the figures: ui/fightfx.js)
     // whispers
     if (ui.whispers && ui.role === 'dm' && state.dread >= 3 && now > whisperAt){ whisperAt = now + (60 - state.dread * 4.5) * 1000 * (0.6 + Math.random() * .8); sendWhisper(pick(WHISPERS)); }
     $('#bloodrim').style.boxShadow = `inset 0 0 ${state.dread * 14}px rgba(150,20,30,${(state.dread - 1) * .05})`;
@@ -186,5 +188,6 @@ if (scr !== null){
 initCardOnly();   // a player's phone at an in-person game: no 3D (ui/cards.js)
 setScreenNow(nightNow); listenForScreens();
 onAskChange(() => { if (ui.tab === 'night') renderPanel(); });
+wireFightFx();
 frame();
 window.DreadDelve = api;   // handy for debugging in the console: DreadDelve.state, DreadDelve.shiftFloor(0), …

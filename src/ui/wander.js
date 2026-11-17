@@ -18,9 +18,11 @@ import { W, rt, hero, members, wandering, startWander, continueWander, leaveWand
   heroAttack, heroDodge, heroTurnAct, heroFeatures, heroFeature, endHeroTurn, aim, target, targets, attackFor, nextWeapon, attacksLeft, myTurn, fightTick, destinations, setOut, travelTo, rest, saveNow,
   pack, toggleEquip, usePotion, coinsGp, shopHere, buyPotion, journal, approvalOf, levelReady, partyLevel, nextLevelXp, levelUpHero, sheetOf, spellList, heroCast,
   SLOTS, slotMeta, canSaveSlot, saveToSlot, loadFromSlot, opening } from '../game/wander.js';
-import { setFightZone, clearFightFx, showMoveSquares, clearMoveSquares, floatText, streak, tickFightFx } from '../render/fightzone.js';
+import { setFightZone, clearFightFx, showMoveSquares, clearMoveSquares } from '../render/fightzone.js';
 import { reach } from '../engine/grid.js';
 import { bus, signed } from '../util/core.js';
+import { optList, optInfo, tag } from './optrow.js';
+import { attackBits, spellBits, actBits, featBits } from './actrows.js';
 import { wx, wz, floorY } from '../render/scene.js';
 import { passage, tapTarget } from '../game/ways.js';
 import { veil, banner } from './passage.js';
@@ -102,7 +104,7 @@ export function renderHud(){
     let body;
     if (myTurn()){
       const tg = target(), i = attackFor(t, tg), atk = t.attacks[i] || t.attacks[rt.atk ?? 0];
-      body = `<div class="wd-fl"><b>Your turn</b> · ${moveAllowance(t) * 5} ft. to move · ${attacksLeft() ? `${attacksLeft()} strike${attacksLeft() === 1 ? '' : 's'} left` : rt.cast ? 'cast' : 'struck'}</div>
+      body = `<div class="wd-fl"><b>Your turn</b> · ${moveAllowance(t) * 5} ft. to move · ${attacksLeft() ? `${attacksLeft()} strike${attacksLeft() === 1 ? '' : 's'} left` : ({ dodge:'🛡 dodging', dash:'💨 dashing', disengage:'↩ disengaged', cast:'✦ cast' }[rt.did] || (rt.cast ? 'cast' : 'struck'))}</div>
         <div class="wd-fl">${tg ? `🎯 <b>${esc(tg.name)}</b> ${bar(tg.hp, tg.maxHp)}` : 'Nobody in sight'}</div>
         ${atk && attacksLeft() ? `<div class="wd-fl wd-weap">⚔ <b>${esc(atk.n)}</b> ${signed(atk.b)} to hit · ${esc(atk.d)} ${esc(atk.t || '')}${tg ? ` · <span class="${i < 0 ? 'far' : 'near'}">${esc(reachWords(t, tg, t.attacks.indexOf(atk)))}</span>` : ''}</div>` : ''}
         <div class="wd-acts"><button class="wd-act" data-act="wdX">${K('x')} Actions</button><button class="wd-act" data-act="wdAim" data-k="1">${K('y')} Next target</button><button class="wd-act" data-act="wdEnd">End turn</button></div>`;
@@ -113,14 +115,14 @@ export function renderHud(){
   const tv = talkView(); show('wdTalk', !!tv);
   if (tv){ talkSel.i = Math.min(talkSel.i, tv.options.length - 1);
     put('wdTalk', `<div class="wd-tt"><b>${esc(tv.title)}</b>${tv.sub ? `<span>${esc(tv.sub)}</span>` : ''}</div><div class="wd-tx">${esc(tv.text)}</div>
-      <div class="wd-opts">${tv.options.map((o, k) => `<button class="wd-opt${k === talkSel.i ? ' on' : ''}${o.off ? ' off' : ''}" data-act="wdSay" data-k="${o.k}">${k + 1}. ${esc(o.label)}</button>`).join('')}</div>`);  keepInView('wdTalk'); }
+      <div class="wd-opts">${optList(tv.options.map(talkRow), talkSel.i, k => `data-act="wdSay" data-k="${esc(tv.options[k].k)}"`)}</div>`);  keepInView('wdTalk'); }
   // the menu
-  show('wdMenuBox', menu.open); $('#wdMenuBox')?.classList.toggle('wd-strike', menu.open && menu.page === 'strike');
+  show('wdMenuBox', menu.open); $('#wdMenuBox')?.classList.toggle('wd-dock', menu.open && !!state.combat.active && ['strike', 'actions', 'spells'].includes(menu.page));
   if (menu.open){ const items = menuItems(); menu.i = Math.min(menu.i, items.length - 1);
     const info = pageInfo();
     put('wdMenuBox', `<div class="wd-tt"><b>${esc(PAGE_TITLE[menu.page] || 'The valley waits')}</b>${info.sub ? `<span>${info.sub}</span>` : ''}</div>
       ${info.html ? `<div class="wd-tx">${info.html}</div>` : ''}
-      <div class="wd-opts">${items.map((o, k) => `<button class="wd-opt${k === menu.i ? ' on' : ''}${o.off ? ' off' : ''}" data-act="wdPick" data-k="${k}">${esc(o.label)}${o.sub ? `<small>${esc(o.sub)}</small>` : ''}</button>`).join('')}</div>`); 
+      <div class="wd-opts">${optList(items, menu.i, k => `data-act="wdPick" data-k="${k}"`)}</div>${optInfo(items[menu.i])}`); 
     keepInView('wdMenuBox'); }
 }
 const KEYS_HELP = 'Each button does one thing. Left stick, D-pad, WASD or the arrows: walk (Q E Z C for the diagonals), or move through a menu. Ⓐ / Space: do what the line on the screen says (talk, climb, look, end your turn), or choose; in a fight it opens the choice of what to strike with, each weapon with its bonus, damage and reach, and Ⓐ again strikes. Ⓑ / Esc: back, or put a card away. Ⓧ / F: Actions (each weapon, spells, Dash, Disengage, Dodge, features like Action Surge, a potion, End turn). Ⓨ / Tab: the next target. LB RB / [ ]: turn the camera; right stick or - = crane it; right stick click / V: the next view. View / I: your hero. ☰ Start / M: this menu. View + Start / K: the save states. Shortcuts: LT / G spells, RT / H a potion, left stick click / J the journal, N end your turn. Or tap where to walk.';
@@ -179,7 +181,7 @@ function menuItems(){
       { label:`Chip tunes: ${hh.chip === false ? 'Off' : 'On'}`, sub:'Its little jingles (with the sound effects on)', run:() => setHandheld({ chip:hh.chip === false }) },
       back()]; }
   if (menu.page === 'pack') return [
-    ...pack().map(i => ({ label:`${i.n}${i.qty > 1 ? ` ×${i.qty}` : ''}${i.equipped ? ' ✓' : ''}`, sub:i.potion ? 'Drink it, or give it to someone beside you' : ['weapon', 'armor', 'shield'].includes(i.kind) ? (i.equipped ? 'In hand / worn: take it off' : 'Wield it / wear it') : '',
+    ...pack().map(i => ({ icon:i.potion ? '🧪' : i.kind === 'weapon' ? '⚔' : i.kind === 'armor' || i.kind === 'shield' ? '🛡' : '◦', label:`${i.n}${i.qty > 1 ? ` ×${i.qty}` : ''}${i.equipped ? ' ✓' : ''}`, sub:i.potion ? 'Drink it, or give it to someone beside you' : ['weapon', 'armor', 'shield'].includes(i.kind) ? (i.equipped ? 'In hand / worn: take it off' : 'Wield it / wear it') : '',
       off:fight && !i.potion, run:() => { if (i.potion){ giving = i.id; menu.page = 'give'; menu.i = 0; } else if (['weapon', 'armor', 'shield'].includes(i.kind)) toggleEquip(i.id); } })),
     ...(shopHere() ? [{ label:'Buy a Potion of Healing', sub:`50 gp (you have ${coinsGp()})`, off:coinsGp() < 50, run:buyPotion }] : []),
     back()];
@@ -190,39 +192,45 @@ function menuItems(){
     { label:'Choose on the character sheet', run:() => { closeMenu(); const s = { ...structuredClone(sheetOf()), lvl:partyLevel() };
       import('./creator.js').then(m => m.openCreator(s, { title:`${s.name}: level ${s.lvl}`, saveLabel:'Level up', onSave:h => levelUpHero(h) })); } },
     back()];
-  if (menu.page === 'spells') return [...spellList().map(e => ({ label:`${e.n}${e.l ? ` (level ${e.l})` : e.l === 0 ? ' (cantrip)' : ''}`, sub:e.why ? `Only ${e.why}` : e.k === 'heal' ? 'On the most hurt of you, within reach' : e.kind === 'atk' ? 'An attack roll, at the target' : '',
-    off:!e.ok, run:() => { closeMenu(); heroCast(e); } })), { label:'Back', run:() => { if (menu.from === 'actions'){ menu.page = 'actions'; menu.i = 0; } else closeMenu(); } }];
+  if (menu.page === 'spells'){ const t = hero(), lvl = e => e.kind === 'atk' ? (t?.attacks?.[e.i]?.l || 0) : e.l || 0;
+    const slotsAt = l => (t?.resources || []).filter(r => r.slot === l).map(r => `${t.res?.[r.id] ?? 0} of ${r.max} slots`).join(', ');
+    return [...spellList().map(e => ({ e, l:lvl(e) })).sort((a, b) => a.l - b.l).map(({ e, l }) => {
+      const b = e.kind === 'atk' ? { ...attackBits(t.attacks[e.i], target() ? reachWords(t, target(), e.i) : ''), ...(e.why ? { sub:`Only ${e.why}` } : {}) } : spellBits(e, e.why);
+      return { label:e.n, group:l ? `Level ${l}${slotsAt(l) ? ` · ${slotsAt(l)}` : ''}` : 'Cantrips', ...b, ...(e.k === 'heal' && !e.why ? { sub:`${b.sub} · the most hurt of you` } : {}), off:!e.ok, run:() => { closeMenu(); heroCast(e); } }; }),
+      { label:'Back', group:' ', icon:'←', run:() => { if (menu.from === 'actions'){ menu.page = 'actions'; menu.i = 0; } else closeMenu(); } }]; }
   if (menu.page === 'strike') return strikeItems();
   if (menu.page === 'actions'){
     const t = hero(), fight = !!state.combat.active, mine = myTurn(), tg = fight ? target() : null, spent = fight && mine && !attacksLeft();
-    const end = fight ? [{ label:'End your turn', sub:spent ? 'Your action is spent' : 'Done for this round', off:!mine, run:() => { closeMenu(); endHeroTurn(); } }] : [];
-    const ta = (k, label, sub) => ({ label, sub, off:!mine || (k !== 'stand' && !attacksLeft()), run:() => { closeMenu(); heroTurnAct(k); } });
+    const end = fight ? [{ label:'End your turn', group:' ', icon:'⏭', sub:spent ? 'Your action is spent' : 'Done for this round', off:!mine, run:() => { closeMenu(); endHeroTurn(); } }] : [];
+    const ta = (k, label) => ({ label, group:'Move & defend', ...actBits(k), off:!mine || (k !== 'stand' && !attacksLeft()), run:() => { closeMenu(); heroTurnAct(k); } });
+    const slots = (t?.resources || []).filter(r => r.slot).map(r => `L${r.slot} ${t.res?.[r.id] ?? 0}/${r.max}`).join(' · ');
+    const potions = pack().filter(i => i.potion).reduce((n, i) => n + i.qty, 0);
     return [
       ...(spent ? end : []),
-      ...(fight ? (t?.attacks || []).map((a, i) => ({ label:a.n, sub:`${a.b >= 0 ? '+' : ''}${a.b} · ${a.d}${tg ? ` · at ${tg.name}${attackForWith(t, tg, i) ? '' : ' (out of reach)'}` : ''}`,
+      ...(fight ? (t?.attacks || []).map((a, i) => ({ label:a.n, group:'Strike', ...attackBits(a, tg ? `${reachWords(t, tg, i)}${attackForWith(t, tg, i) ? ` (${tg.name})` : ''}` : ''),
         off:!mine || !attacksLeft(), run:() => { closeMenu(); rt.atk = i; heroAttack(); } })) : []),
-      ...(spellList().length ? [{ label:'Spells…', sub:fight && (rt.cast || rt.attacks) ? 'Your action is spent' : '', run:() => { menu.page = 'spells'; menu.i = 0; } }] : []),
-      ...(fight ? [ta('dash', 'Dash', 'Your speed again this turn'), ta('disengage', 'Disengage', 'Leave without opportunity attacks'), ta('dodge', 'Dodge', 'Attacks against you at disadvantage'),
-        ...((t?.conds || []).some(c => c.n === 'prone') ? [ta('stand', 'Stand up', 'Half your move')] : [])] : []),
-      ...heroFeatures().map(f => ({ label:f.n, sub:`${f.left} of ${f.max} left${f.why ? ` · ${f.why}` : ''}`, off:!!f.why, run:() => { closeMenu(); heroFeature(f.id); } })),
-      ...(pack().some(i => i.potion) ? [{ label:'Drink a potion', sub:`${pack().filter(i => i.potion).reduce((n, i) => n + i.qty, 0)} in the pack${fight && rt.bonus ? ' · one a turn' : ''}`, off:fight && (!mine || rt.bonus), run:() => { closeMenu(); usePotion(); } }] : []),
+      ...(spellList().length ? [{ label:'Spells…', group:'Magic', icon:'✦', sub:fight && (rt.cast || rt.attacks) ? 'Your action is spent' : slots || 'Cantrips', info:'Every spell you know, by level, with what it does and what it costs.', run:() => { menu.page = 'spells'; menu.i = 0; } }] : []),
+      ...(fight ? [ta('dash', 'Dash'), ta('disengage', 'Disengage'), ta('dodge', 'Dodge'),
+        ...((t?.conds || []).some(c => c.n === 'prone') ? [ta('stand', 'Stand up')] : [])] : []),
+      ...heroFeatures().map(f => ({ label:f.n, group:'Your gifts', ...featBits(f), off:!!f.why, run:() => { closeMenu(); heroFeature(f.id); } })),
+      ...(potions ? [{ label:'Drink a potion', group:'Items', icon:'🧪', sub:`${potions} in the pack · 2d4+2 HP${fight && rt.bonus ? ' · one a turn' : ''}`, tags:[tag('bonus')], info:'A Potion of Healing: drink it yourself, or pour it into someone beside you from the pack.', off:fight && (!mine || rt.bonus), run:() => { closeMenu(); usePotion(); } }] : []),
       ...(spent ? [] : end),
-      { label:'Back', run:closeMenu }];
+      { label:'Back', icon:'←', run:closeMenu }];
   }
   return [
-    { label:'Carry on', run:closeMenu },
-    ...(levelReady() ? [{ label:`Level up to ${partyLevel()}`, sub:'New hit points, and choices', off:fight, run:go('level') }] : []),
-    { label:'Travel…', sub:road ? 'You are on the road already' : fight ? 'Not in a fight' : 'Take a road out of here', off:road || fight, run:go('travel') },
-    { label:road ? 'Rest an hour' : 'Rest the night', sub:fight ? 'Not in a fight' : road ? 'A short rest by the road (something may find you)' : 'Everyone whole again by morning', off:fight, run:() => { closeMenu(); rest(); } },
-    { label:'The pack', sub:`${coinsGp()} gp · ${pack().length} things`, run:go('pack') },
-    { label:'The journal', sub:'Quests, and what your companions think', run:go('journal') },
-    { label:'Your hero', sub:'Your sheet, a page at a time (Select)', run:() => { closeMenu(); openHero(); } },
-    ...(spellList().length ? [{ label:'Spells', run:go('spells') }] : []),
-    { label:'Save', run:() => { saveNow(); toast('Saved.'); closeMenu(); } },
-    { label:'Save states', sub:'Three slots of your own, to come back to', run:go('states') },
-    { label:'Controls', run:go('keys') },
-    { label:'Handheld & camera', sub:hhOn() ? 'On: the phone is the controller' : 'Play on the phone as if it were a pocket console', run:go('handheld') },
-    { label:'Leave to the threshold', sub:'Saved: carry on from the start page', run:() => { closeMenu(); leaveWander(); import('./events.js').then(m => m.showStart()); } },
+    { icon:'▶', label:'Carry on', run:closeMenu },
+    ...(levelReady() ? [{ icon:'⬆', label:`Level up to ${partyLevel()}`, sub:'New hit points, and choices', off:fight, run:go('level') }] : []),
+    { icon:'🧭', label:'Travel…', sub:road ? 'You are on the road already' : fight ? 'Not in a fight' : 'Take a road out of here', off:road || fight, run:go('travel') },
+    { icon:'☾', label:road ? 'Rest an hour' : 'Rest the night', sub:fight ? 'Not in a fight' : road ? 'A short rest by the road (something may find you)' : 'Everyone whole again by morning', off:fight, run:() => { closeMenu(); rest(); } },
+    { icon:'🎒', label:'The pack', sub:`${coinsGp()} gp · ${pack().length} things`, run:go('pack') },
+    { icon:'📜', label:'The journal', sub:'Quests, and what your companions think', run:go('journal') },
+    { icon:'👤', label:'Your hero', sub:'Your sheet, a page at a time (Select)', run:() => { closeMenu(); openHero(); } },
+    ...(spellList().length ? [{ icon:'✦', label:'Spells', run:go('spells') }] : []),
+    { icon:'💾', label:'Save', run:() => { saveNow(); toast('Saved.'); closeMenu(); } },
+    { icon:'🗂', label:'Save states', sub:'Three slots of your own, to come back to', run:go('states') },
+    { icon:'🎮', label:'Controls', run:go('keys') },
+    { icon:'🕹', label:'Handheld & camera', sub:hhOn() ? 'On: the phone is the controller' : 'Play on the phone as if it were a pocket console', run:go('handheld') },
+    { icon:'🚪', label:'Leave to the threshold', sub:'Saved: carry on from the start page', run:() => { closeMenu(); leaveWander(); import('./events.js').then(m => m.showStart()); } },
   ];
 }
 const openMenu = (page = 'main') => { menu.open = true; menu.page = page; menu.from = page; menu.i = 0; };   // (from: a page opened by its own button closes on Ⓑ)
@@ -304,10 +312,10 @@ function strikeItems(){
   const best = tg ? attackFor(t, tg) : -1, ok = i => { try { return !!tg && rangeCheck(t, tg, t.attacks[i]).ok; } catch { return false; } };
   const list = (t.attacks || []).map((a, i) => ({ a, i, r:ok(i) })).sort((x, y) => (y.i === best) - (x.i === best) || y.r - x.r);
   const others = targets().length;
-  return [...list.map(({ a, i, r }) => ({ label:`${a.n}${/ casts /.test(a.f || '') ? ' ✦' : ''}`, sub:`${signed(a.b)} to hit · ${a.d} ${a.t || ''} · ${reachWords(t, tg, i)}`,
+  return [...list.map(({ a, i, r }) => ({ label:a.n, ...attackBits(a, reachWords(t, tg, i)), ...(r ? {} : { tone:'far' }),
       off:!r || !myTurn() || !attacksLeft(), run:() => { closeMenu(); heroAttack(i); } })),
-    { label:'Another target', sub:others > 1 ? `${others} in sight (${hhOn() ? 'Y' : 'Ⓨ / Tab'} changes it too)` : 'Nobody else in sight', off:others < 2, run:() => { aim(1); menu.i = 0; } },
-    { label:'Back', sub:'Nothing is spent', run:closeMenu }];
+    { label:'Another target', group:' ', icon:'🎯', sub:others > 1 ? `${others} in sight (${hhOn() ? 'Y' : 'Ⓨ / Tab'} changes it too)` : 'Nobody else in sight', off:others < 2, run:() => { aim(1); menu.i = 0; } },
+    { label:'Back', icon:'←', sub:'Nothing is spent', run:closeMenu }];
 }
 
 /* ---------- ⚔ a fight breaks out ----------
@@ -349,23 +357,17 @@ function fightGround(){
     showMoveSquares(h.floor, [...R.dist.keys()].filter(i => R.dist.get(i) <= left && i !== h.y * f.W + h.x && !tokenAt(h.floor, i % f.W, (i / f.W) | 0)), `${h.floor}:${h.x}:${h.y}:${left}`); }
   else clearMoveSquares();
 }
-// ⚔ A blow seen to land: a throw, a shot or a spell crosses to its target; a miss says so over them; the hero's own
-// blows, and those on the hero, are felt (a jolt of the camera). The damage itself rises from whoever took it.
-const SPELL_COL = { fire:'#ff8a3a', cold:'#9fd8ff', radiant:'#ffe9a0', necrotic:'#9dff8a', lightning:'#bfe0ff', force:'#c9a0ff', acid:'#b8ff6a', poison:'#8fe36a', thunder:'#d8d8ff', psychic:'#ff9ae0' };
-const critAt = new Map();
-function blowSeen(e){
-  if (!e?.actor || !e.target || !['hit', 'miss', 'critical'].includes(e.trigger)) return;
-  if (e.ranged) streak(e.actor.id, e.target.id, { spell:e.spell ? SPELL_COL[e.spell] || '#c9a0ff' : null });
-  if (e.trigger === 'critical') critAt.set(e.target.id, performance.now());
-  if (e.trigger === 'miss') setTimeout(() => floatText(e.target.id, 'MISS', '#d9d2c4'), 330);
-  const h = hero(); if (h && wandering() && e.trigger !== 'miss' && (e.actor.id === h.id || e.target.id === h.id)) rt.jolt = { at:performance.now() + 330, k:e.trigger === 'critical' ? 1.7 : 1 };
+// ⚔ A blow felt: the hero's own, or one on the hero, jolts the camera (what's drawn over them: ui/fightfx.js)
+function blowFelt(e){
+  const h = hero(); if (!h || !wandering() || !e?.actor || !e.target || !['hit', 'critical'].includes(e.trigger)) return;
+  if (e.actor.id === h.id || e.target.id === h.id) rt.jolt = { at:performance.now() + 330, k:e.trigger === 'critical' ? 1.7 : 1 };
 }
-let hurtLast = 0, hurtN = 0;
-function hurtSeen(e){
-  if (!e?.t || !(e.n > 0)) return;
-  const now = performance.now(); hurtN = now - hurtLast < 80 ? hurtN + 1 : 0; hurtLast = now;
-  const crit = now - (critAt.get(e.t.id) || -1e9) < 80;
-  setTimeout(() => floatText(e.t.id, `${crit ? 'CRIT ' : ''}−${e.n}`, crit ? '#ffd45a' : e.t.kind === 'monster' ? '#ff7a52' : '#ff3b3b', { big:crit }), 330 + hurtN * 160);
+// 🗣 A line to say, as a choice: what kind of line it is (an icon), and the check it needs as a tag, not tacked on
+const TALK_IC = { bye:'←', quest:'📜', ask:'❝', pitch:'🤝' };
+function talkRow(o, k){
+  const m = /\s*\(([A-Z][\w ]*?(?: or [A-Z][\w ]*?)?), (\d+)\)\s*$/.exec(o.label || '');
+  return { label:`${k + 1}. ${m ? o.label.slice(0, m.index) : o.label}`, icon:TALK_IC[o.k] || '❖', off:!!o.off, sub:typeof o.off === 'string' ? o.off : '',
+    tags:m ? [tag('check', `🎲 ${m[1]} ${m[2]}`)] : [] };
 }
 function say(k){ if (!k) return; const r = chooseTalk(k); talkSel.i = 0; if (r === 'joined') toast('A companion follows you now.'); }
 function dismissCard(){ const c = document.querySelector('#cardLayer .pop:last-child'); if (c) c.remove(); return !!c; }
@@ -479,7 +481,7 @@ function frame(now){
   if (now - glintAt > 250){ glintAt = now; try { const h = hero(); showGlints(h.floor, glintsSeen()); } catch (e){ console.warn(e); } }
   tickGlints(now);
   try { feelSteps(now); } catch (e){ console.warn(e); }
-  tickStepFx(now); tickFightFx(now);
+  tickStepFx(now);
   try { animals(dt); } catch (e){ console.warn(e); }
   if (now - musicAt > 1000){ musicAt = now; try { musicTick(hero()); } catch (e){ console.warn(e); } }   // (🎼 ui/regionmusic.js)
   try { lookThrough(hero(), now); } catch (e){ console.warn(e); }
@@ -553,7 +555,7 @@ export function ensureWander(){
   ui.wanderTap = null;
   // a crossing between maps (game/ways.js): the fog, the name, the sound
   passage.veil = veil; passage.banner = banner; passage.sting = id => tune({ door:'door', spotted:'gazeRises', fight:'fightBegins' }[id] || 'stairs');
-  bus.on('acted', blowSeen); bus.on('hurt', hurtSeen);
+  bus.on('acted', blowFelt);
   addEventListener('keydown', onKey, { capture:true });
   addEventListener('keyup', onKeyUp, { capture:true }); addEventListener('blur', () => { held = null; });
   document.addEventListener('click', onClick, true);

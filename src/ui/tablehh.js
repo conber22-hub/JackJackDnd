@@ -19,6 +19,8 @@
    chosen (kept per device). A controller plugged in plays it too. */
 import { state, ui, tokById } from '../engine/state.js';
 import { esc, signed } from '../util/core.js';
+import { optList, optInfo, tag } from './optrow.js';
+import { attackBits, spellBits, actBits, featBits } from './actrows.js';
 import { readPad, padIntents, keyIntent } from '../engine/pad.js';
 import { rangeCheck, coverOf, areaOf, areaSquares, spellReach } from '../engine/targeting.js';
 import { tokGap } from '../engine/movement.js';
@@ -131,9 +133,9 @@ function reachWords(t, tg, a){
 function strikeItems(t){
   const tg = target(), best = tg ? attackFor(t, tg) : -1, ok = a => { try { return !!tg && rangeCheck(t, tg, a).ok && coverOf(t, tg).cover !== 'total'; } catch { return false; } };
   const list = (t.attacks || []).map((a, i) => ({ a, i, r:ok(a) })).sort((x, y) => (y.i === best) - (x.i === best) || y.r - x.r);
-  return [...list.map(({ a, i, r }) => ({ label:a.n, sub:`${signed(a.b)} to hit · ${a.d} ${a.t || ''} · ${reachWords(t, tg, a)}`,
+  return [...list.map(({ a, i, r }) => ({ label:a.n, ...attackBits(a, reachWords(t, tg, a)), ...(r ? {} : { tone:'far' }),
       off:!r || (fight() && (!myTurn() || !strikesLeft(t))) || (a.l && !canCast(t, a.l, a.sn || a.n, a.again)), run:() => { menu.open = false; strike(tg, i); } })),
-    { label:'Back', sub:'Nothing is spent', run:() => { menu.open = false; } }];
+    { label:'Back', icon:'←', sub:'Nothing is spent', run:() => { menu.open = false; } }];
 }
 /* ---------- a spell from the buttons ----------
    At the target (an area aimed at its square), on yourself, or for healing and help a friend chosen on the screen;
@@ -275,8 +277,8 @@ function menuItems(){
   const t = me(); if (!t) return [back];
   const turnOk = !fight() || myTurn();
   if (menu.page === 'strike') return strikeItems(t);
-  if (menu.page === 'spells') return [...(t.casts || []).map((s, i) => ({ label:s.n,
-    sub:`${s.l ? `level ${s.l}` : 'cantrip'}${s.k === 'heal' ? ' · heals' : s.k === 'buff' ? ' · helps' : areaOf(s) ? ' · an area' : ''}${s.k === 'heal' || s.k === 'buff' || s.k === 'util' ? '' : target() ? ` · at ${target().name}` : ''}`,
+  if (menu.page === 'spells') return [...(t.casts || []).map((s, i) => [s, i]).sort((a, b) => (a[0].l || 0) - (b[0].l || 0)).map(([s, i]) => ({ label:s.n, group:s.l ? `Level ${s.l}` : 'Cantrips', ...spellBits(s), ...(areaOf(s) ? { icon:'✺' } : {}),
+    sub:`${spellBits(s).sub}${s.k === 'heal' || s.k === 'buff' || s.k === 'util' ? '' : target() ? ` · at ${target().name}` : ''}`,
     off:!turnOk || !canCast(t, s.l, s.n, s.again) || (fight() && !actionLeft(t)), run:() => { menu.open = false; castFromList(i); } })), back];
   if (menu.page === 'allies'){ const i = rt.cast?.i, sp = t.casts?.[i]; if (!sp) return [back];
     return [...alliesFor(t, sp).map(({ o, ok }) => ({ label:o.id === t.id ? `${o.name} (you)` : o.name, sub:`${Math.max(0, o.hp)} / ${o.maxHp} HP${ok ? '' : ' · out of reach'}`, off:!ok,
@@ -287,20 +289,20 @@ function menuItems(){
   if (menu.page === 'actions'){
     const ta = k => () => { menu.open = false; sendHost({ t:'turnAct', id:t.id, k }); if (k === 'dash' || k === 'dodge' || k === 'disengage'){ if (fight()) usedNow().acted = true; coachLearn(k); } };
     const tg = target(), spent = fight() && myTurn() && !strikesLeft(t);
-    const end = fight() ? [{ label:'End your turn', sub:spent ? 'Your action is spent' : 'Done for this round', off:!myTurn(), run:() => { menu.open = false; endTurn(); } }] : [];
+    const end = fight() ? [{ label:'End your turn', group:' ', icon:'⏭', sub:spent ? 'Your action is spent' : 'Done for this round', off:!myTurn(), run:() => { menu.open = false; endTurn(); } }] : [];
     // an attack: at the target, if it reaches (and from now on, A strikes with it); else choose who on the screen
     const atk = (a, i) => () => { menu.open = false;
       if (tg && rangeCheck(t, tg, a).ok && coverOf(t, tg).cover !== 'total'){ rt.atk = i; strike(tg); return; }
       if (fight()) usedNow().strikes++; cardAct('atk', i); };
     return [
       ...(spent ? end : []),
-      ...t.attacks.map((a, i) => ({ label:a.n, sub:`${a.b >= 0 ? '+' : ''}${a.b} · ${a.d} · ${tg && rangeCheck(t, tg, a).ok ? `at ${tg.name}` : 'choose who'}`, off:!turnOk || (fight() && !strikesLeft(t)) || (a.l && !canCast(t, a.l, a.sn || a.n, a.again)), run:atk(a, i) })),
-      ...(t.casts?.length ? [{ label:'Spells…', sub:fight() && !actionLeft(t) ? 'Your action is spent' : (t.resources || []).filter(r => r.slot).map(r => `L${r.slot} ${left(t, r.id)}/${r.max}`).join(' · ') || 'Cantrips', run:() => { menu.page = 'spells'; menu.i = 0; } }] : []),
-      ...(fight() ? [{ label:'Dash', sub:'Your speed again this turn', off:!myTurn(), run:ta('dash') }, { label:'Disengage', sub:'Leave without opportunity attacks', off:!myTurn(), run:ta('disengage') },
-        { label:'Dodge', sub:'Attacks against you at disadvantage', off:!myTurn(), run:ta('dodge') }, ...(t.conds?.some(c => c.n === 'prone') ? [{ label:'Stand up', off:!myTurn(), run:ta('stand') }] : [])] : []),
-      ...(t.resources || []).filter(r => !r.slot).map(r => ({ label:r.id === 'hd' ? 'Hit Die' : r.n, sub:`${left(t, r.id)} of ${r.max} left${r.id === 'surge' && usedNow().surged ? ' · used this turn' : ''}`,
+      ...t.attacks.map((a, i) => ({ label:a.n, group:'Strike', ...attackBits(a, tg && rangeCheck(t, tg, a).ok ? `at ${tg.name}` : 'choose who'), off:!turnOk || (fight() && !strikesLeft(t)) || (a.l && !canCast(t, a.l, a.sn || a.n, a.again)), run:atk(a, i) })),
+      ...(t.casts?.length ? [{ label:'Spells…', group:'Magic', icon:'✦', info:'Every spell you know, with what it does and what it costs.', sub:fight() && !actionLeft(t) ? 'Your action is spent' : (t.resources || []).filter(r => r.slot).map(r => `L${r.slot} ${left(t, r.id)}/${r.max}`).join(' · ') || 'Cantrips', run:() => { menu.page = 'spells'; menu.i = 0; } }] : []),
+      ...(fight() ? [{ label:'Dash', group:'Move & defend', ...actBits('dash'), off:!myTurn(), run:ta('dash') }, { label:'Disengage', group:'Move & defend', ...actBits('disengage'), off:!myTurn(), run:ta('disengage') },
+        { label:'Dodge', group:'Move & defend', ...actBits('dodge'), off:!myTurn(), run:ta('dodge') }, ...(t.conds?.some(c => c.n === 'prone') ? [{ label:'Stand up', group:'Move & defend', ...actBits('stand'), off:!myTurn(), run:ta('stand') }] : [])] : []),
+      ...(t.resources || []).filter(r => !r.slot).map(r => ({ label:r.id === 'hd' ? 'Hit Die' : r.n, group:'Your gifts', ...featBits({ id:r.id, n:r.n, left:left(t, r.id), max:r.max, text:r.text }), sub:`${left(t, r.id)} of ${r.max} left${r.id === 'surge' && usedNow().surged ? ' · used this turn' : ''}`,
         off:!turnOk || !left(t, r.id) || (r.id === 'surge' && (!fight() || usedNow().surged)), run:() => { menu.open = false; cardAct('feat', 0, r.id); } })),
-      { label:'🔍 Search', sub:'Look around for what\'s hidden', off:!turnOk, run:() => { menu.open = false; search(me()); } },
+      { label:'Search', group:' ', icon:'🔍', tags:[tag('act')], sub:'Look around for what\'s hidden', info:'Look over everything near you for what\'s hidden: a door, a trap, a thing put away.', off:!turnOk, run:() => { menu.open = false; search(me()); } },
       ...(spent ? [] : end),
       back];
   }
@@ -377,7 +379,7 @@ export function renderHud(){
   }
   show('tbMenu', menu.open);
   if (menu.open){ const items = menuItems(); menu.i = Math.min(menu.i, items.length - 1);
-    put('tbMenu', `<div class="wd-tt"><b>${esc(TITLE[menu.page] || '')}</b></div>${menu.page === 'help' ? `<div class="wd-tx">${esc(HELP)}</div>` : ''}<div class="wd-opts">${items.map((o, k) => `<button class="wd-opt${k === menu.i ? ' on' : ''}${o.off ? ' off' : ''}" data-tb="pick" data-i="${k}">${esc(o.label)}${o.sub ? `<small>${esc(o.sub)}</small>` : ''}</button>`).join('')}</div>`);
+    put('tbMenu', `<div class="wd-tt"><b>${esc(TITLE[menu.page] || '')}</b></div>${menu.page === 'help' ? `<div class="wd-tx">${esc(HELP)}</div>` : ''}<div class="wd-opts">${optList(items, menu.i, k => `data-tb="pick" data-i="${k}"`)}</div>${optInfo(items[menu.i])}`);
     // keep the highlight in sight when it moves (only then: a finger scrolling the list isn't pulled back)
     const key = `${menu.page}:${menu.i}`; if (key !== scrolledTo){ scrolledTo = key; document.querySelector('#tbMenu .wd-opt.on')?.scrollIntoView({ block:'nearest' }); } }
   else scrolledTo = '';

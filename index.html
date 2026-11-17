@@ -594,10 +594,11 @@ body.wander #modeHint, body.wander #moveTip, body.wander #btnPanel, body.wander 
 .wd-fight.hidden,.wd-talk.hidden,.wd-menu.hidden{display:none}
 /* ⚔ a fight in the Wanderer: the weapon line on the fight bar; the choice of blow sits low, clear of the figures; the cards wait at the top */
 .wd-weap{font-size:14px;color:#efe1c8}.wd-weap .near{color:#bfe3a0}.wd-weap .far{color:#ffb08a}
-.wd-menu.wd-strike{top:auto;left:auto;right:16px;bottom:calc(max(16px,env(safe-area-inset-bottom)) + 182px);transform:none;width:min(360px,calc(100vw - 32px));padding:12px 14px}
-.wd-menu.wd-strike .wd-opt{padding:7px 12px}.wd-menu.wd-strike .wd-tt b{font-size:20px}
-@media (max-width:640px){.wd-menu.wd-strike{right:auto;left:50%;transform:translateX(-50%)}}
-body.wd-fighting #cardLayer{justify-content:flex-start;padding-top:86px}
+.wd-menu.wd-dock{top:76px;left:auto;right:16px;bottom:auto;transform:none;width:min(390px,calc(100vw - 32px));max-height:calc(100vh - 290px);padding:12px 14px;display:flex;flex-direction:column;overflow:hidden}
+.wd-menu.wd-dock .wd-opts{overflow:auto;min-height:0;flex:1 1 auto;padding-right:2px}.wd-menu.wd-dock .wd-info{flex:none}
+.wd-menu.wd-dock .wd-opts{gap:5px}.wd-menu.wd-dock .wd-opt{padding:6px 12px;font-size:16px}.wd-menu.wd-dock .wd-opt.has-ic{padding-left:40px}.wd-menu.wd-dock .wd-opt small{font-size:12px}.wd-menu.wd-dock .wd-tt b{font-size:20px}
+@media (max-width:640px){.wd-menu.wd-dock{right:auto;left:50%;transform:translateX(-50%)}}
+body.wd-fighting #cardLayer{justify-content:flex-start;align-items:flex-start;padding:96px 0 0 16px}
 body.wd-fighting #cardLayer .pop{width:min(380px,calc(100vw - 32px));padding:12px 16px}
 body.wd-fighting #cardLayer .pop .t{font-size:20px}body.wd-fighting #cardLayer .pop .f{font-size:15px;margin:4px 0}body.wd-fighting #cardLayer .pop .big{font-size:26px}
 /* ⚔ a fight breaks out: bars close in, a red slash, what started it and who goes when */
@@ -621,7 +622,9 @@ body.wd-fighting #cardLayer .pop .t{font-size:20px}body.wd-fighting #cardLayer .
 @keyframes wdIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @keyframes wdOpenOut{to{opacity:0}}
 body.hh .wd-open .ttl{font-size:30px}body.hh .wd-open .fl{font-size:12px}body.hh .wd-open .slash{height:70px;top:calc(50% - 35px)}body.hh .wd-open .ord span{font-size:10px;padding:1px 6px}
-body.hh .wd-menu.wd-strike{bottom:auto;top:50%;transform:translate(-50%,-50%)}
+body.hh .wd-menu.wd-dock{bottom:auto;top:50%;left:50%;right:auto;transform:translate(-50%,-50%);max-height:calc(100% - 14px)}
+body.hh .wd-menu.wd-dock{padding:7px 9px}body.hh .wd-menu.wd-dock .wd-opt{font-size:12px;padding:4px 9px}body.hh .wd-menu.wd-dock .wd-opt small{font-size:10px}body.hh .wd-menu.wd-dock .wd-tt b{font-size:15px}body.hh .wd-menu.wd-dock .wd-opts{gap:3px}
+body.hh .wd-info{max-height:3.6em;overflow:hidden}
 body.hh.wd-fighting #cardLayer{padding-top:8px}
 .wd-order{display:flex;flex-wrap:wrap;gap:6px;font-size:13px}
 .wd-order span{padding:2px 10px;border-radius:999px;border:1px solid var(--line);color:var(--dim)}
@@ -641,6 +644,26 @@ body.hh.wd-fighting #cardLayer{padding-top:8px}
 .wd-opt small{display:block;color:var(--dim);font-size:13px}
 .wd-opt.on{border-color:var(--candle);background:rgba(233,165,74,.12)}
 .wd-opt.off{opacity:.5}
+/* 🎴 a choice that explains itself (ui/optrow.js): an icon, what it does, what it costs; groups; a word more under the list */
+.wd-opt{position:relative}
+.wd-opt.has-ic{padding-left:46px}
+.wd-opt.has-tg{padding-right:calc(var(--tw) + 14px)}.wd-opt.has-tg small{margin-right:calc(-1 * var(--tw))}
+.wd-opt[data-ic]::before{content:attr(data-ic);position:absolute;left:10px;top:50%;transform:translateY(-50%);width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:14px;line-height:1;background:rgba(233,165,74,.1);border:1px solid rgba(233,165,74,.32);color:var(--gold-hi)}
+.wd-opt.on[data-ic]::before{background:rgba(233,165,74,.28);border-color:var(--candle)}
+.wd-opt[data-tone="far"] small{color:#e8a58a}
+.wd-tags{position:absolute;right:10px;top:7px;display:flex;gap:4px;pointer-events:none}
+.wd-tags i{font-style:normal;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:1px 7px;border-radius:99px;border:1px solid;font-family:system-ui,sans-serif}
+.wd-tags .t-act{color:#ffd9a0;border-color:rgba(255,190,110,.45);background:rgba(255,170,80,.1)}
+.wd-tags .t-bonus{color:#a8f0c0;border-color:rgba(120,230,160,.45);background:rgba(90,200,130,.1)}
+.wd-tags .t-free{color:#cfe2ff;border-color:rgba(160,195,255,.42);background:rgba(120,160,240,.1)}
+.wd-tags .t-move{color:#f0e6c8;border-color:rgba(240,230,200,.35)}
+.wd-tags .t-react{color:#ffc0d0;border-color:rgba(255,150,180,.42)}
+.wd-tags .t-slot{color:#e3c8ff;border-color:rgba(200,160,255,.45);background:rgba(170,120,255,.12)}
+.wd-tags .t-conc{color:#d8d0ff;border-color:rgba(200,190,255,.35)}
+.wd-tags .t-check{color:#ffe7a8;border-color:rgba(255,220,140,.42);background:rgba(255,210,120,.08);text-transform:none;letter-spacing:0}
+.wd-grp{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin:6px 2px -2px;font-family:system-ui,sans-serif}
+.wd-grp:first-child{margin-top:0}
+.wd-info{margin-top:10px;padding:8px 12px;border-radius:12px;background:rgba(0,0,0,.28);border-left:2px solid var(--candle);font-size:14px;line-height:1.35;color:#eadcc6;font-style:italic}
 .wd-keys{margin-top:16px;font-size:15px}
 .wd-q{display:flex;flex-direction:column;gap:1px;padding:6px 0;border-bottom:1px solid var(--line)}
 .wd-q b{font-size:17px;color:#f0d6a8;font-weight:600}.wd-q span{font-size:15px;color:var(--dim)}.wd-q.done b{color:var(--dim);text-decoration:line-through}
@@ -762,6 +785,8 @@ body.hh .wd-talk,body.hh .wd-menu{width:calc(100% - 14px);max-height:calc(100% -
 body.hh .wd-tt{margin-bottom:5px}body.hh .wd-tt b{font-size:14px}body.hh .wd-tt span{font-size:11px}
 body.hh .wd-tx{font-size:12px;margin-bottom:7px}
 body.hh .wd-opts{gap:4px}body.hh .wd-opt{font-size:12px;padding:5px 9px;border-radius:9px}body.hh .wd-opt small{font-size:10px}
+body.hh .wd-opt.has-ic,body.hh .wd-menu.wd-dock .wd-opt.has-ic{padding-left:30px}body.hh .wd-opt[data-ic]::before{left:6px;width:18px;height:18px;font-size:10px}
+body.hh .wd-opt.has-tg{padding-right:calc(var(--tw) * .7 + 8px)}body.hh .wd-opt.has-tg small{margin-right:calc(-.7 * var(--tw))}body.hh .wd-tags{right:6px;top:4px}body.hh .wd-tags i{font-size:8px;padding:0 5px}body.hh .wd-grp{font-size:8px;margin:3px 2px -1px}body.hh .wd-info{font-size:10px;padding:4px 8px;margin-top:5px}
 body.hh .wd-q b{font-size:12px}body.hh .wd-q span{font-size:11px}
 body.hh #cardLayer .pop{width:calc(100% - 20px);padding:9px 12px;max-height:calc(100% - 20px);overflow:auto}
 body.hh #cardLayer .pop .t{font-size:17px}body.hh #cardLayer .pop .f{font-size:13px;margin:4px 0}body.hh #cardLayer .pop .r{font-size:11px}
