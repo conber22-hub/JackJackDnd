@@ -88,6 +88,8 @@ test('a hero walks the valley alone: a companion won over, an ambush on the road
   if (fell) expect(after.xp).toBeGreaterThan(0);
   expect(after.hero.hp).toBeGreaterThan(0);
   await expect(page.locator('#wdFight')).toBeHidden();
+  // a won fight ends on the victory screen (Muse's ui/victory.js); Ⓑ puts it away
+  if (fell){ await expect(page.locator('#victory')).toBeVisible(); await page.keyboard.press('Escape'); await expect(page.locator('#victory')).toHaveCount(0); }
 
   // leave to the start page: saved in its own slot, the DM's untouched; then carry on
   await page.keyboard.press('m');
