@@ -14,6 +14,7 @@ import { poseRig, playAction } from './forge/anim.js';
 import { hasClip, clipDuration } from './forge/clips.js';
 import { lookFor } from '../engine/look.js';
 import { hashSeed } from '../util/core.js';
+import { lunge, impact, dodge } from './punch.js';
 
 export function M(geo, color, emi, opts = {}){
   const mat = new THREE.MeshStandardMaterial({ color, roughness:opts.rough ?? .7, metalness:opts.metal ?? .05,
@@ -285,6 +286,9 @@ export function buildFigure(t){
   return g;
 }
 
+// 💥 a killing blow on its way (ui/fightfx.js): the figure doesn't fall until it lands
+const fallHeld = new Map();
+export function holdFall(id, ms){ fallHeld.set(id, performance.now() + ms); }
 export const tokenViews = new Map();   // token id -> { group, key, labelKey, label, anim }
 const condText = t => [...(t.conds || []).map(c => `${CONDITIONS[c.n]?.icon || '•'}${c.n}`), ...(t.conc ? [`🌀${t.conc.n}`] : [])].join(' ');
 export function syncTokens(){
@@ -294,7 +298,10 @@ export function syncTokens(){
   for (const t of state.tokens){
     let tv = tokenViews.get(t.id);
     const key = figureKey(t);
-    if (!tv || tv.key !== key){
+    // a killing blow still on its way: the figure stands until it lands (holdFall), then falls
+    const held = tv && t.dead && !tv.group.userData.wasDead && (fallHeld.get(t.id) || 0) > performance.now();
+    if (held){ if (!fallHeld.get(`${t.id}:s`)){ fallHeld.set(`${t.id}:s`, 1); setTimeout(() => { fallHeld.delete(`${t.id}:s`); syncTokens(); }, fallHeld.get(t.id) - performance.now() + 20); } }
+    else if (!tv || tv.key !== key){
       const wasAlive = tv && !tv.group.userData.wasDead;
       const keepPos = tv ? tv.group.position.clone() : null;
       if (tv){ tv.group.parent?.remove(tv.group); if (tv.group.userData.fig?.userData.rig) disposeForge(tv.group.userData.fig); }
@@ -328,7 +335,7 @@ export function syncTokens(){
     // label
     const showHp = !pv || t.kind !== 'monster', ct = condText(t);
     const lk = [t.name, t.hp, t.maxHp, showHp, t.dead, ct, t.flags.seeded].join('|');
-    if (tv.labelKey !== lk){
+    if (tv.labelKey !== lk && !held){
       if (tv.label){ tv.group.remove(tv.label); tv.label.material.map?.dispose(); tv.label.material.dispose(); }
       const c = t.kind === 'monster' ? '#ffb3b3' : t.kind === 'npc' ? '#d6c8ff' : t.color;
       tv.label = makeLabel(t.dead ? `${t.name} ✝${t.flags.seeded ? ' ☣' : ''}` : t.name, c, 26, showHp && !t.dead ? [t.hp, t.maxHp] : null, t.kind !== 'monster', t.dead ? '' : ct);
@@ -353,7 +360,11 @@ export function clearTokenViews(){ for (const tv of tokenViews.values()) tv.grou
 
 /* A forged figure acts: turns to face its target and swings, casts or flinches (render/forge/anim.js).
    kind: 'attack' | 'cast' | 'hit'. Anything else (models, standees, old shapes) just ignores it. */
-export function actOn(id, kind, targetId = null){
+export function actOn(id, kind, targetId = null, info = null){
+  // 💥 every figure feels it (render/punch.js): the attacker lunges, the one struck is knocked back, a miss sways aside
+  if (kind === 'attack' && targetId) lunge(id, targetId, info || {});
+  else if (kind === 'hit') impact(id, targetId, info || {});
+  else if (kind === 'miss'){ dodge(id, targetId); return; }
   const tv = tokenViews.get(id), fig = tv?.group.userData.fig, rig = fig?.userData.rig; if (!rig) return;
   const tg = targetId && tokById(targetId), me = tokById(id);
   if (tg && me && tg.id !== me.id) fig.userData.faceTo = Math.atan2(tg.x - me.x, tg.y - me.y);

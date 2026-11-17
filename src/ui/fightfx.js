@@ -11,6 +11,10 @@
    (render/fightzone.js). */
 import { bus } from '../util/core.js';
 import { floatText, streak, ringPulse } from '../render/fightzone.js';
+import { impact, setMine } from '../render/punch.js';
+import { holdFall } from '../render/minis.js';
+import { state, ui } from '../engine/state.js';
+import { shareOf } from '../engine/punch.js';
 
 const SPELL_COL = { fire:'#ff8a3a', cold:'#9fd8ff', radiant:'#ffe9a0', necrotic:'#9dff8a', lightning:'#bfe0ff', force:'#c9a0ff', acid:'#b8ff6a', poison:'#8fe36a', thunder:'#d8d8ff', psychic:'#ff9ae0' };
 const ACT = { dash:['DASH', '#ffd27a'], dodge:['DODGE', '#9fd8ff'], disengage:['DISENGAGE', '#d8c8ff'], stand:['UP', '#efe6d2'] };
@@ -21,10 +25,12 @@ const after = (ms, fn) => setTimeout(fn, ms);
 
 const critAt = new Map();
 let hurtLast = 0, hurtN = 0, healLast = 0, healN = 0;
+const blowAt = new Map();   // a blow from a swing, shot or spell attack: its impact comes with the swing (render/punch.js)
 function acted(e){
   if (!e?.actor) return;
   if (e.trigger === 'hit' || e.trigger === 'miss' || e.trigger === 'critical'){
     if (!e.target) return;
+    blowAt.set(e.target.id, performance.now());
     if (e.ranged) streak(e.actor.id, e.target.id, { spell:e.spell ? SPELL_COL[e.spell] || '#c9a0ff' : null });
     if (e.trigger === 'critical') critAt.set(e.target.id, performance.now());
     if (e.trigger === 'miss') after(330, () => floatText(e.target.id, 'MISS', '#d9d2c4'));
@@ -40,6 +46,10 @@ function hurt(e){
   const now = performance.now(); hurtN = now - hurtLast < 80 ? hurtN + 1 : 0; hurtLast = now;
   const crit = now - (critAt.get(e.t.id) || -1e9) < 80;
   after(330 + hurtN * 160, () => floatText(e.t.id, `${crit ? 'CRIT ' : ''}−${e.n}`, crit ? '#ffd45a' : e.t.kind === 'monster' ? '#ff7a52' : '#ff3b3b', { big:crit }));
+  // 💥 a killing blow: the figure stands until it lands, then falls (render/minis.js)
+  if (e.t.dead) holdFall(e.t.id, 500 + hurtN * 160);
+  // what had no swing (a spell's area, a trap, a burst): it lands all the same, from nowhere in particular
+  if (now - (blowAt.get(e.t.id) || -1e9) > 60){ const t = e.t, kill = !!t.dead; after(330 + hurtN * 160, () => impact(t.id, null, { r:shareOf(e.n, t.maxHp), kill })); }
 }
 function healed(e){
   if (!e?.t || !(e.n > 0)) return;
@@ -63,6 +73,8 @@ function cond(e){
 let wired = false;
 export function wireFightFx(){
   if (wired) return; wired = true;
+  // the one watching: a player's own hero, or the Wanderer's (their hurts redden the screen's edges)
+  setMine(id => !!id && (id === ui.myToken || id === state?.campaign?.wander?.heroTok));
   bus.on('acted', acted); bus.on('hurt', hurt); bus.on('healed', healed);
   bus.on('turnAct', turnAct); bus.on('feature', feature); bus.on('cond', cond);
 }

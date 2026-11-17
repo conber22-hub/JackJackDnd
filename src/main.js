@@ -23,6 +23,7 @@ import { tokenViews } from './render/minis.js';
 import { poseRig } from './render/forge/anim.js';
 import { selRing, updatePings, updateGroupRings } from './render/effects.js';
 import { tickFightFx } from './render/fightzone.js';
+import { tickPunch, worldSpeed } from './render/punch.js';
 import { wireFightFx } from './ui/fightfx.js';
 import { wireDice } from './ui/dicemoment.js';
 import { updateAmbience, weatherKind } from './render/ambience.js';
@@ -117,17 +118,20 @@ function frame(){
     const k = ambient.intensity / .93; hemi.intensity = .45 * k * (DL ? DL.fill : 1); moon.intensity = 1.1 * k * (DL ? DL.sunK : 1);
     sunShadow(DL);
     const hue = new THREE.Color(D.hue);
+    // 💥 the hit-stop (render/punch.js): at a blow's impact the figures' swings and clips hold still, then (a killing
+    // blow) run slow; an action's clock is pushed on by the time it was held
+    const ws = worldSpeed(now), adt = dt * ws;
     for (const tv of tokenViews.values()){
       const g = tv.group, u = g.userData, fig = u.fig;
       if (u.light){ u.light.intensity = u.light.userData.base * (1 - D.flick * (.5 + .5 * Math.sin(t * 13 + g.id) * Math.sin(t * 7.3 + g.id * 2))); if (u.light.userData.torch) u.light.color.lerp(hue, .05); }
       if (!fig || !g.visible) continue;
       if (g.userData.wasDead && !fig.userData.rig?.clip) continue;   // the dead rest — unless a death clip is playing, which poseRig drives
-      if (fig.userData.rig){ poseRig(fig, t, dt, !!tv.anim); continue; }   // forged figures animate themselves
+      if (fig.userData.rig){ const rg = fig.userData.rig; if (ws < 1){ const h = dt * (1 - ws); if (rg.action) rg.action.t0 += h; if (rg.clip) rg.clip.t0 += h; } poseRig(fig, t, adt, !!tv.anim); continue; }   // forged figures animate themselves
       if (fig.userData.billboard){ const v = camera.position.clone(); g.worldToLocal(v); fig.rotation.y = Math.atan2(v.x, v.z); }
       if (fig.userData.hover) fig.position.y = .15 + Math.sin(t * 2 + g.id) * .08;
       if (fig.userData.pulse){ const s = 1 + Math.sin(t * 2.4 + g.id) * .04; fig.scale.set(s, 1 / s, s); }
       if (fig.userData.skitter) fig.rotation.y = Math.sin(t * 6 + g.id) * .25;
-      if (u.mixer) u.mixer.update(dt);
+      if (u.mixer) u.mixer.update(adt);
       if (fig.userData.prowl) fig.position.y = Math.abs(Math.sin(t * 3 + g.id)) * .02;
       if (!fig.userData.hover && !fig.userData.pulse && !fig.userData.billboard) fig.scale.y = 1 + Math.sin(t * 1.6 + g.id) * .012;   // breathing
       if (fig.userData.climber) climb(g, fig, t);
@@ -154,7 +158,7 @@ function frame(){
     const mp = mist.geometry.attributes.position; for (let i = 0; i < mp.count; i++){ mp.array[i*3] += Math.sin(t * .2 + i) * .004; mp.array[i*3+2] += .006; if (mp.array[i*3+2] > 30) mp.array[i*3+2] = -30; } mp.needsUpdate = true;
     mist.material.opacity = .08 + state.dread * .018; mist.material.color.lerp(new THREE.Color((THEMES[state.floors[ui.floor]?.theme] || THEMES[0]).mist), .02);
     if (state.dread >= 8) mist.material.color.lerp(redMist, .01);
-    updatePings(now); tickFightFx(now);   // (⚔ what each action leaves over the figures: ui/fightfx.js)
+    updatePings(now); tickFightFx(now); tickPunch(now);   // (⚔ what each action leaves over the figures: ui/fightfx.js)
     // whispers
     if (ui.whispers && ui.role === 'dm' && state.dread >= 3 && now > whisperAt){ whisperAt = now + (60 - state.dread * 4.5) * 1000 * (0.6 + Math.random() * .8); sendWhisper(pick(WHISPERS)); }
     $('#bloodrim').style.boxShadow = `inset 0 0 ${state.dread * 14}px rgba(150,20,30,${(state.dread - 1) * .05})`;

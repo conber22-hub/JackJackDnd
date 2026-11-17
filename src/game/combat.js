@@ -10,6 +10,7 @@ import { burst, showReach, clearReach, flashArea } from '../render/effects.js';
 import { showCard, toast, banner, sendWhisper } from '../ui/hud.js';
 import { WHISPERS } from '../data/dread.js';
 import { sfx } from '../audio/sound.js';
+import { shareOf } from '../engine/punch.js';
 import { currentTurn, addCond, removeCond, tickConds, hasCond, saveBonus, stopped, startConc, endConc, defend, defNote, immuneTo, saveRoll, saveTxt, timingFor, condPhase, endOn, moveAllowance } from './rules.js';
 import { SPELL_EFFECTS } from '../data/spell-effects.js';
 import { witnessed, stepFolkNow } from './folk.js';
@@ -237,7 +238,7 @@ export function endCombat(){ for (const t of state.combat.order.map(tokById)) if
   clearOpportunities(); state.tokens.forEach(freshTurn); state.combat = { active:false, order:[], idx:0, round:1, floor:ui.floor }; log('Combat ends.'); clearReach(); const t = ui.selected && tokById(ui.selected); if (t) showReach(t); changed(); }
 
 // A figure's swing, spell or flinch, on every screen (only forged figures move; the rest ignore it).
-function animate(id, kind, target){ actOn(id, kind, target); broadcast({ t:'act', id, kind, target }); }
+function animate(id, kind, target, fx = null){ actOn(id, kind, target, fx); broadcast({ t:'act', id, kind, target, ...(fx ? { fx } : {}) }); }
 
 /* ---------- attacks & saves ---------- */
 const nearSeep = (tg, a) => state.tokens.some(o => o.id !== a.id && o.id !== tg.id && !o.dead && o.floor === tg.floor && hasTag(o, 'seep') && cheb(o.x, o.y, tg.x, tg.y) <= 1);
@@ -317,7 +318,11 @@ export function doAttack(aId, tId, i, mode = 'normal', { d20 = null, at = null }
   sfx(crit ? 'crit' : hits.length ? 'hit' : 'miss');
   // 🗣 a voice line (ui/voices.js); ⚔ the blow seen to land: the number over them, a streak for a throw, a shot or a spell (ui/wander.js)
   bus.emit('acted', { actor:a, target:tg, trigger:crit ? 'critical' : hits.length ? 'hit' : 'miss', action:atk.n, dmg:total, ranged:rc.kind === 'ranged' && a.id !== tg.id, spell:atk.t && !!(atk.l !== undefined || / casts /.test(atk.f || '')) ? atk.t : null, die });
-  animate(a.id, 'attack', tg.id); if (hits.length) setTimeout(() => animate(tg.id, 'hit', a.id), 330);
+  // 💥 the blow felt (render/punch.js): how much of them it took (a share, never the HP), a crit, a kill; a miss sways aside
+  const ranged = rc.kind === 'ranged', self = a.id === tg.id;
+  if (!self) animate(a.id, 'attack', tg.id, { ranged });
+  if (hits.length) setTimeout(() => animate(tg.id, 'hit', self ? null : a.id, { r:shareOf(total, tg.maxHp), crit, kill:!!tg.dead || tg.hp <= 0 }), 330);
+  else if (!self) setTimeout(() => animate(tg.id, 'miss', a.id), 330);
   // (the Wanderer's card waits for the blow to land, so it doesn't cover the swing: one hero, one camera, on them)
   const card = { kind:crit ? 'crit' : hits.length ? '' : 'miss', title:`${a.name} → ${tg.name}`, sub:atk.n, flair, lines, big:hits.length ? `${total} ${atk.t}` : '', die };
   if (ui.wander) setTimeout(() => showCard(card), 700); else showCard(card);
@@ -343,7 +348,7 @@ export function applyDamage(t, n, type = '', by = null, defended = false){
     const hooks = BEST[t.bid]?.hooks?.onBloodied;
     if (hooks){ showCard({ kind:'seep', title:`${t.name} is bloodied`, flair:'Something changes in the way it holds itself.' }); for (const fx of hooks) runFx(t, fx); }
   }
-  if (t.hp <= 0 && !(t.nem && nemesisHolds(t))){ kill(t, type, by); setTimeout(checkVictory, 600); }
+  if (t.hp <= 0 && !(t.nem && nemesisHolds(t))){ kill(t, type, by); setTimeout(checkVictory, 1300); }   // (after the last one has fallen: render/punch.js)
   bus.emit('hurt', { t, n, type });   // (⚔ the number rising over them: ui/wander.js)
   if (t.kind === 'pc') bus.emit('acted', { actor:t, trigger:t.hp <= 0 ? 'down' : 'hurt', action:'' });   // 🗣 a hero hurt or down says so (ui/voices.js)
   const dealt = n;

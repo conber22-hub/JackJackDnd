@@ -1,0 +1,225 @@
+/* 💥 A BLOW FELT ON THE MAP — every figure, whatever it's made of (forged, a model, a paper standee, an old shape):
+     · the attacker lunges in to meet the blow (a shot or a spell kicks back a touch instead)
+     · at the moment it lands the world holds still for a few hundredths of a second (the hit-stop: figures' swings,
+       models' clips and everything here pause), longer for a heavy blow, longer still for a crit
+     · the one struck flashes white and is knocked back along the line of the blow, then springs home
+     · a slash of light across them (a gold cross on a crit), sparks and blood thrown out the far side, and a splash
+       of it left on the ground for the rest of the fight (rot for the Seep; dust for the dead; nothing for a ghost)
+     · the camera's view punches in; a crit flashes the screen, and a hero of yours hurt reddens its edges
+     · a killing blow: a longer hold, then slow motion, the body thrown back to lie where it falls, and a pale wisp
+       rising out of it
+     · a miss: they sway aside and back
+   The numbers are engine/punch.js; the game says when (game/combat.js animate → minis.js actOn → here, on every
+   screen); ui/fightfx.js covers what has no swing (a spell's area). */
+import * as THREE from 'three';
+import { camera, fx } from './scene.js';
+import { tokenViews } from './minis.js';
+import { state, tokById } from '../engine/state.js';
+import { BEST } from '../data/bestiary.js';
+import { impactOf, speedAt, moveAt, bloodOf } from '../engine/punch.js';
+
+/* ---------- the hit-stop: the world's clock ---------- */
+let imp = null, impAt = -1e9, clk = 0, lastNow = 0;
+// how fast the world runs right now (0 frozen .. 1): main.js slows figures' swings and clips by it
+export const worldSpeed = (now = performance.now()) => speedAt(now - impAt, imp);
+function hold(I, now){
+  // a new blow only takes over if it holds longer than what's left of the one under way
+  const left = imp ? imp.stop + (imp.slowMs || 0) - (now - impAt) : 0;
+  if (I.stop + I.slowMs > left){ imp = I; impAt = now; }
+}
+
+/* ---------- moves: lunge, knock, dodge ---------- */
+const moves = new Map();   // id -> [{ kind, t0 (world clock), ms, amp, dx, dz, back }]
+const dirOf = (from, to) => {
+  const a = tokById(from), b = tokById(to); if (!a || !b || a.id === b.id) return null;
+  const dx = (b.x + ((b.size || 1) - 1) / 2) - (a.x + ((a.size || 1) - 1) / 2), dz = (b.y + ((b.size || 1) - 1) / 2) - (a.y + ((a.size || 1) - 1) / 2), l = Math.hypot(dx, dz) || 1;
+  return { x:dx / l, z:dz / l };
+};
+function addMove(id, m){ if (!moves.has(id)) moves.set(id, []); moves.get(id).push({ t0:clk, ...m }); }
+
+/* ---------- flashes: every mesh of the figure white for an instant ---------- */
+const white = new THREE.MeshBasicMaterial({ color:'#ffffff' }), pale = new THREE.MeshBasicMaterial({ color:'#ffd8d0' });
+const flashes = [];
+function flash(id, ms, crit){
+  const fig = tokenViews.get(id)?.group.userData.fig; if (!fig || !ms) return;
+  const until = performance.now() + ms;
+  fig.traverse(o => {
+    if (!o.isMesh || Array.isArray(o.material) || o.userData.punchOrig) return;
+    o.userData.punchOrig = o.material; o.material = crit ? white : pale; flashes.push({ o, until });
+  });
+}
+
+/* ---------- the slash, the sparks, the splash, the wisp ---------- */
+const glowTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), r = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(.3, 'rgba(255,255,255,.6)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, 64, 64);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
+// a splash on the ground, a few shapes to choose from
+const splatTex = [0, 1, 2].map(seed => {
+  const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d');
+  let s = seed * 9301 + 49297; const rnd = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+  g.fillStyle = '#fff';
+  g.beginPath(); g.arc(64, 64, 26 + rnd() * 8, 0, 7); g.fill();
+  for (let i = 0; i < 9; i++){ const a = rnd() * 6.28, d = 24 + rnd() * 30, r = 4 + rnd() * 10; g.beginPath(); g.arc(64 + Math.cos(a) * d, 64 + Math.sin(a) * d, r, 0, 7); g.fill(); }
+  for (let i = 0; i < 14; i++){ const a = rnd() * 6.28, d = 40 + rnd() * 20; g.beginPath(); g.arc(64 + Math.cos(a) * d, 64 + Math.sin(a) * d, 1.5 + rnd() * 3, 0, 7); g.fill(); }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+});
+const arcGeo = new THREE.RingGeometry(.3, .62, 28, 1, -1.2, 2.4), splatGeo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
+const bits = [];    // { obj, t0 (world clock), ms, kind, ... } — arcs, sparks, glows, wisps
+const splats = [];  // the fight's splashes, cleared when it ends
+let fadeFrom = 0;
+let made = { impacts:0, kills:0, dodges:0, lunges:0, splats:0 };
+const tmp = new THREE.Vector3(), tmp2 = new THREE.Vector3();
+
+function at(id){ const tv = tokenViews.get(id); if (!tv?.group?.parent) return null; return { tv, parent:tv.group.parent, pos:tv.group.position.clone() }; }
+function slash(P, dir, crit, color){
+  const n = crit ? 2 : 1;
+  for (let i = 0; i < n; i++){
+    const m = new THREE.Mesh(arcGeo, new THREE.MeshBasicMaterial({ color, transparent:true, depthWrite:false, depthTest:false, side:THREE.DoubleSide, blending:THREE.AdditiveBlending }));
+    m.position.copy(P.pos).setY(P.pos.y + .72); m.renderOrder = 26;
+    // the arc faces whoever struck (or the camera when no one did), tilted like a swing
+    if (dir) m.lookAt(tmp.copy(m.position).addScaledVector(tmp2.set(-dir.x, 0, -dir.z), 1)); else m.quaternion.copy(camera.quaternion);
+    const tilt = (crit ? (i ? -.8 : .8) : (Math.random() - .5) * 1.4);
+    m.rotateZ(tilt); P.parent.add(m);
+    bits.push({ obj:m, t0:clk + i * 30, ms:crit ? 260 : 200, kind:'arc', spin:crit ? 1.4 : 1.1 * Math.sign(tilt || 1) });
+  }
+  const g = new THREE.Sprite(new THREE.SpriteMaterial({ map:glowTex, color, transparent:true, depthWrite:false, depthTest:false, blending:THREE.AdditiveBlending }));
+  g.position.copy(P.pos).setY(P.pos.y + .75); g.renderOrder = 27; P.parent.add(g);
+  bits.push({ obj:g, t0:clk, ms:crit ? 220 : 150, kind:'glow', s:crit ? 1.6 : 1 });
+}
+function spray(P, dir, blood, crit, kill){
+  const n = crit || kill ? 30 : 16, geo = new THREE.BufferGeometry(), pos = new Float32Array(n * 3), vel = [];
+  const col = new Float32Array(n * 3), c1 = new THREE.Color(blood.spark), c2 = new THREE.Color(blood.color);
+  for (let i = 0; i < n; i++){
+    pos.set([P.pos.x, P.pos.y + .75, P.pos.z], i * 3);
+    const sp = 1.6 + Math.random() * (crit ? 3.2 : 2.2), a = (Math.random() - .5) * 1.6;
+    const bx = dir ? dir.x : Math.cos(i), bz = dir ? dir.z : Math.sin(i);
+    const vx = bx * Math.cos(a) - bz * Math.sin(a), vz = bx * Math.sin(a) + bz * Math.cos(a);
+    vel.push(new THREE.Vector3(vx * sp, 1 + Math.random() * 2.4, vz * sp));
+    (i % 3 ? c2 : c1).toArray(col, i * 3);
+  }
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  const p = new THREE.Points(geo, new THREE.PointsMaterial({ size:.09, vertexColors:true, transparent:true, depthWrite:false, fog:false }));
+  p.renderOrder = 24; P.parent.add(p);
+  bits.push({ obj:p, t0:clk, ms:520, kind:'spray', vel, floor:P.pos.y + .04 });
+}
+function splat(P, dir, blood, big){
+  if (!blood.splat) return;
+  const m = new THREE.Mesh(splatGeo, new THREE.MeshBasicMaterial({ map:splatTex[(Math.random() * 3) | 0], color:blood.color, transparent:true, opacity:.85, fog:false, depthWrite:false, polygonOffset:true, polygonOffsetFactor:-2 }));
+  const d = .4 + Math.random() * .3;   // thrown out behind them, clear of their feet
+  m.position.set(P.pos.x + (dir ? dir.x * d : 0) + (Math.random() - .5) * .15, P.pos.y + .065, P.pos.z + (dir ? dir.z * d : 0) + (Math.random() - .5) * .15);
+  m.rotation.y = Math.random() * 6.28; m.renderOrder = 3;
+  const s = (big ? .95 : .6) + Math.random() * .25; m.scale.setScalar(.01); P.parent.add(m);
+  splats.push(m); bits.push({ obj:m, t0:clk, ms:180, kind:'splat', s }); made.splats++;
+  while (splats.length > 48){ const o = splats.shift(); o.parent?.remove(o); o.material.dispose(); }
+}
+function wisp(P, color){
+  const g = new THREE.Sprite(new THREE.SpriteMaterial({ map:glowTex, color, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending }));
+  g.position.copy(P.pos).setY(P.pos.y + .4); g.renderOrder = 27; P.parent.add(g);
+  bits.push({ obj:g, t0:clk + 250, ms:1500, kind:'wisp', y0:P.pos.y + .4 });
+}
+
+/* ---------- the screen and the camera ---------- */
+let screenEl = null;
+function screen(kind){
+  if (typeof document === 'undefined') return;
+  if (!screenEl){ screenEl = document.createElement('div'); screenEl.id = 'punchScreen';
+    Object.assign(screenEl.style, { position:'fixed', inset:'0', pointerEvents:'none', zIndex:'6', opacity:'0' }); document.body.appendChild(screenEl); }
+  const S = {
+    crit: ['radial-gradient(circle at 50% 50%, rgba(255,240,200,.38), rgba(255,220,140,.12) 60%, rgba(0,0,0,0))', 180],
+    kill: ['radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 40%, rgba(20,0,4,.55))', 650],
+    hurt: ['radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 45%, rgba(200,10,20,.5))', 520],
+    down: ['radial-gradient(circle at 50% 50%, rgba(60,0,0,.15) 20%, rgba(150,0,10,.75))', 1100],
+  }[kind]; if (!S) return;
+  screenEl.style.background = S[0];
+  screenEl.getAnimations?.().forEach(a => a.cancel());
+  screenEl.animate?.([{ opacity:1 }, { opacity:kind === 'kill' ? .8 : 0, offset:kind === 'kill' ? .5 : 1 }, { opacity:0 }], { duration:S[1], easing:'ease-out' });
+}
+let kick = null, baseFov = null;
+function fovKick(deg, ms = 300){ if (!deg) return; if (baseFov == null) baseFov = camera.fov; kick = { at:performance.now(), ms, deg:Math.max(deg, kick && performance.now() - kick.at < 120 ? kick.deg : 0) }; }
+
+/* ---------- what the game calls ---------- */
+let mine = () => false;
+// which figures are the one watching this screen (their hero): their hurts redden the screen's edges
+export function setMine(fn){ mine = fn || (() => false); }
+
+// the attacker: in to meet the blow (ranged: a kick back)
+export function lunge(id, targetId, { ranged = false } = {}){
+  const d = dirOf(id, targetId); if (!d) return;
+  addMove(id, { kind:ranged ? 'knock' : 'lunge', ms:ranged ? 380 : 620, amp:ranged ? -.08 : .3, dx:d.x, dz:d.z, back:true }); made.lunges++;
+}
+// the blow lands on `id`, from `fromId` (none: a spell's area, a trap). info: { r, crit, kill }
+export function impact(id, fromId, info = {}){
+  const t = tokById(id), P = at(id); if (!t || !P) return;
+  const I = impactOf(info), now = performance.now(), d = fromId ? dirOf(fromId, id) : null;
+  const blood = bloodOf({ tags:BEST[t.bid]?.tags, name:t.name, kind:t.kind });
+  hold(I, now); made.impacts++; if (info.kill) made.kills++;
+  addMove(id, { kind:'knock', ms:info.kill ? 380 : 420, amp:I.knock, dx:d ? d.x : 0, dz:d ? d.z : 0, back:I.back });
+  flash(id, I.flash, info.crit);
+  slash(P, d, info.crit, info.crit ? '#ffd45a' : blood.splat ? '#fff0e0' : blood.spark);
+  spray(P, d, blood, info.crit, info.kill);
+  splat(P, d, blood, info.crit || info.kill);
+  if (info.kill) wisp(P, blood.splat ? '#e8e0ff' : blood.spark);
+  fovKick(I.kick, info.kill ? 650 : info.crit ? 420 : 280);
+  if (I.shake > .4) fx.shake = Math.max(fx.shake, (I.shake - .3) * .16);
+  const me = mine(id);
+  if (me) screen(info.kill || t.hp <= 0 ? 'down' : 'hurt');
+  else if (I.screen) screen(I.screen);
+}
+// a miss: they sway aside, away from the blow
+export function dodge(id, fromId){
+  const d = dirOf(fromId, id); if (!d) return;
+  const side = Math.random() < .5 ? 1 : -1;
+  addMove(id, { kind:'dodge', ms:340, amp:.2, dx:-d.z * side, dz:d.x * side, back:true }); made.dodges++;
+}
+
+/* ---------- every frame (main.js) ---------- */
+export function tickPunch(now = performance.now()){
+  const dt = lastNow ? Math.min(100, now - lastNow) : 16; lastNow = now;
+  const sp = worldSpeed(now); clk += dt * sp;
+  // the figures: the sum of their moves, from where they stand
+  for (const [id, list] of moves){
+    const fig = tokenViews.get(id)?.group.userData.fig;
+    const alive = !tokById(id)?.dead;
+    for (let i = list.length - 1; i >= 0; i--) if (clk - list[i].t0 >= list[i].ms && (list[i].back || alive)) list.splice(i, 1);   // (the dead lie where they were thrown)
+    if (!fig){ if (!list.length) moves.delete(id); continue; }
+    const base = fig.userData.punchBase || (fig.userData.punchBase = { x:fig.position.x, z:fig.position.z });
+    let ox = 0, oz = 0;
+    for (const m of list){ const k = (clk - m.t0) / m.ms, o = moveAt(m.kind, k, m.amp, m.back); ox += m.dx * o; oz += m.dz * o; }
+    const s = fig.parent?.scale.x || 1;
+    fig.position.x = base.x + ox / s; fig.position.z = base.z + oz / s;
+    if (!list.length){ delete fig.userData.punchBase; moves.delete(id); }
+  }
+  for (let i = flashes.length - 1; i >= 0; i--){ const f = flashes[i]; if (now >= f.until){ if (f.o.userData.punchOrig){ f.o.material = f.o.userData.punchOrig; delete f.o.userData.punchOrig; } flashes.splice(i, 1); } }
+  for (let i = bits.length - 1; i >= 0; i--){
+    const b = bits[i], k = (clk - b.t0) / b.ms;
+    if (k < 0){ b.obj.visible = false; continue; } b.obj.visible = true;
+    if (k >= 1 && b.kind !== 'splat'){ b.obj.parent?.remove(b.obj); b.obj.material.dispose(); if (b.kind === 'spray') b.obj.geometry.dispose(); bits.splice(i, 1); continue; }
+    if (b.kind === 'arc'){ b.obj.rotateZ(-b.spin * dt * sp / b.ms * 2.2); b.obj.scale.setScalar(.75 + k * .5); b.obj.material.opacity = k < .2 ? k / .2 : (1 - k) / .8; }
+    else if (b.kind === 'glow'){ const e = Math.sin(Math.min(1, k) * Math.PI); b.obj.scale.setScalar((.4 + e * .9) * b.s); b.obj.material.opacity = 1 - k; }
+    else if (b.kind === 'spray'){ const a = b.obj.geometry.attributes.position, h = dt * sp / 1000;
+      for (let j = 0; j < b.vel.length; j++){ const v = b.vel[j]; v.y -= 9 * h; a.array[j * 3] += v.x * h; a.array[j * 3 + 1] = Math.max(b.floor, a.array[j * 3 + 1] + v.y * h); a.array[j * 3 + 2] += v.z * h; if (a.array[j * 3 + 1] <= b.floor){ v.x *= .8; v.z *= .8; } }
+      a.needsUpdate = true; b.obj.material.opacity = k > .6 ? (1 - k) / .4 : 1; }
+    else if (b.kind === 'splat'){ const e = 1 - Math.pow(1 - Math.min(1, k), 3); b.obj.scale.setScalar(b.s * e); if (k >= 1) bits.splice(i, 1); }
+    else if (b.kind === 'wisp'){ b.obj.position.y = b.y0 + k * 1.6; b.obj.position.x += Math.sin(k * 9) * .003; b.obj.scale.setScalar(.35 + k * .5); b.obj.material.opacity = (k < .2 ? k / .2 : (1 - k) / .8) * .8; }
+  }
+  // the fight is over: what was spilt fades into the ground
+  if (splats.length && !state?.combat?.active){
+    if (!fadeFrom) fadeFrom = now;
+    const k = (now - fadeFrom - 1500) / 2500;
+    if (k >= 1) clearPunch(); else if (k > 0) for (const o of splats) o.material.opacity = .85 * (1 - k);
+  } else fadeFrom = 0;
+  if (kick){
+    const k = (now - kick.at) / kick.ms, e = k < .12 ? k / .12 : Math.pow(1 - (k - .12) / .88, 2);
+    camera.fov = baseFov - kick.deg * Math.max(0, e);
+    if (k >= 1){ camera.fov = baseFov; kick = null; }
+    camera.updateProjectionMatrix();
+  }
+}
+// the fight is over: the ground is wiped (and anything still in the air)
+export function clearPunch(){
+  moves.clear();
+  for (const o of splats.splice(0)){ o.parent?.remove(o); o.material.dispose(); }
+  for (const b of bits.splice(0)){ b.obj.parent?.remove(b.obj); b.obj.material.dispose(); if (b.kind === 'spray') b.obj.geometry.dispose(); }
+}
+// (for the tests: what's been felt since the page loaded, and what's on the ground now)
+export const punchCount = () => ({ ...made, onGround:splats.length, speed:worldSpeed(), moving:moves.size });

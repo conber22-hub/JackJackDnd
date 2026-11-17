@@ -518,7 +518,7 @@ export function onClientMsg(m){
   else if (m.t === 'folk' && state) receiveFolk(m);   // the valley's people, moving (game/folk.js)
   else if (m.t === 'area' && state && Array.isArray(m.sq)){ const ex = state.explored?.[m.floor]; flashArea(m.floor, m.sq.filter(i => ex?.has(i)), m.ty); }   // only where they've been
   else if (m.t === 'oaDone') dropAsk(m.id);
-  else if (m.t === 'act' && state && ['attack', 'cast', 'hit'].includes(m.kind)) actOn(m.id, m.kind, m.target);
+  else if (m.t === 'act' && state && ['attack', 'cast', 'hit', 'miss'].includes(m.kind)) actOn(m.id, m.kind, m.target, m.fx && typeof m.fx === 'object' ? m.fx : null);
   else if (m.t === 'bye'){ net.status = 'closed'; clearTimeout(net.retryTimer); toast('The DM closed the table.'); renderNetStatus(); }
   else if (m.t === 'denied'){ waiting(null); toast(m.text); if (ui.myHeroId && !tokById(ui.myToken)) ui.myHeroId = null; const me = tokById(ui.myToken); if (me && ui.selected === me.id) showReach(me); renderPanel(); }
   // (waiting(null): something came back, so the player's 'with the DM' sign goes)

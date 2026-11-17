@@ -16,6 +16,18 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.34 — a blow you feel
+
+- **💥 Every blow lands on the map** (`render/punch.js`, the numbers in `engine/punch.js`; on every screen: the Wanderer, the DM, the table's handhelds and phones). Every figure feels it, whatever it's made of: forged, a model, a paper standee, an old shape.
+  - **The attacker lunges** in to meet the blow (a shot or a spell kicks back a touch instead).
+  - **The hit-stop:** at the instant it lands the world holds still for a few hundredths of a second. Swings, models' clips and everything in the blow pause, longer for a heavy blow (by the share of their hit points it took) and longer still for a crit.
+  - **The one struck** flashes white and is knocked back along the line of the blow, then springs home. A slash of light crosses them (a gold cross on a crit), sparks and blood spray out the far side, and a splash of it stays on the ground until the fight ends, then fades. What comes out depends on what they are: black-green rot from the Seep, dust and bone chips from the dead, straw from a scarecrow, a cold light and no stain from a ghost.
+  - **The camera's view punches in**, harder for a crit and harder again for a kill. A crit flashes the screen. Your own hero hurt reddens the screen's edges (darker when they go down).
+  - **A killing blow:** a longer hold, then slow motion. The figure stands until the blow lands, is thrown back, and lies where it fell, and a pale wisp rises out of it. The victory card waits until the last one has fallen.
+  - **A miss:** they sway aside, away from the blow, and back.
+  - A spell's area, a trap or a burst lands the same way, with no line to be knocked along (for now on the DM's screen and the Wanderer's, not yet the players').
+  - Players' screens get the share of hit points a blow took, rounded to an eighth, never the hit points themselves.
+
 ## v1.33 — the dice, and who's next
 
 - **🎲 The dice moment** (`ui/dicemoment.js`): every attack's d20 tumbles for a breath at the top of the screen and lands. With advantage or disadvantage, the die it beat or lost to sits dimmed beside it. Then comes the sum (*14 +5 = 19 vs AC 13*) and the word: **HIT** in green, **MISS** in grey, a gold **CRITICAL** with rays bursting from the die on a 20, and a cracked red **FUMBLE** on a 1. A blow that lands on the party reads red, so a hit on you never looks like good news. Scorching Ray and the like say how many of their rays hit, and a roll made with real dice at the table says so.
@@ -996,6 +1008,7 @@ src/engine/             pure logic: no DOM, no Three.js, unit-tested
   encounter.js          XP budgets and the encounter generator
   look.js               a figure's recipe: from a sheet, a creature's preset (varied), an NPC roll; describeLook
   targeting.js          reach and range, cover (grid corner rule), area templates and who they catch
+  punch.js              how hard a blow lands: hit-stop, slow motion, knockback, camera kick (impactOf, speedAt, moveAt), what bleeds out (bloodOf)
   odds.js               the odds of a blow before it's struck: chance to hit and to crit (advantage, a 1 and a 20), damage on average, the edge in words
   movement.js           dragged routes, threat & opportunity attacks, following in marching order, formations, Close in
   castle.js             Castle Ravenloft's five hand-shaped floors (approach, halls, upper keep, dungeons, catacombs)
@@ -1036,6 +1049,7 @@ src/render/             Three.js
   props.js              the 3D props, houses with roofs, the instanced pine
   minis.js              procedural 3D minis (SHAPES) + syncing tokens
   effects.js            selection ring, reach glow, pings, bursts, Build overlays
+  punch.js              💥 a blow felt: lunge, hit-stop (worldSpeed, read by main.js), flash, knockback, slash, spray, splashes, kill wisp, screen flash, camera punch-in
   ambience.js           candle and fire light from props, rain and snow outdoors
   living.js             the Living Valley: snow on the wind, rippling blackwater, the Hunger Moss creeping with the Bloom
   forge/                forged minis: build.js (the jointed, sculpted figure), geo.js (shapes, skinning), mat.js (materials, rim light),
