@@ -17,7 +17,7 @@ import { gfx } from './gfx.js';
 import { tokenViews } from './minis.js';
 import { state, tokById } from '../engine/state.js';
 import { BEST } from '../data/bestiary.js';
-import { impactOf, speedAt, moveAt, bloodOf } from '../engine/punch.js';
+import { impactOf, speedAt, moveAt, bloodOf, lastOfSide } from '../engine/punch.js';
 import { dies } from './deathfx.js';
 
 /* ---------- the hit-stop: the world's clock ---------- */
@@ -80,7 +80,7 @@ const arcGeo = new THREE.RingGeometry(.3, .62, 28, 1, -1.2, 2.4), splatGeo = new
 const bits = [];    // { obj, t0 (world clock), ms, kind, ... } — arcs, sparks, glows, wisps
 const splats = [];  // the fight's splashes, cleared when it ends
 let fadeFrom = 0;
-let made = { impacts:0, kills:0, dodges:0, lunges:0, splats:0, aims:0 };
+let made = { impacts:0, kills:0, dodges:0, lunges:0, splats:0, aims:0, lasts:0 };
 const tmp = new THREE.Vector3(), tmp2 = new THREE.Vector3();
 
 function at(id){ const tv = tokenViews.get(id); if (!tv?.group?.parent) return null; return { tv, parent:tv.group.parent, pos:tv.group.position.clone() }; }
@@ -131,6 +131,16 @@ function wisp(P, color){
   bits.push({ obj:g, t0:clk + 250, ms:1500, kind:'wisp', y0:P.pos.y + .4 });
 }
 
+// a ring of force running out across the ground from P (the last blow): to `size` tiles across over ms (real time:
+// it runs on through the slow motion, so it reads as the moment's own), starting `delay` ms on
+const rings = [];
+function shockRing(P, color, size, ms, delay = 0){
+  const mat = new THREE.MeshBasicMaterial({ color, transparent:true, opacity:0, depthWrite:false, fog:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide });
+  const m = new THREE.Mesh(new THREE.RingGeometry(.86, 1, 56).rotateX(-Math.PI / 2), mat);
+  m.position.copy(P.pos).setY(P.pos.y + .09); m.scale.setScalar(.05); m.renderOrder = 8; P.parent.add(m);
+  rings.push({ m, t0:performance.now() + delay, ms, size });
+}
+
 /* ---------- the screen and the camera ---------- */
 let screenEl = null;
 function screen(kind){
@@ -166,7 +176,9 @@ export function impact(id, fromId, info = {}){
   const t = tokById(id), P = at(id); if (!t || !P) return;
   // the same blow told twice (a spell's area: the game's own impact, and ui/fightfx.js's for anything without one)
   const was = lastHit.get(id); if (was && performance.now() - was < 450) return; lastHit.set(id, performance.now());
-  const I = impactOf(info), now = performance.now(), d = fromId ? dirOf(fromId, id) : blastDir(id);
+  // (the blow that ends the fight: the last of its side to fall)
+  const last = !!info.kill && !!state?.combat?.active && lastOfSide(t, (state.combat.order || []).map(tokById));
+  const I = impactOf({ ...info, last }), now = performance.now(), d = fromId ? dirOf(fromId, id) : blastDir(id);
   const b0 = bloodOf({ tags:BEST[t.bid]?.tags, name:t.name, kind:t.kind }), el = EL[info.el];
   const blood = el ? { ...b0, spark:el } : b0;
   hold(I, now); made.impacts++; if (info.kill) made.kills++;
@@ -175,7 +187,8 @@ export function impact(id, fromId, info = {}){
   slash(P, d, info.crit, info.crit ? '#ffd45a' : el || (blood.splat ? '#fff0e0' : blood.spark));
   spray(P, d, blood, info.crit, info.kill);
   splat(P, d, blood, info.crit || info.kill);
-  if (info.kill){ if (b0.death === 'fall') wisp(P, blood.splat ? '#e8e0ff' : blood.spark); dies(id); }   // ☠ how it dies (render/deathfx.js)
+  if (info.kill){ if (b0.death === 'fall') wisp(P, blood.splat ? '#e8e0ff' : blood.spark); dies(id); }
+  if (last){ shockRing(P, '#fff1d6', 3.4, 900); shockRing(P, info.crit ? '#ffd45a' : '#ff9a6a', 2.2, 650, 120); made.lasts++; }   // 🏁 the fight's last blow: a ring of force across the ground   // ☠ how it dies (render/deathfx.js)
   fovKick(I.kick, info.kill ? 650 : info.crit ? 420 : 280);
   if (I.shake > .4 && !gfx.calm) fx.shake = Math.max(fx.shake, (I.shake - .3) * .16);
   const me = mine(id);
@@ -238,6 +251,10 @@ export function tickPunch(now = performance.now()){
     if (k >= 1){ a.g.parent?.remove(a.g); a.ring.parent?.remove(a.ring); a.ring.geometry.dispose(); a.g.children.forEach(c => c.geometry.dispose()); a.mat.dispose(); arrows.splice(i, 1); continue; }
     a.ring.scale.setScalar(1.15 - .15 * Math.min(1, k * 3));
     a.mat.opacity = (k < .15 ? k / .15 : k > .8 ? (1 - k) / .2 : 1) * (.55 + .35 * Math.sin(now / 70)); }
+  for (let i = rings.length - 1; i >= 0; i--){ const r = rings[i], k = (now - r.t0) / r.ms;
+    if (k >= 1){ r.m.parent?.remove(r.m); r.m.geometry.dispose(); r.m.material.dispose(); rings.splice(i, 1); continue; }
+    if (k < 0) continue; const e = 1 - Math.pow(1 - k, 3);
+    r.m.scale.setScalar(Math.max(.05, r.size * e)); r.m.material.opacity = .85 * (1 - k); }
   // the fight is over: what was spilt fades into the ground
   if (splats.length && !state?.combat?.active){
     if (!fadeFrom) fadeFrom = now;

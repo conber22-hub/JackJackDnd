@@ -14,14 +14,17 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
      kick       degrees the camera's view narrows for an instant (a punch-in)
      flash      ms the one struck flashes white
      screen     a full-screen flash: '' | 'crit' | 'kill' */
-export function impactOf({ r = 0, crit = false, kill = false, miss = false } = {}){
+/*  last: the killing blow that ends the fight (the last foe standing, or the last hero): the world holds longer and
+     runs slow for over a second, and the camera kicks harder, so a fight won lands like one */
+export function impactOf({ r = 0, crit = false, kill = false, miss = false, last = false } = {}){
   if (miss) return { stop:0, slowMs:0, slowScale:1, knock:0, back:true, shake:0, kick:0, flash:0, screen:'' };
   const w = clamp(Number(r) || 0, 0, 1), heft = clamp(w * 2.2, 0, 1);   // half their hit points or more is as hard as it gets
   let stop = 40 + 70 * heft, knock = .1 + .22 * heft, shake = .15 + .35 * heft, kick = 1.8 + 3.2 * heft, flash = 70;
   if (crit){ stop += 55; knock *= 1.45; shake = Math.min(1, shake + .3); kick += 3.5; flash = 110; }
   if (kill){ stop = Math.max(stop, 120) + 30; knock = Math.max(knock, .34) + .08; shake = Math.min(1, shake + .2); kick += 4; flash = Math.max(flash, 100); }
-  return { stop:Math.round(stop), slowMs:kill ? 420 : 0, slowScale:kill ? .3 : 1, knock:+knock.toFixed(3), back:!kill,
-    shake:+shake.toFixed(3), kick:+kick.toFixed(2), flash, screen:kill ? 'kill' : crit ? 'crit' : '' };
+  const end = kill && last; if (end){ stop += 70; kick += 2.5; shake = Math.min(1, shake + .15); }
+  return { stop:Math.round(stop), slowMs:end ? 1150 : kill ? 420 : 0, slowScale:end ? .18 : kill ? .3 : 1, knock:+knock.toFixed(3), back:!kill,
+    shake:+shake.toFixed(3), kick:+kick.toFixed(2), flash, screen:kill ? 'kill' : crit ? 'crit' : '', last:end };
 }
 
 /* The world's speed at `ms` after the impact: 0 while frozen, then slowScale through the slow motion, then 1. */
@@ -74,3 +77,10 @@ export function bloodOf({ tags = [], name = '', kind = '' } = {}){
 
 /* A player's screen gets the share of hit points a blow took, rounded to an eighth, never the HP themselves. */
 export const shareOf = (n, maxHp) => maxHp > 0 ? Math.round(clamp(n / maxHp, 0, 1) * 8) / 8 : 0;
+
+/* Whether `t`, just fallen, was the last of its side still up: `others` are the rest of the fight (tokens), a side being
+   the monsters or everyone else. The gone, the dead (unless rising again) and those at 0 hit points don't count. */
+export function lastOfSide(t, others = []){
+  if (!t) return false; const foe = t.kind === 'monster';
+  return !others.some(o => o && o.id !== t.id && (o.kind === 'monster') === foe && !o.flags?.gone && (o.flags?.rising || (!o.dead && o.hp > 0)));
+}

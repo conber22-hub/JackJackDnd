@@ -587,6 +587,9 @@ body.wander #modeHint, body.wander #moveTip, body.wander #btnPanel, body.wander 
 .wd-m.down{opacity:.55;filter:grayscale(.7)}
 .wd-hp{display:block;align-self:center;height:8px;min-width:90px;border-radius:5px;background:rgba(0,0,0,.55);overflow:hidden;border:1px solid rgba(255,255,255,.08)}
 .wd-hp i{display:block;height:100%;background:linear-gradient(90deg,#7d1420,#c9363f)}
+.wd-hp{position:relative}.wd-hp .wd-chip{position:absolute;top:0;height:100%;background:#f2cf7e;transform-origin:left center;animation:wdchip .9s linear forwards}
+@keyframes wdchip{0%{background:#fff;transform:scaleX(1)}12%{background:#f2cf7e}42%{transform:scaleX(1);opacity:1}100%{transform:scaleX(0);opacity:.5}}
+@media (prefers-reduced-motion:reduce){.wd-hp .wd-chip{animation-duration:.4s}}
 .wd-prompt{position:absolute;left:50%;bottom:max(24px,env(safe-area-inset-bottom));transform:translateX(-50%)}
 .wd-act{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:999px;border:1px solid var(--gold-line);background:linear-gradient(rgba(48,30,20,.88),rgba(14,9,10,.92));color:var(--ink);font:inherit;font-size:17px;cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,.5)}
 .wd-act b{font-family:Cinzel,Georgia,serif;color:var(--candle)}

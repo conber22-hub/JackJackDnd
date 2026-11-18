@@ -194,8 +194,10 @@ test('a health bar drains after a blow and climbs after a heal', async ({ page }
     return [...b.ctx.getImageData(Math.round(b.x + b.w * at), b.y + 4, 1, 1).data].slice(0, 3); }, [id, at]);
   // (the hero's: a foe's hit points aren't on its plate in the Wanderer, as on a player's screen)
   const w = await page.evaluate(() => { const D = window.DreadDelve, w = D.wander.hero();
-    w.hp = w.maxHp; D.syncTokens(); w.hp = Math.max(1, Math.floor(w.maxHp / 4)); D.syncTokens(); return { id:w.id, n:D.chipCount() }; });
+    w.hp = w.maxHp; D.syncTokens(); D.renderHud(); w.hp = Math.max(1, Math.floor(w.maxHp / 4)); D.syncTokens(); D.renderHud();
+    return { id:w.id, n:D.chipCount(), hud:document.querySelectorAll('#wdParty .wd-chip').length }; });
   expect(w.n).toBe(1);
+  expect(w.hud).toBe(1);   // (and the party's bar on the screen drains the same way: ui/hpbar.js)
   const lost = await px(w.id, .8);   // (the part it took: pale, not the bar's red or its dark ground)
   expect(Math.min(...lost)).toBeGreaterThan(110);   // (white, or pale gold)
   await expect.poll(() => page.evaluate(() => window.DreadDelve.chipCount()), { timeout:20_000 }).toBe(0);
@@ -208,4 +210,33 @@ test('a health bar drains after a blow and climbs after a heal', async ({ page }
   const ghost = await px(h.id, .8);
   expect(ghost[1]).toBeGreaterThan(ghost[0]);   // (the green ghost, not the fill yet)
   await expect.poll(() => page.evaluate(() => window.DreadDelve.chipCount()), { timeout:20_000 }).toBe(0);
+});
+
+// 🏁 The blow that ends the fight: the last foe falls in a long slow motion, a ring of force running out from it
+test('the last foe\'s fall runs slow, with a ring of force; one with others still up doesn\'t', async ({ page }) => {
+  test.setTimeout(180_000);
+  await fight(page);
+  // (a second wolf, in the fight too)
+  const ids = await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), f = D.get().floors[h.floor], s = D.get();
+    for (const [dx, dy] of [[2, 0], [-2, 0], [0, 2], [0, -2], [2, 2], [-2, -2]]){ const x = h.x + dx, y = h.y + dy;
+      if (f.grid[y * f.W + x] && !s.tokens.some(t => t.x === x && t.y === y)){ D.placeMonster('wolf', { floor:h.floor, x, y }); break; } }
+    const ws = s.tokens.filter(t => t.kind === 'monster'), b = ws.at(-1); b.hp = b.maxHp = 200;
+    if (!s.combat.order.includes(b.id)) s.combat.order.push(b.id); D.syncTokens();
+    return { h:h.id, a:ws[0].id, b:b.id }; });
+  const kill = (w) => page.evaluate(({ h, w }) => { const D = window.DreadDelve, t = D.get().tokens.find(o => o.id === w);
+    t.hp = 0; t.dead = true; D.actOn(w, 'hit', h, { r:1, kill:true }); return D.punchCount().lasts; }, { h:ids.h, w });
+  const l0 = await page.evaluate(() => window.DreadDelve.punchCount().lasts);
+  expect(await kill(ids.a)).toBe(l0);   // (another wolf still stands)
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.worldSpeed())).toBe(1);
+  // held, then slow for over a second (this browser draws a frame or two a second: the world's speed is read at a time
+  // on from the blow, not waited for)
+  const sp = await page.evaluate(({ h, w }) => { const D = window.DreadDelve, t = D.get().tokens.find(o => o.id === w);
+    t.hp = 0; t.dead = true; D.actOn(w, 'hit', h, { r:1, kill:true }); const now = performance.now();
+    return { lasts:D.punchCount().lasts, at0:D.worldSpeed(now + 50), at600:D.worldSpeed(now + 600), at1100:D.worldSpeed(now + 1100), at2500:D.worldSpeed(now + 2500) }; }, { h:ids.h, w:ids.b });
+  expect(sp.lasts).toBe(l0 + 1);
+  expect(sp.at0).toBe(0); expect(sp.at600).toBeLessThan(.5); expect(sp.at1100).toBeLessThan(.5); expect(sp.at2500).toBe(1);
+  // and once it has fallen, the fight won: the victory screen, over the fight's own scorecard (not a fight lost)
+  await expect(page.locator('#victory')).toBeVisible({ timeout:30_000 });
+  expect(await page.evaluate(() => window.DreadDelve.wander.W().trophies?.got || [])).not.toContain('flee');
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.worldSpeed())).toBe(1);
 });

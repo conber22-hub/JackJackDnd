@@ -669,7 +669,8 @@ export function fightTick(now = performance.now()){
     if (rt.unseen >= 3 && left.length){ for (const o of left) o.flags.gone = true; rt.unseen = 0; syncTokens();
       showCard({ kind:'', title:'They slip away', flair:`${left.map(o => o.name).join(', ')} ${left.length === 1 ? 'is' : 'are'} gone into the trees. For now.` }, false); } }
   const lost = partyDown(members()), won = c.won || !c.order.some(id => { const o = tokById(id); return o?.kind === 'monster' && !o.dead && o.hp > 0 && !o.flags?.gone; });
-  if (won || lost){ if (!rt.endAt) rt.endAt = now + 1500; else if (now >= rt.endAt) finishFight(!lost); return; }
+  if (won || lost){ if (!rt.endAt) rt.endAt = now + 2300;   // (the last blow runs slow: render/punch.js)
+    else if (now >= rt.endAt) finishFight(!lost); return; }
   const t = currentTurn(); if (!t) return;
   const key = `${c.round}:${c.idx}:${t.id}`;
   if (t.id === W().heroTok){
@@ -695,15 +696,17 @@ function finishFight(won){
   const each = shareXp(xp, members().length);
   const xpWas = w.xp, nextWas = nextLevelXp(), lvlWas = partyLevel();
   w.xp += each; w.quiet = 0;
+  // 🏆 the fight's scorecard (game/record.js), taken before the fight is ended (endCombat drops a record still open as a
+  // fight called off) and before the fallen get up
+  const loot = fightLoot(xp, { level:partyLevel() }), summary = fightEnds(true, { xp:each, loot, order });
   endCombat();
   for (const m of members()) if (m.dead || m.hp <= 0){ m.dead = false; m.hp = 1; m.flags.bloodied = true; }
   syncTokens();
-  const loot = fightLoot(xp, { level:partyLevel() }), lines = [xp ? `<b>${each} XP</b> each · ${w.xp} in all${nextLevelXp() ? ` (level ${partyLevel() + 1} at ${nextLevelXp()})` : ''}` : 'Nothing worth counting.'];
+  const lines = [xp ? `<b>${each} XP</b> each · ${w.xp} in all${nextLevelXp() ? ` (level ${partyLevel() + 1} at ${nextLevelXp()})` : ''}` : 'Nothing worth counting.'];
   if (loot.gp || loot.sp || loot.items.length){ gainLoot(loot); lines.push(`Found: ${[loot.gp && `${loot.gp} gp`, loot.sp && `${loot.sp} sp`, ...loot.items].filter(Boolean).map(esc).join(', ')}`); }
   const moods = xp ? react(['brave']) : []; lines.push(...moods);
-  // 🏆 the victory screen (Muse's ui/victory.js) over the fight's scorecard (game/record.js); the plain card if there's no
-  // record (a fight the record didn't see begin)
-  const summary = fightEnds(true, { xp:each, loot, order });
+  // 🏆 the victory screen (Muse's ui/victory.js) over the fight's scorecard; the plain card if there's no record (a fight
+  // the record didn't see begin)
   const party = members().map(m => m.id), names = Object.fromEntries(order.map(tokById).filter(Boolean).map(o => [o.id, o.name]));
   if (summary && typeof document !== 'undefined'){
     openVictory(summary, { party, names, faces:{}, xp:{ before:xpWas, after:w.xp, next:nextWas || w.xp, level:lvlWas },

@@ -17,6 +17,7 @@
    It holds the handheld whenever this phone is seated with a hero (not the TV, not card only, not in the Lantern
    Yard), and the device wants it: on a touch screen with no controller, unless the menu's "The classic screen" is
    chosen (kept per device). A controller plugged in plays it too. */
+import { hpBar } from './hpbar.js';
 import { state, ui, tokById } from '../engine/state.js';
 import { esc, signed } from '../util/core.js';
 import { optList, optInfo, tag } from './optrow.js';
@@ -364,7 +365,7 @@ function ensureHud(){
     renderHud();
   });
 }
-const bar = (hp, max) => `<i class="wd-hp"><i style="width:${Math.max(0, Math.min(100, hp / Math.max(1, max) * 100))}%"></i></i>`;
+const bar = (hp, max, key) => hpBar(hp, max, key);   // (💔 a blow's part drains away: ui/hpbar.js)
 const last = {};
 let scrolledTo = '';
 const put = (id, html) => { if (last[id] === html) return; last[id] = html; const el = document.getElementById(id); if (el) el.innerHTML = html; };
@@ -377,7 +378,7 @@ export function renderHud(){
   put('tbPlace', esc(f?.name || state.meta?.name || ''));
   put('tbClock', esc(fight() ? `Round ${state.combat.round || 1} · ${cur ? (cur.id === t.id ? 'your turn' : `${cur.name}'s turn`) : '…'}` : `${state.meta?.name || ''}`));
   const party = [t, ...state.tokens.filter(o => o.kind === 'pc' && o.id !== t.id && o.floor === t.floor && !o.flags?.gone)].slice(0, 4);
-  put('tbParty', party.map(m => `<div class="wd-m${m.id === t.id ? ' me' : ''}${cur?.id === m.id ? ' turn' : ''}${m.dead || m.hp <= 0 ? ' down' : ''}"><span class="nm">${esc(m.name)}</span>${bar(m.hp, m.maxHp)}<span class="hp">${Math.max(0, m.hp)} / ${m.maxHp}</span></div>`).join(''));
+  put('tbParty', party.map(m => `<div class="wd-m${m.id === t.id ? ' me' : ''}${cur?.id === m.id ? ' turn' : ''}${m.dead || m.hp <= 0 ? ' down' : ''}"><span class="nm">${esc(m.name)}</span>${bar(m.hp, m.maxHp, m.id)}<span class="hp">${Math.max(0, m.hp)} / ${m.maxHp}</span></div>`).join(''));
   const oa = ui.oaAsk?.[0], here = !oa && !menu.open && (fight() ? fightAction() : hereAction());
   put('tbPrompt', oa ? `<div class="wd-oa">⚔ <b>${esc(oa.mover)}</b> is getting away: your reaction?</div><button class="wd-act" data-tb="a"><b>A</b> Strike with ${esc(oa.atk)}</button><button class="wd-act" data-tb="b"><b>B</b> Let them go</button>`
     : here ? (here.idle ? `<div class="wd-tx">${esc(here.label)}</div>` : `<button class="wd-act" data-tb="a"><b>A</b> ${esc(here.label)}</button>`) : '');
@@ -388,7 +389,7 @@ export function renderHud(){
     const tg = target(), i = attackFor(t, tg);
     const body = myTurn()
       ? `<div class="wd-fl wd-turn"><b>Your turn</b>${pipsHtml(economy(t))}</div>
-        <div class="wd-fl">${tg ? `🎯 <b>${esc(tg.name)}</b>${tg.maxHp ? ` ${bar(tg.hp, tg.maxHp)}` : ''}${i < 0 ? ' <span class="muted">(out of reach)</span>' : ''}` : 'Nobody in sight'}</div>
+        <div class="wd-fl">${tg ? `🎯 <b>${esc(tg.name)}</b>${tg.maxHp ? ` ${bar(tg.hp, tg.maxHp, tg.id)}` : ''}${i < 0 ? ' <span class="muted">(out of reach)</span>' : ''}` : 'Nobody in sight'}</div>
         ${tg && i >= 0 && strikesLeft(t) ? `<div class="wd-fl wd-weap">⚔ <b>${esc(t.attacks[i].n)}</b> ${signed(t.attacks[i].b)} to hit · ${esc(t.attacks[i].d)} ${esc(t.attacks[i].t || '')} · <span class="near">${esc(reachWords(t, tg, t.attacks[i]))}</span></div>${(e => e.text ? `<div class="wd-fl wd-edge">${esc(e.mark)} ${esc(e.text)}</div>` : '')(edgeOf(t, tg, t.attacks[i]))}` : ''}
         <div class="wd-acts"><button class="wd-act" data-tb="x"><b>X</b> Actions</button><button class="wd-act" data-tb="y"><b>Y</b> Next target</button><button class="wd-act" data-tb="endturn">End turn</button></div>`
       : `<div class="wd-fl">${cur ? `<b>${esc(cur.name)}</b>'s turn…` : '…'}</div>${tg ? `<div class="wd-fl">🎯 ${esc(tg.name)}</div>` : ''}`;

@@ -3,7 +3,9 @@
    turn, a conversation, and the menu (travel, rest, save, leave). Input: a gamepad (engine/pad.js; the loop below
    reads it every frame), the keyboard, the handheld skin's touch buttons (ui/handheld.js), or taps on the map.
    The follow camera (below) eases after the hero and turns, cranes and cycles views with the right stick, L / R, [ ] - = V. */
+import { hpBar } from './hpbar.js';
 import { state, ui, tokById, tokenAt, side } from '../engine/state.js';
+import { lastOfSide } from '../engine/punch.js';
 import { readPad, padIntents, keyIntent } from '../engine/pad.js';
 import { companionById } from '../data/wander.js';
 import { placeById } from '../engine/overland.js';
@@ -90,7 +92,7 @@ const PAD_K = { a:'Ⓐ', b:'Ⓑ', x:'Ⓧ', y:'Ⓨ' }, HH_K = { a:'A', b:'B', x:'
 const K = k => { const n = (hhOn() ? HH_K : PAD_K)[k]; return n ? `<b>${n}</b>` : ''; };
 // The highlighted choice stays in sight when the D-pad moves through a list longer than the box.
 const keepInView = id => { const o = document.querySelector(`#${id} .wd-opt.on`); if (o && o.dataset.seen !== '1'){ document.querySelectorAll(`#${id} .wd-opt[data-seen]`).forEach(n => delete n.dataset.seen); o.dataset.seen = '1'; o.scrollIntoView({ block:'nearest' }); } };
-const bar = (hp, max) => `<i class="wd-hp"><i style="width:${Math.max(0, Math.min(100, hp / Math.max(1, max) * 100))}%"></i></i>`;
+const bar = (hp, max, key) => hpBar(hp, max, key);   // (💔 a blow's part drains away: ui/hpbar.js)
 let last = {};
 const put = (id, html) => { if (last[id] === html) return; last[id] = html; const el = document.getElementById(id); if (el) el.innerHTML = html; };
 const show = (id, on) => document.getElementById(id)?.classList.toggle('hidden', !on);
@@ -104,7 +106,7 @@ export function renderHud(){
   put('wdLvl', levelReady() ? `<button class="wd-lvl" data-act="wdLevel">⬆ Level ${partyLevel()}</button>` : '');
   const turn = state.combat.active && currentTurn();
   put('wdParty', members().map(m => `<div class="wd-m${m.id === t?.id ? ' me' : ''}${turn?.id === m.id ? ' turn' : ''}${m.dead || m.hp <= 0 ? ' down' : ''}">
-    <span class="nm">${esc(m.name)}</span>${bar(m.hp, m.maxHp)}<span class="hp">${Math.max(0, m.hp)} / ${m.maxHp}</span></div>`).join(''));
+    <span class="nm">${esc(m.name)}</span>${bar(m.hp, m.maxHp, m.id)}<span class="hp">${Math.max(0, m.hp)} / ${m.maxHp}</span></div>`).join(''));
   // what Ⓐ does just now
   const here = !rt.talk && !menu.open && (state.combat.active ? fightAction() : hereAction());
   put('wdPrompt', here ? (here.idle ? `<div class="wd-tx">${esc(here.label)}</div>` : `<button class="wd-act" data-act="wdA">${K('a')} ${esc(here.label)}</button>`) : '');
@@ -118,7 +120,7 @@ export function renderHud(){
       const tg = target(), i = attackFor(t, tg), atk = t.attacks[i] || t.attacks[rt.atk ?? 0];
       const ai = t.attacks.indexOf(atk), od = tg && ai >= 0 && i >= 0 ? strikeOdds(ai, tg) : null;
       body = `<div class="wd-fl wd-turn"><b>Your turn</b>${pipsHtml(economy())}</div>
-        <div class="wd-fl">${tg ? `🎯 <b>${esc(tg.name)}</b> ${bar(tg.hp, tg.maxHp)}` : 'Nobody in sight'}</div>
+        <div class="wd-fl">${tg ? `🎯 <b>${esc(tg.name)}</b> ${bar(tg.hp, tg.maxHp, tg.id)}` : 'Nobody in sight'}</div>
         ${atk && attacksLeft() ? `<div class="wd-fl wd-weap">⚔ <b>${esc(atk.n)}</b> ${signed(atk.b)} to hit · ${esc(atk.d)} ${esc(atk.t || '')}${tg ? ` · <span class="${i < 0 ? 'far' : 'near'}">${esc(reachWords(t, tg, ai))}</span>` : ''}${od ? ` · <b class="wd-odds o-${oddsTone(od.hit)}">${esc(od.edge.mark)}${od.pct}</b>` : ''}</div>
         ${od?.edge.text ? `<div class="wd-fl wd-edge">${esc(od.edge.mark)} ${esc(od.edge.text)}</div>` : ''}` : ''}
         <div class="wd-acts"><button class="wd-act" data-act="wdX">${K('x')} Actions</button><button class="wd-act" data-act="wdAim" data-k="1">${K('y')} Next target</button><button class="wd-act" data-act="wdEnd">End turn</button></div>`;
@@ -632,7 +634,9 @@ export function ensureWander(){
   // a crossing between maps (game/ways.js): the fog, the name, the sound
   passage.veil = veil; passage.banner = banner; passage.sting = id => tune({ door:'door', spotted:'gazeRises', fight:'fightBegins' }[id] || 'stairs');
   bus.on('acted', blowFelt);
-  bus.on('hurt', e => { const h = hero(); if (h && wandering() && e?.t?.dead && e.t.kind === 'monster' && e.by === h.id) camBeat(1100, .32); });   // 🎬 your killing blow
+  // 🎬 your killing blow; and whoever's blow it was, the one that ends the fight, held longer and closer
+  bus.on('hurt', e => { const h = hero(); if (!h || !wandering() || !e?.t?.dead || e.t.kind !== 'monster') return;
+    if (lastOfSide(e.t, state.combat.order.map(tokById))) camBeat(1900, .42); else if (e.by === h.id) camBeat(1100, .32); });
   bus.on('levelReady', () => { if (wandering() && !state.combat.active) openMenu('level'); });   // ⬆ after the victory screen: the level-up page, ready
   // ⏳ a face in the turn order: pointed at, its figure lights; a foe tapped is aimed at
   wireStrip('osWd', { hover:id => showHover(id), pick:id => { const o = tokById(id); if (o?.kind === 'monster' && !o.dead && o.hp > 0){ rt.target = id; rt.look = { id, until:performance.now() + 900 }; renderHud(); } } });

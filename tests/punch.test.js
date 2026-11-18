@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { impactOf, speedAt, moveAt, bloodOf, shareOf } from '../src/engine/punch.js';
+import { impactOf, speedAt, moveAt, bloodOf, shareOf, lastOfSide } from '../src/engine/punch.js';
 
 test('a heavier blow holds longer and knocks harder; a crit more, a killing blow most', () => {
   const light = impactOf({ r:.05 }), heavy = impactOf({ r:.5 }), crit = impactOf({ r:.5, crit:true }), kill = impactOf({ r:.5, kill:true });
@@ -55,4 +55,25 @@ test('how it dies: by what it is (a hero only ever falls)', () => {
 
 test('a player\'s screen gets the share of hit points, rounded, never the HP', () => {
   assert.equal(shareOf(7, 22), .375); assert.equal(shareOf(50, 10), 1); assert.equal(shareOf(3, 0), 0); assert.equal(shareOf(1, 100), 0);
+});
+
+test('the blow that ends the fight holds longer and runs slow for over a second', () => {
+  const kill = impactOf({ r:.5, kill:true }), end = impactOf({ r:.5, kill:true, last:true });
+  assert.ok(end.stop > kill.stop);
+  assert.ok(end.slowMs > 1000 && end.slowScale < kill.slowScale);
+  assert.ok(end.kick > kill.kick);
+  assert.equal(end.last, true); assert.equal(kill.last, false);
+  // (only a killing blow can end it)
+  assert.equal(impactOf({ r:.5, last:true }).slowMs, 0);
+});
+
+test('lastOfSide: the last foe, or the last hero, still up', () => {
+  const wolf = { id:'w', kind:'monster', hp:0, dead:true }, bat = { id:'b', kind:'monster', hp:3 }, hero = { id:'h', kind:'pc', hp:9 }, ally = { id:'a', kind:'npc', hp:4 };
+  assert.equal(lastOfSide(wolf, [wolf, bat, hero]), false);
+  assert.equal(lastOfSide(wolf, [wolf, { ...bat, dead:true, hp:0 }, hero]), true);
+  assert.equal(lastOfSide(wolf, [wolf, { ...bat, flags:{ gone:true } }, hero]), true);
+  assert.equal(lastOfSide(wolf, [wolf, { ...bat, dead:true, hp:0, flags:{ rising:true } }]), false);   // (it's getting up again)
+  assert.equal(lastOfSide({ ...hero, hp:0, dead:true }, [hero, ally, bat]), false);   // (a companion still stands)
+  assert.equal(lastOfSide({ ...hero, hp:0, dead:true }, [hero, { ...ally, hp:0 }, bat]), true);
+  assert.equal(lastOfSide(null, []), false);
 });
