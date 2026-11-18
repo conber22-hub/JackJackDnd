@@ -84,3 +84,17 @@ test('a spell cast is seen: a cone, a burst, a bolt, darts, a pillar, a heal', a
   await expect.poll(() => page.evaluate(() => window.DreadDelve.spellFxCount().live), { timeout:20_000 }).toBe(0);
   expect(errs).toEqual([]);
 });
+
+// 🌀 What they're under, on them (render/condfx.js): conditions show on the figures for as long as they last, and go
+test('conditions show on the figures, and go when they end', async ({ page }) => {
+  test.setTimeout(180_000);
+  const errs = []; page.on('pageerror', e => errs.push(e.message));
+  await fight(page);
+  const ids = await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), w = D.get().tokens.find(t => t.kind === 'monster');
+    h.dodge = true; h.conc = { n:'Bless' }; w.conds = [{ n:'prone', r:1 }, { n:'poisoned', r:3 }]; return { h:h.id, w:w.id }; });
+  await expect.poll(() => page.evaluate(i => window.DreadDelve.condFxOn()[i.w], ids)).toBe('down,poisoned');
+  await expect.poll(() => page.evaluate(i => window.DreadDelve.condFxOn()[i.h], ids)).toBe('conc,dodging');
+  await page.evaluate(i => { const D = window.DreadDelve, w = D.get().tokens.find(t => t.id === i.w); w.conds = []; }, ids);
+  await expect.poll(() => page.evaluate(i => window.DreadDelve.condFxOn()[i.w], ids)).toBe('');
+  expect(errs).toEqual([]);
+});

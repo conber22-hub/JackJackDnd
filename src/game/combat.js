@@ -605,7 +605,7 @@ export function castSpell(casterId, targetId, i, aim = null, { at = null } = {})
     const raw = rollDice(sp.d).total + (evil ? d(8) : 0), df = defend(tg, raw, sp.ty), n = df.n;
     seen({ at:tg.id, darts:/missile/i.test(sp.n) ? 3 + Math.max(0, level - 1) : 1 });
     showCard({ kind:'', title:`${c.name}: ${sp.n}`, sub:`on ${tg.name}${evil ? ` · +1d8 against the ${hasTag(tg, 'fiend') ? 'fiend' : 'undead'}` : ''}`, lines:[...(df.why ? [`<span class="muted">${esc(tg.name)} is ${df.why} to ${esc(sp.ty)}: ${raw} → ${n}</span>`] : []), ...paid], big:`${n} ${sp.ty}` });
-    log(`${c.name} casts ${sp.n} on ${tg.name}: ${n} ${sp.ty}.`); applyDamage(tg, n, sp.ty, c, true); changed(); return true;
+    log(`${c.name} casts ${sp.n} on ${tg.name}: ${n} ${sp.ty}.`); applyDamage(tg, n, sp.ty, c, true); if (n) setTimeout(() => animate(tg.id, 'hit', c.id, { r:shareOf(n, tg.maxHp), kill:!!tg.dead, el:sp.ty }), 500); changed(); return true;
   }
   if (sp.k === 'buff' || sp.k === 'util'){
     // a spell that simply gives its target a condition (Invisibility): no roll at all. (Ray of Sickness needs a hit and
@@ -646,7 +646,7 @@ export function castSpell(casterId, targetId, i, aim = null, { at = null } = {})
     // its hold: a concentration spell's lasts until that ends; the rest as the rules say (timingFor): Hold Person's
     // repeated Wisdom save, Color Spray's "until the end of your next turn"
     if (!ok && sp.cond && CONDITIONS[sp.cond]){ const tm = timingFor(hold, { src:c.id, save:sp.sv, dc:sp.dc }); addCond(t, sp.cond, conc ? -1 : tm.rounds, conc ? `conc:${c.id}` : null, false, tm.extra); }
-    if (dmg) applyDamage(t, dmg, sp.ty, c, true);
+    if (dmg){ applyDamage(t, dmg, sp.ty, c, true); const tt = t; setTimeout(() => animate(tt.id, 'hit', null, { r:shareOf(dmg, tt.maxHp), kill:!!tt.dead, el:sp.ty }), 330); }   // 💥 on every screen
   }
   if (!targets.length) lines.push('<span class="muted">No one is caught in it.</span>');
   if (/thunder|fire/.test(sp.ty || '') && (area || sp.rad)) makeNoise(c.floor, origin ? Math.floor(origin.x) : tg.x, origin ? Math.floor(origin.y) : tg.y, 2, sp.n);

@@ -25,6 +25,7 @@ import { selRing, updatePings, updateGroupRings } from './render/effects.js';
 import { tickFightFx } from './render/fightzone.js';
 import { tickPunch, worldSpeed } from './render/punch.js';
 import { tickSpellFx } from './render/spellfx.js';
+import { tickCondFx } from './render/condfx.js';
 import { wireFightFx } from './ui/fightfx.js';
 import { wireFightSfx } from './ui/fightsfx.js';
 import { wireRecord } from './game/record.js';
@@ -166,7 +167,7 @@ function frame(){
     const mp = mist.geometry.attributes.position; for (let i = 0; i < mp.count; i++){ mp.array[i*3] += Math.sin(t * .2 + i) * .004; mp.array[i*3+2] += .006; if (mp.array[i*3+2] > 30) mp.array[i*3+2] = -30; } mp.needsUpdate = true;
     mist.material.opacity = .08 + state.dread * .018; mist.material.color.lerp(new THREE.Color((THEMES[state.floors[ui.floor]?.theme] || THEMES[0]).mist), .02);
     if (state.dread >= 8) mist.material.color.lerp(redMist, .01);
-    updatePings(now); tickFightFx(now); tickPunch(now); tickSpellFx(now);   // (⚔ what each action leaves over the figures: ui/fightfx.js)
+    updatePings(now); tickFightFx(now); tickPunch(now); tickSpellFx(now); tickCondFx(now);   // (⚔ what each action leaves over the figures: ui/fightfx.js)
     // whispers
     if (ui.whispers && ui.role === 'dm' && state.dread >= 3 && now > whisperAt){ whisperAt = now + (60 - state.dread * 4.5) * 1000 * (0.6 + Math.random() * .8); sendWhisper(pick(WHISPERS)); }
     $('#bloodrim').style.boxShadow = `inset 0 0 ${state.dread * 14}px rgba(150,20,30,${(state.dread - 1) * .05})`;

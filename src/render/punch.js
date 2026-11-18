@@ -158,8 +158,11 @@ export function lunge(id, targetId, { ranged = false } = {}){
   addMove(id, { kind:ranged ? 'knock' : 'lunge', ms:ranged ? 380 : 620, amp:ranged ? -.08 : .3, dx:d.x, dz:d.z, back:true }); made.lunges++;
 }
 // the blow lands on `id`, from `fromId` (none: a spell's area, a trap). info: { r, crit, kill }
+const lastHit = new Map();
 export function impact(id, fromId, info = {}){
   const t = tokById(id), P = at(id); if (!t || !P) return;
+  // the same blow told twice (a spell's area: the game's own impact, and ui/fightfx.js's for anything without one)
+  const was = lastHit.get(id); if (was && performance.now() - was < 450) return; lastHit.set(id, performance.now());
   const I = impactOf(info), now = performance.now(), d = fromId ? dirOf(fromId, id) : blastDir(id);
   const b0 = bloodOf({ tags:BEST[t.bid]?.tags, name:t.name, kind:t.kind }), el = EL[info.el];
   const blood = el ? { ...b0, spark:el } : b0;

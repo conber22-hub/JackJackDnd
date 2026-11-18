@@ -16,6 +16,11 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.37 — what they're under, on them
+
+- **🌀 Conditions shown on the figures** (`render/condfx.js`, on every screen, for as long as they last): prone or unconscious, the figure lies on its side, and gets up again; invisible, a faint see-through shimmer; poisoned, green bubbles rising; frightened, trembling over a cold violet ring; restrained or grappled, bands turning round them; paralyzed, stunned or incapacitated, stars circling their head; petrified, grey and still; charmed, pink motes drifting round; raging, a red glow and embers; blessed or hasted, gold motes rising; dodging, a pale blue shield; concentrating, a slow ring of runes at their feet; seeded, a sick green pulse. The name plate's icons and the word that floats up once stay as they were.
+- **💥 A spell's hits land on every screen**: whatever an area or Magic Missile hurts is knocked back (away from the blast) on the players' phones too, not just the DM's and the Wanderer's. (A blow told twice in the same instant lands once.)
+
 ## v1.36 — spells you see
 
 - **✨ Every spell is seen** (`render/spellfx.js`, its look in `engine/spellfx.js`; from `game/combat.js` `castSpell`, and on every screen at the table: `spellfx`). Each damage type has its colours and its manner: fire's embers rise, frost's shards fall, lightning cracks in a jagged bolt, thunder and force throw a shockwave, radiance comes down as a pillar, necrotic and poison hang as a dark cloud and give no light. A healing spell gathers on the one it heals.
@@ -45,7 +50,7 @@ Muse's four screens (round 13) over ChatGPT's fight summary, achievements and be
   - **The camera's view punches in**, harder for a crit and harder again for a kill. A crit flashes the screen. Your own hero hurt reddens the screen's edges (darker when they go down).
   - **A killing blow:** a longer hold, then slow motion. The figure stands until the blow lands, is thrown back, and lies where it fell, and a pale wisp rises out of it. The victory card waits until the last one has fallen.
   - **A miss:** they sway aside, away from the blow, and back.
-  - A spell's area, a trap or a burst lands the same way, with no line to be knocked along (for now on the DM's screen and the Wanderer's, not yet the players').
+  - A spell's area, a trap or a burst lands the same way, knocked away from the blast's middle (since v1.36), on every screen since v1.37.
   - Players' screens get the share of hit points a blow took, rounded to an eighth, never the hit points themselves.
 - **⚔ The fight over your shoulder** (`ui/followcam.js`, the shot in `engine/wander-cam.js` `shoulderShot`; the Wanderer and every handheld at the table). Once a fight's opening is past, the camera comes down low behind your hero, just off their right shoulder, and looks past them at what they face: the foe you're aiming at, a foe on its turn, or a face you point at in the turn order. Your hero is big in the near corner of the screen and the fight is beyond them. It swings round behind them as they turn to a new foe.
   - **L / R** swap shoulders. The right stick sideways peeks round, and eases back when let go. **V** (the right stick's click, View) or craning out goes up above the fight; **V** again comes back down behind them. When the fight ends, the camera goes back to the view you had before it.
@@ -1079,6 +1084,7 @@ src/render/             Three.js
   props.js              the 3D props, houses with roofs, the instanced pine
   minis.js              procedural 3D minis (SHAPES) + syncing tokens
   effects.js            selection ring, reach glow, pings, bursts, Build overlays
+  condfx.js             🌀 conditions on the figures: lying down, see-through, bubbles, bands, stars, shields, runes
   spellfx.js            ✨ spells seen: bursts, cones, bolts, pillars, darts, heals; a flash light kept ready
   punch.js              💥 a blow felt: lunge, hit-stop (worldSpeed, read by main.js), flash, knockback, slash, spray, splashes, kill wisp, screen flash, camera punch-in
   ambience.js           candle and fire light from props, rain and snow outdoors
