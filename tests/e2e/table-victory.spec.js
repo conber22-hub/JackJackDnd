@@ -33,3 +33,29 @@ test('a fight won at the table puts the victory screen on the players\' phones',
     expect(errors).toEqual([]);
   } finally { await context.close(); }
 });
+
+// 📱 A seated player's phone draws the blow's number over whoever took it (ui/fightfx.js remoteBlow)
+test('a player\'s phone shows the numbers of the blows the DM\'s table rolls', async ({ page:dm, browser, baseURL }) => {
+  test.setTimeout(300_000);
+  await arena(dm, []);
+  await dm.evaluate(() => { const D = window.DreadDelve; D.get().campaign.freeRolls = true;
+    const h = D.newHero('Fighter'); h.name = 'Ada'; h.id = 'ada-num'; const t = D.applyCharacter(h, { owner:'Ada' }); t.floor = 0; t.x = 6; t.y = 10; });
+  await dm.locator('[data-act="tab"][data-k="table"]').click();
+  await dm.locator('[data-act="host"]').click();
+  await expect.poll(() => dm.evaluate(() => window.DreadDelve.net.online)).toBe(true);
+  const code = await dm.evaluate(() => window.DreadDelve.net.code);
+  const context = await browser.newContext({ baseURL, viewport:{ width:390, height:844 }, isMobile:true, hasTouch:true });
+  try {
+    const p = await context.newPage();
+    const errors = await preparePage(p);
+    await p.locator('[data-act="thRole"][data-k="player"]').click();
+    await p.locator('#pName').fill('Ada'); await p.locator('#pWord').fill('e2e-secret'); await p.locator('#joinCode').fill(code);
+    await p.getByRole('button', { name:'Join the table', exact:true }).click();
+    await expect.poll(() => p.evaluate(() => { const D = window.DreadDelve; return D.get()?.tokens.find(t => t.id === D.ui.myToken)?.name || null; }), { timeout:30_000 }).toBe('Ada');
+    const before = await p.evaluate(() => window.DreadDelve.fightFxCount().floats);
+    await dm.evaluate(() => { const D = window.DreadDelve; const w = D.placeMonster('wolf', { floor:0, x:7, y:10 }); w.hp = w.maxHp = 300; w.ac = 1;
+      const a = D.get().tokens.find(t => t.name === 'Ada'); D.rollInitiative({ ids:[w.id, a.id] }); D.doAttack(a.id, w.id, 0); });
+    await expect.poll(() => p.evaluate(() => window.DreadDelve.fightFxCount().floats), { timeout:30_000 }).toBeGreaterThan(before);
+    expect(errors).toEqual([]);
+  } finally { await context.close(); }
+});

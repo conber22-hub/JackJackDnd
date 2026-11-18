@@ -1,5 +1,6 @@
 /* MULTIPLAYER — peer-to-peer over PeerJS. The DM hosts; players join with a 4-letter code.
    Players only send requests (move, stairs, door, search, disarm, ping, end turn); the DM's app decides. */
+import { remoteBlow } from '../ui/fightfx.js';
 import { openVictory, setVictoryFace } from '../ui/victory.js';
 import { faceOf } from '../game/night.js';
 import { spellFx } from '../render/spellfx.js';
@@ -531,7 +532,7 @@ export function onClientMsg(m){
   else if (m.t === 'spellfx' && state && m.fx && typeof m.fx === 'object') spellFx(m.fx);   // ✨ a spell seen (render/spellfx.js)
   else if (m.t === 'victory' && state && m.s && typeof m.s === 'object' && !ui.screen) tableVictory(m);   // 🏆 the party won (game/combat.js checkVictory)
   else if (m.t === 'oaDone') dropAsk(m.id);
-  else if (m.t === 'act' && state && ['attack', 'cast', 'hit', 'miss'].includes(m.kind)) actOn(m.id, m.kind, m.target, m.fx && typeof m.fx === 'object' ? m.fx : null);
+  else if (m.t === 'act' && state && ['attack', 'cast', 'hit', 'miss'].includes(m.kind)){ const fx = m.fx && typeof m.fx === 'object' ? m.fx : null; actOn(m.id, m.kind, m.target, fx); remoteBlow(m.kind, m.id, m.target, fx || {}); }   // (the number, MISS, the arrow: ui/fightfx.js)
   else if (m.t === 'bye'){ net.status = 'closed'; clearTimeout(net.retryTimer); toast('The DM closed the table.'); renderNetStatus(); }
   else if (m.t === 'denied'){ waiting(null); toast(m.text); if (ui.myHeroId && !tokById(ui.myToken)) ui.myHeroId = null; const me = tokById(ui.myToken); if (me && ui.selected === me.id) showReach(me); renderPanel(); }
   // (waiting(null): something came back, so the player's 'with the DM' sign goes)

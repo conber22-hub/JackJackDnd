@@ -10,7 +10,7 @@
    The game says what happened on its bus (game/combat.js, moves.js, resources.js, rules.js); this only draws it
    (render/fightzone.js). */
 import { bus } from '../util/core.js';
-import { floatText, streak, ringPulse } from '../render/fightzone.js';
+import { floatText, streak, ringPulse, plantArrow } from '../render/fightzone.js';
 import { impact, setMine, windUp } from '../render/punch.js';
 import { holdFall } from '../render/minis.js';
 import { state, ui } from '../engine/state.js';
@@ -70,6 +70,14 @@ function cond(e){
   after(450, () => floatText(e.t.id, condWord(e.n), col, { word:true }));
 }
 
+/* 📱 A player's screen at the table (net/table.js 'act'): the game's events don't fire there, so the blow's own message
+   draws what the DM's screen draws from them: the shot or the throw crossing (as it's loosed), the number over whoever
+   took it (or MISS), and the arrow that stays where it went. */
+export function remoteBlow(kind, id, from, fx = {}){
+  if (kind === 'attack' && fx?.ranged && from) streak(id, from, { spell:fx.el ? SPELL_COL[fx.el] || '#c9a0ff' : null });   // (attack: id is the one loosing, from its target)
+  else if (kind === 'hit'){ if (fx?.n > 0) floatText(id, `${fx.crit ? 'CRIT ' : ''}−${fx.n}`, fx.crit ? '#ffd45a' : '#ff7a52', { big:!!fx.crit }); if (fx?.ranged && from && !fx.el) plantArrow(from, id, 'hit'); }
+  else if (kind === 'miss'){ floatText(id, 'MISS', '#d9d2c4'); if (fx?.ranged && from && !fx.el) plantArrow(from, id, 'miss'); }
+}
 let wired = false;
 export function wireFightFx(){
   if (wired) return; wired = true;

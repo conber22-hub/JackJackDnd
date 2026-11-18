@@ -121,6 +121,12 @@ export function streak(fromId, toId, { spell = null, ms = 300, stick = null } = 
   parent.add(grp); parent.worldToLocal(a); parent.worldToLocal(b);
   madeStreaks++; streaks.push({ grp, a, b, t0:performance.now(), ms, arc:spell ? .15 : Math.min(1.2, a.distanceTo(b) * .08), stick:spell ? null : stick, toId });
 }
+// an arrow or a javelin planted straight away (a player's screen: it hears of the blow as it lands, not as it flies)
+export function plantArrow(fromId, toId, stick){
+  const a = where(fromId, new THREE.Vector3()), b = where(toId, new THREE.Vector3()), tv = tokenViews.get(fromId); if (!a || !b || !tv?.group?.parent) return;
+  const parent = tv.group.parent; parent.worldToLocal(a); parent.worldToLocal(b);
+  plant({ a, b, toId, stick, grp:{ parent } });
+}
 function plant(s){
   const tv = tokenViews.get(s.toId), dir = new THREE.Vector3().subVectors(s.b, s.a).setY(0).normalize();
   const m = new THREE.Mesh(shaftGeo, new THREE.MeshBasicMaterial({ color:'#cdbb98', transparent:true })), fl = new THREE.Mesh(new THREE.ConeGeometry(.045, .09, 4).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color:'#e8e2d0', transparent:true }));
