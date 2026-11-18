@@ -23,6 +23,7 @@ for (const [label, vp] of [['folded', { width:344, height:882 }], ['unfolded', {
       await scrolls('#charBox', cv.x + cv.width / 2, cv.y + cv.height / 2);          // a swipe on the hero still scrolls
       await page.goto('/dread-delve.html'); await page.waitForFunction(() => !!window.DreadDelve);
       await arena(page);
+      await page.evaluate(() => document.getElementById('startModal')?.classList.add('hidden'));   // (the start page can still be up a moment after the reload)
       if (!(await page.evaluate(() => window.DreadDelve.ui.panelOpen))) await page.locator('#btnPanel').click();
       await page.locator('[data-act="tab"][data-k="tokens"]').click();
       for (const n of ['Bo', 'Cy', 'Di', 'Ed']){ await page.locator('#newName').fill(n); await page.locator('[data-act="addPc"]').click(); }
