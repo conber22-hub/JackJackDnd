@@ -107,5 +107,5 @@ export * as critters from './render/critters.js';   // 🐈 the valley's animals
 export * as screens from './ui/screens-debug.js';   // 🏆 the screens between the fights (ui/victory.js, ui/bestiary.js, ui/trophies.js, ui/levelup.js)
 export { loopFor, musicNow } from './ui/regionmusic.js';   // 🎼 the region music (ui/regionmusic.js): which loop is wanted here, which is playing
 export { tableHH } from './ui/tablehh.js';   // 🕹 the handheld at the table
-export { camTurn, camView, camCrane, renderHud } from './ui/wander.js';   // 🎥 the Wanderer's follow camera
+export { camTurn, camView, camCrane, renderHud, xpFloatsShown } from './ui/wander.js';   // 🎥 the Wanderer's follow camera
 export { viewSize, scene } from './render/scene.js';

@@ -28,6 +28,7 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 - **🎬 A beat on the big moments** (the Wanderer, over the shoulder: `ui/followcam.js` `camBeat`): your critical hit or your killing blow pushes the camera in close as it lands, then eases back out.
 - **💨 A Dash looks fast** (`render/trails.js`): a creature running on its Dash leaves a faint gold sheet behind it, feet to shoulders, as it goes.
+- **✨ What a foe was worth** (the Wanderer: `ui/wander.js`): as a fallen foe settles, a gold "+N XP" rises from it with a gold ring on the ground and a chime (the XP is still shared out when the fight is won).
 - **💓 The music goes far away near death** (`audio/sound.js` `muffle`, from `ui/followcam.js` with the red pulse): at a quarter of your hero's hit points or less, the music and the drone go muffled through a low-pass, further still at an eighth, and come back clear as they're healed. The fight's own sounds stay sharp.
 - **🧭 Where the blow came from** (`render/punch.js` `hitDir`, `engine/punch.js` `arcAngle`): when your hero is struck, a red arc at the edge of the view points towards whoever struck them, measured from the hero and turned with the camera, so a foe behind you or off to the side over the shoulder isn't missed. It shows on your own screen only, in the Wanderer and on a player's phone.
 - **🌫 Dust** (`render/deathfx.js` `dust`): a body hitting the ground, a critical or heavy blow driving someone back, and a Dash's first stride each kick up a low puff of grey-brown dust that rolls outward and settles.

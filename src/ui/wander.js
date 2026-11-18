@@ -21,7 +21,9 @@ import { W, rt, hero, members, wandering, startWander, continueWander, leaveWand
   heroAttack, heroDodge, heroTurnAct, heroFeatures, heroFeature, endHeroTurn, aim, target, targets, attackFor, nextWeapon, attacksLeft, myTurn, fightTick, destinations, setOut, travelTo, rest, saveNow,
   pack, toggleEquip, usePotion, coinsGp, shopHere, buyPotion, journal, approvalOf, levelReady, partyLevel, nextLevelXp, levelUpHero, sheetOf, spellList, heroCast,
   SLOTS, slotMeta, canSaveSlot, saveToSlot, loadFromSlot, opening, economy, strikeOdds } from '../game/wander.js';
-import { setFightZone, clearFightFx, showMoveSquares, clearMoveSquares, showMarks, showOdds, showAreaSquares, clearAim, showHover } from '../render/fightzone.js';
+import { setFightZone, clearFightFx, showMoveSquares, clearMoveSquares, showMarks, showOdds, showAreaSquares, clearAim, showHover, floatText, ringPulse } from '../render/fightzone.js';
+import { xpOf } from '../engine/encounter.js';
+import { BEST } from '../data/bestiary.js';
 import { pipsHtml, markSpent, oddsBits, oddsTone, ODDS_COL } from './turnpips.js';
 import { orderStrip, wireStrip } from './orderstrip.js';
 import { areaOf, areaSquares, caughtIn } from '../engine/targeting.js';
@@ -520,7 +522,8 @@ const padHeld = { back:false };   // (Back held while Start goes down: the save 
 // which way "up on the stick" walks: away from the camera; but in a list or a screen, up is up (the shoulder camera in
 // a fight can stand at any angle)
 const yaw = () => menu.open || talkView() || pocketOpen() || victoryOpen() || levelUpOpen() || bestiaryOpen() || trophiesOpen() ? 0 : camYaw();
-let hudOn = false;
+let hudOn = false, xpShown = 0;
+export const xpFloatsShown = () => xpShown;   // (for the tests: the "+N XP" shown over the fallen)
 /* ---------- 🕹 the tunes and the coach (ui/hhlife.js) ---------- */
 const was = { turn:false, fight:false, lvl:false, quests:-1, done:-1, round:0, banner:false };
 function wanderMoments(){
@@ -643,7 +646,10 @@ export function ensureWander(){
   bus.on('acted', blowFelt);
   // 🎬 your killing blow; and whoever's blow it was, the one that ends the fight, held longer and closer
   bus.on('hurt', e => { const h = hero(); if (!h || !wandering() || !e?.t?.dead || e.t.kind !== 'monster') return;
-    if (lastOfSide(e.t, state.combat.order.map(tokById))) camBeat(1900, .42); else if (e.by === h.id) camBeat(1100, .32); });
+    if (lastOfSide(e.t, state.combat.order.map(tokById))) camBeat(1900, .42); else if (e.by === h.id) camBeat(1100, .32);
+    // ✨ what it was worth: a gold "+N XP" rises from it as it settles, and a gold ring on the ground
+    const xp = xpOf(BEST[e.t.bid]), id = e.t.id;
+    if (xp > 0) setTimeout(() => { if (!wandering()) return; floatText(id, `+${xp} XP`, '#ffd96a', { word:true }); ringPulse(id, '#ffd96a'); sfx('chime', false); xpShown++; }, 520); });
   bus.on('levelReady', () => { if (wandering() && !state.combat.active) openMenu('level'); });   // ⬆ after the victory screen: the level-up page, ready
   // ⏳ a face in the turn order: pointed at, its figure lights; a foe tapped is aimed at
   wireStrip('osWd', { hover:id => showHover(id), pick:id => { const o = tokById(id); if (o?.kind === 'monster' && !o.dead && o.hp > 0){ rt.target = id; rt.look = { id, until:performance.now() + 900 }; renderHud(); } } });

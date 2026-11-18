@@ -273,3 +273,13 @@ test('a blow on your hero shows where it came from', async ({ page }) => {
   expect(d.now.deg <= 60 || d.now.deg >= 300).toBe(true);
   await expect(page.locator('#hitDir')).toHaveCount(1);
 });
+
+// ✨ A foe falls: what it was worth rises from it in gold
+test('a fallen foe shows the XP it was worth', async ({ page }) => {
+  test.setTimeout(180_000);
+  await fight(page);
+  const n0 = await page.evaluate(() => window.DreadDelve.xpFloatsShown());
+  await page.evaluate(() => { const D = window.DreadDelve, w = D.get().tokens.find(t => t.kind === 'monster'); D.applyDamage(w, 9999, 'slashing', D.wander.hero().id); });
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.xpFloatsShown()), { timeout:20_000 }).toBe(n0 + 1);
+  expect(await page.evaluate(() => window.DreadDelve.fightFxCount().texts.join(' '))).toMatch(/\+\d+ XP/);
+});
