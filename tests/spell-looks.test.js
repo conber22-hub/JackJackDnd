@@ -122,3 +122,13 @@ test('partial authored entries inherit all missing fields from the fallback', ()
     valid(school,name);
   } finally { delete LOOKS[name]; }
 });
+
+test('named spells remain distinguishable with captions and audio off', () => {
+  const seen = new Map();
+  for (const [name, look] of Object.entries(LOOKS)) {
+    const { col, col2, motes, mark, path } = look;
+    const signature = JSON.stringify([col, col2, motes, mark, path]);
+    assert.ok(!seen.has(signature), `${name} visually duplicates ${seen.get(signature)}`);
+    seen.set(signature, name);
+  }
+});
