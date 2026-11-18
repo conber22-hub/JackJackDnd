@@ -17,6 +17,7 @@ import { tokenViews } from './minis.js';
 import { state, tokById } from '../engine/state.js';
 import { BEST } from '../data/bestiary.js';
 import { impactOf, speedAt, moveAt, bloodOf } from '../engine/punch.js';
+import { dies } from './deathfx.js';
 
 /* ---------- the hit-stop: the world's clock ---------- */
 let imp = null, impAt = -1e9, clk = 0, lastNow = 0;
@@ -172,7 +173,7 @@ export function impact(id, fromId, info = {}){
   slash(P, d, info.crit, info.crit ? '#ffd45a' : el || (blood.splat ? '#fff0e0' : blood.spark));
   spray(P, d, blood, info.crit, info.kill);
   splat(P, d, blood, info.crit || info.kill);
-  if (info.kill) wisp(P, blood.splat ? '#e8e0ff' : blood.spark);
+  if (info.kill){ if (b0.death === 'fall') wisp(P, blood.splat ? '#e8e0ff' : blood.spark); dies(id); }   // ☠ how it dies (render/deathfx.js)
   fovKick(I.kick, info.kill ? 650 : info.crit ? 420 : 280);
   if (I.shake > .4) fx.shake = Math.max(fx.shake, (I.shake - .3) * .16);
   const me = mine(id);

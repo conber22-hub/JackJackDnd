@@ -41,6 +41,18 @@ test('what comes out of them: blood, rot, dust or nothing', () => {
   assert.equal(bloodOf({ name:'Scarecrow Watcher' }).splat, false);
 });
 
+test('how it dies: by what it is (a hero only ever falls)', () => {
+  assert.equal(bloodOf({ name:'Barovian Wolf' }).death, 'fall');
+  assert.equal(bloodOf({ tags:['seep'], name:'Seepling' }).death, 'melt');
+  assert.equal(bloodOf({ tags:['undead'], name:'Skeleton' }).death, 'crumble');
+  assert.equal(bloodOf({ name:'Zombie' }).death, 'crumble');
+  assert.equal(bloodOf({ name:'Ghost' }).death, 'fade');
+  assert.equal(bloodOf({ name:'Will-o\'-Wisp' }).death, 'fade');
+  assert.equal(bloodOf({ name:'Swarm of Bats' }).death, 'scatter');
+  assert.equal(bloodOf({ name:'Scarecrow' }).death, 'burn');
+  assert.equal(bloodOf({ name:'Ghost', kind:'pc' }).death, 'fall');
+});
+
 test('a player\'s screen gets the share of hit points, rounded, never the HP', () => {
   assert.equal(shareOf(7, 22), .375); assert.equal(shareOf(50, 10), 1); assert.equal(shareOf(3, 0), 0); assert.equal(shareOf(1, 100), 0);
 });

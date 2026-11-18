@@ -58,14 +58,18 @@ export function moveAt(kind, k, amp = 1, back = true){
 
 /* What comes out of a creature when it's struck: its blood, or what it has instead.
    tags: its tags (seep, undead…); name: its name, for the undead and the bodiless the tags don't say. */
+/* death: how it dies (render/deathfx.js) — 'fall' (it drops, and a pool spreads under it) · 'melt' (it bursts and sinks
+   into a puddle: the Seep) · 'crumble' (it falls apart into dust: the walking dead) · 'fade' (it rises into light and is
+   gone: the bodiless) · 'scatter' (it breaks up and flies apart: a swarm) · 'burn' (straw: it goes up in sparks). A hero
+   only ever falls. */
 export function bloodOf({ tags = [], name = '', kind = '' } = {}){
-  const tg = new Set(tags || []), n = String(name || '').toLowerCase();
-  if (tg.has('seep') || /seep|husk|bloom|undertow|budding/.test(n)) return { color:'#4f6b1e', spark:'#c6ff5a', splat:true };   // black-green rot
-  if (/ghost|wraith|specter|spectre|shadow|mist|banshee|wisp|spirit|will-o/.test(n)) return { color:'#9fb8d8', spark:'#e6f2ff', splat:false };   // nothing to spill: a cold light
-  if (tg.has('undead') || /skeleton|zombie|mummy|lich|bone|corpse|revenant/.test(n)) return { color:'#8a8072', spark:'#efe6d2', splat:false };   // dust and chips of bone
-  if (/scarecrow|straw/.test(n)) return { color:'#b89a52', spark:'#ffe2a0', splat:false };   // straw
-  if (/hands?-swarm|swarm of/.test(n)) return { color:'#6a1018', spark:'#ffd0b0', splat:true };
-  return { color:'#7a0c14', spark:kind === 'pc' ? '#ffd0a0' : '#ffe2c0', splat:true };
+  const tg = new Set(tags || []), n = String(name || '').toLowerCase(), hero = kind === 'pc' || kind === 'npc';
+  if (tg.has('seep') || /seep|husk|bloom|undertow|budding/.test(n)) return { color:'#4f6b1e', spark:'#c6ff5a', splat:true, death:hero ? 'fall' : 'melt' };   // black-green rot
+  if (/ghost|wraith|specter|spectre|shadow|mist|banshee|wisp|spirit|will-o/.test(n)) return { color:'#9fb8d8', spark:'#e6f2ff', splat:false, death:hero ? 'fall' : 'fade' };   // nothing to spill: a cold light
+  if (tg.has('undead') || /skeleton|zombie|mummy|lich|bone|corpse|revenant|ghoul|wight/.test(n)) return { color:'#8a8072', spark:'#efe6d2', splat:false, death:hero ? 'fall' : 'crumble' };   // dust and chips of bone
+  if (/scarecrow|straw/.test(n)) return { color:'#b89a52', spark:'#ffe2a0', splat:false, death:hero ? 'fall' : 'burn' };   // straw
+  if (/hands?-swarm|swarm of/.test(n)) return { color:'#6a1018', spark:'#ffd0b0', splat:true, death:hero ? 'fall' : 'scatter' };
+  return { color:'#7a0c14', spark:kind === 'pc' ? '#ffd0a0' : '#ffe2c0', splat:true, death:'fall' };
 }
 
 /* A player's screen gets the share of hit points a blow took, rounded to an eighth, never the HP themselves. */

@@ -88,7 +88,9 @@ export { punchCount, worldSpeed } from './render/punch.js';   // 💥 a blow fel
 export { actOn, holdFall } from './render/minis.js';   // (a swing, a blow, a miss on a figure, for poking: actOn(id, 'hit', fromId, { r, crit, kill }))
 export { shoulderNow } from './ui/followcam.js';   // ⚔ is the fight seen over the hero's shoulder (ui/followcam.js)
 export { spellFxCount, spellFx, setSpellSlow } from './render/spellfx.js';
-export { condFxOn } from './render/condfx.js';   // 🌀 what each creature shows it's under (render/condfx.js)   // ✨ spells seen (render/spellfx.js)
+export { condFxOn } from './render/condfx.js';
+export { deathFxCount } from './render/deathfx.js';
+export { trailCount } from './render/trails.js';   // 🗡 swings' arcs drawn now (render/trails.js)   // ☠ deaths seen (render/deathfx.js)   // 🌀 what each creature shows it's under (render/condfx.js)   // ✨ spells seen (render/spellfx.js)
 export { diceSeen } from './ui/dicemoment.js';
 export { facesMade } from './ui/orderstrip.js';   // ⏳ how many turn-order portraits have been made (ui/orderstrip.js)   // 🎲 what the last dice moments said (ui/dicemoment.js)
 export * as handheld from './ui/handheld.js';   // 🕹 the handheld skin: the phone as the controller

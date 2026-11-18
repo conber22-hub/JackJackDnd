@@ -16,9 +16,11 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
-## v1.37 — what they're under, on them
+## v1.37 — what they're under, how they die, and the swing's arc
 
 - **🌀 Conditions shown on the figures** (`render/condfx.js`, on every screen, for as long as they last): prone or unconscious, the figure lies on its side, and gets up again; invisible, a faint see-through shimmer; poisoned, green bubbles rising; frightened, trembling over a cold violet ring; restrained or grappled, bands turning round them; paralyzed, stunned or incapacitated, stars circling their head; petrified, grey and still; charmed, pink motes drifting round; raging, a red glow and embers; blessed or hasted, gold motes rising; dodging, a pale blue shield; concentrating, a slow ring of runes at their feet; seeded, a sick green pulse. The name plate's icons and the word that floats up once stay as they were.
+- **☠ Each creature dies in its own way** (`render/deathfx.js`, how in `engine/punch.js` `bloodOf`; on every screen): a beast or a person falls and a dark pool spreads out under them; the Seep bursts, sags and sinks into a black-green puddle; the walking dead sink into the ground in a cloud of dust and leave a grey heap; ghosts, wisps and the Mist lift into the air, thin to light and are gone; a swarm breaks apart into a hundred small dark things; a scarecrow goes up in sparks and slumps to ash. Whatever doesn't fall leaves no body, base or name on the map (unless the Seep's Unfinished Death is still deciding). What's left on the ground fades once the fight is over. A hero only ever falls.
+- **🗡 A swing leaves its arc** (`render/trails.js`): a forged figure's sword, axe, mace or claws leave a bright smear through the air from the weapon's middle to its tip as they swing, the newest part brightest, fading as the swing ends.
 - **💥 A spell's hits land on every screen**: whatever an area or Magic Missile hurts is knocked back (away from the blast) on the players' phones too, not just the DM's and the Wanderer's. (A blow told twice in the same instant lands once.)
 
 ## v1.36 — spells you see
@@ -1084,6 +1086,8 @@ src/render/             Three.js
   props.js              the 3D props, houses with roofs, the instanced pine
   minis.js              procedural 3D minis (SHAPES) + syncing tokens
   effects.js            selection ring, reach glow, pings, bursts, Build overlays
+  trails.js             🗡 a swing's arc: a ribbon from the weapon's middle to its tip
+  deathfx.js            ☠ deaths by kind: fall and a pool, melt, crumble, fade, scatter, burn
   condfx.js             🌀 conditions on the figures: lying down, see-through, bubbles, bands, stars, shields, runes
   spellfx.js            ✨ spells seen: bursts, cones, bolts, pillars, darts, heals; a flash light kept ready
   punch.js              💥 a blow felt: lunge, hit-stop (worldSpeed, read by main.js), flash, knockback, slash, spray, splashes, kill wisp, screen flash, camera punch-in

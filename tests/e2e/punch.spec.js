@@ -98,3 +98,33 @@ test('conditions show on the figures, and go when they end', async ({ page }) =>
   await expect.poll(() => page.evaluate(i => window.DreadDelve.condFxOn()[i.w], ids)).toBe('');
   expect(errs).toEqual([]);
 });
+
+// ☠ How it dies (render/deathfx.js): a Seepling melts away and leaves no body; a wolf falls and stays
+test('a creature dies in its own way: the Seep melts away, a wolf falls', async ({ page }) => {
+  test.setTimeout(180_000);
+  const errs = []; page.on('pageerror', e => errs.push(e.message));
+  await fight(page);
+  const ids = await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), w = D.get().tokens.find(t => t.kind === 'monster');
+    const s = D.placeMonster('seepling', { floor:w.floor, x:w.x, y:w.y }); w.flags.gone = true;
+    s.hp = 0; s.dead = true; D.holdFall(s.id, 500); D.actOn(s.id, 'hit', h.id, { r:1, kill:true }); D.syncTokens(); return { s:s.id, w:w.id, h:h.id }; });
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.deathFxCount().made)).toBeGreaterThan(0);
+  // gone: nothing of it is drawn
+  await expect.poll(() => page.evaluate(i => window.DreadDelve.tokenViews.get(i.s).group.children.every(c => !c.visible), ids), { timeout:15_000 }).toBe(true);
+  const fell = await page.evaluate(i => { const D = window.DreadDelve, w = D.get().tokens.find(t => t.id === i.w); w.flags.gone = false; w.hp = 0; w.dead = true;
+    D.holdFall(w.id, 500); D.actOn(w.id, 'hit', i.h, { r:1, kill:true }); D.syncTokens(); return true; }, ids);
+  expect(fell).toBe(true);
+  await page.waitForTimeout(2500);
+  expect(await page.evaluate(i => window.DreadDelve.tokenViews.get(i.w).group.userData.fig.visible, ids)).toBe(true);
+  expect(errs).toEqual([]);
+});
+
+// 🗡 The swing's arc (render/trails.js): a forged hero's sword leaves a bright smear as it swings, gone once it's done
+test('a sword swing leaves an arc through the air', async ({ page }) => {
+  test.setTimeout(180_000);
+  await fight(page);
+  await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), w = D.get().tokens.find(t => t.kind === 'monster');
+    D.actOn(h.id, 'attack', w.id, {}); const rig = D.tokenViews.get(h.id).group.userData.fig.userData.rig;
+    for (const a of [rig.action, rig.clip]) if (a) a.dur = 10; });   // (a slow swing: this browser draws a frame or two a second)
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.trailCount()), { timeout:20_000 }).toBeGreaterThan(0);
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.trailCount()), { timeout:30_000 }).toBe(0);
+});
