@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { scene } from './scene.js';
 import { tokenViews } from './minis.js';
 import { tokById, state } from '../engine/state.js';
+import { dust } from './deathfx.js';
 
 const MELEE = new Set(['slash', 'smash', 'thrust', 'claw']);
 const N = 14;   // samples along the ribbon
@@ -46,7 +47,7 @@ export function tickTrails(now = performance.now()){
     // 💨 a Dash: a creature running on its dash leaves a faint sheet behind it, feet to shoulders, as it goes
     if (tv.anim && state?.combat?.active && tv.group.visible){ const t = tokById(id);
       if (t?.dashed){ const p = tv.group.getWorldPosition(new THREE.Vector3()), base = p.clone().setY(p.y + .1), tip = p.clone().setY(p.y + 1.05);
-        let tr = trails.get(id); if (!tr || tr.fadeFrom || tr.act !== 'dash'){ if (tr){ scene.remove(tr.mesh); tr.mesh.geometry.dispose(); tr.mesh.material.dispose(); } tr = { mesh:ribbon('#ffd27a'), pts:[], fadeFrom:0, act:'dash' }; trails.set(id, tr); }
+        let tr = trails.get(id); if (!tr || tr.fadeFrom || tr.act !== 'dash'){ if (tr){ scene.remove(tr.mesh); tr.mesh.geometry.dispose(); tr.mesh.material.dispose(); } tr = { mesh:ribbon('#ffd27a'), pts:[], fadeFrom:0, act:'dash' }; trails.set(id, tr); dust(tv.group.parent, tv.group.position.clone(), 12, { out:1, ms:700, size:.2 }); }   // (🌫 its first stride kicks up dust)
         const last = tr.pts.at(-1); if (!last || last[0].distanceTo(base) > .04){ tr.pts.push([base, tip]); if (tr.pts.length > N) tr.pts.shift(); }
         seen.add(id); draw(tr, .55); continue; } }
     const fig = tv.group.userData.fig, rig = fig?.userData.rig, act = rig?.action;

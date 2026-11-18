@@ -17,6 +17,7 @@
    It holds the handheld whenever this phone is seated with a hero (not the TV, not card only, not in the Lantern
    Yard), and the device wants it: on a touch screen with no controller, unless the menu's "The classic screen" is
    chosen (kept per device). A controller plugged in plays it too. */
+import { turnBanner } from './turnbanner.js';
 import { hpBar } from './hpbar.js';
 import { state, ui, tokById } from '../engine/state.js';
 import { esc, signed } from '../util/core.js';
@@ -459,7 +460,8 @@ function placeWatch(t){
 // The turn coming round, a fight ending, a hurt or a heal, a reaction to take: a buzz and a tune
 function moments(t){
   const mine = myTurn(), f = fight();
-  if (mine && !rt.turnWas){ tune('turnStart'); waiting(''); try { navigator.vibrate?.([50, 40, 50]); } catch {} }   // (last turn's "with the DM…" is old news)
+  if (mine && !rt.turnWas){ tune('turnStart'); waiting(''); try { navigator.vibrate?.([50, 40, 50]); } catch {}   // (last turn's "with the DM…" is old news)
+    const r = state.combat.round || 1; turnBanner({ title:'Your turn', sub:r > 1 && r !== rt.bannerRound ? `Round ${r}` : '' }); rt.bannerRound = r; }   // ⚔ (ui/turnbanner.js)
   if (!f && rt.fightWas && !t.dead && t.hp > 0) tune('victory');
   if (rt.hpWas !== null && t.hp > rt.hpWas) tune('heal');
   else if (rt.hpWas !== null && t.hp < rt.hpWas) tune(t.hp <= 0 ? 'defeat' : 'hit');

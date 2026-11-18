@@ -90,6 +90,10 @@ export { shoulderNow, nearDeathNow } from './ui/followcam.js';   // ⚔ is the f
 export { spellFxCount, spellFx, setSpellSlow } from './render/spellfx.js';
 export { condFxOn } from './render/condfx.js';
 export { deathFxCount } from './render/deathfx.js';
+import { dust } from './render/deathfx.js';
+// 🌫 dust kicked up at a figure's feet, on its own (to look at it: render/deathfx.js)
+export const dustAt = (id, n = 22, o) => { const tv = tokenViews.get(id); if (tv?.group?.parent) dust(tv.group.parent, tv.group.position.clone(), n, o); };
+export { turnBannerNow } from './ui/turnbanner.js';   // ⚔ "Your turn" (ui/turnbanner.js)
 export { chipCount } from './render/hpchip.js';   // 💔 health bars draining after a blow (render/hpchip.js)
 export { trailCount } from './render/trails.js';   // 🗡 swings' arcs drawn now (render/trails.js)   // ☠ deaths seen (render/deathfx.js)   // 🌀 what each creature shows it's under (render/condfx.js)   // ✨ spells seen (render/spellfx.js)
 export { diceSeen } from './ui/dicemoment.js';

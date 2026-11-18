@@ -35,14 +35,24 @@ function remnant(parent, at, col, size, opacity = .85, ms = 1600){
   left.push({ m, t0:performance.now(), ms, size, op:opacity });
   while (left.length > 30){ const o = left.shift(); o.m.parent?.remove(o.m); o.m.material.dispose(); o.m.geometry.dispose(); }
 }
-function burst(parent, at, col, n, { up = 2, out = 2.5, grav = 6, ms = 1100, size = .1, add = false } = {}){
-  const geo = new THREE.BufferGeometry(), pos = new Float32Array(n * 3), vel = [];
-  for (let i = 0; i < n; i++){ pos.set([at.x, at.y + .5 + Math.random() * .4, at.z], i * 3); const a = Math.random() * 6.283, s = Math.random() * out; vel.push([Math.cos(a) * s, Math.random() * up, Math.sin(a) * s]); }
-  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  const p = new THREE.Points(geo, new THREE.PointsMaterial({ color:col, size, map:glowTex, transparent:true, depthWrite:false, fog:false, ...(add ? { blending:THREE.AdditiveBlending } : {}) }));
-  p.renderOrder = 24; parent.add(p); bits.push({ p, t0:performance.now(), ms, vel, grav, floor:at.y + .05 });
+// (soft sprites, not textured points: a point's texture isn't drawn on every device)
+function burst(parent, at, col, n, { up = 2, out = 2.5, grav = 6, ms = 1100, size = .1, add = false, lift = .5, spread = .4 } = {}){
+  const mat = new THREE.SpriteMaterial({ map:glowTex, color:col, transparent:true, depthWrite:false, fog:false, ...(add ? { blending:THREE.AdditiveBlending } : {}) });
+  const g = new THREE.Group(), vel = [];
+  for (let i = 0; i < n; i++){
+    const sp = new THREE.Sprite(mat); sp.position.set(at.x, at.y + lift + Math.random() * spread, at.z); sp.scale.setScalar(size * (.7 + Math.random() * .6)); sp.renderOrder = 24; g.add(sp);
+    const a = Math.random() * 6.283, s = Math.random() * out; vel.push([Math.cos(a) * s, Math.random() * up, Math.sin(a) * s]);
+  }
+  parent.add(g); bits.push({ p:g, mat, t0:performance.now(), ms, vel, grav, floor:at.y + .05 });
 }
 
+/* 🌫 a puff of dust kicked up at the feet: a body hitting the ground, a heavy blow driving someone back, a Dash's first
+   stride (render/punch.js, render/trails.js). Low, grey-brown, rolling outward and settling. */
+let dusts = 0;
+export function dust(parent, at, n = 22, { out = 1.5, ms = 950, size = .26 } = {}){
+  if (!parent || !at) return; dusts++;
+  burst(parent, at, '#d9ccb0', n, { up:.7, out, grav:.6, ms, size:size * 2, lift:.16, spread:.18 });
+}
 // a killing blow has landed on `id` (render/punch.js)
 export function dies(id){
   const t = tokById(id), tv = tokenViews.get(id); if (!t || !tv?.group?.parent) return;
@@ -50,7 +60,7 @@ export function dies(id){
   dying.set(id, { kind, t0:performance.now(), blood, parent, at }); made++;
   // and what it sounds like: the Seep's wet burst, bone and dust, a last whisper, a swarm's skitter, straw going up
   const snd = { melt:'burst', crumble:'crunch', fade:'whisper', scatter:'skitter', burn:'rise' }[kind]; if (snd) sfx(snd, false);
-  if (kind === 'fall'){ if (blood.splat) setTimeout(() => remnant(parent, at, blood.color, 1.5, .8, 2600), 450); }
+  if (kind === 'fall'){ if (blood.splat) setTimeout(() => remnant(parent, at, blood.color, 1.5, .8, 2600), 450); setTimeout(() => dust(parent, at, 30, { out:2 }), 420); }   // (and the dust as it lands)
   else if (kind === 'melt'){ burst(parent, at, blood.spark, 40, { up:3, out:2.2, ms:900, size:.12 }); burst(parent, at, blood.color, 30, { up:1.5, out:1.4, ms:1200, size:.16 }); setTimeout(() => remnant(parent, at, blood.color, 1.7, .9, 1400), 200); }
   else if (kind === 'crumble'){ burst(parent, at, '#b9b0a0', 50, { up:1.2, out:1.2, grav:1.2, ms:1800, size:.2 }); setTimeout(() => remnant(parent, at, '#6f675b', 1.1, .9, 1400), 300); }
   else if (kind === 'fade'){ burst(parent, at, blood.spark, 36, { up:2.5, out:.6, grav:-1.5, ms:1800, size:.14, add:true }); }
@@ -82,11 +92,11 @@ export function tickDeathFx(now = performance.now()){
     if (hide !== !!g.userData.unbodied || (hide && g.children.some(c => c.visible))){ for (const c of g.children) c.visible = !hide; g.userData.unbodied = hide; }
   }
   for (let i = bits.length - 1; i >= 0; i--){
-    const b = bits[i], k = (now - b.t0) / b.ms, dt = .016;
-    if (k >= 1){ b.p.parent?.remove(b.p); b.p.geometry.dispose(); b.p.material.dispose(); bits.splice(i, 1); continue; }
-    const A = b.p.geometry.attributes.position.array;
-    for (let j = 0; j < b.vel.length; j++){ const v = b.vel[j]; v[1] -= b.grav * dt; A[j * 3] += v[0] * dt; A[j * 3 + 1] = Math.max(b.floor, A[j * 3 + 1] + v[1] * dt); A[j * 3 + 2] += v[2] * dt; if (A[j * 3 + 1] <= b.floor){ v[0] *= .85; v[2] *= .85; } }
-    b.p.geometry.attributes.position.needsUpdate = true; b.p.material.opacity = k < .6 ? 1 : (1 - k) / .4;
+    const b = bits[i], k = (now - b.t0) / b.ms, dt = Math.min(.05, Math.max(.008, (now - (b.last || b.t0)) / 1000)); b.last = now;
+    if (k >= 1){ b.p.parent?.remove(b.p); b.mat.dispose(); bits.splice(i, 1); continue; }
+    const kids = b.p.children;
+    for (let j = 0; j < b.vel.length; j++){ const v = b.vel[j], q = kids[j].position; v[1] -= b.grav * dt; q.x += v[0] * dt; q.y = Math.max(b.floor, q.y + v[1] * dt); q.z += v[2] * dt; if (q.y <= b.floor){ v[0] *= .85; v[2] *= .85; } }
+    b.mat.opacity = k < .6 ? 1 : (1 - k) / .4;
   }
   for (const l of left){ const k = Math.min(1, (now - l.t0) / l.ms), e = 1 - Math.pow(1 - k, 3); l.m.scale.setScalar(Math.max(.01, l.size * e)); }
   // the fight is over: what's left fades into the ground
@@ -98,4 +108,4 @@ export function tickDeathFx(now = performance.now()){
   } else fadeFrom = 0;
 }
 // (for the tests: how many have died on screen, and how)
-export const deathFxCount = () => ({ made, dying:[...dying.values()].map(d => d.kind), left:left.length });
+export const deathFxCount = () => ({ made, dying:[...dying.values()].map(d => d.kind), left:left.length, dusts });

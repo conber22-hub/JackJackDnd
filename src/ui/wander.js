@@ -3,6 +3,7 @@
    turn, a conversation, and the menu (travel, rest, save, leave). Input: a gamepad (engine/pad.js; the loop below
    reads it every frame), the keyboard, the handheld skin's touch buttons (ui/handheld.js), or taps on the map.
    The follow camera (below) eases after the hero and turns, cranes and cycles views with the right stick, L / R, [ ] - = V. */
+import { turnBanner } from './turnbanner.js';
 import { hpBar } from './hpbar.js';
 import { state, ui, tokById, tokenAt, side } from '../engine/state.js';
 import { lastOfSide } from '../engine/punch.js';
@@ -520,11 +521,16 @@ const padHeld = { back:false };   // (Back held while Start goes down: the save 
 const yaw = () => menu.open || talkView() || pocketOpen() || victoryOpen() || levelUpOpen() || bestiaryOpen() || trophiesOpen() ? 0 : camYaw();
 let hudOn = false;
 /* ---------- 🕹 the tunes and the coach (ui/hhlife.js) ---------- */
-const was = { turn:false, fight:false, lvl:false, quests:-1, done:-1 };
+const was = { turn:false, fight:false, lvl:false, quests:-1, done:-1, round:0, banner:false };
 function wanderMoments(){
   const w = W(), h = hero(); if (!w || !h) return;
   const mine = myTurn(), f = !!state.combat.active, lvl = levelReady(), q = w.quests?.length || 0, d = (w.quests || []).filter(x => x.done).length;
-  if (mine && !was.turn) tune('turnStart');
+  if (mine && !was.turn){ tune('turnStart'); was.banner = true; }
+  // ⚔ the banner: once the fight's opening has played, and not over a screen or a card that's up (ui/turnbanner.js)
+  if (!mine || !f) was.banner = false;
+  else if (was.banner && !opening() && !menu.open && !talkView() && !victoryOpen() && !levelUpOpen()){
+    const r = state.combat.round || 1; turnBanner({ title:'Your turn', sub:r > 1 && r !== was.round ? `Round ${r}` : '' }); was.round = r; was.banner = false; }
+  if (!f) was.round = 0;
   if (!f && was.fight) tune(members().every(m => m.dead || m.hp <= 0) ? 'defeat' : 'victory');
   if (lvl && !was.lvl) tune('levelUp');
   if (was.quests >= 0 && q > was.quests) tune('questNew');

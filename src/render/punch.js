@@ -18,7 +18,7 @@ import { tokenViews } from './minis.js';
 import { state, tokById } from '../engine/state.js';
 import { BEST } from '../data/bestiary.js';
 import { impactOf, speedAt, moveAt, bloodOf, lastOfSide } from '../engine/punch.js';
-import { dies } from './deathfx.js';
+import { dies, dust } from './deathfx.js';
 
 /* ---------- the hit-stop: the world's clock ---------- */
 let imp = null, impAt = -1e9, clk = 0, lastNow = 0;
@@ -188,6 +188,7 @@ export function impact(id, fromId, info = {}){
   spray(P, d, blood, info.crit, info.kill);
   splat(P, d, blood, info.crit || info.kill);
   if (info.kill){ if (b0.death === 'fall') wisp(P, blood.splat ? '#e8e0ff' : blood.spark); dies(id); }
+  else if (info.crit || I.knock > .28) dust(P.parent, P.pos, 14, { out:1.1, ms:750, size:.22 });   // 🌫 driven back hard: dust at the feet
   if (last){ shockRing(P, '#fff1d6', 3.4, 900); shockRing(P, info.crit ? '#ffd45a' : '#ff9a6a', 2.2, 650, 120); made.lasts++; }   // 🏁 the fight's last blow: a ring of force across the ground   // ☠ how it dies (render/deathfx.js)
   fovKick(I.kick, info.kill ? 650 : info.crit ? 420 : 280);
   if (I.shake > .4 && !gfx.calm) fx.shake = Math.max(fx.shake, (I.shake - .3) * .16);

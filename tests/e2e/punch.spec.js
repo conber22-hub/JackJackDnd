@@ -46,6 +46,7 @@ test('a blow lands with a lunge, a hold, a knock and a splash; a miss sways asid
   await page.evaluate(({ h, w }) => { const D = window.DreadDelve, t = D.get().tokens.find(o => o.id === w);
     if (!t.dead){ t.hp = 0; t.dead = true; D.actOn(w, 'hit', h, { r:1, kill:true }); } }, ids);
   await expect.poll(() => page.evaluate(() => window.DreadDelve.punchCount().kills)).toBeGreaterThan(k0);
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.deathFxCount().dusts)).toBeGreaterThan(0);   // (🌫 the dust as it lands)
   await page.screenshot({ path:'test-results/punch-kill.png' });
 });
 
@@ -183,6 +184,7 @@ test('a hero running on a Dash leaves a trail', async ({ page }) => {
     for (const [dx, dy] of [[0, 5], [5, 0], [0, -5], [-5, 0], [4, 4], [-4, -4], [4, -4], [-4, 4]]){ const x = h.x + dx, y = h.y + dy;
       if (f.grid[y * f.W + x] === 1 && !D.get().tokens.some(t => t.x === x && t.y === y) && w.walkTo(x, y)) break; } });
   await expect.poll(() => page.evaluate(() => window.DreadDelve.trailCount()), { timeout:20_000 }).toBeGreaterThan(0);
+  expect(await page.evaluate(() => window.DreadDelve.deathFxCount().dusts)).toBeGreaterThan(0);   // (🌫 its first stride kicks up dust)
 });
 
 // 💔 A blow doesn't just shorten a health bar: what it took flashes, holds and drains away; a heal climbs
@@ -239,4 +241,18 @@ test('the last foe\'s fall runs slow, with a ring of force; one with others stil
   await expect(page.locator('#victory')).toBeVisible({ timeout:30_000 });
   expect(await page.evaluate(() => window.DreadDelve.wander.W().trophies?.got || [])).not.toContain('flee');
   await expect.poll(() => page.evaluate(() => window.DreadDelve.worldSpeed())).toBe(1);
+});
+
+// ⚔ Your turn: a gold band sweeps across with the words, and the round's number when a new one has begun
+test('the turn coming round is announced, with the round', async ({ page }) => {
+  test.setTimeout(180_000);
+  await fight(page);
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.turnBannerNow().shown)).toBeGreaterThan(0);
+  const b0 = await page.evaluate(() => window.DreadDelve.turnBannerNow());
+  expect(b0.last).toContain('Your turn');
+  await expect(page.locator('#yourTurn')).toHaveAttribute('role', 'status');
+  // round two: end the turn, the wolf goes, and it's ours again
+  await page.evaluate(() => { const D = window.DreadDelve; D.get().tokens.filter(t => t.kind === 'monster').forEach(t => { t.hp = t.maxHp = 500; }); D.wander.endHeroTurn(); });
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.turnBannerNow().shown), { timeout:60_000 }).toBeGreaterThan(b0.shown);
+  expect((await page.evaluate(() => window.DreadDelve.turnBannerNow())).last).toMatch(/Your turn · Round [2-9]/);
 });
