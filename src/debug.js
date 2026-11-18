@@ -83,7 +83,7 @@ export { horrorHere, showHorror, readHorror } from './game/horror.js';
 export * as wander from './game/wander.js';   // 🗡 the Wanderer (game/wander.js): playing with the game as the DM
 export * as ways from './game/ways.js';   // 🚪 the ways between places (game/ways.js): way outs, the road's ends, doors
 export { stepFxCount } from './render/stepfx.js';   // 👣 what the steps have left (render/stepfx.js)
-export { fightFxCount, fightZone } from './render/fightzone.js';   // ⚔ what a fight draws (render/fightzone.js)
+export { fightFxCount, fightZone, stuckCount } from './render/fightzone.js';   // ⚔ what a fight draws (render/fightzone.js)
 export { punchCount, worldSpeed, windUp } from './render/punch.js';   // 💥 a blow felt: the hit-stop, knocks, splashes (render/punch.js)
 export { actOn, holdFall } from './render/minis.js';   // (a swing, a blow, a miss on a figure, for poking: actOn(id, 'hit', fromId, { r, crit, kill }))
 export { shoulderNow, nearDeathNow } from './ui/followcam.js';   // ⚔ is the fight seen over the hero's shoulder (ui/followcam.js)

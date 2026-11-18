@@ -16,6 +16,12 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.39 — what's left in the fight
+
+- **🏹 Arrows and javelins stay where they went** (`render/fightzone.js` `streak`): a shot or a throw that hits stays in them, at the angle it came in, for a few seconds (and goes with them if they fall); one that misses stays in the ground past them, slanting the way it flew, until the fight's over.
+- **🔊 Deaths you hear** (`render/deathfx.js`): the Seep's wet burst, the dead's crunch of bone and dust, a ghost's last whisper, a swarm's skitter, straw going up.
+- **🔆 Whose turn it is**: a ring pulses under whoever's turn it is as it begins, gold for the party, red for a foe (`combat.js` `startTurn` → `turnStart`, `ui/fightfx.js`).
+
 ## v1.38 — the wounded, and what's coming
 
 - **🩸 A bloodied foe drips** (`render/condfx.js`): a creature at half its hit points or less drips as it stands: blood, the Seep's rot, the dead's dust, a ghost's cold light. It stops when it's healed above half.

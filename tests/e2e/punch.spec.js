@@ -148,3 +148,16 @@ test('a foe winds up before it acts', async ({ page }) => {
   await page.keyboard.press('n');
   await expect.poll(() => page.evaluate(() => window.DreadDelve.punchCount().aims), { timeout:30_000 }).toBeGreaterThan(a0);
 });
+
+// 🏹 A thrown javelin stays where it went: in the wolf, or in the ground past it
+test('a javelin thrown stays where it went', async ({ page }) => {
+  test.setTimeout(180_000);
+  await fight(page);
+  await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), f = D.get().floors[h.floor], w = D.get().tokens.find(t => t.kind === 'monster');
+    for (const [dx, dy] of [[0, -3], [3, 0], [0, 3], [-3, 0], [2, -2], [-2, 2], [2, 2], [-2, -2]]){ const x = h.x + dx, y = h.y + dy;
+      if (f.grid[y * f.W + x] === 1 && !D.get().tokens.some(t => t.x === x && t.y === y)){ w.x = x; w.y = y; break; } }
+    D.syncTokens(); D.wander.rt.target = w.id; });
+  const r = await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), i = h.attacks.findIndex(a => /javelin/i.test(a.n)); if (i >= 0) D.wander.heroAttack(i); return i; });
+  expect(r).toBeGreaterThanOrEqual(0);
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.stuckCount()), { timeout:15_000 }).toBeGreaterThan(0);
+});

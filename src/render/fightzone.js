@@ -108,7 +108,10 @@ const glowTex = (() => { const c = document.createElement('canvas'); c.width = c
 const shaftGeo = new THREE.CylinderGeometry(.018, .018, .55, 5).rotateX(Math.PI / 2);
 const where = (id, v) => { const tv = tokenViews.get(id); if (!tv?.group?.parent) return null; tv.group.getWorldPosition(v); v.y += .75; return v; };
 // from one token to another over ms (spell: a glowing bolt in that colour; else a shaft of steel or wood)
-export function streak(fromId, toId, { spell = null, ms = 300 } = {}){
+// stick: 'hit' (the shaft stays in them a while, at the angle it came in) | 'miss' (it stays in the ground past them,
+// until the fight's over) | null (a spell: nothing stays)
+const stuck = [];
+export function streak(fromId, toId, { spell = null, ms = 300, stick = null } = {}){
   const a = where(fromId, new THREE.Vector3()), b = where(toId, new THREE.Vector3()); if (!a || !b) return;
   const parent = tokenViews.get(fromId).group.parent;
   const grp = new THREE.Group();
@@ -116,7 +119,24 @@ export function streak(fromId, toId, { spell = null, ms = 300 } = {}){
   const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map:glowTex, color:spell || '#fff3d6', transparent:true, depthWrite:false, blending:THREE.AdditiveBlending }));
   glow.scale.setScalar(spell ? .7 : .32); grp.add(shaft, glow); grp.renderOrder = 25;
   parent.add(grp); parent.worldToLocal(a); parent.worldToLocal(b);
-  madeStreaks++; streaks.push({ grp, a, b, t0:performance.now(), ms, arc:spell ? .15 : Math.min(1.2, a.distanceTo(b) * .08) });
+  madeStreaks++; streaks.push({ grp, a, b, t0:performance.now(), ms, arc:spell ? .15 : Math.min(1.2, a.distanceTo(b) * .08), stick:spell ? null : stick, toId });
+}
+function plant(s){
+  const tv = tokenViews.get(s.toId), dir = new THREE.Vector3().subVectors(s.b, s.a).setY(0).normalize();
+  const m = new THREE.Mesh(shaftGeo, new THREE.MeshBasicMaterial({ color:'#cdbb98', transparent:true })), fl = new THREE.Mesh(new THREE.ConeGeometry(.045, .09, 4).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color:'#e8e2d0', transparent:true }));
+  const g = new THREE.Group(); fl.position.z = -.24; g.add(m, fl);
+  if (s.stick === 'hit' && tv?.group?.parent){
+    // in them: a little off their middle, the fletching back toward whoever shot it
+    g.position.set((Math.random() - .5) * .25, .55 + Math.random() * .35, 0).addScaledVector(dir, -.12);
+    g.lookAt(g.position.clone().addScaledVector(dir, -1)); g.rotateX((Math.random() - .5) * .3);
+    const k = 1 / (tv.group.scale.x || 1); g.scale.setScalar(k * 1.3); g.position.multiplyScalar(k); tv.group.add(g);
+    stuck.push({ g, t0:performance.now(), ms:7000, id:s.toId });
+  } else if (s.stick === 'miss'){
+    // in the ground past them, slanting the way it flew
+    const p = s.b.clone().addScaledVector(dir, .7 + Math.random() * .8); p.y = s.b.y - .75 + .12;
+    g.position.copy(p); g.lookAt(p.clone().addScaledVector(dir, -1).setY(p.y + .55)); g.scale.setScalar(1.6); s.grp.parent?.add(g);
+    stuck.push({ g, t0:performance.now(), ms:0 });
+  }
 }
 
 /* ---------- 🎯 before a blow or a spell: who it would reach, the odds, the ground it would cover ----------
@@ -181,6 +201,7 @@ const oddsShown = [];
 /* Every frame: the edge pulses, the ground sweeps out, the numbers rise, the streaks fly. */
 const at = new THREE.Vector3(), ahead = new THREE.Vector3();
 export function tickFightFx(now = performance.now()){
+  tickStuck(now);
   zoneMat.uniforms.uTime.value = now / 1000;
   // the odds keep their size on the screen however close the camera comes (as the name plates do: main.js)
   if (odds.s?.parent){ const b = odds.s.userData.base || (odds.s.userData.base = odds.s.scale.clone()); odds.s.getWorldPosition(at);
@@ -202,12 +223,19 @@ export function tickFightFx(now = performance.now()){
   }
   for (let i = streaks.length - 1; i >= 0; i--){
     const s = streaks[i], a = (now - s.t0) / s.ms;
-    if (a >= 1){ s.grp.parent?.remove(s.grp); s.grp.children.forEach(c => c.material.dispose()); streaks.splice(i, 1); continue; }
+    if (a >= 1){ if (s.stick) plant(s); s.grp.parent?.remove(s.grp); s.grp.children.forEach(c => c.material.dispose()); streaks.splice(i, 1); continue; }
     const p = k => at.lerpVectors(s.a, s.b, k).setY(s.a.y + (s.b.y - s.a.y) * k + Math.sin(k * Math.PI) * s.arc);
     p(a); s.grp.position.copy(at); ahead.copy(p(Math.min(1, a + .05))); s.grp.lookAt(s.grp.parent.localToWorld(ahead.clone()));
   }
 }
-export function clearFightFx(){ clearFightZone(); clearMoveSquares(); clearAim(); showHover(null); }
+function tickStuck(now){
+  for (let i = stuck.length - 1; i >= 0; i--){ const s = stuck[i];
+    const gone = (s.ms && now - s.t0 > s.ms) || !s.g.parent || (s.id && !tokById(s.id));
+    if (gone){ s.g.parent?.remove(s.g); s.g.children.forEach(c => { c.geometry.dispose(); c.material.dispose(); }); stuck.splice(i, 1); continue; }
+    if (s.ms){ const k = (now - s.t0) / s.ms; if (k > .85) s.g.children.forEach(c => { c.material.opacity = (1 - k) / .15; }); } }
+}
+export const stuckCount = () => stuck.length;
+export function clearFightFx(){ clearFightZone(); clearMoveSquares(); clearAim(); showHover(null); for (const s of stuck.splice(0)){ s.g.parent?.remove(s.g); } }
 // (for the tests: what's drawn now, and how many numbers and streaks have been shown since the page loaded)
 let madeFloats = 0, madeStreaks = 0;
 export const fightFxCount = () => ({ zone:!!zone.mesh, moves:moves.mesh?.count || 0, floats:madeFloats, streaks:madeStreaks, texts:floatsSeen.slice(-6),

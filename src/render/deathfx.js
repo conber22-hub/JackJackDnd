@@ -13,6 +13,7 @@ import { state, tokById } from '../engine/state.js';
 import { BEST } from '../data/bestiary.js';
 import { bloodOf } from '../engine/punch.js';
 import { tokenViews } from './minis.js';
+import { sfx } from '../audio/sound.js';
 
 const glowTex = (() => { if (typeof document === 'undefined') return null; const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), r = g.createRadialGradient(32, 32, 0, 32, 32, 32);
   r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(.35, 'rgba(255,255,255,.5)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, 64, 64);
@@ -46,6 +47,8 @@ export function dies(id){
   const t = tokById(id), tv = tokenViews.get(id); if (!t || !tv?.group?.parent) return;
   const blood = bloodOf({ tags:BEST[t.bid]?.tags, name:t.name, kind:t.kind }), kind = blood.death, parent = tv.group.parent, at = tv.group.position.clone();
   dying.set(id, { kind, t0:performance.now(), blood, parent, at }); made++;
+  // and what it sounds like: the Seep's wet burst, bone and dust, a last whisper, a swarm's skitter, straw going up
+  const snd = { melt:'burst', crumble:'crunch', fade:'whisper', scatter:'skitter', burn:'rise' }[kind]; if (snd) sfx(snd, false);
   if (kind === 'fall'){ if (blood.splat) setTimeout(() => remnant(parent, at, blood.color, 1.5, .8, 2600), 450); }
   else if (kind === 'melt'){ burst(parent, at, blood.spark, 40, { up:3, out:2.2, ms:900, size:.12 }); burst(parent, at, blood.color, 30, { up:1.5, out:1.4, ms:1200, size:.16 }); setTimeout(() => remnant(parent, at, blood.color, 1.7, .9, 1400), 200); }
   else if (kind === 'crumble'){ burst(parent, at, '#b9b0a0', 50, { up:1.2, out:1.2, grav:1.2, ms:1800, size:.2 }); setTimeout(() => remnant(parent, at, '#6f675b', 1.1, .9, 1400), 300); }

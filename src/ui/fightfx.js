@@ -31,7 +31,7 @@ function acted(e){
   if (e.trigger === 'hit' || e.trigger === 'miss' || e.trigger === 'critical'){
     if (!e.target) return;
     blowAt.set(e.target.id, performance.now());
-    if (e.ranged) streak(e.actor.id, e.target.id, { spell:e.spell ? SPELL_COL[e.spell] || '#c9a0ff' : null });
+    if (e.ranged) streak(e.actor.id, e.target.id, { spell:e.spell ? SPELL_COL[e.spell] || '#c9a0ff' : null, stick:e.spell ? null : e.trigger === 'miss' ? 'miss' : 'hit' });   // (an arrow or a javelin stays where it went)
     if (e.trigger === 'critical') critAt.set(e.target.id, performance.now());
     if (e.trigger === 'miss') after(330, () => floatText(e.target.id, 'MISS', '#d9d2c4'));
     return;
@@ -77,5 +77,6 @@ export function wireFightFx(){
   setMine(id => !!id && (id === ui.myToken || id === state?.campaign?.wander?.heroTok));
   bus.on('acted', acted); bus.on('hurt', hurt); bus.on('healed', healed);
   bus.on('turnAct', turnAct); bus.on('feature', feature); bus.on('cond', cond);
+  bus.on('turnStart', e => { const t = e?.t; if (!t || t.dead) return; const col = t.kind === 'monster' ? '#ff6a4a' : '#ffd27a'; ringPulse(t.id, col); after(180, () => ringPulse(t.id, col)); });   // 🔆 whose turn it is
   bus.on('aims', e => { if (e?.by && e.at){ windUp(e.by, e.at, e.ms); if (e.at === state?.campaign?.wander?.heroTok || e.at === ui.myToken) floatText(e.at, '!', '#ff4a3a', { word:true }); } });   // ⚠ a foe shows who it's going for
 }
