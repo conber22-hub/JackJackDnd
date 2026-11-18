@@ -93,7 +93,7 @@ test('conditions show on the figures, and go when they end', async ({ page }) =>
   const ids = await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), w = D.get().tokens.find(t => t.kind === 'monster');
     h.dodge = true; h.conc = { n:'Bless' }; w.conds = [{ n:'prone', r:1 }, { n:'poisoned', r:3 }]; return { h:h.id, w:w.id }; });
   await expect.poll(() => page.evaluate(i => window.DreadDelve.condFxOn()[i.w], ids)).toBe('down,poisoned');
-  await expect.poll(() => page.evaluate(i => window.DreadDelve.condFxOn()[i.h], ids)).toBe('conc,dodging');
+  await expect.poll(() => page.evaluate(i => window.DreadDelve.condFxOn()[i.h], ids)).toMatch(/conc.*dodging/);   // (a wolf's bite may have knocked them down too)
   await page.evaluate(i => { const D = window.DreadDelve, w = D.get().tokens.find(t => t.id === i.w); w.conds = []; }, ids);
   await expect.poll(() => page.evaluate(i => window.DreadDelve.condFxOn()[i.w], ids)).toBe('');
   expect(errs).toEqual([]);
