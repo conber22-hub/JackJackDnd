@@ -10,7 +10,7 @@ import { burst, showReach, clearReach, flashArea } from '../render/effects.js';
 import { showCard, toast, banner, sendWhisper } from '../ui/hud.js';
 import { WHISPERS } from '../data/dread.js';
 import { sfx } from '../audio/sound.js';
-import { shareOf } from '../engine/punch.js';
+import { shareOf, missLook } from '../engine/punch.js';
 import { spellFx } from '../render/spellfx.js';
 import { fightBegins, fightEnds, recording } from './record.js';
 import { currentTurn, addCond, removeCond, tickConds, hasCond, saveBonus, stopped, startConc, endConc, defend, defNote, immuneTo, saveRoll, saveTxt, timingFor, condPhase, endOn, moveAllowance } from './rules.js';
@@ -18,7 +18,7 @@ import { SPELL_EFFECTS } from '../data/spell-effects.js';
 import { witnessed, stepFolkNow } from './folk.js';
 import { attackMods } from '../engine/conditions.js';
 import { diceAt, upRays, concDC } from '../engine/spellcast.js';
-import { SPELLS } from '../data/srd.js';
+import { SPELLS, ARMOR } from '../data/srd.js';
 import { freshTurn, clearOpportunities, closeInMove, pausedMover, turnAction } from './moves.js';
 import { planTurn, resistWorthIt } from '../engine/tactics.js';
 import { court as getCourt } from './court.js';
@@ -328,14 +328,18 @@ export function doAttack(aId, tId, i, mode = 'normal', { d20 = null, at = null }
   endOn(a, 'attack');   // Invisibility: it ends when you attack
   if (hits.length && atk.latch && !tg.dead && tg.kind !== 'monster'){ tg.flags.latchedBy = a.id; lines.push(`<span class="fam-seep">${esc(a.name)} is latched on.</span>`); }
   sfx(crit ? 'crit' : hits.length ? 'hit' : 'miss');
+  // 🛡 a miss that came close against a shield, heavy armour or a hard hide is a block, not a dodge (engine/punch.js)
+  const elx = atk.t && (atk.l !== undefined || / casts /.test(atk.f || '')) ? atk.t : null;
+  const guard = !!tg.shield || (tg.kind !== 'monster' ? ARMOR[tg.armor]?.dex === 0 : ac >= 16);
+  const block = !hits.length && missLook({ tot:R0?.tot, ac, n:R0?.r, guard, el:elx }) === 'block';
   // 🗣 a voice line (ui/voices.js); ⚔ the blow seen to land: the number over them, a streak for a throw, a shot or a spell (ui/wander.js)
-  bus.emit('acted', { actor:a, target:tg, trigger:crit ? 'critical' : hits.length ? 'hit' : 'miss', action:atk.n, dmgType:atk.t, dmg:total, ranged:rc.kind === 'ranged' && a.id !== tg.id, spell:atk.t && !!(atk.l !== undefined || / casts /.test(atk.f || '')) ? atk.t : null, die });
+  bus.emit('acted', { actor:a, target:tg, trigger:crit ? 'critical' : hits.length ? 'hit' : 'miss', block, action:atk.n, dmgType:atk.t, dmg:total, ranged:rc.kind === 'ranged' && a.id !== tg.id, spell:atk.t && !!(atk.l !== undefined || / casts /.test(atk.f || '')) ? atk.t : null, die });
   // 💥 the blow felt (render/punch.js): how much of them it took (a share, never the HP), a crit, a kill; a miss sways aside
   const ranged = rc.kind === 'ranged', self = a.id === tg.id;
   const el = atk.t && (atk.l !== undefined || / casts /.test(atk.f || '')) ? atk.t : undefined;   // (a spell that strikes lands in its own colours)
   if (!self) animate(a.id, 'attack', tg.id, { ranged, el });
   if (hits.length) setTimeout(() => animate(tg.id, 'hit', self ? null : a.id, { r:shareOf(total, tg.maxHp), crit, kill:!!tg.dead || tg.hp <= 0, el, n:total, ranged }), 330);
-  else if (!self) setTimeout(() => animate(tg.id, 'miss', a.id, { ranged, el }), 330);   // (n, ranged: for the players' screens, which draw the number and the arrow: ui/fightfx.js remoteBlow)
+  else if (!self) setTimeout(() => animate(tg.id, 'miss', a.id, { ranged, el, block }), 330);   // (n, ranged: for the players' screens, which draw the number and the arrow: ui/fightfx.js remoteBlow)
   // (the Wanderer's card waits for the blow to land, so it doesn't cover the swing: one hero, one camera, on them)
   const card = { kind:crit ? 'crit' : hits.length ? '' : 'miss', title:`${a.name} → ${tg.name}`, sub:atk.n, flair, lines, big:hits.length ? `${total} ${atk.t}` : '', die };
   if (ui.wander) setTimeout(() => showCard(card), 700); else showCard(card);

@@ -93,3 +93,11 @@ export function arcAngle(x, z){
   const a = Math.atan2(x, -z) * 180 / Math.PI;
   return Math.round(((a % 360) + 360) % 360);
 }
+
+/* How a miss looks: 'block' (a shield, heavy armour or a hard hide takes it: the one struck braces, sparks fly, and it
+   reads BLOCKED) when the blow came close (within 4 of their AC) against someone guarded; else 'dodge' (they sway
+   aside). A spell, or a natural 1, is never blocked. guard: a shield, heavy armour, or a creature's AC of 16 or more. */
+export function missLook({ tot = 0, ac = 10, n = 0, guard = false, el = null } = {}){
+  if (el || n === 1 || !guard) return 'dodge';
+  return tot >= ac - 4 ? 'block' : 'dodge';
+}

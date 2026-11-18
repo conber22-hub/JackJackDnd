@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { impactOf, speedAt, moveAt, bloodOf, shareOf, lastOfSide, arcAngle } from '../src/engine/punch.js';
+import { impactOf, speedAt, moveAt, bloodOf, shareOf, lastOfSide, arcAngle, missLook } from '../src/engine/punch.js';
 
 test('a heavier blow holds longer and knocks harder; a crit more, a killing blow most', () => {
   const light = impactOf({ r:.05 }), heavy = impactOf({ r:.5 }), crit = impactOf({ r:.5, crit:true }), kill = impactOf({ r:.5, kill:true });
@@ -85,4 +85,14 @@ test('arcAngle: ahead is the top, right is a quarter round, behind is the bottom
   assert.equal(arcAngle(-5, 0), 270);
   assert.equal(arcAngle(3, -3), 45);
   assert.equal(arcAngle(0, 0), 0);
+});
+
+test('missLook: a close miss on the guarded is a block; a wide one, a spell, a 1 or the unguarded, a dodge', () => {
+  assert.equal(missLook({ tot:15, ac:17, n:10, guard:true }), 'block');
+  assert.equal(missLook({ tot:13, ac:17, n:8, guard:true }), 'block');
+  assert.equal(missLook({ tot:12, ac:17, n:7, guard:true }), 'dodge');
+  assert.equal(missLook({ tot:16, ac:17, n:11, guard:false }), 'dodge');
+  assert.equal(missLook({ tot:16, ac:17, n:11, guard:true, el:'fire' }), 'dodge');
+  assert.equal(missLook({ tot:6, ac:17, n:1, guard:true }), 'dodge');
+  assert.equal(missLook(), 'dodge');
 });

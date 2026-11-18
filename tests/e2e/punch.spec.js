@@ -283,3 +283,20 @@ test('a fallen foe shows the XP it was worth', async ({ page }) => {
   await expect.poll(() => page.evaluate(() => window.DreadDelve.xpFloatsShown()), { timeout:20_000 }).toBe(n0 + 1);
   expect(await page.evaluate(() => window.DreadDelve.fightFxCount().texts.join(' '))).toMatch(/\+\d+ XP/);
 });
+
+// 🛡 A close miss on a shield or heavy armour is a block: they brace, sparks fly, BLOCKED
+test('a close miss on a shield is blocked, not dodged', async ({ page }) => {
+  test.setTimeout(180_000);
+  await fight(page);
+  const ids = await page.evaluate(() => { const D = window.DreadDelve; return { h:D.wander.hero().id, w:D.get().tokens.find(t => t.kind === 'monster').id }; });
+  const b = await page.evaluate(({ h, w }) => { const D = window.DreadDelve, p0 = D.punchCount();
+    D.actOn(h, 'miss', w, { block:true }); const p1 = D.punchCount(); D.actOn(w, 'miss', h, {}); const p2 = D.punchCount();
+    return { blocks:p1.blocks - p0.blocks, dodges:p1.dodges - p0.dodges, then:p2.dodges - p1.dodges }; }, ids);
+  expect(b).toEqual({ blocks:1, dodges:0, then:1 });
+  // through the game: the wolf rolls a 10 and comes 3 short of a Fighter with a shield, so it's blocked
+  const k0 = await page.evaluate(() => window.DreadDelve.punchCount().blocks);
+  await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), w = D.get().tokens.find(t => t.kind === 'monster');
+    h.shield = true; h.ac = 10 + w.attacks[0].b + 3; D.doAttack(w.id, h.id, 0, 'normal', { d20:10 }); });
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.punchCount().blocks), { timeout:20_000 }).toBe(k0 + 1);
+  expect(await page.evaluate(() => window.DreadDelve.fightFxCount().texts.join(' '))).toContain('BLOCKED');
+});

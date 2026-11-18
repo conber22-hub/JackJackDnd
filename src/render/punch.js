@@ -80,7 +80,7 @@ const arcGeo = new THREE.RingGeometry(.3, .62, 28, 1, -1.2, 2.4), splatGeo = new
 const bits = [];    // { obj, t0 (world clock), ms, kind, ... } — arcs, sparks, glows, wisps
 const splats = [];  // the fight's splashes, cleared when it ends
 let fadeFrom = 0;
-let made = { impacts:0, kills:0, dodges:0, lunges:0, splats:0, aims:0, lasts:0 };
+let made = { impacts:0, kills:0, dodges:0, lunges:0, splats:0, aims:0, lasts:0, blocks:0 };
 const tmp = new THREE.Vector3(), tmp2 = new THREE.Vector3();
 
 function at(id){ const tv = tokenViews.get(id); if (!tv?.group?.parent) return null; return { tv, parent:tv.group.parent, pos:tv.group.position.clone() }; }
@@ -236,6 +236,14 @@ export function dodge(id, fromId){
   const d = dirOf(fromId, id); if (!d) return;
   const side = Math.random() < .5 ? 1 : -1;
   addMove(id, { kind:'dodge', ms:340, amp:.2, dx:-d.z * side, dz:d.x * side, back:true }); made.dodges++;
+}
+
+// 🛡 a block: they brace (a short shove back, no sway), sparks fly off where it struck, and they flash
+export function block(id, fromId){
+  const d = dirOf(fromId, id), P = at(id); if (!d || !P) return;
+  addMove(id, { kind:'knock', ms:260, amp:.07, dx:d.x, dz:d.z, back:true });
+  spray(P, { x:-d.x, z:-d.z }, { spark:'#fff4cc', color:'#ffd27a' }, false, false);
+  flash(id, 55, false); made.blocks++;
 }
 
 /* ---------- every frame (main.js) ---------- */
