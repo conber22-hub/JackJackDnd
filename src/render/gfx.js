@@ -5,7 +5,10 @@
    omens: the moving signs of Strahd's Gaze on outdoor maps (ravens, eyes in the trees: render/omens.js). */
 const KEY = 'dreaddelve.gfx.v1';
 const phone = typeof matchMedia !== 'undefined' && (matchMedia('(pointer:coarse)').matches || innerWidth < 760);
-export const gfx = { quality:phone ? 'low' : 'medium', style:'classic', omens:true, volume:.7, music:true, sfx:true };
+// calm: no hit-stop or slow motion, no screen flashes, no camera kick or shake (render/punch.js), a steady near-death
+// edge (ui/followcam.js); on by default where the device asks for less motion
+const lessMotion = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+export const gfx = { quality:phone ? 'low' : 'medium', style:'classic', omens:true, volume:.7, music:true, sfx:true, calm:lessMotion };
 try { Object.assign(gfx, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch {}
 const listeners = [];
 export function onGfx(fn){ listeners.push(fn); }

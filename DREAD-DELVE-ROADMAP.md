@@ -25,6 +25,8 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 - **⬆ From the victory screen straight to the level-up** (the Wanderer): when the victory screen closes and the hero has a level to take, the menu opens on the level-up page instead of a card saying where to find it.
 - **⚔ Weapons up** (`main.js` `fightStance`, `render/forge/anim.js`): in a fight, a forged figure that stands easy (heroic, sly) stands on guard instead, and relaxes when it's over; the stiff, the shambling, the regal and the spellcaster keep their own way of standing. A change of stance eases over a moment instead of snapping.
 
+- **🕊 Calm effects** (🎨 Look → Fights, per device; on by default where the device asks for less motion): no screen flashes, no camera shake or punch-in, no pause or slow motion on a blow, and a steady red edge near death instead of a pulse. Everything else (the knockback, the sparks, the spells, the deaths) stays.
+
 ## v1.39 — what's left in the fight
 
 - **🏹 Arrows and javelins stay where they went** (`render/fightzone.js` `streak`): a shot or a throw that hits stays in them, at the angle it came in, for a few seconds (and goes with them if they fall); one that misses stays in the ground past them, slanting the way it flew, until the fight's over.

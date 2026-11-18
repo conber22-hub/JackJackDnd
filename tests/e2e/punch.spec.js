@@ -161,3 +161,15 @@ test('a javelin thrown stays where it went', async ({ page }) => {
   expect(r).toBeGreaterThanOrEqual(0);
   await expect.poll(() => page.evaluate(() => window.DreadDelve.stuckCount()), { timeout:15_000 }).toBeGreaterThan(0);
 });
+
+// 🕊 Calm effects (the Look panel): a crit lands without the world stopping, and without a flash over the screen
+test('with calm effects on, a blow never stops the world or flashes the screen', async ({ page }) => {
+  test.setTimeout(180_000);
+  await fight(page);
+  await page.evaluate(() => window.DreadDelve.setGfx({ calm:true }));
+  const r = await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), w = D.get().tokens.find(t => t.kind === 'monster');
+    D.actOn(w.id, 'hit', h.id, { r:.5, crit:true }); return D.worldSpeed(); });
+  expect(r).toBe(1);
+  expect(await page.evaluate(() => { const el = document.getElementById('punchScreen'); return el ? el.getAnimations().length : 0; })).toBe(0);
+  await page.evaluate(() => window.DreadDelve.setGfx({ calm:false }));
+});

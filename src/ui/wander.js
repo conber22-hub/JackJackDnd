@@ -47,6 +47,7 @@ import { openTrophies, trophiesOpen, trophiesPress } from './trophies.js';
 import { beastBook, trophyShelf } from '../game/record.js';
 import { faceOf } from '../game/night.js';
 import { makeMonster } from '../engine/state.js';
+import { gfx } from '../render/gfx.js';
 import { camTurn, camView, camCrane, camYaw, camFrame, miniFocus, lookThrough, closeLook, feelHits, camWide, camBack } from './followcam.js';
 import { tune, coachTick, coachLearn, coachDone, coachHide } from './hhlife.js';
 import { openPocketSheet, pocketPress, pocketOpen, closePocketSheet } from './pocketsheet.js';
@@ -427,7 +428,7 @@ function areaCatch(h, sp){
 // ⚔ A blow felt: the hero's own, or one on the hero, jolts the camera (what's drawn over them: ui/fightfx.js)
 function blowFelt(e){
   const h = hero(); if (!h || !wandering() || !e?.actor || !e.target || !['hit', 'critical'].includes(e.trigger)) return;
-  if (e.actor.id === h.id || e.target.id === h.id) rt.jolt = { at:performance.now() + 330, k:e.trigger === 'critical' ? 1.7 : 1 };
+  if ((e.actor.id === h.id || e.target.id === h.id) && !gfx.calm) rt.jolt = { at:performance.now() + 330, k:e.trigger === 'critical' ? 1.7 : 1 };
 }
 // 🗣 A line to say, as a choice: what kind of line it is (an icon), and the check it needs as a tag, not tacked on
 const TALK_IC = { bye:'←', quest:'📜', ask:'❝', pitch:'🤝' };

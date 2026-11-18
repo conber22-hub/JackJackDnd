@@ -9,6 +9,7 @@
 import { camera, controls, camBusy, wx, wz, floorY } from '../render/scene.js';
 import { toOrbit, fromOrbit, clampOrbit, crane, snapTurn, angleTo, nextView, glide, VIEWS, shoulderShot } from '../engine/wander-cam.js';
 import { state, ui } from '../engine/state.js';
+import { gfx } from '../render/gfx.js';
 import { walk } from '../engine/tiles.js';
 import { seeThrough, readyFloor } from '../render/seethrough.js';
 import { tokenViews } from '../render/minis.js';
@@ -126,7 +127,7 @@ function nearDeath(k){
   if (want === pulseK) return; pulseK = want;
   pulseEl.getAnimations?.().forEach(a => a.cancel());
   pulseEl.style.opacity = want ? '1' : '0';
-  if (want && pulseEl.animate) pulseEl.animate([{ opacity:.35 }, { opacity:1, offset:.18 }, { opacity:.45 }], { duration:want === 2 ? 850 : 1150, iterations:Infinity, easing:'ease-out' });
+  if (want && pulseEl.animate && !gfx.calm) pulseEl.animate([{ opacity:.35 }, { opacity:1, offset:.18 }, { opacity:.45 }], { duration:want === 2 ? 850 : 1150, iterations:Infinity, easing:'ease-out' });
 }
 export const nearDeathNow = () => pulseK;
 export function feelHits(t, gp){

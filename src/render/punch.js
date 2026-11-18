@@ -13,6 +13,7 @@
    screen); ui/fightfx.js covers what has no swing (a spell's area). */
 import * as THREE from 'three';
 import { camera, fx } from './scene.js';
+import { gfx } from './gfx.js';
 import { tokenViews } from './minis.js';
 import { state, tokById } from '../engine/state.js';
 import { BEST } from '../data/bestiary.js';
@@ -24,6 +25,7 @@ let imp = null, impAt = -1e9, clk = 0, lastNow = 0;
 // how fast the world runs right now (0 frozen .. 1): main.js slows figures' swings and clips by it
 export const worldSpeed = (now = performance.now()) => speedAt(now - impAt, imp);
 function hold(I, now){
+  if (gfx.calm) return;   // (calm effects: the world never stops on a blow)
   // a new blow only takes over if it holds longer than what's left of the one under way
   const left = imp ? imp.stop + (imp.slowMs || 0) - (now - impAt) : 0;
   if (I.stop + I.slowMs > left){ imp = I; impAt = now; }
@@ -132,7 +134,7 @@ function wisp(P, color){
 /* ---------- the screen and the camera ---------- */
 let screenEl = null;
 function screen(kind){
-  if (typeof document === 'undefined') return;
+  if (typeof document === 'undefined' || gfx.calm) return;
   if (!screenEl){ screenEl = document.createElement('div'); screenEl.id = 'punchScreen';
     Object.assign(screenEl.style, { position:'fixed', inset:'0', pointerEvents:'none', zIndex:'6', opacity:'0' }); document.body.appendChild(screenEl); }
   const S = {
@@ -146,7 +148,7 @@ function screen(kind){
   screenEl.animate?.([{ opacity:1 }, { opacity:kind === 'kill' ? .8 : 0, offset:kind === 'kill' ? .5 : 1 }, { opacity:0 }], { duration:S[1], easing:'ease-out' });
 }
 let kick = null, baseFov = null;
-function fovKick(deg, ms = 300){ if (!deg) return; if (baseFov == null) baseFov = camera.fov; kick = { at:performance.now(), ms, deg:Math.max(deg, kick && performance.now() - kick.at < 120 ? kick.deg : 0) }; }
+function fovKick(deg, ms = 300){ if (!deg || gfx.calm) return; if (baseFov == null) baseFov = camera.fov; kick = { at:performance.now(), ms, deg:Math.max(deg, kick && performance.now() - kick.at < 120 ? kick.deg : 0) }; }
 
 /* ---------- what the game calls ---------- */
 let mine = () => false;
@@ -175,7 +177,7 @@ export function impact(id, fromId, info = {}){
   splat(P, d, blood, info.crit || info.kill);
   if (info.kill){ if (b0.death === 'fall') wisp(P, blood.splat ? '#e8e0ff' : blood.spark); dies(id); }   // ☠ how it dies (render/deathfx.js)
   fovKick(I.kick, info.kill ? 650 : info.crit ? 420 : 280);
-  if (I.shake > .4) fx.shake = Math.max(fx.shake, (I.shake - .3) * .16);
+  if (I.shake > .4 && !gfx.calm) fx.shake = Math.max(fx.shake, (I.shake - .3) * .16);
   const me = mine(id);
   if (me) screen(info.kill || t.hp <= 0 ? 'down' : 'hurt');
   else if (I.screen) screen(I.screen);
