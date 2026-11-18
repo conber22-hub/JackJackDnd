@@ -66,6 +66,8 @@ test('a hero walks the valley alone: a companion won over, an ambush on the road
   expect((await st(page)).ambushes).toBe(1);
   await expect(page.locator('#wdFight')).toBeVisible();
   // the fight: on the hero's turn, Ⓐ strikes and then ends it; Ilse and the creatures take theirs on their own
+  // (weak foes, so it's over in a few rounds: each foe shows what it means to do before it does it, and that takes time)
+  await page.evaluate(() => { for (const t of window.DreadDelve.get().tokens) if (t.kind === 'monster' && !t.dead) t.hp = Math.min(t.hp, 4); });
   let turns = 0;
   await expect.poll(async () => {
     const s = await st(page); if (!s.fight) return 'over';
