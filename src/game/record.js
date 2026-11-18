@@ -37,8 +37,8 @@ const seenIds = new Set();
 export function sighted(m){ if (!m || m.kind !== 'monster' || seenIds.has(m.id)) return; seenIds.add(m.id); learn('seen', m.bid); }
 
 /* ---------- a fight ---------- */
+// (the Wanderer's fights, and the DM's table's too: a won fight's screen goes to every player's phone)
 export function fightBegins(foes){
-  if (!W()) return;
   fight = { events:[], foes:new Set(foes.map(f => f.id)) };
   for (const f of foes){ sighted(f); learn('fought', f.bid); }
   achieve({ t:'fightStart', foes:foes.map(f => f.bid) });
@@ -73,13 +73,12 @@ function onFeature(e){ if (fight && e?.t) rec({ t:'feature', who:e.t.id, id:e.id
 /* The fight is over (game/wander.js finishFight): its scorecard, and what it counts for.
    → the summary (ChatGPT's shape, for ui/victory.js), or null if no fight was being recorded */
 export function fightEnds(won, { xp = 0, loot = null, order = [] } = {}){
-  const f = fight; fight = null; if (!f || !W()) return null;
-  const w = W(), heroT = tokById(w.heroTok);
+  const f = fight; fight = null; if (!f) return null;
+  const w = W() || { heroTok:null, fights:state.log?.length || 0 }, heroT = tokById(w.heroTok);
   const roster = order.map(tokById).filter(Boolean).map(t => ({ id:t.id, name:t.name, side:t.kind === 'monster' ? 'foe' : 'party', hp:Math.max(0, t.hp), maxHp:t.maxHp, dead:!!t.dead }));
   const rounds = f.events.reduce((n, e) => Math.max(n, e.round || 1), 1);
   const heroTaken = f.events.reduce((n, e) => n + ((e.t === 'attack' && e.hit && e.at === w.heroTok) ? e.dmg : (e.t === 'damage' && e.to === w.heroTok) ? e.n : 0), 0);
-  achieve({ t:'fightEnd', won, heroHp:Math.max(0, heroT?.hp || 0), heroTaken, rounds });
-  if (loot?.gp) achieve({ t:'gold', gp:loot.gp });
+  if (W()){ achieve({ t:'fightEnd', won, heroHp:Math.max(0, heroT?.hp || 0), heroTaken, rounds }); if (loot?.gp) achieve({ t:'gold', gp:loot.gp }); }
   const sum = summarize(roster, f.events, { won, xp, loot, seed:`${w.fights || 0}:${rounds}` });
   for (const a of sum.awards || []) a.line = one(a.line);
   return sum;

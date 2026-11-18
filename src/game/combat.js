@@ -12,6 +12,7 @@ import { WHISPERS } from '../data/dread.js';
 import { sfx } from '../audio/sound.js';
 import { shareOf } from '../engine/punch.js';
 import { spellFx } from '../render/spellfx.js';
+import { fightBegins, fightEnds, recording } from './record.js';
 import { currentTurn, addCond, removeCond, tickConds, hasCond, saveBonus, stopped, startConc, endConc, defend, defNote, immuneTo, saveRoll, saveTxt, timingFor, condPhase, endOn, moveAllowance } from './rules.js';
 import { SPELL_EFFECTS } from '../data/spell-effects.js';
 import { witnessed, stepFolkNow } from './folk.js';
@@ -71,6 +72,7 @@ export function rollInitiative({ ids = null, group = true, surprise = 'none', fi
   const order = rollOrder(list, { group, surprise, fixed, d20:() => d(20) });
   for (const o of order){ const t = tokById(o.id); t.initRoll = o.roll; freshTurn(t); delete t.legend; delete t.spent; }   // a new fight: legendary actions full, breath weapons ready
   state.combat = { active:true, order:order.map(o => o.id), idx:0, round:1, floor:L, group, surprise };
+  if (!ui.wander) fightBegins(list.filter(t => t.kind === 'monster'));   // 🏆 the fight's record, for the players' victory screen (game/record.js)
   { const h = state.tokens.find(t => t.floor === L && t.kind !== 'monster' && !t.dead); if (h) witnessed(L, { kind:'fight', x:h.x, y:h.y }); }   // a fight breaks out: the folk see it
   log(`⚔ Initiative on ${f.name}: ${list.map(t => `${t.name} ${t.initRoll}`).join(', ')}`, true);
   log(`⚔ Roll for initiative!${surprise === 'party' ? ' The party is caught by surprise.' : surprise === 'foes' ? ' The party has the drop on them.' : ''}`);
@@ -107,6 +109,9 @@ export function checkVictory(){
   const xp = fightXp(c.order, tokById, BEST), heroes = c.order.map(tokById).filter(t => t?.kind === 'pc').length || 1;
   showCard({ kind:'crit', title:'The fight is won', sub:`Round ${c.round}`, lines:[xp ? `<b>${xp} XP</b> — ${Math.floor(xp / heroes)} each for ${heroes} hero${heroes === 1 ? '' : 'es'}` : 'Nothing worth counting.'], flair:'For now. Somewhere below, something heard all of that.' });
   log(`⚔ The fight is won (${xp} XP).`); changed();
+  // 🏆 every player's phone gets the victory screen (Muse's ui/victory.js): the fight's scorecard, and their share of the XP
+  const sum = fightEnds(true, { xp:Math.floor(xp / heroes), order:[...c.order] });
+  if (sum) broadcast({ t:'victory', s:sum, names:Object.fromEntries(c.order.map(tokById).filter(Boolean).map(t => [t.id, t.name])), share:Math.floor(xp / heroes) });
 }
 /* A monster takes its turn (the DM's 🤖): hits whoever it can reach — the most hurt first; else shoots one in
    range; else closes in and, if that brings a hero within reach, hits them. Specials stay the DM's to use. */
@@ -239,7 +244,8 @@ function endOfRound(){
   // The land rearranges
   if (D.shift > 0 && Math.random() < D.shift) setTimeout(() => shiftFloor(L, 'Barovia rearranges itself as the round ends'), 400);
 }
-export function endCombat(){ for (const t of state.combat.order.map(tokById)) if (t?.nem && !t.dead) nemesisSurvives(t);   // it beat them, or got away
+export function endCombat(){ if (recording()) fightEnds(false, { order:[...state.combat.order] });   // (a fight called off: its record goes)
+ for (const t of state.combat.order.map(tokById)) if (t?.nem && !t.dead) nemesisSurvives(t);   // it beat them, or got away
   garrisonCalm(state.combat.floor ?? ui.floor);   // the site settles, warier (game/garrison.js)
   clearOpportunities(); state.tokens.forEach(freshTurn); state.combat = { active:false, order:[], idx:0, round:1, floor:ui.floor }; log('Combat ends.'); clearReach(); const t = ui.selected && tokById(ui.selected); if (t) showReach(t); changed(); }
 

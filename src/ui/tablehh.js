@@ -48,6 +48,7 @@ import { openPocketSheet, pocketPress, pocketOpen, closePocketSheet } from './po
 import { playerLetters } from './letters.js';
 import { toast, waiting } from './hud.js';
 import { hh, hhHost, hhPad, addHost, setHandheld, skipBoot, shellItem } from './handheld.js';
+import { victoryOpen, victoryPress } from './victory.js';
 import { camTurn, camView, camCrane, camYaw, camFrame, camStart, miniFocus, lookThrough, closeLook, feelHits } from './followcam.js';
 import { tokenViews } from '../render/minis.js';
 
@@ -203,6 +204,7 @@ function putCardAway(){ const c = document.querySelector('#cardLayer .pop:last-c
 function press(b){
   if (!b || skipBoot()) return;
   if (pocketOpen()){ pocketPress(b === 'ls' ? 'back' : b); return; }   // (the pocket sheet takes every press while it's open)
+  if (victoryOpen()){ victoryPress(b === 'ls' || b === 'start' ? 'b' : b); return; }   // 🏆 the victory screen takes every press while it's up
   coachDone();
   if (b === 'rs'){ camView(); coachLearn('camera'); return; }
   if (b === 'turnl' || b === 'turnr'){ camTurn(b === 'turnl' ? 1 : -1); return; }

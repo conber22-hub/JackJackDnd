@@ -16,6 +16,10 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.40 — the victory screen at the table
+
+- **🏆 A fight won at the DM's table ends on every player's phone with the victory screen** (Muse's `ui/victory.js`; `game/record.js` now records the table's fights too, from the first roll of initiative; `game/combat.js` `checkVictory` sends it: `victory`): the fight's headline and verdict, its MVP, each hero's numbers counting up (dealt, taken, healed, kills, crits), the awards, and the XP the fight gave each of them. Ⓐ goes on through it, Ⓑ or Escape puts it away; on the handheld it takes every press while it's up. A fight called off without a win sends nothing. The TV's card-only screen keeps its card.
+
 ## v1.39 — what's left in the fight
 
 - **🏹 Arrows and javelins stay where they went** (`render/fightzone.js` `streak`): a shot or a throw that hits stays in them, at the angle it came in, for a few seconds (and goes with them if they fall); one that misses stays in the ground past them, slanting the way it flew, until the fight's over.

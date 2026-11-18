@@ -1,5 +1,7 @@
 /* MULTIPLAYER — peer-to-peer over PeerJS. The DM hosts; players join with a 4-letter code.
    Players only send requests (move, stairs, door, search, disarm, ping, end turn); the DM's app decides. */
+import { openVictory, setVictoryFace } from '../ui/victory.js';
+import { faceOf } from '../game/night.js';
 import { spellFx } from '../render/spellfx.js';
 import { Peer } from 'peerjs';
 import { state, setState, ui, tokById } from '../engine/state.js';
@@ -184,6 +186,14 @@ export function sendSheetToOwner(id){
 export function sendToSeat(tokId, m){ for (const [pid, tid] of Object.entries(state.seats || {})) if (tid === tokId){ const s = net.conns.get(pid); if (s?.conn.open) try { s.conn.send(m); } catch {} } }
 // The DM imported or changed their books: phones at the table ask for the new version.
 export function offerLibrary(){ const hash = tableHash(); if (hash) for (const [, s] of net.conns) if (!s.screen && s.conn.open) try { s.conn.send({ t:'libHash', hash }); } catch {} }
+// 🏆 A fight won at the table: the victory screen on this player's phone (Muse's ui/victory.js): the party's numbers,
+// the awards, and the XP the fight gave each of them
+function tableVictory(m){
+  const party = Object.keys(m.names || {}).filter(id => { const t = tokById(id); return t && t.kind !== 'monster'; });
+  const me = tokById(ui.myToken), share = Math.max(0, +m.share || 0);
+  openVictory(m.s, { party, names:m.names || {}, faces:{}, xp:{ before:0, after:share, next:share || 1, level:+me?.lvl || +me?.level || 1 } });
+  setTimeout(() => { for (const id of party){ try { const t = tokById(id), f = t && faceOf(t); if (f) setVictoryFace(id, f); } catch {} } }, 80);
+}
 export function broadcast(m, except){ for (const [pid, s] of net.conns) if (pid !== except && s.conn.open) try { s.conn.send(m); } catch {} }
 let pushTimer = null;
 // Everything a newcomer needs to draw the table: who they are, the art, the 3D models they lack, the state.
@@ -519,6 +529,7 @@ export function onClientMsg(m){
   else if (m.t === 'folk' && state) receiveFolk(m);   // the valley's people, moving (game/folk.js)
   else if (m.t === 'area' && state && Array.isArray(m.sq)){ const ex = state.explored?.[m.floor]; flashArea(m.floor, m.sq.filter(i => ex?.has(i)), m.ty); }   // only where they've been
   else if (m.t === 'spellfx' && state && m.fx && typeof m.fx === 'object') spellFx(m.fx);   // ✨ a spell seen (render/spellfx.js)
+  else if (m.t === 'victory' && state && m.s && typeof m.s === 'object' && !ui.screen) tableVictory(m);   // 🏆 the party won (game/combat.js checkVictory)
   else if (m.t === 'oaDone') dropAsk(m.id);
   else if (m.t === 'act' && state && ['attack', 'cast', 'hit', 'miss'].includes(m.kind)) actOn(m.id, m.kind, m.target, m.fx && typeof m.fx === 'object' ? m.fx : null);
   else if (m.t === 'bye'){ net.status = 'closed'; clearTimeout(net.retryTimer); toast('The DM closed the table.'); renderNetStatus(); }
