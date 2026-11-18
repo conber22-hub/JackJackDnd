@@ -26,7 +26,8 @@ const dying = new Map();   // id -> { kind, t0, blood, parent, at:Vector3 }
 const left = [];           // what's left on the ground: { m, t0, ms, size }
 const bits = [];           // particles: { p, t0, ms, vel, grav }
 let fadeFrom = 0, made = 0;
-export const deathOf = t => bloodOf({ tags:BEST[t?.bid]?.tags, name:t?.name, kind:t?.kind }).death;
+const deathKind = new Map();   // (worked out once per creature: what it is doesn't change)
+export const deathOf = t => { const k = `${t?.bid}|${t?.name}|${t?.kind}`; let d = deathKind.get(k); if (!d){ d = bloodOf({ tags:BEST[t?.bid]?.tags, name:t?.name, kind:t?.kind }).death; deathKind.set(k, d); } return d; };
 
 function remnant(parent, at, col, size, opacity = .85, ms = 1600){
   const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map:blotTex, color:col, transparent:true, opacity, depthWrite:false, fog:false, polygonOffset:true, polygonOffsetFactor:-2 }));
@@ -78,7 +79,7 @@ export function tickDeathFx(now = performance.now()){
   if (state) for (const t of state.tokens){
     const g = tokenViews.get(t.id)?.group; if (!g) continue;
     const hide = t.dead && !t.flags?.rising && !dying.has(t.id) && deathOf(t) !== 'fall';
-    if (hide || g.userData.unbodied){ for (const c of g.children) c.visible = !hide; g.userData.unbodied = hide; }
+    if (hide !== !!g.userData.unbodied || (hide && g.children.some(c => c.visible))){ for (const c of g.children) c.visible = !hide; g.userData.unbodied = hide; }
   }
   for (let i = bits.length - 1; i >= 0; i--){
     const b = bits[i], k = (now - b.t0) / b.ms, dt = .016;
