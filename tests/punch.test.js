@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { impactOf, speedAt, moveAt, bloodOf, shareOf, lastOfSide } from '../src/engine/punch.js';
+import { impactOf, speedAt, moveAt, bloodOf, shareOf, lastOfSide, arcAngle } from '../src/engine/punch.js';
 
 test('a heavier blow holds longer and knocks harder; a crit more, a killing blow most', () => {
   const light = impactOf({ r:.05 }), heavy = impactOf({ r:.5 }), crit = impactOf({ r:.5, crit:true }), kill = impactOf({ r:.5, kill:true });
@@ -76,4 +76,13 @@ test('lastOfSide: the last foe, or the last hero, still up', () => {
   assert.equal(lastOfSide({ ...hero, hp:0, dead:true }, [hero, ally, bat]), false);   // (a companion still stands)
   assert.equal(lastOfSide({ ...hero, hp:0, dead:true }, [hero, { ...ally, hp:0 }, bat]), true);
   assert.equal(lastOfSide(null, []), false);
+});
+
+test('arcAngle: ahead is the top, right is a quarter round, behind is the bottom', () => {
+  assert.equal(arcAngle(0, -5), 0);
+  assert.equal(arcAngle(5, 0), 90);
+  assert.equal(arcAngle(0, 5), 180);
+  assert.equal(arcAngle(-5, 0), 270);
+  assert.equal(arcAngle(3, -3), 45);
+  assert.equal(arcAngle(0, 0), 0);
 });

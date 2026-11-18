@@ -17,7 +17,7 @@ import { gfx } from './gfx.js';
 import { tokenViews } from './minis.js';
 import { state, tokById } from '../engine/state.js';
 import { BEST } from '../data/bestiary.js';
-import { impactOf, speedAt, moveAt, bloodOf, lastOfSide } from '../engine/punch.js';
+import { impactOf, speedAt, moveAt, bloodOf, lastOfSide, arcAngle } from '../engine/punch.js';
 import { dies, dust } from './deathfx.js';
 
 /* ---------- the hit-stop: the world's clock ---------- */
@@ -157,6 +157,26 @@ function screen(kind){
   screenEl.getAnimations?.().forEach(a => a.cancel());
   screenEl.animate?.([{ opacity:1 }, { opacity:kind === 'kill' ? .8 : 0, offset:kind === 'kill' ? .5 : 1 }, { opacity:0 }], { duration:S[1], easing:'ease-out' });
 }
+/* 🧭 where it came from: your hero struck, a red arc at the edge of the view points at whoever struck them (over the
+   shoulder, a foe behind you or off to the side is easy to miss) */
+let dirEl = null, dirs = 0;
+function hitDir(toId, fromId){
+  if (typeof document === 'undefined') return;
+  const A = fromId && at(fromId), B = at(toId); if (!A || !B) return;
+  // (from the hero to whoever struck them, along the ground, turned the way the camera faces)
+  const d = A.parent.localToWorld(A.pos.clone()).sub(B.parent.localToWorld(B.pos.clone())).setY(0);
+  const fwd = camera.getWorldDirection(new THREE.Vector3()).setY(0).normalize(), right = new THREE.Vector3(-fwd.z, 0, fwd.x);
+  const deg = arcAngle(d.dot(right), -d.dot(fwd));
+  if (!dirEl){ dirEl = document.createElement('div'); dirEl.id = 'hitDir'; dirEl.innerHTML = '<i></i>';
+    Object.assign(dirEl.style, { position:'fixed', inset:'0', pointerEvents:'none', zIndex:'7', opacity:'0' });
+    Object.assign(dirEl.firstChild.style, { position:'absolute', left:'50%', top:'50%', width:'min(78vw,78vh)', height:'min(78vw,78vh)', borderRadius:'50%',
+      border:'10px solid transparent', borderTopColor:'rgba(235,40,40,.9)', filter:'drop-shadow(0 0 12px rgba(255,30,30,.85))', display:'block' });
+    document.body.appendChild(dirEl); }
+  dirEl.firstChild.style.transform = `translate(-50%,-50%) rotate(${deg}deg)`; dirEl.dataset.deg = deg; dirs++;
+  dirEl.getAnimations?.().forEach(a => a.cancel());
+  dirEl.animate?.([{ opacity:1 }, { opacity:1, offset:.35 }, { opacity:0 }], { duration:900, easing:'ease-out' });
+}
+export const hitDirNow = () => ({ shown:dirs, deg:dirEl ? +dirEl.dataset.deg : null });
 let kick = null, baseFov = null;
 function fovKick(deg, ms = 300){ if (!deg || gfx.calm) return; if (baseFov == null) baseFov = camera.fov; kick = { at:performance.now(), ms, deg:Math.max(deg, kick && performance.now() - kick.at < 120 ? kick.deg : 0) }; }
 
@@ -193,7 +213,7 @@ export function impact(id, fromId, info = {}){
   fovKick(I.kick, info.kill ? 650 : info.crit ? 420 : 280);
   if (I.shake > .4 && !gfx.calm) fx.shake = Math.max(fx.shake, (I.shake - .3) * .16);
   const me = mine(id);
-  if (me) screen(info.kill || t.hp <= 0 ? 'down' : 'hurt');
+  if (me){ screen(info.kill || t.hp <= 0 ? 'down' : 'hurt'); if (fromId && fromId !== id) hitDir(id, fromId); }
   else if (I.screen) screen(I.screen);
 }
 /* ⚠ a foe shows what it means to do (game/wander.js, before its turn): it draws back from whoever it's going for, and a

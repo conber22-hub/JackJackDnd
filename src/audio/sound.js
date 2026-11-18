@@ -7,7 +7,7 @@
    audio after a tap, so nothing plays until the first click. */
 import { gfx, onGfx } from '../render/gfx.js';
 
-let ctx = null, master = null, droneBus = null, sfxBus = null, musicBus = null, noiseBuf = null;
+let ctx = null, master = null, droneBus = null, sfxBus = null, musicBus = null, noiseBuf = null, muffler = null, muffled = 0;
 const drone = { nodes:null, dread:1 };
 let sender = null;
 export function onSfx(fn){ sender = fn; }            // the net layer forwards DM sounds to players
@@ -18,14 +18,25 @@ function init(){
   ctx = new AC();
   master = ctx.createGain(); master.gain.value = gfx.volume; master.connect(ctx.destination);
   const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -18; comp.connect(master);
-  droneBus = ctx.createGain(); droneBus.gain.value = gfx.music ? 1 : 0; droneBus.connect(comp);
+  // (the music and the drone go through one low-pass: near death they go muffled and far away: muffle)
+  muffler = ctx.createBiquadFilter(); muffler.type = 'lowpass'; muffler.frequency.value = 20000; muffler.Q.value = .7; muffler.connect(comp);
+  droneBus = ctx.createGain(); droneBus.gain.value = gfx.music ? 1 : 0; droneBus.connect(muffler);
   sfxBus = ctx.createGain(); sfxBus.gain.value = gfx.sfx ? 1 : 0; sfxBus.connect(comp);
-  musicBus = ctx.createGain(); musicBus.gain.value = gfx.music ? 1 : 0; musicBus.connect(comp);   // (the region loops: loopTune)
+  musicBus = ctx.createGain(); musicBus.gain.value = gfx.music ? 1 : 0; musicBus.connect(muffler);   // (the region loops: loopTune)
+  if (muffled) muffle(muffled, true);
   noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
   const d = noiseBuf.getChannelData(0); let b = 0;
   for (let i = 0; i < d.length; i++){ const w = Math.random() * 2 - 1; b = (b + .02 * w) / 1.02; d[i] = b * 3.5; }    // brown-ish noise
   return ctx;
 }
+/* 💓 near death the music and the drone go muffled, as if heard from under water: level 0 (clear), 1 (a quarter of the hit
+   points or less), 2 (an eighth or less: further still). ui/followcam.js sets it with the red pulse. */
+export function muffle(level = 0, force = false){
+  level = Math.max(0, Math.min(2, level | 0)); if (level === muffled && !force) return; muffled = level;
+  if (!ctx || !muffler) return;
+  muffler.frequency.setTargetAtTime([20000, 1400, 650][level], ctx.currentTime, level ? .25 : .6);
+}
+export const muffledNow = () => muffled;
 export function unlock(){ if (!init()) return; if (ctx.state === 'suspended') ctx.resume(); if (!drone.nodes) startDrone(); }
 onGfx(g => { if (!ctx) return; master.gain.setTargetAtTime(g.volume, ctx.currentTime, .1); droneBus.gain.setTargetAtTime(g.music ? 1 : 0, ctx.currentTime, .3); musicBus.gain.setTargetAtTime(g.music ? 1 : 0, ctx.currentTime, .3); sfxBus.gain.setTargetAtTime(g.sfx ? 1 : 0, ctx.currentTime, .1); });
 

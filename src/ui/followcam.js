@@ -15,7 +15,7 @@ import { seeThrough, readyFloor } from '../render/seethrough.js';
 import { tokenViews } from '../render/minis.js';
 import { floorViews } from '../render/floors.js';
 import { hh, rumble } from './handheld.js';
-import { sfx } from '../audio/sound.js';
+import { sfx, muffle } from '../audio/sound.js';
 import { toast } from './hud.js';
 import * as THREE from 'three';
 
@@ -130,7 +130,7 @@ function nearDeath(k){
       background:'radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 48%, rgba(150,0,12,.55) 100%)' });
     document.body.appendChild(pulseEl); }
   const want = k <= 0 ? 0 : k <= .12 ? 2 : k <= .25 ? 1 : 0;
-  if (want === pulseK) return; pulseK = want;
+  if (want === pulseK) return; pulseK = want; muffle(want);   // (and the music goes far away: audio/sound.js)
   pulseEl.getAnimations?.().forEach(a => a.cancel());
   pulseEl.style.opacity = want ? '1' : '0';
   if (want && pulseEl.animate && !gfx.calm) pulseEl.animate([{ opacity:.35 }, { opacity:1, offset:.18 }, { opacity:.45 }], { duration:want === 2 ? 850 : 1150, iterations:Infinity, easing:'ease-out' });

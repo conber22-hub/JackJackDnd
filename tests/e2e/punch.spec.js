@@ -137,8 +137,10 @@ test('a bloodied foe drips, and a hero near death feels it', async ({ page }) =>
   const w = await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), w = D.get().tokens.find(t => t.kind === 'monster'); w.flags.bloodied = true; w.hp = 3; h.hp = Math.max(1, Math.round(h.maxHp * .1)); return w.id; });
   await expect.poll(() => page.evaluate(i => window.DreadDelve.condFxOn()[i], w)).toBe('bloodied');
   await expect.poll(() => page.evaluate(() => window.DreadDelve.nearDeathNow())).toBe(2);
+  expect(await page.evaluate(() => window.DreadDelve.muffledNow())).toBe(2);   // (the music far away)
   await page.evaluate(() => { const h = window.DreadDelve.wander.hero(); h.hp = h.maxHp; });
   await expect.poll(() => page.evaluate(() => window.DreadDelve.nearDeathNow())).toBe(0);
+  expect(await page.evaluate(() => window.DreadDelve.muffledNow())).toBe(0);
 });
 
 // ⚠ A foe shows what it means to do (game/wander.js): its turn begins with a wind-up at the one it's going for
@@ -258,4 +260,16 @@ test('the turn coming round is announced, with the round', async ({ page }) => {
   await page.evaluate(() => { const D = window.DreadDelve; D.get().tokens.filter(t => t.kind === 'monster').forEach(t => { t.hp = t.maxHp = 500; }); D.wander.endHeroTurn(); });
   await expect.poll(() => page.evaluate(() => window.DreadDelve.turnBannerNow().shown), { timeout:60_000 }).toBeGreaterThan(b0.shown);
   expect((await page.evaluate(() => window.DreadDelve.turnBannerNow())).last).toMatch(/Your turn · Round [2-9]/);
+});
+
+// 🧭 Your hero struck: a red arc at the edge of the view points at whoever struck them (the foe ahead: the top)
+test('a blow on your hero shows where it came from', async ({ page }) => {
+  test.setTimeout(180_000);
+  await fight(page);
+  const ids = await page.evaluate(() => { const D = window.DreadDelve; return { h:D.wander.hero().id, w:D.get().tokens.find(t => t.kind === 'monster').id }; });
+  await page.waitForTimeout(1500);   // (the camera settled over the shoulder, facing the wolf)
+  const d = await page.evaluate(({ h, w }) => { const D = window.DreadDelve, n = D.hitDirNow().shown; D.actOn(h, 'hit', w, { r:.2 }); return { n, now:D.hitDirNow() }; }, ids);
+  expect(d.now.shown).toBe(d.n + 1);
+  expect(d.now.deg <= 60 || d.now.deg >= 300).toBe(true);
+  await expect(page.locator('#hitDir')).toHaveCount(1);
 });

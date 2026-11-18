@@ -84,3 +84,12 @@ export function lastOfSide(t, others = []){
   if (!t) return false; const foe = t.kind === 'monster';
   return !others.some(o => o && o.id !== t.id && (o.kind === 'monster') === foe && !o.flags?.gone && (o.flags?.rising || (!o.dead && o.hp > 0)));
 }
+
+/* Where on the screen a blow came from, as an angle round its middle (degrees, 0 at the top, clockwise): `x` and `z` are
+   the attacker's place in the camera's own space (x to the right, z towards the viewer), so a foe straight ahead is at
+   the top, one behind at the bottom. render/punch.js draws a red arc at that angle (hitDir). */
+export function arcAngle(x, z){
+  if (!x && !z) return 0;
+  const a = Math.atan2(x, -z) * 180 / Math.PI;
+  return Math.round(((a % 360) + 360) % 360);
+}
