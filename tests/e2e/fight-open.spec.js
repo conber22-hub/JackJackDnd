@@ -67,7 +67,8 @@ test('a fight breaks out with a moment of its own, and the hero chooses the blow
   // the card comes once the blow has landed, at the top of the screen, not over the two of them
   const card = page.locator('#cardLayer .pop', { hasText:'Vasha → Wolf' });
   await expect(card).toBeVisible({ timeout:10_000 });
-  const [cb, vh] = [await card.boundingBox(), page.viewportSize().height];
+  // (read where it sits as it's found: on a slow machine the next turn's card can take its place a moment later)
+  const [cb, vh] = [await card.first().evaluate(el => { const r = el.getBoundingClientRect(); return { y:r.y, height:r.height }; }), page.viewportSize().height];
   expect(cb.y + cb.height / 2).toBeLessThan(vh * .45);
   expect(errs).toEqual([]);
 });

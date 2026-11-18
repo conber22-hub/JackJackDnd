@@ -39,8 +39,7 @@ test("the village's people have lives: a voice, a secret, ties to their neighbou
     D.talkTo(p); return { ties:(f.folkTies || []).length, name:p.name }; });
   expect(r.ties).toBeGreaterThan(0);
   const eyes = page.locator('#cardLayer .pop', { hasText:'For your eyes' });
-  await expect(eyes).toContainText('🤫');
-  await expect(eyes).toContainText('🎭');
+  await expect(eyes).toContainText(/^(?=[\s\S]*🤫)(?=[\s\S]*🎭)/);   // (both in one look: the card can be gone a moment later)
   const leak = await page.evaluate(() => { const st = window.DreadDelve.redactForPlayers(window.DreadDelve.get()); return st ? JSON.stringify(st.floors?.[0] || {}).includes('"lives":{') : false; });
   expect(leak).toBe(false);
 });
