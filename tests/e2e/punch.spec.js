@@ -197,9 +197,10 @@ test('a health bar drains after a blow and climbs after a heal', async ({ page }
   // (the hero's: a foe's hit points aren't on its plate in the Wanderer, as on a player's screen)
   const w = await page.evaluate(() => { const D = window.DreadDelve, w = D.wander.hero();
     w.hp = w.maxHp; D.syncTokens(); D.renderHud(); w.hp = Math.max(1, Math.floor(w.maxHp / 4)); D.syncTokens(); D.renderHud();
-    return { id:w.id, n:D.chipCount(), hud:document.querySelectorAll('#wdParty .wd-chip').length }; });
+    return { id:w.id, n:D.chipCount(), hud:document.querySelectorAll('#wdParty .wd-chip').length, jolt:!!document.querySelector('#wdParty .wd-m.hit') }; });
   expect(w.n).toBe(1);
   expect(w.hud).toBe(1);   // (and the party's bar on the screen drains the same way: ui/hpbar.js)
+  expect(w.jolt).toBe(true);   // (its card jolts)
   const lost = await px(w.id, .8);   // (the part it took: pale, not the bar's red or its dark ground)
   expect(Math.min(...lost)).toBeGreaterThan(110);   // (white, or pale gold)
   await expect.poll(() => page.evaluate(() => window.DreadDelve.chipCount()), { timeout:20_000 }).toBe(0);
@@ -207,8 +208,10 @@ test('a health bar drains after a blow and climbs after a heal', async ({ page }
   expect(Math.max(...after)).toBeLessThan(60);   // (drained: only the bar's dark ground)
   // a heal: the bar climbs towards a pale ghost of where it's going
   const h = await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero();
-    h.hp = 1; D.syncTokens(); h.hp = h.maxHp; D.syncTokens(); return { id:h.id, n:D.chipCount() }; });
+    h.hp = 1; D.syncTokens(); D.renderHud(); h.hp = h.maxHp; D.syncTokens(); D.renderHud();
+    return { id:h.id, n:D.chipCount(), glow:!!document.querySelector('#wdParty .wd-m.heal') }; });
   expect(h.n).toBe(1);
+  expect(h.glow).toBe(true);   // (its card glows)
   const ghost = await px(h.id, .8);
   expect(ghost[1]).toBeGreaterThan(ghost[0]);   // (the green ghost, not the fill yet)
   await expect.poll(() => page.evaluate(() => window.DreadDelve.chipCount()), { timeout:20_000 }).toBe(0);

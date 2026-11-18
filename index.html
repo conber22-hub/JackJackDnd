@@ -585,6 +585,10 @@ body.wander #modeHint, body.wander #moveTip, body.wander #btnPanel, body.wander 
 .wd-m.me{border-color:var(--gold-line)}
 .wd-m.turn{box-shadow:0 0 0 2px var(--candle),0 0 24px rgba(233,165,74,.4)}
 .wd-m.down{opacity:.55;filter:grayscale(.7)}
+.wd-m.hit{animation:wdCardHit .38s ease-out;border-color:rgba(230,70,70,.9)}.wd-m.heal{animation:wdCardHeal .65s ease-out;border-color:rgba(120,230,170,.8)}
+@keyframes wdCardHit{0%{transform:translateX(0);box-shadow:0 0 0 2px rgba(230,60,60,.9),0 0 26px rgba(220,40,40,.6)}20%{transform:translateX(-5px)}40%{transform:translateX(4px)}60%{transform:translateX(-2px)}100%{transform:none;box-shadow:none}}
+@keyframes wdCardHeal{0%{box-shadow:0 0 0 2px rgba(120,230,170,.9),0 0 28px rgba(100,220,150,.6)}100%{box-shadow:none}}
+@media (prefers-reduced-motion:reduce){@keyframes wdCardHit{0%{box-shadow:0 0 0 2px rgba(230,60,60,.9)}100%{box-shadow:none}}}
 .wd-hp{display:block;align-self:center;height:8px;min-width:90px;border-radius:5px;background:rgba(0,0,0,.55);overflow:hidden;border:1px solid rgba(255,255,255,.08)}
 .wd-hp i{display:block;height:100%;background:linear-gradient(90deg,#7d1420,#c9363f)}
 .wd-hp{position:relative}.wd-hp .wd-chip{position:absolute;top:0;height:100%;background:#f2cf7e;transform-origin:left center;animation:wdchip .9s linear forwards}

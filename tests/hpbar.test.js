@@ -25,3 +25,11 @@ test('a second blow while the first drains keeps the whole loss in the chip; a h
   assert.deepEqual([+c[1], +c[2]], [20, 80]);
   assert.equal(chipOf(hpBar(9, 10, 'c', 5000)), null);
 });
+
+test('barMood: a jolt just after a blow, a glow just after a heal, then nothing', async () => {
+  const { barMood } = await import('../src/ui/hpbar.js');
+  hpBar(10, 10, 'd', 0); assert.equal(barMood('d', 0), '');
+  hpBar(5, 10, 'd', 100); assert.equal(barMood('d', 150), 'hit'); assert.equal(barMood('d', 1000), '');
+  hpBar(9, 10, 'd', 2000); assert.equal(barMood('d', 2100), 'heal'); assert.equal(barMood('d', 3000), '');
+  assert.equal(barMood('nobody'), '');
+});

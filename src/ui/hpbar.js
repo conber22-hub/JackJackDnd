@@ -11,11 +11,19 @@ export function hpBar(hp, max, key = null, now = (typeof performance !== 'undefi
     const c = seen.get(key);
     if (!c) seen.set(key, { frac:f, from:f, at:-1e9 });
     else {
-      if (f < c.frac - .001){ const showing = now - c.at < MS ? c.from : c.frac; c.from = Math.max(showing, c.frac); c.at = now; }
+      if (f < c.frac - .001){ const showing = now - c.at < MS ? c.from : c.frac; c.from = Math.max(showing, c.frac); c.at = now; c.mood = 'hit'; c.moodAt = now; }
+      else if (f > c.frac + .001){ c.mood = 'heal'; c.moodAt = now; }
       c.frac = f;
       const k = now - c.at;
       if (k < MS && c.from > f) chip = `<i class="wd-chip" style="left:${(f * 100).toFixed(1)}%;width:${((c.from - f) * 100).toFixed(1)}%;animation-delay:-${Math.round(k)}ms"></i>`;
     }
   }
   return `<i class="wd-hp"><i style="width:${(f * 100).toFixed(1)}%"></i>${chip}</i>`;
+}
+
+/* How the card that holds a bar should look just now: 'hit' (a jolt and a red edge) for a moment after a blow, 'heal' (a
+   green glow) after a heal, else ''. Ask after drawing its bar (hpBar), which is what notices the change. */
+export function barMood(key, now = (typeof performance !== 'undefined' ? performance.now() : Date.now())){
+  const c = seen.get(key); if (!c?.mood) return '';
+  return now - c.moodAt < (c.mood === 'hit' ? 380 : 650) ? c.mood : '';
 }
