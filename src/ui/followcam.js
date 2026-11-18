@@ -66,7 +66,7 @@ export function camFrame(dt, pad, { focus = null, me = null, other = null, other
   if (camBusy()) return;   // (a glide of its own is under way: a new floor, the start)
   let o = toOrbit(offset());
   const subj = fight && sh.on && me && fight.subject && fight.subject.floor === me.floor ? fight.subject : null;
-  sh.active = !!subj; ui.shoulderOf = subj ? me.id : null;
+  sh.active = !!subj; ui.shoulderOf = subj ? me.id : null; sh.subj = subj || null;
   if (subj){
     const a = miniFocus(me), b = miniFocus(subj), shot = shoulderShot({ x:a.x, z:a.z }, { x:b.x, z:b.z }, { side:sh.side, room:roomBehind(me, a.x, a.z, b.x, b.z) });
     if (pad && Math.abs(pad.rx) > .2) sh.peek = Math.max(-1.3, Math.min(1.3, sh.peek - pad.rx * dt * 2.2)); else sh.peek *= 1 - glide(dt, 2.5);
@@ -98,14 +98,17 @@ export function miniFocus(t, rate = 8){
 }
 
 /* ---------- 👁 seeing the hero through walls ---------- */
-const at = new THREE.Vector3();
+const at = new THREE.Vector3(), foeAt = new THREE.Vector3();
 let readyAt = 0, holeOpen = false;
 export function lookThrough(t, now = performance.now()){
   const tv = t && tokenViews.get(t.id);
   if (!hh.seeThru || !tv?.group?.parent){ closeLook(); return; }
   if (now - readyAt > 500){ readyAt = now; readyFloor(floorViews[t.floor]); }
   tv.group.getWorldPosition(at); const feet = at.y; at.y += .75;
-  seeThrough(at, feet); holeOpen = true;
+  // over the shoulder: what they face is kept in sight too (a trunk between the camera and the foe is thinned away)
+  const fv = sh.active && sh.subj && tokenViews.get(sh.subj.id); let foe = null;
+  if (fv?.group?.parent){ foe = fv.group.getWorldPosition(foeAt); foe.y += .7; }
+  seeThrough(at, feet, 1.5, foe); holeOpen = true;
 }
 export function closeLook(){ if (holeOpen){ seeThrough(null); holeOpen = false; } }
 
