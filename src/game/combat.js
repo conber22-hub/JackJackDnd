@@ -394,7 +394,7 @@ export function exhaust(t, by = 1){
 export function heal(t, n){
   const was = Math.max(0, t.hp);
   t.hp = Math.min(t.maxHp, t.hp + n);
-  if (t.hp > was) bus.emit('healed', { t, n:t.hp - was });   // (✚ the number rising over them: ui/fightfx.js)
+  if (t.hp > was){ bus.emit('healed', { t, n:t.hp - was }); if (t.kind !== 'monster') broadcast({ t:'healfx', id:t.id, n:t.hp - was }); }   // (a monster's own healing stays the DM's: players never see its hit points)
   if (t.hp > 0 && t.dead){ t.dead = false; t.flags.rising = false; }
   if (t.flags.seeded || t.conds?.some(c => c.n === 'seeded')){ t.flags.seeded = false; t.conds = (t.conds || []).filter(c => c.n !== 'seeded'); toast(`${t.name}: the seed is burned out.`); }
   if (t.hp > t.maxHp / 2) t.flags.bloodied = false;

@@ -78,6 +78,7 @@ export function remoteBlow(kind, id, from, fx = {}){
   else if (kind === 'hit'){ if (fx?.n > 0) floatText(id, `${fx.crit ? 'CRIT ' : ''}−${fx.n}`, fx.crit ? '#ffd45a' : '#ff7a52', { big:!!fx.crit }); if (fx?.ranged && from && !fx.el) plantArrow(from, id, 'hit'); }
   else if (kind === 'miss'){ floatText(id, 'MISS', '#d9d2c4'); if (fx?.ranged && from && !fx.el) plantArrow(from, id, 'miss'); }
 }
+export function remoteHeal(id, n){ if (n > 0){ floatText(id, `+${n}`, '#7dff9a'); ringPulse(id, '#7dff9a'); } }
 let wired = false;
 export function wireFightFx(){
   if (wired) return; wired = true;
