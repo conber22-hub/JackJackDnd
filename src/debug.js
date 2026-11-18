@@ -87,6 +87,7 @@ export { fightFxCount, fightZone } from './render/fightzone.js';   // ⚔ what a
 export { punchCount, worldSpeed } from './render/punch.js';   // 💥 a blow felt: the hit-stop, knocks, splashes (render/punch.js)
 export { actOn, holdFall } from './render/minis.js';   // (a swing, a blow, a miss on a figure, for poking: actOn(id, 'hit', fromId, { r, crit, kill }))
 export { shoulderNow } from './ui/followcam.js';   // ⚔ is the fight seen over the hero's shoulder (ui/followcam.js)
+export { spellFxCount, spellFx, setSpellSlow } from './render/spellfx.js';   // ✨ spells seen (render/spellfx.js)
 export { diceSeen } from './ui/dicemoment.js';
 export { facesMade } from './ui/orderstrip.js';   // ⏳ how many turn-order portraits have been made (ui/orderstrip.js)   // 🎲 what the last dice moments said (ui/dicemoment.js)
 export * as handheld from './ui/handheld.js';   // 🕹 the handheld skin: the phone as the controller
@@ -97,4 +98,4 @@ export * as screens from './ui/screens-debug.js';   // 🏆 the screens between 
 export { loopFor, musicNow } from './ui/regionmusic.js';   // 🎼 the region music (ui/regionmusic.js): which loop is wanted here, which is playing
 export { tableHH } from './ui/tablehh.js';   // 🕹 the handheld at the table
 export { camTurn, camView, camCrane } from './ui/wander.js';   // 🎥 the Wanderer's follow camera
-export { viewSize } from './render/scene.js';
+export { viewSize, scene } from './render/scene.js';

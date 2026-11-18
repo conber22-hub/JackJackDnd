@@ -3,9 +3,9 @@ import { test, expect } from './helpers.js';
 // 💥 A blow felt (render/punch.js): the attacker lunges, the world holds still for an instant at the impact, the one
 // struck is knocked back and left a splash on the ground; a miss sways aside; a killing blow runs slow and the body
 // stays where it was thrown; when the fight's over the ground is wiped.
-async function fight(page){
-  await page.evaluate(() => { const D = window.DreadDelve, h = D.newHero('Fighter'); h.name = 'Vasha'; h.id = 'vasha-punch';
-    localStorage.setItem('dreaddelve.heroes.v1', JSON.stringify([h])); localStorage.removeItem('dreaddelve.role'); });
+async function fight(page, cls = 'Fighter', spells = null){
+  await page.evaluate(([c, sp]) => { const D = window.DreadDelve, h = D.newHero(c); h.name = 'Vasha'; h.id = 'vasha-punch'; if (sp) h.spells = sp;
+    localStorage.setItem('dreaddelve.heroes.v1', JSON.stringify([h])); localStorage.removeItem('dreaddelve.role'); }, [cls, spells]);
   await page.reload(); await page.waitForFunction(() => !!window.DreadDelve);
   await page.locator('[data-act="thRole"][data-k="wander"]').click();
   await page.locator('[data-act="wdBegin"][data-id="vasha-punch"]').click();
@@ -59,4 +59,28 @@ test('a fight is seen over the hero\'s shoulder, close; V looks from above and b
   await expect.poll(() => page.evaluate(() => window.DreadDelve.shoulderNow())).toBe(false);
   await page.keyboard.press('v');
   await expect.poll(() => page.evaluate(() => window.DreadDelve.shoulderNow())).toBe(true);
+});
+
+// ✨ Spells seen (render/spellfx.js): a spell cast through the game is drawn (Burning Hands pours out of the caster),
+// and every shape of spell draws without an error
+test('a spell cast is seen: a cone, a burst, a bolt, darts, a pillar, a heal', async ({ page }) => {
+  test.setTimeout(180_000);
+  const errs = []; page.on('pageerror', e => errs.push(e.message));
+  await fight(page, 'Wizard', ['Fire Bolt', 'Burning Hands', 'Magic Missile']);
+  const n0 = await page.evaluate(() => window.DreadDelve.spellFxCount().made);
+  const r = await page.evaluate(() => { const D = window.DreadDelve, bh = D.wander.spellList().find(s => /Burning/.test(s.n)); if (!bh) return 'none'; D.wander.heroCast(bh); return 'cast'; });
+  expect(r).toBe('cast');
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.spellFxCount().made)).toBeGreaterThan(n0);
+  // every path, by hand
+  await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), w = D.get().tokens.find(t => t.kind === 'monster'), f = D.get().floors[h.floor], L = h.floor;
+    const near = [(w.y) * f.W + w.x, (w.y) * f.W + w.x + 1];
+    D.spellFx({ L, by:h.id, at:w.id, ty:'fire', shape:'sphere', origin:{ x:w.x + .5, y:w.y + .5 }, squares:near });
+    D.spellFx({ L, by:h.id, at:w.id, ty:'thunder', shape:'cube', self:true, origin:{ x:h.x + .5, y:h.y + .5 }, squares:near });
+    D.spellFx({ L, by:h.id, ty:'lightning', shape:'line', squares:near });
+    D.spellFx({ L, by:h.id, at:w.id, ty:'force', k:'auto', darts:3 });
+    D.spellFx({ L, by:h.id, at:w.id, ty:'radiant' });
+    D.spellFx({ L, by:h.id, at:h.id, k:'heal' }); });
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.spellFxCount().live)).toBeGreaterThan(0);
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.spellFxCount().live), { timeout:20_000 }).toBe(0);
+  expect(errs).toEqual([]);
 });

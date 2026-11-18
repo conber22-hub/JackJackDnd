@@ -83,7 +83,7 @@ export const SHELLS = [
      room: how far behind the hero the camera can stand before a wall (squares; it creeps in closer and higher)
      side: +1 the right shoulder, −1 the left
    → { look:{ x, y, z } where to look (y above the floor), orbit:{ yaw, pitch, dist } the camera from there } */
-export const SHOULDER = { back:3.3, up:2.15, side:1.25, ahead:.5, maxAhead:3.2, lookUp:.85, minBack:1.4 };
+export const SHOULDER = { back:3.6, up:2.4, side:1.15, ahead:.38, maxAhead:2.5, lookUp:.7, minBack:1.4 };
 export function shoulderShot(h, s, { room = Infinity, side = 1 } = {}){
   let dx = s.x - h.x, dz = s.z - h.z, l = Math.hypot(dx, dz);
   if (l < .01){ dx = 0; dz = -1; l = 1; }

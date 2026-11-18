@@ -16,6 +16,16 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.36 — spells you see
+
+- **✨ Every spell is seen** (`render/spellfx.js`, its look in `engine/spellfx.js`; from `game/combat.js` `castSpell`, and on every screen at the table: `spellfx`). Each damage type has its colours and its manner: fire's embers rise, frost's shards fall, lightning cracks in a jagged bolt, thunder and force throw a shockwave, radiance comes down as a pillar, necrotic and poison hang as a dark cloud and give no light. A healing spell gathers on the one it heals.
+  - **A burst** (Fireball, Shatter): a ball of it flies from the caster's hands to the spot and goes off. A flash lights everything round it, a dome swells and fades, a shockwave runs along the ground, the ground it covers glows, and its motes fly.
+  - **A cone** (Burning Hands, a breath): it pours out of the caster across the cone, the nearest squares first. **A line** (Lightning Bolt): a jagged, flickering bolt from the caster's hands down the line. **From where they stand** (Thunderwave): out all round them.
+  - **On one** (Sacred Flame): a column of light comes down on them. **Darts** (Magic Missile): one bright dart for each missile, curving in one after another. **Toll the Dead, a hold, a blessing:** it gathers on them, in rings and motes.
+  - Whatever an area catches is knocked away from its middle (`render/punch.js` `setBlast`), and a spell that strikes (Fire Bolt) lands in its own colours.
+  - The flash comes from two lights kept in the scene from the start, so a spell never stalls the frame rebuilding materials.
+- **⚔ The shoulder shot sits higher**: the hero stands in the near foreground clear of the fight bar, with the foe beyond.
+
 ## v1.35 — the screens between the fights
 
 Muse's four screens (round 13) over ChatGPT's fight summary, achievements and bestiary lore, recorded by `game/record.js` from what the fight already says on the game's bus. The Wanderer's run only: never the DM's table.
@@ -1027,6 +1037,7 @@ src/engine/             pure logic: no DOM, no Three.js, unit-tested
   fight-summary.js      (ChatGPT) a fight's scorecard, highlights and awards (the victory screen)
   achievements.js       (ChatGPT) 46 achievements and their progress
   bestiary-lore.js      (ChatGPT) what the party knows of each creature, by sightings, fights and kills
+  spellfx.js            what a spell looks like (spellLook: its element's colours and motes), how it travels (spellPath), a cone's order (wavesFrom)
   punch.js              how hard a blow lands: hit-stop, slow motion, knockback, camera kick (impactOf, speedAt, moveAt), what bleeds out (bloodOf)
   odds.js               the odds of a blow before it's struck: chance to hit and to crit (advantage, a 1 and a 20), damage on average, the edge in words
   movement.js           dragged routes, threat & opportunity attacks, following in marching order, formations, Close in
@@ -1068,6 +1079,7 @@ src/render/             Three.js
   props.js              the 3D props, houses with roofs, the instanced pine
   minis.js              procedural 3D minis (SHAPES) + syncing tokens
   effects.js            selection ring, reach glow, pings, bursts, Build overlays
+  spellfx.js            ✨ spells seen: bursts, cones, bolts, pillars, darts, heals; a flash light kept ready
   punch.js              💥 a blow felt: lunge, hit-stop (worldSpeed, read by main.js), flash, knockback, slash, spray, splashes, kill wisp, screen flash, camera punch-in
   ambience.js           candle and fire light from props, rain and snow outdoors
   living.js             the Living Valley: snow on the wind, rippling blackwater, the Hunger Moss creeping with the Bloom

@@ -11,6 +11,7 @@ import { showCard, toast, banner, sendWhisper } from '../ui/hud.js';
 import { WHISPERS } from '../data/dread.js';
 import { sfx } from '../audio/sound.js';
 import { shareOf } from '../engine/punch.js';
+import { spellFx } from '../render/spellfx.js';
 import { currentTurn, addCond, removeCond, tickConds, hasCond, saveBonus, stopped, startConc, endConc, defend, defNote, immuneTo, saveRoll, saveTxt, timingFor, condPhase, endOn, moveAllowance } from './rules.js';
 import { SPELL_EFFECTS } from '../data/spell-effects.js';
 import { witnessed, stepFolkNow } from './folk.js';
@@ -321,7 +322,8 @@ export function doAttack(aId, tId, i, mode = 'normal', { d20 = null, at = null }
   // 💥 the blow felt (render/punch.js): how much of them it took (a share, never the HP), a crit, a kill; a miss sways aside
   const ranged = rc.kind === 'ranged', self = a.id === tg.id;
   if (!self) animate(a.id, 'attack', tg.id, { ranged });
-  if (hits.length) setTimeout(() => animate(tg.id, 'hit', self ? null : a.id, { r:shareOf(total, tg.maxHp), crit, kill:!!tg.dead || tg.hp <= 0 }), 330);
+  const el = atk.t && (atk.l !== undefined || / casts /.test(atk.f || '')) ? atk.t : undefined;   // (a spell that strikes lands in its own colours)
+  if (hits.length) setTimeout(() => animate(tg.id, 'hit', self ? null : a.id, { r:shareOf(total, tg.maxHp), crit, kill:!!tg.dead || tg.hp <= 0, el }), 330);
   else if (!self) setTimeout(() => animate(tg.id, 'miss', a.id), 330);
   // (the Wanderer's card waits for the blow to land, so it doesn't cover the swing: one hero, one camera, on them)
   const card = { kind:crit ? 'crit' : hits.length ? '' : 'miss', title:`${a.name} → ${tg.name}`, sub:atk.n, flair, lines, big:hits.length ? `${total} ${atk.t}` : '', die };
@@ -586,11 +588,14 @@ export function castSpell(casterId, targetId, i, aim = null, { at = null } = {})
   if (conc && base0.l && !reuse) startConc(c, base0.n);
   const paid = [...(base0.recharge ? [`<span class="muted">Recharge ${base0.recharge}–6: spent until it comes back</span>`] : []), ...(slot ? [`<span class="muted">${esc(slot)}${level > base0.l ? ` · cast at level ${level}${sp.d !== base0.d ? ` (${esc(sp.d)})` : ''}` : ''}</span>`] : []), ...(conc && base0.l ? [`<span class="muted">🌀 ${esc(c.name)} is concentrating on it</span>`] : [])];
   sfx('roll'); animate(c.id, 'cast', tg.id !== c.id ? tg.id : null);
+  // ✨ the spell seen (render/spellfx.js), here and on every screen at the table
+  const seen = fx => { const m = { L:c.floor, by:c.id, n:base0.n, ty:base0.ty || '', k:base0.k || '', cond:base0.cond || '', ...fx }; spellFx(m); broadcast({ t:'spellfx', fx:m }); };
   bus.emit('acted', { actor:c, target:tg, trigger:base0.k === 'heal' ? 'heal' : 'spell', action:base0.n });   // 🗣
   if (sp.k === 'heal'){
     // Mass Healing Word / Mass Cure Wounds: up to six of the caster's side around the creature tapped, each rolled
     const who = sp.multi ? [tg, ...state.tokens.filter(t => t.id !== tg.id && t.floor === tg.floor && !t.flags.gone && !(t.dead && t.kind === 'monster') && side(t) === side(c) && cheb(t.x, t.y, tg.x, tg.y) <= (sp.rad || 6))].slice(0, sp.multi) : [tg];
     const got = who.map(t => { const n = Math.max(0, rollDice(sp.d).total + (sp.healMod || 0)); heal(t, n); return [t, n]; });
+    for (const [t] of got) seen({ at:t.id, k:'heal' });
     showCard({ kind:'', title:`${c.name}: ${sp.n}`, sub:who.length > 1 ? `${who.length} healed` : `on ${tg.name}`, flair:'Warmth, and the wound closes a little.',
       lines:[...(who.length > 1 ? got.map(([t, n]) => `${esc(t.name)} <b>+${n} HP</b>`) : []), ...paid], big:who.length > 1 ? '' : `+${got[0][1]} HP` });
     log(`${c.name} casts ${sp.n}: ${got.map(([t, n]) => `${t.name} +${n}`).join(', ')}.`); changed(); return true;
@@ -598,12 +603,14 @@ export function castSpell(casterId, targetId, i, aim = null, { at = null } = {})
   if (sp.k === 'auto'){
     const evil = sp.smite && (hasTag(tg, 'undead') || hasTag(tg, 'fiend'));
     const raw = rollDice(sp.d).total + (evil ? d(8) : 0), df = defend(tg, raw, sp.ty), n = df.n;
+    seen({ at:tg.id, darts:/missile/i.test(sp.n) ? 3 + Math.max(0, level - 1) : 1 });
     showCard({ kind:'', title:`${c.name}: ${sp.n}`, sub:`on ${tg.name}${evil ? ` · +1d8 against the ${hasTag(tg, 'fiend') ? 'fiend' : 'undead'}` : ''}`, lines:[...(df.why ? [`<span class="muted">${esc(tg.name)} is ${df.why} to ${esc(sp.ty)}: ${raw} → ${n}</span>`] : []), ...paid], big:`${n} ${sp.ty}` });
     log(`${c.name} casts ${sp.n} on ${tg.name}: ${n} ${sp.ty}.`); applyDamage(tg, n, sp.ty, c, true); changed(); return true;
   }
   if (sp.k === 'buff' || sp.k === 'util'){
     // a spell that simply gives its target a condition (Invisibility): no roll at all. (Ray of Sickness needs a hit and
     // Color Spray a failed save, so they're left to the DM here, where the app doesn't roll them.)
+    seen({ at:tg.id });
     const ef = GIVES.has(sp.n) && SPELL_EFFECTS[sp.n];
     if (ef?.cond){ const tm = timingFor(ef, { src:c.id }); addCond(tg, ef.cond, conc ? -1 : tm.rounds, conc ? `conc:${c.id}` : null, false, tm.extra); }
     showCard({ kind:'', title:`${c.name}: ${sp.n}`, sub:tg.id === c.id ? 'on themself' : `on ${tg.name}`, lines:[...(sp.note ? [esc(sp.note)] : []), ...paid, '<span class="muted">The DM rules how it plays out.</span>'] });
@@ -620,8 +627,10 @@ export function castSpell(casterId, targetId, i, aim = null, { at = null } = {})
     targets = caughtIn(c, area, res.squares); origin = res.origin;
     where = ` · ${area.shape === 'aura' ? `${area.size * 5} ft. around ${c.name}` : `${area.size * 5}-ft. ${area.shape}`}${res.ok ? '' : ` (${res.why} — the DM's call)`}`;
     flashArea(c.floor, [...res.squares], sp.ty); broadcast({ t:'area', floor:c.floor, sq:[...res.squares], ty:sp.ty || '' });
+    seen({ at:tg.id, shape:area.shape, self:area.range === 0 || area.shape === 'aura', origin:res.origin, squares:[...res.squares] });
   } else if (sp.rad) targets = state.tokens.filter(t => t.floor === tg.floor && !t.dead && !t.flags.gone && t.id !== c.id && cheb(t.x, t.y, tg.x, tg.y) <= sp.rad);   // hand-made spells with a radius
   else if (gapTo(c, tg) > Math.max(1, spellReach(sp))) where += ` (out of range — the DM's call)`;
+  if (!area) seen({ at:tg.id, ...(sp.rad ? { shape:'sphere', origin:{ x:tg.x + .5, y:tg.y + .5 } } : {}) });
   const base = sp.d ? rollDice(sp.d).total : 0, lines = [];
   // the timing of the condition it leaves (data/spell-effects.js for a spell; a creature's action carries its own)
   const hold = base0.mon ? (base0.cond ? base0 : null) : (SPELL_EFFECTS[base0.n]?.cond === sp.cond ? SPELL_EFFECTS[base0.n] : null);

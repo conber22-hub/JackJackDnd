@@ -35,6 +35,16 @@ const dirOf = (from, to) => {
   const dx = (b.x + ((b.size || 1) - 1) / 2) - (a.x + ((a.size || 1) - 1) / 2), dz = (b.y + ((b.size || 1) - 1) / 2) - (a.y + ((a.size || 1) - 1) / 2), l = Math.hypot(dx, dz) || 1;
   return { x:dx / l, z:dz / l };
 };
+// ✨ a spell's area just went off (render/spellfx.js): what it catches is knocked away from its middle
+let blast = null;
+export function setBlast(L, o){ blast = { L, x:o.x, y:o.y, at:performance.now() }; }
+function blastDir(id){
+  const t = tokById(id); if (!t || !blast || blast.L !== t.floor || performance.now() - blast.at > 1500) return null;
+  const dx = t.x + (t.size || 1) / 2 - blast.x, dz = t.y + (t.size || 1) / 2 - blast.y, l = Math.hypot(dx, dz);
+  return l < .2 ? null : { x:dx / l, z:dz / l };
+}
+// a spell's own colours for the blow (Fire Bolt lands in fire): its sparks, and the slash's light
+const EL = { fire:'#ffb04a', cold:'#d8f3ff', lightning:'#eef4ff', thunder:'#e6e2ff', force:'#d9c2ff', radiant:'#fff6c8', necrotic:'#b5ff9a', acid:'#d9ff6a', poison:'#a8f070', psychic:'#ffb3ec' };
 function addMove(id, m){ if (!moves.has(id)) moves.set(id, []); moves.get(id).push({ t0:clk, ...m }); }
 
 /* ---------- flashes: every mesh of the figure white for an instant ---------- */
@@ -150,12 +160,13 @@ export function lunge(id, targetId, { ranged = false } = {}){
 // the blow lands on `id`, from `fromId` (none: a spell's area, a trap). info: { r, crit, kill }
 export function impact(id, fromId, info = {}){
   const t = tokById(id), P = at(id); if (!t || !P) return;
-  const I = impactOf(info), now = performance.now(), d = fromId ? dirOf(fromId, id) : null;
-  const blood = bloodOf({ tags:BEST[t.bid]?.tags, name:t.name, kind:t.kind });
+  const I = impactOf(info), now = performance.now(), d = fromId ? dirOf(fromId, id) : blastDir(id);
+  const b0 = bloodOf({ tags:BEST[t.bid]?.tags, name:t.name, kind:t.kind }), el = EL[info.el];
+  const blood = el ? { ...b0, spark:el } : b0;
   hold(I, now); made.impacts++; if (info.kill) made.kills++;
   addMove(id, { kind:'knock', ms:info.kill ? 380 : 420, amp:I.knock, dx:d ? d.x : 0, dz:d ? d.z : 0, back:I.back });
   flash(id, I.flash, info.crit);
-  slash(P, d, info.crit, info.crit ? '#ffd45a' : blood.splat ? '#fff0e0' : blood.spark);
+  slash(P, d, info.crit, info.crit ? '#ffd45a' : el || (blood.splat ? '#fff0e0' : blood.spark));
   spray(P, d, blood, info.crit, info.kill);
   splat(P, d, blood, info.crit || info.kill);
   if (info.kill) wisp(P, blood.splat ? '#e8e0ff' : blood.spark);

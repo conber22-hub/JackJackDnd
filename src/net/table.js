@@ -1,5 +1,6 @@
 /* MULTIPLAYER — peer-to-peer over PeerJS. The DM hosts; players join with a 4-letter code.
    Players only send requests (move, stairs, door, search, disarm, ping, end turn); the DM's app decides. */
+import { spellFx } from '../render/spellfx.js';
 import { Peer } from 'peerjs';
 import { state, setState, ui, tokById } from '../engine/state.js';
 import { updateVision, seenNow } from '../engine/grid.js';
@@ -517,6 +518,7 @@ export function onClientMsg(m){
   else if (m.t === 'oa' && m.q?.id) askOpportunity(m.q);
   else if (m.t === 'folk' && state) receiveFolk(m);   // the valley's people, moving (game/folk.js)
   else if (m.t === 'area' && state && Array.isArray(m.sq)){ const ex = state.explored?.[m.floor]; flashArea(m.floor, m.sq.filter(i => ex?.has(i)), m.ty); }   // only where they've been
+  else if (m.t === 'spellfx' && state && m.fx && typeof m.fx === 'object') spellFx(m.fx);   // ✨ a spell seen (render/spellfx.js)
   else if (m.t === 'oaDone') dropAsk(m.id);
   else if (m.t === 'act' && state && ['attack', 'cast', 'hit', 'miss'].includes(m.kind)) actOn(m.id, m.kind, m.target, m.fx && typeof m.fx === 'object' ? m.fx : null);
   else if (m.t === 'bye'){ net.status = 'closed'; clearTimeout(net.retryTimer); toast('The DM closed the table.'); renderNetStatus(); }
