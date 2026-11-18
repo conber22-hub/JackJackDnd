@@ -30,6 +30,7 @@ import { tickDeathFx } from './render/deathfx.js';
 import { tickTrails } from './render/trails.js';
 import { tickChips } from './render/hpchip.js';
 import { wireFightFx } from './ui/fightfx.js';
+import { startCaptions } from './ui/captions.js';
 import { wireFightSfx } from './ui/fightsfx.js';
 import { wireRecord } from './game/record.js';
 import { wireDice } from './ui/dicemoment.js';
@@ -209,6 +210,6 @@ if (scr !== null){
 initCardOnly();   // a player's phone at an in-person game: no 3D (ui/cards.js)
 setScreenNow(nightNow); listenForScreens();
 onAskChange(() => { if (ui.tab === 'night') renderPanel(); });
-wireFightFx(); wireFightSfx(); wireRecord(); wireDice();
+wireFightFx(); wireFightSfx(); wireRecord(); wireDice(); startCaptions();   // (💬 Muse's fight captions: ui/captions.js)
 frame();
 window.DreadDelve = api;   // handy for debugging in the console: DreadDelve.state, DreadDelve.shiftFloor(0), …

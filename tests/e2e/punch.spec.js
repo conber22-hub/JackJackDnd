@@ -300,3 +300,28 @@ test('a close miss on a shield is blocked, not dodged', async ({ page }) => {
   await expect.poll(() => page.evaluate(() => window.DreadDelve.punchCount().blocks), { timeout:20_000 }).toBe(k0 + 1);
   expect(await page.evaluate(() => window.DreadDelve.fightFxCount().texts.join(' '))).toContain('BLOCKED');
 });
+
+// ✨ Each spell its own look (ChatGPT's engine/spell-looks.js): Burning Hands in its own orange, Hold Person's chains on
+// the one held, Web lingering on the ground; a spell on one creature keeps to a pillar or a touch whatever its look says
+test('a spell is drawn in its own look, with its mark and its linger', async ({ page }) => {
+  test.setTimeout(180_000);
+  const errs = []; page.on('pageerror', e => errs.push(e.message));
+  await fight(page, 'Wizard', ['Fire Bolt', 'Burning Hands']);
+  const r = await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), w = D.get().tokens.find(t => t.kind === 'monster'), L = h.floor, W = D.get().floors[L].W;
+    const out = {};
+    D.spellFx({ L, by:h.id, at:w.id, n:'Burning Hands', ty:'fire', shape:'cone', squares:[w.y * W + w.x] }); out.bh = D.spellFxCount().last;
+    const m0 = D.spellFxCount().marks;
+    D.spellFx({ L, by:h.id, at:w.id, n:'Hold Person', cond:'paralyzed' }); out.hp = D.spellFxCount().last; out.marks = D.spellFxCount().marks - m0;
+    D.spellFx({ L, by:h.id, at:w.id, n:'Acid Arrow', ty:'acid' }); out.aa = D.spellFxCount().last;   // (its look says line: one target keeps a touch)
+    out.web = D.lookOf({ n:'Web' });
+    out.heal = D.lookOf({ n:'Some Unknown Heal', k:'heal' });
+    return out; });
+  expect(r.bh).toMatchObject({ n:'Burning Hands', path:'cone', col:'#ffa13b' });
+  expect(r.hp.mark).toBe('chains');
+  expect(r.marks).toBe(1);
+  expect(r.aa.path).toBe('touch');
+  expect(r.web.linger).toBeGreaterThan(1);
+  expect(r.heal.kind).toBe('heal');   // (no look of its own: the game's own heal colours)
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.spellFxCount().live), { timeout:30_000 }).toBe(0);
+  expect(errs).toEqual([]);
+});

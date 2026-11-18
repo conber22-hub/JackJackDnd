@@ -4,6 +4,7 @@
    render/gfx.js, per browser, never sent to the table. Ultra is the
    renderer's (render/gfx.js, render/post.js, render/minis.js); a photo comes
    from the renderer's capture() (render/post.js), one frame read at once. */
+import { captionsOn, setCaptions } from './captions.js';
 import { capture } from '../render/post.js';
 import { ui, log } from '../engine/state.js';
 import { $, esc } from '../util/core.js';
@@ -47,7 +48,7 @@ function panelHTML(){
   <h4>Signs &amp; sound</h4><div class="row"><label><input type="checkbox" data-look-omens ${gfx.omens ? 'checked' : ''}> Omens (Strahd's Gaze, outdoors)</label>
   <label><input type="checkbox" data-look-music ${gfx.music ? 'checked' : ''}> Music</label>
   <label><input type="checkbox" data-look-sfx ${gfx.sfx ? 'checked' : ''}> Effects</label></div>
-  <h4>Fights</h4><div class="row"><label><input type="checkbox" data-look-calm ${gfx.calm ? 'checked' : ''}> Calm effects</label></div>
+  <h4>Fights</h4><div class="row"><label><input type="checkbox" data-look-calm ${gfx.calm ? 'checked' : ''}> Calm effects</label><label title="A short line for each thing that happens in a fight"><input type="checkbox" data-look-captions ${captionsOn() ? 'checked' : ''}> Captions</label></div>
   <div class="muted">No screen flashes, camera shake or punch-in, no pause or slow motion on a blow, and a steady red edge near death instead of a pulse.</div>
   <div class="row"><label style="flex:1">Volume <input type="range" min="0" max="100" value="${Math.round(gfx.volume * 100)}" data-look-vol style="width:100%"></label></div>
   <h4>For this screen</h4><div class="row">${Object.entries(PRESETS).map(([k, p]) => `<button class="btn small" data-look-preset="${k}" title="${esc(p.title)}">${p.label}</button>`).join('')}</div>
@@ -75,6 +76,7 @@ function refreshLookPanel(){
   const mu = m.querySelector('[data-look-music]'); if (mu) mu.checked = gfx.music;
   const fx = m.querySelector('[data-look-sfx]'); if (fx) fx.checked = gfx.sfx;
   const ca = m.querySelector('[data-look-calm]'); if (ca) ca.checked = !!gfx.calm;
+  const cp = m.querySelector('[data-look-captions]'); if (cp) cp.checked = captionsOn();
   const vol = m.querySelector('[data-look-vol]'); if (vol && document.activeElement !== vol) vol.value = Math.round(gfx.volume * 100);
 }
 
@@ -190,6 +192,7 @@ function onLookInput(ev){
   const mu = ev.target.closest('[data-look-music]'); if (mu){ setGfx({ music:mu.checked }); return; }
   const fx = ev.target.closest('[data-look-sfx]'); if (fx){ setGfx({ sfx:fx.checked }); return; }
   const cm = ev.target.closest('[data-look-calm]'); if (cm){ setGfx({ calm:cm.checked }); return; }
+  const cpt = ev.target.closest('[data-look-captions]'); if (cpt){ setCaptions(cpt.checked); return; }   // (💬 per device: ui/captions.js)
   const fr = ev.target.closest('[data-look-frame]'); if (fr){ prefs.frame = fr.checked; savePrefs(); return; }
   const ca = ev.target.closest('[data-look-caption]'); if (ca){ prefs.caption = ca.checked; savePrefs(); return; }
   const sc = ev.target.closest('[data-look-scale]'); if (sc){ prefs.scale = parseFloat(sc.value) || 1; savePrefs(); }

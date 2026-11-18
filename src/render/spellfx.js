@@ -17,13 +17,15 @@ import { tokenViews } from './minis.js';
 import { state, tokById } from '../engine/state.js';
 import { groundY } from '../engine/grid.js';
 import { spellLook, spellPath, wavesFrom } from '../engine/spellfx.js';
+import { lookFor, hasLook } from '../engine/spell-looks.js';
+import { SPELLS } from '../data/srd.js';
 import { setBlast } from './punch.js';
 import { gfx } from './gfx.js';
 
 const live = [];
 let slow = 1;   // (for looking at it frame by frame: setSpellSlow(8) plays every spell eight times slower)
 export function setSpellSlow(k = 1){ slow = Math.max(1, k); }   // { obj, t0, ms, step(k, obj, dt), done() }
-let made = 0;
+let made = 0, lastLook = null;
 const glowTex = (() => { if (typeof document === 'undefined') return null; const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), r = g.createRadialGradient(32, 32, 0, 32, 32, 32);
   r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(.3, 'rgba(255,255,255,.55)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, 64, 64);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
@@ -89,12 +91,15 @@ function motes(at, look, n, r, ms = 1100, delay = 0, dir = null){
 }
 // the ground under it lit, square by square (waves: in order, gap ms apart)
 function groundLit(L, waves, look, gap = 0, ms = 900){
+  // (a spell that lingers — a cloud, a web, a wall — stays on the ground a while, dimmer, then goes: its look's linger)
+  const stay = look.linger > 1 ? Math.min(20000, look.linger * 1000) : 0; if (stay) ms = Math.max(ms, stay);
   waves.forEach((w, i) => {
     const mesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(.94, .94).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial(solidMat({ color:look.col2, opacity:.6 })), w.length);
     const m4 = new THREE.Matrix4();
     w.forEach((s, j) => { const v = sq(L, s.x, s.y, .05); if (v) mesh.setMatrixAt(j, m4.makeTranslation(v.x, v.y, v.z)); });
     mesh.renderOrder = 5;
-    add(mesh, ms, k => { mesh.material.opacity = (k < .15 ? k / .15 : (1 - k) / .85) * .6; mesh.material.color.set(k < .2 ? look.col : look.col2); }, i * gap);
+    add(mesh, ms, stay ? k => { const f = k * ms; mesh.material.opacity = f < 150 ? f / 150 * .6 : f < 900 ? .6 - (f - 150) / 750 * .32 : k < .85 ? .28 : .28 * (1 - k) / .15; mesh.material.color.set(f < 200 ? look.col : look.col2); }
+      : k => { mesh.material.opacity = (k < .15 ? k / .15 : (1 - k) / .85) * .6; mesh.material.color.set(k < .2 ? look.col : look.col2); }, i * gap);
   });
 }
 // a jagged bolt from a to b
@@ -119,9 +124,62 @@ function pillar(at, look, ms = 900){
 
 /* ---------- a spell ----------
    fx: { L, by (caster id), at (target id), shape, self, origin:{ x, y } (squares, centred), squares:[index], ty, k, cond, n, darts } */
+/* ---------- 🔖 what a spell leaves on the one it's on (its look's mark): a glyph over them as it lands ---------- */
+let marksMade = 0;
+const glyphs = new Map();
+function glyph(kind){
+  if (glyphs.has(kind) || typeof document === 'undefined') return glyphs.get(kind) || null;
+  const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d');
+  g.strokeStyle = g.fillStyle = '#fff'; g.lineWidth = 7; g.lineCap = g.lineJoin = 'round'; g.shadowColor = 'rgba(255,255,255,.9)'; g.shadowBlur = 10;
+  const P = (pts, close = false) => { g.beginPath(); pts.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); if (close) g.closePath(); g.stroke(); };
+  const ring = (x, y, rx, ry = rx) => { g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, 6.283); g.stroke(); };
+  const poly = (n, r, rot = 0, x = 64, y = 64) => P([...Array(n)].map((_, i) => [x + Math.cos(rot + i / n * 6.283) * r, y + Math.sin(rot + i / n * 6.283) * r]), true);
+  ({
+    halo:() => { ring(64, 64, 46, 16); },
+    chains:() => { ring(36, 64, 20, 13); ring(64, 64, 20, 13); ring(92, 64, 20, 13); },
+    web:() => { for (let i = 0; i < 6; i++){ const a = i / 6 * 6.283; P([[64, 64], [64 + Math.cos(a) * 54, 64 + Math.sin(a) * 54]]); } g.lineWidth = 4; poly(6, 22); poly(6, 40); },
+    cloud:() => { [[42, 72, 22], [66, 58, 28], [90, 72, 20]].forEach(([x, y, r]) => { g.beginPath(); g.arc(x, y, r, 0, 6.283); g.fill(); }); g.fillRect(24, 72, 84, 20); },
+    shield:() => { poly(6, 50, Math.PI / 6); g.lineWidth = 3; poly(6, 34, Math.PI / 6); },
+    stars:() => { [[64, 50, 30], [32, 88, 15], [96, 92, 12]].forEach(([x, y, r]) => P([[x, y - r], [x + r * .25, y - r * .25], [x + r, y], [x + r * .25, y + r * .25], [x, y + r], [x - r * .25, y + r * .25], [x - r, y], [x - r * .25, y - r * .25]], true)); },
+    runes:() => { ring(64, 64, 52); P([[48, 36], [48, 92]]); P([[48, 46], [76, 34]]); P([[48, 62], [80, 50]]); P([[66, 72], [84, 96]]); },
+    roots:() => { P([[64, 16], [64, 70], [40, 110]]); P([[64, 70], [90, 108]]); P([[64, 52], [36, 70], [22, 96]]); P([[64, 44], [94, 60], [106, 86]]); },
+    flames:() => { [[64, 22, 30], [38, 54, 18], [90, 54, 18]].forEach(([x, y, r]) => { g.beginPath(); g.moveTo(x, y); g.bezierCurveTo(x + r * 1.4, y + r * 2, x + r, y + r * 3.2, x, y + r * 3.2); g.bezierCurveTo(x - r, y + r * 3.2, x - r * 1.4, y + r * 2, x, y); g.fill(); }); },
+    frost:() => { for (let i = 0; i < 6; i++){ const a = i / 6 * 6.283, x = 64 + Math.cos(a) * 52, y = 64 + Math.sin(a) * 52, m = [64 + Math.cos(a) * 32, 64 + Math.sin(a) * 32];
+      P([[64, 64], [x, y]]); P([m, [m[0] + Math.cos(a + .7) * 14, m[1] + Math.sin(a + .7) * 14]]); P([m, [m[0] + Math.cos(a - .7) * 14, m[1] + Math.sin(a - .7) * 14]]); } },
+    eyes:() => { g.beginPath(); g.moveTo(12, 64); g.quadraticCurveTo(64, 14, 116, 64); g.quadraticCurveTo(64, 114, 12, 64); g.stroke(); g.beginPath(); g.arc(64, 64, 16, 0, 6.283); g.fill(); },
+    hands:() => { g.beginPath(); g.ellipse(64, 84, 24, 22, 0, 0, 6.283); g.fill(); [[-20, -.5], [-8, -.15], [6, .1], [20, .4]].forEach(([dx, a]) => P([[64 + dx, 70], [64 + dx + Math.sin(a) * 40, 70 - Math.cos(a) * 46]])); P([[42, 88], [18, 70]]); },
+    bubble:() => { ring(64, 64, 48); g.lineWidth = 5; g.beginPath(); g.arc(64, 64, 34, 3.6, 4.6); g.stroke(); },
+  })[kind]?.();
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; glyphs.set(kind, t); return t;
+}
+function markOn(id, look, delay = 0){
+  // (on them: round the body — chains, a web, roots, a shell — and a halo over the head; the spell's name rises above)
+  const at = tokAt(id, look.mark === 'halo' ? 1.35 : .8), tex = look.mark && glyph(look.mark); if (!at || !tex) return;
+  const m = new THREE.Sprite(new THREE.SpriteMaterial({ map:tex, color:look.col, transparent:true, depthWrite:false, depthTest:false, fog:false }));
+  m.renderOrder = 31; m.position.copy(at); marksMade++;
+  add(m, 2200, k => { m.position.y = at.y + k * .12; m.scale.setScalar(.72 * (k < .12 ? .6 + k / .12 * .4 : 1)); m.material.opacity = k < .1 ? k / .1 : k > .7 ? (1 - k) / .3 : 1; }, delay);
+}
+
+/* ✨ each spell its own look (ChatGPT's engine/spell-looks.js, data/spell-looks.js): its colours, how its motes move, the
+   light it throws and how hard it shakes, what it leaves on the one it's on (a mark) and how long it stays on the
+   ground (linger). The game's own kind (a heal, a help, a hold, an element) still decides how it's drawn; its area
+   decides how it travels: a look may only choose between a pillar and a touch for a spell on one creature. */
+const SCHOOL_OF = new Map(SPELLS.map(x => [x.n, x.school]));
+export function lookOf(fx = {}){
+  const gen = spellLook(fx), school = SCHOOL_OF.get(fx.n);
+  const own = hasLook(fx.n) ? lookFor({ n:fx.n, ty:fx.ty }) : !fx.ty && school && (gen.kind === 'help' || gen.kind === 'force') ? lookFor({ n:fx.n, school }) : null;
+  if (!own) return { ...gen, mark:null, linger:0, words:'', path:null };
+  return { ...gen, col:own.col, col2:own.col2, motes:own.motes, light:own.light, shock:own.shock, mark:own.mark || null, linger:own.linger || 0, words:own.words || '', path:own.path || null };
+}
 export function spellFx(fx = {}){
   const L = fx.L ?? tokById(fx.by)?.floor; if (L == null || !floorViews[L] || !state?.floors?.[L]) return;
-  const look = spellLook(fx), path = spellPath({ shape:fx.shape, self:fx.self, kind:look.kind, k:fx.k, darts:fx.darts, pillar:look.pillar && !fx.shape });
+  const look = lookOf(fx);
+  let path = spellPath({ shape:fx.shape, self:fx.self, kind:look.kind, k:fx.k, darts:fx.darts, pillar:look.pillar && !fx.shape });
+  if (!fx.shape && !(fx.darts > 1) && (look.path === 'pillar' || look.path === 'touch')) path = look.path;
+  lastLook = { n:fx.n || '', path, col:look.col, mark:look.mark, linger:look.linger };
+  // (its mark on whoever it's on: the one it was cast at, or everyone standing in its area, as it lands)
+  if (look.mark){ const on = (fx.squares || []).length ? state.tokens.filter(t => t.floor === L && !t.dead && (fx.squares || []).includes(t.y * state.floors[L].W + t.x)).map(t => t.id) : fx.at ? [fx.at] : [];
+    for (const id of on.slice(0, 8)) markOn(id, look, path === 'burst' ? 380 : 260); }
   const f = state.floors[L], W = f.W, src = tokById(fx.by), tgt = tokById(fx.at);
   const hands = tokAt(fx.by, 1) || (src && sq(L, src.x, src.y, 1)), there = tokAt(fx.at, .8) || (tgt && sq(L, tgt.x, tgt.y, .8));
   const squares = (fx.squares || []).map(i => ({ x:i % W, y:(i / W) | 0 }));
@@ -177,4 +235,4 @@ export function tickSpellFx(now = performance.now()){
   for (const f of flashes){ const k = (now - f.t0) / (f.ms * slow); f.l.intensity = k >= 0 && k < 1 ? f.k * (k < .1 ? k / .1 : Math.pow(1 - (k - .1) / .9, 2)) : 0; }
 }
 // (for the tests: how many spells have been drawn, and how much is on screen now)
-export const spellFxCount = () => ({ made, live:live.length });
+export const spellFxCount = () => ({ made, live:live.length, last:lastLook, marks:marksMade });

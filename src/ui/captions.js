@@ -4,6 +4,7 @@
    (main.js, ui/look.js) call startCaptions() once and bind the Captions checkbox — see the PR. */
 import { bus, esc } from '../util/core.js';
 import { state, ui, tokById } from '../engine/state.js';
+import { hasLook, lookFor } from '../engine/spell-looks.js';
 
 const KEY = 'dreaddelve.captions.v1';
 const MAX = 3;          // lines on screen at once; a new one pushes the oldest off
@@ -82,6 +83,7 @@ function ensureStyle(){
 #captions .cap-line .cap-ic{flex:0 0 auto}
 #captions .cap-line.gold{color:var(--gold-hi);border-color:var(--gold-line)}
 #captions .cap-line.red{color:#ffb3ad;border-color:rgba(194,58,70,.55)}
+#captions .cap-line .cap-sub{display:block;font-size:11.5px;font-style:italic;color:var(--dim)}
 @media (prefers-reduced-motion: reduce){#captions .cap-line{transition:none}}`;
   document.head.appendChild(s);
 }
@@ -117,13 +119,13 @@ function place(){
 // compositor showed them fine), so the lines were in the DOM and never seen. A line that appears is worth
 // more than a fade that doesn't run; the fade out stays, best effort — if the transition stalls there the
 // line simply vanishes at the end of its hold, after being fully readable. Timers, not frames (round 13).
-function show(text, tone = '', icon = ''){
+function show(text, tone = '', icon = '', sub = ''){
   if (!captionsOn()) return;
   history.push(text); if (history.length > KEEP) history.shift();
   ensureEl(); place();
   const line = document.createElement('div');
   line.className = `cap-line${tone ? ` ${tone}` : ''}`;
-  line.innerHTML = `${icon ? `<span class="cap-ic" aria-hidden="true">${icon}</span>` : ''}<span>${esc(text)}</span>`;
+  line.innerHTML = `${icon ? `<span class="cap-ic" aria-hidden="true">${icon}</span>` : ''}<span>${esc(text)}${sub ? `<span class="cap-sub">${esc(sub)}</span>` : ''}</span>`;
   el.appendChild(line);
   while (el.children.length > MAX) el.firstChild.remove();
   setTimeout(() => line.classList.add('out'), HOLD_MS);
@@ -153,6 +155,9 @@ function flushHeal(){
   } else show(`${cap(caster)} heals ${joinNames(g.targets.map(([t]) => t))}.`, gold, '✚');
 }
 
+// what a spell looks like, in a few words (ChatGPT's engine/spell-looks.js), under the line that names it
+const spellWords = name => { try { return hasLook(name) ? lookFor({ n:name }).words || '' : ''; } catch { return ''; } };
+
 /* ---------- the fight, as it passes through the bus ---------- */
 function onActed(e){
   const a = e?.actor, tg = e?.target;
@@ -164,15 +169,16 @@ function onActed(e){
     show(crit ? `A critical! ${text}` : text, isMine(tg.id) ? 'red' : (crit && isMine(a.id) ? 'gold' : ''), '⚔');
   } else if (e?.trigger === 'miss'){
     if (!a || !tg) return;
-    show(`${cap(subj(a))} misses ${obj(tg)}.`, '', '🎯');
+    if (e.block) show(isMine(tg.id) ? `You block ${theName(a)}.` : `${cap(obj(tg))} blocks ${isMine(a.id) ? 'you' : theName(a)}.`, isMine(tg.id) ? 'gold' : '', '🛡');
+    else show(`${cap(subj(a))} misses ${obj(tg)}.`, '', '🎯');
   } else if (e?.trigger === 'spell'){
     if (!a || !e.action) return;
-    show(`${cap(subj(a))} casts ${e.action}.`, '', '✦');
+    show(`${cap(subj(a))} casts ${e.action}.`, '', '✦', spellWords(e.action));
     if (group) flushSpell();
     group = { caster:a, name:e.action, type:null, targets:[], timer:setTimeout(flushSpell, GROUP_MS) };
   } else if (e?.trigger === 'heal'){
     if (!a || !e.action) return;
-    show(`${cap(subj(a))} casts ${e.action}.`, '', '✦');
+    show(`${cap(subj(a))} casts ${e.action}.`, '', '✦', spellWords(e.action));
     if (healGroup) flushHeal();
     healGroup = { caster:a, targets:[], timer:setTimeout(flushHeal, GROUP_MS) };
   }

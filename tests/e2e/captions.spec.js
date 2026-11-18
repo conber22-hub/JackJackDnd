@@ -127,3 +127,22 @@ test('on a phone with the handheld on: the captions sit above the fight bar, and
   } finally { await context.close(); }
   expect(errors, 'Uncaught browser errors').toEqual([]);
 });
+
+// (Claude's additions, wiring round 14 in) a blow that's blocked says so; a spell cast shows what it looks like (ChatGPT's
+// spell looks), under the line that names it
+test('a blocked blow and a spell\'s look in the captions', async ({ browser, baseURL }) => {
+  test.setTimeout(240_000);
+  const context = await browser.newContext({ baseURL, viewport:{ width:1280, height:800 } });
+  const page = await context.newPage(), errors = await preparePage(page);
+  try {
+    await fight(page);
+    await page.evaluate(() => window.DreadDelve.captions.setCaptions(true));
+    await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), w = D.get().tokens.find(t => t.kind === 'monster');
+      h.shield = true; h.ac = 10 + w.attacks[0].b + 3; D.doAttack(w.id, h.id, 0, 'normal', { d20:10 }); });
+    await expect.poll(() => lines(page)).toContain('You block the wolf.');
+    await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), w = D.get().tokens.find(t => t.kind === 'monster');
+      D.bus.emit('acted', { actor:h, target:w, trigger:'spell', action:'Burning Hands' }); });
+    await expect.poll(() => page.evaluate(() => [...document.querySelectorAll('#captions .cap-sub')].map(n => n.textContent).join(' '))).toContain('orange fan');
+    expect(errors).toEqual([]);
+  } finally { await context.close(); }
+});

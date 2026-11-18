@@ -16,6 +16,13 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.41 — every spell its own look, and the fight in words
+
+- **✨ Every spell its own look** (ChatGPT's `engine/spell-looks.js` and `data/spell-looks.js`, 229 spells and the eight schools, drawn by `render/spellfx.js` `lookOf`): a spell is drawn in its own colours and manner, not just its element's: Fire Bolt a spitting mote, Burning Hands an orange fan, Bless gold halos, Bane a sickly violet, Hold Person grey chains, Sleep pale motes drifting down. A spell with no look of its own and no damage type takes its school's. The game still decides how a spell travels from its area; a look only chooses between a pillar and a touch for a spell on one creature.
+  - **🔖 Its mark**: what it leaves on whoever it's on rises round them as it lands, drawn on the map (chains, a halo, a web, a cloud, a shield, stars, runes, roots, flames, frost, eyes, hands, a bubble).
+  - **🌫 Its linger**: a spell that hangs about (a web, a cloud, a wall) stays on the ground for a while, dimmer, then goes (up to 20 seconds).
+- **💬 Captions** (Muse's `ui/captions.js`, round 14; 🎨 Look → Fights → *Captions*, per device; off by default, on in the Wanderer where the device asks for less motion): a short line for each thing in a fight, low on the screen above the fight bar: *Vasha hits the wolf for 7.* · *The wolf misses you.* · *The wolf falls.* · *Your turn.* · *The wolf goes for you!*, at most three at a time, gold for your good news and red for what's done to you. A spell's line names it with what it looks like underneath (*Moon-white strands stitch a sagging silver net.*), and a blocked blow says so (*You block the wolf.*).
+
 ## v1.40 — the victory screen at the table, and the numbers on every phone
 
 - **🏆 A fight won at the DM's table ends on every player's phone with the victory screen** (Muse's `ui/victory.js`; `game/record.js` now records the table's fights too, from the first roll of initiative; `game/combat.js` `checkVictory` sends it: `victory`): the fight's headline and verdict, its MVP, each hero's numbers counting up (dealt, taken, healed, kills, crits), the awards, and the XP the fight gave each of them. Ⓐ goes on through it, Ⓑ or Escape puts it away; on the handheld it takes every press while it's up. A fight called off without a win sends nothing. The TV's card-only screen keeps its card.

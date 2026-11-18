@@ -87,7 +87,7 @@ export { fightFxCount, fightZone, stuckCount } from './render/fightzone.js';   /
 export { punchCount, worldSpeed, windUp } from './render/punch.js';   // 💥 a blow felt: the hit-stop, knocks, splashes (render/punch.js)
 export { actOn, holdFall } from './render/minis.js';   // (a swing, a blow, a miss on a figure, for poking: actOn(id, 'hit', fromId, { r, crit, kill }))
 export { shoulderNow, nearDeathNow } from './ui/followcam.js';   // ⚔ is the fight seen over the hero's shoulder (ui/followcam.js)
-export { spellFxCount, spellFx, setSpellSlow } from './render/spellfx.js';
+export { spellFxCount, spellFx, setSpellSlow, lookOf } from './render/spellfx.js';
 export { condFxOn } from './render/condfx.js';
 export { deathFxCount } from './render/deathfx.js';
 import { dust } from './render/deathfx.js';
@@ -110,3 +110,4 @@ export { loopFor, musicNow } from './ui/regionmusic.js';   // 🎼 the region mu
 export { tableHH } from './ui/tablehh.js';   // 🕹 the handheld at the table
 export { camTurn, camView, camCrane, renderHud, xpFloatsShown } from './ui/wander.js';   // 🎥 the Wanderer's follow camera
 export { viewSize, scene } from './render/scene.js';
+export { bus } from './util/core.js';   // 📣 the game's event bus (acted, hurt, healed, turnStart…), for poking at from the console
