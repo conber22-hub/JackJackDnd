@@ -62,7 +62,14 @@ export function faceToward(fig, x, z){
 
 export function poseRig(fig, t, dt, moving = false, stance = null){
   const rig = fig.userData.rig; if (!rig) return;
-  const L = rig.look, st = STANCES[stance || L.pose] || STANCES.ready, seed = (L.seed % 1000) / 1000 * 6.28;
+  const L = rig.look, goal = STANCES[stance || L.pose] || STANCES.ready, seed = (L.seed % 1000) / 1000 * 6.28;
+  // a change of stance (weapons up for a fight, and down again) eases over a moment rather than snapping
+  let st = goal;
+  if (rig.stGoal !== goal){ rig.stFrom = rig.stNow || goal; rig.stGoal = goal; rig.stK = rig.stNow ? 0 : 1; }
+  if (rig.stK < 1){ rig.stK = Math.min(1, rig.stK + dt * 3); const e = rig.stK * rig.stK * (3 - 2 * rig.stK), mix = {};
+    for (const n of new Set([...Object.keys(rig.stFrom), ...Object.keys(goal)])){ const a = rig.stFrom[n] || [0, 0, 0], b = goal[n] || [0, 0, 0]; mix[n] = [a[0] + (b[0] - a[0]) * e, a[1] + (b[1] - a[1]) * e, a[2] + (b[2] - a[2]) * e]; }
+    st = mix; }
+  rig.stNow = st;
   // the action under way (0..1), if any
   let act = null, ak = 0;
   if (rig.action){ ak = (t - rig.action.t0) / rig.action.dur; if (ak >= 1 || ak < 0) rig.action = null; else act = ACTIONS[rig.action.k]; }

@@ -707,7 +707,7 @@ function finishFight(won){
   const party = members().map(m => m.id), names = Object.fromEntries(order.map(tokById).filter(Boolean).map(o => [o.id, o.name]));
   if (summary && typeof document !== 'undefined'){
     openVictory(summary, { party, names, faces:{}, xp:{ before:xpWas, after:w.xp, next:nextWas || w.xp, level:lvlWas },
-      onClose:() => { if (moods.length) showCard({ kind:'', title:'The party', lines:moods }, false); } });   // (how the companions took it)
+      onClose:() => { if (moods.length) showCard({ kind:'', title:'The party', lines:moods }, false); if (levelReady()) bus.emit('levelReady'); } });   // (how the companions took it; a level to take: straight to it)
     setTimeout(() => { for (const m of members()){ try { const f = faceOf(m); if (f) setVictoryFace(m.id, f); } catch {} } }, 60);
   } else showCard({ kind:'', title:'The fight is over', flair:pick(WON), lines }, false);
   Object.assign(rt, { endAt:0, acting:'', heroKey:'', target:null, cast:false, bonus:false });

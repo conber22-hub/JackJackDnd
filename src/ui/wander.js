@@ -630,6 +630,7 @@ export function ensureWander(){
   // a crossing between maps (game/ways.js): the fog, the name, the sound
   passage.veil = veil; passage.banner = banner; passage.sting = id => tune({ door:'door', spotted:'gazeRises', fight:'fightBegins' }[id] || 'stairs');
   bus.on('acted', blowFelt);
+  bus.on('levelReady', () => { if (wandering() && !state.combat.active) openMenu('level'); });   // ⬆ after the victory screen: the level-up page, ready
   // ⏳ a face in the turn order: pointed at, its figure lights; a foe tapped is aimed at
   wireStrip('osWd', { hover:id => showHover(id), pick:id => { const o = tokById(id); if (o?.kind === 'monster' && !o.dead && o.hp > 0){ rt.target = id; rt.look = { id, until:performance.now() + 900 }; renderHud(); } } });
   addEventListener('keydown', onKey, { capture:true });

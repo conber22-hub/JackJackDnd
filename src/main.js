@@ -91,6 +91,10 @@ function sunShadow(DL){
   moon.position.copy(controls.target).add(sunAim);
 }
 const lblAt = new THREE.Vector3();
+// ⚔ weapons up: in a fight, a forged figure that stands easy (heroic, sly, the spellcaster's) stands on guard instead;
+// the stiff, the shambling and the regal keep their own way of standing
+const EASY = new Set(['hero', 'sneak', undefined, '']);
+const fightStance = (fig, id) => state?.combat?.active && state.combat.order.includes(id) && EASY.has(fig.userData.rig?.look?.pose) ? 'ready' : null;
 function frame(){
   requestAnimationFrame(frame);
   const raw = clock.getDelta(), dt = Math.min(raw, .05), now = performance.now(), t = now / 1000;
@@ -137,7 +141,7 @@ function frame(){
         const k = Math.max(.28, Math.min(1, camera.position.distanceTo(lblAt) / 13)); L.scale.set(b.x * k, b.y * k, 1); L.visible = g.userData.tokenId !== ui.shoulderOf; }
       if (!fig || !g.visible) continue;
       if (g.userData.wasDead && !fig.userData.rig?.clip) continue;   // the dead rest — unless a death clip is playing, which poseRig drives
-      if (fig.userData.rig){ const rg = fig.userData.rig; if (ws < 1){ const h = dt * (1 - ws); if (rg.action) rg.action.t0 += h; if (rg.clip) rg.clip.t0 += h; } poseRig(fig, t, adt, !!tv.anim); continue; }   // forged figures animate themselves
+      if (fig.userData.rig){ const rg = fig.userData.rig; if (ws < 1){ const h = dt * (1 - ws); if (rg.action) rg.action.t0 += h; if (rg.clip) rg.clip.t0 += h; } poseRig(fig, t, adt, !!tv.anim, fightStance(fig, g.userData.tokenId)); continue; }   // forged figures animate themselves
       if (fig.userData.billboard){ const v = camera.position.clone(); g.worldToLocal(v); fig.rotation.y = Math.atan2(v.x, v.z); }
       if (fig.userData.hover) fig.position.y = .15 + Math.sin(t * 2 + g.id) * .08;
       if (fig.userData.pulse){ const s = 1 + Math.sin(t * 2.4 + g.id) * .04; fig.scale.set(s, 1 / s, s); }
