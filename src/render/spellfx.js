@@ -18,6 +18,7 @@ import { state, tokById } from '../engine/state.js';
 import { groundY } from '../engine/grid.js';
 import { spellLook, spellPath, wavesFrom } from '../engine/spellfx.js';
 import { setBlast } from './punch.js';
+import { gfx } from './gfx.js';
 
 const live = [];
 let slow = 1;   // (for looking at it frame by frame: setSpellSlow(8) plays every spell eight times slower)
@@ -33,8 +34,9 @@ const solidMat = o => ({ transparent:true, depthWrite:false, fog:false, ...o });
 function dispose(o){ o.traverse(c => { c.geometry?.dispose?.(); if (c.material){ c.material.dispose(); } }); }
 
 // the flash: two lights kept in the scene from the start (adding a light later would rebuild every material: a stall)
-const flashes = [0, 1].map(() => { const l = new THREE.PointLight('#ffffff', 0, 12, 1.6); scene.add(l); return { l, t0:0, ms:1, k:0 }; });
-function flash(at, col, k, ms = 450){ if (!k) return; const f = flashes.sort((a, b) => a.t0 - b.t0)[0]; f.l.color.set(col); f.l.position.copy(at).setY(at.y + 1.2); f.t0 = performance.now(); f.ms = ms; f.k = k * 2.2; }
+// (not on low quality, the phone's setting: every light makes every lit surface dearer to draw)
+const flashes = gfx.quality === 'low' ? [] : [0, 1].map(() => { const l = new THREE.PointLight('#ffffff', 0, 12, 1.6); scene.add(l); return { l, t0:0, ms:1, k:0 }; });
+function flash(at, col, k, ms = 450){ if (!k || !flashes.length) return; const f = flashes.sort((a, b) => a.t0 - b.t0)[0]; f.l.color.set(col); f.l.position.copy(at).setY(at.y + 1.2); f.t0 = performance.now(); f.ms = ms; f.k = k * 2.2; }
 
 /* ---------- where things are, in the world ---------- */
 const sq = (L, x, y, h = 0) => { const fv = floorViews[L], f = state.floors[L]; if (!fv || !f) return null;
