@@ -106,6 +106,17 @@ export function setBasePixelRatio(pr){ view.base = pr; renderer.setPixelRatio(pr
 addEventListener('resize', applyView);
 
 /* ---------- labels ---------- */
+/* A name plate's health bar: the fill at `frac`; with a chip, the part a blow just took (`chip` above the fill, pale and
+   draining: render/hpchip.js), or a heal's ghost (`ghost`: where the fill is climbing to). */
+export function drawHpBar(b, frac, { chip = null, chipCol = '#f4e6c4', ghost = null } = {}){
+  const f = v => Math.max(0, Math.min(1, v)), { ctx, x, y, w } = b;
+  ctx.fillStyle = '#2a1c20'; ctx.fillRect(x, y, w, 8);
+  if (ghost != null && ghost > frac){ ctx.fillStyle = 'rgba(150,240,190,.45)'; ctx.fillRect(x, y, w * f(ghost), 8); }
+  if (chip != null && chip > frac){ ctx.fillStyle = chipCol; ctx.fillRect(x, y, w * f(chip), 8); }
+  ctx.fillStyle = b.pc ? '#56b39d' : '#d24a4a'; ctx.fillRect(x, y, w * f(frac), 8);
+  if (ghost != null && ghost > frac){ ctx.fillStyle = '#e8fff2'; ctx.fillRect(x + Math.max(0, w * f(frac) - 2), y, 2, 8); }   // (the climbing edge, bright)
+  if (b.tex) b.tex.needsUpdate = true;
+}
 export function makeLabel(text, color = '#ece1cf', px = 28, hp = null, pc = false, conds = ''){
   const c = document.createElement('canvas'), ctx = c.getContext('2d');
   ctx.font = `600 ${px}px system-ui, sans-serif`;
@@ -115,14 +126,12 @@ export function makeLabel(text, color = '#ece1cf', px = 28, hp = null, pc = fals
   ctx.fillStyle = 'rgba(10,8,12,.72)'; ctx.beginPath(); ctx.roundRect(0, 0, w, px + 12, 10); ctx.fill();
   ctx.fillStyle = color; ctx.fillText(text, w / 2, 6);
   let y = px + 16;
-  if (hp){
-    ctx.fillStyle = '#2a1c20'; ctx.fillRect(10, y, w - 20, 8);
-    ctx.fillStyle = pc ? '#56b39d' : '#d24a4a'; ctx.fillRect(10, y, (w - 20) * Math.max(0, Math.min(1, hp[0] / hp[1])), 8);
-    y += 14;
-  }
+  let bar = null;
+  if (hp){ bar = { ctx, x:10, y, w:w - 20, pc }; drawHpBar(bar, hp[0] / hp[1]); y += 14; }
   if (conds){ ctx.font = `600 ${Math.round(px * .8)}px system-ui, sans-serif`; ctx.fillStyle = '#ffd3b0'; ctx.fillText(conds, w / 2, y); }
   const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
   const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map:tex, depthWrite:false, transparent:true, fog:false }));
+  if (bar){ bar.tex = tex; sp.userData.bar = bar; }   // (render/hpchip.js redraws it as a blow chips it away)
   sp.layers.set(LABELS);   // drawn on its own layer: the painted style paints the world, then lays the names on crisp (render/post.js)
   const s = .0085; sp.scale.set(w * s, h * s, 1); sp.renderOrder = 10;
   return sp;

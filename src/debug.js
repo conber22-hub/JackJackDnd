@@ -90,6 +90,7 @@ export { shoulderNow, nearDeathNow } from './ui/followcam.js';   // ⚔ is the f
 export { spellFxCount, spellFx, setSpellSlow } from './render/spellfx.js';
 export { condFxOn } from './render/condfx.js';
 export { deathFxCount } from './render/deathfx.js';
+export { chipCount } from './render/hpchip.js';   // 💔 health bars draining after a blow (render/hpchip.js)
 export { trailCount } from './render/trails.js';   // 🗡 swings' arcs drawn now (render/trails.js)   // ☠ deaths seen (render/deathfx.js)   // 🌀 what each creature shows it's under (render/condfx.js)   // ✨ spells seen (render/spellfx.js)
 export { diceSeen } from './ui/dicemoment.js';
 export { facesMade } from './ui/orderstrip.js';   // ⏳ how many turn-order portraits have been made (ui/orderstrip.js)   // 🎲 what the last dice moments said (ui/dicemoment.js)

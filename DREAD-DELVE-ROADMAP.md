@@ -28,6 +28,7 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 - **🎬 A beat on the big moments** (the Wanderer, over the shoulder: `ui/followcam.js` `camBeat`): your critical hit or your killing blow pushes the camera in close as it lands, then eases back out.
 - **💨 A Dash looks fast** (`render/trails.js`): a creature running on its Dash leaves a faint gold sheet behind it, feet to shoulders, as it goes.
+- **💔 A health bar that drains** (`render/hpchip.js`, over `render/scene.js` `drawHpBar`): a name plate's bar doesn't just jump when a blow lands. The part it took stays, flashes white, holds a moment as pale gold and then drains away to the new length, the way a fighting game's does, so how much a blow took reads at a glance; a heal climbs to its new length towards a pale green ghost of where it's going. (Wherever the bar is shown: every hero's, and a foe's on the DM's screen.)
 - **🕊 Calm effects** (🎨 Look → Fights, per device; on by default where the device asks for less motion): no screen flashes, no camera shake or punch-in, no pause or slow motion on a blow, and a steady red edge near death instead of a pulse. Everything else (the knockback, the sparks, the spells, the deaths) stays.
 
 ## v1.39 — what's left in the fight

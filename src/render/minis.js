@@ -5,6 +5,7 @@ import { seenNow, standHeight } from '../engine/grid.js';
 import { BEST } from '../data/bestiary.js';
 import { CONDITIONS } from '../data/dread.js';
 import { wx, wz, makeLabel, tween } from './scene.js';
+import { chipBar } from './hpchip.js';
 import { floorViews } from './floors.js';
 import { refreshSelectionRing } from './effects.js';
 import { modelKeyFor, instanceModel, modelState } from './models.js';
@@ -306,7 +307,7 @@ export function syncTokens(){
       const keepPos = tv ? tv.group.position.clone() : null;
       if (tv){ tv.group.parent?.remove(tv.group); if (tv.group.userData.fig?.userData.rig) disposeForge(tv.group.userData.fig); }
       const group = buildFigure(t); group.userData.tokenId = t.id; group.userData.wasDead = t.dead;
-      tv = { group, key, labelKey:'', label:null, anim:tv?.anim || null }; tokenViews.set(t.id, tv);
+      tv = { group, key, labelKey:'', label:null, anim:tv?.anim || null, hpFrac:tv?.hpFrac ?? null }; tokenViews.set(t.id, tv);
       if (keepPos) group.position.copy(keepPos);
       if (t.dead && wasAlive){
         const f = group.userData.fig, rig = f.userData.rig, rx = f.rotation.x;
@@ -342,6 +343,10 @@ export function syncTokens(){
       const shape = BEST[t.bid]?.shape, h = shape === 'undertow' ? 2.4 : shape === 'colossus' ? 1.7 : 1.25;
       tv.label.position.y = h / (tv.group.scale.x || 1); tv.label.scale.multiplyScalar(1 / (tv.group.scale.x || 1));
       tv.group.add(tv.label); tv.labelKey = lk;
+      // 💔 the bar doesn't just jump: what a blow took flashes and drains away, a heal climbs (render/hpchip.js)
+      const frac = showHp && !t.dead && t.maxHp > 0 ? Math.max(0, t.hp) / t.maxHp : null;
+      if (frac != null && tv.hpFrac != null && tv.hpFrac !== frac) chipBar(tv.label, tv.hpFrac, frac);
+      tv.hpFrac = frac;
     }
   }
   // torch shadows (high quality): the first three heroes' torches on the floor being looked at cast them; on ultra,

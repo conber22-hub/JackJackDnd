@@ -184,3 +184,28 @@ test('a hero running on a Dash leaves a trail', async ({ page }) => {
       if (f.grid[y * f.W + x] === 1 && !D.get().tokens.some(t => t.x === x && t.y === y) && w.walkTo(x, y)) break; } });
   await expect.poll(() => page.evaluate(() => window.DreadDelve.trailCount()), { timeout:20_000 }).toBeGreaterThan(0);
 });
+
+// 💔 A blow doesn't just shorten a health bar: what it took flashes, holds and drains away; a heal climbs
+test('a health bar drains after a blow and climbs after a heal', async ({ page }) => {
+  test.setTimeout(180_000);
+  await fight(page);
+  // (a pixel of a plate's bar, at `at` along it)
+  const px = (id, at) => page.evaluate(([id, at]) => { const b = window.DreadDelve.tokenViews.get(id).label.userData.bar;
+    return [...b.ctx.getImageData(Math.round(b.x + b.w * at), b.y + 4, 1, 1).data].slice(0, 3); }, [id, at]);
+  // (the hero's: a foe's hit points aren't on its plate in the Wanderer, as on a player's screen)
+  const w = await page.evaluate(() => { const D = window.DreadDelve, w = D.wander.hero();
+    w.hp = w.maxHp; D.syncTokens(); w.hp = Math.max(1, Math.floor(w.maxHp / 4)); D.syncTokens(); return { id:w.id, n:D.chipCount() }; });
+  expect(w.n).toBe(1);
+  const lost = await px(w.id, .8);   // (the part it took: pale, not the bar's red or its dark ground)
+  expect(Math.min(...lost)).toBeGreaterThan(110);   // (white, or pale gold)
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.chipCount()), { timeout:20_000 }).toBe(0);
+  const after = await px(w.id, .8);
+  expect(Math.max(...after)).toBeLessThan(60);   // (drained: only the bar's dark ground)
+  // a heal: the bar climbs towards a pale ghost of where it's going
+  const h = await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero();
+    h.hp = 1; D.syncTokens(); h.hp = h.maxHp; D.syncTokens(); return { id:h.id, n:D.chipCount() }; });
+  expect(h.n).toBe(1);
+  const ghost = await px(h.id, .8);
+  expect(ghost[1]).toBeGreaterThan(ghost[0]);   // (the green ghost, not the fill yet)
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.chipCount()), { timeout:20_000 }).toBe(0);
+});
