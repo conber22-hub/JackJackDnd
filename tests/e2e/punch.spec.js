@@ -173,3 +173,14 @@ test('with calm effects on, a blow never stops the world or flashes the screen',
   expect(await page.evaluate(() => { const el = document.getElementById('punchScreen'); return el ? el.getAnimations().length : 0; })).toBe(0);
   await page.evaluate(() => window.DreadDelve.setGfx({ calm:false }));
 });
+
+// 💨 A Dash leaves a sheet behind the runner (render/trails.js)
+test('a hero running on a Dash leaves a trail', async ({ page }) => {
+  test.setTimeout(180_000);
+  await fight(page);
+  await page.evaluate(() => { const D = window.DreadDelve, w = D.wander, h = w.hero(), f = D.get().floors[h.floor];
+    w.heroTurnAct('dash');
+    for (const [dx, dy] of [[0, 5], [5, 0], [0, -5], [-5, 0], [4, 4], [-4, -4], [4, -4], [-4, 4]]){ const x = h.x + dx, y = h.y + dy;
+      if (f.grid[y * f.W + x] === 1 && !D.get().tokens.some(t => t.x === x && t.y === y) && w.walkTo(x, y)) break; } });
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.trailCount()), { timeout:20_000 }).toBeGreaterThan(0);
+});
