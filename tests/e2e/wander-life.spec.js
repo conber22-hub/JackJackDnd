@@ -64,6 +64,10 @@ test('a wanderer\'s quests, a roadside choice, a companion\'s approval and quest
   await page.keyboard.press('Escape');
   await page.locator('[data-act="wdLevel"]').click();
   await page.locator('#wdMenuBox [data-act="wdPick"]', { hasText:'Let the game choose' }).click();
+  // (the level-up card: what was gained, then away)
+  await expect(page.locator('#levelUp')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#levelUp')).toBeHidden();
   await expect(page.locator('#wdLvl')).toBeEmpty();
   const lv = await ev(page, () => { const w = window.DreadDelve.wander; return { lvl:w.sheetOf().lvl, spells:w.sheetOf().spells.length, hp:w.hero().maxHp }; });
   expect(lv.lvl).toBe(3); expect(lv.spells).toBeGreaterThan(3); expect(lv.hp).toBeGreaterThan(15);
