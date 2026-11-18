@@ -111,8 +111,23 @@ export function closeLook(){ if (holeOpen){ seeThrough(null); holeOpen = false; 
 
 /* ---------- a hit, felt ---------- */
 let hpSeen = null, heroSeen = null, beatAt = 0;
+// 💓 near death, the screen's edges pulse red with the heart (stronger the closer to it); gone when they're whole again
+let pulseEl = null, pulseK = -1;
+function nearDeath(k){
+  if (typeof document === 'undefined') return;
+  if (!pulseEl){ pulseEl = document.createElement('div'); pulseEl.id = 'nearDeath';
+    Object.assign(pulseEl.style, { position:'fixed', inset:'0', pointerEvents:'none', zIndex:'5', opacity:'0', transition:'opacity .6s',
+      background:'radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 48%, rgba(150,0,12,.55) 100%)' });
+    document.body.appendChild(pulseEl); }
+  const want = k <= 0 ? 0 : k <= .12 ? 2 : k <= .25 ? 1 : 0;
+  if (want === pulseK) return; pulseK = want;
+  pulseEl.getAnimations?.().forEach(a => a.cancel());
+  pulseEl.style.opacity = want ? '1' : '0';
+  if (want && pulseEl.animate) pulseEl.animate([{ opacity:.35 }, { opacity:1, offset:.18 }, { opacity:.45 }], { duration:want === 2 ? 850 : 1150, iterations:Infinity, easing:'ease-out' });
+}
+export const nearDeathNow = () => pulseK;
 export function feelHits(t, gp){
-  if (!t){ hpSeen = heroSeen = null; return; }
+  if (!t){ hpSeen = heroSeen = null; nearDeath(0); return; }
   if (heroSeen !== t.id){ heroSeen = t.id; hpSeen = t.hp; return; }
   if (hpSeen !== null && t.hp < hpSeen){
     const k = (hpSeen - t.hp) / Math.max(1, t.maxHp);
@@ -123,4 +138,5 @@ export function feelHits(t, gp){
   // near death, the heart is heard
   const k = t.hp / Math.max(1, t.maxHp), now = performance.now();
   if (t.hp > 0 && k <= .25 && now > beatAt){ beatAt = now + (k <= .12 ? 850 : 1150); sfx('thump', false); }
+  nearDeath(t.hp > 0 ? k : 0);
 }

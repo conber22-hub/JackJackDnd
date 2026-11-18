@@ -16,6 +16,11 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.38 — the wounded
+
+- **🩸 A bloodied foe drips** (`render/condfx.js`): a creature at half its hit points or less drips as it stands: blood, the Seep's rot, the dead's dust, a ghost's cold light. It stops when it's healed above half.
+- **💓 Near death, the screen pulses** (`ui/followcam.js`, the Wanderer and every handheld at the table): with your hero at a quarter of their hit points or less, the screen's edges pulse red in time with the heartbeat already heard, faster and stronger at an eighth; gone when they're whole again.
+
 ## v1.37 — what they're under, how they die, and the swing's arc
 
 - **🌀 Conditions shown on the figures** (`render/condfx.js`, on every screen, for as long as they last): prone or unconscious, the figure lies on its side, and gets up again; invisible, a faint see-through shimmer; poisoned, green bubbles rising; frightened, trembling over a cold violet ring; restrained or grappled, bands turning round them; paralyzed, stunned or incapacitated, stars circling their head; petrified, grey and still; charmed, pink motes drifting round; raging, a red glow and embers; blessed or hasted, gold motes rising; dodging, a pale blue shield; concentrating, a slow ring of runes at their feet; seeded, a sick green pulse. The name plate's icons and the word that floats up once stay as they were.

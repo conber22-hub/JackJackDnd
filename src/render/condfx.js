@@ -6,11 +6,13 @@
      · petrified: grey, and still                        · charmed: pink motes drifting round them
      · raging: a red glow and embers                     · blessed, hasted: gold motes rising
      · dodging: a pale blue shield round them            · concentrating: a slow ring of runes at their feet
-     · seeded: a sick green pulse at their feet
+     · seeded: a sick green pulse at their feet       · bloodied (half their hit points or less): dripping
    Drawn on every screen, from what each token carries (conds, dodge, conc). Every frame from main.js. */
 import * as THREE from 'three';
 import { state } from '../engine/state.js';
 import { tokenViews } from './minis.js';
+import { BEST } from '../data/bestiary.js';
+import { bloodOf } from '../engine/punch.js';
 
 const glowTex = (() => { if (typeof document === 'undefined') return null; const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), r = g.createRadialGradient(32, 32, 0, 32, 32, 32);
   r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(.35, 'rgba(255,255,255,.5)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, 64, 64);
@@ -35,6 +37,7 @@ export function effectsOf(t){
     else if (['invisible', 'poisoned', 'frightened', 'petrified', 'charmed', 'raging', 'seeded'].includes(n)) out.add(n);
   }
   if (t.hp <= 0 && t.kind !== 'monster') out.add('down');
+  if (t.flags?.bloodied && t.hp > 0) out.add('bloodied');   // half their hit points or less: it shows
   if (t.dodge) out.add('dodging');
   if (t.conc) out.add('conc');
   return [...out].sort();
@@ -58,6 +61,8 @@ const MAKE = {
   frightened:() => { const m = new THREE.Mesh(new THREE.RingGeometry(.42, .5, 40).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial(add({ color:'#9a7cff', opacity:.6, side:THREE.DoubleSide }))); m.position.y = .05; return m; },
   dodging:() => { const m = new THREE.Mesh(new THREE.SphereGeometry(.62, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshBasicMaterial(add({ color:'#9fd8ff', opacity:.16, side:THREE.DoubleSide, blending:THREE.AdditiveBlending }))); m.scale.y = 1.6; return m; },
   conc:() => { const m = new THREE.Mesh(new THREE.PlaneGeometry(1.25, 1.25).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial(add({ map:runeTex, color:'#c9a0ff', opacity:.55, blending:THREE.AdditiveBlending }))); m.position.y = .04; return m; },
+  bloodied:t => { const b = bloodOf({ tags:BEST[t.bid]?.tags, name:t.name, kind:t.kind }); const p = motes(b.splat ? '#a0101c' : b.spark, 11, b.splat ? .14 : .1);
+    p.material.blending = THREE.NormalBlending; p.userData.kind = 'drip'; return p; },
   seeded:() => { const m = new THREE.Mesh(new THREE.CircleGeometry(.5, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial(add({ color:'#5f8a1e', opacity:.4 }))); m.position.y = .035; return m; },
 };
 
@@ -80,7 +85,7 @@ function sync(t, tv){
   if (!rec){ rec = { key:'', parts:new Map(), tilt:0 }; on.set(t.id, rec); }
   if (rec.key !== key || rec.group !== tv.group){
     for (const [n, o] of rec.parts) if (!fx.includes(n) || rec.group !== tv.group){ o.parent?.remove(o); o.traverse(c => { c.geometry?.dispose(); c.material?.dispose(); }); rec.parts.delete(n); }
-    for (const n of fx) if (MAKE[n] && !rec.parts.has(n)){ const o = MAKE[n](); tv.group.add(o); rec.parts.set(n, o); }
+    for (const n of fx) if (MAKE[n] && !rec.parts.has(n)){ const o = MAKE[n](t); tv.group.add(o); rec.parts.set(n, o); }
     rec.key = key; rec.group = tv.group;
   }
   setFigTint(rec, fig, fx.includes('petrified') ? 'petrified' : fx.includes('invisible') ? 'invisible' : null);
@@ -111,6 +116,7 @@ function animate(n, o, t, dt){
     const p = o.isPoints ? o : o.children.find(c => c.isPoints), a = p.geometry.attributes.position, sd = p.userData.seed, k = p.userData.kind, sp = p.userData.speed || .4;
     for (let i = 0; i < sd.length; i++){ const [ph, off, r] = sd[i];
       if (k === 'rise'){ const y = ((t * sp + off) % 1); a.setXYZ(i, Math.cos(ph + t * .6) * r, .1 + y * 1.5, Math.sin(ph + t * .6) * r); }
+      else if (k === 'drip'){ const y = 1 - ((t * .9 + off) % 1); a.setXYZ(i, Math.cos(ph) * r * .8, .05 + y * .85, Math.sin(ph) * r * .8); }   // falling from them, a drop at a time
       else if (k === 'orbit'){ const ang = ph + t * 1.3; a.setXYZ(i, Math.cos(ang) * .55, .5 + Math.sin(t * 2 + ph) * .25, Math.sin(ang) * .55); }
       else { const ang = ph + t * 3; a.setXYZ(i, Math.cos(ang) * .3, 1.25, Math.sin(ang) * .3); } }
     a.needsUpdate = true;

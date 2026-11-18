@@ -128,3 +128,14 @@ test('a sword swing leaves an arc through the air', async ({ page }) => {
   await expect.poll(() => page.evaluate(() => window.DreadDelve.trailCount()), { timeout:20_000 }).toBeGreaterThan(0);
   await expect.poll(() => page.evaluate(() => window.DreadDelve.trailCount()), { timeout:30_000 }).toBe(0);
 });
+
+// 🩸 A foe at half its hit points or less drips; 💓 a hero near death has the screen's edges pulse with the heart
+test('a bloodied foe drips, and a hero near death feels it', async ({ page }) => {
+  test.setTimeout(180_000);
+  await fight(page);
+  const w = await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), w = D.get().tokens.find(t => t.kind === 'monster'); w.flags.bloodied = true; w.hp = 3; h.hp = Math.max(1, Math.round(h.maxHp * .1)); return w.id; });
+  await expect.poll(() => page.evaluate(i => window.DreadDelve.condFxOn()[i], w)).toBe('bloodied');
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.nearDeathNow())).toBe(2);
+  await page.evaluate(() => { const h = window.DreadDelve.wander.hero(); h.hp = h.maxHp; });
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.nearDeathNow())).toBe(0);
+});
