@@ -48,7 +48,7 @@ import { beastBook, trophyShelf } from '../game/record.js';
 import { faceOf } from '../game/night.js';
 import { makeMonster } from '../engine/state.js';
 import { gfx } from '../render/gfx.js';
-import { camTurn, camView, camCrane, camYaw, camFrame, miniFocus, lookThrough, closeLook, feelHits, camWide, camBack } from './followcam.js';
+import { camTurn, camView, camCrane, camYaw, camFrame, miniFocus, lookThrough, closeLook, feelHits, camWide, camBack, camBeat } from './followcam.js';
 import { tune, coachTick, coachLearn, coachDone, coachHide } from './hhlife.js';
 import { openPocketSheet, pocketPress, pocketOpen, closePocketSheet } from './pocketsheet.js';
 import { toast } from './hud.js';
@@ -428,6 +428,7 @@ function areaCatch(h, sp){
 // ⚔ A blow felt: the hero's own, or one on the hero, jolts the camera (what's drawn over them: ui/fightfx.js)
 function blowFelt(e){
   const h = hero(); if (!h || !wandering() || !e?.actor || !e.target || !['hit', 'critical'].includes(e.trigger)) return;
+  if (e.trigger === 'critical' && e.actor.id === h.id) camBeat(900, .28);   // 🎬 your crit: the camera pushes in
   if ((e.actor.id === h.id || e.target.id === h.id) && !gfx.calm) rt.jolt = { at:performance.now() + 330, k:e.trigger === 'critical' ? 1.7 : 1 };
 }
 // 🗣 A line to say, as a choice: what kind of line it is (an icon), and the check it needs as a tag, not tacked on
@@ -631,6 +632,7 @@ export function ensureWander(){
   // a crossing between maps (game/ways.js): the fog, the name, the sound
   passage.veil = veil; passage.banner = banner; passage.sting = id => tune({ door:'door', spotted:'gazeRises', fight:'fightBegins' }[id] || 'stairs');
   bus.on('acted', blowFelt);
+  bus.on('hurt', e => { const h = hero(); if (h && wandering() && e?.t?.dead && e.t.kind === 'monster' && e.by === h.id) camBeat(1100, .32); });   // 🎬 your killing blow
   bus.on('levelReady', () => { if (wandering() && !state.combat.active) openMenu('level'); });   // ⬆ after the victory screen: the level-up page, ready
   // ⏳ a face in the turn order: pointed at, its figure lights; a foe tapped is aimed at
   wireStrip('osWd', { hover:id => showHover(id), pick:id => { const o = tokById(id); if (o?.kind === 'monster' && !o.dead && o.hp > 0){ rt.target = id; rt.look = { id, until:performance.now() + 900 }; renderHud(); } } });

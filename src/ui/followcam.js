@@ -27,6 +27,8 @@ const offset = () => camera.position.clone().sub(controls.target).toArray();
    comes back down behind them. */
 const sh = { on:true, active:false, fight:false, side:1, peek:0 };
 export const shoulderNow = () => sh.active;
+// 🎬 a big moment (a crit, a kill): over the shoulder, the camera pushes in for ms, then eases back (not with calm effects)
+export function camBeat(ms = 900, k = .3){ if (gfx.calm) return; sh.beat = { at:performance.now() + 300, ms, k }; }
 function leaveShoulder(label){ sh.on = false; sh.active = false; const v = VIEWS.find(x => x.k === 'high'); cam.goal = { pitch:v.pitch, dist:v.dist }; toast(`🎥 ${label}`); }
 export function camTurn(dir){ if (sh.active){ sh.side = -sh.side; return; } cam.yaw = snapTurn(cam.yaw ?? toOrbit(offset()).yaw, dir); }
 export function camView(){
@@ -72,7 +74,11 @@ export function camFrame(dt, pad, { focus = null, me = null, other = null, other
     const a = miniFocus(me), b = miniFocus(subj), shot = shoulderShot({ x:a.x, z:a.z }, { x:b.x, z:b.z }, { side:sh.side, room:roomBehind(me, a.x, a.z, b.x, b.z) });
     if (pad && Math.abs(pad.rx) > .2) sh.peek = Math.max(-1.3, Math.min(1.3, sh.peek - pad.rx * dt * 2.2)); else sh.peek *= 1 - glide(dt, 2.5);
     const k = glide(dt, 4.5), goalYaw = shot.orbit.yaw + sh.peek;
-    o.yaw += angleTo(o.yaw, goalYaw) * k; o.pitch += (shot.orbit.pitch - o.pitch) * k; o.dist += (shot.orbit.dist - o.dist) * k;
+    // (a beat: in close, quickly, then back out slowly)
+    const bt = sh.beat ? (performance.now() - sh.beat.at) / sh.beat.ms : -1, be = bt < 0 || bt > 1 ? 0 : bt < .2 ? bt / .2 : 1 - (bt - .2) / .8;
+    if (bt > 1) sh.beat = null;
+    const goalDist = shot.orbit.dist * (1 - (sh.beat?.k || 0) * be), kd = be > 0 ? glide(dt, 9) : k;
+    o.yaw += angleTo(o.yaw, goalYaw) * k; o.pitch += (shot.orbit.pitch - o.pitch) * k; o.dist += (goalDist - o.dist) * kd;
     const t = controls.target, ly = a.y + shot.look.y, kt = glide(dt, 5);
     t.x += (shot.look.x - t.x) * kt; t.y += (ly - t.y) * kt; t.z += (shot.look.z - t.z) * kt;
     cam.yaw = null; cam.goal = null;
