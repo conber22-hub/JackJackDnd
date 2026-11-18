@@ -16,9 +16,10 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
-## v1.38 — the wounded
+## v1.38 — the wounded, and what's coming
 
 - **🩸 A bloodied foe drips** (`render/condfx.js`): a creature at half its hit points or less drips as it stands: blood, the Seep's rot, the dead's dust, a ghost's cold light. It stops when it's healed above half.
+- **⚠ A foe shows what it means to do** (the Wanderer: `game/wander.js`, drawn by `render/punch.js` `windUp`): when a creature's turn comes, it draws back for half a second while a red arrow runs along the ground to whoever it's going for, with a pulsing red ring round them (and a **!** over your hero if it's you); then it does just that (`combat.js` `planFor`, the plan it showed, handed to `autoTurn`).
 - **💓 Near death, the screen pulses** (`ui/followcam.js`, the Wanderer and every handheld at the table): with your hero at a quarter of their hit points or less, the screen's edges pulse red in time with the heartbeat already heard, faster and stronger at an eighth; gone when they're whole again.
 
 ## v1.37 — what they're under, how they die, and the swing's arc

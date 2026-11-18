@@ -29,10 +29,10 @@ import { freeTilesNear, reach, updateVision, seenNow } from '../engine/grid.js';
 import { walk } from '../engine/tiles.js';
 import { placeById, planJourney } from '../engine/overland.js';
 import { VALLEY_PLACES } from '../data/barovia-map.js';
-import { pick, uid, rollDice, esc } from '../util/core.js';
+import { pick, uid, rollDice, esc, bus } from '../util/core.js';
 import { applyCharacter } from './heroes.js';
 import { doMove, resolvePath, takeStairs, onStairs, goFloor, nearestOpen, setDread } from './actions.js';
-import { rollInitiative, nextTurn, autoTurn, endCombat, doAttack, attackEdge, currentTurn, partySees, riseFrom, removeToken, castSpell, heal } from './combat.js';
+import { rollInitiative, nextTurn, autoTurn, planFor, endCombat, doAttack, attackEdge, currentTurn, partySees, riseFrom, removeToken, castSpell, heal } from './combat.js';
 import { turnAction, pausedMover, autoAnswer } from './moves.js';
 import { moveAllowance } from './rules.js';
 import { travel, arrive, enterPlace, valley, passTime, clockText, springEvent, hourHooks } from './overworld.js';
@@ -71,6 +71,7 @@ const night = () => { const h = valley().hour; return h >= 20 || h < 6; };
 const onRoad = () => state.meta.template === 'journey';
 
 // What only this device keeps while playing (never saved): the hero's trail, the aim, whose turn was whose.
+const WIND_MS = 550;   // how long a foe shows what it means to do before it does it
 export const rt = { walkN:0, tapTo:null, step:null, spotted:0, heard:new Set(), trail:[], target:null, atk:null, heroKey:'', attacks:0, cast:false, bonus:false, acting:'', actAt:0, lastBusy:0, endAt:0, talk:null, seen:new Set(), round:0, unseen:0, hpWas:null, focus:null, look:null, opening:null };
 export const freshRun = () => fresh();
 const fresh = () => Object.assign(rt, { opening:null, spotted:0, heard:new Set(), trail:[], target:null, atk:null, heroKey:'', attacks:0, cast:false, bonus:false, acting:'', actAt:0, lastBusy:0, endAt:0, talk:null, round:0, unseen:0, hpWas:null });
@@ -677,7 +678,13 @@ export function fightTick(now = performance.now()){
     if (!attacksLeft() && moveAllowance(t) <= 0 && now - rt.lastBusy > 900) endHeroTurn();
     return;
   }
-  if (rt.acting !== key){ rt.acting = key; rt.actAt = now; if (t.dead || t.hp <= 0 || t.flags?.gone){ nextTurn(); return; } try { autoTurn(t); } catch (e){ console.warn(e); } return; }
+  // a foe's turn: it shows who it's going for (a wind-up, a red arrow on the ground: ui/fightfx.js), then does it
+  if (rt.acting !== key){ rt.acting = key; rt.actAt = now; if (t.dead || t.hp <= 0 || t.flags?.gone){ nextTurn(); return; }
+    let p = null; try { p = planFor(t); } catch {}
+    const tg = p && (p.kind === 'attack' || p.kind === 'cast') && p.target && tokById(p.target);
+    if (tg && tg.id !== t.id){ bus.emit('aims', { by:t.id, at:tg.id, ms:WIND_MS }); rt.wind = { key, until:now + WIND_MS, p }; return; }
+    try { autoTurn(t, p); } catch (e){ console.warn(e); } return; }
+  if (rt.wind?.key === key){ if (now < rt.wind.until) return; const p = rt.wind.p; rt.wind = null; rt.actAt = now; try { autoTurn(t, p); } catch (e){ console.warn(e); } return; }
   if (now - rt.actAt > 1100 && now - rt.lastBusy > 700) nextTurn();
 }
 function finishFight(won){

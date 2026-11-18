@@ -78,7 +78,7 @@ const arcGeo = new THREE.RingGeometry(.3, .62, 28, 1, -1.2, 2.4), splatGeo = new
 const bits = [];    // { obj, t0 (world clock), ms, kind, ... } — arcs, sparks, glows, wisps
 const splats = [];  // the fight's splashes, cleared when it ends
 let fadeFrom = 0;
-let made = { impacts:0, kills:0, dodges:0, lunges:0, splats:0 };
+let made = { impacts:0, kills:0, dodges:0, lunges:0, splats:0, aims:0 };
 const tmp = new THREE.Vector3(), tmp2 = new THREE.Vector3();
 
 function at(id){ const tv = tokenViews.get(id); if (!tv?.group?.parent) return null; return { tv, parent:tv.group.parent, pos:tv.group.position.clone() }; }
@@ -180,6 +180,21 @@ export function impact(id, fromId, info = {}){
   if (me) screen(info.kill || t.hp <= 0 ? 'down' : 'hurt');
   else if (I.screen) screen(I.screen);
 }
+/* ⚠ a foe shows what it means to do (game/wander.js, before its turn): it draws back from whoever it's going for, and a
+   red arrow runs along the ground from it to them, pulsing, for ms */
+const arrows = [];
+export function windUp(id, targetId, ms = 550){
+  const d = dirOf(id, targetId), A = at(id), B = at(targetId); if (!d || !A || !B) return;
+  addMove(id, { kind:'knock', ms:ms + 120, amp:-.14, dx:d.x, dz:d.z, back:true });
+  const len = Math.max(.3, A.pos.distanceTo(B.pos) - .7), g = new THREE.Group();
+  const mat = new THREE.MeshBasicMaterial({ color:'#ff3a2a', transparent:true, opacity:0, depthWrite:false, fog:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide });
+  const shaft = new THREE.Mesh(new THREE.PlaneGeometry(.13, len).rotateX(-Math.PI / 2), mat); shaft.position.z = -len / 2 - .35;
+  const head = new THREE.Mesh(new THREE.ShapeGeometry(new THREE.Shape([new THREE.Vector2(-.22, 0), new THREE.Vector2(.22, 0), new THREE.Vector2(0, -.36)])).rotateX(-Math.PI / 2), mat); head.position.z = -len - .35;
+  g.add(shaft, head); g.position.copy(A.pos).setY(A.pos.y + .07); g.rotation.y = Math.atan2(-d.x, -d.z); g.renderOrder = 7;
+  // (and a red ring round whoever it's going for: next to them, an arrow is hidden under the bases)
+  const ring = new THREE.Mesh(new THREE.RingGeometry(.55, .68, 40).rotateX(-Math.PI / 2), mat); ring.position.copy(B.pos).setY(B.pos.y + .08); ring.renderOrder = 7;
+  A.parent.add(g, ring); arrows.push({ g, ring, mat, t0:performance.now(), ms:ms + 250 }); made.aims++;
+}
 // a miss: they sway aside, away from the blow
 export function dodge(id, fromId){
   const d = dirOf(fromId, id); if (!d) return;
@@ -217,6 +232,10 @@ export function tickPunch(now = performance.now()){
     else if (b.kind === 'splat'){ const e = 1 - Math.pow(1 - Math.min(1, k), 3); b.obj.scale.setScalar(b.s * e); if (k >= 1) bits.splice(i, 1); }
     else if (b.kind === 'wisp'){ b.obj.position.y = b.y0 + k * 1.6; b.obj.position.x += Math.sin(k * 9) * .003; b.obj.scale.setScalar(.35 + k * .5); b.obj.material.opacity = (k < .2 ? k / .2 : (1 - k) / .8) * .8; }
   }
+  for (let i = arrows.length - 1; i >= 0; i--){ const a = arrows[i], k = (now - a.t0) / a.ms;
+    if (k >= 1){ a.g.parent?.remove(a.g); a.ring.parent?.remove(a.ring); a.ring.geometry.dispose(); a.g.children.forEach(c => c.geometry.dispose()); a.mat.dispose(); arrows.splice(i, 1); continue; }
+    a.ring.scale.setScalar(1.15 - .15 * Math.min(1, k * 3));
+    a.mat.opacity = (k < .15 ? k / .15 : k > .8 ? (1 - k) / .2 : 1) * (.55 + .35 * Math.sin(now / 70)); }
   // the fight is over: what was spilt fades into the ground
   if (splats.length && !state?.combat?.active){
     if (!fadeFrom) fadeFrom = now;

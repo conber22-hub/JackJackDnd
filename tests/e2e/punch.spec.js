@@ -139,3 +139,12 @@ test('a bloodied foe drips, and a hero near death feels it', async ({ page }) =>
   await page.evaluate(() => { const h = window.DreadDelve.wander.hero(); h.hp = h.maxHp; });
   await expect.poll(() => page.evaluate(() => window.DreadDelve.nearDeathNow())).toBe(0);
 });
+
+// ⚠ A foe shows what it means to do (game/wander.js): its turn begins with a wind-up at the one it's going for
+test('a foe winds up before it acts', async ({ page }) => {
+  test.setTimeout(180_000);
+  await fight(page);
+  const a0 = await page.evaluate(() => window.DreadDelve.punchCount().aims);
+  await page.keyboard.press('n');
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.punchCount().aims), { timeout:30_000 }).toBeGreaterThan(a0);
+});

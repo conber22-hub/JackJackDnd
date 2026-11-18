@@ -11,7 +11,7 @@
    (render/fightzone.js). */
 import { bus } from '../util/core.js';
 import { floatText, streak, ringPulse } from '../render/fightzone.js';
-import { impact, setMine } from '../render/punch.js';
+import { impact, setMine, windUp } from '../render/punch.js';
 import { holdFall } from '../render/minis.js';
 import { state, ui } from '../engine/state.js';
 import { shareOf } from '../engine/punch.js';
@@ -77,4 +77,5 @@ export function wireFightFx(){
   setMine(id => !!id && (id === ui.myToken || id === state?.campaign?.wander?.heroTok));
   bus.on('acted', acted); bus.on('hurt', hurt); bus.on('healed', healed);
   bus.on('turnAct', turnAct); bus.on('feature', feature); bus.on('cond', cond);
+  bus.on('aims', e => { if (e?.by && e.at){ windUp(e.by, e.at, e.ms); if (e.at === state?.campaign?.wander?.heroTok || e.at === ui.myToken) floatText(e.at, '!', '#ff4a3a', { word:true }); } });   // ⚠ a foe shows who it's going for
 }

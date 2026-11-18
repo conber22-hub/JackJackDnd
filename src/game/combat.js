@@ -115,11 +115,16 @@ export function checkVictory(){
    burned it; cowards run; archers keep their distance; the Count's wolves carry the fallen off), the DM sees why,
    and then it does it through the app's own actions (walks with opportunity attacks, spells with their saves).
    Anything it can't carry out falls back to the old way: close in, and swing at the most hurt. */
-export function autoTurn(t){
-  if (!t || t.dead || stopped(t)) return;
+// What a creature means to do this turn (engine/tactics.js planTurn): { kind, target, why, … }
+export function planFor(t){
   const sameFloor = o => o.floor === t.floor && !o.flags.gone;
-  const think = () => planTurn(t, { allies:state.tokens.filter(o => sameFloor(o) && o.id !== t.id && side(o) === side(t)), foes:state.tokens.filter(o => sameFloor(o) && side(o) !== side(t)),
+  return planTurn(t, { allies:state.tokens.filter(o => sameFloor(o) && o.id !== t.id && side(o) === side(t)), foes:state.tokens.filter(o => sameFloor(o) && side(o) !== side(t)),
     floor:state.floors[t.floor], round:state.combat.round, court:getCourt() }, Math.random);
+}
+// first: a plan already made (the Wanderer shows it coming first: game/wander.js), else it thinks now
+export function autoTurn(t, first = null){
+  if (!t || t.dead || stopped(t)) return;
+  const think = () => planFor(t);
   // after a walk (and any opportunity attack it provoked): then
   const afterWalk = then => { const until = Date.now() + 20000; const wait = () => { if (tokenViews.get(t.id)?.anim || pausedMover(t.id)){ if (Date.now() < until) setTimeout(wait, 150); return; } if (!t.dead && currentTurn()?.id === t.id) then(); }; setTimeout(wait, 200); };
   const act = (p, second = false) => {
@@ -155,7 +160,7 @@ export function autoTurn(t){
     afterWalk(() => { if (!strike()) toast(`${t.name} closes in, but can't reach anyone yet.`); });
     return true;
   };
-  act(think());
+  act(first || think());
 }
 // The Count's wolves carry a fallen hero off: the body comes along to a square beside the wolf.
 function dragBody(w, body){
