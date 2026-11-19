@@ -15,7 +15,7 @@ import { poseRig, playAction } from './forge/anim.js';
 import { hasClip, clipDuration } from './forge/clips.js';
 import { lookFor } from '../engine/look.js';
 import { hashSeed } from '../util/core.js';
-import { lunge, impact, dodge, block } from './punch.js';
+import { lunge, impact, dodge, block, stumble } from './punch.js';
 
 export function M(geo, color, emi, opts = {}){
   const mat = new THREE.MeshStandardMaterial({ color, roughness:opts.rough ?? .7, metalness:opts.metal ?? .05,
@@ -369,7 +369,7 @@ export function actOn(id, kind, targetId = null, info = null){
   // 💥 every figure feels it (render/punch.js): the attacker lunges, the one struck is knocked back, a miss sways aside
   if (kind === 'attack' && targetId) lunge(id, targetId, info || {});
   else if (kind === 'hit') impact(id, targetId, info || {});
-  else if (kind === 'miss'){ if (info?.block) block(id, targetId); else dodge(id, targetId); return; }
+  else if (kind === 'miss'){ if (info?.block) block(id, targetId); else dodge(id, targetId); if (info?.fumble && targetId) stumble(targetId, id); return; }   // (a natural 1: the attacker stumbles)
   const tv = tokenViews.get(id), fig = tv?.group.userData.fig, rig = fig?.userData.rig; if (!rig) return;
   const tg = targetId && tokById(targetId), me = tokById(id);
   if (tg && me && tg.id !== me.id) fig.userData.faceTo = Math.atan2(tg.x - me.x, tg.y - me.y);

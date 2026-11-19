@@ -415,3 +415,14 @@ test('the party list shows the heroes\' faces', async ({ page }) => {
   await expect(page.locator('#wdParty .wd-face').first()).toBeVisible({ timeout:20_000 });
   expect(await page.locator('#wdParty .wd-face').first().getAttribute('src')).toMatch(/^data:image\//);
 });
+
+// 🙃 A natural 1: the attacker stumbles back, FUMBLE rises over them, and the captions say so
+test('a natural 1 is a fumble: the attacker stumbles', async ({ page }) => {
+  test.setTimeout(180_000);
+  await fight(page);
+  const f0 = await page.evaluate(() => window.DreadDelve.punchCount().fumbles || 0);
+  await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), w = D.get().tokens.find(t => t.kind === 'monster'); D.captions.setCaptions(true); D.doAttack(h.id, w.id, 0, 'normal', { d20:1 }); });
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.punchCount().fumbles || 0), { timeout:20_000 }).toBe(f0 + 1);
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.fightFxCount().texts.join(' '))).toContain('FUMBLE');
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.captions.captionLines().join(' | '))).toContain('Vasha fumbles, and misses the wolf.');
+});

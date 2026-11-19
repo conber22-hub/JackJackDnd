@@ -253,6 +253,12 @@ export function block(id, fromId){
   flash(id, 55, false); made.blocks++;
 }
 
+// 🙃 a natural 1: the attacker overreaches and stumbles back, off balance
+export function stumble(id, fromId){
+  const d = dirOf(fromId, id); if (!d) return;
+  addMove(id, { kind:'knock', ms:520, amp:.22, dx:d.x, dz:d.z, back:true }); made.fumbles = (made.fumbles || 0) + 1;
+}
+
 /* ---------- every frame (main.js) ---------- */
 export function tickPunch(now = performance.now()){
   const dt = lastNow ? Math.min(100, now - lastNow) : 16; lastNow = now;

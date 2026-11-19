@@ -206,6 +206,7 @@ function capOut(e){
   for (const [k, v] of Object.entries(e || {})){
     if (v && typeof v === 'object' && typeof v.id === 'string' && 'hp' in v) o[k] = capTok(v);
     else if (v == null || ['string', 'number', 'boolean'].includes(typeof v)) o[k] = v;
+    else if (k === 'die' && Number.isFinite(v.n)) o.die = { n:v.n };   // (the d20 alone: a natural 1 is a fumble)
   }
   return o;
 }
@@ -214,6 +215,7 @@ for (const k of CAPTION_EVENTS) bus.on(k, e => { if (ui.role === 'dm' && !ui.wan
 function capIn(k, e){
   const o = {};
   for (const [f, v] of Object.entries(e || {})){
+    if (f === 'die' && v && typeof v === 'object'){ o.die = { n:+v.n || 0 }; continue; }
     if (v && typeof v === 'object' && v.$tok){ const t = tokById(v.$tok); if (!t) return;
       if (t.kind === 'monster' && !seenNow[t.floor]?.has(t.y * (state.floors[t.floor]?.W || 0) + t.x)) return;
       o[f] = { ...t, hp:+v.hp, dead:!!v.dead }; }

@@ -176,6 +176,7 @@ function onActed(e){
   } else if (e?.trigger === 'miss'){
     if (!a || !tg) return;
     if (e.block) show(isMine(tg.id) ? `You block ${theName(a)}.` : `${cap(obj(tg))} blocks ${isMine(a.id) ? 'you' : theName(a)}.`, isMine(tg.id) ? 'gold' : '', '🛡');
+    else if (e.die?.n === 1) show(`${cap(subj(a))} fumbles, and misses ${obj(tg)}.`, isMine(a.id) ? 'red' : isMine(tg.id) ? 'gold' : '', '🙃');
     else show(`${cap(subj(a))} misses ${obj(tg)}.`, '', '🎯');
   } else if (e?.trigger === 'spell'){
     if (!a || !e.action) return;

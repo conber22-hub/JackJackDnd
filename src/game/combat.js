@@ -340,7 +340,7 @@ export function doAttack(aId, tId, i, mode = 'normal', { d20 = null, at = null }
   const w = el ? undefined : atk.n, wt = el ? undefined : atk.t, sz = a.size || 1;   // (🪓 what struck, for its heft: engine/weapon-heft.js)
   if (!self) animate(a.id, 'attack', tg.id, { ranged, el, w, wt, sz });
   if (hits.length) setTimeout(() => animate(tg.id, 'hit', self ? null : a.id, { r:shareOf(total, tg.maxHp), crit, kill:!!tg.dead || tg.hp <= 0, el, n:total, ranged, w, wt, sz }), 330);
-  else if (!self) setTimeout(() => animate(tg.id, 'miss', a.id, { ranged, el, block }), 330);   // (n, ranged: for the players' screens, which draw the number and the arrow: ui/fightfx.js remoteBlow)
+  else if (!self) setTimeout(() => animate(tg.id, 'miss', a.id, { ranged, el, block, fumble:R0?.r === 1 }), 330);   // (n, ranged: for the players' screens, which draw the number and the arrow: ui/fightfx.js remoteBlow)
   // (the Wanderer's card waits for the blow to land, so it doesn't cover the swing: one hero, one camera, on them)
   const card = { kind:crit ? 'crit' : hits.length ? '' : 'miss', title:`${a.name} → ${tg.name}`, sub:atk.n, flair, lines, big:hits.length ? `${total} ${atk.t}` : '', die };
   if (ui.wander) setTimeout(() => showCard(card), 700); else showCard(card);

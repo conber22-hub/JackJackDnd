@@ -18,6 +18,7 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ## v1.42 — what struck, and who you're going for
 
+- **🙃 Fumbles** (`render/punch.js` `stumble`): a natural 1 has the attacker overreach and stumble back, FUMBLE rises over them, and the captions say *Vasha fumbles, and misses the wolf.*, on every screen.
 - **🖼 Faces in the party list** (the Wanderer: `ui/targetinfo.js` `faceFor`): each hero's card in the party list shows their portrait (drawn a moment after the list, then kept), greyed when they're down; it jolts with the card when they're struck.
 - **🩸 Bloodied** (`game/combat.js` `applyDamage` → the `hurt` event's `bloodied`): the blow that takes a foe to half its hit points or below is marked: BLOODIED rises over it after the number, and the captions say *The wolf is bloodied.* (on the players' phones too), once.
 - **⚠ Risky squares** (the Wanderer: `ui/wander.js`, `render/fightzone.js`, by the game's own rule in `engine/movement.js` `provokers`): of the squares your hero can still walk to on their turn, those that would take them out of a foe's reach, giving it a free swing at them as they go, are tinted red; the safe ones stay gold. After a Disengage, none are red.

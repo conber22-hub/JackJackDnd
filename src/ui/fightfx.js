@@ -34,6 +34,7 @@ function acted(e){
     if (e.ranged) streak(e.actor.id, e.target.id, { spell:e.spell ? SPELL_COL[e.spell] || '#c9a0ff' : null, stick:e.spell ? null : e.trigger === 'miss' ? 'miss' : 'hit' });   // (an arrow or a javelin stays where it went)
     if (e.trigger === 'critical') critAt.set(e.target.id, performance.now());
     if (e.trigger === 'miss') after(330, () => floatText(e.target.id, e.block ? 'BLOCKED' : 'MISS', e.block ? '#f2e2b0' : '#d9d2c4', { word:!!e.block }));
+    if (e.trigger === 'miss' && e.die?.n === 1) after(420, () => floatText(e.actor.id, 'FUMBLE', '#c9a0ff', { word:true }));   // 🙃 (and they stumble: render/punch.js)
     return;
   }
   if ((e.trigger === 'spell' || e.trigger === 'heal') && e.action){
@@ -78,7 +79,7 @@ function cond(e){
 export function remoteBlow(kind, id, from, fx = {}){
   if (kind === 'attack' && fx?.ranged && from) streak(id, from, { spell:fx.el ? SPELL_COL[fx.el] || '#c9a0ff' : null });   // (attack: id is the one loosing, from its target)
   else if (kind === 'hit'){ if (fx?.n > 0) floatText(id, `${fx.crit ? 'CRIT ' : ''}−${fx.n}`, fx.crit ? '#ffd45a' : '#ff7a52', { big:!!fx.crit }); if (fx?.ranged && from && !fx.el) plantArrow(from, id, 'hit'); }
-  else if (kind === 'miss'){ floatText(id, fx?.block ? 'BLOCKED' : 'MISS', fx?.block ? '#f2e2b0' : '#d9d2c4', { word:!!fx?.block }); if (fx?.ranged && from && !fx.el) plantArrow(from, id, 'miss'); }
+  else if (kind === 'miss'){ floatText(id, fx?.block ? 'BLOCKED' : 'MISS', fx?.block ? '#f2e2b0' : '#d9d2c4', { word:!!fx?.block }); if (fx?.fumble && from) floatText(from, 'FUMBLE', '#c9a0ff', { word:true }); if (fx?.ranged && from && !fx.el) plantArrow(from, id, 'miss'); }
 }
 export function remoteHeal(id, n){ if (n > 0){ floatText(id, `+${n}`, '#7dff9a'); ringPulse(id, '#7dff9a'); } }
 let wired = false;
