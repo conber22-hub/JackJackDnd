@@ -16,6 +16,11 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v1.42 — what struck, and who you're going for
+
+- **🪓 What struck matters** (ChatGPT's `engine/weapon-heft.js` and `data/weapon-heft.js`: every SRD weapon, the natural attacks by kind, and a fallback by damage type; `render/punch.js`, `render/trails.js`): a blow is felt by what struck, not only how much it took. A dagger barely pauses the world and leaves a thin quick streak; a longsword is in between; a maul or a greataxe stops the world dead, throws them back and sweeps a wide, slow arc in its own colour; a giant's slam outweighs a wolf's bite. The attacker drives in by its weapon's weight too. A critical hit's caption says what it felt like underneath (*The whole yard shudders.*). The players' phones feel the same weight (the blow's message carries what struck).
+- **🎯 The target card** (Muse's `ui/targetcard.js`, round 15, over `ui/targetinfo.js`): the fight bar's line for the foe you're going for is now a card: its portrait ringed in the colour of how hurt it is, its name, its health in words (*Unhurt*, *Scratched*, *Hurt*, *Bloodied*, *Near death*, *Down*: never numbers), its conditions as small chips, and what the party has learned of its kind (*Resists slashing*, *AC 12*, or *Not yet known*). In the Wanderer, and at the table on the handheld when the phone knows the foe's health.
+
 ## v1.41 — every spell its own look, and the fight in words
 
 - **✨ Every spell its own look** (ChatGPT's `engine/spell-looks.js` and `data/spell-looks.js`, 229 spells and the eight schools, drawn by `render/spellfx.js` `lookOf`): a spell is drawn in its own colours and manner, not just its element's: Fire Bolt a spitting mote, Burning Hands an orange fan, Bless gold halos, Bane a sickly violet, Hold Person grey chains, Sleep pale motes drifting down. A spell with no look of its own and no damage type takes its school's. The game still decides how a spell travels from its area; a look only chooses between a pillar and a touch for a spell on one creature.

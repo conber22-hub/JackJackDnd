@@ -5,6 +5,7 @@
 import { bus, esc } from '../util/core.js';
 import { state, ui, tokById } from '../engine/state.js';
 import { hasLook, lookFor } from '../engine/spell-looks.js';
+import { heftFor } from '../engine/weapon-heft.js';
 
 const KEY = 'dreaddelve.captions.v1';
 const MAX = 3;          // lines on screen at once; a new one pushes the oldest off
@@ -158,6 +159,8 @@ function flushHeal(){
   } else show(`${cap(caster)} heals ${joinNames(g.targets.map(([t]) => t))}.`, gold, '✚');
 }
 
+// (Claude) what a critical blow felt like, in a few words (ChatGPT's engine/weapon-heft.js), under its line
+const heftWords = (n, t) => { try { return heftFor({ n, t }).words || ''; } catch { return ''; } };
 // what a spell looks like, in a few words (ChatGPT's engine/spell-looks.js), under the line that names it
 const spellWords = name => { try { return hasLook(name) ? lookFor({ n:name }).words || '' : ''; } catch { return ''; } };
 
@@ -169,7 +172,7 @@ function onActed(e){
     lastBlow = { target:tg.id, n:e.dmg || 0, at:Date.now() };
     const crit = e.trigger === 'critical';
     const text = `${cap(subj(a))} ${blowVerb(a, e.action)} ${obj(tg)}${e.dmg > 0 ? ` for ${e.dmg}` : ''}.`;
-    show(crit ? `A critical! ${text}` : text, isMine(tg.id) ? 'red' : (crit && isMine(a.id) ? 'gold' : ''), '⚔');
+    show(crit ? `A critical! ${text}` : text, isMine(tg.id) ? 'red' : (crit && isMine(a.id) ? 'gold' : ''), '⚔', crit && !e.spell ? heftWords(e.action, e.dmgType) : '');
   } else if (e?.trigger === 'miss'){
     if (!a || !tg) return;
     if (e.block) show(isMine(tg.id) ? `You block ${theName(a)}.` : `${cap(obj(tg))} blocks ${isMine(a.id) ? 'you' : theName(a)}.`, isMine(tg.id) ? 'gold' : '', '🛡');

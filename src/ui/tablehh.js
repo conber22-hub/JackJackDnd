@@ -19,6 +19,7 @@
    chosen (kept per device). A controller plugged in plays it too. */
 import { turnBanner } from './turnbanner.js';
 import { hpBar, barMood } from './hpbar.js';
+import { showTarget } from './targetinfo.js';
 import { state, ui, tokById } from '../engine/state.js';
 import { esc, signed } from '../util/core.js';
 import { optList, optInfo, tag } from './optrow.js';
@@ -391,11 +392,12 @@ export function renderHud(){
     const tg = target(), i = attackFor(t, tg);
     const body = myTurn()
       ? `<div class="wd-fl wd-turn"><b>Your turn</b>${pipsHtml(economy(t))}</div>
-        <div class="wd-fl">${tg ? `🎯 <b>${esc(tg.name)}</b>${tg.maxHp ? ` ${bar(tg.hp, tg.maxHp, tg.id)}` : ''}${i < 0 ? ' <span class="muted">(out of reach)</span>' : ''}` : 'Nobody in sight'}</div>
+        <div class="wd-fl${tg?.maxHp ? ' wd-tgt' : ''}">${tg ? tg.maxHp ? `<div class="wd-tc" id="tbTarget"></div>${i < 0 ? ' <span class="muted">(out of reach)</span>' : ''}` : `🎯 <b>${esc(tg.name)}</b>${i < 0 ? ' <span class="muted">(out of reach)</span>' : ''}` : 'Nobody in sight'}</div>
         ${tg && i >= 0 && strikesLeft(t) ? `<div class="wd-fl wd-weap">⚔ <b>${esc(t.attacks[i].n)}</b> ${signed(t.attacks[i].b)} to hit · ${esc(t.attacks[i].d)} ${esc(t.attacks[i].t || '')} · <span class="near">${esc(reachWords(t, tg, t.attacks[i]))}</span></div>${(e => e.text ? `<div class="wd-fl wd-edge">${esc(e.mark)} ${esc(e.text)}</div>` : '')(edgeOf(t, tg, t.attacks[i]))}` : ''}
         <div class="wd-acts"><button class="wd-act" data-tb="x"><b>X</b> Actions</button><button class="wd-act" data-tb="y"><b>Y</b> Next target</button><button class="wd-act" data-tb="endturn">End turn</button></div>`
       : `<div class="wd-fl">${cur ? `<b>${esc(cur.name)}</b>'s turn…` : '…'}</div>${tg ? `<div class="wd-fl">🎯 ${esc(tg.name)}</div>` : ''}`;
     put('tbFight', `<div class="wd-order">${order}</div>${body}`);
+    if (myTurn() && tg?.maxHp) showTarget(document.getElementById('tbTarget'), tg);   // 🎯 (Muse's ui/targetcard.js; only when its health is known here)
   }
   show('tbMenu', menu.open);
   if (menu.open){ const items = markSpent(menuItems(), economy(t)); menu.i = Math.min(menu.i, items.length - 1);

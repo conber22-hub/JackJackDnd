@@ -5,6 +5,7 @@
    The follow camera (below) eases after the hero and turns, cranes and cycles views with the right stick, L / R, [ ] - = V. */
 import { turnBanner } from './turnbanner.js';
 import { hpBar, barMood } from './hpbar.js';
+import { showTarget } from './targetinfo.js';
 import { state, ui, tokById, tokenAt, side } from '../engine/state.js';
 import { lastOfSide } from '../engine/punch.js';
 import { readPad, padIntents, keyIntent } from '../engine/pad.js';
@@ -124,12 +125,15 @@ export function renderHud(){
       const tg = target(), i = attackFor(t, tg), atk = t.attacks[i] || t.attacks[rt.atk ?? 0];
       const ai = t.attacks.indexOf(atk), od = tg && ai >= 0 && i >= 0 ? strikeOdds(ai, tg) : null;
       body = `<div class="wd-fl wd-turn"><b>Your turn</b>${pipsHtml(economy())}</div>
-        <div class="wd-fl">${tg ? `🎯 <b>${esc(tg.name)}</b> ${bar(tg.hp, tg.maxHp, tg.id)}` : 'Nobody in sight'}</div>
+        <div class="wd-fl wd-tgt">${tg ? `<div class="wd-tc" id="wdTarget" data-tid="${esc(tg.id)}"></div>` : 'Nobody in sight'}</div>
         ${atk && attacksLeft() ? `<div class="wd-fl wd-weap">⚔ <b>${esc(atk.n)}</b> ${signed(atk.b)} to hit · ${esc(atk.d)} ${esc(atk.t || '')}${tg ? ` · <span class="${i < 0 ? 'far' : 'near'}">${esc(reachWords(t, tg, ai))}</span>` : ''}${od ? ` · <b class="wd-odds o-${oddsTone(od.hit)}">${esc(od.edge.mark)}${od.pct}</b>` : ''}</div>
         ${od?.edge.text ? `<div class="wd-fl wd-edge">${esc(od.edge.mark)} ${esc(od.edge.text)}</div>` : ''}` : ''}
         <div class="wd-acts"><button class="wd-act" data-act="wdX">${K('x')} Actions</button><button class="wd-act" data-act="wdAim" data-k="1">${K('y')} Next target</button><button class="wd-act" data-act="wdEnd">End turn</button></div>`;
     } else body = `<div class="wd-fl">${turn ? `<b>${esc(turn.name)}</b>'s turn…` : '…'}</div>`;
     put('wdFight', `${hhOn() ? `<div class="wd-order">${order}</div>` : ''}${body}`);
+    // 🎯 the target card (Muse's ui/targetcard.js): who you're going for, how hurt (in words), what's known (the odds stay
+    // on the weapon's line below, as they change with the weapon)
+    if (myTurn()) showTarget(document.getElementById('wdTarget'), target());
     if (!hhOn()) put('wdOrder', order);
   }
   // a conversation

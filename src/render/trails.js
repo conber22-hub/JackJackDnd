@@ -57,9 +57,12 @@ export function tickTrails(now = performance.now()){
     let base, tip;
     if (claw){ base = rig.aR.f.getWorldPosition(new THREE.Vector3()); tip = rig.aR.h.getWorldPosition(new THREE.Vector3()); tip.addScaledVector(v1.subVectors(tip, base), .6); }
     else { const e = ends(item); base = item.localToWorld(v1.copy(e.base)).clone(); tip = item.localToWorld(v2.copy(e.tip)).clone(); }
+    // (🪓 its weapon's heft: the arc's colour, how wide a band it sweeps, how long it lingers: engine/weapon-heft.js)
+    const H = tv.heft, arc = H?.swing && H.swing !== 'none' ? H.arc : null;
+    if (arc?.width && arc.width !== 1) base = tip.clone().addScaledVector(v1.subVectors(base, tip), Math.max(.3, Math.min(2.2, arc.width)));
     let tr = trails.get(id);
     if (!tr || tr.fadeFrom){ if (tr){ scene.remove(tr.mesh); tr.mesh.geometry.dispose(); tr.mesh.material.dispose(); }
-      tr = { mesh:ribbon(claw ? '#ff9a7a' : '#e8f2ff'), pts:[], fadeFrom:0, act }; trails.set(id, tr); }
+      tr = { mesh:ribbon(arc?.col || (claw ? '#ff9a7a' : '#e8f2ff')), pts:[], fadeFrom:0, act, life:arc?.life || 1 }; trails.set(id, tr); }
     if (tr.act !== act){ tr.pts = []; tr.act = act; }
     tr.pts.push([base, tip]); if (tr.pts.length > N) tr.pts.shift();
     seen.add(id); draw(tr, 1);
@@ -67,7 +70,7 @@ export function tickTrails(now = performance.now()){
   for (const [id, tr] of trails){
     if (seen.has(id)) continue;
     if (!tr.fadeFrom) tr.fadeFrom = now;
-    const f = 1 - (now - tr.fadeFrom) / 160;
+    const f = 1 - (now - tr.fadeFrom) / (160 * (tr.life || 1));
     if (f <= 0){ scene.remove(tr.mesh); tr.mesh.geometry.dispose(); tr.mesh.material.dispose(); trails.delete(id); }
     else draw(tr, f);
   }

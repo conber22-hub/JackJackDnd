@@ -18,6 +18,7 @@ import { tokenViews } from './minis.js';
 import { state, tokById } from '../engine/state.js';
 import { BEST } from '../data/bestiary.js';
 import { impactOf, speedAt, moveAt, bloodOf, lastOfSide, arcAngle } from '../engine/punch.js';
+import { heftFor, applyHeft } from '../engine/weapon-heft.js';
 import { dies, dust } from './deathfx.js';
 
 /* ---------- the hit-stop: the world's clock ---------- */
@@ -80,7 +81,7 @@ const arcGeo = new THREE.RingGeometry(.3, .62, 28, 1, -1.2, 2.4), splatGeo = new
 const bits = [];    // { obj, t0 (world clock), ms, kind, ... } — arcs, sparks, glows, wisps
 const splats = [];  // the fight's splashes, cleared when it ends
 let fadeFrom = 0;
-let made = { impacts:0, kills:0, dodges:0, lunges:0, splats:0, aims:0, lasts:0, blocks:0 };
+let made = { impacts:0, kills:0, dodges:0, lunges:0, splats:0, aims:0, lasts:0, blocks:0 }, lastHeft = null;
 const tmp = new THREE.Vector3(), tmp2 = new THREE.Vector3();
 
 function at(id){ const tv = tokenViews.get(id); if (!tv?.group?.parent) return null; return { tv, parent:tv.group.parent, pos:tv.group.position.clone() }; }
@@ -186,9 +187,14 @@ let mine = () => false;
 export function setMine(fn){ mine = fn || (() => false); }
 
 // the attacker: in to meet the blow (ranged: a kick back)
-export function lunge(id, targetId, { ranged = false } = {}){
+/* 🪓 how heavy what struck is (ChatGPT's engine/weapon-heft.js): a maul stops the world longer and throws them further
+   than a dagger, a giant's slam more than a wolf's bite. w: the attack's name, wt: its damage type, sz: the attacker's
+   size. A spell has none (its own look: render/spellfx.js). The figure keeps it for its swing's arc (render/trails.js). */
+const heftOf = info => info?.w ? heftFor({ n:info.w, t:info.wt, rng:info.ranged ? 1 : 0 }, { size:info.sz || 1 }) : null;
+export function lunge(id, targetId, info = {}){
   const d = dirOf(id, targetId); if (!d) return;
-  addMove(id, { kind:ranged ? 'knock' : 'lunge', ms:ranged ? 380 : 620, amp:ranged ? -.08 : .3, dx:d.x, dz:d.z, back:true }); made.lunges++;
+  const ranged = !!info.ranged, H = heftOf(info), tv = tokenViews.get(id); if (tv) tv.heft = H;
+  addMove(id, { kind:ranged ? 'knock' : 'lunge', ms:ranged ? 380 : 620, amp:ranged ? -.08 : .3 * (H?.lunge || 1), dx:d.x, dz:d.z, back:true }); made.lunges++;
 }
 // the blow lands on `id`, from `fromId` (none: a spell's area, a trap). info: { r, crit, kill }
 const lastHit = new Map();
@@ -198,7 +204,8 @@ export function impact(id, fromId, info = {}){
   const was = lastHit.get(id); if (was && performance.now() - was < 450) return; lastHit.set(id, performance.now());
   // (the blow that ends the fight: the last of its side to fall)
   const last = !!info.kill && !!state?.combat?.active && lastOfSide(t, (state.combat.order || []).map(tokById));
-  const I = impactOf({ ...info, last }), now = performance.now(), d = fromId ? dirOf(fromId, id) : blastDir(id);
+  const H = heftOf(info), I0 = impactOf({ ...info, last }), I = H ? { ...applyHeft(I0, H), last:I0.last } : I0, now = performance.now(), d = fromId ? dirOf(fromId, id) : blastDir(id);
+  lastHeft = H;
   const b0 = bloodOf({ tags:BEST[t.bid]?.tags, name:t.name, kind:t.kind }), el = EL[info.el];
   const blood = el ? { ...b0, spark:el } : b0;
   hold(I, now); made.impacts++; if (info.kill) made.kills++;
@@ -304,4 +311,4 @@ export function clearPunch(){
   for (const b of bits.splice(0)){ b.obj.parent?.remove(b.obj); b.obj.material.dispose(); if (b.kind === 'spray') b.obj.geometry.dispose(); }
 }
 // (for the tests: what's been felt since the page loaded, and what's on the ground now)
-export const punchCount = () => ({ ...made, onGround:splats.length, speed:worldSpeed(), moving:moves.size });
+export const punchCount = () => ({ ...made, onGround:splats.length, speed:worldSpeed(), moving:moves.size, heft:lastHeft });

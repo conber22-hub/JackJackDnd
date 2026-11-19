@@ -355,3 +355,29 @@ test('a blow on the hero buzzes the phone', async ({ page }) => {
   await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), w = D.get().tokens.find(t => t.kind === 'monster'); D.applyDamage(h, 40, 'piercing', w.id); });
   await expect.poll(() => page.evaluate(() => window.__vib.length), { timeout:20_000 }).toBeGreaterThan(0);
 });
+
+// 🪓 What struck matters (ChatGPT's engine/weapon-heft.js): a maul stops the world longer than a dagger for the same blow
+test('a maul lands heavier than a dagger', async ({ page }) => {
+  test.setTimeout(180_000);
+  await fight(page);
+  const r = await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), w = D.get().tokens.find(t => t.kind === 'monster');
+    D.actOn(w.id, 'hit', h.id, { r:.3, w:'Dagger', wt:'piercing' }); let now = performance.now(); const dagger = { heft:D.punchCount().heft, at100:D.worldSpeed(now + 100) };
+    D.actOn(h.id, 'hit', w.id, { r:.3, w:'Maul', wt:'bludgeoning' }); now = performance.now(); const maul = { heft:D.punchCount().heft, at100:D.worldSpeed(now + 100) };
+    return { dagger, maul }; });
+  expect(r.maul.heft.stop).toBeGreaterThan(r.dagger.heft.stop);
+  expect(r.dagger.at100).toBe(1);   // (the dagger's pause is over)
+  expect(r.maul.at100).toBe(0);     // (the maul still holds the world)
+});
+
+// 🎯 The target card (Muse's ui/targetcard.js) in the fight bar: the foe's name, its health in words, never a number
+test('the fight bar shows the target card, its health in words', async ({ page }) => {
+  test.setTimeout(180_000);
+  await fight(page);
+  await expect(page.locator('#wdTarget .tc-card')).toBeVisible();
+  await expect(page.locator('#wdTarget .tc-hw')).toHaveText('Unhurt');
+  await page.evaluate(() => { const D = window.DreadDelve, w = D.get().tokens.find(t => t.kind === 'monster'); w.hp = Math.ceil(w.maxHp * .4); D.renderHud(); });
+  await expect(page.locator('#wdTarget .tc-hw')).toHaveText('Bloodied');
+  const text = await page.locator('#wdTarget').textContent();
+  expect(text).toContain('Wolf');
+  expect(text).not.toMatch(/\b\d+\s*\/\s*\d+\b|\b200\b|\b80\b/);   // (no hit points)
+});
