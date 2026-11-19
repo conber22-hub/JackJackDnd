@@ -24,7 +24,8 @@ import { planTurn, resistWorthIt } from '../engine/tactics.js';
 import { court as getCourt } from './court.js';
 import { doMove, nearestOpen } from './actions.js';
 import { rangeCheck, coverOf, areaOf, areaSquares, caughtIn, coverFromOrigin, spellReach } from '../engine/targeting.js';
-import { tokGap as gapTo, bestMelee, planToward } from '../engine/movement.js';
+import { tokGap as gapTo, bestMelee, planToward, fits } from '../engine/movement.js';
+import { shoveDC, pbAt, canShove, saveFor, pushTo, shoveResult } from '../engine/shove.js';
 import { fightCandidates, rollOrder, fightWon, fightXp } from '../engine/fight.js';
 import { shiftFloor } from './shift.js';
 import { whimRoll, whimStep, whimReset } from './whim.js';
@@ -735,3 +736,29 @@ export function removeToken(id){
   changed();
 }
 export function restoreTaken(t){ t.flags.gone = false; t.flags.taken = false; t.dead = false; t.hp = Math.max(1, t.hp); updateVision(); rebuildFog(t.floor); changed(); }
+
+/* 🤚 SHOVE (engine/shove.js), in place of one attack: a creature within 5 feet, no more than one size larger, saves with
+   the better of Strength and Dexterity against 8 + the shover's Strength + proficiency, or is pushed 5 feet straight
+   away (choice 'push') or knocked prone ('prone'). The blow is seen (a lunge, a knock), said (a card, the captions:
+   the bus's 'shove') and felt. → the outcome ('pushed' | 'prone' | 'resisted' | 'stuck'), or false when it can't. */
+export function shove(aId, tId, choice = 'push'){
+  const a = tokById(aId), tg = tokById(tId); if (!a || !tg || a.id === tg.id || tg.dead) return false;
+  if (gapTo(a, tg) > 1){ toast(`${tg.name} is too far to shove: get beside them.`); return false; }
+  if (!canShove(a, tg)){ toast(`${tg.name} is too big to shove.`); return false; }
+  const lvl = +(String(a.cls || '').match(/(\d+)/)?.[1] || 1), dc = shoveDC({ str:a.mods?.str ?? 0, pb:a.kind === 'monster' ? 2 : pbAt(lvl) });
+  const ab = saveFor(tg.saves || {}), S = saveRoll(tg, ab);
+  const to = pushTo(a, tg, (x, y) => fits(tg.floor, x, y, tg.size || 1, tg.id));
+  const out = shoveResult({ choice, dc, save:S.tot, to });
+  a.lastMove = null;
+  if (out === 'pushed'){ tg.x = to.x; tg.y = to.y; }
+  if (out === 'prone' && !immuneTo(tg, 'prone')) addCond(tg, 'prone', 1);
+  sfx(out === 'resisted' ? 'miss' : 'hit');
+  animate(a.id, 'attack', tg.id, {});
+  setTimeout(() => { if (out === 'resisted') animate(tg.id, 'miss', a.id, { block:true }); else animate(tg.id, 'hit', a.id, { r:out === 'pushed' ? .35 : .2 }); syncTokens(); }, 330);
+  const said = { pushed:`${tg.name} is pushed back.`, prone:`${tg.name} is knocked prone.`, resisted:`${tg.name} stands firm.`, stuck:`${tg.name} staggers, but there's nowhere to go.` }[out];
+  showCard({ kind:out === 'resisted' ? 'miss' : '', title:`${a.name} shoves ${tg.name}`, sub:choice === 'prone' ? 'Shove: prone' : 'Shove: push',
+    lines:[`${esc(tg.name)}: ${ab.toUpperCase()} save ${saveTxt(S)} vs DC ${dc} — <b>${esc(said)}</b>`] });
+  bus.emit('shove', { actor:a, target:tg, out, choice });
+  log(`🤚 ${a.name} shoves ${tg.name}: ${said}`);
+  changed(); return out;
+}

@@ -426,3 +426,24 @@ test('a natural 1 is a fumble: the attacker stumbles', async ({ page }) => {
   await expect.poll(() => page.evaluate(() => window.DreadDelve.fightFxCount().texts.join(' '))).toContain('FUMBLE');
   await expect.poll(() => page.evaluate(() => window.DreadDelve.captions.captionLines().join(' | '))).toContain('Vasha fumbles, and misses the wolf.');
 });
+
+// 🤚 Shove (engine/shove.js), in place of a strike: the wolf (who can't save) is pushed a square away, or knocked prone;
+// a huge creature can't be shoved
+test('a shove pushes a foe back or knocks it prone, in place of a strike', async ({ page }) => {
+  test.setTimeout(180_000);
+  await fight(page);
+  const r = await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), w = D.get().tokens.find(t => t.kind === 'monster');
+    w.saves = { str:-30, dex:-30 }; const was = { x:w.x, y:w.y }, gap = Math.max(Math.abs(w.x - h.x), Math.abs(w.y - h.y));
+    D.wander.heroShove('push'); return { gap, was, now:{ x:w.x, y:w.y }, gapNow:Math.max(Math.abs(w.x - h.x), Math.abs(w.y - h.y)), left:D.wander.attacksLeft() }; });
+  expect(r.gap).toBe(1);
+  expect(r.gapNow).toBe(2);                    // (one square further away)
+  expect(r.left).toBeFalsy();                  // (it took the strike)
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.fightFxCount().texts.join(' '))).toContain('SHOVED');
+  // prone, through the game itself (the next turn's strike, beside it again)
+  const p = await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), w = D.get().tokens.find(t => t.kind === 'monster');
+    w.x = h.x + (w.x > h.x ? 1 : w.x < h.x ? -1 : 0); w.y = h.y + (w.y > h.y ? 1 : w.y < h.y ? -1 : 0); D.syncTokens();
+    return D.shove(h.id, w.id, 'prone'); });
+  expect(p).toBe('prone');
+  expect(await page.evaluate(() => window.DreadDelve.get().tokens.find(t => t.kind === 'monster').conds.some(c => c.n === 'prone'))).toBe(true);
+  expect(await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), w = D.get().tokens.find(t => t.kind === 'monster'); w.size = 3; return D.shove(h.id, w.id, 'push'); })).toBe(false);
+});

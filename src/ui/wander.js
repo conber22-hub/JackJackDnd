@@ -20,7 +20,7 @@ import { currentTurn } from '../game/combat.js';
 import { moveAllowance } from '../game/rules.js';
 import { rangeCheck } from '../engine/targeting.js';
 import { W, rt, hero, members, wandering, startWander, continueWander, leaveWander, stepHero, heroBusy, walkTo, hereAction, talkView, chooseTalk, talkTo,
-  heroAttack, heroDodge, heroTurnAct, heroFeatures, heroFeature, endHeroTurn, aim, target, targets, attackFor, nextWeapon, attacksLeft, myTurn, fightTick, destinations, setOut, travelTo, rest, saveNow,
+  heroAttack, heroDodge, heroShove, heroTurnAct, heroFeatures, heroFeature, endHeroTurn, aim, target, targets, attackFor, nextWeapon, attacksLeft, myTurn, fightTick, destinations, setOut, travelTo, rest, saveNow,
   pack, toggleEquip, usePotion, coinsGp, shopHere, buyPotion, journal, approvalOf, levelReady, partyLevel, nextLevelXp, levelUpHero, sheetOf, spellList, heroCast,
   SLOTS, slotMeta, canSaveSlot, saveToSlot, loadFromSlot, opening, economy, strikeOdds } from '../game/wander.js';
 import { setFightZone, clearFightFx, showMoveSquares, clearMoveSquares, showMarks, showOdds, showAreaSquares, clearAim, showHover, floatText, ringPulse, moveSquaresKey } from '../render/fightzone.js';
@@ -239,6 +239,10 @@ function menuItems(){
       ...(fight ? (t?.attacks || []).map((a, i) => ({ label:a.n, group:'Strike', ...attackBits(a, tg ? `${reachWords(t, tg, i)}${attackForWith(t, tg, i) ? ` (${tg.name})` : ''}` : '', tg && attackForWith(t, tg, i) ? oddsBits(strikeOdds(i, tg)) : null),
         aim:{ atk:i }, off:!mine || !attacksLeft(), run:() => { closeMenu(); rt.atk = i; heroAttack(); } })) : []),
       ...(spellList().length ? [{ label:'Spells…', group:'Magic', icon:'✦', sub:fight && (rt.cast || rt.attacks) ? 'Your action is spent' : slots || 'Cantrips', info:'Every spell you know, by level, with what it does and what it costs.', run:() => { menu.page = 'spells'; menu.i = 0; } }] : []),
+      // 🤚 Shove, in place of a strike: the one aimed at, if they're beside you (engine/shove.js)
+      ...(fight && tg && Math.max(Math.abs(tg.x - t.x), Math.abs(tg.y - t.y)) <= Math.max(1, tg.size || 1) ? [
+        { label:'Shove: push back', group:'Strike', icon:'🤚', sub:`${tg.name} 5 ft away, unless they save`, info:'In place of a strike: they make a Strength or Dexterity save against 8 + your Strength + your proficiency, or are pushed 5 feet straight away from you (out of your reach, or theirs).', off:!mine || !attacksLeft(), run:() => { closeMenu(); heroShove('push'); } },
+        { label:'Shove: knock prone', group:'Strike', icon:'🤚', sub:`${tg.name} down: your blows have advantage`, info:'In place of a strike: the same save, or they fall prone. Blows from beside a prone creature have advantage; it stands up with half its move.', off:!mine || !attacksLeft(), run:() => { closeMenu(); heroShove('prone'); } }] : []),
       ...(fight ? [ta('dash', 'Dash'), ta('disengage', 'Disengage'), ta('dodge', 'Dodge'),
         ...((t?.conds || []).some(c => c.n === 'prone') ? [ta('stand', 'Stand up')] : [])] : []),
       ...heroFeatures().map(f => ({ label:f.n, group:'Your gifts', ...featBits(f), off:!!f.why, run:() => { closeMenu(); heroFeature(f.id); } })),

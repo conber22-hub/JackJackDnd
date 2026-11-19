@@ -90,5 +90,6 @@ export function wireFightFx(){
   bus.on('acted', acted); bus.on('hurt', hurt); bus.on('healed', healed);
   bus.on('turnAct', turnAct); bus.on('feature', feature); bus.on('cond', cond);
   bus.on('turnStart', e => { const t = e?.t; if (!t || t.dead) return; const col = t.kind === 'monster' ? '#ff6a4a' : '#ffd27a'; ringPulse(t.id, col); after(180, () => ringPulse(t.id, col)); });   // 🔆 whose turn it is
+  bus.on('shove', e => { if (!e?.target || e.out === 'prone') return; after(380, () => floatText(e.target.id, { pushed:'SHOVED', prone:'PRONE', resisted:'STANDS FIRM', stuck:'STAGGERS' }[e.out] || 'SHOVE', e.out === 'resisted' ? '#d9d2c4' : '#ffd27a', { word:true })); });   // 🤚 (game/combat.js shove)
   bus.on('aims', e => { if (e?.by && e.at){ windUp(e.by, e.at, e.ms); if (e.at === state?.campaign?.wander?.heroTok || e.at === ui.myToken) floatText(e.at, '!', '#ff4a3a', { word:true }); } });   // ⚠ a foe shows who it's going for
 }

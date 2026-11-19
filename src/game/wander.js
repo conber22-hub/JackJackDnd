@@ -34,7 +34,7 @@ import { VALLEY_PLACES } from '../data/barovia-map.js';
 import { pick, uid, rollDice, esc, bus } from '../util/core.js';
 import { applyCharacter } from './heroes.js';
 import { doMove, resolvePath, takeStairs, onStairs, goFloor, nearestOpen, setDread } from './actions.js';
-import { rollInitiative, nextTurn, autoTurn, planFor, endCombat, doAttack, attackEdge, currentTurn, partySees, riseFrom, removeToken, castSpell, heal } from './combat.js';
+import { rollInitiative, nextTurn, autoTurn, planFor, endCombat, doAttack, attackEdge, currentTurn, partySees, riseFrom, removeToken, castSpell, heal, shove } from './combat.js';
 import { turnAction, pausedMover, autoAnswer } from './moves.js';
 import { moveAllowance } from './rules.js';
 import { travel, arrive, enterPlace, valley, passTime, clockText, springEvent, hourHooks } from './overworld.js';
@@ -611,6 +611,17 @@ export function heroAttack(pick = null){
   const i = attackFor(t, tg); if (i < 0) return toast(`${tg.name} is out of reach: walk closer.`);
   rt.look = { id:tg.id, until:performance.now() + 1500 };   // (the camera frames the two of them a moment: ui/wander.js)
   if (doAttack(t.id, tg.id, i) !== false){ rt.attacks++; rt.did = 'strike'; }
+  changed();
+}
+// 🤚 a Shove at the one aimed at, in place of a strike (game/combat.js shove): 'push' them back, or knock them 'prone'
+export function heroShove(choice = 'push'){
+  const t = hero(), tg = target();
+  if (opening()) return;
+  if (!myTurn()) return toast('Not your turn yet.');
+  if (!tg) return toast('Nobody to shove.');
+  if (!attacksLeft()) return toast('You have struck this turn.');
+  rt.look = { id:tg.id, until:performance.now() + 1500 };
+  if (shove(t.id, tg.id, choice)){ rt.attacks++; rt.did = 'strike'; }
   changed();
 }
 export function heroDodge(){ heroTurnAct('dodge'); }

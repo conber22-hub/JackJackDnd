@@ -227,6 +227,10 @@ const HANDLERS = {
     show(isMine(t.id) ? `You are ${w}.` : `${cap(theName(t))} is ${w}.`, isMine(t.id) ? 'red' : ''); },
   turnStart:e => { const t = e?.t; if (!t || t.dead) return;
     show(isMine(t.id) ? 'Your turn.' : `${cap(theName(t))}'s turn.`, isMine(t.id) ? 'gold' : '', isMine(t.id) ? '★' : ''); },
+  // (Claude) 🤚 a shove (game/combat.js): its outcome; knocked prone says itself as a condition
+  shove:e => { const a = e?.actor, tg = e?.target; if (!a || !tg || e.out === 'prone') return;
+    show(e.out === 'pushed' ? `${cap(subj(a))} shoves ${obj(tg)} back.` : e.out === 'resisted' ? `${cap(obj(tg))} ${isMine(tg.id) ? 'stand' : 'stands'} firm against ${isMine(a.id) ? 'you' : theName(a)}.` : `${cap(subj(a))} shoves ${obj(tg)}, who staggers.`,
+      isMine(tg.id) ? 'red' : isMine(a.id) && e.out !== 'resisted' ? 'gold' : '', '🤚'); },
   aims:e => { const by = tokById(e?.by), at = tokById(e?.at); if (!by || !at) return;
     show(`${cap(subj(by))} goes for ${obj(at)}!`, isMine(at.id) ? 'red' : '', '🎯'); },
 };
