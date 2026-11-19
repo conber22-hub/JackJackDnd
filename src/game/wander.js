@@ -48,6 +48,7 @@ import { loadState, changed, flushSave, loadWanderSave, wanderCheckpoint, deseri
 import { showCard, toast } from '../ui/hud.js';
 import { fightBegins, fightEnds, achieve, sighted } from './record.js';
 import { openVictory, setVictoryFace } from '../ui/victory.js';
+import { openDefeat, setDefeatFace } from '../ui/defeat.js';
 import { openLevelUp } from '../ui/levelup.js';
 import { faceOf } from './night.js';
 import { syncTokens, tokenViews, faceStep } from '../render/minis.js';
@@ -705,7 +706,7 @@ export function fightTick(now = performance.now()){
 function finishFight(won){
   const c = state.combat, w = W();
   const order = [...c.order];
-  if (!won){ fightEnds(false, { order }); endCombat(); fallen(); return; }
+  if (!won){ const summary = fightEnds(false, { order }); endCombat(); fallen(summary, order); return; }
   const xp = c.order.map(tokById).filter(o => o?.kind === 'monster' && (o.dead || o.hp <= 0)).reduce((s, o) => s + xpOf(BEST[o.bid]), 0);
   const each = shareXp(xp, members().length);
   const xpWas = w.xp, nextWas = nextLevelXp(), lvlWas = partyLevel();
@@ -734,12 +735,27 @@ function finishFight(won){
   follow(); changed(); saveNow();
 }
 // The whole party is down: the Mists take them back to the last save (or, with none, to waking in the village).
-function fallen(){
+// 🌫 the whole party down: Muse's defeat screen (the fight's scorecard, the heroes greyed, where they'll wake), and
+// Rise carries on from the last safe save (or, with none, at full health where they stand). Without a scorecard (a
+// page with no screen to show) the old card and its 2.6 seconds.
+function fallen(summary = null, order = []){
   rt.endAt = 0;
-  showCard({ kind:'seep', ...LOST }, false);
-  setTimeout(() => {
-    if (!continueWander({ safe:true })){ for (const m of members()){ m.dead = false; m.hp = m.maxHp; } syncTokens(); changed(); }
-  }, 2600);
+  const wake = () => { if (!continueWander({ safe:true })){ for (const m of members()){ m.dead = false; m.hp = m.maxHp; } syncTokens(); changed(); } };
+  if (!summary || typeof document === 'undefined'){ showCard({ kind:'seep', ...LOST }, false); setTimeout(wake, 2600); return; }
+  const party = members().map(m => m.id);
+  const names = Object.fromEntries([...party, ...order].map(tokById).filter(Boolean).map(o => [o.id, o.name]));
+  openDefeat(summary, { party, names, faces:{}, from:wakePlace(), onClose:wake });
+  setTimeout(() => { for (const m of members()){ try { const f = faceOf(m); if (f) setDefeatFace(m.id, f); } catch {} } }, 60);
+}
+// where the last safe save stands: its hero's place (or the road it was on), read from the save as it is
+export function wakePlace(){
+  try {
+    const s = loadWanderSave({ safe:true }); if (!s) return null;
+    const V = s.campaign?.valley, h = (s.tokens || []).find(t => t.id === s.campaign?.wander?.heroTok);
+    if (V?.journey) return `the road to ${placeById(V.journey.to)?.name || 'the next village'}`;
+    const name = s.floors?.[h?.floor ?? 0]?.name;
+    return name ? name : null;
+  } catch { return null; }
 }
 
 /* ---------- Ⓐ: what's here ---------- */

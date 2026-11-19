@@ -456,3 +456,26 @@ test('the fight\'s music follows the danger', async ({ page }) => {
   await page.evaluate(() => { const h = window.DreadDelve.wander.hero(); h.hp = 10; });
   expect(await page.evaluate(() => window.DreadDelve.fightMusicNow().wanted)).toBe('lastStand');
 });
+
+test('a party that falls sees the Mists close over them, and rises where they last rested', async ({ page }) => {
+  test.setTimeout(240_000);
+  await fight(page);
+  // the wolf's blow puts Vasha down: the whole party is down
+  await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), w = D.get().tokens.find(t => t.kind === 'monster');
+    D.applyDamage(h, 999, 'piercing', w.id); });
+  // the defeat screen, over the fight's own scorecard: the words, the hero, where they'll wake (the village they set out from)
+  await expect(page.locator('#defeat')).toBeVisible({ timeout:90_000 });
+  await expect(page.locator('#defeat')).toContainText('The Mists close over you');
+  await expect(page.locator('#defeat')).toContainText('Vasha');
+  await expect(page.locator('#defeat')).toContainText('Village of Barovia');
+  if (process.env.SHOT) await page.screenshot({ path:process.env.SHOT });
+  expect(await page.evaluate(() => window.DreadDelve.get().combat.active)).toBe(false);
+  // it waits for the player (the old card went on its own after 2.6 s): Escape rises
+  await page.waitForTimeout(3000);
+  await expect(page.locator('#defeat')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#defeat')).toHaveCount(0);
+  await expect(page.locator('#defeatMist')).toHaveCount(0);
+  await expect.poll(() => page.evaluate(() => { const h = window.DreadDelve.wander.hero(); return !!h && !h.dead && h.hp > 0; }), { timeout:30_000 }).toBe(true);
+  await expect(page.locator('#wdPlace')).toHaveText('Village of Barovia');
+});

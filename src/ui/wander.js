@@ -48,6 +48,7 @@ import { sfx } from '../audio/sound.js';
 import { loyalty } from '../engine/wander-life.js';
 import { hh, hhOn, hhHost, hhPad, addHost, setHandheld, skipBoot, shellItem } from './handheld.js';
 import { victoryOpen, victoryPress } from './victory.js';
+import { defeatOpen, defeatPress } from './defeat.js';
 import { levelUpOpen, levelUpPress } from './levelup.js';
 import { openBestiary, bestiaryOpen, bestiaryPress, setBestiaryFace } from './bestiary.js';
 import { openTrophies, trophiesOpen, trophiesPress } from './trophies.js';
@@ -286,6 +287,7 @@ function press(b){
   // 🏆 Muse's screens between the fights take every press while one is open (a real Escape arrives here as Ⓑ)
   const sb = b === 'ls' || b === 'start' ? 'b' : b;
   if (victoryOpen()){ victoryPress(sb); renderHud(); return; }
+  if (defeatOpen()){ defeatPress(sb); renderHud(); return; }
   if (levelUpOpen()){ levelUpPress(sb); renderHud(); return; }
   if (bestiaryOpen()){ bestiaryPress(sb); renderHud(); return; }
   if (trophiesOpen()){ trophiesPress(sb); renderHud(); return; }
@@ -463,7 +465,7 @@ function step(dx, dy){
   if (skipBoot()) return;
   if (pocketOpen()){ pocketPress(dy < 0 ? 'up' : dy > 0 ? 'down' : dx < 0 ? 'left' : 'right'); return; }
   { const d = dy < 0 ? 'up' : dy > 0 ? 'down' : dx < 0 ? 'left' : 'right';
-    if (victoryOpen() || levelUpOpen()) return; if (bestiaryOpen()){ bestiaryPress(d); return; } if (trophiesOpen()){ trophiesPress(d); return; } }
+    if (victoryOpen() || defeatOpen() || levelUpOpen()) return; if (bestiaryOpen()){ bestiaryPress(d); return; } if (trophiesOpen()){ trophiesPress(d); return; } }
   if (menu.open){ if (dy){ const n = Math.max(0, Math.min(menuItems().length - 1, menu.i + dy)); if (n !== menu.i) tune('menuMove'); menu.i = n; } return; }
   const tv = talkView(); if (tv){ if (dy) talkSel.i = Math.max(0, Math.min(tv.options.length - 1, talkSel.i + dy)); return; }
   if (!stepHero(dx, dy)) pending = { dx, dy, until:performance.now() + 260 };
@@ -534,7 +536,7 @@ let pending = null, padMem = {}, hhMem = {}, lastTick = 0, lastFrame = 0, glintA
 const padHeld = { back:false };   // (Back held while Start goes down: the save states)
 // which way "up on the stick" walks: away from the camera; but in a list or a screen, up is up (the shoulder camera in
 // a fight can stand at any angle)
-const yaw = () => menu.open || talkView() || pocketOpen() || victoryOpen() || levelUpOpen() || bestiaryOpen() || trophiesOpen() ? 0 : camYaw();
+const yaw = () => menu.open || talkView() || pocketOpen() || victoryOpen() || defeatOpen() || levelUpOpen() || bestiaryOpen() || trophiesOpen() ? 0 : camYaw();
 let hudOn = false, xpShown = 0;
 export const xpFloatsShown = () => xpShown;   // (for the tests: the "+N XP" shown over the fallen)
 /* ---------- 🕹 the tunes and the coach (ui/hhlife.js) ---------- */
@@ -545,7 +547,7 @@ function wanderMoments(){
   if (mine && !was.turn){ tune('turnStart'); was.banner = true; }
   // ⚔ the banner: once the fight's opening has played, and not over a screen or a card that's up (ui/turnbanner.js)
   if (!mine || !f) was.banner = false;
-  else if (was.banner && !opening() && !menu.open && !talkView() && !victoryOpen() && !levelUpOpen()){
+  else if (was.banner && !opening() && !menu.open && !talkView() && !victoryOpen() && !defeatOpen() && !levelUpOpen()){
     const r = state.combat.round || 1; turnBanner({ title:'Your turn', sub:r > 1 && r !== was.round ? `Round ${r}` : '' }); was.round = r; was.banner = false; }
   if (!f) was.round = 0;
   if (!f && was.fight) tune(members().every(m => m.dead || m.hp <= 0) ? 'defeat' : 'victory');
