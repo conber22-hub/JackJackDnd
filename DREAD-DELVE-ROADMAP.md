@@ -20,6 +20,7 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 Dread Delve grows out of D&D into its own game, made in memory of Chance ("Dutcher", the Dutch Oven), who loved Halo and history. The story stays; the d20 core stays; what a hero is built from becomes our own. The design is in `docs/homebrew/callings.md`.
 
+- **🕯 The dedication** (`ui/dedication.js`, its words in `data/memorial.js`): the game opens on a candle and *In memory of Chance, “Dutcher.” The Dutch Oven.*, once each time it's opened; it goes on its own after a few seconds or on a tap or key. The start page carries his line at its foot, always.
 - **⛨ The Callings** (ChatGPT, `docs/chatgpt/callings.md`): twelve in place of the D&D classes, warriors from every age pulled in by the Mists (the Vanguard, Huscarl, Outrider, Marksman, Warden, Chaplain, Archivist, Relicborn, Seepbound, Herald, Mistwalker and Pankratiast), each with three Paths, the third Seep-touched (our Flood parallels).
 - **🧭 Origins, backgrounds and feats** (ChatGPT, `docs/chatgpt/origins-feats.md`): *The Drawn* of every age, the Barovian-born and the valley's stranger kin, in place of the species; our own backgrounds and feats.
 - **Choose your Calling** (Muse, `docs/muse/brief-18.md`): the picker in the hero creator, and twelve emblems.

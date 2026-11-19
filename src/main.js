@@ -43,6 +43,7 @@ import { updateSkyline } from './render/skyline.js';
 import { sendWhisper } from './ui/hud.js';
 import { renderPanel } from './ui/panels.js';
 import { showStart } from './ui/events.js';
+import { showDedication, memorialFoot } from './ui/dedication.js';
 import { bootScreenUI } from './ui/screen.js';
 import { initCardOnly } from './ui/cards.js';
 import { runLocalScreen, listenForScreens } from './net/screen.js';
@@ -206,7 +207,7 @@ if (scr !== null){
   readInvite(); bootScreenUI(); $('#startModal')?.classList.add('hidden');
   if (scr.length >= 4){ joinTable(scr, '📺 Table screen', 'screen-' + Math.random().toString(36).slice(2, 8)); net.join.screen = true; }
   else runLocalScreen();
-} else initSaves().then(showStart);   // the save is cached before the start screen reads it
+} else initSaves().then(() => { showStart(); memorialFoot(); showDedication(); });   // the save is cached before the start screen reads it; 🕯 Chance's dedication (ui/dedication.js)
 initCardOnly();   // a player's phone at an in-person game: no 3D (ui/cards.js)
 setScreenNow(nightNow); listenForScreens();
 onAskChange(() => { if (ui.tab === 'night') renderPanel(); });
