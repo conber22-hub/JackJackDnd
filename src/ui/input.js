@@ -21,7 +21,7 @@ import { $, esc } from '../util/core.js';
 import { toast, renderDock, renderSel, BUILD_TOOLS } from './hud.js';
 import { renderPanel } from './panels.js';
 import { select, selectDoor, selectTrap, requestMove, doPing } from '../game/actions.js';
-import { doAttack, placeMonster, castSpell } from '../game/combat.js';
+import { doAttack, placeMonster, castSpell, shove } from '../game/combat.js';
 import { editTile, paintRoom, commitRoom, traceStep, commitCorridor, eraseAt, placeDoorAt, placeTrapAt, placeStairsAt, placePropAt, placeHouseAt } from '../game/build.js';
 import { holdTap, holdHover, holdModeOff } from './holdings.js';
 import { changed, snapshot } from '../game/session.js';
@@ -217,6 +217,10 @@ function handleTap(cx, cy, shift = false){
       }
       else doAttack(ui.modeData.attacker, tokId, ui.modeData.i, ui.atkMode, { at:ui.modeData.at });
       ui.atkMode = 'normal'; setMode('select'); renderSel(); } return;
+    case 'shove': if (tokId && tokId !== ui.modeData.attacker){   // 🤚 (game/combat.js shove; a player's is a request)
+      if (ui.role === 'player') requestAct({ kind:'shove', id:ui.modeData.attacker, target:tokId, choice:ui.modeData.choice });
+      else shove(ui.modeData.attacker, tokId, ui.modeData.choice);
+      setMode('select'); renderSel(); } return;
     case 'cast': {
       const c = tokById(ui.modeData.caster), sp = c?.casts?.[ui.modeData.i], area = areaOf(sp);
       if (area){                                              // an area: aim it at a square (touch: tap twice)

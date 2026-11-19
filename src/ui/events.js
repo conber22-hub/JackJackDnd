@@ -118,6 +118,7 @@ document.addEventListener('click', e => {
     case 'atkMode': ui.atkMode = { normal:'adv', adv:'dis', dis:'normal' }[ui.atkMode]; renderSel(); break;
     case 'atk': if (sel){ const a = sel.attacks[+el.dataset.i], i = +el.dataset.i, who = sel;
       pickSlot(who, a?.l, a?.sn || a?.n, at => setMode('attack', { attacker:who.id, i, at }, `${who.name}: ${a.n}${at ? ` (level ${at})` : ''}${ui.atkMode !== 'normal' ? ` (${ui.atkMode})` : ''} — tap the target (the shading is its reach)`)); } break;
+    case 'shove': if (sel) setMode('shove', { attacker:sel.id, choice:k === 'prone' ? 'prone' : 'push' }, `${sel.name}: ${k === 'prone' ? 'knock prone' : 'shove back'} — tap who's beside them`); break;   // 🤚
     case 'dropConc': { const t = ui.role === 'player' ? tokById(ui.myToken) : sel; if (!t?.conc) break; if (ui.role === 'player') sendHost({ t:'dropConc' }); else { endConc(t, 'lets go'); changed(); } } break;
     case 'special': if (sel) useSpecial(sel, BEST[sel.bid].specials[+el.dataset.i]); break;
     case 'feat': if (sel){

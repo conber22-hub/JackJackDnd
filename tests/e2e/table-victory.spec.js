@@ -100,3 +100,32 @@ test('a player\'s phone captions the DM\'s fight, with their hero as "you"', asy
     expect(errors).toEqual([]);
   } finally { await context.close(); }
 });
+
+// 🤚 A player shoves from their phone (a request, run by the DM's table: game/requests.js 'shove')
+test('a player\'s shove at the table pushes the foe back', async ({ page:dm, browser, baseURL }) => {
+  test.setTimeout(300_000);
+  await arena(dm, []);
+  await dm.evaluate(() => { const D = window.DreadDelve; D.get().campaign.freeRolls = true;
+    const h = D.newHero('Fighter'); h.name = 'Ada'; h.id = 'ada-shove'; const t = D.applyCharacter(h, { owner:'Ada' }); t.floor = 0; t.x = 6; t.y = 10; });
+  await dm.locator('[data-act="tab"][data-k="table"]').click();
+  await dm.locator('[data-act="host"]').click();
+  await expect.poll(() => dm.evaluate(() => window.DreadDelve.net.online)).toBe(true);
+  const code = await dm.evaluate(() => window.DreadDelve.net.code);
+  const context = await browser.newContext({ baseURL, viewport:{ width:390, height:844 }, isMobile:true, hasTouch:true });
+  try {
+    const p = await context.newPage();
+    const errors = await preparePage(p);
+    await p.locator('[data-act="thRole"][data-k="player"]').click();
+    await p.locator('#pName').fill('Ada'); await p.locator('#pWord').fill('e2e-secret'); await p.locator('#joinCode').fill(code);
+    await p.getByRole('button', { name:'Join the table', exact:true }).click();
+    await expect.poll(() => p.evaluate(() => { const D = window.DreadDelve; return D.get()?.tokens.find(t => t.id === D.ui.myToken)?.name || null; }), { timeout:30_000 }).toBe('Ada');
+    await dm.evaluate(() => { const D = window.DreadDelve; const w = D.placeMonster('wolf', { floor:0, x:7, y:10 }); w.hp = w.maxHp = 300; w.saves = { str:-30, dex:-30 };
+      const a = D.get().tokens.find(t => t.name === 'Ada'); D.rollInitiative({ ids:[a.id, w.id], fixed:{ [a.id]:20, [w.id]:1 } }); });
+    await expect.poll(() => p.evaluate(() => { const D = window.DreadDelve; return !!D.get()?.tokens.find(t => t.bid === 'wolf') && D.get().combat.active; }), { timeout:30_000 }).toBe(true);
+    // (Ada's turn: her sheet offers the shove)
+    await expect.poll(() => p.evaluate(() => !!document.querySelector('[data-act="shove"]')), { timeout:30_000 }).toBe(true);
+    await p.evaluate(() => { const D = window.DreadDelve, w = D.get().tokens.find(t => t.bid === 'wolf'); D.requestAct({ kind:'shove', id:D.ui.myToken, target:w.id, choice:'push' }); });
+    await expect.poll(() => dm.evaluate(() => window.DreadDelve.get().tokens.find(t => t.bid === 'wolf').x), { timeout:30_000 }).toBe(8);
+    expect(errors).toEqual([]);
+  } finally { await context.close(); }
+});

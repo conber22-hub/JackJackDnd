@@ -182,6 +182,8 @@ export function renderSel(){
   if ((dm || mine) && !t.dead){
     acts += `<button class="btn small ${ui.atkMode !== 'normal' ? 'on' : ''}" data-act="atkMode" title="Advantage / disadvantage for the next roll">${ui.atkMode === 'adv' ? '▲ Adv' : ui.atkMode === 'dis' ? '▼ Dis' : '◆ Normal'}</button>`;
     acts += t.attacks.map((a, i) => `<button class="btn small ${a.l && !canCast(t, a.l, a.sn || a.n, a.again) ? 'off' : ''}" data-act="atk" data-i="${i}">🗡 ${esc(a.n)} <span class="muted">${a.b >= 0 ? '+' : ''}${a.b} · ${esc(a.d)}${a.l ? ` · L${a.l}` : ''}</span></button>`).join('');
+    // 🤚 a shove, in a fight (game/combat.js shove): pick, then tap who's beside them
+    if (state.combat.active && t.kind !== 'monster') acts += `<button class="btn small" data-act="shove" data-k="push" title="In place of a strike: they save (Strength or Dexterity) or are pushed 5 feet away">🤚 Shove</button><button class="btn small" data-act="shove" data-k="prone" title="In place of a strike: they save (Strength or Dexterity) or fall prone">🤚 Knock prone</button>`;
     if (dm && b?.specials) acts += b.specials.map((s, i) => `<button class="btn small seep" data-act="special" data-i="${i}">✦ ${esc(s.n)}</button>`).join('');
     const lg = dm && legendOf(t);
     if (lg?.legendary) acts += `<span class="chip on" title="Back at the start of its turn">⚜ ${legendLeft(t)}/${lg.legendary.n}</span>` + lg.legendary.acts.map((a, i) => `<button class="btn small ${legendLeft(t) < (a.cost || 1) ? 'off' : ''}" data-act="legend" data-i="${i}" title="${esc(a.f || '')}">⚜ ${esc(a.n)}${a.cost > 1 ? ` <span class="muted">(${a.cost})</span>` : ''}</button>`).join('');
