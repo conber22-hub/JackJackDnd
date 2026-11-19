@@ -104,13 +104,16 @@ function place(){
     if (r.width > 0){ el.style.left = `${r.left + r.width / 2}px`; el.style.transform = 'translateX(-50%)';
       el.style.bottom = `${window.innerHeight - r.top + 10}px`; el.style.alignItems = 'center'; return; }
   }
-  const dock = document.getElementById('dock');
-  if (dock && dock.offsetParent !== null){
-    const r = dock.getBoundingClientRect();
-    if (r.width > 0 && r.left < 200 && r.top < window.innerHeight - 40){
-      el.style.left = '12px'; el.style.transform = 'none'; el.style.bottom = `${window.innerHeight - r.top + 10}px`;
-      el.style.alignItems = 'flex-start'; return; }
+  // (Claude) above whatever sits along the bottom on the left: the dock, or a player's hero sheet on a phone at the table
+  let top = Infinity;
+  for (const id of ['dock', 'selCard']){
+    const n = document.getElementById(id); if (!n || !n.getClientRects().length || n.classList.contains('hidden')) continue;   // (a fixed panel has no offsetParent)
+    const r = n.getBoundingClientRect();
+    if (r.width > 0 && r.left < 200 && r.bottom > window.innerHeight - 90 && r.top < window.innerHeight - 40) top = Math.min(top, r.top);
   }
+  if (top < Infinity){
+    el.style.left = '12px'; el.style.transform = 'none'; el.style.bottom = `${window.innerHeight - top + 10}px`;
+    el.style.alignItems = 'flex-start'; return; }
   el.style.left = '12px'; el.style.transform = 'none'; el.style.bottom = '16px'; el.style.alignItems = 'flex-start';
 }
 // one line: on screen at full strength at once, holding about three seconds, then out and gone. It used to
@@ -209,16 +212,23 @@ function onHealed(e){
 const ACT_VERBS = { dash:'dashes', dodge:'dodges', disengage:'disengages', stand:'stands up' };
 const COND_WORDS = { prone:'knocked prone' };   // the rest say themselves: frightened, poisoned, restrained…
 
+const HANDLERS = {
+  acted:onActed, hurt:onHurt, healed:onHealed,
+  turnAct:e => { const t = e?.t; if (!t) return; show(`${cap(subj(t))} ${ACT_VERBS[e.k] || 'acts'}.`); },
+  feature:e => { const t = e?.t; if (!t) return;
+    show(e.id === 'rage' ? `${cap(subj(t))} rages.` : `${cap(subj(t))} uses ${e.n || 'a feature'}.`); },
+  cond:e => { const t = e?.t; if (!t || !e.n) return; const w = COND_WORDS[e.n] || e.n;
+    show(isMine(t.id) ? `You are ${w}.` : `${cap(theName(t))} is ${w}.`, isMine(t.id) ? 'red' : ''); },
+  turnStart:e => { const t = e?.t; if (!t || t.dead) return;
+    show(isMine(t.id) ? 'Your turn.' : `${cap(theName(t))}'s turn.`, isMine(t.id) ? 'gold' : '', isMine(t.id) ? '★' : ''); },
+  aims:e => { const by = tokById(e?.by), at = tokById(e?.at); if (!by || !at) return;
+    show(`${cap(subj(by))} goes for ${obj(at)}!`, isMine(at.id) ? 'red' : '', '🎯'); },
+};
+export const CAPTION_EVENTS = Object.keys(HANDLERS);
 export function startCaptions(){
   if (wired) return; wired = true;
-  bus.on('acted', onActed); bus.on('hurt', onHurt); bus.on('healed', onHealed);
-  bus.on('turnAct', e => { const t = e?.t; if (!t) return; show(`${cap(subj(t))} ${ACT_VERBS[e.k] || 'acts'}.`); });
-  bus.on('feature', e => { const t = e?.t; if (!t) return;
-    show(e.id === 'rage' ? `${cap(subj(t))} rages.` : `${cap(subj(t))} uses ${e.n || 'a feature'}.`); });
-  bus.on('cond', e => { const t = e?.t; if (!t || !e.n) return; const w = COND_WORDS[e.n] || e.n;
-    show(isMine(t.id) ? `You are ${w}.` : `${cap(theName(t))} is ${w}.`, isMine(t.id) ? 'red' : ''); });
-  bus.on('turnStart', e => { const t = e?.t; if (!t || t.dead) return;
-    show(isMine(t.id) ? 'Your turn.' : `${cap(theName(t))}'s turn.`, isMine(t.id) ? 'gold' : '', isMine(t.id) ? '★' : ''); });
-  bus.on('aims', e => { const by = tokById(e?.by), at = tokById(e?.at); if (!by || !at) return;
-    show(`${cap(subj(by))} goes for ${obj(at)}!`, isMine(at.id) ? 'red' : '', '🎯'); });
+  for (const [k, fn] of Object.entries(HANDLERS)) bus.on(k, fn);
 }
+/* 📱 (Claude) a player's phone at the table: the fight's events don't fire there, so the DM's app sends each one, by
+   ids (net/table.js 'cap'), and the phone says it from its own player's side ("you" is their hero). */
+export function feedCaption(k, e){ try { HANDLERS[k]?.(e); } catch {} }

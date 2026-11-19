@@ -111,3 +111,4 @@ export { tableHH } from './ui/tablehh.js';   // 🕹 the handheld at the table
 export { camTurn, camView, camCrane, renderHud, xpFloatsShown } from './ui/wander.js';   // 🎥 the Wanderer's follow camera
 export { viewSize, scene } from './render/scene.js';
 export { bus } from './util/core.js';   // 📣 the game's event bus (acted, hurt, healed, turnStart…), for poking at from the console
+export { seenNow } from './engine/grid.js';   // 👁 what the party can see this moment, by floor (tiles)

@@ -4,6 +4,7 @@ import { remoteBlow, remoteHeal } from '../ui/fightfx.js';
 import { openVictory, setVictoryFace } from '../ui/victory.js';
 import { faceOf } from '../game/night.js';
 import { spellFx } from '../render/spellfx.js';
+import { CAPTION_EVENTS, feedCaption } from '../ui/captions.js';
 import { Peer } from 'peerjs';
 import { state, setState, ui, tokById } from '../engine/state.js';
 import { updateVision, seenNow } from '../engine/grid.js';
@@ -194,6 +195,32 @@ function tableVictory(m){
   const me = tokById(ui.myToken), share = Math.max(0, +m.share || 0);
   openVictory(m.s, { party, names:m.names || {}, faces:{}, xp:{ before:0, after:share, next:share || 1, level:+me?.lvl || +me?.level || 1 } });
   setTimeout(() => { for (const id of party){ try { const t = tokById(id), f = t && faceOf(t); if (f) setVictoryFace(id, f); } catch {} } }, 80);
+}
+/* 💬 the fight's captions on the players' phones (Muse's ui/captions.js): what happens in a fight is said on each phone
+   from its own player's side, so the DM's app sends each event as it happens, its creatures by id with their hit
+   points and whether they're down (a phone's copy of the table can be a beat behind). Only while players are at the
+   table; never from the Wanderer (it plays alone). */
+const capTok = t => ({ $tok:t.id, hp:t.hp, dead:!!t.dead });
+function capOut(e){
+  const o = {};
+  for (const [k, v] of Object.entries(e || {})){
+    if (v && typeof v === 'object' && typeof v.id === 'string' && 'hp' in v) o[k] = capTok(v);
+    else if (v == null || ['string', 'number', 'boolean'].includes(typeof v)) o[k] = v;
+  }
+  return o;
+}
+for (const k of CAPTION_EVENTS) bus.on(k, e => { if (ui.role === 'dm' && !ui.wander && net.conns.size) broadcast({ t:'cap', k, e:capOut(e) }); });
+// a phone: the creatures back from their ids (as the DM had them at that moment); nothing about a foe the party can't see
+function capIn(k, e){
+  const o = {};
+  for (const [f, v] of Object.entries(e || {})){
+    if (v && typeof v === 'object' && v.$tok){ const t = tokById(v.$tok); if (!t) return;
+      if (t.kind === 'monster' && !seenNow[t.floor]?.has(t.y * (state.floors[t.floor]?.W || 0) + t.x)) return;
+      o[f] = { ...t, hp:+v.hp, dead:!!v.dead }; }
+    else o[f] = v;
+  }
+  if (k === 'aims'){ for (const id of [o.by, o.at]){ const t = tokById(id); if (t?.kind === 'monster' && !seenNow[t.floor]?.has(t.y * (state.floors[t.floor]?.W || 0) + t.x)) return; } }
+  feedCaption(k, o);
 }
 export function broadcast(m, except){ for (const [pid, s] of net.conns) if (pid !== except && s.conn.open) try { s.conn.send(m); } catch {} }
 let pushTimer = null;
@@ -531,6 +558,7 @@ export function onClientMsg(m){
   else if (m.t === 'area' && state && Array.isArray(m.sq)){ const ex = state.explored?.[m.floor]; flashArea(m.floor, m.sq.filter(i => ex?.has(i)), m.ty); }   // only where they've been
   else if (m.t === 'healfx' && state && m.id) remoteHeal(m.id, +m.n || 0);   // ✚ someone healed (game/combat.js heal)
   else if (m.t === 'spellfx' && state && m.fx && typeof m.fx === 'object') spellFx(m.fx);   // ✨ a spell seen (render/spellfx.js)
+  else if (m.t === 'cap' && state && CAPTION_EVENTS.includes(m.k) && m.e && typeof m.e === 'object') capIn(m.k, m.e);   // 💬 a caption, said from this player's side
   else if (m.t === 'victory' && state && m.s && typeof m.s === 'object' && !ui.screen) tableVictory(m);   // 🏆 the party won (game/combat.js checkVictory)
   else if (m.t === 'oaDone') dropAsk(m.id);
   else if (m.t === 'act' && state && ['attack', 'cast', 'hit', 'miss'].includes(m.kind)){ const fx = m.fx && typeof m.fx === 'object' ? m.fx : null; actOn(m.id, m.kind, m.target, fx); remoteBlow(m.kind, m.id, m.target, fx || {}); }   // (the number, MISS, the arrow: ui/fightfx.js)

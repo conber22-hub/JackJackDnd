@@ -20,6 +20,12 @@ const mode = () => { try { return localStorage.getItem(KEY) || 'captions'; } cat
 function caption(text){
   let el = document.getElementById('voiceCap');
   if (!el){ el = document.createElement('div'); el.id = 'voiceCap'; document.body.appendChild(el); }
+  // (above what sits along the bottom: a hero's sheet on a phone, the fight bar, the dock; 96px up when nothing does)
+  let top = innerHeight - 96;
+  for (const id of ['selCard', 'wdFight', 'dock']){ const n = document.getElementById(id); if (!n || n.classList.contains('hidden') || !n.getClientRects().length) continue;
+    const r = n.getBoundingClientRect(); if (r.width > 0 && r.bottom > innerHeight - 90 && r.top > innerHeight * .35) top = Math.min(top, r.top - 12); }
+  const cap = document.getElementById('captions'); if (cap?.children.length){ const r = cap.getBoundingClientRect(); if (r.height > 0) top = Math.min(top, r.top - 8); }   // (and above the fight's captions: ui/captions.js)
+  el.style.bottom = `${Math.round(innerHeight - top)}px`;
   el.textContent = text; el.classList.add('on'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('on'), 3200);
 }
 function hear(cue){
