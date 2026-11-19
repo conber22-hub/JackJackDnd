@@ -394,3 +394,16 @@ test('moving out of a foe\'s reach is marked as risky, unless you disengage', as
   await page.evaluate(() => { window.DreadDelve.wander.heroTurnAct('disengage'); window.DreadDelve.renderHud(); });
   await expect.poll(() => page.evaluate(() => window.DreadDelve.fightFxCount().risky), { timeout:20_000 }).toBe(0);
 });
+
+// 🩸 The blow that takes a foe to half its hit points: BLOODIED rises over it, and the captions say so
+test('a foe taken to half its hit points is seen to be bloodied', async ({ page }) => {
+  test.setTimeout(180_000);
+  await fight(page);
+  await page.evaluate(() => { const D = window.DreadDelve, w = D.get().tokens.find(t => t.kind === 'monster'); D.captions.setCaptions(true); D.applyDamage(w, 120, 'slashing', D.wander.hero().id); });
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.fightFxCount().texts.join(' ')), { timeout:20_000 }).toContain('BLOODIED');
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.captions.captionLines().join(' | '))).toContain('The wolf is bloodied.');
+  // (once: a second blow doesn't say it again)
+  await page.evaluate(() => { const D = window.DreadDelve, w = D.get().tokens.find(t => t.kind === 'monster'); D.applyDamage(w, 5, 'slashing', D.wander.hero().id); });
+  await page.waitForTimeout(1500);
+  expect((await page.evaluate(() => window.DreadDelve.captions.captionLines())).filter(l => /bloodied/.test(l)).length).toBe(1);
+});

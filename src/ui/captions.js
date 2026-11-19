@@ -203,6 +203,8 @@ function onHurt(e){
     if (!group.type) group.type = e.type || null;
     group.targets.push([t, e.n]); return;
   }
+  // (Claude) a foe taken to half its hit points: said once, after the blow
+  if (e.bloodied && t.kind === 'monster') setTimeout(() => show(`${cap(theName(t))} is bloodied.`, isMine(e.by) ? 'gold' : '', '🩸'), 250);
   if (lastBlow && t.id === lastBlow.target && e.n === lastBlow.n && Date.now() - lastBlow.at < BLOW_MS) return;
   show(hurtLine(t, e.n, e.type), isMine(t?.id) ? 'red' : '', VERBS[e.type] ? '✦' : '');
 }

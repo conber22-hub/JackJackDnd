@@ -361,13 +361,14 @@ export function applyDamage(t, n, type = '', by = null, defended = false){
   t.hp = Math.max(0, t.hp - n);
   burst(t.floor, t.x, t.y, '#c0303a');
   if (t.bid === 'seepling' && n >= 5) t.hp = 0;     // Burst Sac
+  let crossed = false;   // (🩸 this blow took it to half its hit points or below: ui/fightfx.js, ui/captions.js)
   if (t.hp > 0 && !t.flags.bloodied && t.hp <= t.maxHp / 2){
-    t.flags.bloodied = true;
+    t.flags.bloodied = true; crossed = true;
     const hooks = BEST[t.bid]?.hooks?.onBloodied;
     if (hooks){ showCard({ kind:'seep', title:`${t.name} is bloodied`, flair:'Something changes in the way it holds itself.' }); for (const fx of hooks) runFx(t, fx); }
   }
   if (t.hp <= 0 && !(t.nem && nemesisHolds(t))){ kill(t, type, by); setTimeout(checkVictory, 2100); }   // (after the last one has fallen, in its slow motion: render/punch.js)
-  bus.emit('hurt', { t, n, type, by:(typeof by === 'string' ? by : by?.id) || null });   // (⚔ the number rising over them: ui/wander.js)
+  bus.emit('hurt', { t, n, type, by:(typeof by === 'string' ? by : by?.id) || null, bloodied:crossed && t.hp > 0 });   // (⚔ the number rising over them: ui/wander.js)
   if (t.kind === 'pc') bus.emit('acted', { actor:t, trigger:t.hp <= 0 ? 'down' : 'hurt', action:'' });   // 🗣 a hero hurt or down says so (ui/voices.js)
   const dealt = n;
   // being hurt ends some holds (Charm Person: hurt by the caster or their friends); hurting someone ends Invisibility

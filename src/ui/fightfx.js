@@ -48,6 +48,8 @@ function hurt(e){
   after(330 + hurtN * 160, () => floatText(e.t.id, `${crit ? 'CRIT ' : ''}−${e.n}`, crit ? '#ffd45a' : e.t.kind === 'monster' ? '#ff7a52' : '#ff3b3b', { big:crit }));
   // 💥 a killing blow: the figure stands until it lands, then falls (render/minis.js)
   if (e.t.dead) holdFall(e.t.id, 500 + hurtN * 160);
+  // 🩸 half its hit points gone, with this blow: a foe staggers into it, and the word rises after the number
+  if (e.bloodied && e.t.kind === 'monster') after(780 + hurtN * 160, () => floatText(e.t.id, 'BLOODIED', '#ff6a5a', { word:true }));
   // what had no swing (a spell's area, a trap, a burst): it lands all the same, from nowhere in particular
   if (now - (blowAt.get(e.t.id) || -1e9) > 60){ const t = e.t, kill = !!t.dead; after(330 + hurtN * 160, () => impact(t.id, null, { r:shareOf(e.n, t.maxHp), kill })); }
 }
