@@ -337,3 +337,12 @@ test('a brisk fight pace shortens the foes\' turns', async ({ page }) => {
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('dreaddelve.gfx.v1')).pace)).toBe('brisk');
   await page.evaluate(() => window.DreadDelve.setGfx({ pace:'normal' }));
 });
+
+// 📳 In the Wanderer on a phone, a blow on the hero buzzes it (with the handheld's shell or without)
+test('a blow on the hero buzzes the phone', async ({ page }) => {
+  test.setTimeout(180_000);
+  await fight(page);
+  await page.evaluate(() => { window.__vib = []; navigator.vibrate = v => { window.__vib.push(v); return true; }; });
+  await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), w = D.get().tokens.find(t => t.kind === 'monster'); D.applyDamage(h, 40, 'piercing', w.id); });
+  await expect.poll(() => page.evaluate(() => window.__vib.length), { timeout:20_000 }).toBeGreaterThan(0);
+});

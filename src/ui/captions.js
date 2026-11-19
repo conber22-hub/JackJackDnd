@@ -228,6 +228,7 @@ export const CAPTION_EVENTS = Object.keys(HANDLERS);
 export function startCaptions(){
   if (wired) return; wired = true;
   for (const [k, fn] of Object.entries(HANDLERS)) bus.on(k, fn);
+  bus.on('state', () => { if (el?.children.length) setTimeout(place, 0); });   // (a phone's sheet can grow with a new state: keep clear of it)
 }
 /* 📱 (Claude) a player's phone at the table: the fight's events don't fire there, so the DM's app sends each one, by
    ids (net/table.js 'cap'), and the phone says it from its own player's side ("you" is their hero). */

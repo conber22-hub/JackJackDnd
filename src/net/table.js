@@ -610,6 +610,11 @@ function applyRemoteState(s){
   else if (me && key !== lastTurnSeen && state.combat.active && state.combat.order[upNext()] === me.id){ toast('You\'re up next — get ready.'); buzz([60]); }   // on deck
   else if (me && ui.selected === me.id && !tokenViews.get(me.id)?.anim) showReach(me);   // what's left of their move
   lastTurnSeen = key;
+  // 📳 your hero struck: the phone buzzes, harder the harder the blow; a long buzz when they go down (the handheld has
+  // its own rumble: ui/handheld.js)
+  const was = myPrev && myPrev === ui.myToken ? prev?.tokens?.find(t => t.id === myPrev) : null;
+  if (me && was && me.hp < was.hp && !document.body.classList.contains('hh')){ const k = (was.hp - me.hp) / Math.max(1, me.maxHp);
+    buzz(me.hp <= 0 ? [120, 60, 220] : k > .3 ? [70, 40, 110] : k > .12 ? [60] : [30]); }
   renderAll();
   if (ui.screen) afterScreenState();
   try { bus.emit('state', state); } catch (e) { console.warn(e); }   // a new state has arrived from the DM (the Map Book redraws on it: ui/mapbook.js)

@@ -181,8 +181,8 @@ function leaveFull(){ wentFull = false; if (document.fullscreenElement) document
 /* ---------- a hit ---------- */
 // k: how hard (the share of the hero's hit points it took)
 export function rumble(k = .2){
+  try { navigator.vibrate?.(k > .3 ? [70, 40, 110] : k > .12 ? [60] : [30]); } catch {}   // (📳 a phone buzzes, the shell on or not)
   if (!on) return;
-  try { navigator.vibrate?.(k > .3 ? [70, 40, 110] : k > .12 ? [60] : [30]); } catch {}
   el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit');
 }
 let lastLg = '';
