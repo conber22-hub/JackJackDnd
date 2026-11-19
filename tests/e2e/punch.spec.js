@@ -325,3 +325,15 @@ test('a spell is drawn in its own look, with its mark and its linger', async ({ 
   await expect.poll(() => page.evaluate(() => window.DreadDelve.spellFxCount().live), { timeout:30_000 }).toBe(0);
   expect(errs).toEqual([]);
 });
+
+// ⏩ The fight's pace (🎨 Look → Fights → Fight pace, per device: engine/pace.js): Brisk shortens a foe's wind-up and the
+// waits between turns, and is remembered
+test('a brisk fight pace shortens the foes\' turns', async ({ page }) => {
+  test.setTimeout(180_000);
+  await fight(page);
+  await page.evaluate(() => window.DreadDelve.setGfx({ pace:'brisk' }));
+  const ms = await page.evaluate(() => new Promise(res => { const D = window.DreadDelve; D.bus.on('aims', e => res(e.ms)); D.wander.endHeroTurn(); setTimeout(() => res(null), 30000); }));
+  expect(ms).toBe(240);
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('dreaddelve.gfx.v1')).pace)).toBe('brisk');
+  await page.evaluate(() => window.DreadDelve.setGfx({ pace:'normal' }));
+});

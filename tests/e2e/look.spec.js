@@ -70,3 +70,12 @@ test('capture produces a PNG of a sensible size', async ({ page }) => {
   expect(buf.subarray(0, 8)).toEqual(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));   // the PNG signature
   expect(buf.length).toBeGreaterThan(4096);   // a real frame, not a cleared buffer
 });
+
+// ⏩ Fights: the pace of a fight is chosen here, next to Calm effects and Captions
+test('the Look panel chooses the fight pace', async ({ page }) => {
+  await startDM(page);
+  await openPanel(page);
+  await page.locator('[data-look-pace]').selectOption('quick');
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('dreaddelve.gfx.v1')).pace)).toBe('quick');
+  await expect(page.locator('[data-look-captions]')).toBeVisible();
+});

@@ -8,7 +8,8 @@ const phone = typeof matchMedia !== 'undefined' && (matchMedia('(pointer:coarse)
 // calm: no hit-stop or slow motion, no screen flashes, no camera kick or shake (render/punch.js), a steady near-death
 // edge (ui/followcam.js); on by default where the device asks for less motion
 const lessMotion = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-export const gfx = { quality:phone ? 'low' : 'medium', style:'classic', omens:true, volume:.7, music:true, sfx:true, calm:lessMotion };
+// pace: how fast a fight's turns follow one another in the Wanderer: 'normal' · 'quick' · 'brisk' (engine/pace.js)
+export const gfx = { quality:phone ? 'low' : 'medium', style:'classic', omens:true, volume:.7, music:true, sfx:true, calm:lessMotion, pace:'normal' };
 try { Object.assign(gfx, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch {}
 const listeners = [];
 export function onGfx(fn){ listeners.push(fn); }

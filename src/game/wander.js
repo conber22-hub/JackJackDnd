@@ -12,6 +12,8 @@
      · talk: a companion's own words and the pitch (a skill check the game rolls), or what one of the valley's folk says
      · travel and rest from the menu; it saves in its own slot (game/session.js), never over the DM's campaign
    The run lives in state.campaign.wander, so it saves and loads with everything else. */
+import { paceOf } from '../engine/pace.js';
+import { gfx } from '../render/gfx.js';
 import { state, ui, tokById, tokenAt, makeMonster, makeNPC, log, newState } from '../engine/state.js';
 import { newWander, planAmbush, recruitRoll, followSpot, pushTrail, roadEnd, cycleTarget, partyDown, ambushChance } from '../engine/wander.js';
 import { COMPANIONS, companionById, WAKE, WAKE_HANDHELD, AMBUSH, WON, LOST, LIKES, MOOD, QUESTS, questById, MOMENTS, momentById } from '../data/wander.js';
@@ -71,7 +73,8 @@ const night = () => { const h = valley().hour; return h >= 20 || h < 6; };
 const onRoad = () => state.meta.template === 'journey';
 
 // What only this device keeps while playing (never saved): the hero's trail, the aim, whose turn was whose.
-const WIND_MS = 550;   // how long a foe shows what it means to do before it does it
+// how long a foe shows what it means to do before it does it, and the waits between turns: by the player's pace
+const pace = () => paceOf(gfx.pace);
 export const rt = { walkN:0, tapTo:null, step:null, spotted:0, heard:new Set(), trail:[], target:null, atk:null, heroKey:'', attacks:0, cast:false, bonus:false, acting:'', actAt:0, lastBusy:0, endAt:0, talk:null, seen:new Set(), round:0, unseen:0, hpWas:null, focus:null, look:null, opening:null };
 export const freshRun = () => fresh();
 const fresh = () => Object.assign(rt, { opening:null, spotted:0, heard:new Set(), trail:[], target:null, atk:null, heroKey:'', attacks:0, cast:false, bonus:false, acting:'', actAt:0, lastBusy:0, endAt:0, talk:null, round:0, unseen:0, hpWas:null });
@@ -674,19 +677,19 @@ export function fightTick(now = performance.now()){
   const t = currentTurn(); if (!t) return;
   const key = `${c.round}:${c.idx}:${t.id}`;
   if (t.id === W().heroTok){
-    if (t.dead || t.hp <= 0){ if (rt.acting !== key){ rt.acting = key; rt.actAt = now; } else if (now - rt.actAt > 900) nextTurn(); return; }
+    if (t.dead || t.hp <= 0){ if (rt.acting !== key){ rt.acting = key; rt.actAt = now; } else if (now - rt.actAt > pace().down) nextTurn(); return; }
     if (rt.heroKey !== key){ rt.heroKey = key; rt.did = ''; rt.attacks = 0; rt.cast = false; rt.bonus = false; rt.surged = false; rt.atk = null; if (!target()) aim(1); follow(t); }
-    if (!attacksLeft() && moveAllowance(t) <= 0 && now - rt.lastBusy > 900) endHeroTurn();
+    if (!attacksLeft() && moveAllowance(t) <= 0 && now - rt.lastBusy > pace().down) endHeroTurn();
     return;
   }
   // a foe's turn: it shows who it's going for (a wind-up, a red arrow on the ground: ui/fightfx.js), then does it
   if (rt.acting !== key){ rt.acting = key; rt.actAt = now; if (t.dead || t.hp <= 0 || t.flags?.gone){ nextTurn(); return; }
     let p = null; try { p = planFor(t); } catch {}
     const tg = p && (p.kind === 'attack' || p.kind === 'cast') && p.target && tokById(p.target);
-    if (tg && tg.id !== t.id){ bus.emit('aims', { by:t.id, at:tg.id, ms:WIND_MS }); rt.wind = { key, until:now + WIND_MS, p }; return; }
+    if (tg && tg.id !== t.id){ const ms = pace().wind; bus.emit('aims', { by:t.id, at:tg.id, ms }); rt.wind = { key, until:now + ms, p }; return; }
     try { autoTurn(t, p); } catch (e){ console.warn(e); } return; }
   if (rt.wind?.key === key){ if (now < rt.wind.until) return; const p = rt.wind.p; rt.wind = null; rt.actAt = now; try { autoTurn(t, p); } catch (e){ console.warn(e); } return; }
-  if (now - rt.actAt > 1100 && now - rt.lastBusy > 700) nextTurn();
+  if (now - rt.actAt > pace().after && now - rt.lastBusy > pace().settle) nextTurn();
 }
 function finishFight(won){
   const c = state.combat, w = W();
