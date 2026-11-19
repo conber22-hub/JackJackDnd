@@ -201,6 +201,8 @@ export function playTune(evts, { gain = .5, at = 0, bus = null } = {}){
    evts: one pass of the loop (as for playTune); len: its length in seconds. The loop is laid down a few seconds ahead
    on a bus of its own (under the music setting), fading in; stop(fade) fades it out and lets it go.
    → { stop(fade) } or null (no sound yet: before the first tap, or music off). */
+// a short phrase on the music's channel (a fight's ending: ui/regionmusic.js), with the music setting, not the sounds'
+export function playMusic(evts, { gain = .4 } = {}){ if (!gfx.music || !evts?.length || !init() || ctx.state !== 'running') return () => {}; return playTune(evts, { gain, bus:musicBus }); }
 export function loopTune(evts, len, { gain = .32, fadeIn = 3 } = {}){
   if (!gfx.music || !evts?.length || !(len > .5)) return null;
   if (!init() || ctx.state !== 'running') return null;

@@ -447,3 +447,12 @@ test('a shove pushes a foe back or knocks it prone, in place of a strike', async
   expect(await page.evaluate(() => window.DreadDelve.get().tokens.find(t => t.kind === 'monster').conds.some(c => c.n === 'prone'))).toBe(true);
   expect(await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), w = D.get().tokens.find(t => t.kind === 'monster'); w.size = 3; return D.shove(h.id, w.id, 'push'); })).toBe(false);
 });
+
+// 🥁 The fight's music (ChatGPT's engine/battle-music.js): a wolf is a skirmish; the hero alone near death, a last stand
+test('the fight\'s music follows the danger', async ({ page }) => {
+  test.setTimeout(180_000);
+  await fight(page);
+  expect(await page.evaluate(() => window.DreadDelve.fightMusicNow().wanted)).toBe('skirmish');
+  await page.evaluate(() => { const h = window.DreadDelve.wander.hero(); h.hp = 10; });
+  expect(await page.evaluate(() => window.DreadDelve.fightMusicNow().wanted)).toBe('lastStand');
+});
