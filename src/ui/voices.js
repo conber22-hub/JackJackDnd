@@ -25,6 +25,10 @@ function caption(text){
   for (const id of ['selCard', 'wdFight', 'dock']){ const n = document.getElementById(id); if (!n || n.classList.contains('hidden') || !n.getClientRects().length) continue;
     const r = n.getBoundingClientRect(); if (r.width > 0 && r.bottom > innerHeight - 90 && r.top > innerHeight * .35) top = Math.min(top, r.top - 12); }
   const cap = document.getElementById('captions'); if (cap?.children.length){ const r = cap.getBoundingClientRect(); if (r.height > 0) top = Math.min(top, r.top - 8); }   // (and above the fight's captions: ui/captions.js)
+  // (on the handheld: on its screen, under the dice at the top, not over the buttons on the body below it)
+  const B = document.body, hhY = B.classList.contains('hh') ? parseFloat(getComputedStyle(B).getPropertyValue('--hh-scr-y')) : NaN;
+  if (Number.isFinite(hhY)) top = hhY + 128;
+  el.classList.toggle('hh', Number.isFinite(hhY));
   el.style.bottom = `${Math.round(innerHeight - top)}px`;
   el.textContent = text; el.classList.add('on'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('on'), 3200);
 }
@@ -54,7 +58,8 @@ export function ensureVoices(){
   const st = document.createElement('style');
   st.textContent = `#voiceCap{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(8px);max-width:min(560px,90vw);padding:8px 16px;border-radius:999px;
     background:rgba(12,10,14,.82);color:#f3e6c8;font-family:var(--serif);font-style:italic;font-size:17px;text-align:center;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:30}
-    #voiceCap.on{opacity:1;transform:translateX(-50%)}`;
+    #voiceCap.on{opacity:1;transform:translateX(-50%)}
+    #voiceCap.hh{font-size:13px;padding:4px 12px;max-width:80vw}`;
   document.head.appendChild(st);
   bus.on('acted', onActed);
   net.onVoice = m => hear(m.cue);

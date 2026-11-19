@@ -115,3 +115,4 @@ export { viewSize, scene } from './render/scene.js';
 export { bus } from './util/core.js';   // 📣 the game's event bus (acted, hurt, healed, turnStart…), for poking at from the console
 export { seenNow } from './engine/grid.js';   // 👁 what the party can see this moment, by floor (tiles)
 export { shove } from './game/combat.js';   // 🤚 shove(aId, tId, 'push' | 'prone'): in place of a strike (engine/shove.js)
+export { showCard } from './ui/hud.js';

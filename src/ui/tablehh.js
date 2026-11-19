@@ -17,7 +17,7 @@
    It holds the handheld whenever this phone is seated with a hero (not the TV, not card only, not in the Lantern
    Yard), and the device wants it: on a touch screen with no controller, unless the menu's "The classic screen" is
    chosen (kept per device). A controller plugged in plays it too. */
-import { turnBanner } from './turnbanner.js';
+import { turnBannerWhenClear } from './turnbanner.js';
 import { hpBar, barMood } from './hpbar.js';
 import { showTarget } from './targetinfo.js';
 import { state, ui, tokById } from '../engine/state.js';
@@ -395,7 +395,7 @@ export function renderHud(){
         <div class="wd-fl${tg?.maxHp ? ' wd-tgt' : ''}">${tg ? tg.maxHp ? `<div class="wd-tc" id="tbTarget"></div>${i < 0 ? ' <span class="muted">(out of reach)</span>' : ''}` : `🎯 <b>${esc(tg.name)}</b>${i < 0 ? ' <span class="muted">(out of reach)</span>' : ''}` : 'Nobody in sight'}</div>
         ${tg && i >= 0 && strikesLeft(t) ? `<div class="wd-fl wd-weap">⚔ <b>${esc(t.attacks[i].n)}</b> ${signed(t.attacks[i].b)} to hit · ${esc(t.attacks[i].d)} ${esc(t.attacks[i].t || '')} · <span class="near">${esc(reachWords(t, tg, t.attacks[i]))}</span></div>${(e => e.text ? `<div class="wd-fl wd-edge">${esc(e.mark)} ${esc(e.text)}</div>` : '')(edgeOf(t, tg, t.attacks[i]))}` : ''}
         <div class="wd-acts"><button class="wd-act" data-tb="x"><b>X</b> Actions</button><button class="wd-act" data-tb="y"><b>Y</b> Next target</button><button class="wd-act" data-tb="endturn">End turn</button></div>`
-      : `<div class="wd-fl">${cur ? `<b>${esc(cur.name)}</b>'s turn…` : '…'}</div>${tg ? `<div class="wd-fl">🎯 ${esc(tg.name)}</div>` : ''}`;
+      : `<div class="wd-fl">${cur ? `<span><b>${esc(cur.name)}</b>'s turn…</span>` : '…'}</div>${tg ? `<div class="wd-fl">🎯 ${esc(tg.name)}</div>` : ''}`;
     put('tbFight', `<div class="wd-order">${order}</div>${body}`);
     if (myTurn() && tg?.maxHp) showTarget(document.getElementById('tbTarget'), tg);   // 🎯 (Muse's ui/targetcard.js; only when its health is known here)
   }
@@ -464,7 +464,7 @@ function placeWatch(t){
 function moments(t){
   const mine = myTurn(), f = fight();
   if (mine && !rt.turnWas){ tune('turnStart'); waiting(''); try { navigator.vibrate?.([50, 40, 50]); } catch {}   // (last turn's "with the DM…" is old news)
-    const r = state.combat.round || 1; turnBanner({ title:'Your turn', sub:r > 1 && r !== rt.bannerRound ? `Round ${r}` : '' }); rt.bannerRound = r; }   // ⚔ (ui/turnbanner.js)
+    const r = state.combat.round || 1; turnBannerWhenClear({ title:'Your turn', sub:r > 1 && r !== rt.bannerRound ? `Round ${r}` : '' }, myTurn); rt.bannerRound = r; }   // ⚔ (ui/turnbanner.js)
   if (!f && rt.fightWas && !t.dead && t.hp > 0) tune('victory');
   if (rt.hpWas !== null && t.hp > rt.hpWas) tune('heal');
   else if (rt.hpWas !== null && t.hp < rt.hpWas) tune(t.hp <= 0 ? 'defeat' : 'hit');

@@ -17,7 +17,16 @@ export function tune(id, opts){ if (hh.chip === false) return; try { playTune(ev
 /* ---------- the coach ---------- */
 const KEY = 'dreaddelve.coach.v1';
 let mem = reset(); try { mem = { ...reset(), ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch {}
-let lastTick = 0, lastDid = 'none', shownAt = 0, sitAt = 0, savedAt = '';
+let lastTick = 0, lastDid = 'none', shownAt = 0, sitAt = 0, savedAt = '', shownFor = '';
+// the moment a tip was shown for: once the fight starts or ends, or the turn changes hands, it's old news
+const momentOf = s => s ? `${!!s.fight}:${!!s.myTurn}:${!!s.down}` : '';
+// off the handheld the tip is a small pill in the middle, under the fight's turn order when that's up (it used to be
+// a bar the width of the screen, over the order's portraits)
+function placeTip(e){
+  if (hhOn()){ e.style.top = ''; return; }
+  const o = document.getElementById('wdOrder'), r = o && !o.classList.contains('hidden') && o.getClientRects().length ? o.getBoundingClientRect() : null;
+  e.style.top = r && r.bottom > 0 ? `${Math.round(r.bottom + 8)}px` : '';
+}
 const save = () => { const s = JSON.stringify(mem); if (s === savedAt) return; savedAt = s; try { localStorage.setItem(KEY, s); } catch {} };
 // The player did something the coach teaches ('strike', 'cast', 'endTurn', 'aim', 'camera', 'sheet', 'menu', 'stairs', 'door', 'dash'…)
 export function coachLearn(action){ if (!action) return; lastDid = action; mem = learn(mem, action); save(); }
@@ -37,11 +46,12 @@ export function coachTick(snapFn, now = performance.now()){
   if (!e.classList.contains('hidden') && now - shownAt > 9000) e.classList.add('hidden');
   if (now - lastTick < 1000) return; lastTick = now;
   const snap = snapFn(); if (!snap){ e.classList.add('hidden'); return; }
+  if (!e.classList.contains('hidden') && momentOf(snap) !== shownFor) e.classList.add('hidden');
   const pad = [...(navigator.getGamepads?.() || [])].some(g => g && g.connected);
   const mode = hhOn() ? 'handheld' : pad ? 'pad' : 'keys';
   const r = nextTip({ ...snap, now:Date.now(), mode, justDid:lastDid, sessionMs:now - sitAt }, mem);
   mem = r.memory; lastDid = 'none'; save();
-  if (r.tip){ e.textContent = `💡 ${r.tip.text}`; e.classList.remove('hidden'); shownAt = now; }
+  if (r.tip){ e.textContent = `💡 ${r.tip.text}`; e.classList.remove('hidden'); shownAt = now; shownFor = momentOf(snap); placeTip(e); }
 }
 export function coachHide(){ el().classList.add('hidden'); }
 export const coachMemory = () => mem;

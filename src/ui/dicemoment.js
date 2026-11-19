@@ -54,6 +54,8 @@ export function diceMoment(d, names = {}){
   if (!busy) play(queue.shift());
 }
 export const diceSeen = () => seen.slice();
+// a roll on screen, or waiting its turn (ui/turnbanner.js holds the turn's banner until it's gone)
+export const diceBusy = () => busy || queue.length > 0;
 
 let wired = false;
 export function wireDice(){

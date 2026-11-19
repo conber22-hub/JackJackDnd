@@ -219,7 +219,8 @@ export function startTurn(){
   if (b?.hooks?.onTurnStart && !t.dead) for (const fx of b.hooks.onTurnStart) runFx(t, fx, true);
   if (isDM()){ ui.selected = t.id; if (t.floor !== ui.floor) goFloor(t.floor, false); focusTile(t.floor, t.x, t.y); showReach(t); }
   const extra = t.conds?.length ? ` (${t.conds.map(c => c.n).join(', ')})` : '';
-  banner(`${t.name}'s turn${extra}`); sfx('turn'); bus.emit('turnStart', { t });   // (a ring under whoever's turn it is: ui/fightfx.js)
+  if (!ui.wander) banner(`${t.name}'s turn${extra}`);   // (the Wanderer's turn order and gold "Your turn" say it: ui/turnbanner.js)
+  sfx('turn'); bus.emit('turnStart', { t });   // (a ring under whoever's turn it is: ui/fightfx.js)
   toPlayers({ t:'banner', text:t.kind === 'monster' && !partySees(t) ? 'Something unseen acts…' : `${t.name}'s turn` }, 'turns');
 }
 

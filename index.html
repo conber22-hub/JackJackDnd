@@ -633,7 +633,12 @@ body.hh .wd-open .ttl{font-size:30px}body.hh .wd-open .fl{font-size:12px}body.hh
 body.hh .wd-menu.wd-dock{bottom:auto;top:50%;left:50%;right:auto;transform:translate(-50%,-50%);max-height:calc(100% - 14px)}
 body.hh .wd-menu.wd-dock{padding:7px 9px}body.hh .wd-menu.wd-dock .wd-opt{font-size:12px;padding:4px 9px}body.hh .wd-menu.wd-dock .wd-opt small{font-size:10px}body.hh .wd-menu.wd-dock .wd-tt b{font-size:15px}body.hh .wd-menu.wd-dock .wd-opts{gap:3px}
 body.hh .wd-info{max-height:3.6em;overflow:hidden}
-body.hh.wd-fighting #cardLayer{padding-top:8px}
+/* (on the handheld's screen a fight's card is a small note low on the left, under the dice at the top and clear of the hero: the
+   dice and the captions tell the blow, the note keeps what they don't, the save and the damage) */
+body.hh.wd-fighting #cardLayer{justify-content:flex-end;padding:0 0 46px 6px}
+body.hh.wd-fighting #cardLayer .pop{width:min(240px,72%);padding:5px 9px;border-radius:10px}
+body.hh.wd-fighting #cardLayer .pop .t{font-size:13px}body.hh.wd-fighting #cardLayer .pop .r{font-size:10px;margin:1px 0}body.hh.wd-fighting #cardLayer .pop .big{font-size:15px;margin:2px 0 0}
+body.hh.wd-fighting #cardLayer .pop .s,body.hh.wd-fighting #cardLayer .pop .f,body.hh.wd-fighting #cardLayer .pop .tap{display:none}
 .wd-order{display:flex;flex-wrap:wrap;gap:6px;font-size:13px}
 .wd-order span{padding:2px 10px;border-radius:999px;border:1px solid var(--line);color:var(--dim)}
 .wd-order .foe{color:#e39a9a}.wd-order .pal{color:#bfe3a3}.wd-order .now{border-color:var(--candle);color:var(--ink)}.wd-order .down{text-decoration:line-through;opacity:.5}
@@ -800,7 +805,7 @@ body.hh .dm-who{font-size:8px}body.hh .dm-sum{font-size:10px}body.hh .dm-sum i{f
   #handheld.fight .hh-bezel{height:min(41dvh,calc((100vw - 32px) * 1.02))}
   #handheld.fight .hh-sub{display:block;width:calc(100vw - 32px);height:clamp(112px,18dvh,156px);margin-top:8px;border-radius:10px 10px 22px 10px;background:var(--hh-bezel);box-shadow:inset 0 0 0 2px rgba(255,255,255,.05),inset 0 6px 16px rgba(0,0,0,.6),0 1px 0 var(--hh-edge)}
 }
-body.hh-subon .hh-fightbar{position:fixed;left:var(--hh-sub-x);top:var(--hh-sub-y);width:var(--hh-sub-w);height:var(--hh-sub-h);transform:none;bottom:auto;box-sizing:border-box;overflow:auto;padding:7px 9px;border-radius:10px;background:transparent;border:0;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+body.hh-subon .wd-fight.hh-fightbar{position:fixed;left:var(--hh-sub-x);top:var(--hh-sub-y);width:var(--hh-sub-w);height:var(--hh-sub-h);transform:none;bottom:auto;box-sizing:border-box;overflow:auto;padding:7px 9px;border-radius:10px;background:transparent;border:0;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
 body.hh #stage{z-index:2;inset:auto}
 body.hh #stage{position:fixed;overflow:hidden;border-radius:3px}
 body.hh #stage canvas.chunky{image-rendering:pixelated}
@@ -833,6 +838,7 @@ body.hh-lcd #wdBanner b{font-family:"Pixelify Sans","Cormorant Garamond",monospa
 #hhTip{position:fixed;z-index:44;left:calc(var(--hh-scr-x, 8px) + 8px);width:calc(var(--hh-scr-w, 100vw) - 16px);top:calc(var(--hh-scr-y, 8px) + 46px);box-sizing:border-box;padding:6px 10px;border-radius:10px;
   background:rgba(14,10,14,.86);border:1px solid var(--gold-line);color:#f0d6a8;font:13px/1.35 "Cormorant Garamond",Georgia,serif;box-shadow:0 6px 18px rgba(0,0,0,.5);animation:hhtip .3s ease-out;cursor:pointer}
 #hhTip.hidden{display:none}
+body:not(.hh) #hhTip{left:0;right:0;margin:0 auto;width:fit-content;max-width:min(560px,calc(100vw - 32px));top:96px;text-align:center}
 @keyframes hhtip{from{opacity:0;transform:translateY(-6px)}}
 #tbPrompt{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:calc(100% - 12px)}
 .wd-oa{flex-basis:100%;text-align:center;padding:4px 10px;border-radius:10px;background:rgba(120,20,30,.82);border:1px solid #d23a3a;color:#ffe6e6;font-size:13px;animation:hhtip .25s ease-out}

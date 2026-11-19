@@ -1,4 +1,4 @@
-import { test, expect } from './helpers.js';
+import { test, expect, preparePage } from './helpers.js';
 
 // 💥 A blow felt (render/punch.js): the attacker lunges, the world holds still for an instant at the impact, the one
 // struck is knocked back and left a splash on the ground; a miss sways aside; a killing blow runs slow and the body
@@ -478,4 +478,34 @@ test('a party that falls sees the Mists close over them, and rises where they la
   await expect(page.locator('#defeatMist')).toHaveCount(0);
   await expect.poll(() => page.evaluate(() => { const h = window.DreadDelve.wander.hero(); return !!h && !h.dead && h.hp > 0; }), { timeout:30_000 }).toBe(true);
   await expect(page.locator('#wdPlace')).toHaveText('Village of Barovia');
+});
+
+test('on a phone the fight fits the handheld: the fight bar in its lower screen, one small card, the voice on the screen', async ({ browser, baseURL }) => {
+  test.setTimeout(240_000);
+  const context = await browser.newContext({ baseURL, viewport:{ width:390, height:844 }, isMobile:true, hasTouch:true });
+  const page = await context.newPage();
+  const errors = await preparePage(page);
+  try {
+    await fight(page);
+    expect(await page.evaluate(() => document.body.classList.contains('hh'))).toBe(true);
+    // the fight bar and the target card inside the lower screen (a later rule once made the bar wider than the phone)
+    const r = await page.evaluate(() => { const b = s => document.querySelector(s)?.getBoundingClientRect();
+      const sub = b('#hhSub'), f = b('#wdFight'), t = b('#wdTarget'); return { sub:[sub.left, sub.right], f:[f.left, f.right], t:t ? [t.left, t.right] : null, vw:innerWidth }; });
+    expect(r.f[0]).toBeGreaterThanOrEqual(r.sub[0] - 1); expect(r.f[1]).toBeLessThanOrEqual(r.sub[1] + 1);
+    if (r.t){ expect(r.t[0]).toBeGreaterThanOrEqual(r.sub[0] - 1); expect(r.t[1]).toBeLessThanOrEqual(r.sub[1] + 1); }
+    // three cards in a row: only the newest stays on the handheld's screen, small, low on it
+    await page.evaluate(() => { const D = window.DreadDelve; for (const n of [1, 2, 3]) D.showCard({ title:`Card ${n}`, lines:['d20 12 +4 = 16 vs AC 12 — HIT'] }, false); });
+    await expect(page.locator('#cardLayer .pop')).toHaveCount(1);
+    await expect(page.locator('#cardLayer .pop')).toContainText('Card 3');
+    const c = await page.evaluate(() => { const p = document.querySelector('#cardLayer .pop').getBoundingClientRect(), cs = getComputedStyle(document.body);
+      const y = parseFloat(cs.getPropertyValue('--hh-scr-y')), h = parseFloat(cs.getPropertyValue('--hh-scr-h')); return { top:p.top, bottom:p.bottom, height:p.height, y, h }; });
+    expect(c.top).toBeGreaterThan(c.y + c.h / 2); expect(c.bottom).toBeLessThanOrEqual(c.y + c.h); expect(c.height).toBeLessThan(110);
+    // the hero's voice: on the screen, not over the buttons on the body below it
+    await page.evaluate(() => window.DreadDelve.wander.heroAttack(0));
+    await expect(page.locator('#voiceCap.on')).toBeVisible({ timeout:30_000 });
+    const v = await page.evaluate(() => { const r = document.querySelector('#voiceCap').getBoundingClientRect(), cs = getComputedStyle(document.body);
+      return { bottom:r.bottom, end:parseFloat(cs.getPropertyValue('--hh-scr-y')) + parseFloat(cs.getPropertyValue('--hh-scr-h')) }; });
+    expect(v.bottom).toBeLessThanOrEqual(v.end);
+  } finally { await context.close(); }
+  expect(errors, 'Uncaught browser errors').toEqual([]);
 });

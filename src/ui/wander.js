@@ -49,6 +49,7 @@ import { loyalty } from '../engine/wander-life.js';
 import { hh, hhOn, hhHost, hhPad, addHost, setHandheld, skipBoot, shellItem } from './handheld.js';
 import { victoryOpen, victoryPress } from './victory.js';
 import { defeatOpen, defeatPress } from './defeat.js';
+import { diceBusy } from './dicemoment.js';
 import { levelUpOpen, levelUpPress } from './levelup.js';
 import { openBestiary, bestiaryOpen, bestiaryPress, setBestiaryFace } from './bestiary.js';
 import { openTrophies, trophiesOpen, trophiesPress } from './trophies.js';
@@ -131,7 +132,7 @@ export function renderHud(){
         ${atk && attacksLeft() ? `<div class="wd-fl wd-weap">⚔ <b>${esc(atk.n)}</b> ${signed(atk.b)} to hit · ${esc(atk.d)} ${esc(atk.t || '')}${tg ? ` · <span class="${i < 0 ? 'far' : 'near'}">${esc(reachWords(t, tg, ai))}</span>` : ''}${od ? ` · <b class="wd-odds o-${oddsTone(od.hit)}">${esc(od.edge.mark)}${od.pct}</b>` : ''}</div>
         ${od?.edge.text ? `<div class="wd-fl wd-edge">${esc(od.edge.mark)} ${esc(od.edge.text)}</div>` : ''}` : ''}
         <div class="wd-acts"><button class="wd-act" data-act="wdX">${K('x')} Actions</button><button class="wd-act" data-act="wdAim" data-k="1">${K('y')} Next target</button><button class="wd-act" data-act="wdEnd">End turn</button></div>`;
-    } else body = `<div class="wd-fl">${turn ? `<b>${esc(turn.name)}</b>'s turn…` : '…'}</div>`;
+    } else body = `<div class="wd-fl">${turn ? `<span><b>${esc(turn.name)}</b>'s turn…</span>` : '…'}</div>`;
     put('wdFight', `${hhOn() ? `<div class="wd-order">${order}</div>` : ''}${body}`);
     // 🎯 the target card (Muse's ui/targetcard.js): who you're going for, how hurt (in words), what's known (the odds stay
     // on the weapon's line below, as they change with the weapon)
@@ -547,7 +548,7 @@ function wanderMoments(){
   if (mine && !was.turn){ tune('turnStart'); was.banner = true; }
   // ⚔ the banner: once the fight's opening has played, and not over a screen or a card that's up (ui/turnbanner.js)
   if (!mine || !f) was.banner = false;
-  else if (was.banner && !opening() && !menu.open && !talkView() && !victoryOpen() && !defeatOpen() && !levelUpOpen()){
+  else if (was.banner && !opening() && !menu.open && !talkView() && !victoryOpen() && !defeatOpen() && !levelUpOpen() && !diceBusy()){
     const r = state.combat.round || 1; turnBanner({ title:'Your turn', sub:r > 1 && r !== was.round ? `Round ${r}` : '' }); was.round = r; was.banner = false; }
   if (!f) was.round = 0;
   if (!f && was.fight) tune(members().every(m => m.dead || m.hp <= 0) ? 'defeat' : 'victory');

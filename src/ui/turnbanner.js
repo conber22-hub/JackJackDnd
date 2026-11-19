@@ -1,6 +1,7 @@
 /* ⚔ YOUR TURN — when the turn comes round to you in a fight (the Wanderer's hero; a seated player's own hero on the
    handheld at the table), a gold band sweeps across the screen with the words, and the round's number when a new round
    has begun; it holds a moment and goes, without taking a press. With calm effects on (render/gfx.js) it only fades. */
+import { diceBusy } from './dicemoment.js';
 import { gfx } from '../render/gfx.js';
 
 let el = null, timer = 0, shown = 0, lastWords = '';
@@ -28,6 +29,13 @@ body.hh #yourTurn{top:14%}body.hh #yourTurn .tb-t{font-size:24px}`;
   return el;
 }
 // show it: { title, sub }
+// The banner once the last roll has cleared the screen (the two would land in the same place), if ok() still holds
+// then; it waits at most three seconds.
+export function turnBannerWhenClear(opts, ok = () => true, since = performance.now()){
+  if (!ok()) return;
+  if (diceBusy() && performance.now() - since < 3000){ setTimeout(() => turnBannerWhenClear(opts, ok, since), 150); return; }
+  turnBanner(opts);
+}
 export function turnBanner({ title = 'Your turn', sub = '' } = {}){
   const b = ensure(); if (!b) return;
   b.innerHTML = `<div class="tb-t"></div>${sub ? '<div class="tb-s"></div>' : ''}`;

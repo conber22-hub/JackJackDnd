@@ -73,7 +73,10 @@ function renderCard(c, share, calm){
   el.innerHTML = `<div class="t">${esc(c.title)}</div>${c.sub ? `<div class="s">${esc(c.sub)}</div>` : ''}${c.flair ? `<div class="f">${esc(c.flair)}</div>` : ''}${(c.lines || []).map(l => `<div class="r">${l}</div>`).join('')}${c.big ? `<div class="big">${esc(c.big)}</div>` : ''}<div class="tap">tap to dismiss</div>`;
   const born = performance.now();
   el.onclick = () => { if (performance.now() - born > 400){ el.remove(); if (calm && waitingCards.length){ renderCard(waitingCards.shift(), false, true); moreChip(); } } };   // the tap that made it (a cast on a phone) mustn't also dismiss it
-  layer.appendChild(el); while (layer.children.length > 3) layer.firstChild.remove();
+  // (on the Wanderer's handheld screen only the newest card: the dice and the captions tell the blows, and a stack of
+  // three covered the whole fight)
+  const most = ui.wander && document.body.classList.contains('hh') ? 1 : 3;
+  layer.appendChild(el); while (layer.children.length > most) layer.firstChild.remove();
   if (calm) moreChip();
   else if (!c.stay) setTimeout(() => el.remove(), 8000);   // (stay: it waits to be dismissed, like the Wanderer's first card)
   // the players see it only if the DM sends it (game/outbox.js): a held card says so, with a Send button on it
