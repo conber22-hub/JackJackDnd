@@ -89,8 +89,8 @@ test('on a desktop: a blow names the hero and the foe, then the foe\'s turn and 
     expect(await maxShown(p)).toBeLessThanOrEqual(3);
     if (SP) await p.screenshot({ path:`${SP}/captions-desktop.png` });
     // off again: nothing new appears, and the stack is gone at once
-    const n0 = (await lines(p)).length;
-    await p.evaluate(() => window.DreadDelve.captions.setCaptions(false));
+    // (counted and turned off in one go: the hero's own turn line can land between two round trips)
+    const n0 = await p.evaluate(() => { const C = window.DreadDelve.captions; C.setCaptions(false); return C.captionLines().length; });
     expect(await shown(p)).toEqual([]);
     await expect.poll(() => p.evaluate(() => window.DreadDelve.wander.myTurn() && !window.DreadDelve.busy()), { timeout:60_000 }).toBe(true);
     await p.evaluate(() => window.DreadDelve.wander.heroAttack(0));
