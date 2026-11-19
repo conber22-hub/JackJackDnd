@@ -87,7 +87,7 @@ test('a player\'s phone captions the DM\'s fight, with their hero as "you"', asy
     await dm.evaluate(() => { const D = window.DreadDelve, a = D.get().tokens.find(t => t.name === 'Ada'), w = D.get().tokens.find(t => t.bid === 'wolf');
       D.doAttack(a.id, w.id, 0, 'normal', { d20:15 }); D.doAttack(w.id, a.id, 0, 'normal', { d20:1 }); });
     await expect.poll(() => p.evaluate(() => window.DreadDelve.captions.captionLines().join(' | ')), { timeout:30_000 }).toMatch(/Ada hits the wolf/);
-    await expect.poll(() => p.evaluate(() => window.DreadDelve.captions.captionLines().join(' | ')), { timeout:30_000 }).toMatch(/The wolf misses you\./);
+    await expect.poll(() => p.evaluate(() => window.DreadDelve.captions.captionLines().join(' | ')), { timeout:30_000 }).toMatch(/The wolf fumbles, and misses you\./);   // (a natural 1: the d20 reaches the phone too)
     // (clear of the hero's sheet along the bottom)
     expect(await p.evaluate(() => { const c = document.getElementById('captions').getBoundingClientRect(), s = document.getElementById('selCard');
       return !!s && s.getClientRects().length > 0 && c.bottom <= s.getBoundingClientRect().top + 1; })).toBe(true);
