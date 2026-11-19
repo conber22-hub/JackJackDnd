@@ -16,6 +16,15 @@ When you start a Claude Code session, say: *"Read DREAD-DELVE-ROADMAP.md, then h
 
 ---
 
+## v2.0 (in progress): its own game, in memory of Chance
+
+Dread Delve grows out of D&D into its own game, made in memory of Chance ("Dutcher", the Dutch Oven), who loved Halo and history. The story stays; the d20 core stays; what a hero is built from becomes our own. The design is in `docs/homebrew/callings.md`.
+
+- **⛨ The Callings** (ChatGPT, `docs/chatgpt/callings.md`): twelve in place of the D&D classes, warriors from every age pulled in by the Mists (the Vanguard, Huscarl, Outrider, Marksman, Warden, Chaplain, Archivist, Relicborn, Seepbound, Herald, Mistwalker and Pankratiast), each with three Paths, the third Seep-touched (our Flood parallels).
+- **🧭 Origins, backgrounds and feats** (ChatGPT, `docs/chatgpt/origins-feats.md`): *The Drawn* of every age, the Barovian-born and the valley's stranger kin, in place of the species; our own backgrounds and feats.
+- **Choose your Calling** (Muse, `docs/muse/brief-18.md`): the picker in the hero creator, and twelve emblems.
+- **The memorial and the wiring** (Claude): the dedication, the Dutch Oven, the legend of Dutcher; the Callings in the hero, the sheet and the fights, with their new mechanics (the Vanguard's recharging Ward first); the D&D classes behind a Classic switch until the set is complete; old saves keep loading.
+
 ## v1.42 — what struck, and who you're going for
 
 - **🤚 Shove** (SRD 5.2's Unarmed Strike Shove: `engine/shove.js`, `game/combat.js` `shove`; the Wanderer: Ⓧ Actions → *Shove: push back* or *Shove: knock prone*, in place of a strike, at the foe you're aiming at when it's beside you): it saves with the better of Strength and Dexterity against 8 + your Strength + your proficiency, or is pushed 5 feet straight away from you (out of reach, into the open, never through a wall) or knocked prone (your blows from beside it then have advantage). No more than one size larger than you. The shove is seen (a lunge, a knock, SHOVED or STANDS FIRM over it), on a card with the save, and in the captions. At the table, a hero's sheet has 🤚 *Shove* and 🤚 *Knock prone* in a fight: pick one and tap who's beside them (a player's is a request, run by the DM's table).
