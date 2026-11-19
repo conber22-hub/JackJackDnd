@@ -105,6 +105,7 @@ export * as pocket from './ui/pocketsheet.js';   // 📖 the pocket sheet (ui/po
 export * as shells from './ui/shells.js';   // 🎨 the shells and stickers (ui/shells.js): the pack and the sticker book
 export * as critters from './render/critters.js';   // 🐈 the valley's animals (render/critters.js): dogs, cats, ravens, rats, bats, goats and the crow
 export * as screens from './ui/screens-debug.js';   // 🏆 the screens between the fights (ui/victory.js, ui/bestiary.js, ui/trophies.js, ui/levelup.js)
+export * as defeat from './ui/defeat.js';   // 🌫 when the party falls (ui/defeat.js): the defeat screen
 export * as captions from './ui/captions.js';   // 💬 fight captions (ui/captions.js): a short, readable line for each thing that happens in a fight
 export * as targetCard from './ui/targetcard.js';   // 🎯 the target card (ui/targetcard.js): a small card for the foe you're aiming at
 export { loopFor, musicNow, fightMusicNow } from './ui/regionmusic.js';   // 🎼 the region music (ui/regionmusic.js): which loop is wanted here, which is playing
