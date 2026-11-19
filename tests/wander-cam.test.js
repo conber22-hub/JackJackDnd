@@ -84,3 +84,15 @@ test('over the shoulder: behind the hero, looking past them at the foe, low, clo
   const l = shoulderShot(h, foe, { side:-1 }), [lx] = fromOrbit(l.orbit); assert.ok(l.look.x + lx < -.5);
   assert.ok(Number.isFinite(shoulderShot(h, h).orbit.yaw));
 });
+
+test('eyesShot: from the hero\'s eyes, just behind their head, at the foe\'s chest', async () => {
+  const { eyesShot, fromOrbit, EYES } = await import('../src/engine/wander-cam.js');
+  const h = { x:0, z:0 }, foe = { x:0, z:-3 };
+  const s = eyesShot(h, foe), [ox, oy, oz] = fromOrbit(s.orbit), cam = { x:s.look.x + ox, y:s.look.y + oy, z:s.look.z + oz };
+  assert.ok(Math.abs(cam.x) < 1e-6);
+  assert.ok(Math.abs(cam.y - EYES.eye) < 1e-6);
+  assert.ok(cam.z > 0 && cam.z < .3);                      // (behind the head, not in front of the face)
+  assert.deepEqual([s.look.x, s.look.z], [0, -3]);
+  assert.ok(s.orbit.pitch > 0 && s.orbit.pitch < .35);    // (looking a little down, at the chest)
+  const same = eyesShot(h, h); assert.ok(Number.isFinite(same.orbit.dist));
+});

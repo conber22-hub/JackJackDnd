@@ -95,3 +95,16 @@ export function shoulderShot(h, s, { room = Infinity, side = 1 } = {}){
   const cam = [h.x - fx * back + rx * SHOULDER.side, up, h.z - fz * back + rz * SHOULDER.side];
   return { look, orbit:toOrbit([cam[0] - look.x, cam[1] - look.y, cam[2] - look.z]) };
 }
+
+/* 👁 Through their eyes (a fight's third view, after over the shoulder): the camera at the hero's eye height, a hand's
+   width behind their head, looking at the foe's chest. h: the hero's place, s: the foe's (x, z, in world units);
+   eye: the eye height. → { look, orbit } like shoulderShot (the hero's own figure is hidden by the caller). */
+export const EYES = { eye:1.32, back:.16, chest:.72 };
+export function eyesShot(h, s, { eye = EYES.eye } = {}){
+  let dx = s.x - h.x, dz = s.z - h.z, l = Math.hypot(dx, dz);
+  if (l < .01){ dx = 0; dz = -1; l = 1; }
+  const fx = dx / l, fz = dz / l;
+  const look = { x:s.x, y:EYES.chest, z:s.z };
+  const cam = [h.x - fx * EYES.back, eye, h.z - fz * EYES.back];
+  return { look, orbit:toOrbit([cam[0] - look.x, cam[1] - look.y, cam[2] - look.z]) };
+}

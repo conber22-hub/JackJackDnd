@@ -51,15 +51,24 @@ test('a blow lands with a lunge, a hold, a knock and a splash; a miss sways asid
 });
 
 // ⚔ Over the shoulder (ui/followcam.js): in a fight the camera stands low and close behind the hero, looking past them
-// at the foe; V goes up above the fight and V again comes back down.
-test('a fight is seen over the hero\'s shoulder, close; V looks from above and back', async ({ page }) => {
+// at the foe; V looks through their eyes (their own figure hidden), V again goes up above the fight, and V again
+// comes back down behind them.
+test('a fight is seen over the hero\'s shoulder, close; V looks through their eyes, from above and back', async ({ page }) => {
   test.setTimeout(180_000);
   await fight(page);
+  const figOn = () => page.evaluate(() => { const D = window.DreadDelve; return D.tokenViews.get(D.wander.hero().id).group.userData.fig.visible; });
   await expect.poll(() => page.evaluate(() => window.DreadDelve.shoulderNow())).toBe(true);
+  expect(await figOn()).toBe(true);
+  await page.keyboard.press('v');
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.eyesNow())).toBe(true);
+  await expect.poll(figOn).toBe(false);
+  await page.screenshot({ path:'test-results/punch-eyes.png' });
   await page.keyboard.press('v');
   await expect.poll(() => page.evaluate(() => window.DreadDelve.shoulderNow())).toBe(false);
+  await expect.poll(figOn).toBe(true);
   await page.keyboard.press('v');
   await expect.poll(() => page.evaluate(() => window.DreadDelve.shoulderNow())).toBe(true);
+  expect(await page.evaluate(() => window.DreadDelve.eyesNow())).toBe(false);
 });
 
 // ✨ Spells seen (render/spellfx.js): a spell cast through the game is drawn (Burning Hands pours out of the caster),
