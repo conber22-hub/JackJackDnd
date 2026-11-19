@@ -59,14 +59,23 @@ export const fightZone = () => zone.mesh ? { L:zone.L, cx:zone.cx, cy:zone.cy, r
 
 /* ---------- where the hero can still walk this turn ---------- */
 const moveMat = new THREE.MeshBasicMaterial({ color:'#f4c46a', transparent:true, opacity:.12, depthWrite:false, polygonOffset:true, polygonOffsetFactor:-3, polygonOffsetUnits:-3 });
-const moves = { mesh:null, key:'' };
-export function clearMoveSquares(){ if (moves.mesh){ moves.mesh.parent?.remove(moves.mesh); moves.mesh.dispose(); moves.mesh = null; } moves.key = ''; }
-export function showMoveSquares(L, squares, key){
+// ⚠ a square that would take the hero out of a foe's reach (it gets a swing at them as they go: engine/movement.js
+// provokers) is tinted red instead
+const riskMat = new THREE.MeshBasicMaterial({ color:'#ff4a3a', transparent:true, opacity:.2, depthWrite:false, polygonOffset:true, polygonOffsetFactor:-3, polygonOffsetUnits:-3 });
+const moves = { mesh:null, key:'', risky:0 };
+export function clearMoveSquares(){ if (moves.mesh){ moves.mesh.parent?.remove(moves.mesh); for (const m of moves.mesh.children) m.dispose(); moves.mesh = null; } moves.key = ''; moves.risky = 0; }
+export const moveSquaresKey = () => moves.key;
+export function showMoveSquares(L, squares, key, risky = []){
   if (key === moves.key) return; clearMoveSquares(); moves.key = key;
   const f = state?.floors?.[L], fv = floorViews[L]; if (!f || !fv || !squares.length) return;
-  const mesh = new THREE.InstancedMesh(G.plane, moveMat, squares.length), m4 = new THREE.Matrix4(), s = new THREE.Vector3(.86, 1, .86);
-  squares.forEach((i, n) => { const x = i % f.W, y = (i / f.W) | 0; m4.makeTranslation(wx(x), .04 + groundY(f, x, y), wz(y)); m4.scale(s); mesh.setMatrixAt(n, m4); });
-  mesh.renderOrder = 3; fv.group.add(mesh); moves.mesh = mesh;
+  const bad = new Set(risky), g = new THREE.Group(), m4 = new THREE.Matrix4(), s = new THREE.Vector3(.86, 1, .86);
+  for (const [list, mat] of [[squares.filter(i => !bad.has(i)), moveMat], [squares.filter(i => bad.has(i)), riskMat]]){
+    if (!list.length) continue;
+    const mesh = new THREE.InstancedMesh(G.plane, mat, list.length);
+    list.forEach((i, n) => { const x = i % f.W, y = (i / f.W) | 0; m4.makeTranslation(wx(x), .04 + groundY(f, x, y), wz(y)); m4.scale(s); mesh.setMatrixAt(n, m4); });
+    mesh.renderOrder = 3; g.add(mesh);
+  }
+  fv.group.add(g); moves.mesh = g; moves.risky = bad.size;
 }
 
 /* ---------- what happened to them, rising ---------- */
@@ -244,6 +253,6 @@ export const stuckCount = () => stuck.length;
 export function clearFightFx(){ clearFightZone(); clearMoveSquares(); clearAim(); showHover(null); for (const s of stuck.splice(0)){ s.g.parent?.remove(s.g); } }
 // (for the tests: what's drawn now, and how many numbers and streaks have been shown since the page loaded)
 let madeFloats = 0, madeStreaks = 0;
-export const fightFxCount = () => ({ zone:!!zone.mesh, moves:moves.mesh?.count || 0, floats:madeFloats, streaks:madeStreaks, texts:floatsSeen.slice(-6),
+export const fightFxCount = () => ({ zone:!!zone.mesh, moves:(moves.mesh?.children || []).reduce((n, m) => n + m.count, 0), risky:moves.risky, floats:madeFloats, streaks:madeStreaks, texts:floatsSeen.slice(-6),
   marks:marks.list.map(m => ({ id:m.id, k:m.k })), odds:odds.key ? oddsShown[oddsShown.length - 1] : '', area:area.mesh?.count || 0, hover:hoverOn() });
 const floatsSeen = [];

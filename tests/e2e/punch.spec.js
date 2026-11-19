@@ -381,3 +381,16 @@ test('the fight bar shows the target card, its health in words', async ({ page }
   expect(text).toContain('Wolf');
   expect(text).not.toMatch(/\b\d+\s*\/\s*\d+\b|\b200\b|\b80\b/);   // (no hit points)
 });
+
+// ⚠ The squares the hero can walk to: those that would let the wolf swing at them as they leave its reach are red;
+// after a Disengage, none are
+test('moving out of a foe\'s reach is marked as risky, unless you disengage', async ({ page }) => {
+  test.setTimeout(180_000);
+  await fight(page);
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.fightFxCount().moves), { timeout:20_000 }).toBeGreaterThan(0);
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.fightFxCount().risky)).toBeGreaterThan(0);
+  const c = await page.evaluate(() => window.DreadDelve.fightFxCount());
+  expect(c.risky).toBeLessThan(c.moves);   // (squares still beside the wolf are safe)
+  await page.evaluate(() => { window.DreadDelve.wander.heroTurnAct('disengage'); window.DreadDelve.renderHud(); });
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.fightFxCount().risky), { timeout:20_000 }).toBe(0);
+});

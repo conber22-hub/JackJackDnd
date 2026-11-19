@@ -4,6 +4,7 @@
    reads it every frame), the keyboard, the handheld skin's touch buttons (ui/handheld.js), or taps on the map.
    The follow camera (below) eases after the hero and turns, cranes and cycles views with the right stick, L / R, [ ] - = V. */
 import { turnBanner } from './turnbanner.js';
+import { provokers } from '../engine/movement.js';
 import { hpBar, barMood } from './hpbar.js';
 import { showTarget } from './targetinfo.js';
 import { state, ui, tokById, tokenAt, side } from '../engine/state.js';
@@ -22,13 +23,13 @@ import { W, rt, hero, members, wandering, startWander, continueWander, leaveWand
   heroAttack, heroDodge, heroTurnAct, heroFeatures, heroFeature, endHeroTurn, aim, target, targets, attackFor, nextWeapon, attacksLeft, myTurn, fightTick, destinations, setOut, travelTo, rest, saveNow,
   pack, toggleEquip, usePotion, coinsGp, shopHere, buyPotion, journal, approvalOf, levelReady, partyLevel, nextLevelXp, levelUpHero, sheetOf, spellList, heroCast,
   SLOTS, slotMeta, canSaveSlot, saveToSlot, loadFromSlot, opening, economy, strikeOdds } from '../game/wander.js';
-import { setFightZone, clearFightFx, showMoveSquares, clearMoveSquares, showMarks, showOdds, showAreaSquares, clearAim, showHover, floatText, ringPulse } from '../render/fightzone.js';
+import { setFightZone, clearFightFx, showMoveSquares, clearMoveSquares, showMarks, showOdds, showAreaSquares, clearAim, showHover, floatText, ringPulse, moveSquaresKey } from '../render/fightzone.js';
 import { xpOf } from '../engine/encounter.js';
 import { BEST } from '../data/bestiary.js';
 import { pipsHtml, markSpent, oddsBits, oddsTone, ODDS_COL } from './turnpips.js';
 import { orderStrip, wireStrip } from './orderstrip.js';
 import { areaOf, areaSquares, caughtIn } from '../engine/targeting.js';
-import { reach } from '../engine/grid.js';
+import { reach, pathTo } from '../engine/grid.js';
 import { bus, signed } from '../util/core.js';
 import { optList, optInfo, tag } from './optrow.js';
 import { attackBits, spellBits, actBits, featBits } from './actrows.js';
@@ -396,9 +397,13 @@ function fightGround(){
   if (zoneOf.wide && !opening()){ zoneOf.wide = false; camBack(); }
   // the hero's turn: the squares they can still walk to
   const left = myTurn() && !opening() && !heroBusy() ? moveAllowance(h) : 0;
-  if (left > 0){ const f = state.floors[h.floor], R = reach(h.floor, h.x, h.y, left, h.id);
-    showMoveSquares(h.floor, [...R.dist.keys()].filter(i => R.dist.get(i) <= left && i !== h.y * f.W + h.x && !tokenAt(h.floor, i % f.W, (i / f.W) | 0)), `${h.floor}:${h.x}:${h.y}:${left}`); }
-  else clearMoveSquares();
+  // (⚠ in red, those that would let a foe swing at them as they leave its reach: engine/movement.js provokers)
+  const mk = left > 0 ? `${h.floor}:${h.x}:${h.y}:${left}:${state.combat.round}:${state.combat.idx}:${h.disengaged ? 1 : 0}` : '';
+  if (left > 0 && mk !== moveSquaresKey()){ const f = state.floors[h.floor], R = reach(h.floor, h.x, h.y, left, h.id);
+    const sq = [...R.dist.keys()].filter(i => R.dist.get(i) <= left && i !== h.y * f.W + h.x && !tokenAt(h.floor, i % f.W, (i / f.W) | 0));
+    let risky = []; try { risky = sq.filter(i => provokers(h, pathTo(R.par, f.W, i)).length); } catch {}
+    showMoveSquares(h.floor, sq, mk, risky); }
+  else if (!(left > 0)) clearMoveSquares();
   fightAim();
 }
 /* 🎯 Before a blow or a spell: who it would reach (rings on the ground), the odds over the one aimed at, and the
