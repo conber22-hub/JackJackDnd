@@ -6,7 +6,7 @@
 import { turnBanner } from './turnbanner.js';
 import { provokers } from '../engine/movement.js';
 import { hpBar, barMood } from './hpbar.js';
-import { showTarget } from './targetinfo.js';
+import { showTarget, faceFor, onFaceReady } from './targetinfo.js';
 import { state, ui, tokById, tokenAt, side } from '../engine/state.js';
 import { lastOfSide } from '../engine/punch.js';
 import { readPad, padIntents, keyIntent } from '../engine/pad.js';
@@ -112,7 +112,7 @@ export function renderHud(){
   const turn = state.combat.active && currentTurn();
   // (💔 the bar first: it's what notices a blow or a heal, and the card jolts or glows with it: ui/hpbar.js)
   put('wdParty', members().map(m => { const hb = bar(m.hp, m.maxHp, m.id), mood = barMood(m.id); return `<div class="wd-m${m.id === t?.id ? ' me' : ''}${turn?.id === m.id ? ' turn' : ''}${m.dead || m.hp <= 0 ? ' down' : ''}${mood ? ` ${mood}` : ''}">
-    <span class="nm">${esc(m.name)}</span>${hb}<span class="hp">${Math.max(0, m.hp)} / ${m.maxHp}</span></div>`; }).join(''));
+    ${(f => f ? `<img class="wd-face" src="${f}" alt="">` : '')(faceFor(m))}<span class="nm">${esc(m.name)}</span>${hb}<span class="hp">${Math.max(0, m.hp)} / ${m.maxHp}</span></div>`; }).join(''));
   // what Ⓐ does just now
   const here = !rt.talk && !menu.open && (state.combat.active ? fightAction() : hereAction());
   put('wdPrompt', here ? (here.idle ? `<div class="wd-tx">${esc(here.label)}</div>` : `<button class="wd-act" data-act="wdA">${K('a')} ${esc(here.label)}</button>`) : '');
@@ -653,6 +653,7 @@ export function ensureWander(){
   // a crossing between maps (game/ways.js): the fog, the name, the sound
   passage.veil = veil; passage.banner = banner; passage.sting = id => tune({ door:'door', spotted:'gazeRises', fight:'fightBegins' }[id] || 'stairs');
   bus.on('acted', blowFelt);
+  onFaceReady(() => { if (wandering()) renderHud(); });   // (a portrait drawn for the party list or the target card)
   // 🎬 your killing blow; and whoever's blow it was, the one that ends the fight, held longer and closer
   bus.on('hurt', e => { const h = hero(); if (!h || !wandering() || !e?.t?.dead || e.t.kind !== 'monster') return;
     if (lastOfSide(e.t, state.combat.order.map(tokById))) camBeat(1900, .42); else if (e.by === h.id) camBeat(1100, .32);

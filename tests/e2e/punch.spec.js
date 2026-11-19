@@ -407,3 +407,11 @@ test('a foe taken to half its hit points is seen to be bloodied', async ({ page 
   await page.waitForTimeout(1500);
   expect((await page.evaluate(() => window.DreadDelve.captions.captionLines())).filter(l => /bloodied/.test(l)).length).toBe(1);
 });
+
+// 🖼 The party list shows each hero's face (drawn a moment after the list itself)
+test('the party list shows the heroes\' faces', async ({ page }) => {
+  test.setTimeout(180_000);
+  await fight(page);
+  await expect(page.locator('#wdParty .wd-face').first()).toBeVisible({ timeout:20_000 });
+  expect(await page.locator('#wdParty .wd-face').first().getAttribute('src')).toMatch(/^data:image\//);
+});
