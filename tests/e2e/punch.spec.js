@@ -624,3 +624,22 @@ test('the Carrier\'s satchel bursts on the foes beside them when they drop', asy
   expect(r.down).toBe(true);
   expect(r.took).toBeGreaterThan(0);   // (7 poison, unless the wolf shrugs some of it off)
 });
+
+test('a hero who drops is dying: death saves on their turn, a blow while down is a failure, healing brings them back', async ({ page }) => {
+  test.setTimeout(180_000);
+  await fight(page);
+  const r = await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), w = D.get().tokens.find(t => t.kind === 'monster');
+    h.hp = 5; D.applyDamage(h, 8, 'piercing', w.id);
+    const down = { dead:!!h.dead, dying:JSON.stringify(h.dying), slain:!!h.flags.slain };
+    D.applyDamage(h, 4, 'piercing', w.id); const struck = h.dying.f;
+    return { down, struck }; });
+  expect(r.down).toEqual({ dead:true, dying:JSON.stringify({ s:0, f:0, stable:false, dead:false }), slain:false });
+  expect(r.struck).toBe(1);
+  // healing: back up, no longer dying
+  const back = await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(); D.heal(h, 3); return { hp:h.hp, dead:!!h.dead, dying:h.dying }; });
+  expect(back).toEqual({ hp:3, dead:false, dying:null });
+  // a blow with the whole maximum past 0: gone outright, and beyond healing
+  const gone = await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), w = D.get().tokens.find(t => t.kind === 'monster');
+    D.applyDamage(h, h.hp + h.maxHp, 'slashing', w.id); D.heal(h, 10); return { slain:!!h.flags.slain, hp:h.hp, dying:h.dying }; });
+  expect(gone).toEqual({ slain:true, hp:0, dying:null });
+});

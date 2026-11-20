@@ -121,3 +121,4 @@ export { nearestOpen } from './game/actions.js';   // the nearest open square to
 export { wardFloats } from './ui/fightfx.js';   // ⛨ how many Ward floats have shown (engine/mech.js)
 export { applyMechs, mechCtx } from './game/mechfx.js';   // ⚙ give a token a Calling's features (engine/mech.js)
 export { mechsFor } from './game/mechfx.js';
+export { heal, startTurn } from './game/combat.js';   // 💀 (the death saves' spec)

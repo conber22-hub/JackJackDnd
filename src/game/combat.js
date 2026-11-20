@@ -40,6 +40,30 @@ import { toPlayers } from './outbox.js';
 import { wardSoak, wardTurn, mechEdge, mechExtra, mechTempHp, tempSoak, tempGive } from '../engine/mech.js';
 import { mechCtx, firstHitNow, isSeep, mechsFor, anyMechs, reactNow, alliesNear, turnKey, autoLeft, payPrice } from './mechfx.js';
 import { amountOf } from '../engine/mech.js';
+import { startDying, deathSave, hurtWhileDown, healWhileDown, isDying, wordsFor } from '../engine/death-saves.js';
+/* 💀 DYING (ChatGPT's engine/death-saves.js): a hero who drops to 0 is down and dying (t.dying = { s, f, stable, dead });
+   on each of their turns a death save, on its own; struck while down, a failure (two on a crit); any healing brings
+   them back; three failures, or a blow that leaves their whole maximum past 0, and they're gone (t.flags.slain).
+   Monsters just die, as before. */
+let critNext = false;   // (doAttack: the hit about to land is a critical)
+const nameIn = (s, t) => String(s || '').replace(/\{name\}/g, t.name);
+function dyingCard(t, r, title, extra = []){
+  const words = nameIn(r.words, t);
+  bus.emit('dying', { t, outcome:r.outcome, words, marks:t.dying ? { s:t.dying.s, f:t.dying.f } : null, rolled:r.rolled ?? null });
+  showCard({ kind:r.outcome === 'dead' ? 'miss' : r.outcome === 'rise' ? 'crit' : 'seep', title, flair:words, lines:extra }, false);
+  log(`💀 ${t.name}: ${title}${r.rolled ? ` (d20 ${r.rolled})` : ''}.`);
+}
+function slay(t){ t.flags.slain = true; t.dead = true; t.hp = 0; }
+// The death save at the start of a dying hero's turn
+function deathSaveTurn(t){
+  const r1 = d(20), r = deathSave(t.dying, r1);
+  if (r.outcome === 'none') return;
+  const marks = d => d ? `${'♥'.repeat(d.s)}${'·'.repeat(3 - d.s)}  ${'☠'.repeat(d.f)}${'·'.repeat(3 - d.f)}` : '';
+  if (r.outcome === 'rise'){ t.dying = null; t.dead = false; t.hp = 1; syncTokens(); dyingCard(t, r, `${t.name} rises`, [`d20 <b>${r1}</b>: back on their feet at 1 HP`]); return; }
+  t.dying = r.dying;
+  if (r.outcome === 'dead') slay(t);
+  dyingCard(t, r, r.outcome === 'stable' ? `${t.name} is stable` : r.outcome === 'dead' ? `${t.name} is gone` : `${t.name}'s death save`, [`d20 <b>${r1}</b>${r1 === 1 ? ' — two failures' : ''} · ${marks(t.dying)}`]);
+}
 /* ⚙ A burst (a Calling's: { k:'burst', radius, dice, type, targets }): around `at`, on each of the bearer's foes (or all
    but the bearer) within the radius */
 function burstFrom(bearer, at, r){
@@ -209,11 +233,11 @@ export function nextTurn(){
   turnCard(currentTurn(), 'end');   // saves repeated to shake off Hold Person and the like; holds that run out now
   stepFolkNow(state.combat.floor ?? ui.floor, { fight:true });   // the valley's folk run for home, a step a turn
   tickConds(currentTurn());
-  if (!state.combat.order.some(id => { const t = tokById(id); return t && !t.flags.gone && (!t.dead || t.flags.rising); })){ toast('Everyone in this fight is down.'); return; }
+  if (!state.combat.order.some(id => { const t = tokById(id); return t && !t.flags.gone && (!t.dead || t.flags.rising || isDying(t.dying)); })){ toast('Everyone in this fight is down.'); return; }
   for (let guard = 0; guard < 300; guard++){
     state.combat.idx++;
     if (state.combat.idx >= state.combat.order.length){ state.combat.idx = 0; state.combat.round++; endOfRound(); }
-    const t = currentTurn(); if (t && !t.flags.gone && (!t.dead || t.flags.rising)) break;
+    const t = currentTurn(); if (t && !t.flags.gone && (!t.dead || t.flags.rising || isDying(t.dying))) break;
     if (!state.combat.order.length) break;
   }
   startTurn(); changed();
@@ -226,6 +250,7 @@ function turnCard(t, phase){
 export function startTurn(){
   const t = currentTurn(); if (!t) return;
   freshTurn(t);
+  if (t.dead && isDying(t.dying)) deathSaveTurn(t);   // 💀
   turnCard(t, 'start');
   const lg = legendOf(t); if (lg?.legendary) t.legend = lg.legendary.n;   // legendary actions come back
   // a spent breath weapon (and the like) comes back on a d6 roll of its Recharge number or more
@@ -387,7 +412,7 @@ export function doAttack(aId, tId, i, mode = 'normal', { d20 = null, at = null }
   const card = { kind:crit ? 'crit' : hits.length ? '' : 'miss', title:`${a.name} → ${tg.name}`, sub:atk.n, flair, lines, big:hits.length ? `${total} ${atk.t}` : '', die };
   if (ui.wander) setTimeout(() => showCard(card), 700); else showCard(card);
   log(`${a.name} ${atk.n} → ${tg.name}: ${hits.length ? `${total} ${atk.t}${crit ? ' (crit)' : ''}` : 'miss'}`);
-  for (const x of hits) applyDamage(tg, x.dmg, atk.t, a, true);   // already through its defences (above)
+  for (const x of hits){ critNext = !!x.crit; applyDamage(tg, x.dmg, atk.t, a, true); }   // already through its defences (above); 💀 a crit on one down is two failures
   changed(); return true;
 }
 const GIVES = new Set(['Invisibility', 'Greater Invisibility']);
@@ -396,6 +421,12 @@ const condTxt = (t, cond) => immuneTo(t, cond) ? ` · <span class="muted">immune
 /* Damage to one creature, after its resistances, immunities and vulnerabilities (rules.js defend: its stat block, plus Rage).
    defended: the caller already ran it through defend() so its card could show the real number. → the damage dealt */
 export function applyDamage(t, n, type = '', by = null, defended = false){
+  const crit = critNext; critNext = false;
+  if (t.dead && isDying(t.dying) && n > 0 && !t.flags.slain){   // 💀 struck while down
+    const r = hurtWhileDown(t.dying, { damage:n, maxHp:t.maxHp, crit });
+    if (r.outcome !== 'none'){ t.dying = r.dying; if (r.outcome === 'dead') slay(t); dyingCard(t, { ...r, words:r.words || wordsFor('hurt', n) }, r.outcome === 'dead' ? `${t.name} is gone` : `${t.name} is struck while down`, [`${crit ? 'A critical: two failures' : 'A failure'} · ${'☠'.repeat(t.dying?.f || 0)}`]); changed(); }
+    return 0;
+  }
   if (t.dead || n <= 0) return 0;
   if (!defended) n = defend(t, n, type).n;
   if (n <= 0) return 0;
@@ -428,6 +459,11 @@ export function applyDamage(t, n, type = '', by = null, defended = false){
     if (r){ t.hp = 1; t.res[r.id]--; bus.emit('react', { t, src:r.n, k:'holdAtOne' }); const p = payPrice(t, r.mech); showCard({ kind:'seep', title:`${t.name}: ${r.n}`, flair:'The wound packs itself shut. They stay on their feet.', lines:p }, false); } }
   // ⚙ a burst when its bearer drops (the Carrier's satchel)
   if (t.hp <= 0 && t.kind !== 'monster'){ const r = autoLeft(t, 'burst', 'selfDown'); if (r){ t.res[r.id]--; burstFrom(t, t, r); } }
+  if (t.hp <= 0 && t.kind !== 'monster' && !t.dead){   // 💀 a hero drops: dying, or gone outright
+    const r = startDying({ hpBefore:before, damage:before + Math.max(0, n - before), maxHp:t.maxHp });
+    t.dying = r.outcome === 'dead' ? null : r.dying;
+    if (r.outcome === 'dead') t.flags.slain = true;
+    setTimeout(() => dyingCard(t, r, r.outcome === 'dead' ? `${t.name} is gone` : `${t.name} is down`, r.outcome === 'dead' ? ['The blow was more than a body can hold.'] : ['Dying: a death save on each of their turns. Heal them, or steady them.']), 700); }
   if (t.hp <= 0 && !(t.nem && nemesisHolds(t))){ kill(t, type, by); setTimeout(checkVictory, 2100);
     // ⚙ one who dropped: those on their side may react (No One Left Behind: game/mechfx.js)
     if (t.kind !== 'monster') for (const o of alliesNear(t, 6)){ const r = reactNow(o, 'allyDown'); if (r){ react(r, o, { fallen:t }); break; } } }   // (after the last one has fallen, in its slow motion: render/punch.js)
@@ -461,6 +497,8 @@ export function exhaust(t, by = 1){
   if (now === 6 && !t.dead){ t.hp = 0; kill(t, 'exhaustion'); setTimeout(checkVictory, 600); }
 }
 export function heal(t, n){
+  if (t.kind !== 'monster' && t.flags?.slain){ toast(`${t.name} is beyond healing.`); return; }   // 💀 (engine/death-saves.js)
+  if (t.dying && n > 0){ const r = healWhileDown(t.dying, n); t.dying = null; if (r.outcome === 'rise') dyingCard(t, r, `${t.name} comes back`); }
   const was = Math.max(0, t.hp);
   t.hp = Math.min(t.maxHp, t.hp + n);
   if (t.hp > was){ bus.emit('healed', { t, n:t.hp - was }); if (t.kind !== 'monster') broadcast({ t:'healfx', id:t.id, n:t.hp - was }); }   // (a monster's own healing stays the DM's: players never see its hit points)

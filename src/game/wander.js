@@ -716,7 +716,7 @@ function finishFight(won){
   // fight called off) and before the fallen get up
   const loot = fightLoot(xp, { level:partyLevel() }), summary = fightEnds(true, { xp:each, loot, order });
   endCombat();
-  for (const m of members()) if (m.dead || m.hp <= 0){ m.dead = false; m.hp = 1; m.flags.bloodied = true; }
+  for (const m of members()) if (m.dead || m.hp <= 0){ m.dead = false; m.dying = null; m.flags.slain = false; m.hp = 1; m.flags.bloodied = true; }
   syncTokens();
   const lines = [xp ? `<b>${each} XP</b> each · ${w.xp} in all${nextLevelXp() ? ` (level ${partyLevel() + 1} at ${nextLevelXp()})` : ''}` : 'Nothing worth counting.'];
   if (loot.gp || loot.sp || loot.items.length){ gainLoot(loot); lines.push(`Found: ${[loot.gp && `${loot.gp} gp`, loot.sp && `${loot.sp} sp`, ...loot.items].filter(Boolean).map(esc).join(', ')}`); }
@@ -741,7 +741,7 @@ function finishFight(won){
 // page with no screen to show) the old card and its 2.6 seconds.
 function fallen(summary = null, order = []){
   rt.endAt = 0;
-  const wake = () => { if (!continueWander({ safe:true })){ for (const m of members()){ m.dead = false; m.hp = m.maxHp; } syncTokens(); changed(); } else wakeAtOven(); };
+  const wake = () => { if (!continueWander({ safe:true })){ for (const m of members()){ m.dead = false; m.dying = null; if (m.flags) m.flags.slain = false; m.hp = m.maxHp; } syncTokens(); changed(); } else wakeAtOven(); };
   if (!summary || typeof document === 'undefined'){ showCard({ kind:'seep', ...LOST }, false); setTimeout(wake, 2600); return; }
   const party = members().map(m => m.id);
   const names = Object.fromEntries([...party, ...order].map(tokById).filter(Boolean).map(o => [o.id, o.name]));
@@ -836,7 +836,7 @@ export function rest(){
   if (state.combat.active) return false;
   const list = members().filter(m => !m.flags?.gone);
   if (onRoad()){ shortRest(list); passTime(1); W().quiet = Math.max(W().quiet, 30); }
-  else { for (const m of list){ m.dead = false; if (m.hp <= 0) m.hp = 1; } longRest(list); passTime(8); questEvent({ k:'rest', place:valley().at });
+  else { for (const m of list){ m.dead = false; m.dying = null; if (m.flags) m.flags.slain = false; if (m.hp <= 0) m.hp = 1; } longRest(list); passTime(8); questEvent({ k:'rest', place:valley().at });
     if (inOven()) showCard({ kind:'', title:`A night at ${MEMORIAL.oven.name}`, flair:MEMORIAL.oven.rest }, false); }
   syncTokens(); changed(); saveNow(); return true;
 }
