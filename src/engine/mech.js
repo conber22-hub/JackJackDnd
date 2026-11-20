@@ -165,3 +165,25 @@ export function mechResources(mechs, ctx = {}){
 export function seepCosts(m, ctx = {}, roll){
   return (Array.isArray(m?.also) ? m.also : []).filter(x => x?.k === 'seepCost').map(x => ({ what:x.what === 'maxHp' ? 'maxHp' : 'mark', n:Math.max(1, amountOf(x.amount || '1', ctx, roll)), text:x.text || '' }));
 }
+
+// Extra movement in feet right now ({ k:'move', feet:10, when:'…' }): the most any one gives (they don't add up)
+export function mechMove(mechs, ctx = {}){
+  let best = 0; for (const m of list(mechs)) if (m.k === 'move' && whenHolds(m.when, ctx)) best = Math.max(best, Math.floor(+m.feet || 0));
+  return best;
+}
+
+/* Reactions ({ k:'reaction', trigger, when, does:{ another mech } }): once a round each, on their own.
+   trigger: 'hit' (the bearer is struck), 'allyHit' (one on their side within 5 ft. is), 'missed' (a foe misses the
+   bearer), 'allyDown' (one on their side within 30 ft. drops). does: { k:'reduce', amount } (the blow is that much
+   less), { k:'damage', dice, type } (back at whoever did it), { k:'tempHp', amount } or { k:'heal', amount } (the bearer,
+   or for allyDown the one who dropped). → the first that holds: { does, src } or null */
+const TRIG = { hit:'hit', struck:'hit', hurt:'hit', allyhit:'allyHit', allystruck:'allyHit', missed:'missed', miss:'missed', allydown:'allyDown', allydrops:'allyDown' };
+export function mechReaction(mechs, trigger, ctx = {}){
+  for (const m of list(mechs)){
+    if (m.k !== 'reaction' || !m.does) continue;
+    if (TRIG[String(m.trigger || '').toLowerCase().replace(/[^a-z]/g, '')] !== trigger) continue;
+    if (!whenHolds(m.when, ctx)) continue;
+    return { does:m.does, src:m.src || 'Reaction' };
+  }
+  return null;
+}

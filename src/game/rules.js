@@ -7,7 +7,7 @@ import { BEST } from '../data/bestiary.js';
 import { applyDefenses, conditionImmune, defensesFor } from '../engine/defenses.js';
 import { saveMods, speedOf, damageMods } from '../engine/conditions.js';
 import { d, bus } from '../util/core.js';
-import { mechResist, mechEdge } from '../engine/mech.js';
+import { mechResist, mechEdge, mechMove } from '../engine/mech.js';
 import { mechCtx, mechsFor, anyMechs } from './mechfx.js';
 
 export const currentTurn = () => state.combat.active ? state.tokens.find(t => t.id === state.combat.order[state.combat.idx]) : null;
@@ -122,6 +122,7 @@ export function moveAllowance(t, { dash = false } = {}){
   // grappled, restrained and the like: nowhere; exhaustion: 5 ft. less a level (engine/conditions.js)
   if (speedOf(t, 999) === 0) return 0;
   let sq = Math.max(0, speedSquares(t) - Math.min(6, t.exhaustion || 0));
+  if (anyMechs(t)) sq += Math.floor(mechMove(mechsFor(t), mechCtx(t)) / 5);   // ⚙ a Calling's extra movement (engine/mech.js)
   if (state.combat.active){ sq *= t.dashed || dash ? 2 : 1; if (hasCond(t, 'prone')) sq = Math.floor(sq / 2); return Math.max(0, sq - (t.moved || 0)); }
   if (hasCond(t, 'prone')) sq = Math.floor(sq / 2);
   return Math.max(sq, 6) * 4;   // exploration pace outside combat

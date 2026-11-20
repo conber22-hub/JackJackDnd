@@ -580,3 +580,15 @@ test('a feature you use: a heal from the Actions list, and a Seep-touched one ta
   const z = await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(); D.longRest([h], true); return { max:h.maxHp, hp:h.hp, left:h.res['m-field-rites'] }; });
   expect(z).toEqual({ max:r.max0, hp:r.max0, left:2 });
 });
+
+test('reactions fire on their own, once a round: a blow taken less, an ally who drops steadied', async ({ page }) => {
+  test.setTimeout(180_000);
+  await fight(page);
+  const r = await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), w = D.get().tokens.find(t => t.kind === 'monster');
+    D.applyMechs(h, [{ k:'reaction', trigger:'hit', does:{ k:'reduce', amount:'4' }, src:'Brace' }]);
+    const hp = h.hp; D.applyDamage(h, 10, '', w.id); const first = hp - h.hp;
+    const hp2 = h.hp; D.applyDamage(h, 10, '', w.id); const second = hp2 - h.hp;   // (once a round: the second is whole)
+    return { first, second }; });
+  expect(r).toEqual({ first:6, second:10 });
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.fightFxCount().texts.join(' ')), { timeout:10_000 }).toMatch(/BRACE/);
+});

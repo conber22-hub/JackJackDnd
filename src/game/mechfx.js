@@ -4,7 +4,7 @@
    hit points). game/rules.js and game/combat.js call in here; the Calling's data (ChatGPT's data/callings.js) gives
    the mechs (game/heroes.js applyMechs). */
 import { state } from '../engine/state.js';
-import { mechWard, mechResources, amountOf, seepCosts, tempGive } from '../engine/mech.js';
+import { mechWard, mechResources, amountOf, seepCosts, tempGive, mechReaction } from '../engine/mech.js';
 
 const cheb = (a, b) => Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
 const side = t => t?.kind === 'monster' ? 'foe' : 'party';
@@ -85,3 +85,13 @@ export function runMech(t, m, target, heal){
 }
 // A long rest gives back what the rot drained
 export function restoreDrain(t){ if (t?.seepDrain > 0){ t.maxHp += t.seepDrain; delete t.seepDrain; } }
+
+/* ⚙ A reaction, once a round (game/combat.js asks at the moment it could fire): → { does, src } or null, marked used */
+export function reactNow(o, trigger, extra = {}){
+  const c = state?.combat; if (!c?.active || !up(o) || !anyMechs(o)) return null;
+  const key = `r${c.round}`; if (o.mechReact === key) return null;
+  const r = mechReaction(mechsFor(o), trigger, mechCtx(o, extra)); if (!r) return null;
+  o.mechReact = key; return r;
+}
+// Those on t's side within reach (squares) who could react for it
+export const alliesNear = (t, sq) => (state?.tokens || []).filter(o => o !== t && o.floor === t.floor && up(o) && side(o) === side(t) && cheb(o, t) <= sq && o.mechs?.length);

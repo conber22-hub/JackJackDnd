@@ -100,3 +100,22 @@ test('features you use: their uses, as resources, and the price a Seep-touched o
   assert.deepEqual(seepCosts(rs[2].mech, {}, fixed(3)), [{ what:'maxHp', n:3, text:'' }]);
   assert.deepEqual(seepCosts(rs[0].mech), []);
 });
+
+import { mechMove } from '../src/engine/mech.js';
+test('extra movement: the most any one gives, when it holds', () => {
+  const ms = [{ k:'move', feet:10, src:'Outrider' }, { k:'move', feet:15, when:'bloodied', src:'Hollowed' }];
+  assert.equal(mechMove(ms, {}), 10);
+  assert.equal(mechMove(ms, { bloodied:true }), 15);
+  assert.equal(mechMove([], {}), 0);
+});
+
+import { mechReaction } from '../src/engine/mech.js';
+test('reactions: by what sets them off, when they hold', () => {
+  const ms = [{ k:'reaction', trigger:'allyHit', does:{ k:'reduce', amount:'1d10+pb' }, src:'Shield-Brother' },
+    { k:'reaction', trigger:'missed', when:'melee', does:{ k:'damage', dice:'1d6', type:'piercing' }, src:'Riposte' }];
+  assert.equal(mechReaction(ms, 'allyHit', {}).src, 'Shield-Brother');
+  assert.equal(mechReaction(ms, 'missed', { melee:false }), null);
+  assert.equal(mechReaction(ms, 'missed', { melee:true }).does.k, 'damage');
+  assert.equal(mechReaction(ms, 'hit', {}), null);
+  assert.equal(mechReaction(null, 'hit', {}), null);
+});

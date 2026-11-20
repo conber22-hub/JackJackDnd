@@ -38,7 +38,20 @@ import { makeNoise } from './noise.js';
 import { nemesisDamage, nemesisHolds, nemesisRegen, nemesisFalls, nemesisSurvives } from './court.js';
 import { toPlayers } from './outbox.js';
 import { wardSoak, wardTurn, mechEdge, mechExtra, mechTempHp, tempSoak, tempGive } from '../engine/mech.js';
-import { mechCtx, firstHitNow, isSeep, mechsFor, anyMechs } from './mechfx.js';
+import { mechCtx, firstHitNow, isSeep, mechsFor, anyMechs, reactNow, alliesNear } from './mechfx.js';
+import { amountOf } from '../engine/mech.js';
+/* ⚙ A reaction fires (game/mechfx.js reactNow): what it does — the blow less, a strike back, a breath of temporary hit
+   points, a heal (for one who dropped). → how much less the blow is (for 'reduce') */
+function react(r, bearer, { foe = null, fallen = null } = {}){
+  const d = r.does || {}, ctx = mechCtx(bearer); let less = 0;
+  if (d.k === 'reduce') less = amountOf(d.amount || '1d6', ctx);
+  else if (d.k === 'damage' && foe && !foe.dead) setTimeout(() => { if (!foe.dead) applyDamage(foe, amountOf(d.dice || d.amount || '1d6', ctx), d.type || '', bearer); changed(); }, 420);
+  else if (d.k === 'tempHp') bearer.thp = tempGive(bearer.thp, amountOf(d.amount || '1d6', ctx));
+  else if (d.k === 'heal') heal(fallen || bearer, Math.max(1, amountOf(d.amount || '1d8', ctx)));
+  bus.emit('react', { t:bearer, src:r.src, k:d.k, n:less });
+  log(`⚙ ${bearer.name}: ${r.src}.`);
+  return less;
+}
 import { alarmAt, garrisonCalm } from './garrison.js';
 
 export { currentTurn };
@@ -320,6 +333,7 @@ export function doAttack(aId, tId, i, mode = 'normal', { d20 = null, at = null }
     }
   }
   const hits = rolls.filter(x => x.hit), crit = rolls.some(x => x.crit), total = hits.reduce((n, x) => n + x.dmg, 0);
+  if (!hits.length && a.id !== tg.id){ const r = reactNow(tg, 'missed', { melee:rc.kind !== 'ranged', ranged:rc.kind === 'ranged' }); if (r) setTimeout(() => react(r, tg, { foe:a }), 500); }   // ⚙ a miss answered
   // the TV spins a d20 to it (ui/screen.js); every other screen pops it up (ui/dicemoment.js): the die, the one it
   // beat or lost to with advantage or disadvantage, the bonus, the total and what it had to reach
   const R0 = rolls[0], die = { n:R0?.r, crit:R0?.crit, hit:R0?.hit, other:R0?.other ?? null, mode:useBoth ? (adv ? 'adv' : 'dis') : '', bonus, tot:R0?.tot, ac, real:!!R0?.real, rays:rolls.length,
@@ -373,6 +387,13 @@ export function applyDamage(t, n, type = '', by = null, defended = false){
   if (!defended) n = defend(t, n, type).n;
   if (n <= 0) return 0;
   if (t.nem) n = nemesisDamage(t, n, type);   // one of the Count's court: its weakness, its scars (game/court.js)
+  // ⚙ reactions (once a round): the one struck, then one beside them, may take some of the blow (game/mechfx.js)
+  if (state.combat.active && anyMechs(t)){
+    const foe = typeof by === 'string' ? tokById(by) : by;
+    const own = foe ? reactNow(t, 'hit') : null; if (own) n = Math.max(0, n - react(own, t, { foe }));
+    if (n > 0) for (const o of alliesNear(t, 1)){ const r = reactNow(o, 'allyHit'); if (r){ n = Math.max(0, n - react(r, o, { foe })); break; } }
+    if (n <= 0) return 0;
+  }
   // ⛨ a Ward (the Vanguard's, engine/mech.js) takes the blow first; what gets through comes off the hit points
   if (t.ward?.max > 0){ const W = wardSoak(t.ward, n); t.ward = W.ward; n = W.through;
     if (W.soaked) bus.emit('ward', { t, soaked:W.soaked, broke:W.broke, by:(typeof by === 'string' ? by : by?.id) || null });
@@ -388,7 +409,9 @@ export function applyDamage(t, n, type = '', by = null, defended = false){
     const hooks = BEST[t.bid]?.hooks?.onBloodied;
     if (hooks){ showCard({ kind:'seep', title:`${t.name} is bloodied`, flair:'Something changes in the way it holds itself.' }); for (const fx of hooks) runFx(t, fx); }
   }
-  if (t.hp <= 0 && !(t.nem && nemesisHolds(t))){ kill(t, type, by); setTimeout(checkVictory, 2100); }   // (after the last one has fallen, in its slow motion: render/punch.js)
+  if (t.hp <= 0 && !(t.nem && nemesisHolds(t))){ kill(t, type, by); setTimeout(checkVictory, 2100);
+    // ⚙ one who dropped: those on their side may react (No One Left Behind: game/mechfx.js)
+    if (t.kind !== 'monster') for (const o of alliesNear(t, 6)){ const r = reactNow(o, 'allyDown'); if (r){ react(r, o, { fallen:t }); break; } } }   // (after the last one has fallen, in its slow motion: render/punch.js)
   bus.emit('hurt', { t, n, type, by:(typeof by === 'string' ? by : by?.id) || null, bloodied:crossed && t.hp > 0 });   // (⚔ the number rising over them: ui/wander.js)
   if (t.kind === 'pc') bus.emit('acted', { actor:t, trigger:t.hp <= 0 ? 'down' : 'hurt', action:'' });   // 🗣 a hero hurt or down says so (ui/voices.js)
   const dealt = n;
