@@ -10,9 +10,11 @@ import { test, expect } from './helpers.js';
 // On a desktop it stays away until asked for, and the keys turn and crane the camera.
 const yaw = page => page.evaluate(() => { const D = window.DreadDelve, o = D.camera.position.clone().sub(D.controls.target); return Math.atan2(o.x, o.z); });
 const hero = page => page.evaluate(() => { const h = window.DreadDelve.wander.hero(); return { x:h.x, y:h.y }; });
-// the hero's figure standing on its square (not still stepping onto it)
-const settled = page => page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), g = D.tokenViews.get(h.id).group, s = D.get().meta.size / 2 - .5;
-  return Math.abs(g.position.x - (h.x - s)) < .04 && Math.abs(g.position.z - (h.y - s)) < .04; });
+// the hero's figure standing on its square (not still stepping onto it),
+// and the follow camera done easing after it
+const settled = page => page.evaluate(() => new Promise(done => { const D = window.DreadDelve, h = D.wander.hero(), g = D.tokenViews.get(h.id).group, s = D.get().meta.size / 2 - .5;
+  const was = D.camera.position.clone();
+  setTimeout(() => done(Math.abs(g.position.x - (h.x - s)) < .04 && Math.abs(g.position.z - (h.y - s)) < .04 && D.camera.position.distanceTo(was) < .003), 150); }));
 // where a square (dx, dy from the hero) is on the screen, to tap it
 const spot = (page, dx, dy) => page.evaluate(([dx, dy]) => { const D = window.DreadDelve, h = D.wander.hero(), g = D.tokenViews.get(h.id).group, c = document.querySelector('#stage canvas').getBoundingClientRect();
   const v = g.position.clone(); v.x += dx; v.z += dy; v.project(D.camera); return { x:c.left + (v.x + 1) / 2 * c.width, y:c.top + (1 - v.y) / 2 * c.height }; }, [dx, dy]);

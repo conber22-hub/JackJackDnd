@@ -63,3 +63,19 @@ test('NPCs: rolled by kind, seeded, varied', () => {
   // an ally token without a look still gets one, coloured by the token
   assert.equal(lookFor({ id:'n1', kind:'npc', color:'#aa3322' }).c1, '#aa3322');
 });
+
+test('a Calling dresses the hero; a Seep-touched Path shows the rot, and each mark of it spreads', () => {
+  const h = { id:'v1', name:'Vasha', sp:'Human', cls:'Fighter 3', calling:'vanguard', path:'hoplite' };
+  const hop = sheetLook(h);
+  assert.equal(hop.outfit, 'cuirass'); assert.equal(hop.helm, 'crested'); assert.equal(normalizeLook(hop).rot, 0);
+  const hol = normalizeLook(sheetLook({ ...h, path:'hollowed' }));
+  assert.ok(hol.rot > .4, 'the Hollowed show the rot');
+  assert.ok(normalizeLook(sheetLook({ ...h, calling:'seepbound', path:null })).rot > 0, 'any Seepbound a little');
+  assert.equal(normalizeLook(sheetLook({ id:'c1', name:'Classic', sp:'Human', cls:'Fighter 3' })).rot, 0);
+  // in play: marks of the rot on the token spread it, up to all of it
+  const t = { id:'t1', kind:'pc', look:hol };
+  assert.equal(lookFor(t).rot, hol.rot);
+  assert.ok(lookFor({ ...t, seepMarks:2 }).rot > hol.rot);
+  assert.equal(lookFor({ ...t, seepMarks:40 }).rot, 1);
+  assert.equal(normalizeLook({ rot:'x' }).rot, 0); assert.equal(normalizeLook({ rot:9 }).rot, 1);
+});

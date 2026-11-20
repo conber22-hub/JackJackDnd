@@ -53,6 +53,7 @@ export function buildForge(look){
   hornsAndTail(rig, L, M, B, hs, G);
   cloakAndHelm(rig, L, M, B, hs, Wd);
   gear(rig, L, M);
+  if (L.rot > 0) rotGrowth(rig, L);
   // bind the bending pieces in the rest pose (every joint straight)
   fig.updateMatrixWorld(true);
   for (const [sm, a, b] of rig.skins){ sm.bind(new THREE.Skeleton([a, b])); sm.frustumCulled = false; }
@@ -519,6 +520,28 @@ function gear(rig, L, M){
   }
   if (L.lantern){ const g = new THREE.Group(); lanternMesh(g, M); const s = J(rig.hips, 'beltLantern', [-.088, .03, .03]); s.add(g); rig.items.belt = s; }
   for (const it of Object.values(rig.items)) it.traverse(o => { if (o.userData.flame) rig.flames.push(o); });
+}
+
+/* ---------- ☣ the rot (a Seep-touched Path, the marks it leaves) ----------
+   Swollen growths breaking through at the shoulder first, then the neck, the forearm and the chest, then the thigh
+   and the jaw, as L.rot rises (0..1): pale lumps, a dark bruise under them, and a few pods with a sick green light. */
+function rotGrowth(rig, L){
+  let n = (L.seed >>> 0) || 7; const r = () => ((n = (n * 1664525 + 1013904223) >>> 0) / 4294967296);
+  const flesh = mat('skin', '#c4b98a'), flesh2 = mat('skin', '#a39a6c'), bruise = mat('skin', '#3e4630'), pod = mat('gem', '#a8d850', '#7fc832', 1.5);
+  const sites = [[.0, rig.aL.s, [.012, .018, 0], 1.1], [.3, rig.neck, [.028, .005, .012], .7], [.5, rig.aL.f, [.012, -.07, .024], .8],
+    [.55, rig.chest, [.05, .06, .062], .9], [.75, rig.lR.t, [-.01, -.09, .04], .8], [.85, rig.head, [-.06, -.03, .03], .55]];
+  for (const [at, joint, [x, y, z], big] of sites){
+    if (L.rot <= at) continue;
+    const k = big * (1.15 + L.rot * .6);
+    put(joint, sphere(.03, 12, 8), bruise, [x, y, z], [0, 0, 0], [1.4 * k, 1.1 * k, .75 * k]);
+    const lumps = 3 + Math.floor(r() * 3);
+    for (let i = 0; i < lumps; i++){
+      const a = r() * Math.PI * 2, d = .012 + r() * .016, sz = (.45 + r() * .55) * k;
+      put(joint, sphere(.02, 10, 8), i % 2 ? flesh2 : flesh, [x + Math.cos(a) * d * k, y + Math.sin(a) * d * .8 * k, z + .01 + r() * .012], [0, 0, 0], [sz, sz * (.8 + r() * .5), sz * .9]);
+    }
+    for (let i = 0; i < 2 + Math.floor(L.rot * 3); i++){ const a = r() * Math.PI * 2, d = (.008 + r() * .02) * k;
+      put(joint, sphere(.009, 8, 6), pod, [x + Math.cos(a) * d, y + Math.sin(a) * d, z + .026 * k], [0, 0, 0], [1, 1, 1].map(() => .8 + r() * .6)); }
+  }
 }
 
 /* ---------- merge what doesn't move on its own ---------- */

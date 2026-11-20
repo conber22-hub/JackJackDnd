@@ -7,10 +7,11 @@ import { BODIES, SKINS, SKINS_FANTASY, HAIR_COLS, CLOTHS, RAGS, METALS, HAIR, BE
   CLASS_STYLE, ARMOR_OUTFIT, PRESETS, NPC_KINDS, weaponModel, TWO_HANDED } from '../data/looks.js';
 import { mulberry32, hashSeed } from '../util/core.js';
 import { callingLook } from '../data/calling-looks.js';
+import { CALLINGS } from '../data/callings.js';
 
 export const BASE_LOOK = { v:1, body:'human', height:1, build:.5, frame:.5, skin:'#d9a57e', hair:'short', hairCol:'#3a2a1e', beard:'none', eyes:'#5a6a7a', glow:false,
   horns:'none', hornCol:'#2a2224', tail:false, outfit:'tunic', c1:'#3a4a6a', c2:'#a08a6a', leather:'#5a3a22', metal:'steel', cloak:'none', cloakCol:'#2a2430',
-  helm:'none', main:'none', off:'none', shieldCol:'#6a2a2a', pose:'ready', lantern:false, tilt:0, seed:0 };
+  helm:'none', main:'none', off:'none', shieldCol:'#6a2a2a', pose:'ready', lantern:false, tilt:0, rot:0, seed:0 };
 const pick = (a, r) => a[Math.floor(r() * a.length) % a.length];
 const HEX = /^#[0-9a-f]{6}$/i;
 const ENUMS = { body:Object.keys(BODIES), hair:HAIR, beard:BEARDS, horns:HORNS, outfit:[...Object.keys(OUTFITS), 'none'], cloak:Object.keys(CLOAKS), helm:Object.keys(HELMS),
@@ -22,7 +23,7 @@ export function normalizeLook(l = {}){
   const o = { ...BASE_LOOK };
   for (const [k, list] of Object.entries(ENUMS)) if (list.includes(l[k])) o[k] = l[k];
   for (const k of COLOURS) if (HEX.test(l[k] || '')) o[k] = l[k];
-  o.height = clamp01(l.height, .75, 1.3, 1); o.build = clamp01(l.build, 0, 1, .5); o.frame = clamp01(l.frame, 0, 1, .5); o.tilt = clamp01(l.tilt, -1, 1, 0);
+  o.height = clamp01(l.height, .75, 1.3, 1); o.build = clamp01(l.build, 0, 1, .5); o.frame = clamp01(l.frame, 0, 1, .5); o.tilt = clamp01(l.tilt, -1, 1, 0); o.rot = clamp01(l.rot, 0, 1, 0);
   o.glow = !!l.glow; o.tail = l.tail === undefined ? !!BODIES[o.body]?.tail : !!l.tail; o.lantern = !!l.lantern;
   o.seed = Number.isInteger(l.seed) ? l.seed >>> 0 : 0;
   if (l.horns === undefined && BODIES[o.body]?.horns) o.horns = BODIES[o.body].horns;
@@ -41,6 +42,10 @@ export function sheetLook(h){
   // ⛨ a Calling's look over the hero's own (data/calling-looks.js); a two-handed weapon keeps the off hand empty
   const cl = callingLook(h.calling, h.path);
   if (cl.off && TWO_HANDED.has(base.main)) delete cl.off;
+  // ☣ the rot shows on a Seep-touched Path (and a little on any Seepbound): growths at the shoulder, the neck, the arm
+  const C = CALLINGS[h.calling], P = (C?.paths || []).find(p => p.id === h.path);
+  const rot = (P?.seep ? .55 : 0) + (h.calling === 'seepbound' ? .3 : 0);
+  if (rot) cl.rot = Math.min(1, rot);
   return { ...base, ...cl, lantern:!['torch', 'lantern'].includes(cl.off || base.off) && base.lantern };
 }
 function classicLook(h){
@@ -112,7 +117,7 @@ export function npcLook(kind = 'villager', rng = Math.random){
 }
 // The look for any token: its own recipe, a creature's preset, or an adventurer rolled from its id and colour.
 export function lookFor(t, b){
-  if (t.look) return normalizeLook(t.look);
+  if (t.look){ const l = normalizeLook(t.look); if (t.seepMarks > 0) l.rot = Math.min(1, l.rot + t.seepMarks * .08); return l; }   // (each mark of the rot spreads it)
   if (t.kind === 'monster') return creatureLook(b, t.id);
   const r = mulberry32(hashSeed(t.id || t.name));
   const l = npcLook(t.kind === 'npc' ? 'villager' : 'adventurer', r); if (t.color) l.c1 = t.color;
@@ -141,5 +146,6 @@ export function describeLook(l){
   const held = [l.main !== 'none' ? `a ${l.main.replace('longbow', 'longbow')}` : '', l.off === 'shield' ? 'a shield' : l.off === 'claw' ? '' : l.off !== 'none' ? `a ${({ holy:'holy symbol', book:'book', orb:'glowing orb' })[l.off] || l.off}` : ''].filter(Boolean);
   const a = /^[aeiou]/.test(size + heft + who) ? 'An' : 'A';
   const and = xs => xs.length > 1 ? `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}` : xs[0] || '';
-  return `${a} ${size}${heft}${who}${bits.length ? ` with ${and(bits)}` : ''}, in ${and(wear)}${held.length ? `, carrying ${and(held)}` : ''}.`;
+  const rot = l.rot > .7 ? ' The rot has them: pale growths at the shoulder, the throat and the arm, lit faintly green from inside.' : l.rot > .45 ? ' Pale growths break through at the shoulder and the throat, lit faintly green from inside.' : l.rot > 0 ? ' Something pale grows at one shoulder.' : '';
+  return `${a} ${size}${heft}${who}${bits.length ? ` with ${and(bits)}` : ''}, in ${and(wear)}${held.length ? `, carrying ${and(held)}` : ''}.${rot}`;
 }
