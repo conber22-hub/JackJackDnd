@@ -26,6 +26,23 @@ export function mechCtx(t, extra = {}){
 }
 export const isSeep = seepy;
 
+/* What applies to a token right now: its own features, and what the auras of those on its side within reach give it
+   (a Warden's oath, a Herald's banner: { k:'aura', radius:10, gives:{ k:'advantage', on:'save' } }; feet, 5 a square).
+   The bearer stands in its own aura. An aura that's down (its bearer down) gives nothing. */
+export function mechsFor(t){
+  if (!t) return [];
+  const own = (t.mechs || []).filter(m => m.k !== 'aura');
+  const out = [...own];
+  for (const o of state?.tokens || []){
+    if (!o.mechs?.length || o.floor !== t.floor || !up(o) || side(o) !== side(t)) continue;
+    for (const m of o.mechs){ if (m.k !== 'aura' || !m.gives) continue;
+      if (cheb(o, t) * 5 > (+m.radius || 10)) continue;
+      for (const g of Array.isArray(m.gives) ? m.gives : [m.gives]) out.push({ ...g, src:o === t ? (m.src || 'aura') : `${m.src || 'aura'} (${o.name})` }); }
+  }
+  return out;
+}
+export const anyMechs = t => !!t && (t.mechs?.length > 0 || (state?.tokens || []).some(o => o.mechs?.some(m => m.k === 'aura')));
+
 // The first hit this turn? (for the features that strike once a turn) — marks it taken
 export function firstHitNow(a){
   const c = state?.combat, key = c?.active ? `${c.round}:${c.idx}` : `x${Date.now() >> 12}`;

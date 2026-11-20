@@ -38,7 +38,7 @@ import { makeNoise } from './noise.js';
 import { nemesisDamage, nemesisHolds, nemesisRegen, nemesisFalls, nemesisSurvives } from './court.js';
 import { toPlayers } from './outbox.js';
 import { wardSoak, wardTurn, mechEdge, mechExtra, mechTempHp, tempSoak, tempGive } from '../engine/mech.js';
-import { mechCtx, firstHitNow, isSeep } from './mechfx.js';
+import { mechCtx, firstHitNow, isSeep, mechsFor, anyMechs } from './mechfx.js';
 import { alarmAt, garrisonCalm } from './garrison.js';
 
 export { currentTurn };
@@ -279,7 +279,7 @@ export function attackEdge(a, tg, atk, mode = 'normal'){
   const cm = self ? { adv:[], dis:[], autoCrit:false, penalty:0 } : attackMods({ attacker:a, target:tg, melee:rc.kind !== 'ranged', within5:rc.d <= 1,
     attackerSeen:!hasCond(a, 'invisible'), targetSeen:!hasCond(tg, 'invisible') });
   advWhy.push(...cm.adv); disWhy.push(...cm.dis);
-  if (a.mechs?.length && !self){ const me = mechEdge(a.mechs, 'attack', mechCtx(a, { melee:rc.kind !== 'ranged', ranged:rc.kind === 'ranged', vsSeep:isSeep(tg) })); advWhy.push(...me.adv); disWhy.push(...me.dis); }   // ⚙ a Calling's (engine/mech.js)
+  if (anyMechs(a) && !self){ const me = mechEdge(mechsFor(a), 'attack', mechCtx(a, { melee:rc.kind !== 'ranged', ranged:rc.kind === 'ranged', vsSeep:isSeep(tg) })); advWhy.push(...me.adv); disWhy.push(...me.dis); }   // ⚙ a Calling's (engine/mech.js)
   if (tg.dodge && !stopped(tg) && !self) disWhy.push(`${tg.name} is dodging`);
   const why = [...advWhy.filter(w => w !== 'the DM\'s call'), ...disWhy.filter(w => w !== 'the DM\'s call')];
   return { adv:advWhy.length > 0, dis:disWhy.length > 0, advWhy, disWhy, why, rc, cov, cm,
@@ -313,8 +313,8 @@ export function doAttack(aId, tId, i, mode = 'normal', { d20 = null, at = null }
     lines.push(`${atk.rays > 1 ? `#${k + 1} · ` : ''}${real ? '🎲 at the table ' : `d20 ${useBoth ? `(${r1}, ${r2} → ${adv ? 'adv' : 'dis'}) ` : ''}`}<b>${r}</b> ${signed(bonus)} = <b>${tot}</b> vs AC ${ac}${cov.ac ? ` <span class="muted">(${cov.cover === 'half' ? 'half' : '¾'} cover)</span>` : ''} — <b>${crit ? 'CRITICAL' : hit ? 'HIT' : r === 1 ? 'FUMBLE' : 'MISS'}</b>${atk.rays > 1 && hit ? ` → ${dmg}` : ''}`);
   }
   // ⚙ a Calling's extra damage on a hit (engine/mech.js): through the target's defences, by its own type
-  if (a.mechs?.length) for (const x of rolls.filter(r => r.hit)){
-    for (const e of mechExtra(a.mechs, mechCtx(a, { crit:x.crit, melee:rc.kind !== 'ranged', ranged:rc.kind === 'ranged', vsSeep:isSeep(tg), firstHit:firstHitNow(a) }))){
+  if (anyMechs(a)) for (const x of rolls.filter(r => r.hit)){
+    for (const e of mechExtra(mechsFor(a), mechCtx(a, { crit:x.crit, melee:rc.kind !== 'ranged', ranged:rc.kind === 'ranged', vsSeep:isSeep(tg), firstHit:firstHitNow(a) }))){
       const n = defend(tg, e.n, e.type || atk.t).n; if (!n) continue;
       x.dmg += n; lines.push(`<span class="muted">+${n}${e.type ? ` ${esc(e.type)}` : ''} · ${esc(e.src)}</span>`);
     }

@@ -546,3 +546,17 @@ test('a Calling\'s features work in a fight: advantage, extra damage, a resistan
   const thp = await page.evaluate(({ h, w }) => { const D = window.DreadDelve; D.applyDamage(D.tokById(w), 999, 'fire', h); return D.tokById(h).thp; }, ids);
   expect(thp).toBe(7);
 });
+
+test('an aura gives those on its side within reach what it gives, and the bearer too', async ({ page }) => {
+  test.setTimeout(180_000);
+  await fight(page);
+  const r = await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero();
+    D.applyMechs(h, [{ k:'aura', radius:10, gives:{ k:'resist', types:['piercing'] }, src:'Oath of the Hearth' }]);
+    const hp = h.hp; D.applyDamage(h, 10, 'piercing', null); const took = hp - h.hp;
+    const srcs = D.mechsFor(h).map(m => m.src);
+    const w = D.get().tokens.find(t => t.kind === 'monster'), wm = D.mechsFor(w).length;   // (a foe gets none of it)
+    return { took, srcs, wm }; });
+  expect(r.took).toBe(5);
+  expect(r.srcs).toEqual(['Oath of the Hearth']);
+  expect(r.wm).toBe(0);
+});
