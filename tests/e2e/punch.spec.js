@@ -592,3 +592,35 @@ test('reactions fire on their own, once a round: a blow taken less, an ally who 
   expect(r).toEqual({ first:6, second:10 });
   await expect.poll(() => page.evaluate(() => window.DreadDelve.fightFxCount().texts.join(' ')), { timeout:10_000 }).toMatch(/BRACE/);
 });
+
+test('the Hollowed\'s packed wound holds at 1 HP once and takes its price; an invoked feature holds a minute; the Carrier bursts as it drops', async ({ page }) => {
+  test.setTimeout(180_000);
+  await fight(page);
+  const r = await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), w = D.get().tokens.find(t => t.kind === 'monster');
+    D.applyMechs(h, [{ k:'holdAtOne', uses:'1/longRest', src:'Packed Wound', also:[{ k:'seepCost', what:'Each invocation reduces maximum HP by one until a long rest.' }] },
+      { k:'resist', types:['necrotic'], when:'invoked1min', src:'Vacant Ribs', also:[{ k:'seepCost', what:'After invoking, your tracks shine for one hour.' }] }]);
+    const listed = D.wander.heroFeatures().map(f => f.id);
+    // invoked: necrotic halved for the minute
+    const hp0 = h.hp; D.applyDamage(h, 10, 'necrotic', w.id); const before = hp0 - h.hp;
+    D.wander.heroFeature('m-vacant-ribs'); const hp1 = h.hp; D.applyDamage(h, 10, 'necrotic', w.id); const after = hp1 - h.hp;
+    // the packed wound: held at 1, the maximum down by one
+    const max0 = h.maxHp; h.hp = 5; D.applyDamage(h, 20, 'slashing', w.id); const held = { hp:h.hp, max:h.maxHp, dead:!!h.dead };
+    h.hp = 5; D.applyDamage(h, 20, 'slashing', w.id); const second = { hp:h.hp, dead:!!h.dead };
+    return { listed, before, after, max0, held, second }; });
+  expect(r.listed).toContain('m-vacant-ribs');
+  expect(r.listed).not.toContain('m-packed-wound');          // (it fires on its own)
+  expect([r.before, r.after]).toEqual([10, 5]);
+  expect(r.held).toEqual({ hp:1, max:r.max0 - 1, dead:false });
+  expect(r.second).toMatchObject({ hp:0, dead:true });
+  await expect(page.locator('#cardLayer')).toContainText(/tracks shine|Packed Wound/);
+});
+
+test('the Carrier\'s satchel bursts on the foes beside them when they drop', async ({ page }) => {
+  test.setTimeout(180_000);
+  await fight(page);
+  const r = await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), w = D.get().tokens.find(t => t.kind === 'monster');
+    D.applyMechs(h, [{ k:'burst', radius:5, dice:'7', type:'poison', when:'selfDown', targets:'enemies', uses:'1/longRest', src:'Burst Satchel' }]);
+    const w0 = w.hp; h.hp = 3; D.applyDamage(h, 50, 'piercing', w.id); return { took:w0 - w.hp, down:h.hp <= 0 }; });
+  expect(r.down).toBe(true);
+  expect(r.took).toBeGreaterThan(0);   // (7 poison, unless the wolf shrugs some of it off)
+});

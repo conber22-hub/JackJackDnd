@@ -2,6 +2,7 @@
    and each sheet drives a token on the map. A player's own sheets also live in their browser.
    Signing in is a name plus a secret word: the DM's save remembers which sheets belong to which player,
    so a player on a new device gets their characters back by joining with the same name and word. */
+import { applyCalling } from './calling.js';
 import { state, ui, makePC, log } from '../engine/state.js';
 import { heroToken, heroStats } from '../engine/hero.js';
 import { updateVision } from '../engine/grid.js';
@@ -40,10 +41,10 @@ export function applyCharacter(sheet, { owner, key, place = true } = {}){
   if (t){
     const lost = Math.max(0, (t.maxHp || 0) - (t.hp || 0)), oldMax = Object.fromEntries((t.resources || []).map(r => [r.id, r.max]));
     Object.assign(t, fields); t.hp = Math.max(t.dead ? 0 : 1, fields.maxHp - lost);
-    fillResources(t, oldMax);
+    fillResources(t, oldMax); applyCalling(t, sheet);   // ⛨ (game/calling.js)
     log(`${t.name}'s sheet was updated (${fields.cls}).`);
   } else if (place){
-    t = makePC({ name:fields.name }); Object.assign(t, fields); t.hp = fields.maxHp; fillResources(t);
+    t = makePC({ name:fields.name }); Object.assign(t, fields); t.hp = fields.maxHp; fillResources(t); applyCalling(t, sheet);   // ⛨ (game/calling.js)
     const L = partyFloor(), f = state.floors[L], r = f.rooms[0], spot = nearestOpen(L, r.cx, r.cy) || { x:r.cx, y:r.cy };
     Object.assign(t, { floor:L, x:spot.x, y:spot.y });
     state.tokens.push(t);

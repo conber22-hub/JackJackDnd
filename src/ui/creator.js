@@ -10,6 +10,9 @@ import { $, esc, clamp, d } from '../util/core.js';
 import { toast } from './hud.js';
 import { heroLook, sheetLook } from '../engine/look.js';
 import { creatorGear } from '../engine/gear.js';
+import { callingList, callingOf, callingForChassis, pathOf } from '../engine/callings.js';
+import { originList, originView, backList, backView, featView, asClassic } from '../engine/origins.js';
+import { rulesMode, setRulesMode } from '../game/calling.js';
 import { BODIES, SKINS, SKINS_FANTASY, HAIR_COLS, CLOTHS, HAIR, BEARDS, HORNS, OUTFITS, CLOAKS, HELMS, WEAPON_MODELS, OFFHANDS, POSES } from '../data/looks.js';
 import { setStage, frame, portrait, act, studioCanvas, stageKey } from '../render/forge/studio.js';
 
@@ -101,7 +104,17 @@ function setAsi(l, k, v){
   edit.asi[l] = p.feat ? p : undefined;
 }
 
+/* ⛨ Dread Delve's own rules (docs/homebrew/callings.md): a Calling over the class, an Origin over the species, our
+   backgrounds over the D&D ones; the D&D ones stay under the Classic switch. A hero made under the Classic rules has
+   none of the three (and plays exactly as it did). */
+function adoptDread(h){
+  if (!h.calling){ const C = callingForChassis(h.cls); if (C){ h.calling = C.id; h.color ||= C.color; } }
+  if (!h.origin){ const o = originList().find(x => x.like === h.sp) || originList()[0]; if (o){ h.origin = o.id; Object.assign(h, pick2(asClassic(h))); } }
+  if (!h.back){ const b = backList().find(x => x.like === h.bg) || backList()[0]; if (b) h.back = b.id; }
+}
+const pick2 = a => ({ sp:a.sp, spOpt:a.spOpt });
 function render(){
+  const dread = rulesMode() === 'dread'; if (dread) adoptDread(edit);
   const h = edit, C = CLASSES[h.cls], st = heroStats(h), L = st.L, bg = bgOf(h), spc = spcOf(h), spOpts = spc.opts, subs = SUBCLASSES[h.cls];
   const spOptKey = spOpts ? Object.keys(spOpts)[0] : null;
   const lim = spellLimits(h), pool = spellPool(h);
@@ -117,18 +130,25 @@ function render(){
     <div class="cr-st-row">${heroStarterCards().map(c => `<button class="cr-st ${edit.starter === c.id ? 'on' : ''}" data-cr="starter" data-k="${esc(c.id)}" title="${esc(c.pitch)}"><b>${esc(c.title)}</b><span>${esc(c.species)} ${esc(c.cls)} · ${esc(c.role)}</span></button>`).join('')}</div>
     ${edit.starter ? `<div class="muted"><i>${esc(heroStarterCards().find(c => c.id === edit.starter)?.pitch || '')}</i> ${esc(heroStarterCards().find(c => c.id === edit.starter)?.hook || '')}</div>` : ''}</div>` : ''}
   <div class="cr-cols"><div class="cr-form">
+    <div class="row cr-rules"><span class="muted">Rules:</span><button class="btn small ${dread ? 'on' : ''}" data-cr="rules" data-k="dread" title="Dread Delve's own: Callings, Paths, Origins">⛨ Dread Delve</button><button class="btn small ${dread ? '' : 'on'}" data-cr="rules" data-k="classic" title="The D&D classes, species and backgrounds">Classic</button></div>
     <h2>Who</h2>
     <div class="grid2"><label>Name<input class="txt" data-cf="name" value="${esc(h.name)}" placeholder="e.g. Ilse Vantorin"></label>
       <label>Player<input class="txt" data-cf="player" value="${esc(h.player)}" placeholder="your name"></label></div>
     <div class="grid3"><label>Level${sel('lvl', Array.from({ length:MAX_LEVEL }, (_, i) => i + 1), h.lvl)}</label>
-      <label>Class${sel('cls', Object.keys(CLASSES), h.cls)}</label>
+      ${dread ? `<label>Calling${sel('calling', callingList().map(c => [c.id, `${c.emblem} ${c.name}`]), h.calling)}</label>` : `<label>Class${sel('cls', Object.keys(CLASSES), h.cls)}</label>`}
       <label>Colour<input type="color" class="txt" data-cf="color" value="${esc(h.color)}"></label></div>
-    ${subs ? `<div class="grid2"><label>Subclass${sel('sub', [[C.sub, `${C.sub} (wired into the rules)`], ...Object.keys(subs).sort().map(n => [n, `📚 ${n}`])], h.sub && subs[h.sub] ? h.sub : C.sub)}</label><span class="muted" style="align-self:end">${h.sub && subs[h.sub] ? `${esc(subs[h.sub].src)} · its features are on your sheet to read; the DM rules what they do` : ''}</span></div>` : ''}
-    <div class="muted">${L >= 3 || st.sub ? `Subclass: <b>${esc(st.sub || C.sub)}</b>` : `Subclass at level 3: ${esc(h.sub && subs?.[h.sub] ? h.sub : C.sub)}`} · d${C.hd} hit die · saves ${C.sv.join(', ')}${C.cast ? ` · casts with ${C.cast}` : ''}</div>
-    <div class="grid2"><label>Species${selLib('sp', SPECIES, h.sp)}</label>${spOptKey ? `<label>${esc(spOptKey)}${sel('spOpt', spOpts[spOptKey], h.spOpt || spOpts[spOptKey][0])}</label>` : '<span></span>'}</div>
-    <div class="muted">${esc([spc.note, spc.subs?.[h.spOpt]?.note].filter(Boolean).join(' · '))}${spc.lib ? ` <i>(${esc(spc.src)})</i>` : ''}</div>
-    <div class="grid3"><label>Background${selLib('bg', BACKGROUNDS, h.bg)}</label><label>+2 to${sel('bg2', bg.ab, h.bg2)}</label><label>+1 to${sel('bg1', bg.ab.filter(a => a !== h.bg2), h.bg1)}</label></div>
-    <div class="muted">${bg.feat ? `Origin feat: ${esc(bg.feat)} · ` : bg.note ? `${esc(bg.note)} · ` : ''}skills: ${bg.skills.join(', ') || '—'}${bg.lib ? ` <i>(${esc(bg.src)})</i>` : ''}</div>
+    ${dread ? (() => { const K = callingOf(h); if (!K) return ''; const P = pathOf(K.id, h.path);
+      return `<div class="grid2"><label>Path${sel('path', [['', L >= 3 ? 'Choose a Path' : 'Choose at level 3 (or now)'], ...K.paths.map(p => [p.id, `${p.seep ? '☣ ' : ''}${p.name}`])], h.path || '')}</label><span class="muted" style="align-self:end">${P ? esc(P.blurb || '') : ''}</span></div>
+      <div class="muted cr-calling"><b>${esc(K.emblem)} ${esc(K.name)}</b> · ${esc(K.blurb)} · <b>${esc(K.signature.n)}</b>: ${esc(K.signature.text)}${P?.seep ? ` · <span class="fam-seep">☣ The price: ${esc(P.cost || '')}</span>` : ''} · d${C.hd} hit die · saves ${C.sv.join(', ')}</div>`; })() : ''}
+    ${!dread && subs ? `<div class="grid2"><label>Subclass${sel('sub', [[C.sub, `${C.sub} (wired into the rules)`], ...Object.keys(subs).sort().map(n => [n, `📚 ${n}`])], h.sub && subs[h.sub] ? h.sub : C.sub)}</label><span class="muted" style="align-self:end">${h.sub && subs[h.sub] ? `${esc(subs[h.sub].src)} · its features are on your sheet to read; the DM rules what they do` : ''}</span></div>` : ''}
+    ${dread ? '' : `<div class="muted">${L >= 3 || st.sub ? `Subclass: <b>${esc(st.sub || C.sub)}</b>` : `Subclass at level 3: ${esc(h.sub && subs?.[h.sub] ? h.sub : C.sub)}`} · d${C.hd} hit die · saves ${C.sv.join(', ')}${C.cast ? ` · casts with ${C.cast}` : ''}</div>`}
+    ${dread ? (() => { const o = originView(h.origin), ok = o?.opts ? Object.keys(o.opts)[0] : null;
+      return `<div class="grid2"><label>Origin${sel('origin', originList().map(x => [x.id, `${x.group === 'drawn' ? 'The Drawn: ' : x.group === 'barovian' ? 'Barovian: ' : ''}${x.name}`]), h.origin)}</label>${ok ? `<label>${esc(ok)}${sel('originOpt', o.opts[ok], h.originOpt || o.opts[ok][0])}</label>` : '<span></span>'}</div>
+      <div class="muted">${o ? `${esc(o.blurb)} · ${o.traits.map(t => `<b>${esc(t.n)}</b>: ${esc(t.text)}`).join(' · ')}` : ''}</div>`; })() : ''}
+    ${dread ? '' : `<div class="grid2"><label>Species${selLib('sp', SPECIES, h.sp)}</label>${spOptKey ? `<label>${esc(spOptKey)}${sel('spOpt', spOpts[spOptKey], h.spOpt || spOpts[spOptKey][0])}</label>` : '<span></span>'}</div>
+    <div class="muted">${esc([spc.note, spc.subs?.[h.spOpt]?.note].filter(Boolean).join(' · '))}${spc.lib ? ` <i>(${esc(spc.src)})</i>` : ''}</div>`}
+    <div class="grid3"><label>Background${dread ? sel('back', backList().map(b => [b.id, b.name]), h.back) : selLib('bg', BACKGROUNDS, h.bg)}</label><label>+2 to${sel('bg2', bg.ab, h.bg2)}</label><label>+1 to${sel('bg1', bg.ab.filter(a => a !== h.bg2), h.bg1)}</label></div>
+    <div class="muted">${dread && backView(h.back) ? `${esc(backView(h.back).blurb)} · Origin feat: <b>${esc(featView(backView(h.back).feat)?.name || '')}</b> (${esc(featView(backView(h.back).feat)?.text || '')}) · carries ${esc(backView(h.back).gear || '')} · ` : ''}${dread ? '' : bg.feat ? `Origin feat: ${esc(bg.feat)} · ` : bg.note ? `${esc(bg.note)} · ` : ''}skills: ${bg.skills.join(', ') || '—'}${bg.lib ? ` <i>(${esc(bg.src)})</i>` : ''}</div>
 
     <h2>Ability scores</h2>
     <div class="row">${[['standard', 'Standard array'], ['pointbuy', `Point buy (${pts}/27)`], ['manual', 'Enter my own'], ['roll', 'Roll 4d6']].map(([k, l]) => `<button class="btn small ${h.method === k ? 'on' : ''}" data-cr="method" data-k="${k}">${l}</button>`).join('')}
@@ -251,6 +271,11 @@ function set(path, v){
   else if (path === 'cls'){ h.cls = v; h.sub = null; const C = CLASSES[v]; h.ab = { ...C.arr }; h.method = 'standard'; h.skills = C.skills[1].slice(0, C.skills[0]); h.expert = []; h.spells = []; h.color = C.color;
     h.armor = C.armor?.startsWith('heavy') ? 'Chain Mail' : C.armor?.startsWith('medium') ? 'Scale Mail' : C.armor?.startsWith('light') ? 'Leather' : 'None'; h.shield = /shield/.test(C.armor || ''); }
   else if (path === 'sub') h.sub = v === CLASSES[h.cls].sub ? null : v;   // null: the class's own
+  else if (path === 'calling'){ const K = callingOf({ calling:v }); if (!K) return; set('cls', K.chassis); h.calling = K.id; h.path = null; h.color = K.color; return; }
+  else if (path === 'path') h.path = v || null;
+  else if (path === 'origin'){ h.origin = v; h.originOpt = null; Object.assign(h, pick2(asClassic(h))); }
+  else if (path === 'originOpt'){ h.originOpt = v; Object.assign(h, pick2(asClassic(h))); }
+  else if (path === 'back'){ const b = backView(v); if (!b) return; set('bg', b.like); h.back = v; }
   else if (path === 'bg'){ h.bg = v; const b = BACKGROUNDS[v]; if (!b) return; h.bg2 = b.ab[0]; h.bg1 = b.ab[1]; h.skills = (h.skills || []).filter(s => !b.skills.includes(s)); }
   else if (path === 'bg2'){ h.bg2 = v; if (h.bg1 === v) h.bg1 = bgOf(h).ab.find(a => a !== v); }
   else if (path === 'sp'){ h.sp = v; const o = SPECIES[v]?.opts; h.spOpt = o ? Object.values(o)[0][0] : null; }
@@ -289,6 +314,7 @@ document.addEventListener('click', e => {
   const b = e.target.closest('[data-cr]'); if (!b || !$('#charBox').contains(b)) return;
   const a = b.dataset.cr;
   if (a === 'close'){ closeCreator(); return; }
+  if (a === 'rules'){ setRulesMode(b.dataset.k); if (b.dataset.k === 'classic'){ edit.calling = edit.path = edit.origin = edit.originOpt = edit.back = null; } render(); return; }
   if (a === 'method'){ edit.method = b.dataset.k; if (edit.method === 'pointbuy') for (const k of ABILITIES) edit.ab[k] = clamp(edit.ab[k], 8, 15); if (edit.method === 'standard') edit.ab = { ...CLASSES[edit.cls].arr }; render(); }
   if (a === 'suggest'){ edit.ab = { ...CLASSES[edit.cls].arr }; if (edit.method === 'roll') edit.method = 'standard'; render(); }
   if (a === 'roll'){

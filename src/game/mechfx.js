@@ -22,9 +22,18 @@ export function mechCtx(t, extra = {}){
   return { lvl, ab:t.ab || null, mods:t.mods || null,
     raging:has(t, 'raging'), bloodied:t.hp > 0 && t.hp <= (t.maxHp || 1) / 2, hpLow:t.hp > 0 && t.hp <= (t.maxHp || 1) / 4,
     allyNear, alone:!others.some(o => side(o) === side(t) && cheb(o, t) <= 6), foesNear,
-    wardUp:(t.ward?.now || 0) > 0, wardDown:(t.ward?.max || 0) > 0 && !(t.ward?.now > 0), ...extra };
+    wardUp:(t.ward?.now || 0) > 0, wardDown:(t.ward?.max || 0) > 0 && !(t.ward?.now > 0),
+    firstRound:!!state?.combat?.active && (state.combat.round || 1) <= 1, attacked:!!state?.combat?.active && t.attackedKey === turnKey(),
+    dashed:!!t.dashed, hidden:has(t, 'hidden') || has(t, 'invisible'), invoked:invokedNow(t), ...extra };
 }
 export const isSeep = seepy;
+export const turnKey = () => { const c = state?.combat; return c?.active ? `${c.round}:${c.idx}` : ''; };
+// The features invoked within the minute (ten rounds in a fight; sixty seconds out of one)
+export function invokedNow(t){
+  const c = state?.combat, out = [];
+  for (const [src, v] of Object.entries(t?.invoked || {})) if (c?.active && v.round != null ? (c.round || 1) - v.round < 10 : Date.now() - (v.at || 0) < 60000) out.push(src);
+  return out;
+}
 
 /* What applies to a token right now: its own features, and what the auras of those on its side within reach give it
    (a Warden's oath, a Herald's banner: { k:'aura', radius:10, gives:{ k:'advantage', on:'save' } }; feet, 5 a square).
@@ -72,16 +81,31 @@ export function runMech(t, m, target, heal){
     const to = target || t; if (to.dead && to.kind === 'monster') return null;
     const n = Math.max(1, amountOf(m.amount || '1d8', ctx)); heal(to, n);
     lines.push(`${to === t ? '' : `${to.name} `}<b>+${n} HP</b> (${to.hp}/${to.maxHp})`);
-  } else if (m.k === 'tempHp'){
+  } else if (m.k === 'tempHp' && !/^invoked/i.test(String(m.when || ''))){
     const n = amountOf(m.amount || '1d6', ctx); t.thp = tempGive(t.thp, n);
     lines.push(`<b>${t.thp} temporary hit points</b>`);
+  } else if (/^invoked/i.test(String(m.when || ''))){   // invoked: it holds for a minute
+    const c = state?.combat; (t.invoked ||= {})[m.src] = { round:c?.active ? c.round || 1 : null, at:Date.now() };
+    lines.push(`Invoked for a minute: ${m.text || m.src}`);
   } else return null;
+  lines.push(...payPrice(t, m, ctx));
+  return lines;
+}
+// The price a Seep-touched feature takes, each time it's used or fires
+export function payPrice(t, m, ctx = mechCtx(t)){
+  const lines = [];
   for (const c of seepCosts(m, ctx)){
     if (c.what === 'maxHp'){ const n = Math.min(c.n, Math.max(0, t.maxHp - 1)); t.seepDrain = (t.seepDrain || 0) + n; t.maxHp -= n; t.hp = Math.min(t.hp, t.maxHp);
       lines.push(`<span class="fam-seep">The rot takes its price: hit point maximum −${n} until a long rest.</span>`); }
+    else if (c.what === 'hp'){ const n = Math.min(c.n, Math.max(0, t.hp - 1)); t.hp -= n; lines.push(`<span class="fam-seep">The rot takes its price: −${n} HP.</span>`); }
+    else if (c.what === 'text') lines.push(`<span class="fam-seep">☣ The price: ${c.text}</span>`);
     else { t.seepMarks = (t.seepMarks || 0) + c.n; lines.push(`<span class="fam-seep">The rot spreads under the skin (${t.seepMarks} mark${t.seepMarks === 1 ? '' : 's'}).</span>`); }
   }
   return lines;
+}
+// A feature that fires on its own with uses (holdAtOne, a burst): the resource, if one is left
+export function autoLeft(t, k, when = null){
+  return (t?.resources || []).find(r => r.auto && r.mech?.k === k && (!when || String(r.mech.when || '').toLowerCase() === when.toLowerCase()) && (t.res?.[r.id] ?? 0) > 0) || null;
 }
 // A long rest gives back what the rot drained
 export function restoreDrain(t){ if (t?.seepDrain > 0){ t.maxHp += t.seepDrain; delete t.seepDrain; } }

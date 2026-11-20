@@ -80,14 +80,18 @@ export const wardFrac = ward => ward && ward.max > 0 ? Math.max(0, Math.min(1, (
 const SAME = { fury:'raging', rage:'raging', raging:'raging', bloodied:'bloodied', alone:'alone', allyadjacent:'allyNear', allynear:'allyNear', ally:'allyNear',
   vsseep:'vsSeep', seep:'vsSeep', seeped:'vsSeep', infected:'vsSeep', firsthiteachturn:'firstHit', firsthit:'firstHit', onceperturn:'firstHit', crit:'crit', critical:'crit',
   always:'always', ward:'wardUp', wardup:'wardUp', warddown:'wardDown', wardbroken:'wardDown', hplow:'hpLow', neardeath:'hpLow', melee:'melee', ranged:'ranged',
-  turnstart:'turnStart', kill:'kill', rest:'rest', bonus:'bonus' };
+  turnstart:'turnStart', kill:'kill', rest:'rest', bonus:'bonus', initiative:'firstRound', firstround:'firstRound', afterattack:'attacked', attacked:'attacked',
+  afterdash:'dashed', dashed:'dashed', afterhide:'hidden', hidden:'hidden', invoked:'invoked', invoked1min:'invoked' };
 export const KNOWN_WHEN = Object.keys(SAME);
-const holds1 = (w, ctx) => { const k = SAME[String(w).toLowerCase().replace(/[^a-z]/g, '')]; return k === 'always' ? true : !!(k && ctx?.[k]); };
-export function whenHolds(when, ctx = {}){
+// ('invoked' is the feature's own: its bearer invoked it within the minute — ctx.invoked lists those, by name)
+const holds1 = (w, ctx, m) => { const k = SAME[String(w).toLowerCase().replace(/[^a-z0-9]/g, '')];
+  if (k === 'invoked') return !!m?.src && Array.isArray(ctx?.invoked) && ctx.invoked.includes(m.src);
+  return k === 'always' ? true : !!(k && ctx?.[k]); };
+export function whenHolds(when, ctx = {}, m = null){
   if (when == null || when === '') return true;
   const s = String(when);
-  if (s.includes('|')) return s.split('|').some(p => whenHolds(p, ctx));
-  return s.split('+').every(p => holds1(p.trim(), ctx));
+  if (s.includes('|')) return s.split('|').some(p => whenHolds(p, ctx, m));
+  return s.split('+').every(p => holds1(p.trim(), ctx, m));
 }
 const list = mechs => (Array.isArray(mechs) ? mechs : []).flatMap(m => m && typeof m === 'object' ? [m, ...(Array.isArray(m.also) ? m.also.map(x => ({ ...x, src:m.src })) : [])] : []);
 // Advantage (or disadvantage) on an attack, a save or a check: { adv:[why], dis:[why] }. vs: an ability ('dex') or a
@@ -99,7 +103,7 @@ export function mechEdge(mechs, on, ctx = {}, vs = null){
     if (m.on && m.on !== on) continue;
     if (m.vs && vs && String(m.vs).toLowerCase() !== String(vs).toLowerCase()) continue;
     if (m.vs && !vs && on !== 'attack') continue;
-    if (!whenHolds(m.when, ctx)) continue;
+    if (!whenHolds(m.when, ctx, m)) continue;
     (m.k === 'advantage' ? adv : dis).push(m.src || m.k);
   }
   return { adv, dis };
@@ -107,14 +111,14 @@ export function mechEdge(mechs, on, ctx = {}, vs = null){
 // Damage types resisted right now
 export function mechResist(mechs, ctx = {}){
   const out = new Set();
-  for (const m of list(mechs)) if (m.k === 'resist' && whenHolds(m.when, ctx)) for (const t of m.types || []) out.add(String(t).toLowerCase());
+  for (const m of list(mechs)) if (m.k === 'resist' && whenHolds(m.when, ctx, m)) for (const t of m.types || []) out.add(String(t).toLowerCase());
   return [...out];
 }
 // Extra damage on a hit: [{ n, type, src }] (firstHit: only the first hit this turn counts for those that say so)
 export function mechExtra(mechs, ctx = {}, roll){
   const out = [];
   for (const m of list(mechs)){
-    if (m.k !== 'extraDamage' || !whenHolds(m.when, ctx)) continue;
+    if (m.k !== 'extraDamage' || !whenHolds(m.when, ctx, m)) continue;
     const n = amountOf(ctx.crit ? `${m.dice}+${m.dice}` : m.dice, ctx, roll);
     if (n > 0) out.push({ n, type:m.type || '', src:m.src || '' });
   }
@@ -149,26 +153,39 @@ export function mechUses(uses, ctx = {}){
   return { max:Math.max(1, amountOf(n || '1', ctx, () => 0)), rest:/short/i.test(per || '') ? 'short' : 'long' };
 }
 const slug = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'feature';
-const ACTIVE = m => m.k === 'heal' || (m.k === 'tempHp' && (m.when || 'bonus') === 'bonus');
+const INVOKED = m => /^invoked/i.test(String(m.when || ''));
+const ACTIVE = m => m.k === 'heal' || (m.k === 'tempHp' && (m.when || 'bonus') === 'bonus') || INVOKED(m);
+const AUTO = m => m.k === 'holdAtOne' || m.k === 'burst';   // (with uses, but they fire on their own)
 export function mechResources(mechs, ctx = {}){
   const seen = new Set(), out = [];
   for (const m of Array.isArray(mechs) ? mechs : []){
-    if (!m || !ACTIVE(m)) continue;
+    if (!m || !(ACTIVE(m) || AUTO(m))) continue;
     let id = `m-${slug(m.src)}`; while (seen.has(id)) id += '-2'; seen.add(id);
-    const u = mechUses(m.uses, ctx);
-    out.push({ id, n:m.src || (m.k === 'heal' ? 'Mending' : 'Second Breath'), max:u.max, rest:u.rest, use:'mech', mech:m,
-      text:m.text || (m.k === 'heal' ? `Heal ${m.amount}${m.range ? `, someone within ${m.range} ft.` : ''}` : `${m.amount} temporary hit points`) });
+    const u = mechUses(m.uses || (INVOKED(m) ? 'pb/longRest' : undefined), ctx);
+    out.push({ id, n:m.src || (m.k === 'heal' ? 'Mending' : 'Second Breath'), max:u.max, rest:u.rest, use:'mech', mech:m, ...(AUTO(m) ? { auto:true } : {}), ...(INVOKED(m) ? { invoke:true } : {}),
+      text:m.text || (m.k === 'heal' ? `Heal ${m.amount}${m.range ? `, someone within ${m.range} ft.` : ''}` : m.k === 'tempHp' ? `${m.amount} temporary hit points` : '') });
   }
   return out;
 }
 // The price a used feature takes: [{ what:'maxHp' | 'mark', n }]
+// (the data writes a price two ways: { what:'maxHp', amount } or in words — "reduces maximum HP by one", "lose HP equal to
+// proficiency", "take one force damage per calling level" are read; any other words are the price as told, for the DM)
+const WORDN = { one:1, two:2, three:3, four:4, five:5 };
 export function seepCosts(m, ctx = {}, roll){
-  return (Array.isArray(m?.also) ? m.also : []).filter(x => x?.k === 'seepCost').map(x => ({ what:x.what === 'maxHp' ? 'maxHp' : 'mark', n:Math.max(1, amountOf(x.amount || '1', ctx, roll)), text:x.text || '' }));
+  return (Array.isArray(m?.also) ? m.also : []).filter(x => x?.k === 'seepCost').map(x => {
+    const w = String(x.what || ''), lw = w.toLowerCase();
+    if (w === 'maxHp') return { what:'maxHp', n:Math.max(1, amountOf(x.amount || '1', ctx, roll)), text:x.text || '' };
+    const mh = lw.match(/maximum hp by (\w+)/); if (mh) return { what:'maxHp', n:WORDN[mh[1]] || Math.max(1, +mh[1] || 1), text:w };
+    if (/lose hp equal to proficiency/.test(lw)) return { what:'hp', n:amountOf('pb', ctx), text:w };
+    if (/damage per (calling )?level/.test(lw)) return { what:'hp', n:amountOf('lvl', ctx), text:w };
+    if (w === 'mark' || !w) return { what:'mark', n:Math.max(1, amountOf(x.amount || '1', ctx, roll)), text:x.text || '' };
+    return { what:'text', n:0, text:w };
+  });
 }
 
 // Extra movement in feet right now ({ k:'move', feet:10, when:'…' }): the most any one gives (they don't add up)
 export function mechMove(mechs, ctx = {}){
-  let best = 0; for (const m of list(mechs)) if (m.k === 'move' && whenHolds(m.when, ctx)) best = Math.max(best, Math.floor(+m.feet || 0));
+  let best = 0; for (const m of list(mechs)) if (m.k === 'move' && whenHolds(m.when, ctx, m)) best = Math.max(best, Math.floor(+m.feet || 0));
   return best;
 }
 
@@ -182,7 +199,7 @@ export function mechReaction(mechs, trigger, ctx = {}){
   for (const m of list(mechs)){
     if (m.k !== 'reaction' || !m.does) continue;
     if (TRIG[String(m.trigger || '').toLowerCase().replace(/[^a-z]/g, '')] !== trigger) continue;
-    if (!whenHolds(m.when, ctx)) continue;
+    if (!whenHolds(m.when, ctx, m)) continue;
     return { does:m.does, src:m.src || 'Reaction' };
   }
   return null;

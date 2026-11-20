@@ -3,6 +3,7 @@
    turn, a conversation, and the menu (travel, rest, save, leave). Input: a gamepad (engine/pad.js; the loop below
    reads it every frame), the keyboard, the handheld skin's touch buttons (ui/handheld.js), or taps on the map.
    The follow camera (below) eases after the hero and turns, cranes and cycles views with the right stick, L / R, [ ] - = V. */
+import { classLine, originLine } from '../game/calling.js';
 import { turnBanner } from './turnbanner.js';
 import { provokers } from '../engine/movement.js';
 import { hpBar, barMood } from './hpbar.js';
@@ -78,7 +79,7 @@ export function renderWanderStart(){
   box.innerHTML = cont + `<h3 class="th-h3">${w ? 'Or begin again with' : 'Who walks into the fog?'}</h3>
     <div class="th-heroes">${list.map(h => `<div class="th-hero">
       <div class="pt" style="background:radial-gradient(circle at 50% 40%,${h.color}66,#120b10 75%)">${h.portrait ? `<img src="${h.portrait}" alt="">` : esc((h.name || '?')[0])}</div>
-      <div class="nm">${esc(h.name || 'Unnamed')}</div><div class="meta">${esc(h.sp)} ${esc(h.cls)} ${h.lvl}</div>
+      <div class="nm">${esc(h.name || 'Unnamed')}</div><div class="meta">${esc(originLine(h))} ${esc(classLine(h))}</div>
       <div class="acts"><button class="btn small primary" data-act="wdBegin" data-id="${h.id}">Begin</button></div></div>`).join('')}
       <button class="th-hero new" data-act="wdNewHero"><b>+</b><span>Create a character</span></button></div>
     <p class="muted wd-keys">🎮 A controller works in Chrome and Edge: plug it in and press a button. Or the keys: <b>WASD</b> or the arrows walk, <b>Space</b> does what the screen says (strike, talk, end your turn), <b>Esc</b> goes back, <b>F</b> opens your actions, <b>Tab</b> picks a target, <b>I</b> is your hero, <b>M</b> the menu, <b>[ ]</b> turn the camera. Or tap where to walk.</p>

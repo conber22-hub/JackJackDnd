@@ -1,4 +1,5 @@
 /* UI EVENT WIRING — every [data-act] button, [data-edit] field, and keyboard shortcut. */
+import { classLine, originLine } from '../game/calling.js';
 import { state, setState, ui, tokById, isDM, makePC, makeNPC, dreadLevel } from '../engine/state.js';
 import { ensureTourButton } from './tour.js';
 import { ensureGhost } from './ghost.js';
@@ -609,10 +610,10 @@ export function renderHeroList(){
   const list = myHeroes();
   $('#heroList').innerHTML = list.map(h => `<div class="th-hero">
       <div class="pt" style="background:radial-gradient(circle at 50% 40%,${h.color}66,#120b10 75%)">${h.portrait ? `<img src="${h.portrait}" alt="">` : esc((h.name || '?')[0])}</div>
-      <div class="nm">${esc(h.name || 'Unnamed')}</div><div class="meta">${esc(h.sp)} ${esc(h.cls)} ${h.lvl}</div>
+      <div class="nm">${esc(h.name || 'Unnamed')}</div><div class="meta">${esc(originLine(h))} ${esc(classLine(h))}</div>
       <div class="acts"><button class="btn small" data-act="editHero" data-id="${h.id}">Edit</button><button class="btn small" data-act="exportHero" data-id="${h.id}" title="Download">⬇</button><button class="btn small danger" data-act="delHero" data-id="${h.id}" title="Delete">✕</button></div></div>`).join('')
     + `<button class="th-hero new" data-act="newHero"><b>+</b><span>Create a character</span></button>`;
-  $('#joinHero').innerHTML = list.map(h => `<option value="${h.id}">${esc(h.name)} — ${esc(h.cls)} ${h.lvl}</option>`).join('') + `<option value="">★ My characters at the DM's table${list.length ? '' : ' (or none yet)'}</option>`;
+  $('#joinHero').innerHTML = list.map(h => `<option value="${h.id}">${esc(h.name)} — ${esc(classLine(h))}</option>`).join('') + `<option value="">★ My characters at the DM's table${list.length ? '' : ' (or none yet)'}</option>`;
   renderRecentTables(); renderWanderStart();
 }
 // 🧭 The tables this browser has been let into, newest first: one tap goes back with the hero played there.

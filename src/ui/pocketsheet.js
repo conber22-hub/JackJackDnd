@@ -2,6 +2,7 @@
    the buttons, like the status screens of the old handheld games (in this app's own look: no console's name, badge
    or art). It only reads: no messages to the DM, no state changes. The hosts (ui/tablehh.js, ui/wander.js) call
    openPocketSheet(...) and give each press to pocketPress first — see the PR. */
+import { classLine, originLine } from '../game/calling.js';
 import { esc } from '../util/core.js';
 import { ABILITIES } from '../data/srd.js';
 import { heroStats, SP } from '../engine/hero.js';
@@ -127,7 +128,7 @@ function buildPage(idx){
     const face = sh?.portrait
       ? `<img class="pk-face" src="${esc(sh.portrait)}" alt="">`
       : `<div class="pk-face init" style="background:${esc(colour)}">${esc(initial)}</div>`;
-    const line = [sh?.sp, t.cls || (sh ? `${sh.cls || ''} ${sh.lvl || ''}`.trim() : '')].filter(Boolean).join(' · ');
+    const line = [sh ? originLine(sh) : '', t.callName ? classLine(t) : t.cls || (sh ? classLine(sh) : '')].filter(Boolean).join(' · ');
     html += `<div class="pk-hero">${face}<div><div class="pk-name">${esc(name)}</div><div class="pk-sub">${esc(line)}</div></div></div>`;
     const hp = Math.max(0, t.hp ?? 0), max = Math.max(1, t.maxHp ?? 1);
     html += `<div class="pk-vitals"><div class="pk-vit"><b>${t.ac ?? '—'}</b><span>Armour</span></div><div class="pk-vit"><b>${hp} / ${max}</b><span>Hit points</span></div><div class="pk-vit"><b>${t.speed ?? '—'} ft.</b><span>Speed</span></div></div>`;

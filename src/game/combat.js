@@ -38,8 +38,19 @@ import { makeNoise } from './noise.js';
 import { nemesisDamage, nemesisHolds, nemesisRegen, nemesisFalls, nemesisSurvives } from './court.js';
 import { toPlayers } from './outbox.js';
 import { wardSoak, wardTurn, mechEdge, mechExtra, mechTempHp, tempSoak, tempGive } from '../engine/mech.js';
-import { mechCtx, firstHitNow, isSeep, mechsFor, anyMechs, reactNow, alliesNear } from './mechfx.js';
+import { mechCtx, firstHitNow, isSeep, mechsFor, anyMechs, reactNow, alliesNear, turnKey, autoLeft, payPrice } from './mechfx.js';
 import { amountOf } from '../engine/mech.js';
+/* ⚙ A burst (a Calling's: { k:'burst', radius, dice, type, targets }): around `at`, on each of the bearer's foes (or all
+   but the bearer) within the radius */
+function burstFrom(bearer, at, r){
+  const m = r.mech || {}, sq = Math.max(1, Math.round((+m.radius || 5) / 5)), ctx = mechCtx(bearer), foe = o => (o.kind === 'monster') !== (bearer.kind === 'monster');
+  const hit = state.tokens.filter(o => o !== bearer && o.floor === at.floor && !o.dead && o.hp > 0 && Math.max(Math.abs(o.x - at.x), Math.abs(o.y - at.y)) <= sq && (m.targets === 'all' || foe(o)));
+  burst(at.floor, at.x, at.y, m.type === 'poison' ? '#9cc23c' : '#e8c25a');
+  bus.emit('react', { t:bearer, src:r.n, k:'burst' });
+  for (const o of hit) applyDamage(o, amountOf(m.dice || '2d6', ctx), m.type || '', bearer);
+  const p = payPrice(bearer, m); if (p.length) showCard({ kind:'seep', title:`${bearer.name}: ${r.n}`, lines:p }, false);
+  log(`⚙ ${bearer.name}: ${r.n} (${hit.length} caught).`); changed();
+}
 /* ⚙ A reaction fires (game/mechfx.js reactNow): what it does — the blow less, a strike back, a breath of temporary hit
    points, a heal (for one who dropped). → how much less the blow is (for 'reduce') */
 function react(r, bearer, { foe = null, fallen = null } = {}){
@@ -313,6 +324,7 @@ export function doAttack(aId, tId, i, mode = 'normal', { d20 = null, at = null }
   if (cm.penalty) why.push(`exhaustion −${cm.penalty}`);
   const D = dreadLevel();
   a.lastMove = null;   // after an attack there's no taking the move back
+  a.attackedKey = turnKey();   // ⚙ (a Calling's 'after you attack': game/mechfx.js)
   const bonus = E.bonus, useBoth = adv !== dis, ac = E.ac;
   const rage = atk.m && hasCond(a, 'raging') ? a.rageDmg || 2 : 0;
   // one roll per ray / beam (Scorching Ray, Eldritch Blast); everything else is one roll
@@ -333,6 +345,7 @@ export function doAttack(aId, tId, i, mode = 'normal', { d20 = null, at = null }
     }
   }
   const hits = rolls.filter(x => x.hit), crit = rolls.some(x => x.crit), total = hits.reduce((n, x) => n + x.dmg, 0);
+  if (hits.length && rc.kind === 'ranged' && a.id !== tg.id){ const r = autoLeft(a, 'burst', 'rangedHitAtTarget'); if (r){ a.res[r.id]--; setTimeout(() => burstFrom(a, tg, r), 520); } }   // ⚙ the Yeoman's volley
   if (!hits.length && a.id !== tg.id){ const r = reactNow(tg, 'missed', { melee:rc.kind !== 'ranged', ranged:rc.kind === 'ranged' }); if (r) setTimeout(() => react(r, tg, { foe:a }), 500); }   // ⚙ a miss answered
   // the TV spins a d20 to it (ui/screen.js); every other screen pops it up (ui/dicemoment.js): the die, the one it
   // beat or lost to with advantage or disadvantage, the bonus, the total and what it had to reach
@@ -400,6 +413,7 @@ export function applyDamage(t, n, type = '', by = null, defended = false){
     if (n <= 0) return 0; }
   // temporary hit points next (a Calling's, engine/mech.js)
   if (t.thp > 0){ const S = tempSoak(t.thp, n); t.thp = S.thp; n = S.through; if (S.soaked) bus.emit('temphp', { t, soaked:S.soaked }); if (n <= 0) return 0; }
+  const before = t.hp;
   t.hp = Math.max(0, t.hp - n);
   burst(t.floor, t.x, t.y, '#c0303a');
   if (t.bid === 'seepling' && n >= 5) t.hp = 0;     // Burst Sac
@@ -409,6 +423,11 @@ export function applyDamage(t, n, type = '', by = null, defended = false){
     const hooks = BEST[t.bid]?.hooks?.onBloodied;
     if (hooks){ showCard({ kind:'seep', title:`${t.name} is bloodied`, flair:'Something changes in the way it holds itself.' }); for (const fx of hooks) runFx(t, fx); }
   }
+  // ⚙ a Calling's: held at 1 hit point (the Hollowed's packed wound), once a rest — not against a blow that kills outright
+  if (t.hp <= 0 && t.kind !== 'monster' && n - before < (t.maxHp || 1)){ const r = autoLeft(t, 'holdAtOne');
+    if (r){ t.hp = 1; t.res[r.id]--; bus.emit('react', { t, src:r.n, k:'holdAtOne' }); const p = payPrice(t, r.mech); showCard({ kind:'seep', title:`${t.name}: ${r.n}`, flair:'The wound packs itself shut. They stay on their feet.', lines:p }, false); } }
+  // ⚙ a burst when its bearer drops (the Carrier's satchel)
+  if (t.hp <= 0 && t.kind !== 'monster'){ const r = autoLeft(t, 'burst', 'selfDown'); if (r){ t.res[r.id]--; burstFrom(t, t, r); } }
   if (t.hp <= 0 && !(t.nem && nemesisHolds(t))){ kill(t, type, by); setTimeout(checkVictory, 2100);
     // ⚙ one who dropped: those on their side may react (No One Left Behind: game/mechfx.js)
     if (t.kind !== 'monster') for (const o of alliesNear(t, 6)){ const r = reactNow(o, 'allyDown'); if (r){ react(r, o, { fallen:t }); break; } } }   // (after the last one has fallen, in its slow motion: render/punch.js)

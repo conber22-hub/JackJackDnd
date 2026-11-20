@@ -638,7 +638,7 @@ export function heroTurnAct(k){
 }
 // The hero's features (Second Wind, Action Surge, Rage, Lay on Hands on themselves…): engine-side, game/resources.js.
 // Action Surge gives the turn's action back, strikes and all (once a turn).
-export const heroFeatures = () => { const t = hero(); return t ? (t.resources || []).filter(r => !r.slot && r.id !== 'hd').map(r => ({ id:r.id, n:r.n, left:left(t, r.id), max:r.max, text:r.text || '',
+export const heroFeatures = () => { const t = hero(); return t ? (t.resources || []).filter(r => !r.slot && r.id !== 'hd' && !r.auto).map(r => ({ id:r.id, n:r.n, left:left(t, r.id), max:r.max, text:r.text || '',
   why:!left(t, r.id) ? 'none left: a rest brings it back' : r.id === 'surge' && !state.combat.active ? 'in a fight' : r.id === 'surge' && rt.surged ? 'once a turn' : state.combat.active && !myTurn() ? 'on your turn'
     : state.combat.active && BONUS_FEATS.has(r.id) && rt.bonus ? 'your bonus action is spent' : '' })) : []; };
 export function heroFeature(id){

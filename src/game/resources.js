@@ -5,7 +5,9 @@ import { rollDice, esc, bus } from '../util/core.js';
 import { showCard, toast } from '../ui/hud.js';
 import { addCond } from './rules.js';
 import { heal } from './combat.js';
-import { runMech, restoreDrain } from './mechfx.js';
+import { runMech, restoreDrain, mechCtx } from './mechfx.js';
+import { mechTempHp, tempGive } from '../engine/mech.js';
+const restTemp = t => { if (!t.mechs?.length) return; const g = mechTempHp(t.mechs, 'rest', mechCtx(t)); if (g.n) t.thp = tempGive(t.thp, g.n); };
 import { changed } from './session.js';
 import { longRest as fearRest } from '../engine/horror.js';
 
@@ -108,7 +110,7 @@ export function shortRest(list = party()){
     if (r.rest === 'short') t.res[r.id] = r.max;
     else if (r.rest === 'short1') t.res[r.id] = Math.min(r.max, left(t, r.id) + 1);
   }
-  for (const t of list) if (t.ward?.max > 0) t.ward = { ...t.ward, now:t.ward.max, hit:false };   // ⛨ whole again (engine/mech.js)
+  for (const t of list){ if (t.ward?.max > 0) t.ward = { ...t.ward, now:t.ward.max, hit:false }; restTemp(t); }   // ⛨ whole again; ⚙ a Calling's after-rest temporary hit points
   showCard({ kind:'', title:'A short rest', sub:'An hour', flair:'Bandages, a pipe, a whetstone. Nobody quite sleeps.', lines:['Short-rest features are back (one charge of the one-a-rest ones). Spend Hit Dice from each hero\'s card to heal.'] });
   log('The party takes a short rest.'); changed();
 }
@@ -118,7 +120,7 @@ export function longRest(list = party(), quiet = false){
     restoreDrain(t);   // (what the rot drained comes back first: game/mechfx.js)
     t.hp = t.maxHp; t.flags.bloodied = false; delete t.sustain;
     if (t.ward?.max > 0) t.ward = { ...t.ward, now:t.ward.max, hit:false };   // ⛨ (engine/mech.js)
-    delete t.thp;   // (temporary hit points end with a long rest)
+    delete t.thp; restTemp(t);   // (temporary hit points end with a long rest; a Calling's may come with it)
     t.conds = (t.conds || []).filter(c => c.n === 'seeded');
     if (t.exhaustion) t.exhaustion > 1 ? t.exhaustion-- : delete t.exhaustion;   // a long rest: one level of exhaustion less
     for (const r of t.resources || []) t.res[r.id] = r.max;
