@@ -12,6 +12,7 @@
    Each takes { seed, name, last (no floor below), part }. Pure: no DOM, no Three.js. */
 import { mulberry32, hashSeed, clamp } from '../util/core.js';
 import { CROPS } from '../data/props.js';
+import { MEMORIAL } from '../data/memorial.js';
 
 const N = 40;
 const P = (k, x, y, r = 0) => [k, x, y, r];
@@ -115,6 +116,10 @@ const tavernProps = r => [P('bar', r.x + r.w - 2, r.y + 1, 0), P('hearth', r.x +
 const shopProps = r => [P('shelf', r.x, r.y + 1, 0), P('shelf', r.x + r.w - 1, r.y + 1, 2), P('crate', r.x + 2, r.y + 1), P('barrel', r.x + 3, r.y + r.h - 1), P('sacks', r.x + 1, r.y + r.h - 1), P('table', r.x + Math.floor(r.w / 2), r.y + 2)];
 const churchProps = r => [P('altar', r.x + Math.floor(r.w / 2) - 1, r.y, 1), P('candelabra', r.x, r.y), P('candelabra', r.x + r.w - 1, r.y),
   ...[2, 4].flatMap(dy => [P('bench', r.x + 1, r.y + dy, 1), P('bench', r.x + r.w - 3, r.y + dy, 1)])];
+// 🔥 the Dutch Oven (data/memorial.js): the great oven at the back wall (a hearth beside the forge), the anvil, the bread
+// tables and benches, flour and barrels, and the soldier's armour on its stand by the door
+const ovenProps = r => [P('hearth', r.x + 1, r.y, 1), P('forge', r.x + 3, r.y, 0), P('anvil', r.x + r.w - 3, r.y + 1, 0), P('table', r.x + 2, r.y + 2), P('bench', r.x + 1, r.y + 2, 1),
+  P('table', r.x + 4, r.y + 3), P('sacks', r.x, r.y + r.h - 1), P('barrel', r.x + r.w - 1, r.y + r.h - 1), P('armor', r.x + r.w - 1, r.y + 1, 2), P('candelabra', r.x + r.w - 2, r.y + r.h - 1)];
 const mansionProps = r => [P('rug', r.x + 2, r.y + 1, 0), P('longtable', r.x + r.w - 3, r.y + 2, 0), P('chair', r.x + r.w - 4, r.y + 2, 3), P('chair', r.x + r.w - 4, r.y + 3, 3), P('hearth', r.x, r.y + 2, 0), P('shelf', r.x + r.w - 1, r.y + r.h - 3, 2), P('candelabra', r.x + 1, r.y + r.h - 1)];
 
 /* ---------- the village, the town and the walled village ---------- */
@@ -161,6 +166,13 @@ function settlement(kind, o, g){
     lay.paths.push({ w:1, pts:[gy.x, gy.y + 4, scx + 1, gy.y + 4] }); lay.doors.push([ch.x + ch.w, gy.y + 4, 'open']);   // the church's side door
     for (let i = 0; i < 6; i++) lay.props.push(P('gravestone', gy.x + 1 + (i % 3) * 2, gy.y + (i < 3 ? 1 : 3)));
     lay.props.push(P('deadtree', gy.x + gy.w - 1, gy.y)); }
+  // 🪨 Dutcher's cairn, on the rise beside the graveyard (or the church's other side)
+  if (o.cairn) for (const [i, cr] of [R(gy.x + gy.w + 2, top + 1, 3, 3), R(ch.x - 5, top + 1, 3, 3)].entries()) if (cr.x > 1 && cr.x + cr.w < N - 1 && pl.free(cr, 0)){
+    room(lay, cr, 'chamber', MEMORIAL.cairn.name, MEMORIAL.cairn.notes, true); pl.take(cr, 1);
+    // a footpath up to it: from the graveyard, or from the church street
+    if (i === 0) lay.paths.push({ w:1, pts:[cr.x, cr.y + 1, gy.x + gy.w - 1, cr.y + 1] });
+    else lay.paths.push({ w:1, pts:[cr.x + 1, cr.y + cr.h, cr.x + 1, top + 7, scx, top + 7] });
+    lay.props.push(P('stone', cr.x + 1, cr.y + 1), P('shrine', cr.x, cr.y + 2), P('lantern', cr.x + 2, cr.y + 2)); break; }
   lay.paths.push({ w:2, pts:[scx, sq.y + sq.h, scx, bot - 7] }); pl.take(R(scx, sq.y + sq.h, 2, bot - 7 - sq.y - sq.h + 1), 0);
   const mh = R(scx - 5, bot - 5, 11, 6);
   hall(lay, pl, mh, town ? 'The burgomaster\'s mansion' : 'The burgomaster\'s house', town ? 'Every lamp lit. Every guest checked at the door.' : 'Shutters barred. Claw marks on the door, deep and old.', { x:scx, y:mh.y - 1, sx:scx, sy:mh.y - 2 }, mansionProps);
@@ -169,6 +181,9 @@ function settlement(kind, o, g){
   if (pl.free(tv, 0)) hall(lay, pl, tv, town ? 'The inn' : 'The tavern', town ? 'Warm, loud, and full of people who are very careful what they say.' : 'One lit window. A barkeep who has stopped asking names.', { x:tv.x + 2, y:tv.y - 1, sx:tv.x + 2, sy:y0 + 1 }, tavernProps);
   const sh = R(sq.x - 9, y0 - 2 - 6, 7, 5);
   if (pl.free(sh, 0)) hall(lay, pl, sh, town ? 'The coffin maker\'s' : 'The mercantile', town ? 'Coffins in the window. More coffins than a town this size could need.' : 'Overpriced, under-stocked, and the only shop for miles.', { x:sh.x + 3, y:sh.y + sh.h, sx:sh.x + 3, sy:y0 - 1 }, shopProps);
+  // 🔥 the Dutch Oven, across the square from the tavern (the Village of Barovia's: data/memorial.js), before the houses
+  if (o.oven){ const ov = R(sq.x - 10, y0 + 3, 8, 5);
+    if (pl.free(ov, 0)) hall(lay, pl, ov, MEMORIAL.oven.name, MEMORIAL.oven.notes, { x:ov.x + 3, y:ov.y - 1, sx:ov.x + 3, sy:y0 + 1 }, ovenProps); }
   // a back lane on the west side
   const lx = Math.max(wallR ? wallR.x + 4 : 5, sq.x - 12);
   lay.paths.push({ w:1, pts:[lx, y0 + 2, lx, bot - 2] }); pl.take(R(lx, y0 + 2, 1, bot - y0 - 3), 0);

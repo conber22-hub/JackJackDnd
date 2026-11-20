@@ -117,3 +117,4 @@ export { seenNow } from './engine/grid.js';   // 👁 what the party can see thi
 export { shove } from './game/combat.js';   // 🤚 shove(aId, tId, 'push' | 'prone'): in place of a strike (engine/shove.js)
 export { showCard } from './ui/hud.js';
 export * as dedication from './ui/dedication.js';   // 🕯 Chance's dedication
+export { nearestOpen } from './game/actions.js';   // the nearest open square to (x, y) on a floor

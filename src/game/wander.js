@@ -49,6 +49,7 @@ import { showCard, toast } from '../ui/hud.js';
 import { fightBegins, fightEnds, achieve, sighted } from './record.js';
 import { openVictory, setVictoryFace } from '../ui/victory.js';
 import { openDefeat, setDefeatFace } from '../ui/defeat.js';
+import { MEMORIAL } from '../data/memorial.js';
 import { openLevelUp } from '../ui/levelup.js';
 import { faceOf } from './night.js';
 import { syncTokens, tokenViews, faceStep } from '../render/minis.js';
@@ -740,12 +741,35 @@ function finishFight(won){
 // page with no screen to show) the old card and its 2.6 seconds.
 function fallen(summary = null, order = []){
   rt.endAt = 0;
-  const wake = () => { if (!continueWander({ safe:true })){ for (const m of members()){ m.dead = false; m.hp = m.maxHp; } syncTokens(); changed(); } };
+  const wake = () => { if (!continueWander({ safe:true })){ for (const m of members()){ m.dead = false; m.hp = m.maxHp; } syncTokens(); changed(); } else wakeAtOven(); };
   if (!summary || typeof document === 'undefined'){ showCard({ kind:'seep', ...LOST }, false); setTimeout(wake, 2600); return; }
   const party = members().map(m => m.id);
   const names = Object.fromEntries([...party, ...order].map(tokById).filter(Boolean).map(o => [o.id, o.name]));
   openDefeat(summary, { party, names, faces:{}, from:wakePlace(), onClose:wake });
   setTimeout(() => { for (const m of members()){ try { const f = faceOf(m); if (f) setDefeatFace(m.id, f); } catch {} } }, 60);
+}
+/* ---------- 🔥 the Dutch Oven and Dutcher's cairn (data/memorial.js) ----------
+   In the Village of Barovia (engine/settlement.js, the village's oven and cairn): the first time on a journey the
+   hero steps into either, a card tells the village's story of Dutcher; a night's rest under the Oven's roof says so;
+   and a fallen party wakes there, by the fire. */
+const roomOf = t => t ? (state.floors[t.floor]?.rooms || []).find(r => t.x >= r.x && t.x < r.x + r.w && t.y >= r.y && t.y < r.y + r.h) || null : null;
+const ovenOn = L => (state.floors[L]?.rooms || []).find(r => r.name === MEMORIAL.oven.name) || null;
+const memorialSeen = new Set();   // (once each journey: this page's run)
+export function memorialSteps(){
+  if (!W() || state.combat.active || rt.talk) return null;
+  const r = roomOf(hero()), M = r && [MEMORIAL.oven, MEMORIAL.cairn].find(m => m.name === r.name);
+  if (!M || memorialSeen.has(M.name)) return null;
+  memorialSeen.add(M.name);
+  showCard({ kind:'', title:M.name, flair:M.flair, lines:M.lines }, false);
+  return M.name;
+}
+export const inOven = () => roomOf(hero())?.name === MEMORIAL.oven.name;
+function wakeAtOven(){
+  const h = hero(), r = h && ovenOn(h.floor); if (!r) return false;
+  for (const m of members().filter(o => !o.flags?.gone)){ m.x = -99; }   // (out of the way of each other's squares while they're placed)
+  for (const m of members().filter(o => !o.flags?.gone)){ const at = nearestOpen(h.floor, r.cx, r.cy); if (at){ m.floor = h.floor; m.x = at.x; m.y = at.y; } }
+  syncTokens(); enterView(); changed(); saveNow();
+  return true;
 }
 // where the last safe save stands: its hero's place (or the road it was on), read from the save as it is
 export function wakePlace(){
@@ -753,7 +777,8 @@ export function wakePlace(){
     const s = loadWanderSave({ safe:true }); if (!s) return null;
     const V = s.campaign?.valley, h = (s.tokens || []).find(t => t.id === s.campaign?.wander?.heroTok);
     if (V?.journey) return `the road to ${placeById(V.journey.to)?.name || 'the next village'}`;
-    const name = s.floors?.[h?.floor ?? 0]?.name;
+    const fl = s.floors?.[h?.floor ?? 0], name = fl?.name;
+    if ((fl?.rooms || []).some(r => r.name === MEMORIAL.oven.name)) return `the Dutch Oven${name ? `, in the ${name}` : ''}`;   // (the party wakes by its fire)
     return name ? name : null;
   } catch { return null; }
 }
@@ -811,7 +836,8 @@ export function rest(){
   if (state.combat.active) return false;
   const list = members().filter(m => !m.flags?.gone);
   if (onRoad()){ shortRest(list); passTime(1); W().quiet = Math.max(W().quiet, 30); }
-  else { for (const m of list){ m.dead = false; if (m.hp <= 0) m.hp = 1; } longRest(list); passTime(8); questEvent({ k:'rest', place:valley().at }); }
+  else { for (const m of list){ m.dead = false; if (m.hp <= 0) m.hp = 1; } longRest(list); passTime(8); questEvent({ k:'rest', place:valley().at });
+    if (inOven()) showCard({ kind:'', title:`A night at ${MEMORIAL.oven.name}`, flair:MEMORIAL.oven.rest }, false); }
   syncTokens(); changed(); saveNow(); return true;
 }
 

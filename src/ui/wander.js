@@ -20,7 +20,7 @@ import { currentTurn } from '../game/combat.js';
 import { moveAllowance } from '../game/rules.js';
 import { rangeCheck } from '../engine/targeting.js';
 import { W, rt, hero, members, wandering, startWander, continueWander, leaveWander, stepHero, heroBusy, walkTo, hereAction, talkView, chooseTalk, talkTo,
-  heroAttack, heroDodge, heroShove, heroTurnAct, heroFeatures, heroFeature, endHeroTurn, aim, target, targets, attackFor, nextWeapon, attacksLeft, myTurn, fightTick, destinations, setOut, travelTo, rest, saveNow,
+  heroAttack, heroDodge, heroShove, heroTurnAct, heroFeatures, heroFeature, endHeroTurn, aim, target, targets, attackFor, nextWeapon, attacksLeft, myTurn, fightTick, memorialSteps, destinations, setOut, travelTo, rest, saveNow,
   pack, toggleEquip, usePotion, coinsGp, shopHere, buyPotion, journal, approvalOf, levelReady, partyLevel, nextLevelXp, levelUpHero, sheetOf, spellList, heroCast,
   SLOTS, slotMeta, canSaveSlot, saveToSlot, loadFromSlot, opening, economy, strikeOdds } from '../game/wander.js';
 import { setFightZone, clearFightFx, showMoveSquares, clearMoveSquares, showMarks, showOdds, showAreaSquares, clearAim, showHover, floatText, ringPulse, moveSquaresKey } from '../render/fightzone.js';
@@ -593,7 +593,7 @@ function frame(now){
   try { wanderMoments(); coachTick(wanderSnapshot); } catch (e){ console.warn(e); }
   if (pending){ if (now > pending.until) pending = null; else if (stepHero(pending.dx, pending.dy)) pending = null; }
   walkHeld();
-  if (now - lastTick > 180){ lastTick = now; try { fightTick(now); } catch (e){ console.warn(e); } try { fightGround(now); } catch (e){ console.warn(e); } renderHud(); }
+  if (now - lastTick > 180){ lastTick = now; try { fightTick(now); } catch (e){ console.warn(e); } try { fightGround(now); } catch (e){ console.warn(e); } try { memorialSteps(); } catch (e){ console.warn(e); } renderHud(); }
 }
 let held = null;   // (the walking key held down, if one is)
 function onKeyUp(e){ if (held && e.key.toLowerCase() === held.key) held = null; }
