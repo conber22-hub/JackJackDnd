@@ -17,6 +17,7 @@
    It holds the handheld whenever this phone is seated with a hero (not the TV, not card only, not in the Lantern
    Yard), and the device wants it: on a touch screen with no controller, unless the menu's "The classic screen" is
    chosen (kept per device). A controller plugged in plays it too. */
+import { magicWord } from '../game/calling.js';
 import { turnBannerWhenClear } from './turnbanner.js';
 import { hpBar, barMood } from './hpbar.js';
 import { showTarget } from './targetinfo.js';
@@ -160,7 +161,7 @@ function castFromList(i){
   const t = me(), sp = t?.casts?.[i]; if (!sp) return;
   if (fight() && !myTurn()) return toast('Not your turn yet.');
   if (fight() && !actionLeft(t)) return toast('Your action is spent: A again ends your turn.');
-  if (!canCast(t, sp.l, sp.n, sp.again)) return toast(`${sp.n}: no slot left for it.`);
+  if (!canCast(t, sp.l, sp.sn || sp.n, sp.again)) return toast(`${sp.n}: no slot left for it.`);
   const area = areaOf(sp), help = sp.k === 'heal' || sp.k === 'buff';
   const go = target => slotThen(t, sp, at => sendCast(t, i, sp, target, at));
   if (area?.shape === 'aura') return go({ id:t.id, aim:{ x:t.x, y:t.y } });
@@ -296,7 +297,7 @@ function menuItems(){
   if (menu.page === 'strike') return strikeItems(t);
   if (menu.page === 'spells') return [...(t.casts || []).map((s, i) => [s, i]).sort((a, b) => (a[0].l || 0) - (b[0].l || 0)).map(([s, i]) => ({ label:s.n, group:s.l ? `Level ${s.l}` : 'Cantrips', ...spellBits(s), ...(areaOf(s) ? { icon:'✺' } : {}),
     sub:`${spellBits(s).sub}${s.k === 'heal' || s.k === 'buff' || s.k === 'util' ? '' : target() ? ` · at ${target().name}` : ''}`,
-    off:!turnOk || !canCast(t, s.l, s.n, s.again) || (fight() && (bonusSpell(s) ? usedNow().bonus : !actionLeft(t))), run:() => { menu.open = false; castFromList(i); } })), back];
+    off:!turnOk || !canCast(t, s.l, s.sn || s.n, s.again) || (fight() && (bonusSpell(s) ? usedNow().bonus : !actionLeft(t))), run:() => { menu.open = false; castFromList(i); } })), back];
   if (menu.page === 'allies'){ const i = rt.cast?.i, sp = t.casts?.[i]; if (!sp) return [back];
     return [...alliesFor(t, sp).map(({ o, ok }) => ({ label:o.id === t.id ? `${o.name} (you)` : o.name, sub:`${Math.max(0, o.hp)} / ${o.maxHp} HP${ok ? '' : ' · out of reach'}`, off:!ok,
       run:() => slotThen(t, sp, at => sendCast(t, i, sp, { id:o.id }, at)) })), { label:'Back', run:() => { rt.cast = null; menu.page = 'spells'; menu.i = 0; } }]; }
@@ -314,7 +315,7 @@ function menuItems(){
     return [
       ...(spent ? end : []),
       ...t.attacks.map((a, i) => ({ label:a.n, group:'Strike', ...attackBits(a, tg && rangeCheck(t, tg, a).ok ? `at ${tg.name}` : 'choose who'), off:!turnOk || (fight() && !strikesLeft(t)) || (a.l && !canCast(t, a.l, a.sn || a.n, a.again)), run:atk(a, i) })),
-      ...(t.casts?.length ? [{ label:'Spells…', group:'Magic', icon:'✦', info:'Every spell you know, with what it does and what it costs.', sub:fight() && !actionLeft(t) ? 'Your action is spent' : (t.resources || []).filter(r => r.slot).map(r => `L${r.slot} ${left(t, r.id)}/${r.max}`).join(' · ') || 'Cantrips', run:() => { menu.page = 'spells'; menu.i = 0; } }] : []),
+      ...(t.casts?.length ? [{ label:`${magicWord(t)}…`, group:'Magic', icon:'✦', info:'Every spell you know, with what it does and what it costs.', sub:fight() && !actionLeft(t) ? 'Your action is spent' : (t.resources || []).filter(r => r.slot).map(r => `L${r.slot} ${left(t, r.id)}/${r.max}`).join(' · ') || 'Cantrips', run:() => { menu.page = 'spells'; menu.i = 0; } }] : []),
       ...(fight() ? [{ label:'Dash', group:'Move & defend', ...actBits('dash'), off:!myTurn(), run:ta('dash') }, { label:'Disengage', group:'Move & defend', ...actBits('disengage'), off:!myTurn(), run:ta('disengage') },
         { label:'Dodge', group:'Move & defend', ...actBits('dodge'), off:!myTurn(), run:ta('dodge') }, ...(t.conds?.some(c => c.n === 'prone') ? [{ label:'Stand up', group:'Move & defend', ...actBits('stand'), off:!myTurn(), run:ta('stand') }] : [])] : []),
       ...(t.resources || []).filter(r => !r.slot).map(r => ({ label:r.id === 'hd' ? 'Hit Die' : r.n, group:'Your gifts', ...featBits({ id:r.id, n:r.n, left:left(t, r.id), max:r.max, text:r.text }), sub:`${left(t, r.id)} of ${r.max} left${r.id === 'surge' && usedNow().surged ? ' · used this turn' : ''}`,
@@ -341,7 +342,7 @@ function menuItems(){
     { label:'Carry on', run:() => { menu.open = false; } },
     { label:'Your hero', sub:'Your sheet, a page at a time (Select)', run:() => { menu.open = false; openSheet(); } },
     { label:'The full sheet', sub:'The classic Hero tab: notes, letters, your voice and the rest', run:() => { menu.open = false; openClassicSheet(); } },
-    ...(t.casts?.length ? [{ label:'Spells', run:go('spells') }] : []),
+    ...(t.casts?.length ? [{ label:magicWord(t), run:go('spells') }] : []),
     { label:'Actions', sub:'Dash, Disengage, Dodge, an attack of your choice, features', run:go('actions') },
     { label:'Handheld & camera', sub:'Shell, pixel screen, full screen, seeing through, the classic screen', run:go('handheld') },
     { label:'How to play', run:go('help') },

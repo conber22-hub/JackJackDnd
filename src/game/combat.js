@@ -342,7 +342,7 @@ export function doAttack(aId, tId, i, mode = 'normal', { d20 = null, at = null }
   // a spell attack cast with a higher slot: more dice, or more rays (engine/spellcast.js); some need Concentration
   const lib = atk0.l ? spellInfo(atk0.sn || atk0.n) : null, level = !atk0.l ? 0 : slot === '' ? Math.max(atk0.l, at || 0) : (a.castAt || atk0.l), extra = level - (atk0.l || 0);
   const atk = extra > 0 ? { ...atk0, ...(upRays(lib) ? { rays:(atk0.rays || 1) + extra } : { d:diceAt({ ...lib, d:atk0.d }, level) }) } : atk0;
-  if (lib?.conc && !reuse) startConc(a, lib.n);
+  if (lib?.conc && !reuse) startConc(a, lib.n, String(atk0.n || lib.n).replace(/ \(×.*\)$/, ''));
   const E = attackEdge(a, tg, atk, mode), { rc, cov, cm, adv, dis, why } = E;
   if (!rc.ok) why.push(`${rc.why} — the DM's call`);
   if (cov.cover === 'total') why.push('behind total cover — the DM\'s call');
@@ -481,7 +481,7 @@ export function applyDamage(t, n, type = '', by = null, defended = false){
     if (t.dead) endConc(t, 'goes down');
     else {   // a Constitution save to keep hold of it: DC 10 or half the damage (2024 rules)
       const dc = concDC(n), S = saveRoll(t, 'con'), r = S.r, tot = S.tot, held = tot >= dc;
-      showCard({ kind:held ? '' : 'miss', title:`${t.name} ${held ? 'holds on' : 'loses concentration'}`, sub:`${t.conc.n} · Constitution save DC ${dc}`, lines:[`d20 <b>${r}</b> ${signed(tot - r)} = <b>${tot}</b>`] });
+      showCard({ kind:held ? '' : 'miss', title:`${t.name} ${held ? 'holds on' : 'loses concentration'}`, sub:`${t.conc.shown || t.conc.n} · Constitution save DC ${dc}`, lines:[`d20 <b>${r}</b> ${signed(tot - r)} = <b>${tot}</b>`] });
       if (!held) endConc(t, 'loses concentration');
     }
   }
@@ -695,37 +695,38 @@ export function castSpell(casterId, targetId, i, aim = null, { at = null } = {})
   const tg = tokById(targetId) || (area && aim ? c : null); if (!c || !tg || !base0) return false;
   if (base0.k === 'heal' && tg.dead && tg.kind === 'monster'){ toast(`${tg.name} is beyond healing.`); return false; }
   if (base0.recharge && c.spent?.[base0.n]){ toast(`${c.name}'s ${base0.n} hasn't come back yet (Recharge ${base0.recharge}–6).`); return false; }
-  const reuse = !!base0.again && c.sustain === base0.n;   // a sustained spell, used again: not a fresh casting
-  const slot = spendSpell(c, base0.l, base0.n, !!base0.again, at);
+  const key = base0.sn || base0.n, nm = base0.n;   // ✦ the spell's own name (the rules), and what this caster calls it (a Calling's: game/calling.js)
+  const reuse = !!base0.again && c.sustain === key;   // a sustained spell, used again: not a fresh casting
+  const slot = spendSpell(c, base0.l, key, !!base0.again, at);
   if (slot !== null) c.lastMove = null;
   if (slot === null){ toast(`${c.name} has no spell slot left for ${base0.n}.`); return false; }
   endOn(c, 'castSpell');   // Invisibility: it ends when you cast
   if (c.kind !== 'monster') witnessed(c.floor, { kind:'spell', x:c.x, y:c.y, by:c.name, type:base0.ty || '' });   // magic in the street: someone saw
   // a breath weapon and its like: spent until a d6 at the start of its turn comes up (combat.js startTurn)
   if (base0.recharge) (c.spent ||= {})[base0.n] = true;
-  const lib = base0.mon ? null : spellInfo(base0.n), level = !base0.l ? 0 : slot === '' ? Math.max(base0.l, at || 0) : (c.castAt || base0.l);
-  const sp = { ...base0, d:base0.d && diceAt({ ...base0, hl:lib?.hl, up:base0.up || lib?.up }, level) }, conc = !!(base0.conc || lib?.conc);
-  if (conc && base0.l && !reuse) startConc(c, base0.n);
+  const lib = base0.mon ? null : spellInfo(key), level = !base0.l ? 0 : slot === '' ? Math.max(base0.l, at || 0) : (c.castAt || base0.l);
+  const sp = { ...base0, n:key, d:base0.d && diceAt({ ...base0, hl:lib?.hl, up:base0.up || lib?.up }, level) }, conc = !!(base0.conc || lib?.conc);
+  if (conc && base0.l && !reuse) startConc(c, key, nm);
   const paid = [...(base0.recharge ? [`<span class="muted">Recharge ${base0.recharge}–6: spent until it comes back</span>`] : []), ...(slot ? [`<span class="muted">${esc(slot)}${level > base0.l ? ` · cast at level ${level}${sp.d !== base0.d ? ` (${esc(sp.d)})` : ''}` : ''}</span>`] : []), ...(conc && base0.l ? [`<span class="muted">🌀 ${esc(c.name)} is concentrating on it</span>`] : [])];
   sfx('roll'); animate(c.id, 'cast', tg.id !== c.id ? tg.id : null);
   // ✨ the spell seen (render/spellfx.js), here and on every screen at the table
-  const seen = fx => { const m = { L:c.floor, by:c.id, n:base0.n, ty:base0.ty || '', k:base0.k || '', cond:base0.cond || '', ...fx }; spellFx(m); broadcast({ t:'spellfx', fx:m }); };
-  bus.emit('acted', { actor:c, target:tg, trigger:base0.k === 'heal' ? 'heal' : 'spell', action:base0.n });   // 🗣
+  const seen = fx => { const m = { L:c.floor, by:c.id, n:key, ty:base0.ty || '', k:base0.k || '', cond:base0.cond || '', ...fx }; spellFx(m); broadcast({ t:'spellfx', fx:m }); };
+  bus.emit('acted', { actor:c, target:tg, trigger:base0.k === 'heal' ? 'heal' : 'spell', action:nm, key, line:base0.line || '' });   // 🗣
   if (sp.k === 'heal'){
     // Mass Healing Word / Mass Cure Wounds: up to six of the caster's side around the creature tapped, each rolled
     const who = sp.multi ? [tg, ...state.tokens.filter(t => t.id !== tg.id && t.floor === tg.floor && !t.flags.gone && !(t.dead && t.kind === 'monster') && side(t) === side(c) && cheb(t.x, t.y, tg.x, tg.y) <= (sp.rad || 6))].slice(0, sp.multi) : [tg];
     const got = who.map(t => { const n = Math.max(0, rollDice(sp.d).total + (sp.healMod || 0)); heal(t, n); return [t, n]; });
     for (const [t] of got) seen({ at:t.id, k:'heal' });
-    showCard({ kind:'', title:`${c.name}: ${sp.n}`, sub:who.length > 1 ? `${who.length} healed` : `on ${tg.name}`, flair:'Warmth, and the wound closes a little.',
+    showCard({ kind:'', title:`${c.name}: ${nm}`, sub:who.length > 1 ? `${who.length} healed` : `on ${tg.name}`, flair:'Warmth, and the wound closes a little.',
       lines:[...(who.length > 1 ? got.map(([t, n]) => `${esc(t.name)} <b>+${n} HP</b>`) : []), ...paid], big:who.length > 1 ? '' : `+${got[0][1]} HP` });
-    log(`${c.name} casts ${sp.n}: ${got.map(([t, n]) => `${t.name} +${n}`).join(', ')}.`); changed(); return true;
+    log(`${c.name} casts ${nm}: ${got.map(([t, n]) => `${t.name} +${n}`).join(', ')}.`); changed(); return true;
   }
   if (sp.k === 'auto'){
     const evil = sp.smite && (hasTag(tg, 'undead') || hasTag(tg, 'fiend'));
     const raw = rollDice(sp.d).total + (evil ? d(8) : 0), df = defend(tg, raw, sp.ty), n = df.n;
     seen({ at:tg.id, darts:/missile/i.test(sp.n) ? 3 + Math.max(0, level - 1) : 1 });
-    showCard({ kind:'', title:`${c.name}: ${sp.n}`, sub:`on ${tg.name}${evil ? ` · +1d8 against the ${hasTag(tg, 'fiend') ? 'fiend' : 'undead'}` : ''}`, lines:[...(df.why ? [`<span class="muted">${esc(tg.name)} is ${df.why} to ${esc(sp.ty)}: ${raw} → ${n}</span>`] : []), ...paid], big:`${n} ${sp.ty}` });
-    log(`${c.name} casts ${sp.n} on ${tg.name}: ${n} ${sp.ty}.`); applyDamage(tg, n, sp.ty, c, true); if (n) setTimeout(() => animate(tg.id, 'hit', c.id, { r:shareOf(n, tg.maxHp), kill:!!tg.dead, el:sp.ty, n }), 500); changed(); return true;
+    showCard({ kind:'', title:`${c.name}: ${nm}`, sub:`on ${tg.name}${evil ? ` · +1d8 against the ${hasTag(tg, 'fiend') ? 'fiend' : 'undead'}` : ''}`, lines:[...(df.why ? [`<span class="muted">${esc(tg.name)} is ${df.why} to ${esc(sp.ty)}: ${raw} → ${n}</span>`] : []), ...paid], big:`${n} ${sp.ty}` });
+    log(`${c.name} casts ${nm} on ${tg.name}: ${n} ${sp.ty}.`); applyDamage(tg, n, sp.ty, c, true); if (n) setTimeout(() => animate(tg.id, 'hit', c.id, { r:shareOf(n, tg.maxHp), kill:!!tg.dead, el:sp.ty, n }), 500); changed(); return true;
   }
   if (sp.k === 'buff' || sp.k === 'util'){
     // a spell that simply gives its target a condition (Invisibility): no roll at all. (Ray of Sickness needs a hit and
@@ -733,11 +734,11 @@ export function castSpell(casterId, targetId, i, aim = null, { at = null } = {})
     seen({ at:tg.id });
     const ef = GIVES.has(sp.n) && SPELL_EFFECTS[sp.n];
     if (ef?.cond){ const tm = timingFor(ef, { src:c.id }); addCond(tg, ef.cond, conc ? -1 : tm.rounds, conc ? `conc:${c.id}` : null, false, tm.extra); }
-    showCard({ kind:'', title:`${c.name}: ${sp.n}`, sub:tg.id === c.id ? 'on themself' : `on ${tg.name}`, lines:[...(sp.note ? [esc(sp.note)] : []), ...paid, '<span class="muted">The DM rules how it plays out.</span>'] });
+    showCard({ kind:'', title:`${c.name}: ${nm}`, sub:tg.id === c.id ? 'on themself' : `on ${tg.name}`, lines:[...(sp.note ? [esc(sp.note)] : []), ...paid, '<span class="muted">The DM rules how it plays out.</span>'] });
     // Lesser Restoration: blinded, paralyzed, poisoned · Greater: charmed, petrified · both burn out the Seep's seed
     const cures = sp.n === 'Lesser Restoration' ? ['blinded', 'paralyzed', 'poisoned', 'seeded'] : sp.n === 'Greater Restoration' ? ['charmed', 'petrified', 'seeded'] : null;
     if (cures){ tg.conds = (tg.conds || []).filter(x => !cures.includes(x.n)); if (tg.flags.seeded) heal(tg, 0); }
-    log(`${c.name} casts ${sp.n}${tg.id === c.id ? '' : ` on ${tg.name}`}.`); changed(); return true;
+    log(`${c.name} casts ${nm}${tg.id === c.id ? '' : ` on ${tg.name}`}.`); changed(); return true;
   }
   // an area (engine/targeting.js): the squares it covers from where it was aimed, everyone in them, a flash on the map;
   // a creature with cover from the blast's origin adds +2 / +5 to a Dexterity save
@@ -753,7 +754,7 @@ export function castSpell(casterId, targetId, i, aim = null, { at = null } = {})
   if (!area) seen({ at:tg.id, ...(sp.rad ? { shape:'sphere', origin:{ x:tg.x + .5, y:tg.y + .5 } } : {}) });
   const base = sp.d ? rollDice(sp.d).total : 0, lines = [];
   // the timing of the condition it leaves (data/spell-effects.js for a spell; a creature's action carries its own)
-  const hold = base0.mon ? (base0.cond ? base0 : null) : (SPELL_EFFECTS[base0.n]?.cond === sp.cond ? SPELL_EFFECTS[base0.n] : null);
+  const hold = base0.mon ? (base0.cond ? base0 : null) : (SPELL_EFFECTS[key]?.cond === sp.cond ? SPELL_EFFECTS[key] : null);
   if (base0.conditionManual) lines.push('<span class="muted">Its grip, swallow or other hold is the DM\'s call (see its stat block).</span>');
   for (const t of targets){
     const cv = area && sp.sv === 'dex' ? coverFromOrigin(c.floor, origin, t) : null, cb = cv && cv.cover !== 'total' ? cv.ac : 0;
@@ -769,9 +770,9 @@ export function castSpell(casterId, targetId, i, aim = null, { at = null } = {})
     if (dmg){ applyDamage(t, dmg, sp.ty, c, true); const tt = t; setTimeout(() => animate(tt.id, 'hit', null, { r:shareOf(dmg, tt.maxHp), kill:!!tt.dead, el:sp.ty, n:dmg }), 330); }   // 💥 on every screen
   }
   if (!targets.length) lines.push('<span class="muted">No one is caught in it.</span>');
-  if (/thunder|fire/.test(sp.ty || '') && (area || sp.rad)) makeNoise(c.floor, origin ? Math.floor(origin.x) : tg.x, origin ? Math.floor(origin.y) : tg.y, 2, sp.n);
-  showCard({ kind:'', title:`${c.name}: ${sp.n}`, sub:`DC ${sp.dc} ${String(sp.sv).toUpperCase()}${where}${base ? ` · ${sp.d} ${sp.ty}` : ''}`, lines:[...lines, ...paid] });
-  log(`${c.name} casts ${sp.n}: ${targets.length} caught.`);
+  if (/thunder|fire/.test(sp.ty || '') && (area || sp.rad)) makeNoise(c.floor, origin ? Math.floor(origin.x) : tg.x, origin ? Math.floor(origin.y) : tg.y, 2, nm);
+  showCard({ kind:'', title:`${c.name}: ${nm}`, sub:`DC ${sp.dc} ${String(sp.sv).toUpperCase()}${where}${base ? ` · ${sp.d} ${sp.ty}` : ''}`, lines:[...lines, ...paid] });
+  log(`${c.name} casts ${nm}: ${targets.length} caught.`);
   changed(); return true;
 }
 

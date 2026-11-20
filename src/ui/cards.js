@@ -2,6 +2,7 @@
    cool and the battery lasts): just their hero as a big card, their attacks, spells and features as big
    buttons, a list of who they can target (with what's in reach), the d20 they rolled if the table uses real
    dice, and a pad to step their hero one square at a time (north is up, as on the TV). */
+import { magicWord } from '../game/calling.js';
 import { state, ui, tokById } from '../engine/state.js';
 import { $, esc, cheb } from '../util/core.js';
 import { rangeCheck, coverOf, areaOf, areaSquares, spellReach } from '../engine/targeting.js';
@@ -72,7 +73,7 @@ export function cardHTML(t){
     + t.attacks.map((a, i) => btn('atk', i, a.n, `${a.b >= 0 ? '+' : ''}${a.b} · ${a.d}`, a.l && !canCast(t, a.l, a.sn || a.n, a.again))).join('') + `</div>`;
   // a monster's save actions (breath weapons and the like): what they do, and whether they've come back
   const tag = s => s.mon ? `${String(s.sv).toUpperCase()} ${s.dc} · ${s.d} ${s.ty}${s.recharge ? (t.spent?.[s.n] ? ' · spent' : ` · ⟳${s.recharge}–6`) : ''}` : s.l ? `level ${s.l}` : 'cantrip';
-  if (t.casts?.length) h += `<h4>${t.casts.every(s => s.mon) ? 'Breath & other actions' : 'Spells'}</h4><div class="cgrid">` + t.casts.map((s, i) => btn('cast', i, s.n, tag(s), (s.mon && s.recharge && t.spent?.[s.n]) || !canCast(t, s.l, s.n, s.again))).join('') + `</div>`;
+  if (t.casts?.length) h += `<h4>${t.casts.every(s => s.mon) ? 'Breath & other actions' : magicWord(t)}</h4><div class="cgrid">` + t.casts.map((s, i) => btn('cast', i, s.n, tag(s), (s.mon && s.recharge && t.spent?.[s.n]) || !canCast(t, s.l, s.n, s.again))).join('') + `</div>`;
   const feats = (t.resources || []).filter(r => !r.slot);
   if (feats.length) h += `<h4>Features</h4><div class="cgrid">` + feats.map(r => btn('feat', 0, r.id === 'hd' ? 'Hit Die' : r.n, `${left(t, r.id)}/${r.max}`, !left(t, r.id), `data-res="${r.id}"`)).join('') + `</div>`;
   h += `<h4>Move <span class="muted" style="font-weight:400">one square a tap · north is up, as on the TV</span></h4><div class="dpad">${[[-1, -1, '↖'], [0, -1, '↑'], [1, -1, '↗'], [-1, 0, '←'], [0, 0, '·'], [1, 0, '→'], [-1, 1, '↙'], [0, 1, '↓'], [1, 1, '↘']].map(([dx, dy, a]) => dx || dy ? `<button class="btn" data-act="cardStep" data-k="${dx},${dy}">${a}</button>` : '<span></span>').join('')}</div>`;

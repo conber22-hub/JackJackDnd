@@ -82,3 +82,25 @@ test('the Classic switch gives the D&D classes back, and a classic hero has no C
   } finally { await context.close(); }
   expect(errors, 'Uncaught browser errors').toEqual([]);
 });
+
+// ✦ ChatGPT's rites (data/rites.js): an Archivist's spells are Protocols, by our names, and cast as the spells they are
+test('an Archivist casts by our names: the Protocol is renamed on the hero, spends its slot, and strikes', async ({ page }) => {
+  test.setTimeout(120_000);
+  await arena(page);
+  const got = await page.evaluate(() => { const D = window.DreadDelve, h = D.newHero('Wizard');
+    Object.assign(h, { name:'Ilse', lvl:3, calling:'archivist', path:null });
+    h.spells = [...new Set([...(h.spells || []), 'Magic Missile', 'Fire Bolt'])];
+    const t = D.applyCharacter(h); t.floor = 0;
+    const i = t.casts.findIndex(c => c.sn === 'Magic Missile'), mm = t.casts[i], fb = t.attacks.find(a => a.sn === 'Fire Bolt');
+    const slots = () => (t.resources || []).filter(r => r.slot === 1).reduce((n, r) => n + (t.res[r.id] || 0), 0), before = slots();
+    const z = D.placeMonster('zombie', { floor:0, x:t.x + 2, y:t.y }), hp = z.hp;
+    const ok = D.castSpell(t.id, z.id, i);
+    return { i, n:mm?.n, line:mm?.line, fb:fb?.n, ok, spent:before - slots(), hurt:z.hp < hp || z.dead, log:D.get().log.slice(-6).map(l => l.m).join(' | ') };
+  });
+  expect(got.i).toBeGreaterThanOrEqual(0);
+  expect(got.n).toBeTruthy(); expect(got.n).not.toContain('Magic Missile'); expect(got.line).toBeTruthy();
+  expect(got.fb).toBeTruthy(); expect(got.fb).not.toContain('Fire Bolt');
+  expect(got.ok).toBe(true); expect(got.spent).toBe(1); expect(got.hurt).toBe(true);
+  expect(got.log).toContain(got.n); expect(got.log).not.toContain('Magic Missile');
+  await expect(page.locator('#cardLayer .pop', { hasText:got.n }).first()).toBeVisible();
+});

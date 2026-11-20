@@ -132,16 +132,16 @@ export function moveAllowance(t, { dash = false } = {}){
    conditions that spell laid on anyone (src 'conc:<caster id>') and the sustained effect, if it was that one. */
 // A fresh casting: whatever it held before ends first, even the same spell (a second Hold Person frees the first
 // target). Using a sustained spell again on a later turn (Spiritual Weapon, Moonbeam) isn't a fresh casting: callers skip it.
-export function startConc(t, name){
-  if (t.conc) endConc(t, `starts concentrating on ${name}`);
-  t.conc = { n:name };
+export function startConc(t, name, shown = name){   // (shown: what this caster calls it, a Calling's name: game/calling.js)
+  if (t.conc) endConc(t, `starts concentrating on ${shown}`);
+  t.conc = { n:name, ...(shown !== name ? { shown } : {}) };
 }
 export function endConc(t, why = ''){
   if (!t?.conc) return null;
-  const n = t.conc.n, src = `conc:${t.id}`;
+  const n = t.conc.n, said = t.conc.shown || n, src = `conc:${t.id}`;
   t.conc = null;
   for (const o of state.tokens) if (o.conds?.some(c => c.src === src)) o.conds = o.conds.filter(c => c.src !== src);
   if (t.sustain === n) t.sustain = null;
-  log(`🌀 ${t.name} ${why ? `${why} — ` : ''}${n} ends.`);
+  log(`🌀 ${t.name} ${why ? `${why} — ` : ''}${said} ends.`);
   return n;
 }

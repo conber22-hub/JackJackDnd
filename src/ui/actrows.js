@@ -24,7 +24,7 @@ export function attackBits(a, reach = '', odds = null){
   return { icon:sp ? '✦' : far ? '🏹' : '⚔',
     sub:`${signed(a.b)} to hit · ${a.d} ${a.t || ''}${reach ? ` · ${reach}` : ''}`,
     tags:[...(odds ? [odds.tag] : []), tag('act'), ...(a.l ? [tag('slot', `L${a.l}`)] : [])],
-    info:`${odds ? `${odds.info}<br>` : ''}${s ? esc(clip(s.text, odds ? 140 : 220)) : `A strike with your ${esc(a.n.toLowerCase())}: roll ${signed(a.b)} against their armour; on a hit, ${esc(a.d)} ${esc(a.t || '')} damage.`}` };
+    info:`${odds ? `${odds.info}<br>` : ''}${a.line ? `<i>${esc(a.line)}</i><br>` : ''}${s ? esc(clip(s.text, odds ? 140 : 220)) : `A strike with your ${esc(a.n.toLowerCase())}: roll ${signed(a.b)} against their armour; on a hit, ${esc(a.d)} ${esc(a.t || '')} damage.`}` };
 }
 
 /* ---------- a spell ---------- */
@@ -38,7 +38,7 @@ export function spellBits(c, why = ''){
   return { icon:SPELL_ICON[k] || '◇',
     sub:why ? `Only ${why}` : what.filter(Boolean).join(' · '),
     tags:[timeTag(s), ...(c.l ? [tag('slot', `L${c.l}`)] : []), ...(s?.conc ? [tag('conc', 'Conc.')] : [])],
-    info:s ? `${esc(clip(s.text, 240))}${s.dur && s.dur !== 'Instantaneous' ? ` <span class="muted">· ${esc(s.dur)}</span>` : ''}` : '' };
+    info:(c.line ? `<i>${esc(c.line)}</i>${s ? '<br>' : ''}` : '') + (s ? `${esc(clip(s.text, 240))}${s.dur && s.dur !== 'Instantaneous' ? ` <span class="muted">· ${esc(s.dur)}</span>` : ''}` : '') };
 }
 
 /* ---------- the actions every creature has ---------- */

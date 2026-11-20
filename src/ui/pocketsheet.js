@@ -2,6 +2,7 @@
    the buttons, like the status screens of the old handheld games (in this app's own look: no console's name, badge
    or art). It only reads: no messages to the DM, no state changes. The hosts (ui/tablehh.js, ui/wander.js) call
    openPocketSheet(...) and give each press to pocketPress first — see the PR. */
+import { magicWord } from '../game/calling.js';
 import { featuresAt } from '../engine/callings.js';
 import { classLine, originLine } from '../game/calling.js';
 import { esc } from '../util/core.js';
@@ -147,7 +148,7 @@ function buildPage(idx){
     for (const a of attacks){
       html += addRow({ label:a.n, sub:`${sgn(a.b)} · ${a.d}${a.t ? ` ${a.t}` : ''}`, open:() => attackDetail(a) });
     }
-    html += head('Spells');
+    html += head(magicWord(t));
     const casts = t.casts || [], byLevel = new Map();
     for (const c of casts){ const l = c.l || 0; if (!byLevel.has(l)) byLevel.set(l, []); byLevel.get(l).push(c); }
     if (!casts.length) html += note('No spells yet — the sword is enough.');

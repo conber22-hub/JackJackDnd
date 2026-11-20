@@ -3,6 +3,7 @@
    turn, a conversation, and the menu (travel, rest, save, leave). Input: a gamepad (engine/pad.js; the loop below
    reads it every frame), the keyboard, the handheld skin's touch buttons (ui/handheld.js), or taps on the map.
    The follow camera (below) eases after the hero and turns, cranes and cycles views with the right stick, L / R, [ ] - = V. */
+import { magicWord } from '../game/calling.js';
 import { classLine, originLine } from '../game/calling.js';
 import { turnBanner } from './turnbanner.js';
 import { provokers } from '../engine/movement.js';
@@ -242,7 +243,7 @@ function menuItems(){
       ...(spent ? end : []),
       ...(fight ? (t?.attacks || []).map((a, i) => ({ label:a.n, group:'Strike', ...attackBits(a, tg ? `${reachWords(t, tg, i)}${attackForWith(t, tg, i) ? ` (${tg.name})` : ''}` : '', tg && attackForWith(t, tg, i) ? oddsBits(strikeOdds(i, tg)) : null),
         aim:{ atk:i }, off:!mine || !attacksLeft(), run:() => { closeMenu(); rt.atk = i; heroAttack(); } })) : []),
-      ...(spellList().length ? [{ label:'Spells…', group:'Magic', icon:'✦', sub:fight && (rt.cast || rt.attacks) ? 'Your action is spent' : slots || 'Cantrips', info:'Every spell you know, by level, with what it does and what it costs.', run:() => { menu.page = 'spells'; menu.i = 0; } }] : []),
+      ...(spellList().length ? [{ label:`${magicWord(hero())}…`, group:'Magic', icon:'✦', sub:fight && (rt.cast || rt.attacks) ? 'Your action is spent' : slots || 'Cantrips', info:'Every spell you know, by level, with what it does and what it costs.', run:() => { menu.page = 'spells'; menu.i = 0; } }] : []),
       // 🤚 Shove, in place of a strike: the one aimed at, if they're beside you (engine/shove.js)
       ...(fight && tg && Math.max(Math.abs(tg.x - t.x), Math.abs(tg.y - t.y)) <= Math.max(1, tg.size || 1) ? [
         { label:'Shove: push back', group:'Strike', icon:'🤚', sub:`${tg.name} 5 ft away, unless they save`, info:'In place of a strike: they make a Strength or Dexterity save against 8 + your Strength + your proficiency, or are pushed 5 feet straight away from you (out of your reach, or theirs).', off:!mine || !attacksLeft(), run:() => { closeMenu(); heroShove('push'); } },
@@ -264,7 +265,7 @@ function menuItems(){
     { icon:'👤', label:'Your hero', sub:'Your sheet, a page at a time (Select)', run:() => { closeMenu(); openHero(); } },
     { icon:'📕', label:'The bestiary', sub:(() => { const b = beastBook(); return `${b.seen} of ${b.of} seen · ${b.mastered} known well`; })(), run:() => { closeMenu(); openBeasts(); } },
     { icon:'🏆', label:'Achievements', sub:(() => { const t = trophyShelf().score; return `${t.got} of ${t.of}`; })(), run:() => { closeMenu(); const t = trophyShelf(); openTrophies(t.shelf, t.score); } },
-    ...(spellList().length ? [{ icon:'✦', label:'Spells', run:go('spells') }] : []),
+    ...(spellList().length ? [{ icon:'✦', label:magicWord(hero()), run:go('spells') }] : []),
     { icon:'💾', label:'Save', run:() => { saveNow(); toast('Saved.'); closeMenu(); } },
     { icon:'🗂', label:'Save states', sub:'Three slots of your own, to come back to', run:go('states') },
     { icon:'🎮', label:'Controls', run:go('keys') },

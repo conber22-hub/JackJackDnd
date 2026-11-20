@@ -12,7 +12,8 @@ import { heroLook, sheetLook } from '../engine/look.js';
 import { creatorGear } from '../engine/gear.js';
 import { callingOf, callingForChassis, pathOf, featuresAt } from '../engine/callings.js';
 import { originList, originView, backList, backView, featView, asClassic } from '../engine/origins.js';
-import { rulesMode, setRulesMode, classLine } from '../game/calling.js';
+import { rulesMode, setRulesMode, classLine, spellWord, spellReading } from '../game/calling.js';
+import { tradition } from '../engine/rites.js';
 import { openCallingPicker, closeCallingPicker } from './callingpicker.js';
 import { emblemSvg } from './emblems.js';
 import { CALLINGS } from '../data/callings.js';
@@ -58,8 +59,8 @@ export function sheetHTML(h){
     </div>
     <div class="sheet-ab">${ABILITIES.map(a => `<div><small>${a}</small><b>${st.sc[a]}</b><i>${sgn(mod(st.sc[a]))}</i><em>save ${sgn(st.saves[a])}${st.C.sv.includes(a) ? ' •' : ''}</em></div>`).join('')}</div>
     <div class="sheet-l"><b>Skills</b> ${Object.keys(SKILLS).filter(s => st.prof.has(s)).map(s => `${esc(s)} ${sgn(st.skills[s])}${st.expert.has(s) ? '★' : ''}`).join(' · ') || '—'}</div>
-    <div class="sheet-l"><b>Attacks</b> ${atks.map(a => `${esc(a.n)} ${sgn(a.b)} (${esc(a.d)} ${esc(a.t)})`).join(' · ')}</div>
-    ${sps.length ? `<div class="sheet-l"><b>Spells</b> ${sps.map(s => `${esc(s.n)}${s.l ? ` <sup>${s.l}</sup>` : ''}`).join(' · ')}</div>` : ''}
+    <div class="sheet-l"><b>Attacks</b> ${atks.map(a => `${esc(spellWord(a.n, h))} ${sgn(a.b)} (${esc(a.d)} ${esc(a.t)})`).join(' · ')}</div>
+    ${sps.length ? `<div class="sheet-l"><b>${esc(tradition(h.calling)?.plural || 'Spells')}</b> ${sps.map(s => `${esc(spellWord(s.n, h))}${s.l ? ` <sup>${s.l}</sup>` : ''}`).join(' · ')}</div>` : ''}
     ${st.slots ? `<div class="sheet-l"><b>Slots</b> ${st.slots.map((n, i) => `L${i + 1}×${n}`).join(' ')}</div>` : ''}${st.pact ? `<div class="sheet-l"><b>Pact slots</b> ${st.pact.n} × level ${st.pact.l}</div>` : ''}
     <div class="sheet-l"><b>Features</b> ${(dw ? dw.features : st.features).map(esc).join(' · ')}</div>
     ${dw ? `<div class="sheet-l muted">${esc(dw.note)}</div>
@@ -193,8 +194,8 @@ function render(){
     ${C.style && L >= C.style ? `<div class="row"><label>Fighting style</label>${sel('style', Object.keys(STYLES), h.style || 'Defense')}<span class="muted">${esc(STYLES[h.style] || '')}</span></div>` : ''}
     ${h.cls === 'Warlock' ? `<div class="row"><label>Invocation</label>${sel('invoc', INVOCATIONS, h.invoc || 'Agonizing Blast')}</div>` : ''}
 
-    ${pool.length ? `<h2>Spells</h2><div class="muted">Cantrips ${nCan}${lim.cantrips ? ` / ${lim.cantrips}` : ''} · prepared ${nPrep}${lim.prepared ? ` / ${lim.prepared}` : ''}. Subclass and species spells are added for you.</div>
-      ${[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].filter(l => pool.some(s => s.l === l)).map(l => `<h4>${arc.has(l) ? `Mystic Arcanum · level ${l} <span class="muted">(choose one; once a long rest, no slot)</span>` : l ? `Level ${l}` : 'Cantrips'}</h4><div class="cr-chk">${pool.filter(s => s.l === l).map(s => `<label class="crc"><input type="checkbox" data-spell="${esc(s.n)}" ${(h.spells || []).includes(s.n) ? 'checked' : ''}><span>${esc(s.n)}</span></label>`).join('')}</div>`).join('')}` : ''}
+    ${pool.length ? `<h2>${esc(tradition(h.calling)?.plural || 'Spells')}</h2>${tradition(h.calling) ? `<div class="muted"><i>${esc(tradition(h.calling).voice)}</i></div>` : ''}<div class="muted">Cantrips ${nCan}${lim.cantrips ? ` / ${lim.cantrips}` : ''} · prepared ${nPrep}${lim.prepared ? ` / ${lim.prepared}` : ''}. Subclass and species spells are added for you.</div>
+      ${[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].filter(l => pool.some(s => s.l === l)).map(l => `<h4>${arc.has(l) ? `Mystic Arcanum · level ${l} <span class="muted">(choose one; once a long rest, no slot)</span>` : l ? `Level ${l}` : 'Cantrips'}</h4><div class="cr-chk">${pool.filter(s => s.l === l).map(s => `<label class="crc"><input type="checkbox" data-spell="${esc(s.n)}" ${(h.spells || []).includes(s.n) ? 'checked' : ''}><span${spellReading(s.n, h.calling) ? ` title="${esc(spellReading(s.n, h.calling).line)}"` : ''}>${esc(spellWord(s.n, h))}</span></label>`).join('')}</div>`).join('')}` : ''}
 
     ${lookHTML(h)}
     <h2>Portrait</h2>

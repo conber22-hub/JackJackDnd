@@ -180,12 +180,12 @@ function onActed(e){
     else show(`${cap(subj(a))} misses ${obj(tg)}.`, '', '🎯');
   } else if (e?.trigger === 'spell'){
     if (!a || !e.action) return;
-    show(`${cap(subj(a))} casts ${e.action}.`, '', '✦', spellWords(e.action));
+    show(`${cap(subj(a))} casts ${e.action}.`, '', '✦', e.line || spellWords(e.key || e.action));
     if (group) flushSpell();
     group = { caster:a, name:e.action, type:null, targets:[], timer:setTimeout(flushSpell, GROUP_MS) };
   } else if (e?.trigger === 'heal'){
     if (!a || !e.action) return;
-    show(`${cap(subj(a))} casts ${e.action}.`, '', '✦', spellWords(e.action));
+    show(`${cap(subj(a))} casts ${e.action}.`, '', '✦', e.line || spellWords(e.key || e.action));
     if (healGroup) flushHeal();
     healGroup = { caster:a, targets:[], timer:setTimeout(flushHeal, GROUP_MS) };
   }

@@ -410,9 +410,9 @@ export function levelGains(was, now){
 export function spellList(){
   const t = hero(); if (!t) return [];
   const fight = state.combat.active;
-  const casts = (t.casts || []).map((c, i) => { const can = canCast(t, c.l, c.n, !!c.again), peace = ['heal', 'buff', 'util'].includes(c.k);
+  const casts = (t.casts || []).map((c, i) => { const can = canCast(t, c.l, c.sn || c.n, !!c.again), peace = ['heal', 'buff', 'util'].includes(c.k);
     const quick = bonusSpell(c), spent = fight && myTurn() && (quick ? rt.bonus : rt.cast || rt.attacks > 0);
-    return { i, n:c.n, l:c.l, k:c.k, kind:'cast', ok:can && (fight || peace) && !spent, why:!can ? 'no slot left' : !fight && !peace ? 'in a fight' : spent ? (quick ? 'with a bonus action left' : 'with your action left') : '' }; });
+    return { i, n:c.n, sn:c.sn, line:c.line, l:c.l, k:c.k, kind:'cast', ok:can && (fight || peace) && !spent, why:!can ? 'no slot left' : !fight && !peace ? 'in a fight' : spent ? (quick ? 'with a bonus action left' : 'with your action left') : '' }; });
   const atks = (t.attacks || []).map((a, i) => ({ i, n:a.n, l:null, k:'atk', kind:'atk', spell:/ casts /.test(a.f || '') })).filter(a => a.spell).map(a => ({ ...a, ok:fight, why:fight ? '' : 'in a fight' }));
   return [...casts, ...atks];
 }
