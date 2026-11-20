@@ -50,6 +50,7 @@ import { loyalty } from '../engine/wander-life.js';
 import { hh, hhOn, hhHost, hhPad, addHost, setHandheld, skipBoot, shellItem } from './handheld.js';
 import { victoryOpen, victoryPress } from './victory.js';
 import { defeatOpen, defeatPress } from './defeat.js';
+import { callingPickerOpen, callingPickerPress } from './callingpicker.js';
 import { diceBusy } from './dicemoment.js';
 import { levelUpOpen, levelUpPress } from './levelup.js';
 import { openBestiary, bestiaryOpen, bestiaryPress, setBestiaryFace } from './bestiary.js';
@@ -290,6 +291,7 @@ function press(b){
   const sb = b === 'ls' || b === 'start' ? 'b' : b;
   if (victoryOpen()){ victoryPress(sb); renderHud(); return; }
   if (defeatOpen()){ defeatPress(sb); renderHud(); return; }
+  if (callingPickerOpen()){ callingPickerPress(sb); renderHud(); return; }
   if (levelUpOpen()){ levelUpPress(sb); renderHud(); return; }
   if (bestiaryOpen()){ bestiaryPress(sb); renderHud(); return; }
   if (trophiesOpen()){ trophiesPress(sb); renderHud(); return; }
@@ -467,6 +469,7 @@ function step(dx, dy){
   if (skipBoot()) return;
   if (pocketOpen()){ pocketPress(dy < 0 ? 'up' : dy > 0 ? 'down' : dx < 0 ? 'left' : 'right'); return; }
   { const d = dy < 0 ? 'up' : dy > 0 ? 'down' : dx < 0 ? 'left' : 'right';
+    if (callingPickerOpen()){ callingPickerPress(d); return; }
     if (victoryOpen() || defeatOpen() || levelUpOpen()) return; if (bestiaryOpen()){ bestiaryPress(d); return; } if (trophiesOpen()){ trophiesPress(d); return; } }
   if (menu.open){ if (dy){ const n = Math.max(0, Math.min(menuItems().length - 1, menu.i + dy)); if (n !== menu.i) tune('menuMove'); menu.i = n; } return; }
   const tv = talkView(); if (tv){ if (dy) talkSel.i = Math.max(0, Math.min(tv.options.length - 1, talkSel.i + dy)); return; }
@@ -605,6 +608,7 @@ function walkHeld(){
 function onKey(e){
   if (!wandering() || e.ctrlKey || e.metaKey || e.altKey) return;
   if (/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName) || !$('#charModal')?.classList.contains('hidden')) return;
+  if (callingPickerOpen()) return;   // (the picker reads the keyboard itself: ui/callingpicker.js)
   if (menu.open || talkView()){ if (/^[1-9]$/.test(e.key)){ const k = +e.key - 1; if (menu.open){ menu.i = k; press('a'); } else { talkSel.i = k; press('a'); } e.preventDefault(); e.stopPropagation(); return; } }
   const it = keyIntent(e.key, { shift:e.shiftKey, yaw:yaw() }); if (!it) return;
   e.preventDefault(); e.stopPropagation();

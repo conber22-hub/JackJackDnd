@@ -1,5 +1,6 @@
 /* HUD — toasts, banners, whispers, pop-up cards, top bar, dock, initiative list, selection card. */
 import { classLine } from '../game/calling.js';
+import { emblemSvg } from './emblems.js';
 import { state, ui, tokById, isDM, dreadLevel, viewAsPlayer } from '../engine/state.js';
 import { exitLabel } from '../engine/generator.js';
 import { seenNow } from '../engine/grid.js';
@@ -233,7 +234,7 @@ export function renderSel(){
   if (dm) acts += `<button class="btn small danger" data-act="remove">✕ Remove</button>`;
   const move = state.combat.active && showStats ? ` · ${moveAllowance(t) * 5} ft left${t.dashed ? ' (dashing)' : ''}${t.disengaged ? ' · disengaged' : ''}${t.dodge ? ' · dodging' : ''}${t.reacted ? ' · reaction used' : ''}` : '';
   const flags = [t.flags.rising && '<span class="fam-seep">rising…</span>', t.flags.seeded && '<span class="fam-seep">☣ seeded</span>', t.flags.latchedBy && !t.dead && tokById(t.flags.latchedBy) && !tokById(t.flags.latchedBy).dead && '<span class="fam-seep">a Seepling is latched on</span>', t.flags.alert && dm && 'alerted'].filter(Boolean);
-  el.innerHTML = `<div class="top"><span class="dot" style="color:${color};background:${color}"></span><span class="nm">${esc(t.name)}${t.dead ? ' ✝' : ''}${mine ? ' <span class="muted">(you)</span>' : ''}${t.cls ? ` <span class="muted" style="font-size:13px">${esc(t.callName ? `${t.emblem || ''} ${classLine(t)}`.trim() : t.cls)}</span>` : ''}</span>
+  el.innerHTML = `<div class="top"><span class="dot" style="color:${color};background:${color}"></span><span class="nm">${esc(t.name)}${t.dead ? ' ✝' : ''}${mine ? ' <span class="muted">(you)</span>' : ''}${t.cls ? ` <span class="muted" style="font-size:13px">${t.callName ? `<span class="cr-emb" style="color:${esc(t.callColor || 'currentColor')}">${emblemSvg(t.calling, { size:15 })}</span>${esc(classLine(t))}` : esc(t.cls)}</span>` : ''}</span>
     ${b ? `<span class="muted">CR ${b.cr}</span>` : ''}<button class="btn small" data-act="deselect">✕</button></div>
     ${showStats ? `<div class="stat">AC <b>${t.ac}</b> · HP <b>${t.hp}/${t.maxHp}</b>${t.ward?.max > 0 ? ` · ⛨ Ward <b>${t.ward.now}/${t.ward.max}</b>` : ''}${t.thp > 0 ? ` · <b>+${t.thp}</b> temp` : ''} · Speed <b>${t.speed} ft</b>${move}${flags.length ? ' · ' + flags.join(' · ') : ''}</div>${hpBar(t, t.kind !== 'monster')}` : (b ? `<div class="look">${esc(b.look)}</div>` : '')}
     ${dm && t.notes ? `<div class="look">${esc(t.notes)}</div>` : ''}

@@ -10,9 +10,12 @@ import { $, esc, clamp, d } from '../util/core.js';
 import { toast } from './hud.js';
 import { heroLook, sheetLook } from '../engine/look.js';
 import { creatorGear } from '../engine/gear.js';
-import { callingList, callingOf, callingForChassis, pathOf, featuresAt } from '../engine/callings.js';
+import { callingOf, callingForChassis, pathOf, featuresAt } from '../engine/callings.js';
 import { originList, originView, backList, backView, featView, asClassic } from '../engine/origins.js';
 import { rulesMode, setRulesMode, classLine } from '../game/calling.js';
+import { openCallingPicker, closeCallingPicker } from './callingpicker.js';
+import { emblemSvg } from './emblems.js';
+import { CALLINGS } from '../data/callings.js';
 import { BODIES, SKINS, SKINS_FANTASY, HAIR_COLS, CLOTHS, HAIR, BEARDS, HORNS, OUTFITS, CLOAKS, HELMS, WEAPON_MODELS, OFFHANDS, POSES } from '../data/looks.js';
 import { setStage, frame, portrait, act, studioCanvas, stageKey } from '../render/forge/studio.js';
 
@@ -33,7 +36,7 @@ export function openCreator(sheet, o = {}){
   $('#charModal').classList.remove('hidden');
   render();
 }
-export function closeCreator(){ $('#charModal').classList.add('hidden'); edit = null; }
+export function closeCreator(){ closeCallingPicker(); $('#charModal').classList.add('hidden'); edit = null; }
 
 // ⛨ a Calling's hero, in our words (game/calling.js, ChatGPT's engine/callings.js and engine/origins.js)
 function dreadWords(h, st){
@@ -48,7 +51,7 @@ function dreadWords(h, st){
 export function sheetHTML(h){
   const st = heroStats(h), atks = heroAttacks(h, st), sps = heroSpells(h, st), dw = dreadWords(h, st);
   return `<div class="sheet">
-    <div class="sheet-h"><span class="dot" style="color:${h.color};background:${h.color}"></span><b>${esc(h.name || 'Unnamed hero')}</b>
+    <div class="sheet-h">${callingOf(h) ? `<span class="cr-emb" style="color:${callingOf(h).color}">${emblemSvg(callingOf(h).id, { size:24 })}</span>` : `<span class="dot" style="color:${h.color};background:${h.color}"></span>`}<b>${esc(h.name || 'Unnamed hero')}</b>
       <span class="muted">${dw ? esc(dw.head) : `${esc(h.sp)}${h.spOpt ? ` (${esc(h.spOpt)})` : ''} ${esc(h.cls)} ${st.L}${st.sub ? ` · ${esc(st.sub)}` : ''} · ${esc(h.bg)}`}</span></div>
     <div class="sheet-k">
       <span>AC<b>${st.ac}</b></span><span>HP<b>${st.hp}</b></span><span>Speed<b>${st.spd}</b></span><span>Init<b>${sgn(st.init)}</b></span><span>Prof<b>+${st.pb}</b></span><span>Passive<b>${st.passive}</b></span>${st.dc ? `<span>Spell DC<b>${st.dc}</b></span>` : ''}
@@ -146,11 +149,11 @@ function render(){
     <div class="grid2"><label>Name<input class="txt" data-cf="name" value="${esc(h.name)}" placeholder="e.g. Ilse Vantorin"></label>
       <label>Player<input class="txt" data-cf="player" value="${esc(h.player)}" placeholder="your name"></label></div>
     <div class="grid3"><label>Level${sel('lvl', Array.from({ length:MAX_LEVEL }, (_, i) => i + 1), h.lvl)}</label>
-      ${dread ? `<label>Calling${sel('calling', callingList().map(c => [c.id, `${c.emblem} ${c.name}`]), h.calling)}</label>` : `<label>Class${sel('cls', Object.keys(CLASSES), h.cls)}</label>`}
+      ${dread ? (() => { const K = callingOf(h); return `<label>Calling<button type="button" class="txt cr-callbtn" data-cr="pickCalling" style="${K ? `color:${K.color}` : ''}">${K ? emblemSvg(K.id, { size:22 }) : ''}<span>${esc(K?.name || 'Choose your Calling')}</span><i>▾</i></button></label>`; })() : `<label>Class${sel('cls', Object.keys(CLASSES), h.cls)}</label>`}
       <label>Colour<input type="color" class="txt" data-cf="color" value="${esc(h.color)}"></label></div>
     ${dread ? (() => { const K = callingOf(h); if (!K) return ''; const P = pathOf(K.id, h.path);
       return `<div class="grid2"><label>Path${sel('path', [['', L >= 3 ? 'Choose a Path' : 'Choose at level 3 (or now)'], ...K.paths.map(p => [p.id, `${p.seep ? '☣ ' : ''}${p.name}`])], h.path || '')}</label><span class="muted" style="align-self:end">${P ? esc(P.blurb || '') : ''}</span></div>
-      <div class="muted cr-calling"><b>${esc(K.emblem)} ${esc(K.name)}</b> · ${esc(K.blurb)} · <b>${esc(K.signature.n)}</b>: ${esc(K.signature.text)}${P?.seep ? ` · <span class="fam-seep">☣ The price: ${esc(P.cost || '')}</span>` : ''} · d${C.hd} hit die · saves ${C.sv.join(', ')}</div>`; })() : ''}
+      <div class="muted cr-calling"><span class="cr-emb" style="color:${K.color}">${emblemSvg(K.id, { size:18 })}</span><b>${esc(K.name)}</b> · ${esc(K.blurb)} · <b>${esc(K.signature.n)}</b>: ${esc(K.signature.text)}${P?.seep ? ` · <span class="fam-seep">☣ The price: ${esc(P.cost || '')}</span>` : ''} · d${C.hd} hit die · saves ${C.sv.join(', ')}</div>`; })() : ''}
     ${!dread && subs ? `<div class="grid2"><label>Subclass${sel('sub', [[C.sub, `${C.sub} (wired into the rules)`], ...Object.keys(subs).sort().map(n => [n, `📚 ${n}`])], h.sub && subs[h.sub] ? h.sub : C.sub)}</label><span class="muted" style="align-self:end">${h.sub && subs[h.sub] ? `${esc(subs[h.sub].src)} · its features are on your sheet to read; the DM rules what they do` : ''}</span></div>` : ''}
     ${dread ? '' : `<div class="muted">${L >= 3 || st.sub ? `Subclass: <b>${esc(st.sub || C.sub)}</b>` : `Subclass at level 3: ${esc(h.sub && subs?.[h.sub] ? h.sub : C.sub)}`} · d${C.hd} hit die · saves ${C.sv.join(', ')}${C.cast ? ` · casts with ${C.cast}` : ''}</div>`}
     ${dread ? (() => { const o = originView(h.origin), ok = o?.opts ? Object.keys(o.opts)[0] : null;
@@ -325,6 +328,10 @@ document.addEventListener('click', e => {
   const b = e.target.closest('[data-cr]'); if (!b || !$('#charBox').contains(b)) return;
   const a = b.dataset.cr;
   if (a === 'close'){ closeCreator(); return; }
+  if (a === 'pickCalling'){   // ⛨ Muse's picker (ui/callingpicker.js): the twelve, their Paths, the Seep-touched marked
+    openCallingPicker({ callings:Object.values(CALLINGS), current:edit.calling || callingForChassis(edit.cls)?.id || null,
+      onPick:({ calling, path }) => { if (!edit) return; set('calling', calling); if (path && pathOf(calling, path)) edit.path = path; render(); } });
+    return; }
   if (a === 'rules'){ setRulesMode(b.dataset.k); if (b.dataset.k === 'classic'){ edit.calling = edit.path = edit.origin = edit.originOpt = edit.back = null; } render(); return; }
   if (a === 'method'){ edit.method = b.dataset.k; if (edit.method === 'pointbuy') for (const k of ABILITIES) edit.ab[k] = clamp(edit.ab[k], 8, 15); if (edit.method === 'standard') edit.ab = { ...CLASSES[edit.cls].arr }; render(); }
   if (a === 'suggest'){ edit.ab = { ...CLASSES[edit.cls].arr }; if (edit.method === 'roll') edit.method = 'standard'; render(); }

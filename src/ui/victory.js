@@ -4,6 +4,7 @@
    it's on, then goes on. It takes plain data (the shape is ChatGPT's fight-summary); Claude wires it in from
    finishFight, and opens the level-up screen after this one closes. A lost fight gets none of this. */
 import { esc } from '../util/core.js';
+import { emblemSvg } from './emblems.js';
 import { sfx } from '../audio/sound.js';
 
 const sgn = n => `${n >= 0 ? '+' : ''}${n}`;
@@ -101,11 +102,11 @@ function render(){
   } else if (b === 'mvp'){
     const m = s.mvp, name = cur.names?.[m.id] || 'A hero';
     html = `<div class="vc-mvp-tag">Most valuable hero</div>${faceHtml(m.id, 'vc-mvp-face')}
-      <div class="vc-mvp-name">${esc(name)}</div><div class="vc-mvp-why">${esc(m.why || '')}</div>`;
+      <div class="vc-mvp-name">${emb(m.id, 20)}${esc(name)}</div><div class="vc-mvp-why">${esc(m.why || '')}</div>`;
   } else if (b === 'party'){
     html = `<div class="vc-cards">${cur.party.map(id => { const p = s.per?.[id] || {}, name = cur.names?.[id] || 'Hero';
       return `<div class="vc-card" data-id="${esc(id)}">${faceHtml(id)}
-        <div style="flex:1;min-width:0"><div class="vc-nm">${esc(name)}</div>
+        <div style="flex:1;min-width:0"><div class="vc-nm">${emb(id, 16)}${esc(name)}</div>
         <div class="vc-nums"><span>Dealt <b data-n="dealt">${cur.counted ? fmt(p.dealt) : '0'}</b></span><span>Taken <b data-n="taken">${cur.counted ? fmt(p.taken) : '0'}</b></span><span>Healed <b data-n="healed">${cur.counted ? fmt(p.healed) : '0'}</b></span><span>Kills <b data-n="kills">${cur.counted ? fmt(p.kills) : '0'}</b></span><span>Crits <b data-n="crits">${cur.counted ? fmt(p.crits) : '0'}</b></span></div></div></div>`; }).join('')}</div>`;
   } else if (b === 'awards'){
     html = (s.awards || []).slice(0, cur.awardsShown).map(a => `<div class="vc-award"><div class="vc-at">${esc(a.title)}</div>
@@ -196,10 +197,10 @@ function onClick(e){
   if (e.target.closest('.vc-foot')){ victoryPress('a'); return; }
 }
 
-export function openVictory(summary, { party = [], names = {}, faces = {}, xp = null, onClose } = {}){
+export function openVictory(summary, { party = [], names = {}, faces = {}, callings = {}, xp = null, onClose } = {}){
   if (!summary) return null;
   if (cur) closeVictory();
-  cur = { summary, party:party.length ? party : Object.keys(summary.per || {}), names, faces,
+  cur = { summary, party:party.length ? party : Object.keys(summary.per || {}), names, faces, callings:callings || {},
     xp:xp || summary.xp || { before:0, after:0, next:100, level:1 },
     onClose:typeof onClose === 'function' ? onClose : null,
     beat:'headline', counted:false, awardsShown:0, lootShown:0, xpShown:(xp || summary.xp || { before:0 }).before || 0 };
@@ -230,6 +231,8 @@ export function setVictoryFace(id, url){
   cur.faces = { ...cur.faces, [id]:url };
   if (cur.beat === 'mvp' || cur.beat === 'party' || cur.beat === 'awards') render();
 }
+// ⛨ a Calling's emblem beside a hero's name (ui/emblems.js), when the opener said which Calling: { id: { calling, color } }
+function emb(id, size){ const c = cur?.callings?.[id]; return c?.calling ? `<span class="vc-emb" style="color:${esc(c.color || 'currentColor')};display:inline-flex;vertical-align:-3px;margin-right:6px">${emblemSvg(c.calling, { size })}</span>` : ''; }
 export function victoryPress(name){
   if (!cur) return false;
   switch (name){

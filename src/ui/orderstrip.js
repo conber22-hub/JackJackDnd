@@ -8,6 +8,7 @@
 import { esc } from '../util/core.js';
 import { tokById } from '../engine/state.js';
 import { faceOf } from '../game/night.js';
+import { emblemSvg } from './emblems.js';
 
 const COND_IC = { prone:'⤓', poisoned:'☠', frightened:'😱', blessed:'✦', restrained:'⛓', stunned:'💫', paralyzed:'⚡', invisible:'👁', concentrating:'🌀',
   raging:'🔥', grappled:'✋', charmed:'♥', blinded:'🕶', unconscious:'💤', incapacitated:'✖', deafened:'🔇', petrified:'🗿', hasted:'»', exhaustion:'😩', seeded:'☣', dodging:'🛡' };
@@ -43,6 +44,7 @@ export function orderStrip({ order, cur, me, round = 1, seeHp = () => true, onFa
     const wrap = n > 0 && all.indexOf(o) === 0 ? `<span class="os-round" title="Round ${round + 1}">↻ ${round + 1}</span>` : '';
     return `${wrap}<button class="os-p ${o.kind === 'monster' ? 'foe' : 'pal'}${now ? ' now' : ''}${o.id === next ? ' next' : ''}${down ? ' down' : ''}${o.id === me ? ' me' : ''}" data-act="${act}" data-id="${esc(o.id)}" title="${esc(o.name)}${hp !== null ? ` · ${Math.max(0, o.hp)} / ${o.maxHp} HP` : ''}">`
       + `<span class="os-face"${img ? ` style="background-image:url(${img})"` : ''}>${img ? '' : esc((o.name || '?')[0])}</span>`
+      + `${o.calling && o.kind !== 'monster' ? `<span class="os-emb" style="color:${esc(o.callColor || '#e8d6a8')}">${emblemSvg(o.calling, { size:14 })}</span>` : ''}`
       + `${hp !== null ? `<span class="os-hp"><i style="width:${Math.round(hp * 100)}%" class="${hp <= .25 ? 'low' : hp <= .5 ? 'mid' : ''}"></i></span>` : ''}`
       + `${condIcons(o).length ? `<span class="os-cond">${condIcons(o).map(([ic, nm]) => `<i title="${esc(nm)}">${ic}</i>`).join('')}</span>` : ''}`
       + `<span class="os-nm">${now ? '▸ ' : ''}${esc(o.name)}</span>${o.id === next ? '<span class="os-next">next</span>' : ''}</button>`;

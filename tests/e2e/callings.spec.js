@@ -14,11 +14,21 @@ test('a Vanguard of the Hoplite Path, from the far-future Drawn, is made in the 
     await page.locator('[data-act="tab"][data-k="tokens"]').click();
     await page.locator('[data-act="dmNewChar"]').first().click();
     const box = page.locator('#charBox');
-    await expect(box.locator('select[data-cf="calling"] option')).toHaveCount(12);
     await expect(box.locator('select[data-cf="cls"]')).toHaveCount(0);
-    await box.locator('select[data-cf="calling"]').selectOption('vanguard');
+    // Muse's picker (ui/callingpicker.js): the twelve with their emblems; a card turns over to its Paths; Choose
     await box.locator('select[data-cf="lvl"]').selectOption('3');
-    await box.locator('select[data-cf="path"]').selectOption('hoplite');
+    await box.locator('[data-cr="pickCalling"]').click();
+    const picker = page.locator('#callingPicker');
+    await expect(picker.locator('[data-cp-card]')).toHaveCount(12);
+    await expect(picker.locator('[data-cp-card] svg')).toHaveCount(12);
+    await picker.locator('[data-cp-card="vanguard"]').click();
+    await expect(picker.locator('.cp-path.seep')).toHaveCount(1);
+    await picker.locator('[data-cp-path="hoplite"]').click();
+    await picker.locator('[data-cp="choose"]').click();
+    await expect(picker).toHaveCount(0);
+    await expect(box.locator('[data-cr="pickCalling"]')).toContainText('Vanguard');
+    await expect(box.locator('[data-cr="pickCalling"] svg')).toHaveCount(1);
+    await expect(box.locator('select[data-cf="path"]')).toHaveValue('hoplite');
     await expect(box.locator('.cr-calling')).toContainText('Ward');
     await box.locator('select[data-cf="origin"]').selectOption('drawn-future');
     await expect(box).toContainText('Failing Night-Sight');
@@ -27,6 +37,7 @@ test('a Vanguard of the Hoplite Path, from the far-future Drawn, is made in the 
     // the sheet beside it, in our words: the Calling and Path, the Origin, no D&D class or subclass
     const sheet = box.locator('.sheet');
     await expect(sheet).toContainText('Vanguard · Hoplite 3');
+    await expect(sheet.locator('.sheet-h svg')).toHaveCount(1);   // its emblem by the name
     await expect(sheet).toContainText('Last Signal');
     await expect(sheet).toContainText('Shield Rim');
     await expect(sheet).not.toContainText('Champion');
@@ -60,7 +71,7 @@ test('the Classic switch gives the D&D classes back, and a classic hero has no C
     const box = page.locator('#charBox');
     await box.locator('[data-cr="rules"][data-k="classic"]').click();
     await expect(box.locator('select[data-cf="cls"]')).toBeVisible();
-    await expect(box.locator('select[data-cf="calling"]')).toHaveCount(0);
+    await expect(box.locator('[data-cr="pickCalling"]')).toHaveCount(0);
     await box.locator('select[data-cf="cls"]').selectOption('Rogue');
     await box.locator('input[data-cf="name"]').fill('Mirela');
     await box.locator('input[data-cf="name"]').dispatchEvent('change');

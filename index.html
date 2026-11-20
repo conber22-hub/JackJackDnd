@@ -134,6 +134,8 @@ details.card summary{cursor:pointer;font-size:13px}
 .modal .box.wide{width:min(1100px,100%)}
 .cr-head{display:flex;align-items:center;justify-content:space-between}
 .cr-head h1{font-size:30px}
+#charBox .cr-callbtn{display:flex;align-items:center;gap:8px;width:100%;text-align:left;cursor:pointer;font:inherit;font-weight:600;background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:var(--r-sm);padding:6px 11px;min-height:36px;box-shadow:inset 0 1px 2px rgba(0,0,0,.25)}#charBox .cr-callbtn:hover{border-color:var(--gold-line)}#charBox .cr-callbtn span{flex:1;color:var(--ink)}#charBox .cr-callbtn i{font-style:normal;opacity:.6}#charBox .cr-callbtn svg{flex:none}
+.cr-emb{display:inline-flex;vertical-align:middle;margin-right:5px}.cr-emb svg{display:block}
 .cr-starters{margin:6px 0 14px}.cr-st-row{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}.cr-st{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:9px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:var(--ink);cursor:pointer;font:inherit;text-align:left;min-width:150px}.cr-st span{font-size:12px;color:var(--dim)}.cr-st.on{border-color:var(--gold);background:rgba(232,185,56,.1)}
 .cr-cols{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:18px;align-items:start}
 .cr-side{position:sticky;top:0}
@@ -689,6 +691,7 @@ body.hh.wd-fighting #cardLayer .pop .s,body.hh.wd-fighting #cardLayer .pop .f,bo
 .os-strip{display:flex;align-items:flex-end;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 6px 4px}
 .os-strip::-webkit-scrollbar{display:none}
 .os-p{position:relative;flex:none;display:flex;flex-direction:column;align-items:center;gap:2px;width:54px;padding:0;background:none;border:0;cursor:pointer;color:inherit;font:inherit}
+.os-emb{position:absolute;top:-3px;left:calc(50% - 26px);width:18px;height:18px;border-radius:50%;background:#140e12;border:1px solid rgba(239,225,200,.3);display:flex;align-items:center;justify-content:center;z-index:2;pointer-events:none}.os-emb svg{display:block}
 .os-face{width:42px;height:42px;border-radius:50%;background:#1d141a center/cover no-repeat;border:2px solid rgba(239,225,200,.25);box-shadow:0 3px 10px rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;font:700 18px Georgia,serif;color:#cdbfa8;transition:transform .2s,border-color .2s}
 .os-p.foe .os-face{border-color:rgba(255,120,110,.55)}.os-p.pal .os-face{border-color:rgba(150,220,160,.55)}.os-p.me .os-face{border-color:rgba(159,216,255,.8)}
 .os-p.now{width:66px}.os-p.now .os-face{width:56px;height:56px;border:3px solid #ffd27a;box-shadow:0 0 18px rgba(255,200,100,.55),0 3px 10px rgba(0,0,0,.6)}
@@ -701,7 +704,7 @@ body.hh.wd-fighting #cardLayer .pop .s,body.hh.wd-fighting #cardLayer .pop .f,bo
 .os-next{position:absolute;top:30px;left:50%;transform:translateX(-50%);font:700 8px system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#14100c;background:#efe1c8;border-radius:99px;padding:0 5px}
 .os-round{flex:none;align-self:center;font:700 10px system-ui,sans-serif;color:#cdbfa8;padding:0 2px;opacity:.75}
 .wd-order .os-strip{padding:0;gap:3px}
-body.hh .os-p{width:40px}body.hh .os-p.now{width:44px}body.hh .os-face{width:22px;height:22px;font-size:10px;border-width:1px}body.hh .os-p.now .os-face{width:28px;height:28px;border-width:2px}
+body.hh .os-emb{width:12px;height:12px;top:-3px;left:calc(50% - 15px)}body.hh .os-emb svg{width:9px;height:9px}.os-p.now .os-emb{left:calc(50% - 32px)}body.hh .os-p.now .os-emb{left:calc(50% - 18px)}body.hh .os-p{width:40px}body.hh .os-p.now{width:44px}body.hh .os-face{width:22px;height:22px;font-size:10px;border-width:1px}body.hh .os-p.now .os-face{width:28px;height:28px;border-width:2px}
 body.hh .os-hp{width:22px;height:2px}body.hh .os-p.now .os-hp{width:28px}body.hh .os-nm{font-size:7px}body.hh .os-next{top:16px;font-size:6px;padding:0 3px}body.hh .os-cond{top:-3px;right:-3px}body.hh .os-cond i{width:10px;height:10px;font-size:7px}body.hh .os-round{font-size:7px}
 body.hh .os-p.down .os-face::after{top:4px;font-size:11px}
 /* 🎲 the dice moment (ui/dicemoment.js) */

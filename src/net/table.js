@@ -193,7 +193,7 @@ export function offerLibrary(){ const hash = tableHash(); if (hash) for (const [
 function tableVictory(m){
   const party = Object.keys(m.names || {}).filter(id => { const t = tokById(id); return t && t.kind !== 'monster'; });
   const me = tokById(ui.myToken), share = Math.max(0, +m.share || 0);
-  openVictory(m.s, { party, names:m.names || {}, faces:{}, xp:{ before:0, after:share, next:share || 1, level:+me?.lvl || +me?.level || 1 } });
+  openVictory(m.s, { party, names:m.names || {}, faces:{}, callings:Object.fromEntries(party.map(tokById).filter(o => o?.calling).map(o => [o.id, { calling:o.calling, color:o.callColor }])), xp:{ before:0, after:share, next:share || 1, level:+me?.lvl || +me?.level || 1 } });
   setTimeout(() => { for (const id of party){ try { const t = tokById(id), f = t && faceOf(t); if (f) setVictoryFace(id, f); } catch {} } }, 80);
 }
 /* 💬 the fight's captions on the players' phones (Muse's ui/captions.js): what happens in a fight is said on each phone
