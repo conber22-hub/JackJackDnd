@@ -37,6 +37,7 @@ import { MONSTER_PLAY } from '../data/monster-play.js';
 import { makeNoise } from './noise.js';
 import { nemesisDamage, nemesisHolds, nemesisRegen, nemesisFalls, nemesisSurvives } from './court.js';
 import { toPlayers } from './outbox.js';
+import { wardSoak, wardTurn } from '../engine/mech.js';
 import { alarmAt, garrisonCalm } from './garrison.js';
 
 export { currentTurn };
@@ -213,6 +214,8 @@ export function startTurn(){
     showCard({ kind:'seep', title:`${t.name} gets back up`, flair:'The tendrils pull the body upright by the collarbones. It was never finished dying.', lines:['Unfinished Death — it returns at 1 HP. Radiant or fire damage keeps it down.'] });
     syncTokens(); burst(t.floor, t.x, t.y, '#9cc23c');
   }
+  // ⛨ a Ward comes back whole at the start of its bearer's turn, if nothing touched them since their last one
+  if (t.ward?.max > 0 && !t.dead){ const W = wardTurn(t.ward); t.ward = W.ward; if (W.back) bus.emit('ward', { t, back:true }); }
   const b = BEST[t.bid], D = dreadLevel();
   if (!t.dead && isHis(t) && D.regen && t.hp < t.maxHp){ t.hp = Math.min(t.maxHp, t.hp + D.regen); }
   if (!t.dead && t.nem && t.hp < t.maxHp){ const r = nemesisRegen(t); if (r) t.hp = Math.min(t.maxHp, t.hp + r); }   // His favour
@@ -360,6 +363,10 @@ export function applyDamage(t, n, type = '', by = null, defended = false){
   if (!defended) n = defend(t, n, type).n;
   if (n <= 0) return 0;
   if (t.nem) n = nemesisDamage(t, n, type);   // one of the Count's court: its weakness, its scars (game/court.js)
+  // ⛨ a Ward (the Vanguard's, engine/mech.js) takes the blow first; what gets through comes off the hit points
+  if (t.ward?.max > 0){ const W = wardSoak(t.ward, n); t.ward = W.ward; n = W.through;
+    if (W.soaked) bus.emit('ward', { t, soaked:W.soaked, broke:W.broke, by:(typeof by === 'string' ? by : by?.id) || null });
+    if (n <= 0) return 0; }
   t.hp = Math.max(0, t.hp - n);
   burst(t.floor, t.x, t.y, '#c0303a');
   if (t.bid === 'seepling' && n >= 5) t.hp = 0;     // Burst Sac

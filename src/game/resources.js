@@ -103,6 +103,7 @@ export function shortRest(list = party()){
     if (r.rest === 'short') t.res[r.id] = r.max;
     else if (r.rest === 'short1') t.res[r.id] = Math.min(r.max, left(t, r.id) + 1);
   }
+  for (const t of list) if (t.ward?.max > 0) t.ward = { ...t.ward, now:t.ward.max, hit:false };   // ⛨ whole again (engine/mech.js)
   showCard({ kind:'', title:'A short rest', sub:'An hour', flair:'Bandages, a pipe, a whetstone. Nobody quite sleeps.', lines:['Short-rest features are back (one charge of the one-a-rest ones). Spend Hit Dice from each hero\'s card to heal.'] });
   log('The party takes a short rest.'); changed();
 }
@@ -110,6 +111,7 @@ export function longRest(list = party(), quiet = false){
   for (const t of list){
     if (t.dead) continue;                      // the fallen don't rest; they need raising first
     t.hp = t.maxHp; t.flags.bloodied = false; delete t.sustain;
+    if (t.ward?.max > 0) t.ward = { ...t.ward, now:t.ward.max, hit:false };   // ⛨ (engine/mech.js)
     t.conds = (t.conds || []).filter(c => c.n === 'seeded');
     if (t.exhaustion) t.exhaustion > 1 ? t.exhaustion-- : delete t.exhaustion;   // a long rest: one level of exhaustion less
     for (const r of t.resources || []) t.res[r.id] = r.max;

@@ -82,6 +82,8 @@ export function remoteBlow(kind, id, from, fx = {}){
   else if (kind === 'miss'){ floatText(id, fx?.block ? 'BLOCKED' : 'MISS', fx?.block ? '#f2e2b0' : '#d9d2c4', { word:!!fx?.block }); if (fx?.fumble && from) floatText(from, 'FUMBLE', '#c9a0ff', { word:true }); if (fx?.ranged && from && !fx.el) plantArrow(from, id, 'miss'); }
 }
 export function remoteHeal(id, n){ if (n > 0){ floatText(id, `+${n}`, '#7dff9a'); ringPulse(id, '#7dff9a'); } }
+let wardsShown = 0;
+export const wardFloats = () => wardsShown;
 let wired = false;
 export function wireFightFx(){
   if (wired) return; wired = true;
@@ -91,5 +93,10 @@ export function wireFightFx(){
   bus.on('turnAct', turnAct); bus.on('feature', feature); bus.on('cond', cond);
   bus.on('turnStart', e => { const t = e?.t; if (!t || t.dead) return; const col = t.kind === 'monster' ? '#ff6a4a' : '#ffd27a'; ringPulse(t.id, col); after(180, () => ringPulse(t.id, col)); });   // 🔆 whose turn it is
   bus.on('shove', e => { if (!e?.target || e.out === 'prone') return; after(380, () => floatText(e.target.id, { pushed:'SHOVED', prone:'PRONE', resisted:'STANDS FIRM', stuck:'STAGGERS' }[e.out] || 'SHOVE', e.out === 'resisted' ? '#d9d2c4' : '#ffd27a', { word:true })); });   // 🤚 (game/combat.js shove)
+  // ⛨ a Ward (engine/mech.js): what it soaked, pale blue; WARD DOWN when it breaks; WARD when it comes back whole
+  bus.on('ward', e => { const t = e?.t; if (!t) return;
+    if (e.back){ floatText(t.id, '⛨ WARD', '#9fdcff', { word:true }); ringPulse(t.id, '#9fdcff'); wardsShown++; return; }
+    after(330, () => floatText(t.id, `⛨ −${e.soaked}`, '#9fdcff')); wardsShown++;
+    if (e.broke) after(700, () => { floatText(t.id, 'WARD DOWN', '#6fb6e8', { word:true }); ringPulse(t.id, '#6fb6e8'); }); });
   bus.on('aims', e => { if (e?.by && e.at){ windUp(e.by, e.at, e.ms); if (e.at === state?.campaign?.wander?.heroTok || e.at === ui.myToken) floatText(e.at, '!', '#ff4a3a', { word:true }); } });   // ⚠ a foe shows who it's going for
 }

@@ -509,3 +509,19 @@ test('on a phone the fight fits the handheld: the fight bar in its lower screen,
   } finally { await context.close(); }
   expect(errors, 'Uncaught browser errors').toEqual([]);
 });
+
+test('a Ward takes a blow before the hit points, breaks, and is seen to', async ({ page }) => {
+  test.setTimeout(180_000);
+  await fight(page);
+  const r = await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), w = D.get().tokens.find(t => t.kind === 'monster');
+    h.ward = { max:10, now:10, hit:false }; const hp0 = h.hp, f0 = D.wardFloats();
+    D.applyDamage(h, 4, 'piercing', w.id); const a = { hp:h.hp, ward:h.ward.now };
+    D.applyDamage(h, 9, 'piercing', w.id); const b = { hp:h.hp, ward:h.ward.now };
+    return { hp0, a, b, f0 }; });
+  expect(r.a).toEqual({ hp:r.hp0, ward:6 });          // all of it soaked
+  expect(r.b).toEqual({ hp:r.hp0 - 3, ward:0 });      // it breaks, and the rest gets through
+  await expect.poll(() => page.evaluate(() => window.DreadDelve.wardFloats())).toBeGreaterThan(r.f0);
+  // a long rest makes it whole
+  await page.evaluate(() => { const D = window.DreadDelve; D.wander.hero().ward.now = 0; });
+  expect(await page.evaluate(() => { const D = window.DreadDelve; D.endCombat?.(); D.longRest([D.wander.hero()], true); return D.wander.hero().ward.now; })).toBe(10);
+});
