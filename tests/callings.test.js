@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { CALLINGS, MECHS } from '../src/data/callings.js';
 import { CLASSES } from '../src/data/srd.js';
-import { callingList, callingOf, callingForChassis, pathOf, pathFeatures, featuresAt, featureView, validateCallings } from '../src/engine/callings.js';
+import { callingList, callingOf, callingForChassis, pathOf, pathFeatures, pathBreakdown, featuresAt, featureView, validateCallings } from '../src/engine/callings.js';
 
 test('twelve original callings cover every chassis and its progressions',()=>{
   assert.deepEqual(validateCallings(),[]);
@@ -37,4 +37,24 @@ test('level-five Hoplite shows its Ward, drill and own path in order',()=>{
   assert.deepEqual(featureView('vanguard','Champion: Improved Critical'),{n:'Champion: Improved Critical',text:''});
   for(const h of [null,{}, {calling:'constructor'}]){assert.equal(callingOf(h),null);assert.deepEqual(featuresAt(h),[]);}
   assert.equal(pathOf(null,null),null);
+});
+
+test('every path previews exactly the gains the sheet will show through level 20',()=>{
+  const advice = new Set();
+  for(const c of Object.values(CALLINGS)) for(const p of c.paths){
+    const guide = pathBreakdown(c.id,p.id);
+    assert.ok(guide.role && guide.play && !advice.has(guide.play)); advice.add(guide.play);
+    assert.equal(guide.cost,p.cost ?? null);
+    assert.deepEqual(guide.milestones,Object.keys(p.features).map(Number));
+    assert.equal(guide.levels.length,20);
+    for(const [index,row] of guide.levels.entries()){
+      assert.equal(row.lvl,index+1);
+      const earned = featuresAt({calling:c.id,path:p.id,lvl:row.lvl}).filter(f=>f.lvl===row.lvl);
+      assert.deepEqual([...row.calling,...row.path],earned);
+    }
+    assert.ok(guide.levels[19].calling.length + guide.levels[19].path.length);
+  }
+  assert.equal(advice.size,36);
+  assert.equal(pathBreakdown('vanguard','templar'),null);
+  assert.equal(pathBreakdown(null,null),null);
 });

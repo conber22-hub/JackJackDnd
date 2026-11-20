@@ -56,3 +56,21 @@ export function validateCallings(){
   if(chassis.size!==12) errors.push('Expected twelve chassis');
   return errors;
 }
+
+// Preview each level once. Empty rows matter: the chassis may still advance
+// spell slots or other resources without granting a newly named feature.
+export function pathBreakdown(callingId, pathId){
+  const path = pathOf(callingId, pathId);
+  if (!path) return null;
+  const levels = Array.from({length:20}, (_, index) => ({
+    lvl:index + 1, calling:[], path:[]
+  }));
+  for (const feature of featuresAt({calling:callingId, path:pathId, lvl:20})){
+    levels[feature.lvl - 1][feature.from].push(structuredClone(feature));
+  }
+  return {
+    id:path.id, name:path.name, role:path.role, play:path.play, cost:path.cost ?? null,
+    milestones:levels.filter(level => level.path.length).map(level => level.lvl),
+    levels
+  };
+}

@@ -260,7 +260,9 @@ export const CALLINGS = {
               }
             }
           ]
-        }
+        },
+        "role": "Shield neighbour",
+        "play": "Pick the friend who must cross the courtyard. Rest before the crossing for Shield Rim, then stay close enough for Lock Shields to bring you to their side."
       },
       {
         "id": "breacher",
@@ -329,7 +331,9 @@ export const CALLINGS = {
               }
             }
           ]
-        }
+        },
+        "role": "Entry fighter",
+        "play": "Use your opening move to claim the doorway. Later, Clear the Sill lets you leave it after striking so the next fighter can come through."
       },
       {
         "id": "hollowed",
@@ -426,7 +430,9 @@ export const CALLINGS = {
             }
           ]
         },
-        "cost": "Each invocation reduces maximum HP by one until a long rest."
+        "cost": "Each invocation reduces maximum HP by one until a long rest.",
+        "role": "Last defender",
+        "play": "Save Packed Wound for a blow that would drop you. Check your remaining maximum HP before bargaining for another gift during the same watch."
       }
     ]
   },
@@ -567,7 +573,9 @@ export const CALLINGS = {
               }
             }
           ]
-        }
+        },
+        "role": "Fury striker",
+        "play": "Call Open Guard on a turn when you can follow through. Rim of Teeth pays off on the first hit, but enemies can exploit your opening until your next turn."
       },
       {
         "id": "hearth-sworn",
@@ -630,7 +638,9 @@ export const CALLINGS = {
               }
             }
           ]
-        }
+        },
+        "role": "Escort",
+        "play": "Choose a companion who has to get home. Keep a route open to them; Benchmate spends your reaction on closing that distance."
       },
       {
         "id": "rotblood",
@@ -711,7 +721,9 @@ export const CALLINGS = {
             }
           ]
         },
-        "cost": "After each invocation lose HP equal to proficiency. This loss bypasses temporary HP."
+        "cost": "After each invocation lose HP equal to proficiency. This loss bypasses temporary HP.",
+        "role": "Attrition fighter",
+        "play": "Call the blisters on a hit that matters. Hungry Marrow grants a buffer on a kill, but the price still comes from your own blood."
       }
     ]
   },
@@ -845,7 +857,9 @@ export const CALLINGS = {
               }
             }
           ]
-        }
+        },
+        "role": "Mounted skirmisher",
+        "play": "Loose first, then use Rein Hand to leave the return lane. On a narrow road your mount can make the move; in a crypt you can do it on foot."
       },
       {
         "id": "saboteur",
@@ -898,7 +912,9 @@ export const CALLINGS = {
               }
             }
           ]
-        }
+        },
+        "role": "Ambush planner",
+        "play": "Walk the escape route before you rig the wire. A snare across the only exit is just as inconvenient for the last friend out."
       },
       {
         "id": "carrier",
@@ -982,7 +998,9 @@ export const CALLINGS = {
             }
           ]
         },
-        "cost": "After invoking, your tracks shine for one hour. Checks to follow them have advantage."
+        "cost": "After invoking, your tracks shine for one hour. Checks to follow them have advantage.",
+        "role": "Hazard at close range",
+        "play": "Before entering a crush, count the enemies within five feet. The satchel can still burst if you fall; its luminous tracks make a quiet escape harder."
       }
     ]
   },
@@ -1115,7 +1133,9 @@ export const CALLINGS = {
               }
             }
           ]
-        }
+        },
+        "role": "Volley archer",
+        "play": "Start on the edge of the pack. Once you have Volley Bell, choose the target with the most enemies within five feet."
       },
       {
         "id": "long-watch",
@@ -1171,7 +1191,9 @@ export const CALLINGS = {
               }
             }
           ]
-        }
+        },
+        "role": "Hidden lookout",
+        "play": "Find cover with a second sightline. Dawn Blind gives you the movement after hiding to take the shot from somewhere new."
       },
       {
         "id": "seepsight",
@@ -1253,7 +1275,9 @@ export const CALLINGS = {
             }
           ]
         },
-        "cost": "After invoking, lose ordinary colour vision until a short rest. Checks relying on colour fail."
+        "cost": "After invoking, lose ordinary colour vision until a short rest. Checks relying on colour fail.",
+        "role": "Rot tracker",
+        "play": "Read the site before the party tramples it. Ask a companion to read coloured trail marks while the gift dims your colour vision."
       }
     ]
   },
@@ -1385,7 +1409,9 @@ export const CALLINGS = {
               }
             }
           ]
-        }
+        },
+        "role": "Order knight",
+        "play": "Prepare your guard at rest. When the dead try to break the procession with fear, keep the most vulnerable travellers within ten feet."
       },
       {
         "id": "last-bastion",
@@ -1445,7 +1471,9 @@ export const CALLINGS = {
               }
             }
           ]
-        }
+        },
+        "role": "Rescue guard",
+        "play": "Leave room beside a threatened ally. Reach the Fallen gets you to them; Bind in Place and Homeward Bell give you something to do when you arrive."
       },
       {
         "id": "penitent",
@@ -1527,7 +1555,9 @@ export const CALLINGS = {
             }
           ]
         },
-        "cost": "After invoking, your speed drops by five feet until your next turn ends."
+        "cost": "After invoking, your speed drops by five feet until your next turn ends.",
+        "role": "Blight hunter",
+        "play": "Close with the infected before calling the brand. The chain slows your next steps, so make sure you can still reach whoever needs your healing."
       }
     ]
   },
@@ -1595,6 +1625,13 @@ export const CALLINGS = {
                 "range": 5,
                 "uses": "pb/longRest"
               }
+            },
+            {
+              "n": "Triage Chalk",
+              "text": "Spend a minute examining a willing or unconscious creature within reach. Learn whether it is stable and whether it is poisoned. This examination does not stabilise it.",
+              "mech": {
+                "k": "text"
+              }
             }
           ],
           "6": [
@@ -1621,7 +1658,9 @@ export const CALLINGS = {
               }
             }
           ]
-        }
+        },
+        "role": "Front-line medic",
+        "play": "Count the squares to the nearest casualty. Your dressings work within five feet, and a living patient at zero HP can wake from the first treatment."
       },
       {
         "id": "bell-keeper",
@@ -1638,6 +1677,13 @@ export const CALLINGS = {
                 "dice": "1d6",
                 "type": "thunder",
                 "when": "firstHitEachTurn"
+              }
+            },
+            {
+              "n": "Parish Peal",
+              "text": "After ten minutes with a working bell, teach willing listeners three distinct signals. Within earshot they recognise those signals until their next long rest.",
+              "mech": {
+                "k": "text"
               }
             }
           ],
@@ -1669,7 +1715,9 @@ export const CALLINGS = {
               }
             }
           ]
-        }
+        },
+        "role": "Parish defender",
+        "play": "Set the bell where the frightened can gather. Passing Toll serves against any foe; save room at the centre when Parish Ring comes online."
       },
       {
         "id": "mender-of-the-choir",
@@ -1686,6 +1734,19 @@ export const CALLINGS = {
                 "amount": "1d8+wis",
                 "range": 5,
                 "uses": "pb/longRest",
+                "also": [
+                  {
+                    "k": "seepCost",
+                    "what": "Lose one hit die after each invocation. Without an unspent hit die you cannot invoke."
+                  }
+                ]
+              }
+            },
+            {
+              "n": "Count the Threads",
+              "text": "With consent, let the Choir listen to a patient for one minute. Learn how many hit dice the patient has left.",
+              "mech": {
+                "k": "text",
                 "also": [
                   {
                     "k": "seepCost",
@@ -1731,7 +1792,9 @@ export const CALLINGS = {
             }
           ]
         },
-        "cost": "Lose one hit die after each invocation. Without an unspent hit die you cannot invoke."
+        "cost": "Lose one hit die after each invocation. Without an unspent hit die you cannot invoke.",
+        "role": "Reserve healer",
+        "play": "Count unspent hit dice alongside the wounded. Even with uses of Living Thread left, an empty reserve means the Choir cannot stitch."
       }
     ]
   },
@@ -1835,7 +1898,9 @@ export const CALLINGS = {
               }
             }
           ]
-        }
+        },
+        "role": "Evidence keeper",
+        "play": "Take the ten minutes to recover a witness’s sentence before anyone clears the hearth. Later, call the lamp when the search leads below ground."
       },
       {
         "id": "strategist",
@@ -1899,7 +1964,9 @@ export const CALLINGS = {
               }
             }
           ]
-        }
+        },
+        "role": "Formation caller",
+        "play": "Use First Disposition to take the hinge of the formation. Leave a clear lane towards the ally Reserve File may need to reach."
       },
       {
         "id": "whispered-archive",
@@ -1977,7 +2044,9 @@ export const CALLINGS = {
             }
           ]
         },
-        "cost": "After invoking, the Chorus learns the last truthful answer you received from your lamp."
+        "cost": "After invoking, the Chorus learns the last truthful answer you received from your lamp.",
+        "role": "Listener at the veil",
+        "play": "Ask the lantern what you can afford to reveal. The Chorus learns the last truthful answer, so the order of your questions matters."
       }
     ]
   },
@@ -2075,7 +2144,9 @@ export const CALLINGS = {
               }
             }
           ]
-        }
+        },
+        "role": "Crossing maker",
+        "play": "Find two firm supports and decide who crosses first. Your ten-foot span holds one traveller at a time and vanishes after one minute."
       },
       {
         "id": "keyed",
@@ -2129,7 +2200,9 @@ export const CALLINGS = {
               }
             }
           ]
-        }
+        },
+        "role": "Relic reader",
+        "play": "Start with the silent engine. Wake the Lock tells you which part powered it; that gives the party a specific piece to recover."
       },
       {
         "id": "fused",
@@ -2210,7 +2283,9 @@ export const CALLINGS = {
             }
           ]
         },
-        "cost": "After invoking, take one force damage per calling level. Resistance cannot reduce it."
+        "cost": "After invoking, take one force damage per calling level. Resistance cannot reduce it.",
+        "role": "Shard striker",
+        "play": "Weigh the force you will take against the wound you can inflict. At higher levels a casual invocation can cost more HP than the fight itself."
       }
     ]
   },
@@ -2321,7 +2396,9 @@ export const CALLINGS = {
               }
             }
           ]
-        }
+        },
+        "role": "Infected envoy",
+        "play": "Choose the one sentence the infected need to understand. Shared Tongue carries a warning or a bargain, but their answer is their own."
       },
       {
         "id": "the-swarm",
@@ -2375,7 +2452,9 @@ export const CALLINGS = {
               }
             }
           ]
-        }
+        },
+        "role": "Spore handler",
+        "play": "Decide where the envoy belongs before summoning its successor. You get one minute with it, and replacing it dismisses the first."
       },
       {
         "id": "the-bloom",
@@ -2457,7 +2536,9 @@ export const CALLINGS = {
             }
           ]
         },
-        "cost": "After invoking, flowers betray your position. You cannot hide until your next turn ends."
+        "cost": "After invoking, flowers betray your position. You cannot hide until your next turn ends.",
+        "role": "Blighted caretaker",
+        "play": "Choose your ground before flowering. If you need to hide before your next turn ends, keep the garden closed."
       }
     ]
   },
@@ -2529,6 +2610,13 @@ export const CALLINGS = {
                 "when": "initiative",
                 "provokes": false
               }
+            },
+            {
+              "n": "Night Signals",
+              "text": "During a rest, teach up to six allies a drum call for advance, halt and withdraw. They recognise those calls whenever they can hear your drum.",
+              "mech": {
+                "k": "text"
+              }
             }
           ],
           "6": [
@@ -2555,7 +2643,9 @@ export const CALLINGS = {
               }
             }
           ]
-        }
+        },
+        "role": "Tempo caller",
+        "play": "Take the opening step to a place the company can follow. Marching Stroke later lets you strike and move again without inviting pursuit."
       },
       {
         "id": "standard-bearer",
@@ -2571,6 +2661,13 @@ export const CALLINGS = {
                 "k": "tempHp",
                 "amount": "1d6+lvl",
                 "when": "rest"
+              }
+            },
+            {
+              "n": "Muster Roll",
+              "text": "During a rest, mark up to six willing companions on the staff. After one minute observing a visible crowd, learn which marked companions you can see among them.",
+              "mech": {
+                "k": "text"
               }
             }
           ],
@@ -2606,7 +2703,9 @@ export const CALLINGS = {
               }
             }
           ]
-        }
+        },
+        "role": "Rally point",
+        "play": "Choose a patch of ground your companions can actually reach. Rally there before the fighting; keep them near the cloth when fear spreads."
       },
       {
         "id": "hollow-voice",
@@ -2623,6 +2722,19 @@ export const CALLINGS = {
                 "on": "save",
                 "vs": "frightened",
                 "when": "invoked1min",
+                "also": [
+                  {
+                    "k": "seepCost",
+                    "what": "After each invocation, speech above a whisper is impossible until the end of your next turn."
+                  }
+                ]
+              }
+            },
+            {
+              "n": "Stolen Echo",
+              "text": "Invoke the Chorus to repeat one sentence heard in the past minute in the speaker’s voice. It carries only as far as your whisper.",
+              "mech": {
+                "k": "text",
                 "also": [
                   {
                     "k": "seepCost",
@@ -2673,7 +2785,9 @@ export const CALLINGS = {
             }
           ]
         },
-        "cost": "After each invocation, speech above a whisper is impossible until the end of your next turn."
+        "cost": "After each invocation, speech above a whisper is impossible until the end of your next turn.",
+        "role": "Choir singer",
+        "play": "Give your companions the plan before you invoke. They may be too far away to hear the whisper that follows."
       }
     ]
   },
@@ -2792,7 +2906,9 @@ export const CALLINGS = {
               }
             }
           ]
-        }
+        },
+        "role": "Pack scout",
+        "play": "Call the wolf when a minute together will count. Later, Flank Path lets you change sides after an attack without giving the foe a free swing."
       },
       {
         "id": "grove-keeper",
@@ -2851,7 +2967,9 @@ export const CALLINGS = {
               }
             }
           ]
-        }
+        },
+        "role": "Rooted guardian",
+        "play": "Hold the spot where allies can reach you. Root Stance helps you keep your feet and Sap Dressing needs a patient within arm’s reach."
       },
       {
         "id": "mycelial",
@@ -2929,7 +3047,9 @@ export const CALLINGS = {
             }
           ]
         },
-        "cost": "After invoking, your feet take root. Your speed is zero until your next turn starts."
+        "cost": "After invoking, your feet take root. Your speed is zero until your next turn starts.",
+        "role": "Root listener",
+        "play": "Finish the step before asking the ground a question. Invoking fixes your feet in place until your next turn starts."
       }
     ]
   },
@@ -3079,7 +3199,9 @@ export const CALLINGS = {
               }
             }
           ]
-        }
+        },
+        "role": "Arena runner",
+        "play": "Use Starting Stone to claim the open lane first. Once Long Course is yours, a Dash can carry you clear of the ring without provoking on the extra movement."
       },
       {
         "id": "pit-fighter",
@@ -3134,7 +3256,9 @@ export const CALLINGS = {
               }
             }
           ]
-        }
+        },
+        "role": "Close striker",
+        "play": "Watch the exit over the other fighter’s shoulder. Inside Elbow rewards the first hit, and Low Step opens a way out after an attack."
       },
       {
         "id": "twisted",
@@ -3219,7 +3343,9 @@ export const CALLINGS = {
             }
           ]
         },
-        "cost": "After invoking, one hand curls shut around nothing. It cannot hold equipment until your next turn starts."
+        "cost": "After invoking, one hand curls shut around nothing. It cannot hold equipment until your next turn starts.",
+        "role": "Grasping rescuer",
+        "play": "Move the lantern to your pack or give it to a friend. One hand closes after you invoke, just when you might need it to carry something."
       }
     ]
   }
