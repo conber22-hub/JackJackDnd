@@ -87,3 +87,16 @@ test('resistances, extra damage (doubled dice on a crit), temporary hit points a
   assert.deepEqual(tempSoak(5, 8), { thp:0, soaked:5, through:3 });
   assert.equal(tempGive(4, 7), 7); assert.equal(tempGive(9, 7), 9);
 });
+
+import { mechUses, mechResources, seepCosts } from '../src/engine/mech.js';
+test('features you use: their uses, as resources, and the price a Seep-touched one takes', () => {
+  assert.deepEqual(mechUses('pb/longRest', { lvl:5 }), { max:3, rest:'long' });
+  assert.deepEqual(mechUses('1/shortRest'), { max:1, rest:'short' });
+  assert.deepEqual(mechUses(undefined), { max:1, rest:'long' });
+  const rs = mechResources([{ k:'heal', amount:'2d8+wis', range:5, uses:'pb/longRest', src:'Field Rites' }, { k:'tempHp', amount:'1d10+lvl', when:'bonus', src:'Second Breath' },
+    { k:'tempHp', amount:'5', when:'kill', src:'Blood Price' }, { k:'resist', types:['cold'], src:'Hide' },
+    { k:'heal', amount:'3d8', src:'Mender of the Choir', also:[{ k:'seepCost', what:'maxHp', amount:'1d4' }] }], { lvl:5 });
+  assert.deepEqual(rs.map(r => [r.id, r.max, r.rest, r.use]), [['m-field-rites', 3, 'long', 'mech'], ['m-second-breath', 1, 'long', 'mech'], ['m-mender-of-the-choir', 1, 'long', 'mech']]);
+  assert.deepEqual(seepCosts(rs[2].mech, {}, fixed(3)), [{ what:'maxHp', n:3, text:'' }]);
+  assert.deepEqual(seepCosts(rs[0].mech), []);
+});

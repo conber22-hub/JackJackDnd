@@ -4,7 +4,7 @@
    hit points). game/rules.js and game/combat.js call in here; the Calling's data (ChatGPT's data/callings.js) gives
    the mechs (game/heroes.js applyMechs). */
 import { state } from '../engine/state.js';
-import { mechWard } from '../engine/mech.js';
+import { mechWard, mechResources, amountOf, seepCosts, tempGive } from '../engine/mech.js';
 
 const cheb = (a, b) => Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
 const side = t => t?.kind === 'monster' ? 'foe' : 'party';
@@ -53,8 +53,35 @@ export function firstHitNow(a){
 // A token's features: set them, and its Ward with them (kept as it is if the Ward is the same size)
 export function applyMechs(t, mechs = []){
   t.mechs = (Array.isArray(mechs) ? mechs : []).filter(m => m && typeof m === 'object' && m.k);
-  const w = mechWard(t.mechs, mechCtx(t));
+  // the ones you use become resources (kept counts where they were already there)
+  const ctx = mechCtx(t), rs = mechResources(t.mechs, ctx);
+  t.resources = [...(t.resources || []).filter(r => r.use !== 'mech'), ...rs]; t.res ||= {};
+  for (const r of rs) if (t.res[r.id] == null || t.res[r.id] > r.max) t.res[r.id] = r.max;
+  const w = mechWard(t.mechs, ctx);
   if (!w || !(w.max > 0)) delete t.ward;
   else if (t.ward?.max !== w.max) t.ward = { max:w.max, now:w.max, hit:false };
   return t;
 }
+
+/* Using one (game/resources.js useFeature, use 'mech'): → the card's lines, or null when it can't. heal(t, n) is passed
+   in (game/combat.js's, so its bus and checks run). And its price, if it's Seep-touched: hit point maximum gone until a
+   long rest (t.seepDrain), or a mark of the rot (t.seepMarks), which the faithful can see. */
+export function runMech(t, m, target, heal){
+  const ctx = mechCtx(t), lines = [];
+  if (m.k === 'heal'){
+    const to = target || t; if (to.dead && to.kind === 'monster') return null;
+    const n = Math.max(1, amountOf(m.amount || '1d8', ctx)); heal(to, n);
+    lines.push(`${to === t ? '' : `${to.name} `}<b>+${n} HP</b> (${to.hp}/${to.maxHp})`);
+  } else if (m.k === 'tempHp'){
+    const n = amountOf(m.amount || '1d6', ctx); t.thp = tempGive(t.thp, n);
+    lines.push(`<b>${t.thp} temporary hit points</b>`);
+  } else return null;
+  for (const c of seepCosts(m, ctx)){
+    if (c.what === 'maxHp'){ const n = Math.min(c.n, Math.max(0, t.maxHp - 1)); t.seepDrain = (t.seepDrain || 0) + n; t.maxHp -= n; t.hp = Math.min(t.hp, t.maxHp);
+      lines.push(`<span class="fam-seep">The rot takes its price: hit point maximum −${n} until a long rest.</span>`); }
+    else { t.seepMarks = (t.seepMarks || 0) + c.n; lines.push(`<span class="fam-seep">The rot spreads under the skin (${t.seepMarks} mark${t.seepMarks === 1 ? '' : 's'}).</span>`); }
+  }
+  return lines;
+}
+// A long rest gives back what the rot drained
+export function restoreDrain(t){ if (t?.seepDrain > 0){ t.maxHp += t.seepDrain; delete t.seepDrain; } }

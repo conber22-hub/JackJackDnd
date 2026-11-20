@@ -5,6 +5,7 @@ import { rollDice, esc, bus } from '../util/core.js';
 import { showCard, toast } from '../ui/hud.js';
 import { addCond } from './rules.js';
 import { heal } from './combat.js';
+import { runMech, restoreDrain } from './mechfx.js';
 import { changed } from './session.js';
 import { longRest as fearRest } from '../engine/horror.js';
 
@@ -77,6 +78,10 @@ export function useFeature(t, id, target = t){
     const got = recoverSlots(t, r); if (!got.length){ toast(`${t.name} has no spent slots to recover.`); return false; }
     lines.push(`Back: ${got.join(', ')}`);
   }
+  else if (r.use === 'mech'){   // ⚙ a Calling's (engine/mech.js, game/mechfx.js)
+    if (t.dead){ toast(`${t.name} is down.`); return false; }
+    const got = runMech(t, r.mech || {}, target, heal); if (!got) return false; lines.push(...got);
+  }
   else if (r.text) lines.push(esc(r.text));
   t.res[id] -= cost;
   bus.emit('feature', { t, id, n:r.n, target });   // (its name over them: ui/fightfx.js)
@@ -110,6 +115,7 @@ export function shortRest(list = party()){
 export function longRest(list = party(), quiet = false){
   for (const t of list){
     if (t.dead) continue;                      // the fallen don't rest; they need raising first
+    restoreDrain(t);   // (what the rot drained comes back first: game/mechfx.js)
     t.hp = t.maxHp; t.flags.bloodied = false; delete t.sustain;
     if (t.ward?.max > 0) t.ward = { ...t.ward, now:t.ward.max, hit:false };   // ⛨ (engine/mech.js)
     delete t.thp;   // (temporary hit points end with a long rest)

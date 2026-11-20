@@ -560,3 +560,23 @@ test('an aura gives those on its side within reach what it gives, and the bearer
   expect(r.srcs).toEqual(['Oath of the Hearth']);
   expect(r.wm).toBe(0);
 });
+
+test('a feature you use: a heal from the Actions list, and a Seep-touched one takes its price until a long rest', async ({ page }) => {
+  test.setTimeout(180_000);
+  await fight(page);
+  const r = await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero();
+    D.applyMechs(h, [{ k:'heal', amount:'5', uses:'2/longRest', src:'Field Rites' }, { k:'heal', amount:'4', src:'Mender of the Choir', also:[{ k:'seepCost', what:'maxHp', amount:'3' }] }]);
+    const list = D.wander.heroFeatures().map(f => [f.id, f.left]);
+    h.hp = 100; const max0 = h.maxHp;
+    D.wander.heroFeature('m-field-rites'); const a = h.hp;
+    return { list, a, max0 }; });
+  expect(r.list).toEqual(expect.arrayContaining([['m-field-rites', 2], ['m-mender-of-the-choir', 1]]));
+  expect(r.a).toBe(105);
+  await expect(page.locator('#cardLayer')).toContainText('Field Rites');
+  // the Seep-touched one: its heal, and the hit point maximum it takes
+  const s = await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(); D.useFeature(h, 'm-mender-of-the-choir', h); return { max:h.maxHp, drain:h.seepDrain }; });
+  expect(s).toEqual({ max:r.max0 - 3, drain:3 });
+  // a long rest gives it back, and the uses
+  const z = await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(); D.longRest([h], true); return { max:h.maxHp, hp:h.hp, left:h.res['m-field-rites'] }; });
+  expect(z).toEqual({ max:r.max0, hp:r.max0, left:2 });
+});

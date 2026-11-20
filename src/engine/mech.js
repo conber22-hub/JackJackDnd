@@ -139,3 +139,29 @@ export function mechWard(mechs, ctx = {}){
 // Temporary hit points: they soak before hit points, and the most you're given replaces, never adds to, what's left
 export function tempSoak(thp, n){ const have = Math.max(0, thp || 0), s = Math.min(have, Math.max(0, n)); return { thp:have - s, soaked:s, through:Math.max(0, n) - s }; }
 export const tempGive = (thp, n) => Math.max(thp || 0, n || 0);
+
+/* ---------- the features you use ----------
+   A heal, temporary hit points on a bonus action: each has uses ('pb/longRest', '1/shortRest', '2/longRest',
+   'lvl/longRest'; none written means once a long rest) and becomes one of the hero's resources (game/resources.js
+   runs it: use 'mech'). The price a Seep-touched one takes rides along in `also` (seepCost). */
+export function mechUses(uses, ctx = {}){
+  const [n, per] = String(uses || '1/longRest').split('/');
+  return { max:Math.max(1, amountOf(n || '1', ctx, () => 0)), rest:/short/i.test(per || '') ? 'short' : 'long' };
+}
+const slug = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'feature';
+const ACTIVE = m => m.k === 'heal' || (m.k === 'tempHp' && (m.when || 'bonus') === 'bonus');
+export function mechResources(mechs, ctx = {}){
+  const seen = new Set(), out = [];
+  for (const m of Array.isArray(mechs) ? mechs : []){
+    if (!m || !ACTIVE(m)) continue;
+    let id = `m-${slug(m.src)}`; while (seen.has(id)) id += '-2'; seen.add(id);
+    const u = mechUses(m.uses, ctx);
+    out.push({ id, n:m.src || (m.k === 'heal' ? 'Mending' : 'Second Breath'), max:u.max, rest:u.rest, use:'mech', mech:m,
+      text:m.text || (m.k === 'heal' ? `Heal ${m.amount}${m.range ? `, someone within ${m.range} ft.` : ''}` : `${m.amount} temporary hit points`) });
+  }
+  return out;
+}
+// The price a used feature takes: [{ what:'maxHp' | 'mark', n }]
+export function seepCosts(m, ctx = {}, roll){
+  return (Array.isArray(m?.also) ? m.also : []).filter(x => x?.k === 'seepCost').map(x => ({ what:x.what === 'maxHp' ? 'maxHp' : 'mark', n:Math.max(1, amountOf(x.amount || '1', ctx, roll)), text:x.text || '' }));
+}
