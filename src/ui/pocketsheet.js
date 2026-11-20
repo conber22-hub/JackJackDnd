@@ -2,6 +2,7 @@
    the buttons, like the status screens of the old handheld games (in this app's own look: no console's name, badge
    or art). It only reads: no messages to the DM, no state changes. The hosts (ui/tablehh.js, ui/wander.js) call
    openPocketSheet(...) and give each press to pocketPress first — see the PR. */
+import { featuresAt } from '../engine/callings.js';
 import { classLine, originLine } from '../game/calling.js';
 import { esc } from '../util/core.js';
 import { ABILITIES } from '../data/srd.js';
@@ -166,6 +167,12 @@ function buildPage(idx){
     if (!feats.length) html += note('Nothing to spend.');
     for (const r of feats){
       html += addRow({ label:r.n, sub:`${left(t, r.id)} / ${r.max} left`, open:() => ({ title:r.n, sub:`${left(t, r.id)} of ${r.max} left`, html:`<p class="pk-text">${esc(r.text || 'Nothing more written about it.')}</p>` }) });
+    }
+    // ⛨ a Calling's hero: everything their Calling and Path give them, in our words (ChatGPT's engine/callings.js)
+    if (t.calling){
+      const lvl = +(String(t.cls || '').match(/ (\d+)/)?.[1]) || 1, all = featuresAt({ calling:t.calling, path:t.path, lvl }).filter(f => f.text);
+      html += head(t.callName || 'Calling');
+      for (const f of all) html += addRow({ label:f.n, sub:`${f.from === 'path' ? 'Path' : 'Calling'} · level ${f.lvl}`, open:() => ({ title:f.n, sub:`${t.callName || ''} · level ${f.lvl}`, html:`<p class="pk-text">${esc(f.text)}</p>` }) });
     }
   } else if (idx === 2){   // Saves & skills
     html += head('Saving throws');
