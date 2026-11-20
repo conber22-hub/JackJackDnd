@@ -30,11 +30,11 @@ export const METALS = { steel:'#a8adb5', iron:'#6e7076', brass:'#c09a50', black:
 export const HAIR = ['bald', 'short', 'crop', 'long', 'tied', 'braid', 'topknot', 'wild', 'mohawk', 'bun'];
 export const BEARDS = ['none', 'stubble', 'short', 'full', 'long', 'braided', 'moustache'];
 export const HORNS = ['none', 'curled', 'swept', 'small', 'ram'];
-export const OUTFITS = { robe:'Robes', tunic:'Tunic and breeches', leather:'Leathers', hide:'Hide and fur', chain:'Chain mail', half:'Breastplate', plate:'Plate armour', monk:'Wrapped gi', rags:'Rags', noble:'Noble finery', vestments:'Vestments' };
+export const OUTFITS = { robe:'Robes', tunic:'Tunic and breeches', leather:'Leathers', hide:'Hide and fur', chain:'Chain mail', half:'Breastplate', plate:'Plate armour', monk:'Wrapped gi', rags:'Rags', noble:'Noble finery', vestments:'Vestments', relic:'Relic armour (a failing suit)', cuirass:'Bronze cuirass' };
 export const CLOAKS = { none:'None', cloak:'Cloak', hood:'Hooded cloak', cape:'Short cape', mantle:'High-collared mantle' };
-export const HELMS = { none:'None', cap:'Leather cap', open:'Open helm', great:'Great helm', circlet:'Circlet', hat:'Wide-brimmed hat', pointed:'Pointed hat' };
+export const HELMS = { none:'None', cap:'Leather cap', open:'Open helm', great:'Great helm', circlet:'Circlet', hat:'Wide-brimmed hat', pointed:'Pointed hat', crested:'Crested bronze helm', visor:'Sealed visor helm', conical:'Conical nasal helm' };
 export const WEAPON_MODELS = ['none', 'sword', 'shortsword', 'greatsword', 'rapier', 'scimitar', 'dagger', 'axe', 'greataxe', 'mace', 'hammer', 'maul', 'club', 'spear', 'glaive', 'staff', 'bow', 'longbow', 'crossbow', 'sickle', 'whip', 'trident'];
-export const OFFHANDS = { none:'Nothing', shield:'Shield', dagger:'Dagger', torch:'Torch', lantern:'Lantern', book:'Spellbook', orb:'Orb', holy:'Holy symbol', claw:'Bare claws' };
+export const OFFHANDS = { none:'Nothing', shield:'Shield', dagger:'Dagger', torch:'Torch', lantern:'Lantern', book:'Spellbook', orb:'Orb', holy:'Holy symbol', claw:'Bare claws', aspis:'Great round shield', drum:'War drum', banner:'Standard' };
 export const POSES = { hero:'Heroic', ready:'On guard', caster:'Spellcaster', sneak:'Sly', regal:'Regal', slump:'Shambling', stiff:'Stiff' };
 
 // SRD weapon names (and a monster's attack names) → the model in its hand

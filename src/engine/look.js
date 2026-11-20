@@ -6,6 +6,7 @@
 import { BODIES, SKINS, SKINS_FANTASY, HAIR_COLS, CLOTHS, RAGS, METALS, HAIR, BEARDS, HORNS, OUTFITS, CLOAKS, HELMS, WEAPON_MODELS, OFFHANDS, POSES,
   CLASS_STYLE, ARMOR_OUTFIT, PRESETS, NPC_KINDS, weaponModel, TWO_HANDED } from '../data/looks.js';
 import { mulberry32, hashSeed } from '../util/core.js';
+import { callingLook } from '../data/calling-looks.js';
 
 export const BASE_LOOK = { v:1, body:'human', height:1, build:.5, frame:.5, skin:'#d9a57e', hair:'short', hairCol:'#3a2a1e', beard:'none', eyes:'#5a6a7a', glow:false,
   horns:'none', hornCol:'#2a2224', tail:false, outfit:'tunic', c1:'#3a4a6a', c2:'#a08a6a', leather:'#5a3a22', metal:'steel', cloak:'none', cloakCol:'#2a2430',
@@ -35,6 +36,14 @@ const DRAGON_SKIN = { Black:'#2a2a30', Blue:'#2f6aa0', Brass:'#b08a3a', Bronze:'
 const BUILD_OF = { Barbarian:.85, Fighter:.65, Paladin:.7, Monk:.4, Rogue:.35, Ranger:.45, Wizard:.25, Sorcerer:.3, Warlock:.35, Bard:.4, Cleric:.55, Druid:.4 };
 // What the sheet suggests (species, class, armour, weapons), with the hero's own seed for the rest.
 export function sheetLook(h){
+  const base = classicLook(h);
+  if (!h?.calling) return base;
+  // ⛨ a Calling's look over the hero's own (data/calling-looks.js); a two-handed weapon keeps the off hand empty
+  const cl = callingLook(h.calling, h.path);
+  if (cl.off && TWO_HANDED.has(base.main)) delete cl.off;
+  return { ...base, ...cl, lantern:!['torch', 'lantern'].includes(cl.off || base.off) && base.lantern };
+}
+function classicLook(h){
   const r = mulberry32(hashSeed(h.id || h.name || 'hero')), body = BODY_OF[h.sp] || 'human', B = BODIES[body], style = CLASS_STYLE[h.cls] || {};
   let skin = pick(SKINS_FANTASY[body] || SKINS, r);
   if (body === 'elf' && /Drow/.test(h.spOpt || '')) skin = pick(SKINS_FANTASY.drow, r);
@@ -114,9 +123,9 @@ export { METALS };
 /* ---------- in words ---------- */
 const HAIR_WORDS = { short:'short', crop:'cropped', long:'long', tied:'tied-back', braid:'braided', topknot:'top-knotted', wild:'wild', mohawk:'shaved-sided', bun:'pinned-up' };
 const BEARD_WORDS = { stubble:'a few days\' stubble', short:'a short beard', full:'a full beard', long:'a long beard', braided:'a braided beard', moustache:'a moustache' };
-const OUTFIT_WORDS = { robe:'robes', tunic:'a plain tunic', leather:'worn leathers', hide:'hide and fur', chain:'mail and a tabard', half:'a breastplate over mail', plate:'full plate', monk:'a wrapped gi', rags:'rags', noble:'fine dark clothes', vestments:'vestments and a stole', none:'nothing at all' };
+const OUTFIT_WORDS = { robe:'robes', tunic:'a plain tunic', leather:'worn leathers', hide:'hide and fur', chain:'mail and a tabard', half:'a breastplate over mail', plate:'full plate', monk:'a wrapped gi', rags:'rags', noble:'fine dark clothes', vestments:'vestments and a stole', relic:'a battered suit of relic armour, its seams faintly lit', cuirass:'a bronze cuirass over a short tunic', none:'nothing at all' };
 const CLOAK_WORDS = { cloak:'a cloak', hood:'a hooded cloak', cape:'a short cape', mantle:'a high-collared mantle' };
-const HELM_WORDS = { cap:'a leather cap', open:'an open helm', great:'a great helm', circlet:'a circlet', hat:'a wide-brimmed hat', pointed:'a pointed hat' };
+const HELM_WORDS = { cap:'a leather cap', open:'an open helm', great:'a great helm', circlet:'a circlet', hat:'a wide-brimmed hat', pointed:'a pointed hat', crested:'a crested bronze helm', visor:'a sealed helm with a lit visor', conical:'a conical helm with a nose guard' };
 const hairName = c => { const h = parseInt(c.slice(1), 16), r = h >> 16, g = (h >> 8) & 255, b = h & 255, l = (Math.max(r, g, b) + Math.min(r, g, b)) / 2;
   return l > 200 ? 'white' : l > 150 && r - b < 40 ? 'grey' : l > 150 ? 'fair' : r > 150 && g < 100 ? 'red' : r > 120 && g > 80 ? 'sandy' : l < 50 ? 'black' : 'brown'; };
 // One sentence for a look: what the party sees.

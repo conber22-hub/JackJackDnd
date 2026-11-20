@@ -33,7 +33,7 @@ export function buildForge(look){
   const metalCol = METALS[L.metal] || METALS.steel;
   const M = {
     skin:mat(bones ? 'bone' : 'skin', L.skin), c1:mat('cloth', L.c1), c1d:mat('cloth', shade(L.c1, -.08)), c2:mat('cloth', L.c2), lea:mat('leather', L.leather),
-    leaD:mat('leather', shade(L.leather, -.08)), metal:mat('metal', metalCol), chain:mat('chain', metalCol), brass:mat('metal', METALS.brass), hair:mat('hair', L.hairCol),
+    leaD:mat('leather', shade(L.leather, -.08)), metal:mat('metal', metalCol), chain:mat('chain', metalCol), relic:mat('metal', '#5b636d'), relicD:mat('metal', '#3a4048'), seam:mat('gem', '#7cc6ff', '#7cc6ff', 1.6), brass:mat('metal', METALS.brass), hair:mat('hair', L.hairCol),
     dark:mat('dark', '#120d10'), wood:mat('wood', '#5a3d24'), lip:mat('skin', shade(L.skin, -.12, .05)),
   };
   // joints
@@ -72,6 +72,9 @@ function outfitParts(L, M, G, Wd){
   if (o === 'chain') Object.assign(w, { top:M.chain, upArm:M.chain, foArm:M.lea, hand:M.leaD, skirt:{ len:.13, flare:.105, m:M.chain } });
   if (o === 'half') Object.assign(w, { top:M.chain, upArm:M.chain, foArm:M.metal, hand:M.leaD, skirt:{ len:.12, flare:.105, m:M.c1 } });
   if (o === 'plate') Object.assign(w, { top:M.metal, upArm:M.metal, foArm:M.metal, hand:M.metal, pelvis:M.chain, thigh:M.metal, shin:M.metal, boot:M.metal, skirt:{ len:.09, flare:.1, m:M.chain } });
+  // ⛨ the Callings' (docs/homebrew/callings.md): a far-future soldier's failing suit, and a hoplite's bronze and leather
+  if (o === 'relic') Object.assign(w, { top:M.relic, upArm:M.relic, foArm:M.relic, hand:M.relicD, pelvis:M.relicD, thigh:M.relic, shin:M.relic, boot:M.relicD, skirt:null });
+  if (o === 'cuirass') Object.assign(w, { top:M.brass, upArm:M.c1, foArm:M.skin, hand:M.skin, pelvis:M.c1, thigh:M.skin, shin:M.brass, boot:M.lea, skirt:{ len:.11, flare:.105, m:M.c1 } });
   if (o === 'monk') Object.assign(w, { foArm:mat('cloth', '#d8ccb0'), thigh:M.c1d, shin:mat('cloth', '#d8ccb0'), pelvis:M.c1d, boot:M.skin });
   if (o === 'rags') Object.assign(w, { top:mat('cloth', shade(L.c1, -.05, -.25)), upArm:M.skin, thigh:mat('cloth', shade(L.c2, -.1, -.25)), shin:M.skin, boot:M.skin, skirt:{ len:.1, flare:.105, m:mat('cloth', shade(L.c1, -.05, -.25)), torn:true } });
   if (o === 'noble') Object.assign(w, { upArm:M.c1, foArm:M.c1, hand:mat('leather', '#1a1418'), thigh:mat('cloth', '#1a1418'), shin:mat('leather', '#141012'), boot:mat('leather', '#141012') });
@@ -157,16 +160,28 @@ function dressUp(rig, M, G, Wd, w){
     for (const z of [1, -1]) put(hips, plate('tabard', [[-.05, .14], [.05, .14], [.055, -.15], [0, -.17], [-.055, -.15]], .004, .0015), M.c1, [0, .02, z * .066 * G], [z > 0 ? .05 : -.05, 0, 0]);
     if (o === 'chain') put(chest, plate('tabTop', [[-.06, -.01], [.06, -.01], [.055, .12], [-.055, .12]], .004, .0015), M.c1, [0, -.0, .068 * Wd], [-.12, 0, 0]);
   }
-  if (o === 'half' || o === 'plate'){                                                                       // breastplate and pauldrons
-    put(chest, shell('breast', [[.088, -.01], [.098, .03], [.108, .07], [.11, .1], [.096, .125], [.06, .14]], Wd * 1.04, .72), M.metal);
-    if (o === 'plate') put(spine, shell('plackart', [[.078, -.015], [.076, .03], [.084, .07], [.09, .095]], G * 1.04, .74), M.metal);
-    for (const [a, sd] of [[aL, 1], [aR, -1]]){
-      put(a.s, dome(.05 * G, 1.4, 16, 8), M.metal, [sd * .006, .012, 0], [0, 0, sd * -.35], [1, .85, 1.05]);
-      put(a.s, dome(.046 * G, 1.2, 16, 6), M.metal, [sd * .012, -.008, 0], [0, 0, sd * -.5], [1, .8, 1.05]);
+  if (o === 'half' || o === 'plate' || o === 'relic' || o === 'cuirass'){                                  // breastplate and pauldrons
+    const bm = o === 'relic' ? M.relic : o === 'cuirass' ? M.brass : M.metal;
+    put(chest, shell('breast', [[.088, -.01], [.098, .03], [.108, .07], [.11, .1], [.096, .125], [.06, .14]], Wd * 1.04, .72), bm);
+    if (o === 'cuirass'){   // the hoplite's: the pteruges, leather strips hanging from the waist
+      for (let i = 0; i < 12; i++){ const a = (i / 12) * PI * 2; put(hips, box(.022, .07, .005), M.lea, [Math.sin(a) * .085 * G, -.03, Math.cos(a) * .07 * G], [0, a, 0]); }
+    }
+    if (o === 'relic'){   // the suit's lit seams, and the pack on its back that keeps it running (just)
+      for (const x of [-.03, .03]) put(chest, box(.004, .09, .004), M.seam, [x * Wd, .06, .1 * Wd]);
+      put(chest, box(.07 * Wd, .004, .004), M.seam, [0, .11, .098 * Wd]);
+      for (const a of [aL, aR]) put(a.u, box(.004, .07, .004), M.seam, [0, -.06, .038]);
+      put(spine, box(.11 * Wd, .1, .045), M.relicD, [0, .07, -.085 * G]);
+      put(spine, box(.012, .05, .004), M.seam, [0, .07, -.109 * G]);
+    }
+    if (o === 'plate' || o === 'relic') put(spine, shell('plackart', [[.078, -.015], [.076, .03], [.084, .07], [.09, .095]], G * 1.04, .74), M.metal);
+    if (o !== 'cuirass') for (const [a, sd] of [[aL, 1], [aR, -1]]){
+      put(a.s, dome(.05 * G, 1.4, 16, 8), bm, [sd * .006, .012, 0], [0, 0, sd * -.35], [1, .85, 1.05]);
+      put(a.s, dome(.046 * G, 1.2, 16, 6), bm, [sd * .012, -.008, 0], [0, 0, sd * -.5], [1, .8, 1.05]);
     }
   }
-  if (o === 'plate'){
-    put(neck, cylinder(.04, .046, .04, 14), M.metal, [0, -.005, 0]);                                         // gorget
+  if (o === 'plate' || o === 'relic'){
+    const pm = o === 'relic' ? M.relic : M.metal;
+    put(neck, cylinder(.04, .046, .04, 14), pm, [0, -.005, 0]);                                         // gorget
     for (let i = 0; i < 3; i++) put(hips, torus(.088 + i * .006, .01, 6, 28), M.metal, [0, .045 - i * .028, 0], [PI / 2, 0, 0], [G, .76 * G, 1]);   // faulds
     for (const a of [aL, aR]) put(a.h, ellipsoid(.026, .016, .03, 10, 6), M.metal, [0, .002, .004]);       // gauntlet cuffs
     for (const l of [lL, lR]){ put(l.sh, ellipsoid(.036 * G, .034, .022, 12, 8), M.metal, [0, .0, .03 * G]); put(l.ft, ellipsoid(.034 * G, .02, .062, 10, 6), M.metal, [0, -.008, .028]); }   // knee cops, sabatons
@@ -239,7 +254,7 @@ function face(rig, L, M, B, hs, bones){
 
 /* ---------- hair and beards ---------- */
 function hairAndBeard(rig, L, M, B, hs){
-  const head = rig.head, r = .074 * hs, cy = .072, hide = L.cloak === 'hood' || L.helm === 'great';
+  const head = rig.head, r = .074 * hs, cy = .072, hide = L.cloak === 'hood' || ['great', 'visor', 'crested'].includes(L.helm);
   const style = B.snout ? 'bald' : L.hair;
   if (!hide && style !== 'bald'){
     const cap = (k = 1.07, th = 1.2) => put(head, dome(r * k, th, 22, 10), M.hair, [0, cy, -r * .02], [-.25, 0, 0]);
@@ -277,7 +292,7 @@ function hairAndBeard(rig, L, M, B, hs){
 /* ---------- horns and tails ---------- */
 function hornsAndTail(rig, L, M, B, hs, G){
   const head = rig.head, r = .074 * hs, cy = .072, hm = mat('bone', L.hornCol);
-  if (L.horns && L.horns !== 'none' && L.helm !== 'great'){
+  if (L.horns && L.horns !== 'none' && !['great', 'visor', 'crested'].includes(L.helm)){
     const P = { curled:[[0, 0, 0], [.01, .03, -.02], [.02, .04, -.05], [.03, .02, -.07], [.03, -.01, -.06]], swept:[[0, 0, 0], [.008, .03, -.03], [.012, .05, -.07], [.012, .06, -.11]],
       small:[[0, 0, 0], [.004, .02, -.006], [.006, .032, -.016]], ram:[[0, 0, 0], [.02, .03, -.02], [.05, .025, -.05], [.06, -.01, -.04], [.045, -.035, -.005], [.03, -.03, .015]] }[L.horns];
     const g = taperTube(`horn|${L.horns}`, P, r * .17, r * .03, 20, 8);
@@ -320,6 +335,31 @@ function cloakAndHelm(rig, L, M, B, hs, Wd){
       put(head, shell('greathelm', [[r * 1.05, -r * .95], [r * 1.12, -r * .2], [r * 1.12, r * .6], [r * .9, r * 1.05], [.0005, r * 1.18]], 1, 1, 20, true), metal, [0, cy, 0]);
       put(head, box(r * 1.4, r * .1, r * .2), M.dark, [0, cy + r * .18, r * 1.03]);                         // eye slit
       put(head, box(r * .08, r * .9, r * .06), metal, [0, cy - r * .2, r * 1.15]);
+      break;
+    // ⛨ the Callings' helms (docs/homebrew/callings.md)
+    case 'crested': {   // the hoplite's: a bronze bowl down over the face, a T of darkness for the eyes and mouth, a horsehair crest
+      const bz = mat('metal', METALS.brass);
+      put(head, shell('corinth', [[r * 1.04, -r * 1.05], [r * 1.1, -r * .3], [r * 1.12, r * .55], [r * .92, r * 1.02], [.0005, r * 1.16]], 1, 1, 22, true), bz, [0, cy, 0]);
+      put(head, box(r * 1.15, r * .16, r * .2), M.dark, [0, cy + r * .2, r * 1.0]);                         // the eyes
+      put(head, box(r * .22, r * .75, r * .2), M.dark, [0, cy - r * .32, r * 1.02]);                        // and down to the mouth
+      put(head, taperTube('crest2', [[0, r * 1.0, r * .85], [0, r * 1.7, r * .45], [0, r * 1.95, -r * .2], [0, r * 1.7, -r * .9], [0, r * 1.05, -r * 1.35], [0, r * .4, -r * 1.5]], r * .5, r * .22, 26, 10), mat('hair', L.c2 || '#8a1f1f'), [0, cy, 0], [0, 0, 0], [.42, 1, 1]);
+      put(head, box(r * .14, r * .3, r * .14), bz, [0, cy + r * 1.1, 0]);
+      break;
+    }
+    case 'visor': {     // a war not yet fought: a sealed shell, and a visor lit faintly from inside
+      const sm = mat('metal', '#59616b'), lit = mat('gem', '#7cc6ff', '#7cc6ff', 1.8);
+      put(head, shell('visorhelm', [[r * 1.02, -r * 1.02], [r * 1.16, -r * .4], [r * 1.18, r * .35], [r * 1.02, r * .9], [.0005, r * 1.14]], 1, 1.06, 24, true), sm, [0, cy, 0]);
+      put(head, box(r * 1.2, r * .26, r * .08), lit, [0, cy + r * .12, r * 1.2]).userData.live = 1;             // the visor: a lit band across the front
+      for (const s of [-1, 1]) put(head, box(r * .55, r * .22, r * .08), lit, [s * r * .93, cy + r * .12, r * .93], [0, s * .78, 0]).userData.live = 1;
+      put(head, box(r * .9, r * .28, r * .25), mat('metal', '#3a4048'), [0, cy - r * .55, r * .92]);       // the jaw plate
+      put(head, cylinder(r * .04, r * .04, r * .6, 6), sm, [r * .9, cy + r * .9, -r * .35], [0, 0, -.3]);    // a dead aerial
+      break;
+    }
+    case 'conical':     // the huscarl's: a bowl drawn up to a short point, a brass brow band, a nasal
+      put(head, dome(r * 1.15, 1.5, 22, 10), metal, [0, cy, -r * .02], [-.1, 0, 0]);
+      put(head, cone(r * .62, r * .75, 16), metal, [0, cy + r * 1.3, -r * .1], [-.1, 0, 0]);
+      put(head, torus(r * 1.13, r * .07, 6, 28), M.brass, [0, cy + r * .12, -r * .02], [PI / 2 - .1, 0, 0]);
+      put(head, box(r * .16, r * .62, r * .09), metal, [0, cy - r * .12, r * 1.12]);
       break;
     case 'circlet': put(head, torus(r * 1.02, r * .05, 6, 28), M.brass, [0, cy + r * .45, 0], [PI / 2 - .15, 0, 0]); put(head, sphere(r * .1, 8, 6), mat('gem', L.c2, L.c2, 1.5), [0, cy + r * .5, r * 1.0]); break;
     case 'hat': {
@@ -426,6 +466,29 @@ function offItem(kind, L, M){
       if (em === 2) put(g, cylinder(.03, .03, .004, 20), mat('metal', METALS.brass), [0, .01, .015], [PI / 2, 0, 0]);
     }
     g.userData.shield = 1;
+  }
+  // ⛨ the Callings' (docs/homebrew/callings.md): the hoplite's great round shield, the herald's drum and standard
+  if (kind === 'aspis'){
+    const bz = mat('metal', METALS.brass), face = mat('cloth', L.shieldCol);
+    put(g, shell('aspis', [[.0005, .022], [.09, .018], [.14, .004], [.15, -.004], [.0005, -.008]], 1, 1, 30, false), bz, [0, 0, 0], [PI / 2, 0, 0]);
+    put(g, torus(.148, .01, 6, 34), bz, [0, 0, 0]);
+    put(g, cylinder(.07, .07, .003, 24), face, [0, 0, .023], [PI / 2, 0, 0]);                                // its device, in the hero's colour
+    put(g, plate('aspisDev', [[-.03, -.04], [0, .05], [.03, -.04], [0, -.015]], .003, .001), mat('cloth', L.c2), [0, 0, .026]);
+    g.userData.shield = 1;
+  }
+  if (kind === 'drum'){
+    put(g, cylinder(.05, .05, .055, 18), mat('wood', shade(L.leather, .05)), [0, .02, .02], [PI / 2, 0, 0]);
+    for (const z of [-.028, .028]) put(g, cylinder(.051, .051, .004, 18), mat('leather', '#d8c8a8'), [0, .02, .02 + z], [PI / 2, 0, 0]);
+    for (let i = 0; i < 6; i++){ const a = i * PI / 3; put(g, box(.003, .003, .055), M.lea, [Math.cos(a) * .05, .02 + Math.sin(a) * .05, .02]); }
+    put(g, cylinder(.004, .004, .1, 6), M.wood, [.04, .08, .05], [0, 0, -.6]);                               // a stick
+  }
+  if (kind === 'banner'){
+    put(g, cylinder(.007, .007, .5, 8), M.wood, [0, .16, 0]);
+    put(g, sphere(.012, 8, 6), M.brass, [0, .415, 0]);
+    put(g, box(.13, .004, .004), M.wood, [.065, .39, 0]);
+    put(g, plate('pennon', [[0, 0], [.13, 0], [.13, -.16], [.065, -.2], [0, -.16]], .003, .001), twoSided(mat('cloth', L.c1)), [0, .385, 0]);
+    put(g, plate('pennonDev', [[.04, -.05], [.09, -.05], [.09, -.1], [.04, -.1]], .003, .001), twoSided(mat('cloth', L.c2)), [0, .385, .002]);
+    g.userData.upright = 1;
   }
   if (kind === 'dagger') return weaponMesh('dagger', M);
   if (kind === 'torch'){ put(g, cylinder(.009, .007, .2, 8), M.wood, [0, .06, 0]); put(g, cylinder(.014, .012, .03, 8), mat('cloth', '#3a2a1a'), [0, .16, 0]);
