@@ -10,9 +10,9 @@ import { $, esc, clamp, d } from '../util/core.js';
 import { toast } from './hud.js';
 import { heroLook, sheetLook } from '../engine/look.js';
 import { creatorGear } from '../engine/gear.js';
-import { callingList, callingOf, callingForChassis, pathOf } from '../engine/callings.js';
+import { callingList, callingOf, callingForChassis, pathOf, featuresAt } from '../engine/callings.js';
 import { originList, originView, backList, backView, featView, asClassic } from '../engine/origins.js';
-import { rulesMode, setRulesMode } from '../game/calling.js';
+import { rulesMode, setRulesMode, classLine } from '../game/calling.js';
 import { BODIES, SKINS, SKINS_FANTASY, HAIR_COLS, CLOTHS, HAIR, BEARDS, HORNS, OUTFITS, CLOAKS, HELMS, WEAPON_MODELS, OFFHANDS, POSES } from '../data/looks.js';
 import { setStage, frame, portrait, act, studioCanvas, stageKey } from '../render/forge/studio.js';
 
@@ -35,11 +35,21 @@ export function openCreator(sheet, o = {}){
 }
 export function closeCreator(){ $('#charModal').classList.add('hidden'); edit = null; }
 
+// ⛨ a Calling's hero, in our words (game/calling.js, ChatGPT's engine/callings.js and engine/origins.js)
+function dreadWords(h, st){
+  const K = callingOf(h); if (!K) return null;
+  const o = originView(h.origin), b = backView(h.back), ft = b ? featView(b.feat) : null;
+  const feats = featuresAt({ calling:K.id, path:h.path, lvl:st.L });
+  return { head:`${o?.name || h.sp} · ${classLine({ ...h, lvl:st.L })}${b ? ` · ${b.name}` : ''}`,
+    features:feats.map(f => `${f.n} (${f.lvl})`),
+    note:[...(o?.traits || []).map(t => `${t.n}: ${t.text}`), ft ? `Origin feat: ${ft.name}.` : ''].filter(Boolean).join(' · '),
+    read:[...feats.map(f => [f.n, f.text]), ...(o?.traits || []).map(t => [t.n, t.text]), ...(ft ? [[ft.name, ft.text]] : [])].filter(([, t]) => t) };
+}
 export function sheetHTML(h){
-  const st = heroStats(h), atks = heroAttacks(h, st), sps = heroSpells(h, st);
+  const st = heroStats(h), atks = heroAttacks(h, st), sps = heroSpells(h, st), dw = dreadWords(h, st);
   return `<div class="sheet">
     <div class="sheet-h"><span class="dot" style="color:${h.color};background:${h.color}"></span><b>${esc(h.name || 'Unnamed hero')}</b>
-      <span class="muted">${esc(h.sp)}${h.spOpt ? ` (${esc(h.spOpt)})` : ''} ${esc(h.cls)} ${st.L}${st.sub ? ` · ${esc(st.sub)}` : ''} · ${esc(h.bg)}</span></div>
+      <span class="muted">${dw ? esc(dw.head) : `${esc(h.sp)}${h.spOpt ? ` (${esc(h.spOpt)})` : ''} ${esc(h.cls)} ${st.L}${st.sub ? ` · ${esc(st.sub)}` : ''} · ${esc(h.bg)}`}</span></div>
     <div class="sheet-k">
       <span>AC<b>${st.ac}</b></span><span>HP<b>${st.hp}</b></span><span>Speed<b>${st.spd}</b></span><span>Init<b>${sgn(st.init)}</b></span><span>Prof<b>+${st.pb}</b></span><span>Passive<b>${st.passive}</b></span>${st.dc ? `<span>Spell DC<b>${st.dc}</b></span>` : ''}
     </div>
@@ -48,9 +58,10 @@ export function sheetHTML(h){
     <div class="sheet-l"><b>Attacks</b> ${atks.map(a => `${esc(a.n)} ${sgn(a.b)} (${esc(a.d)} ${esc(a.t)})`).join(' · ')}</div>
     ${sps.length ? `<div class="sheet-l"><b>Spells</b> ${sps.map(s => `${esc(s.n)}${s.l ? ` <sup>${s.l}</sup>` : ''}`).join(' · ')}</div>` : ''}
     ${st.slots ? `<div class="sheet-l"><b>Slots</b> ${st.slots.map((n, i) => `L${i + 1}×${n}`).join(' ')}</div>` : ''}${st.pact ? `<div class="sheet-l"><b>Pact slots</b> ${st.pact.n} × level ${st.pact.l}</div>` : ''}
-    <div class="sheet-l"><b>Features</b> ${st.features.map(esc).join(' · ')}</div>
-    <div class="sheet-l muted">${esc([spcOf(h).note, spcOf(h).subs?.[h.spOpt]?.note].filter(Boolean).join(' · '))}${bgOf(h).feat ? ` Origin feat: ${esc(bgOf(h).feat)}.` : bgOf(h).note ? ` Background: ${esc(bgOf(h).note)}.` : ''}</div>
-    ${readHTML(h, st)}
+    <div class="sheet-l"><b>Features</b> ${(dw ? dw.features : st.features).map(esc).join(' · ')}</div>
+    ${dw ? `<div class="sheet-l muted">${esc(dw.note)}</div>
+    ${dw.read.length ? `<details class="sheet-l"><summary><b>📖 What your features do</b> <span class="muted">(${dw.read.length})</span></summary>${dw.read.map(([n, t]) => `<div class="feat-read"><b>${esc(n)}</b> ${esc(t)}</div>`).join('')}</details>` : ''}` : `<div class="sheet-l muted">${esc([spcOf(h).note, spcOf(h).subs?.[h.spOpt]?.note].filter(Boolean).join(' · '))}${bgOf(h).feat ? ` Origin feat: ${esc(bgOf(h).feat)}.` : bgOf(h).note ? ` Background: ${esc(bgOf(h).note)}.` : ''}</div>
+    ${readHTML(h, st)}`}
   </div>`;
 }
 // What a feature says: the SRD's text (shared names like Extra Attack keep a section per class: "### Fighter, level 5"),
@@ -127,7 +138,7 @@ function render(){
   $('#charBox').innerHTML = `
   <div class="cr-head"><h1>${esc(opts.title || 'Create a character')}</h1><button class="btn small" data-cr="close">✕</button></div>
   ${opts.fresh ? `<div class="cr-starters"><div class="muted">⚡ Start from a ready hero (you can change anything after), or build your own below.</div>
-    <div class="cr-st-row">${heroStarterCards().map(c => `<button class="cr-st ${edit.starter === c.id ? 'on' : ''}" data-cr="starter" data-k="${esc(c.id)}" title="${esc(c.pitch)}"><b>${esc(c.title)}</b><span>${esc(c.species)} ${esc(c.cls)} · ${esc(c.role)}</span></button>`).join('')}</div>
+    <div class="cr-st-row">${heroStarterCards().map(c => `<button class="cr-st ${edit.starter === c.id ? 'on' : ''}" data-cr="starter" data-k="${esc(c.id)}" title="${esc(c.pitch)}"><b>${esc(c.title)}</b><span>${dread ? `${esc(callingForChassis(c.cls)?.name || c.cls)}` : `${esc(c.species)} ${esc(c.cls)}`} · ${esc(c.role)}</span></button>`).join('')}</div>
     ${edit.starter ? `<div class="muted"><i>${esc(heroStarterCards().find(c => c.id === edit.starter)?.pitch || '')}</i> ${esc(heroStarterCards().find(c => c.id === edit.starter)?.hook || '')}</div>` : ''}</div>` : ''}
   <div class="cr-cols"><div class="cr-form">
     <div class="row cr-rules"><span class="muted">Rules:</span><button class="btn small ${dread ? 'on' : ''}" data-cr="rules" data-k="dread" title="Dread Delve's own: Callings, Paths, Origins">⛨ Dread Delve</button><button class="btn small ${dread ? '' : 'on'}" data-cr="rules" data-k="classic" title="The D&D classes, species and backgrounds">Classic</button></div>
@@ -167,9 +178,9 @@ function render(){
     ${asiLevels(h).map(l => asiHTML(h, l)).join('')}
 
     <h2>Skills</h2>
-    <div class="muted">Choose ${nSkills} from your class (${(h.skills || []).length} chosen). From your background: ${bg.skills.join(', ')}${h.sp === 'Elf' ? '; Elf: Perception' : ''}${[...(spc.skills || []), ...(spc.subs?.[h.spOpt]?.skills || [])].length ? `; ${esc(h.sp)}: ${[...(spc.skills || []), ...(spc.subs?.[h.spOpt]?.skills || [])].join(', ')}` : ''}.</div>
+    <div class="muted">Choose ${nSkills} from your ${dread ? 'Calling' : 'class'} (${(h.skills || []).length} chosen). From your background: ${bg.skills.join(', ')}${h.sp === 'Elf' ? `; ${dread ? esc(originView(h.origin)?.name || 'Elf') : 'Elf'}: Perception` : ''}${[...(spc.skills || []), ...(spc.subs?.[h.spOpt]?.skills || [])].length ? `; ${esc(dread ? originView(h.origin)?.name || h.sp : h.sp)}: ${[...(spc.skills || []), ...(spc.subs?.[h.spOpt]?.skills || [])].join(', ')}` : ''}.</div>
     <div class="cr-chk">${classSkills.map(s => `<label class="crc"><input type="checkbox" data-skill="${esc(s)}" ${(h.skills || []).includes(s) ? 'checked' : ''} ${bg.skills.includes(s) ? 'disabled' : ''}><span>${esc(s)} <span class="muted">${SKILLS[s]}</span></span></label>`).join('')}</div>
-    ${h.sp === 'Human' ? `<div class="row"><label>Human — Skillful</label>${sel('extraSkill', Object.keys(SKILLS), h.extraSkill || 'Perception')}</div>` : ''}
+    ${h.sp === 'Human' ? `<div class="row"><label>${dread ? `${esc(originView(h.origin)?.name || 'Origin')} — one more skill` : 'Human — Skillful'}</label>${sel('extraSkill', Object.keys(SKILLS), h.extraSkill || 'Perception')}</div>` : ''}
     ${exSlots ? `<div class="muted">Expertise: pick ${exSlots} proficient skills (double proficiency).</div><div class="cr-chk">${[...st.prof].map(s => `<label class="crc"><input type="checkbox" data-exp="${esc(s)}" ${(h.expert || []).includes(s) ? 'checked' : ''}><span>${esc(s)}</span></label>`).join('')}</div>` : ''}
 
     <h2>Gear</h2>

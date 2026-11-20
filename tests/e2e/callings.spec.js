@@ -24,9 +24,17 @@ test('a Vanguard of the Hoplite Path, from the far-future Drawn, is made in the 
     await expect(box).toContainText('Failing Night-Sight');
     await box.locator('select[data-cf="back"]').selectOption('levy-veteran');
     await expect(box).toContainText('Hold the Line');
+    // the sheet beside it, in our words: the Calling and Path, the Origin, no D&D class or subclass
+    const sheet = box.locator('.sheet');
+    await expect(sheet).toContainText('Vanguard · Hoplite 3');
+    await expect(sheet).toContainText('Last Signal');
+    await expect(sheet).toContainText('Shield Rim');
+    await expect(sheet).not.toContainText('Champion');
+    await expect(sheet).not.toContainText('Fighter');
     // the Seep-touched Path says its price
     await expect(box.locator('select[data-cf="path"] option', { hasText:'☣' })).toHaveCount(1);
     await box.locator('input[data-cf="name"]').fill('Brannoc');
+    await box.locator('input[data-cf="name"]').dispatchEvent('change');
     await box.locator('[data-cr="save"]').first().click();
     const t = await page.evaluate(() => { const D = window.DreadDelve, t = D.get().tokens.find(x => x.name === 'Brannoc'), sh = D.get().characters[t.charId];
       return { calling:t.calling, path:t.path, callName:t.callName, ward:t.ward, mechs:t.mechs.map(m => m.src), sw:(t.resources || []).find(r => r.dd === 'Second Wind')?.n, cls:t.cls,
@@ -35,8 +43,6 @@ test('a Vanguard of the Hoplite Path, from the far-future Drawn, is made in the 
     expect(t.cls).toMatch(/^Fighter 3/);                  // the chassis underneath
     expect(t.mechs).toEqual(expect.arrayContaining(['Ward', 'Shield Rim']));
     expect(t.sw).toBeTruthy(); expect(t.sw).not.toBe('Second Wind');   // the chassis's feature in our words
-    // the selected token's card names the Calling and shows the Ward
-    await page.evaluate(() => { const D = window.DreadDelve; D.ui.selected = D.get().tokens.find(x => x.name === 'Brannoc').id; D.renderSel?.(); });
   } finally { await context.close(); }
   expect(errors, 'Uncaught browser errors').toEqual([]);
 });
@@ -57,6 +63,7 @@ test('the Classic switch gives the D&D classes back, and a classic hero has no C
     await expect(box.locator('select[data-cf="calling"]')).toHaveCount(0);
     await box.locator('select[data-cf="cls"]').selectOption('Rogue');
     await box.locator('input[data-cf="name"]').fill('Mirela');
+    await box.locator('input[data-cf="name"]').dispatchEvent('change');
     await box.locator('[data-cr="save"]').first().click();
     const t = await page.evaluate(() => { const t = window.DreadDelve.get().tokens.find(x => x.name === 'Mirela'); return { calling:t.calling, mechs:(t.mechs || []).length, cls:t.cls }; });
     expect(t).toMatchObject({ calling:null, mechs:0 }); expect(t.cls).toMatch(/^Rogue/);
