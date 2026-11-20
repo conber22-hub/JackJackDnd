@@ -233,6 +233,15 @@ const HANDLERS = {
       isMine(tg.id) ? 'red' : isMine(a.id) && e.out !== 'resisted' ? 'gold' : '', '🤚'); },
   aims:e => { const by = tokById(e?.by), at = tokById(e?.at); if (!by || !at) return;
     show(`${cap(subj(by))} goes for ${obj(at)}!`, isMine(at.id) ? 'red' : '', '🎯'); },
+  // (Claude) 💀 dying (game/combat.js, ChatGPT's engine/death-saves.js): the death save's words, and the marks
+  dying:e => { const t = e?.t; if (!t || !e.words) return;
+    const marks = e.marks ? `${'♥'.repeat(e.marks.s)}${'☠'.repeat(e.marks.f)}` : '';
+    show(e.words, e.outcome === 'rise' || e.outcome === 'stable' ? 'gold' : isMine(t.id) || t.kind !== 'monster' ? 'red' : '', '💀', e.rolled ? `d20 ${e.rolled}${marks ? ` · ${marks}` : ''}` : marks); },
+  // (Claude) ⚙ a Calling's reaction, burst or packed wound (game/combat.js)
+  react:e => { const t = e?.t; if (!t || !e.src) return; show(`${cap(subj(t))}: ${e.src}.`, isMine(t.id) ? 'gold' : '', '⚙'); },
+  // (Claude) ⛨ a Ward breaks, or comes back (engine/mech.js)
+  ward:e => { const t = e?.t; if (!t || !(e.broke || e.back)) return;
+    show(e.back ? (isMine(t.id) ? 'Your Ward is back.' : `${cap(theName(t))}'s Ward is back.`) : (isMine(t.id) ? 'Your Ward breaks.' : `${cap(theName(t))}'s Ward breaks.`), e.back ? 'gold' : isMine(t.id) ? 'red' : '', '⛨'); },
 };
 export const CAPTION_EVENTS = Object.keys(HANDLERS);
 export function startCaptions(){

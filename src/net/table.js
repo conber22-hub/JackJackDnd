@@ -207,6 +207,7 @@ function capOut(e){
     if (v && typeof v === 'object' && typeof v.id === 'string' && 'hp' in v) o[k] = capTok(v);
     else if (v == null || ['string', 'number', 'boolean'].includes(typeof v)) o[k] = v;
     else if (k === 'die' && Number.isFinite(v.n)) o.die = { n:v.n };   // (the d20 alone: a natural 1 is a fumble)
+    else if (k === 'marks' && Number.isFinite(v.s)) o.marks = { s:v.s, f:+v.f || 0 };   // (💀 a death save's hearts and skulls)
   }
   return o;
 }
@@ -216,6 +217,7 @@ function capIn(k, e){
   const o = {};
   for (const [f, v] of Object.entries(e || {})){
     if (f === 'die' && v && typeof v === 'object'){ o.die = { n:+v.n || 0 }; continue; }
+    if (f === 'marks' && v && typeof v === 'object'){ o.marks = { s:+v.s || 0, f:+v.f || 0 }; continue; }
     if (v && typeof v === 'object' && v.$tok){ const t = tokById(v.$tok); if (!t) return;
       if (t.kind === 'monster' && !seenNow[t.floor]?.has(t.y * (state.floors[t.floor]?.W || 0) + t.x)) return;
       o[f] = { ...t, hp:+v.hp, dead:!!v.dead }; }
