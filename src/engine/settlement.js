@@ -118,7 +118,7 @@ const churchProps = r => [P('altar', r.x + Math.floor(r.w / 2) - 1, r.y, 1), P('
   ...[2, 4].flatMap(dy => [P('bench', r.x + 1, r.y + dy, 1), P('bench', r.x + r.w - 3, r.y + dy, 1)])];
 // 🔥 the Dutch Oven (data/memorial.js): the great oven at the back wall (a hearth beside the forge), the anvil, the bread
 // tables and benches, flour and barrels, and the soldier's armour on its stand by the door
-const ovenProps = r => [P('hearth', r.x + 1, r.y, 1), P('forge', r.x + 3, r.y, 0), P('anvil', r.x + r.w - 3, r.y + 1, 0), P('table', r.x + 2, r.y + 2), P('bench', r.x + 1, r.y + 2, 1),
+const ovenProps = r => [P('bakeoven', r.x + 1, r.y, 0), P('forge', r.x + 3, r.y, 0), P('anvil', r.x + r.w - 3, r.y + 1, 0), P('table', r.x + 2, r.y + 2), P('bench', r.x + 1, r.y + 2, 1),
   P('table', r.x + 4, r.y + 3), P('sacks', r.x, r.y + r.h - 1), P('barrel', r.x + r.w - 1, r.y + r.h - 1), P('armor', r.x + r.w - 1, r.y + 1, 2), P('candelabra', r.x + r.w - 2, r.y + r.h - 1)];
 const mansionProps = r => [P('rug', r.x + 2, r.y + 1, 0), P('longtable', r.x + r.w - 3, r.y + 2, 0), P('chair', r.x + r.w - 4, r.y + 2, 3), P('chair', r.x + r.w - 4, r.y + 3, 3), P('hearth', r.x, r.y + 2, 0), P('shelf', r.x + r.w - 1, r.y + r.h - 3, 2), P('candelabra', r.x + 1, r.y + r.h - 1)];
 
@@ -172,7 +172,7 @@ function settlement(kind, o, g){
     // a footpath up to it: from the graveyard, or from the church street
     if (i === 0) lay.paths.push({ w:1, pts:[cr.x, cr.y + 1, gy.x + gy.w - 1, cr.y + 1] });
     else lay.paths.push({ w:1, pts:[cr.x + 1, cr.y + cr.h, cr.x + 1, top + 7, scx, top + 7] });
-    lay.props.push(P('stone', cr.x + 1, cr.y + 1), P('shrine', cr.x, cr.y + 2), P('lantern', cr.x + 2, cr.y + 2)); break; }
+    lay.props.push(P('cairn', cr.x + 1, cr.y + 1), P('shrine', cr.x, cr.y + 2), P('lantern', cr.x + 2, cr.y + 2)); break; }
   lay.paths.push({ w:2, pts:[scx, sq.y + sq.h, scx, bot - 7] }); pl.take(R(scx, sq.y + sq.h, 2, bot - 7 - sq.y - sq.h + 1), 0);
   const mh = R(scx - 5, bot - 5, 11, 6);
   hall(lay, pl, mh, town ? 'The burgomaster\'s mansion' : 'The burgomaster\'s house', town ? 'Every lamp lit. Every guest checked at the door.' : 'Shutters barred. Claw marks on the door, deep and old.', { x:scx, y:mh.y - 1, sx:scx, sy:mh.y - 2 }, mansionProps);

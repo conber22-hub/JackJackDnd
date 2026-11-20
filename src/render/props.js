@@ -224,6 +224,47 @@ const BUILD = {
     box(g, 2, .12, .12, '#3a2a1c', 0, 1.85, 0);
     for (const sx of [-1, 1]){ const leaf = opener(g, p, 'rotation.y', 0, sx * -1.3, sx * .8, 0, 0); box(leaf, .78, 1.5, .08, WOOD, -sx * .39, .8, 0); box(leaf, .78, .08, .1, DARK, -sx * .39, .5, 0); box(leaf, .78, .08, .1, DARK, -sx * .39, 1.2, 0); } },
   bedroll(g){ for (const [x, z, c] of [[-.22, -.15, '#6e5a48'], [.22, .18, '#5a5a6a']]){ const r = cyl(g, .1, .1, .7, c, x, .1, z, { r:.95 }); r.rotation.z = Math.PI / 2; box(g, .7, .03, .35, c, x, .02, z + .25); } },
+  /* 🔥 The Dutch Oven's own (data/memorial.js): a domed brick bread oven on its plinth, the fire in its mouth, a
+     soldier's old helm resting on the dome, a lidded cast-iron pot on the ledge, loaves and the peel. Front is +z. */
+  bakeoven(g){
+    const BRICK = '#8a4a34', MORTAR = '#6e5a4c';
+    box(g, 1.8, .5, 1.85, MORTAR, 0, .25, 0, { r:.95 }); box(g, 1.86, .06, 1.9, '#5a4a40', 0, .52, 0, { r:.95 });
+    const dome = mesh(g, geo('ovdome', () => new THREE.SphereGeometry(.78, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2)), BRICK, 0, .55, -.15, { r:.9 }); dome.scale.set(1, .85, 1);
+    for (const y of [.2, .42]) { const u = y / .85 / .78; mesh(g, geo(`ovband${y}`, () => new THREE.TorusGeometry(.78 * Math.sqrt(1 - u * u) + .005, .018, 4, 24)), MORTAR, 0, .55 + y, -.15).rotation.x = Math.PI / 2; }
+    // the mouth: an arched brick lip, the dark inside, the fire
+    box(g, .62, .42, .2, BRICK, 0, .76, .58, { r:.9 }); cyl(g, .31, .31, .2, BRICK, 0, .97, .58, {}, 14).rotation.x = Math.PI / 2;
+    box(g, .42, .3, .22, '#120a07', 0, .72, .6, { r:1 }); cyl(g, .21, .21, .22, '#120a07', 0, .87, .6, { r:1 }, 12).rotation.x = Math.PI / 2;
+    box(g, .36, .03, .06, '#ff8a3a', 0, .585, .69, FIRE); for (const x of [-.09, .07]) flame(g, x, .66, .69, 1.3); box(g, .3, .12, .02, '#ff7a2a', 0, .64, .705, { e:'#ff5a1a', ei:.9, r:1, op:.55 });
+    // the flue at the back
+    cyl(g, .11, .13, .34, '#6a3a2a', 0, 1.24, -.6, { r:.9 }, 10); cyl(g, .14, .14, .05, MORTAR, 0, 1.42, -.6, {}, 10);
+    // the old helm on the dome, a little askew, its brow to the room
+    const helm = new THREE.Group(); helm.position.set(.12, 1.19, -.05); helm.rotation.set(-.12, .5, .1); g.add(helm);
+    const STEEL = '#9aa0a6', HM = { r:.45, m:.3 };
+    const cap = mesh(helm, geo('ovhelm', () => new THREE.SphereGeometry(.2, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2)), STEEL, 0, 0, 0, HM); cap.scale.set(1, 1.3, 1.15);
+    mesh(helm, geo('ovbrim', () => new THREE.TorusGeometry(.205, .022, 5, 20)), '#7d828a', 0, .01, 0, HM).rotation.x = Math.PI / 2;
+    box(helm, .035, .05, .42, '#7d828a', 0, .25, 0, HM); box(helm, .41, .035, .06, '#5a6a4a', 0, .1, 0);   // a painted band, worn                          // the ridge
+    box(helm, .18, .05, .03, '#2a2a2c', 0, .06, .225);                             // where the visor was
+    box(helm, .05, .08, .02, '#4a3020', .17, -.04, .08);                           // the chin strap, cut
+    // the pot: a lidded cast-iron Dutch oven on the ledge, its handles, a wisp of steam
+    cyl(g, .17, .15, .17, '#1c1b1b', .58, .64, .7, METAL, 16); cyl(g, .18, .18, .025, '#232222', .58, .735, .7, METAL, 16); cyl(g, .03, .03, .03, '#2a2828', .58, .76, .7, METAL, 8);
+    for (const sx of [-1, 1]) mesh(g, geo('ovear', () => new THREE.TorusGeometry(.035, .01, 4, 8)), '#2a2828', .58 + sx * .18, .69, .7, METAL).rotation.y = Math.PI / 2;
+    // two loaves cooling, and the peel
+    for (const [x, z, r] of [[-.55, .7, .2], [-.3, .76, -.4]]){ const l = ball(g, .1, '#b98146', x, .6, z, { r:.8 }); l.scale.set(1.5, .7, 1); l.rotation.y = r; box(g, .02, .01, .1, '#8a5a2a', x, .67, z).rotation.y = r + .9; }
+    box(g, .06, .02, .55, LIGHT, -.62, .565, .25).rotation.y = .3; box(g, .26, .02, .24, LIGHT, -.7, .565, -.08).rotation.y = .3;   // the peel, laid by
+  },
+  /* 🪨 Dutcher's cairn: field stones stacked by many hands, the top one flat, a loaf of bread left on it */
+  cairn(g){
+    const tones = ['#5e5b55', '#53514c', '#68645c', '#4a4844', '#5a5850', '#706a60'], MOSS = '#3d4a2c', R = { r:1 };
+    for (const [i, [x, z]] of [[-.3, -.25], [.3, -.28], [-.32, .3], [.28, .3], [0, .42], [.42, 0], [-.42, .02]].entries()){
+      const s = ball(g, .1, tones[i % 6], x, .04, z, R); s.scale.set(1.25 - (i % 3) * .15, .55, 1 + (i % 2) * .2); s.rotation.set(.2 * (i % 2), i, .15); }
+    let y = 0;
+    for (const [i, [r, h, x, z]] of [[.36, .22, 0, 0], [.3, .2, .03, -.02], [.25, .18, -.03, .02], [.2, .16, .02, 0], [.15, .13, -.01, .01], [.15, .06, 0, 0]].entries()){
+      const s = ball(g, .5, tones[(i + 2) % 6], x, y + h / 2, z, R); s.scale.set(r * 2.1, h * 1.05, r * 1.8); s.rotation.set(i % 2 ? .08 : -.06, i * 1.3, i % 3 ? .07 : -.05);
+      if (i < 3){ const m = ball(g, .5, MOSS, x - r * .55, y + h * .7, z + r * .3, R); m.scale.set(r * .9, h * .35, r * .8); m.rotation.y = i; }
+      y += h * .82; }
+    const loaf = ball(g, .1, '#9a6a3a', 0, y + .05, 0, { r:.85 }); loaf.scale.set(1.25, .6, .9); loaf.rotation.y = .4;
+    box(g, .015, .01, .1, '#6a4a28', .03, y + .1, 0).rotation.y = 1.2;
+  },
   // a stone hearth with a hood and chimney, coals, an anvil on a stump, a quench tub
   forge(g){ box(g, .9, .7, .8, STONE, -.45, .35, 0, { r:.95 }); box(g, .55, .12, .5, '#1a0c08', -.45, .72, 0); flame(g, -.45, .82, 0, 1.4); flame(g, -.32, .8, .1, 1);
     box(g, .7, .5, .6, '#5f5a55', -.45, 1.35, 0); box(g, .28, 1.1, .28, '#5f5a55', -.45, 2.1, 0);

@@ -48,5 +48,5 @@ test('a village fills with folk who walk about; a killing seen by one of the Cou
   expect(told.hunting).toBe(true);
   expect(told.knows?.heroes?.length).toBeGreaterThan(0);
   expect(told.knows?.tactic).toBe('fire');
-  await expect(page.locator('#cardLayer .pop', { hasText:'The Count\'s eyes saw that' })).toBeVisible();
+  await expect(page.locator('#cardLayer .pop', { hasText:'The Count\'s eyes saw that' }).first()).toBeVisible();
 });

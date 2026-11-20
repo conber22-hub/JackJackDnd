@@ -113,7 +113,7 @@ export { tableHH } from './ui/tablehh.js';   // 🕹 the handheld at the table
 export { camTurn, camView, camCrane, renderHud, xpFloatsShown } from './ui/wander.js';   // 🎥 the Wanderer's follow camera
 export { viewSize, scene } from './render/scene.js';
 export { bus } from './util/core.js';   // 📣 the game's event bus (acted, hurt, healed, turnStart…), for poking at from the console
-export { seenNow } from './engine/grid.js';   // 👁 what the party can see this moment, by floor (tiles)
+export { seenNow, canStep } from './engine/grid.js';   // 👁 what the party can see this moment, by floor (tiles); a step's way open
 export { shove } from './game/combat.js';   // 🤚 shove(aId, tId, 'push' | 'prone'): in place of a strike (engine/shove.js)
 export { showCard } from './ui/hud.js';
 export * as dedication from './ui/dedication.js';   // 🕯 Chance's dedication

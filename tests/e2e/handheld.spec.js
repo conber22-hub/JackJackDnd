@@ -10,6 +10,9 @@ import { test, expect } from './helpers.js';
 // On a desktop it stays away until asked for, and the keys turn and crane the camera.
 const yaw = page => page.evaluate(() => { const D = window.DreadDelve, o = D.camera.position.clone().sub(D.controls.target); return Math.atan2(o.x, o.z); });
 const hero = page => page.evaluate(() => { const h = window.DreadDelve.wander.hero(); return { x:h.x, y:h.y }; });
+// the hero's figure standing on its square (not still stepping onto it)
+const settled = page => page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), g = D.tokenViews.get(h.id).group, s = D.get().meta.size / 2 - .5;
+  return Math.abs(g.position.x - (h.x - s)) < .04 && Math.abs(g.position.z - (h.y - s)) < .04; });
 // where a square (dx, dy from the hero) is on the screen, to tap it
 const spot = (page, dx, dy) => page.evaluate(([dx, dy]) => { const D = window.DreadDelve, h = D.wander.hero(), g = D.tokenViews.get(h.id).group, c = document.querySelector('#stage canvas').getBoundingClientRect();
   const v = g.position.clone(); v.x += dx; v.z += dy; v.project(D.camera); return { x:c.left + (v.x + 1) / 2 * c.width, y:c.top + (1 - v.y) / 2 * c.height }; }, [dx, dy]);
@@ -36,7 +39,7 @@ test.describe('on a phone', () => {
     const shaderErrors = []; page.on('console', m => { if (/Shader Error|WebGLProgram|ERROR: 0:/.test(m.text())) shaderErrors.push(m.text().slice(0, 300)); });
     await begin(page, 'vasha-hh', { full:false });   // (the whole screen isn't asked for: the test keeps its window)
     await expect(page.locator('#handheld')).toBeVisible();
-    await expect(page.locator('#hhBoot')).toBeVisible();
+    await expect(page.locator('#handheld')).toHaveAttribute('data-booted', '1');   // (the boot ran: a slow page can be past it already)
     await expect(page.locator('#hhBoot')).toContainText('DREAD DELVE');
     await expect(page.locator('body')).toHaveClass(/\bhh\b/);
     await expect(page.locator('#cardLayer')).toContainText('Walk with the D-pad');
@@ -55,9 +58,14 @@ test.describe('on a phone', () => {
     await expect.poll(async () => (await hero(page)).y).toBeGreaterThan(h0.y);
     // touch: a tap on the ground three squares on walks there
     await page.waitForTimeout(800);
-    const h1 = await hero(page), sq = await spot(page, 0, 3);
+    await expect.poll(() => settled(page), { timeout:10_000 }).toBe(true);   // (aimed from the figure: wait for it to finish its step)
+    // (three open squares straight on, nobody on them: the D-pad may have walked the hero up to a wall)
+    const way = await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), f = D.get().floors[h.floor];
+      const free = (x, y) => !D.get().tokens.some(t => t !== h && t.floor === h.floor && t.x === x && t.y === y) && !(f.folk || []).some(p => Math.abs(p.x - x) < 1.5 && Math.abs(p.y - y) < 1.5);
+      return [[0, 1], [0, -1], [1, 0], [-1, 0]].find(([dx, dy]) => [0, 1, 2].every(k => D.canStep(f, h.x + dx * k, h.y + dy * k, dx, dy) && free(h.x + dx * (k + 1), h.y + dy * (k + 1)))) || [0, 1]; });
+    const h1 = await hero(page), sq = await spot(page, way[0] * 3, way[1] * 3);
     await page.touchscreen.tap(sq.x, sq.y);
-    await expect.poll(async () => (await hero(page)).y, { timeout:10_000 }).toBe(h1.y + 3);
+    await expect.poll(async () => { const h = await hero(page); return [h.x - h1.x, h.y - h1.y]; }, { timeout:10_000 }).toEqual([way[0] * 3, way[1] * 3]);
     // L turns the camera an eighth
     const y0 = await yaw(page);
     await hold(page, 'l');

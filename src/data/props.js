@@ -38,6 +38,8 @@ export const PROPS = {
   gravestone: { n:'Gravestone',      cat:'village', w:1, h:1 },
   shrine:     { n:'Roadside shrine', cat:'village', w:1, h:1 },
   anvil:      { n:'Anvil & forge',   cat:'village', w:2, h:1 },
+  bakeoven:   { n:'Bread oven',      cat:'village', w:2, h:2 },
+  cairn:      { n:'Cairn',           cat:'village', w:1, h:1 },
   // road & wild
   carriage:   { n:'Carriage',        cat:'road',    w:2, h:3 },
   wreck:      { n:'Overturned carriage', cat:'road', w:3, h:3 },
@@ -133,7 +135,7 @@ export const CROPS = {
   orchard:{ n:'Apple trees',      field:'The orchard',        notes:'Old apple trees in crooked rows, unpruned. The windfalls lie where they dropped and nobody gathers them.' },
 };
 // Props that give off light (candles, fire): the renderer puts a real flickering light on the nearest few.
-export const LIT = { forge:1.1, alchemy:.5,  candelabra:1, brazier:1.3, hearth:1.6, lantern:.8, lamppost:1, campfire:1.6, altar:.7, cauldron:.8, anvil:.9, longtable:.5, organ:.4 };
+export const LIT = { forge:1.1, alchemy:.5,  candelabra:1, brazier:1.3, hearth:1.6, lantern:.8, lamppost:1, campfire:1.6, altar:.7, cauldron:.8, anvil:.9, bakeoven:1.4, longtable:.5, organ:.4 };
 
 // Houses for the Build tab's House tool (solid buildings with roofs, on rock). w × h squares.
 export const HOUSES = {
@@ -155,7 +157,7 @@ export const PROP_TOP = { wagon:.62, workbench:.8, alchemy:.8, table:.51, longta
   rack:.5, minecart:.64, cauldron:.5, saltcrock:.4, stall:.5, wreck:.3, wheel:.12, ore:.2, boat:.25 };
 export const PROP_HOP = new Set(['fence', 'drystone', 'bedroll', 'garden', 'woodpile', 'saltline']);
 export const PROP_BLOCK = new Set(['shelf', 'hearth', 'bookshelf', 'wardrobe', 'statue', 'pillar', 'organ', 'armor', 'banner', 'lamppost', 'signpost', 'candelabra',
-  'gravestone', 'shrine', 'cage', 'pine', 'deadtree', 'scarecrow', 'well', 'carriage', 'horse', 'vardo', 'tent', 'hull', 'beam', 'brazier', 'lantern', 'milestone',
+  'gravestone', 'shrine', 'bakeoven', 'cairn', 'cage', 'pine', 'deadtree', 'scarecrow', 'well', 'carriage', 'horse', 'vardo', 'tent', 'hull', 'beam', 'brazier', 'lantern', 'milestone',
   'dollhouse', 'gallows', 'palisade', 'stone', 'watchtower', 'stonewall', 'palgate', 'forge', 'stable', 'coveredwagon']);
 for (const [k, p] of Object.entries(PACK_PROPS)){ if (p.move === 'top') PROP_TOP[k] = p.top ?? .4; else if (p.move === 'hop') PROP_HOP.add(k); else if (p.move === 'block') PROP_BLOCK.add(k); }   // the packs' pieces
 // The squares a prop covers, after turning (a toppled one lies across fw × fh squares).

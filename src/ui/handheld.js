@@ -156,7 +156,7 @@ function show(v){
 // (counted in drawn frames, not the clock: building the map can hold the page up longer than the whole boot)
 let bootLeft = 0, bootAt = 0, lastSync = 0;
 function startBoot(){
-  boot.classList.remove('hidden', 'out'); el.classList.add('booting');
+  boot.classList.remove('hidden', 'out'); el.classList.add('booting'); el.dataset.booted = '1';   // (it has been on: a slow page can be past it by the time anyone looks)
   bootLeft = 2300; bootAt = performance.now(); chimed = false;
 }
 // Any press skips it (the shell's own, a key, a controller's: ui/wander.js press).
