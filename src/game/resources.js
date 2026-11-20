@@ -112,6 +112,7 @@ export function longRest(list = party(), quiet = false){
     if (t.dead) continue;                      // the fallen don't rest; they need raising first
     t.hp = t.maxHp; t.flags.bloodied = false; delete t.sustain;
     if (t.ward?.max > 0) t.ward = { ...t.ward, now:t.ward.max, hit:false };   // ⛨ (engine/mech.js)
+    delete t.thp;   // (temporary hit points end with a long rest)
     t.conds = (t.conds || []).filter(c => c.n === 'seeded');
     if (t.exhaustion) t.exhaustion > 1 ? t.exhaustion-- : delete t.exhaustion;   // a long rest: one level of exhaustion less
     for (const r of t.resources || []) t.res[r.id] = r.max;

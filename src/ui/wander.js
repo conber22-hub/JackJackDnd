@@ -99,7 +99,7 @@ const PAD_K = { a:'Ⓐ', b:'Ⓑ', x:'Ⓧ', y:'Ⓨ' }, HH_K = { a:'A', b:'B', x:'
 const K = k => { const n = (hhOn() ? HH_K : PAD_K)[k]; return n ? `<b>${n}</b>` : ''; };
 // The highlighted choice stays in sight when the D-pad moves through a list longer than the box.
 const keepInView = id => { const o = document.querySelector(`#${id} .wd-opt.on`); if (o && o.dataset.seen !== '1'){ document.querySelectorAll(`#${id} .wd-opt[data-seen]`).forEach(n => delete n.dataset.seen); o.dataset.seen = '1'; o.scrollIntoView({ block:'nearest' }); } };
-const bar = (hp, max, key) => hpBar(hp, max, key);   // (💔 a blow's part drains away: ui/hpbar.js)
+const bar = (hp, max, key, t = null) => hpBar(hp, max, key, undefined, t);   // (💔 a blow's part drains away: ui/hpbar.js)
 let last = {};
 const put = (id, html) => { if (last[id] === html) return; last[id] = html; const el = document.getElementById(id); if (el) el.innerHTML = html; };
 const show = (id, on) => document.getElementById(id)?.classList.toggle('hidden', !on);
@@ -113,7 +113,7 @@ export function renderHud(){
   put('wdLvl', levelReady() ? `<button class="wd-lvl" data-act="wdLevel">⬆ Level ${partyLevel()}</button>` : '');
   const turn = state.combat.active && currentTurn();
   // (💔 the bar first: it's what notices a blow or a heal, and the card jolts or glows with it: ui/hpbar.js)
-  put('wdParty', members().map(m => { const hb = bar(m.hp, m.maxHp, m.id), mood = barMood(m.id); return `<div class="wd-m${m.id === t?.id ? ' me' : ''}${turn?.id === m.id ? ' turn' : ''}${m.dead || m.hp <= 0 ? ' down' : ''}${mood ? ` ${mood}` : ''}">
+  put('wdParty', members().map(m => { const hb = bar(m.hp, m.maxHp, m.id, m), mood = barMood(m.id); return `<div class="wd-m${m.id === t?.id ? ' me' : ''}${turn?.id === m.id ? ' turn' : ''}${m.dead || m.hp <= 0 ? ' down' : ''}${mood ? ` ${mood}` : ''}">
     ${(f => f ? `<img class="wd-face" src="${f}" alt="">` : '')(faceFor(m))}<span class="nm">${esc(m.name)}</span>${hb}<span class="hp">${Math.max(0, m.hp)} / ${m.maxHp}</span></div>`; }).join(''));
   // what Ⓐ does just now
   const here = !rt.talk && !menu.open && (state.combat.active ? fightAction() : hereAction());

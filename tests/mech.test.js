@@ -48,3 +48,42 @@ test('the Ward comes back whole only after a round untouched; a rest makes it wh
   assert.equal(wardRest({ max:10, now:0, hit:true }).now, 10);
   assert.equal(wardTurn(null).back, false);
 });
+
+import { whenHolds, mechEdge, mechResist, mechExtra, mechTempHp, mechWard, tempSoak, tempGive } from '../src/engine/mech.js';
+
+test('when: a word, all of several (+), any of several (|), alike words; an unknown word never holds', () => {
+  assert.equal(whenHolds(undefined, {}), true);
+  assert.equal(whenHolds('fury', { raging:true }), true);
+  assert.equal(whenHolds('rage', { raging:false }), false);
+  assert.equal(whenHolds('firstHitEachTurn', { firstHit:true }), true);
+  assert.equal(whenHolds('bloodied+allyAdjacent', { bloodied:true, allyNear:false }), false);
+  assert.equal(whenHolds('bloodied|alone', { alone:true }), true);
+  assert.equal(whenHolds('during a full moon', { raging:true }), false);
+  assert.equal(whenHolds('always', {}), true);
+});
+test('advantage and disadvantage from features, by roll and against what', () => {
+  const ms = [{ k:'advantage', on:'attack', when:'alone', src:'Last Bastion' }, { k:'advantage', on:'save', vs:'con', src:'Shieldbiter' },
+    { k:'disadvantage', on:'attack', when:'hpLow', src:'Hollowed' }, { k:'advantage', on:'save', vs:'frightened', src:'Hearth-Sworn' }];
+  assert.deepEqual(mechEdge(ms, 'attack', { alone:true }), { adv:['Last Bastion'], dis:[] });
+  assert.deepEqual(mechEdge(ms, 'attack', { alone:false, hpLow:true }), { adv:[], dis:['Hollowed'] });
+  assert.deepEqual(mechEdge(ms, 'save', {}, 'con').adv, ['Shieldbiter']);
+  assert.deepEqual(mechEdge(ms, 'save', {}, 'dex').adv, []);
+  assert.deepEqual(mechEdge(null, 'attack', {}), { adv:[], dis:[] });
+});
+test('resistances, extra damage (doubled dice on a crit), temporary hit points and the Ward from features', () => {
+  const ms = [{ k:'resist', types:['necrotic', 'Poison'], when:'fury', src:'Rotblood' }, { k:'extraDamage', dice:'1d6', type:'fire', when:'firstHitEachTurn', src:'Shardfire' },
+    { k:'tempHp', amount:'1d10+lvl', when:'kill', src:'Huscarl' }, { k:'tempHp', amount:'pb', when:'turnStart', src:'Hollowed' }, { k:'ward', max:'lvl*2+4', src:'Vanguard' },
+    { k:'heal', amount:'1d8', also:[{ k:'resist', types:['cold'] }], src:'Mender' }];
+  assert.deepEqual(mechResist(ms, { raging:true }).sort(), ['cold', 'necrotic', 'poison']);
+  assert.deepEqual(mechResist(ms, {}), ['cold']);
+  assert.deepEqual(mechExtra(ms, { firstHit:true }, fixed(4)), [{ n:4, type:'fire', src:'Shardfire' }]);
+  assert.deepEqual(mechExtra(ms, { firstHit:true, crit:true }, fixed(4)), [{ n:8, type:'fire', src:'Shardfire' }]);
+  assert.deepEqual(mechExtra(ms, { firstHit:false }, fixed(4)), []);
+  assert.deepEqual(mechTempHp(ms, 'kill', { lvl:3 }, fixed(5)), { n:8, src:'Huscarl' });
+  assert.deepEqual(mechTempHp(ms, 'turnStart', { lvl:5 }), { n:3, src:'Hollowed' });
+  assert.deepEqual(mechTempHp(ms, 'rest', {}), { n:0, src:'' });
+  assert.deepEqual(mechWard(ms, { lvl:2 }), { max:8, src:'Vanguard' });
+  assert.equal(mechWard([], {}), null);
+  assert.deepEqual(tempSoak(5, 8), { thp:0, soaked:5, through:3 });
+  assert.equal(tempGive(4, 7), 7); assert.equal(tempGive(9, 7), 9);
+});

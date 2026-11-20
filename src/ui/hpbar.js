@@ -4,7 +4,9 @@
    CSS animation; a bar drawn again while it runs picks it up where it was (a negative delay). */
 const seen = new Map();   // key -> { frac, from, at }
 const MS = 900;
-export function hpBar(hp, max, key = null, now = (typeof performance !== 'undefined' ? performance.now() : Date.now())){
+// t (optional): the token, for what guards its hit points: ⛨ a Ward (a pale-blue line along the top of the bar) and
+// temporary hit points (a violet stretch past the fill); engine/mech.js
+export function hpBar(hp, max, key = null, now = (typeof performance !== 'undefined' ? performance.now() : Date.now()), t = null){
   const f = Math.max(0, Math.min(1, hp / Math.max(1, max)));
   let chip = '';
   if (key != null){
@@ -18,7 +20,11 @@ export function hpBar(hp, max, key = null, now = (typeof performance !== 'undefi
       if (k < MS && c.from > f) chip = `<i class="wd-chip" style="left:${(f * 100).toFixed(1)}%;width:${((c.from - f) * 100).toFixed(1)}%;animation-delay:-${Math.round(k)}ms"></i>`;
     }
   }
-  return `<i class="wd-hp"><i style="width:${(f * 100).toFixed(1)}%"></i>${chip}</i>`;
+  const w = t?.ward?.max > 0 ? Math.max(0, Math.min(1, (t.ward.now || 0) / t.ward.max)) : null;
+  const tp = t?.thp > 0 ? Math.min(1 - f, t.thp / Math.max(1, max)) : 0;
+  const ward = w === null ? '' : `<i class="wd-ward${w ? '' : ' down'}" style="width:${((w || 1) * 100).toFixed(1)}%" title="Ward ${t.ward.now || 0}/${t.ward.max}"></i>`;
+  const temp = tp > 0 ? `<i class="wd-thp" style="left:${(f * 100).toFixed(1)}%;width:${Math.max(4, tp * 100).toFixed(1)}%" title="${t.thp} temporary hit points"></i>` : '';
+  return `<i class="wd-hp${w !== null ? ' warded' : ''}"><i style="width:${(f * 100).toFixed(1)}%"></i>${temp}${chip}${ward}</i>`;
 }
 
 /* How the card that holds a bar should look just now: 'hit' (a jolt and a red edge) for a moment after a blow, 'heal' (a

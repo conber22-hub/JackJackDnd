@@ -37,7 +37,8 @@ import { MONSTER_PLAY } from '../data/monster-play.js';
 import { makeNoise } from './noise.js';
 import { nemesisDamage, nemesisHolds, nemesisRegen, nemesisFalls, nemesisSurvives } from './court.js';
 import { toPlayers } from './outbox.js';
-import { wardSoak, wardTurn } from '../engine/mech.js';
+import { wardSoak, wardTurn, mechEdge, mechExtra, mechTempHp, tempSoak, tempGive } from '../engine/mech.js';
+import { mechCtx, firstHitNow, isSeep } from './mechfx.js';
 import { alarmAt, garrisonCalm } from './garrison.js';
 
 export { currentTurn };
@@ -216,6 +217,7 @@ export function startTurn(){
   }
   // ⛨ a Ward comes back whole at the start of its bearer's turn, if nothing touched them since their last one
   if (t.ward?.max > 0 && !t.dead){ const W = wardTurn(t.ward); t.ward = W.ward; if (W.back) bus.emit('ward', { t, back:true }); }
+  if (t.mechs?.length && !t.dead){ const g = mechTempHp(t.mechs, 'turnStart', mechCtx(t)); if (g.n > (t.thp || 0)){ t.thp = tempGive(t.thp, g.n); bus.emit('temphp', { t, given:g.n, src:g.src }); } }
   const b = BEST[t.bid], D = dreadLevel();
   if (!t.dead && isHis(t) && D.regen && t.hp < t.maxHp){ t.hp = Math.min(t.maxHp, t.hp + D.regen); }
   if (!t.dead && t.nem && t.hp < t.maxHp){ const r = nemesisRegen(t); if (r) t.hp = Math.min(t.maxHp, t.hp + r); }   // His favour
@@ -277,6 +279,7 @@ export function attackEdge(a, tg, atk, mode = 'normal'){
   const cm = self ? { adv:[], dis:[], autoCrit:false, penalty:0 } : attackMods({ attacker:a, target:tg, melee:rc.kind !== 'ranged', within5:rc.d <= 1,
     attackerSeen:!hasCond(a, 'invisible'), targetSeen:!hasCond(tg, 'invisible') });
   advWhy.push(...cm.adv); disWhy.push(...cm.dis);
+  if (a.mechs?.length && !self){ const me = mechEdge(a.mechs, 'attack', mechCtx(a, { melee:rc.kind !== 'ranged', ranged:rc.kind === 'ranged', vsSeep:isSeep(tg) })); advWhy.push(...me.adv); disWhy.push(...me.dis); }   // ⚙ a Calling's (engine/mech.js)
   if (tg.dodge && !stopped(tg) && !self) disWhy.push(`${tg.name} is dodging`);
   const why = [...advWhy.filter(w => w !== 'the DM\'s call'), ...disWhy.filter(w => w !== 'the DM\'s call')];
   return { adv:advWhy.length > 0, dis:disWhy.length > 0, advWhy, disWhy, why, rc, cov, cm,
@@ -308,6 +311,13 @@ export function doAttack(aId, tId, i, mode = 'normal', { d20 = null, at = null }
     const raw = hit ? rollDice(atk.d, crit).total + rage : 0, df = defend(tg, raw, atk.t), dmg = df.n;   // its resistances, immunities, Rage
     rolls.push({ hit, crit, dmg, raw, why:df.why, r, other:!real && useBoth ? (r === r1 ? r2 : r1) : null, tot, real:!!real });
     lines.push(`${atk.rays > 1 ? `#${k + 1} · ` : ''}${real ? '🎲 at the table ' : `d20 ${useBoth ? `(${r1}, ${r2} → ${adv ? 'adv' : 'dis'}) ` : ''}`}<b>${r}</b> ${signed(bonus)} = <b>${tot}</b> vs AC ${ac}${cov.ac ? ` <span class="muted">(${cov.cover === 'half' ? 'half' : '¾'} cover)</span>` : ''} — <b>${crit ? 'CRITICAL' : hit ? 'HIT' : r === 1 ? 'FUMBLE' : 'MISS'}</b>${atk.rays > 1 && hit ? ` → ${dmg}` : ''}`);
+  }
+  // ⚙ a Calling's extra damage on a hit (engine/mech.js): through the target's defences, by its own type
+  if (a.mechs?.length) for (const x of rolls.filter(r => r.hit)){
+    for (const e of mechExtra(a.mechs, mechCtx(a, { crit:x.crit, melee:rc.kind !== 'ranged', ranged:rc.kind === 'ranged', vsSeep:isSeep(tg), firstHit:firstHitNow(a) }))){
+      const n = defend(tg, e.n, e.type || atk.t).n; if (!n) continue;
+      x.dmg += n; lines.push(`<span class="muted">+${n}${e.type ? ` ${esc(e.type)}` : ''} · ${esc(e.src)}</span>`);
+    }
   }
   const hits = rolls.filter(x => x.hit), crit = rolls.some(x => x.crit), total = hits.reduce((n, x) => n + x.dmg, 0);
   // the TV spins a d20 to it (ui/screen.js); every other screen pops it up (ui/dicemoment.js): the die, the one it
@@ -367,6 +377,8 @@ export function applyDamage(t, n, type = '', by = null, defended = false){
   if (t.ward?.max > 0){ const W = wardSoak(t.ward, n); t.ward = W.ward; n = W.through;
     if (W.soaked) bus.emit('ward', { t, soaked:W.soaked, broke:W.broke, by:(typeof by === 'string' ? by : by?.id) || null });
     if (n <= 0) return 0; }
+  // temporary hit points next (a Calling's, engine/mech.js)
+  if (t.thp > 0){ const S = tempSoak(t.thp, n); t.thp = S.thp; n = S.through; if (S.soaked) bus.emit('temphp', { t, soaked:S.soaked }); if (n <= 0) return 0; }
   t.hp = Math.max(0, t.hp - n);
   burst(t.floor, t.x, t.y, '#c0303a');
   if (t.bid === 'seepling' && n >= 5) t.hp = 0;     // Burst Sac
@@ -418,6 +430,8 @@ export function kill(t, type, by){
   // the folk see a death; the Count's eyes among them tell his court who did it, and with what (game/folk.js)
   const killer = typeof by === 'string' ? tokById(by) : by;
   if (killer && killer.kind !== 'monster') witnessed(t.floor, { kind:'kill', x:t.x, y:t.y, by:killer.name, type:String(type || '').split(/[ ,]/)[0] });
+  // ⚙ a Calling's temporary hit points for a kill (engine/mech.js)
+  if (killer?.mechs?.length && killer !== t && !killer.dead){ const g = mechTempHp(killer.mechs, 'kill', mechCtx(killer)); if (g.n > (killer.thp || 0)){ killer.thp = tempGive(killer.thp, g.n); bus.emit('temphp', { t:killer, given:g.n, src:g.src }); } }
   t.dead = true;
   t.conds = (t.conds || []).filter(c => c.n !== 'raging'); delete t.sustain;   // rage and sustained spells end when you drop
   const radiant = /radiant|fire/.test(String(type));

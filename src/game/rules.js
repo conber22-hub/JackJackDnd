@@ -7,6 +7,8 @@ import { BEST } from '../data/bestiary.js';
 import { applyDefenses, conditionImmune, defensesFor } from '../engine/defenses.js';
 import { saveMods, speedOf, damageMods } from '../engine/conditions.js';
 import { d, bus } from '../util/core.js';
+import { mechResist, mechEdge } from '../engine/mech.js';
+import { mechCtx } from './mechfx.js';
 
 export const currentTurn = () => state.combat.active ? state.tokens.find(t => t.id === state.combat.order[state.combat.idx]) : null;
 export const turnKey = () => `${state.combat.round}:${state.combat.idx}`;
@@ -27,8 +29,9 @@ export function defencesOf(t){
   d ||= { resist:[], immune:[], vuln:[], condImmune:[] };
   const own = t?.def;   // set on the token by the DM (or a nemesis's strengths), on top of its kind's
   const stone = hasCond(t, 'petrified') ? damageMods(t) : null;   // petrified: resistance to everything, can't be poisoned
-  if (!own && !stone && !hasCond(t, 'raging')) return d;
-  const join = k => [...new Set([...(d[k] || []), ...(own?.[k] || []), ...(stone?.[k] || []), ...(k === 'resist' && hasCond(t, 'raging') ? PHYS_TYPES : [])])];
+  const feat = t?.mechs?.length ? mechResist(t.mechs, mechCtx(t)) : [];   // ⚙ a Calling's resistances (engine/mech.js)
+  if (!own && !stone && !hasCond(t, 'raging') && !feat.length) return d;
+  const join = k => [...new Set([...(d[k] || []), ...(own?.[k] || []), ...(stone?.[k] || []), ...(k === 'resist' && hasCond(t, 'raging') ? PHYS_TYPES : []), ...(k === 'resist' ? feat : [])])];
   return { resist:join('resist'), immune:join('immune'), vuln:join('vuln'), condImmune:join('condImmune') };
 }
 /* Damage after defences: { n, why } — why is '', 'resistant', 'immune' or 'vulnerable' (for the card). */
@@ -45,6 +48,7 @@ export const immuneTo = (t, n) => conditionImmune(defencesOf(t), n);
    → { r, tot, auto, note }: tot is -99 on an automatic failure; note says why, for the card */
 export function saveRoll(t, ab, extra = 0){
   const m = saveMods(t, ab);
+  if (t?.mechs?.length){ const e = mechEdge(t.mechs, 'save', mechCtx(t), String(ab).toLowerCase().slice(0, 3)); m.adv = [...m.adv, ...e.adv]; m.dis = [...m.dis, ...e.dis]; }   // ⚙ a Calling's (engine/mech.js)
   if (m.autoFail) return { r:0, tot:-99, auto:true, note:' <span class="muted">(fails automatically)</span>' };
   const r1 = d(20), r2 = d(20), adv = m.adv.length > 0, dis = m.dis.length > 0;
   const r = adv && !dis ? Math.max(r1, r2) : dis && !adv ? Math.min(r1, r2) : r1;

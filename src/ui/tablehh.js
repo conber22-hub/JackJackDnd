@@ -367,7 +367,7 @@ function ensureHud(){
     renderHud();
   });
 }
-const bar = (hp, max, key) => hpBar(hp, max, key);   // (💔 a blow's part drains away: ui/hpbar.js)
+const bar = (hp, max, key, t = null) => hpBar(hp, max, key, undefined, t);   // (💔 a blow's part drains away: ui/hpbar.js)
 const last = {};
 let scrolledTo = '';
 const put = (id, html) => { if (last[id] === html) return; last[id] = html; const el = document.getElementById(id); if (el) el.innerHTML = html; };
@@ -380,7 +380,7 @@ export function renderHud(){
   put('tbPlace', esc(f?.name || state.meta?.name || ''));
   put('tbClock', esc(fight() ? `Round ${state.combat.round || 1} · ${cur ? (cur.id === t.id ? 'your turn' : `${cur.name}'s turn`) : '…'}` : `${state.meta?.name || ''}`));
   const party = [t, ...state.tokens.filter(o => o.kind === 'pc' && o.id !== t.id && o.floor === t.floor && !o.flags?.gone)].slice(0, 4);
-  put('tbParty', party.map(m => { const hb = bar(m.hp, m.maxHp, m.id), mood = barMood(m.id);   // (💔 the card jolts or glows with its bar: ui/hpbar.js)
+  put('tbParty', party.map(m => { const hb = bar(m.hp, m.maxHp, m.id, m), mood = barMood(m.id);   // (💔 the card jolts or glows with its bar: ui/hpbar.js)
     return `<div class="wd-m${m.id === t.id ? ' me' : ''}${cur?.id === m.id ? ' turn' : ''}${m.dead || m.hp <= 0 ? ' down' : ''}${mood ? ` ${mood}` : ''}"><span class="nm">${esc(m.name)}</span>${hb}<span class="hp">${Math.max(0, m.hp)} / ${m.maxHp}</span></div>`; }).join(''));
   const oa = ui.oaAsk?.[0], here = !oa && !menu.open && (fight() ? fightAction() : hereAction());
   put('tbPrompt', oa ? `<div class="wd-oa">⚔ <b>${esc(oa.mover)}</b> is getting away: your reaction?</div><button class="wd-act" data-tb="a"><b>A</b> Strike with ${esc(oa.atk)}</button><button class="wd-act" data-tb="b"><b>B</b> Let them go</button>`

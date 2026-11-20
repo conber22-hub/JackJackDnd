@@ -525,3 +525,24 @@ test('a Ward takes a blow before the hit points, breaks, and is seen to', async 
   await page.evaluate(() => { const D = window.DreadDelve; D.wander.hero().ward.now = 0; });
   expect(await page.evaluate(() => { const D = window.DreadDelve; D.endCombat?.(); D.longRest([D.wander.hero()], true); return D.wander.hero().ward.now; })).toBe(10);
 });
+
+test('a Calling\'s features work in a fight: advantage, extra damage, a resistance, a Ward, temporary hit points for a kill', async ({ page }) => {
+  test.setTimeout(180_000);
+  await fight(page);
+  const ids = await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), w = D.get().tokens.find(t => t.kind === 'monster');
+    w.hp = w.maxHp = 200;
+    D.applyMechs(h, [{ k:'advantage', on:'attack', when:'always', src:'Steady Eye' }, { k:'extraDamage', dice:'3', type:'fire', when:'firstHitEachTurn', src:'Shardfire' },
+      { k:'resist', types:['piercing'], src:'Thick Hide' }, { k:'ward', max:'10', src:'Ward' }, { k:'tempHp', amount:'7', when:'kill', src:'Blood Price' }]);
+    return { h:h.id, w:w.id }; });
+  // advantage shows in the odds before the swing
+  expect(await page.evaluate(() => JSON.stringify(window.DreadDelve.wander.strikeOdds(0)?.edge) || '')).toMatch(/Steady Eye/);
+  // a hit (the d20 at 15): the extra fire, named on the card, once a turn
+  await page.evaluate(({ h, w }) => window.DreadDelve.doAttack(h, w, 0, 'normal', { d20:15 }), ids);
+  await expect(page.locator('#cardLayer')).toContainText('Shardfire', { timeout:15_000 });
+  // a piercing blow of 10: halved by the resistance, then all of it into the Ward (10 → 5)
+  const r = await page.evaluate(({ h, w }) => { const D = window.DreadDelve, t = D.tokById(h), hp = t.hp; D.applyDamage(t, 10, 'piercing', w); return { hp0:hp, hp:t.hp, ward:t.ward.now }; }, ids);
+  expect(r).toEqual({ hp0:r.hp0, hp:r.hp0, ward:5 });
+  // the kill: temporary hit points
+  const thp = await page.evaluate(({ h, w }) => { const D = window.DreadDelve; D.applyDamage(D.tokById(w), 999, 'fire', h); return D.tokById(h).thp; }, ids);
+  expect(thp).toBe(7);
+});

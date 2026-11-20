@@ -98,5 +98,6 @@ export function wireFightFx(){
     if (e.back){ floatText(t.id, '⛨ WARD', '#9fdcff', { word:true }); ringPulse(t.id, '#9fdcff'); wardsShown++; return; }
     after(330, () => floatText(t.id, `⛨ −${e.soaked}`, '#9fdcff')); wardsShown++;
     if (e.broke) after(700, () => { floatText(t.id, 'WARD DOWN', '#6fb6e8', { word:true }); ringPulse(t.id, '#6fb6e8'); }); });
+  bus.on('temphp', e => { const t = e?.t; if (!t) return; if (e.given) floatText(t.id, `+${e.given} TEMP`, '#c9b8ff'); else if (e.soaked) after(330, () => floatText(t.id, `−${e.soaked} temp`, '#b3a4e6')); });   // (engine/mech.js)
   bus.on('aims', e => { if (e?.by && e.at){ windUp(e.by, e.at, e.ms); if (e.at === state?.campaign?.wander?.heroTok || e.at === ui.myToken) floatText(e.at, '!', '#ff4a3a', { word:true }); } });   // ⚠ a foe shows who it's going for
 }

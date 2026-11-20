@@ -69,3 +69,73 @@ export function wardTurn(ward){
 export const wardRest = ward => ward && ward.max > 0 ? { ...ward, now:ward.max, hit:false } : ward;
 // For a bar: 0..1
 export const wardFrac = ward => ward && ward.max > 0 ? Math.max(0, Math.min(1, (ward.now || 0) / ward.max)) : 0;
+
+/* ---------- the features, in a fight ----------
+   A token carries the features it has as mechs: [{ k, …fields, src:'Hoplite: Phalanx' }] (game/heroes.js builds them
+   from its Calling and Path). Each kind is read here, pure, against a moment's flags (game/mechfx.js gathers them):
+     ctx = { raging, bloodied, alone, allyNear, vsSeep, crit, firstHit, wardUp, wardDown, hpLow, … } (true / false)
+   A mech's `when` (a word, or several joined by '+' meaning all, or '|' meaning any) must hold; none means always.
+   Words the data uses for the same thing are read alike (fury = raging = rage). An unknown word never holds: a
+   feature the game doesn't yet understand stays the DM's, never fires by mistake. */
+const SAME = { fury:'raging', rage:'raging', raging:'raging', bloodied:'bloodied', alone:'alone', allyadjacent:'allyNear', allynear:'allyNear', ally:'allyNear',
+  vsseep:'vsSeep', seep:'vsSeep', seeped:'vsSeep', infected:'vsSeep', firsthiteachturn:'firstHit', firsthit:'firstHit', onceperturn:'firstHit', crit:'crit', critical:'crit',
+  always:'always', ward:'wardUp', wardup:'wardUp', warddown:'wardDown', wardbroken:'wardDown', hplow:'hpLow', neardeath:'hpLow', melee:'melee', ranged:'ranged',
+  turnstart:'turnStart', kill:'kill', rest:'rest', bonus:'bonus' };
+export const KNOWN_WHEN = Object.keys(SAME);
+const holds1 = (w, ctx) => { const k = SAME[String(w).toLowerCase().replace(/[^a-z]/g, '')]; return k === 'always' ? true : !!(k && ctx?.[k]); };
+export function whenHolds(when, ctx = {}){
+  if (when == null || when === '') return true;
+  const s = String(when);
+  if (s.includes('|')) return s.split('|').some(p => whenHolds(p, ctx));
+  return s.split('+').every(p => holds1(p.trim(), ctx));
+}
+const list = mechs => (Array.isArray(mechs) ? mechs : []).flatMap(m => m && typeof m === 'object' ? [m, ...(Array.isArray(m.also) ? m.also.map(x => ({ ...x, src:m.src })) : [])] : []);
+// Advantage (or disadvantage) on an attack, a save or a check: { adv:[why], dis:[why] }. vs: an ability ('dex') or a
+// condition ('frightened') the roll is against.
+export function mechEdge(mechs, on, ctx = {}, vs = null){
+  const adv = [], dis = [];
+  for (const m of list(mechs)){
+    if (m.k !== 'advantage' && m.k !== 'disadvantage') continue;
+    if (m.on && m.on !== on) continue;
+    if (m.vs && vs && String(m.vs).toLowerCase() !== String(vs).toLowerCase()) continue;
+    if (m.vs && !vs && on !== 'attack') continue;
+    if (!whenHolds(m.when, ctx)) continue;
+    (m.k === 'advantage' ? adv : dis).push(m.src || m.k);
+  }
+  return { adv, dis };
+}
+// Damage types resisted right now
+export function mechResist(mechs, ctx = {}){
+  const out = new Set();
+  for (const m of list(mechs)) if (m.k === 'resist' && whenHolds(m.when, ctx)) for (const t of m.types || []) out.add(String(t).toLowerCase());
+  return [...out];
+}
+// Extra damage on a hit: [{ n, type, src }] (firstHit: only the first hit this turn counts for those that say so)
+export function mechExtra(mechs, ctx = {}, roll){
+  const out = [];
+  for (const m of list(mechs)){
+    if (m.k !== 'extraDamage' || !whenHolds(m.when, ctx)) continue;
+    const n = amountOf(ctx.crit ? `${m.dice}+${m.dice}` : m.dice, ctx, roll);
+    if (n > 0) out.push({ n, type:m.type || '', src:m.src || '' });
+  }
+  return out;
+}
+// Temporary hit points a moment gives (when: 'turnStart' | 'kill' | 'rest' | 'bonus'): the most of them (they don't stack)
+export function mechTempHp(mechs, moment, ctx = {}, roll){
+  let best = 0, src = '';
+  for (const m of list(mechs)){
+    if (m.k !== 'tempHp') continue;
+    if ((m.when || 'bonus') !== moment && !String(m.when || '').split('|').includes(moment)) continue;
+    const n = amountOf(m.amount, ctx, roll); if (n > best){ best = n; src = m.src || ''; }
+  }
+  return { n:best, src };
+}
+// The Ward a token's features give (the biggest), or null
+export function mechWard(mechs, ctx = {}){
+  let w = null;
+  for (const m of list(mechs)) if (m.k === 'ward'){ const max = amountOf(m.max || WARD_MAX, ctx, () => 0); if (!w || max > w.max) w = { max, src:m.src || '' }; }
+  return w;
+}
+// Temporary hit points: they soak before hit points, and the most you're given replaces, never adds to, what's left
+export function tempSoak(thp, n){ const have = Math.max(0, thp || 0), s = Math.min(have, Math.max(0, n)); return { thp:have - s, soaked:s, through:Math.max(0, n) - s }; }
+export const tempGive = (thp, n) => Math.max(thp || 0, n || 0);
