@@ -106,6 +106,7 @@ export * as shells from './ui/shells.js';   // 🎨 the shells and stickers (ui/
 export * as critters from './render/critters.js';   // 🐈 the valley's animals (render/critters.js): dogs, cats, ravens, rats, bats, goats and the crow
 export * as screens from './ui/screens-debug.js';   // 🏆 the screens between the fights (ui/victory.js, ui/bestiary.js, ui/trophies.js, ui/levelup.js)
 export * as defeat from './ui/defeat.js';   // 🌫 when the party falls (ui/defeat.js): the defeat screen
+export * as deathSave from './ui/deathsave.js';   // 💀 three hearts, three skulls (ui/deathsave.js): the death save's moment
 export * as callingPicker from './ui/callingpicker.js';   // ⛨ choose your Calling (ui/callingpicker.js): the picker
 export * as emblems from './ui/emblems.js';   // ⛨ the twelve emblems (ui/emblems.js): inline SVG, one per Calling
 export * as captions from './ui/captions.js';   // 💬 fight captions (ui/captions.js): a short, readable line for each thing that happens in a fight
