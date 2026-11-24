@@ -643,3 +643,18 @@ test('a hero who drops is dying: death saves on their turn, a blow while down is
     D.applyDamage(h, h.hp + h.maxHp, 'slashing', w.id); D.heal(h, 10); return { slain:!!h.flags.slain, hp:h.hp, dying:h.dying }; });
   expect(gone).toEqual({ slain:true, hp:0, dying:null });
 });
+
+// 💀 Muse's moment (ui/deathsave.js) at the dying hero's turn: the d20, the hearts and skulls; a press closes it; the
+// party card shows the marks (the Wanderer holds a dying companion's turn while it's up: game/wander.js)
+test('a dying hero\'s death save is a moment on screen; a press closes it, and the party card shows the marks', async ({ page }) => {
+  test.setTimeout(180_000);
+  await fight(page);
+  await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), w = D.get().tokens.find(t => t.kind === 'monster');
+    h.hp = 5; D.applyDamage(h, 8, 'piercing', w.id); h.dying.f = 1;
+    const c = D.get().combat; c.idx = c.order.indexOf(h.id); const rnd = Math.random; Math.random = () => .5; try { D.startTurn(); } finally { Math.random = rnd; } });   // (an 11: a success, still dying)
+  await expect(page.locator('#deathSave')).toBeVisible();
+  await expect(page.locator('#wdParty .ds-badge')).toHaveCount(1);
+  expect(await page.evaluate(() => document.querySelector('#deathSave').textContent)).toContain('Vasha');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#deathSave')).toHaveCount(0);
+});

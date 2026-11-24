@@ -5,6 +5,8 @@
    The follow camera (below) eases after the hero and turns, cranes and cycles views with the right stick, L / R, [ ] - = V. */
 import { magicWord } from '../game/calling.js';
 import { emblemSvg } from './emblems.js';
+import { deathSaveOpen, deathSavePress, dyingBadge } from './deathsave.js';
+import { dyingMarks } from '../engine/death-saves.js';
 import { classLine, originLine } from '../game/calling.js';
 import { turnBanner } from './turnbanner.js';
 import { provokers } from '../engine/movement.js';
@@ -118,7 +120,8 @@ export function renderHud(){
   const turn = state.combat.active && currentTurn();
   // (💔 the bar first: it's what notices a blow or a heal, and the card jolts or glows with it: ui/hpbar.js)
   put('wdParty', members().map(m => { const hb = bar(m.hp, m.maxHp, m.id, m), mood = barMood(m.id); return `<div class="wd-m${m.id === t?.id ? ' me' : ''}${turn?.id === m.id ? ' turn' : ''}${m.dead || m.hp <= 0 ? ' down' : ''}${mood ? ` ${mood}` : ''}">
-    ${(f => f ? `<img class="wd-face" src="${f}" alt="">` : '')(faceFor(m))}<span class="nm">${m.calling ? `<span class="cr-emb" style="color:${esc(m.callColor || 'currentColor')}">${emblemSvg(m.calling, { size:14 })}</span>` : ''}${esc(m.name)}</span>${hb}<span class="hp">${Math.max(0, m.hp)} / ${m.maxHp}</span></div>`; }).join(''));
+    ${(f => f ? `<img class="wd-face" src="${f}" alt="">` : '')(faceFor(m))}<span class="nm">${m.calling ? `<span class="cr-emb" style="color:${esc(m.callColor || 'currentColor')}">${emblemSvg(m.calling, { size:14 })}</span>` : ''}${esc(m.name)}</span>${hb}<span class="hp">${Math.max(0, m.hp)} / ${m.maxHp}</span>${m.dying ? `<span class="ds-badge" data-dying="${esc(m.id)}"></span>` : ''}</div>`; }).join(''));
+  for (const el of document.querySelectorAll('#wdParty .ds-badge')){ const m = tokById(el.dataset.dying); dyingBadge(el, m?.dying ? dyingMarks(m.dying) : null); }   // 💀 hearts and skulls
   // what Ⓐ does just now
   const here = !rt.talk && !menu.open && (state.combat.active ? fightAction() : hereAction());
   put('wdPrompt', here ? (here.idle ? `<div class="wd-tx">${esc(here.label)}</div>` : `<button class="wd-act" data-act="wdA">${K('a')} ${esc(here.label)}</button>`) : '');
@@ -293,6 +296,7 @@ function press(b){
   const sb = b === 'ls' || b === 'start' ? 'b' : b;
   if (victoryOpen()){ victoryPress(sb); renderHud(); return; }
   if (defeatOpen()){ defeatPress(sb); renderHud(); return; }
+  if (deathSaveOpen()){ deathSavePress(sb); renderHud(); return; }   // 💀 (Muse's ui/deathsave.js: any press skips it)
   if (callingPickerOpen()){ callingPickerPress(sb); renderHud(); return; }
   if (levelUpOpen()){ levelUpPress(sb); renderHud(); return; }
   if (bestiaryOpen()){ bestiaryPress(sb); renderHud(); return; }

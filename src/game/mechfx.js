@@ -107,7 +107,7 @@ export function payPrice(t, m, ctx = mechCtx(t)){
       lines.push(`<span class="fam-seep">The rot takes its price: hit point maximum −${n} until a long rest.</span>`); }
     else if (c.what === 'hp'){ const n = Math.min(c.n, Math.max(0, t.hp - 1)); t.hp -= n; lines.push(`<span class="fam-seep">The rot takes its price: −${n} HP.</span>`); }
     else if (c.what === 'text') lines.push(`<span class="fam-seep">☣ The price: ${c.text}</span>`);
-    else { t.seepMarks = (t.seepMarks || 0) + c.n; lines.push(`<span class="fam-seep">The rot spreads under the skin (${t.seepMarks} mark${t.seepMarks === 1 ? '' : 's'}).</span>`); }
+    else { const was = t.seepMarks || 0; t.seepMarks = was + c.n; lines.push(`<span class="fam-seep">The rot spreads under the skin (${t.seepMarks} mark${t.seepMarks === 1 ? '' : 's'}).</span>`); rotHooks.watch?.(t, was); }
   }
   return lines;
 }
@@ -117,6 +117,10 @@ export function autoLeft(t, k, when = null){
 }
 // A long rest gives back what the rot drained
 export function restoreDrain(t){ if (t?.seepDrain > 0){ t.maxHp += t.seepDrain; delete t.seepDrain; } }
+
+/* ☣ The rot's moments (game/rot.js fills these in, so this file stays free of the screens): watch(t, marksBefore) after
+   a mark; speak(t, trigger) for the Chorus at a rest */
+export const rotHooks = { watch:null, speak:null };
 
 /* ⚙ Where a summon goes on the board (game/combat.js fills these in: placing a token there knows the map, the turn
    order and the screen): place(tok, by) → true when it's down; remove(id) */

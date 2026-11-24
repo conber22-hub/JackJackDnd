@@ -3,6 +3,7 @@
    or art). It only reads: no messages to the DM, no state changes. The hosts (ui/tablehh.js, ui/wander.js) call
    openPocketSheet(...) and give each press to pocketPress first — see the PR. */
 import { magicWord } from '../game/calling.js';
+import { rotLines } from '../game/rot.js';
 import { featuresAt } from '../engine/callings.js';
 import { classLine, originLine } from '../game/calling.js';
 import { esc } from '../util/core.js';
@@ -175,6 +176,9 @@ function buildPage(idx){
       html += head(t.callName || 'Calling');
       for (const f of all) html += addRow({ label:f.n, sub:`${f.from === 'path' ? 'Path' : 'Calling'} · level ${f.lvl}`, open:() => ({ title:f.n, sub:`${t.callName || ''} · level ${f.lvl}`, html:`<p class="pk-text">${esc(f.text)}</p>` }) });
     }
+    // ☣ the rot, if it has them (Codex's engine/rot.js, game/rot.js)
+    { const r = rotLines(t); if (r){ html += head('The rot');
+      html += addRow({ label:r.name, sub:`${r.marks} mark${r.marks === 1 ? '' : 's'}`, open:() => ({ title:`The rot: ${r.name}`, sub:`${r.marks} mark${r.marks === 1 ? '' : 's'}`, html:`<p class="pk-text"><i>${esc(r.text)}</i></p>${r.rules.map(x => `<p class="pk-text">${esc(x)}</p>`).join('')}` }) }); } }
   } else if (idx === 2){   // Saves & skills
     html += head('Saving throws');
     for (const a of ABILITIES){

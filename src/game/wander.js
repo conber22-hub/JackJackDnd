@@ -13,6 +13,8 @@
      · travel and rest from the menu; it saves in its own slot (game/session.js), never over the DM's campaign
    The run lives in state.campaign.wander, so it saves and loads with everything else. */
 import { classLine, spellReading, rulesMode } from './calling.js';
+import { deathSaveOpen } from '../ui/deathsave.js';
+import { ovenCure } from './rot.js';
 import { callingOf, featuresAt, callingForChassis } from '../engine/callings.js';
 import { paceOf } from '../engine/pace.js';
 import { gfx } from '../render/gfx.js';
@@ -700,18 +702,19 @@ export function fightTick(now = performance.now()){
   const t = currentTurn(); if (!t) return;
   const key = `${c.round}:${c.idx}:${t.id}`;
   if (t.id === W().heroTok){
-    if (t.dead || t.hp <= 0){ if (rt.acting !== key){ rt.acting = key; rt.actAt = now; } else if (now - rt.actAt > pace().down) nextTurn(); return; }
+    if (t.dead || t.hp <= 0){ if (rt.acting !== key || deathSaveOpen()){ if (rt.acting !== key) rt.acting = key; rt.actAt = now; } else if (now - rt.actAt > pace().down) nextTurn(); return; }   // (💀 the turn waits out the death save's moment)
     if (rt.heroKey !== key){ rt.heroKey = key; rt.did = ''; rt.attacks = 0; rt.cast = false; rt.bonus = false; rt.surged = false; rt.atk = null; if (!target()) aim(1); follow(t); }
     if (!attacksLeft() && moveAllowance(t) <= 0 && now - rt.lastBusy > pace().down) endHeroTurn();
     return;
   }
   // a foe's turn: it shows who it's going for (a wind-up, a red arrow on the ground: ui/fightfx.js), then does it
-  if (rt.acting !== key){ rt.acting = key; rt.actAt = now; if (t.dead || t.hp <= 0 || t.flags?.gone){ nextTurn(); return; }
+  if (rt.acting !== key){ rt.acting = key; rt.actAt = now; if (t.dead || t.hp <= 0 || t.flags?.gone){ if (!deathSaveOpen()) nextTurn(); return; }
     let p = null; try { p = planFor(t); } catch {}
     const tg = p && (p.kind === 'attack' || p.kind === 'cast') && p.target && tokById(p.target);
     if (tg && tg.id !== t.id){ const ms = pace().wind; bus.emit('aims', { by:t.id, at:tg.id, ms }); rt.wind = { key, until:now + ms, p }; return; }
     try { autoTurn(t, p); } catch (e){ console.warn(e); } return; }
   if (rt.wind?.key === key){ if (now < rt.wind.until) return; const p = rt.wind.p; rt.wind = null; rt.actAt = now; try { autoTurn(t, p); } catch (e){ console.warn(e); } return; }
+  if (deathSaveOpen()){ rt.actAt = now; return; }   // (💀 a companion's death save on screen)
   if (now - rt.actAt > pace().after && now - rt.lastBusy > pace().settle) nextTurn();
 }
 function finishFight(won){
@@ -847,7 +850,7 @@ export function rest(){
   const list = members().filter(m => !m.flags?.gone);
   if (onRoad()){ shortRest(list); passTime(1); W().quiet = Math.max(W().quiet, 30); }
   else { for (const m of list){ m.dead = false; m.dying = null; if (m.flags) m.flags.slain = false; if (m.hp <= 0) m.hp = 1; } longRest(list); passTime(8); questEvent({ k:'rest', place:valley().at });
-    if (inOven()) showCard({ kind:'', title:`A night at ${MEMORIAL.oven.name}`, flair:MEMORIAL.oven.rest }, false); }
+    if (inOven()){ showCard({ kind:'', title:`A night at ${MEMORIAL.oven.name}`, flair:MEMORIAL.oven.rest }, false); ovenCure(list, `${valley().at}:${valley().arrivals || 0}`); } }
   syncTokens(); changed(); saveNow(); return true;
 }
 

@@ -64,7 +64,7 @@ export function arrive({ quiet = false } = {}){   // (quiet: the Wanderer slides
   const V = valley(); if (!V.journey) return;
   const p = placeById(V.journey.to);
   passTime(V.journey.hours || 0);
-  V.at = p.id; if (!V.visited.includes(p.id)) V.visited.push(p.id); V.journey = null;
+  V.at = p.id; V.arrivals = (V.arrivals || 0) + 1; if (!V.visited.includes(p.id)) V.visited.push(p.id); V.journey = null;   // (arrivals: a visit's count, for what comes once a visit: the Dutch Oven's cure)
   achieve({ t:'arrive', place:p.id, day:V.day || 0 });   // 🏆 (the Wanderer's run only: game/record.js)
   ui.valleySel = p.id;
   if (!quiet) showCard({ kind:'', title:p.name, sub:clockText(), flair:p.blurb, lines:V.hour >= 21 || V.hour < 5 ? ['<span class="muted">They arrive after dark. Doors stay shut; something is always awake.</span>'] : [] });

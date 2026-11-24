@@ -5,7 +5,7 @@ import { rollDice, esc, bus } from '../util/core.js';
 import { showCard, toast } from '../ui/hud.js';
 import { addCond } from './rules.js';
 import { heal } from './combat.js';
-import { runMech, restoreDrain, mechCtx } from './mechfx.js';
+import { runMech, restoreDrain, mechCtx, rotHooks } from './mechfx.js';
 import { mechTempHp, tempGive } from '../engine/mech.js';
 const restTemp = t => { if (!t.mechs?.length) return; const g = mechTempHp(t.mechs, 'rest', mechCtx(t)); if (g.n) t.thp = tempGive(t.thp, g.n); };
 import { changed } from './session.js';
@@ -128,6 +128,7 @@ export function longRest(list = party(), quiet = false){
     const holder = state.characters?.[t.charId] || t;
     if (holder.horror) holder.horror = fearRest({ horror:holder.horror }, { safe:true }).horror;
   }
+  if (!quiet) for (const t of list) if (!t.dead && t.seepMarks > 0) rotHooks.speak?.(t, 'rest');   // ☣ the Chorus, in the quiet after (game/rot.js)
   if (state.campaign) state.campaign.lastRestId = `rest-${Date.now().toString(36)}`;   // 🔥 the fire's scenes key on the rest (ui/ledger.js)
   for (const t of state.tokens) delete t.lres;   // a new day: Legendary Resistance comes back too
   if (!quiet) showCard({ kind:'', title:'A long rest', sub:'Eight hours', flair:'They sleep, after a fashion. In Barovia the dreams are not entirely their own.', lines:['Full HP, every slot and feature back, Hit Dice restored, conditions gone.'] });

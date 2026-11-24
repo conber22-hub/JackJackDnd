@@ -1,4 +1,5 @@
 /* UI EVENT WIRING — every [data-act] button, [data-edit] field, and keyboard shortcut. */
+import { takeChorus } from '../game/rot.js';
 import { classLine, originLine } from '../game/calling.js';
 import { state, setState, ui, tokById, isDM, makePC, makeNPC, dreadLevel } from '../engine/state.js';
 import { ensureTourButton } from './tour.js';
@@ -220,6 +221,7 @@ document.addEventListener('click', e => {
     case 'whimAuto': state.grasp.auto = !state.grasp.auto; changed(); break;
     case 'setDread': setDread(+k); break;
     case 'courtDay': courtDay('The DM'); renderPanel(); break;
+    case 'chorusTake': if (isDM() || ui.wander){ takeChorus(id); el.closest('.pop')?.remove(); } break;   // ☣ the Chorus's offer, taken (game/rot.js)
     case 'outSend': sendHeld(id, editsFor(id)); ui.outEdit = null; el.closest('.pop')?.querySelector('.held')?.remove(); renderOutbox(); break;
     case 'outDrop': dropHeld(id); break;
     case 'outEdit': ui.outEdit = id; ui.outOpen = true; renderOutbox(); break;

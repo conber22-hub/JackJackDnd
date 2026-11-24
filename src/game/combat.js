@@ -8,6 +8,9 @@ import { tween, ease, focusTile } from '../render/scene.js';
 import { syncTokens, tokenViews, actOn } from '../render/minis.js';
 import { burst, showReach, clearReach, flashArea } from '../render/effects.js';
 import { showCard, toast, banner, sendWhisper } from '../ui/hud.js';
+import { showDeathSave } from '../ui/deathsave.js';
+import { chorusSpeaks } from './rot.js';
+import { faceOf } from './night.js';
 import { WHISPERS } from '../data/dread.js';
 import { sfx } from '../audio/sound.js';
 import { shareOf, missLook } from '../engine/punch.js';
@@ -47,22 +50,31 @@ import { startDying, deathSave, hurtWhileDown, healWhileDown, isDying, wordsFor 
    Monsters just die, as before. */
 let critNext = false;   // (doAttack: the hit about to land is a critical)
 const nameIn = (s, t) => String(s || '').replace(/\{name\}/g, t.name);
-function dyingCard(t, r, title, extra = []){
+function dyingCard(t, r, title, extra = [], moment = null){
   const words = nameIn(r.words, t);
   bus.emit('dying', { t, outcome:r.outcome, words, marks:t.dying ? { s:t.dying.s, f:t.dying.f } : null, rolled:r.rolled ?? null });
-  showCard({ kind:r.outcome === 'dead' ? 'miss' : r.outcome === 'rise' ? 'crit' : 'seep', title, flair:words, lines:extra }, false);
+  // 💀 a death save rolled on the hero's turn: Muse's moment (ui/deathsave.js), the d20 tumbling and a heart or a skull
+  // filling; the turn waits for it (game/wander.js deathSaveOpen); anything else (a drop, a hit while down) a card
+  if (moment && typeof document !== 'undefined'){
+    let face = null; try { face = faceOf(t); } catch {}
+    showDeathSave({ name:t.name, face, before:moment.before, after:moment.after, d20:moment.d20, outcome:r.outcome, words,
+      mine:t.id === ui.myToken || (!!ui.wander && t.id === state.campaign?.wander?.heroTok) });
+  } else showCard({ kind:r.outcome === 'dead' ? 'miss' : r.outcome === 'rise' ? 'crit' : 'seep', title, flair:words, lines:extra }, false);
   log(`💀 ${t.name}: ${title}${r.rolled ? ` (d20 ${r.rolled})` : ''}.`);
 }
 function slay(t){ t.flags.slain = true; t.dead = true; t.hp = 0; }
 // The death save at the start of a dying hero's turn
 function deathSaveTurn(t){
+  const before = { s:t.dying?.s || 0, f:t.dying?.f || 0 };
   const r1 = d(20), r = deathSave(t.dying, r1);
   if (r.outcome === 'none') return;
   const marks = d => d ? `${'♥'.repeat(d.s)}${'·'.repeat(3 - d.s)}  ${'☠'.repeat(d.f)}${'·'.repeat(3 - d.f)}` : '';
-  if (r.outcome === 'rise'){ t.dying = null; t.dead = false; t.hp = 1; syncTokens(); dyingCard(t, r, `${t.name} rises`, [`d20 <b>${r1}</b>: back on their feet at 1 HP`]); return; }
+  // (stable: the engine starts the count fresh, so the moment's last mark is the third heart)
+  const moment = { before, d20:r1, after:r.outcome === 'stable' ? { s:3, f:before.f } : r.outcome === 'rise' ? before : { s:r.dying?.s ?? before.s, f:r.dying?.f ?? 3 } };
+  if (r.outcome === 'rise'){ t.dying = null; t.dead = false; t.hp = 1; syncTokens(); dyingCard(t, r, `${t.name} rises`, [`d20 <b>${r1}</b>: back on their feet at 1 HP`], moment); return; }
   t.dying = r.dying;
   if (r.outcome === 'dead') slay(t);
-  dyingCard(t, r, r.outcome === 'stable' ? `${t.name} is stable` : r.outcome === 'dead' ? `${t.name} is gone` : `${t.name}'s death save`, [`d20 <b>${r1}</b>${r1 === 1 ? ' — two failures' : ''} · ${marks(t.dying)}`]);
+  dyingCard(t, r, r.outcome === 'stable' ? `${t.name} is stable` : r.outcome === 'dead' ? `${t.name} is gone` : `${t.name}'s death save`, [`d20 <b>${r1}</b>${r1 === 1 ? ' — two failures' : ''} · ${marks(t.dying)}`], moment);
 }
 /* ⚙ A burst (a Calling's: { k:'burst', radius, dice, type, targets }): around `at`, on each of the bearer's foes (or all
    but the bearer) within the radius */
@@ -464,6 +476,7 @@ export function applyDamage(t, n, type = '', by = null, defended = false){
     const r = startDying({ hpBefore:before, damage:before + Math.max(0, n - before), maxHp:t.maxHp });
     t.dying = r.outcome === 'dead' ? null : r.dying;
     if (r.outcome === 'dead') t.flags.slain = true;
+    else if (t.seepMarks > 0) setTimeout(() => { if (t.dying && !t.dying.dead) chorusSpeaks(t, 'down'); }, 1800);   // ☣ the Chorus, to the fallen (game/rot.js)
     setTimeout(() => dyingCard(t, r, r.outcome === 'dead' ? `${t.name} is gone` : `${t.name} is down`, r.outcome === 'dead' ? ['The blow was more than a body can hold.'] : ['Dying: a death save on each of their turns. Heal them, or steady them.']), 700); }
   if (t.hp <= 0 && !(t.nem && nemesisHolds(t))){ kill(t, type, by); setTimeout(checkVictory, 2100);
     // ⚙ one who dropped: those on their side may react (No One Left Behind: game/mechfx.js)
@@ -512,6 +525,7 @@ export function kill(t, type, by){
   const killer = typeof by === 'string' ? tokById(by) : by;
   if (killer && killer.kind !== 'monster') witnessed(t.floor, { kind:'kill', x:t.x, y:t.y, by:killer.name, type:String(type || '').split(/[ ,]/)[0] });
   // ⚙ a Calling's temporary hit points for a kill (engine/mech.js)
+  if (killer && killer !== t && killer.kind !== 'monster' && killer.seepMarks > 0 && t.kind === 'monster') setTimeout(() => chorusSpeaks(killer, 'kill'), 1500);   // ☣ (game/rot.js)
   if (killer?.mechs?.length && killer !== t && !killer.dead){ const g = mechTempHp(killer.mechs, 'kill', mechCtx(killer)); if (g.n > (killer.thp || 0)){ killer.thp = tempGive(killer.thp, g.n); bus.emit('temphp', { t:killer, given:g.n, src:g.src }); } }
   t.dead = true;
   t.conds = (t.conds || []).filter(c => c.n !== 'raging'); delete t.sustain;   // rage and sustained spells end when you drop

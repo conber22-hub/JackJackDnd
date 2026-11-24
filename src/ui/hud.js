@@ -1,6 +1,7 @@
 /* HUD — toasts, banners, whispers, pop-up cards, top bar, dock, initiative list, selection card. */
 import { classLine } from '../game/calling.js';
 import { emblemSvg } from './emblems.js';
+import { rotLines } from '../game/rot.js';
 import { state, ui, tokById, isDM, dreadLevel, viewAsPlayer } from '../engine/state.js';
 import { exitLabel } from '../engine/generator.js';
 import { seenNow } from '../engine/grid.js';
@@ -238,6 +239,7 @@ export function renderSel(){
     ${b ? `<span class="muted">CR ${b.cr}</span>` : ''}<button class="btn small" data-act="deselect">✕</button></div>
     ${showStats ? `<div class="stat">AC <b>${t.ac}</b> · HP <b>${t.hp}/${t.maxHp}</b>${t.ward?.max > 0 ? ` · ⛨ Ward <b>${t.ward.now}/${t.ward.max}</b>` : ''}${t.thp > 0 ? ` · <b>+${t.thp}</b> temp` : ''} · Speed <b>${t.speed} ft</b>${move}${flags.length ? ' · ' + flags.join(' · ') : ''}</div>${hpBar(t, t.kind !== 'monster')}` : (b ? `<div class="look">${esc(b.look)}</div>` : '')}
     ${dm && t.notes ? `<div class="look">${esc(t.notes)}</div>` : ''}
+    ${(dm || mine) ? (r => r ? `<div class="look fam-seep">☣ <b>${esc(r.name)}</b> (${r.marks} mark${r.marks === 1 ? '' : 's'}) · <i>${esc(r.text)}</i>${r.rules.length ? `<br>${r.rules.map(esc).join(' · ')}` : ''}${r.signs ? `<br><span class="muted">A priest: ${esc(r.signs.priest)} The Count: ${esc(r.signs.count)}</span>` : ''}</div>` : '')(rotLines(t, dm)) : ''}
     ${t.conds?.length || t.conc ? `<div>${t.conc ? `<span class="chip on" style="border-color:#8a7ad8" ${dm || mine ? 'data-act="dropConc" title="Concentrating — tap to end it"' : 'title="Concentrating"'}>🌀 ${esc(t.conc.shown || t.conc.n)}${dm || mine ? ' ✕' : ''}</span> ` : ''}${condChips(t, dm)}</div>` : ''}
     ${showStats ? resChips(t, dm) : ''}
     <div class="acts">${acts}</div>`;
