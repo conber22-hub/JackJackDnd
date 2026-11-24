@@ -125,3 +125,4 @@ export { applyMechs, mechCtx } from './game/mechfx.js';   // ⚙ give a token a 
 export { mechsFor } from './game/mechfx.js';
 export { heal, startTurn } from './game/combat.js';   // 💀 (the death saves' spec)
 export { openCreator } from './ui/creator.js';   // the hero creator (for poking and the specs)
+export { callingLines } from './engine/calling-voices.js';   // 🗣 a Calling's own lines (ChatGPT's data/calling-voices.js)

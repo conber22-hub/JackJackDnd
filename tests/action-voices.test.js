@@ -114,3 +114,18 @@ test('animal effects use an unlocked audio context, with no speech queue', () =>
   assert.equal(playActionVoice(cue, { ...settings, sounds: false }), 'caption');
   assert.equal(events.length, 2);
 });
+
+test('a Calling\'s hero speaks in its own voice; the Chorus slips into a Seep-touched Path; a player\'s own lines still win', async () => {
+  const { planActionVoice, newActionVoiceState } = await import('../src/engine/action-voices.js');
+  const { callingLines } = await import('../src/engine/calling-voices.js');
+  const say = (actor, trigger, pack) => planActionVoice(newActionVoiceState(), { id:`e-${trigger}-${actor.id}`, actor, trigger }, { now:1000, pack }).cue?.text;
+  const hus = say({ id:'h1', publicName:'Brannoc', kind:'pc', calling:'huscarl' }, 'attack');
+  assert.ok(callingLines('huscarl', 'attack').includes(hus), hus);
+  const hol = say({ id:'h2', publicName:'Ves', kind:'pc', calling:'vanguard', path:'hollowed' }, 'hurt');
+  assert.ok(callingLines('vanguard', 'hurt', 'hollowed').includes(hol), hol);
+  const own = say({ id:'h3', publicName:'Ada', kind:'pc', calling:'huscarl' }, 'attack', { lines:[{ trigger:'attack', text:'For the hall!' }] });
+  assert.equal(own, 'For the hall!');
+  // a classic hero, or a Calling we don't know, keeps the old lines
+  assert.ok(say({ id:'h4', publicName:'Old', kind:'pc' }, 'attack'));
+  assert.ok(say({ id:'h5', publicName:'Odd', kind:'pc', calling:'nobody' }, 'attack'));
+});

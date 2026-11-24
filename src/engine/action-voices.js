@@ -1,5 +1,6 @@
 import { VOICE_TRIGGERS, DELIVERY, VOICE_LINES, SPELL_VOICE_LINES, VOICE_SOUNDS, CREATURE_VOICES } from '../data/action-voices.js';
 import { hashSeed } from '../util/core.js';
+import { callingLines } from './calling-voices.js';
 
 const ANIMALS = ['wolf', 'dog', 'raven', 'horse', 'small', 'beast'];
 const TRIGGERS = new Set(VOICE_TRIGGERS);
@@ -65,6 +66,8 @@ function spokenLines(profile, event, pack) {
   const generic = pack.lines.filter(line => line.trigger === trigger && !line.action);
   if (exact.length) return exact.map(line => line.text);
   if (generic.length) return generic.map(line => line.text);
+  // a Calling's hero in its own voice (ChatGPT's data/calling-voices.js), the Chorus slipping in on a Seep-touched Path
+  if (profile === 'hero' && typeof event.actor.calling === 'string'){ const own = callingLines(event.actor.calling, trigger, event.actor.path || null); if (own.length) return own; }
   if (['spell', 'heal'].includes(trigger) && own(SPELL_VOICE_LINES, action)) return SPELL_VOICE_LINES[action];
   return VOICE_LINES[profile]?.[trigger] ?? [];
 }

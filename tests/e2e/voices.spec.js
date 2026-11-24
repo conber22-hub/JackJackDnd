@@ -16,3 +16,18 @@ test('a hero attacks and says something; a wolf answers with a sound; the table 
   await page.evaluate(({ ada, wolf }) => window.DreadDelve.doAttack(wolf, ada, 0), ids);
   await expect.poll(() => page.locator('#voiceCap').textContent()).not.toBe(first);
 });
+
+// 🗣 A Calling's hero in its own voice (ChatGPT's data/calling-voices.js): a Huscarl's attack is one of a Huscarl's lines
+test('a Huscarl attacks and says a Huscarl\'s line', async ({ page }) => {
+  test.setTimeout(120_000);
+  await arena(page, [{ name:'Ada', x:6, y:10 }]);
+  const ids = await page.evaluate(() => { const D = window.DreadDelve, h = D.newHero('Fighter'); Object.assign(h, { name:'Brannoc', lvl:3, calling:'huscarl' });
+    const t = D.applyCharacter(h); Object.assign(t, { floor:0, x:6, y:11 }); D.placeMonster('wolf', { floor:0, x:7, y:11 });
+    return { me:t.id, wolf:D.get().tokens.find(o => o.bid === 'wolf').id, lines:['attack', 'hit', 'miss', 'critical'].flatMap(k => D.callingLines('huscarl', k)) }; });
+  expect(ids.lines.length).toBeGreaterThan(1);
+  await page.evaluate(({ me, wolf }) => window.DreadDelve.doAttack(me, wolf, 0), ids);
+  const cap = page.locator('#voiceCap.on');
+  await expect(cap).toBeVisible();
+  const said = (await cap.textContent()).replace(/^Brannoc:\s*/, '').trim();
+  expect(ids.lines).toContain(said);
+});

@@ -38,7 +38,7 @@ function hear(cue){
 }
 function onActed(e){
   if (ui.role !== 'dm' || !state || !e?.actor) return;
-  const a = e.actor, actor = { id:a.id, publicName:a.name, kind:a.kind === 'pc' ? 'pc' : a.kind === 'npc' ? 'npc' : 'monster', bid:a.bid, role:a.role };
+  const a = e.actor, actor = { id:a.id, publicName:a.name, kind:a.kind === 'pc' ? 'pc' : a.kind === 'npc' ? 'npc' : 'monster', bid:a.bid, role:a.role, ...(a.calling ? { calling:a.calling, path:a.path || null } : {}) };
   const pack = voicePackFor(a);   // the owner's approved lines (game/voiceworkshop.js), or the DM's
   const trigger = e.trigger === 'miss' && CREATURE_VOICES[a.bid] ? 'attack' : e.trigger;   // (a wolf that misses still growls)
   const r = planActionVoice(vs, { id:`${a.id}:${++seq}`, actor, trigger, action:String(e.action || '').replace(/ \(×.*\)$/, ''), targetPublicName:e.target?.name, shareable:!a.flags?.hidden },
