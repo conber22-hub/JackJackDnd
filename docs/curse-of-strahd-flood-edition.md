@@ -232,6 +232,12 @@ The village, the tavern, the Kolyana manor and the grieving siblings, and the ch
 - ▦ **Dungeon:** The Village of Barovia — Floor 1 is the village street and houses, floor 2 the church undercroft.
 - ⚔ **Night street:** 3 × Zombie (CR 1/4), 2 × Barovian Wolf (CR 1/4)
 
+### The Dutch Oven
+- Across the square from the tavern, the only chimney in the village that smokes all day. Tamsa keeps it: bread, a hot stone to sit on, and no questions. Read the Oven's story when they walk in (the app tells it); the bread is free, and always was.
+- The legend, as the village tells it: Dutcher walked out of the Mists in a soldier's helm from no age anyone knew. He built the oven with his own hands and kept the village fed through the winter the sun never came. When the Seep first came up the road, he held the line at the gate until the last cart was in. Then he was gone, and the oven was still warm.
+- The helm still sits on the dome. If one of the Drawn (a hero pulled in from another age) touches it, let them know the make without knowing how: someone from their own side of the Mists stood here first, and fed people.
+- Nobody here will say he died. "Dutcher went back out to hold the road," Tamsa says, and puts another loaf in. His cairn is on the rise past the graveyard; folk leave bread on the top stone.
+
 ### The church and the undercroft
 - The undercroft is the Bloomed chapel. When it goes on the map, play it loud.
 - The priest begs them not to kill his son. Let them choose. Every choice here is a bad one; let it be theirs.
@@ -242,9 +248,9 @@ The village, the tavern, the Kolyana manor and the grieving siblings, and the ch
 - The burgomaster must be buried in consecrated ground — and the village's ground no longer is. Somebody has to bless it, or carry the coffin to a church that is still clean.
 - The Count may appear at the edge of the churchyard (Patience full, or just because). He does not stay. He looks at the church, then at the party, and says one sentence about the Bloom.
 
-**Faces.** Ismark Kolyanovich · Ireena Kolyana · Father Donavich · Strahd, the Count
+**Faces.** Ismark Kolyanovich · Ireena Kolyana · Father Donavich · Tamsa, who keeps the Dutch Oven · Strahd, the Count
 
-**Loot.** Holy water ×2 from the church — burns Bloom like fire · The burgomaster's letter (your book)
+**Loot.** Holy water ×2 from the church — burns Bloom like fire · The burgomaster's letter (your book) · A loaf from the Dutch Oven, wrapped in cloth: still warm a day later. Shared on the road, it is a short rest's comfort
 
 **Clocks.** The salt runs out +1 · Bloom tide +1 · The Count's patience +1
 
@@ -507,6 +513,7 @@ The Hand-Warrens, Saint Andral, and the first sight of the Undertow. This is the
 ### The Undertow
 - Floor 5. Do not roll initiative unless they insist. It is cathedral-sized and it speaks: in the voice of a hero's smell-of-home, in the voices of Vallaki's missing.
 - It asks them to "carry it up." It offers a cure for one Seeded person they care about. The price is a cyst in their own chest.
+- Listen to the Chorus long enough and there is a gap in it, a place where one more voice ought to be and is not. The Seep has everyone it ever met in there. It never got Dutcher. If a hero carries bread from the Dutch Oven, the singing falters around them, like a room going quiet when someone it remembers walks in.
 - Raise the Gaze to 9, then 10 as they run. The Shift is constant. Let them get out — barely.
 - ⚔ **What it sends after them:** 2 × Hollowstalker (CR 5), 4 × Seepling (CR 1/2)
 
@@ -529,6 +536,7 @@ The Hand-Warrens, Saint Andral, and the first sight of the Undertow. This is the
 - **Ireena Kolyana** — A burgomaster's daughter who has already buried one life. *Want:* A road that leaves the valley. *Fear:* Becoming a costume in someone else's romance. *Lever:* Protect the living in the village and she will walk into worse rooms with you. (Her death accelerates every clock. Do not spend her cheap.)
 - **Ismark Kolyanovich** — A man trying to fill a dead father's coat. *Want:* To be taken seriously before he is ready. *Fear:* That competence is a costume too. *Lever:* Give him a job with a measurable end. (Can die. The village gets meaner, not empty.)
 - **Madam Eva** — Cards that have been handled too many winters. *Want:* The reading to come true in the ugly way. *Fear:* A party that refuses to be read. *Lever:* Ask a question you are afraid of. (Do not kill her. The sandbox needs a compass.)
+- **Tamsa, who keeps the Dutch Oven** — Flour to the elbows and a burn on every knuckle. She has not let the fire go out in nineteen years. *Want:* The oven lit, and everyone who comes through the door fed. *Fear:* The morning the fire will not catch. *Lever:* Carry wood, or flour, or news of the road. She pays in bread and in the one story she tells. (Do not kill her. If she falls, someone in the village takes up the peel the same night.)
 - **Father Donavich** — A village priest whose holy symbol is worn shiny from being held, not used. *Want:* One funeral that stays finished. *Fear:* That the morning bells are a courtesy the dead no longer need. *Lever:* Ask him to open the church at night. He will, and he will hate you for the gift. (Can die. The churchyard goes blooming within two dawns.)
 - **Father Lucian (Saint Andral's)** — A careful man counting candles that keep going out. *Want:* His church to be a sanctuary again. *Fear:* Learning which of his flock did it. *Lever:* Bring back the bones. He will owe you everything he has, which is not much. (Can die. The font floods the nave by morning.)
 - **Baron Vargas Vallakovich** — A smile that is a locked gate. *Want:* The walled town to look happy from the walls. *Fear:* A festival that tells the truth. *Lever:* Public humiliation or public praise — both work, both cost. (Killing him starts the Riot clock at 2.)

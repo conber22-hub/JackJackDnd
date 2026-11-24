@@ -1,4 +1,5 @@
 /* SIDE PANEL — one function per tab. The DM gets Story · Tokens · Bestiary · Dungeon · Build · Gaze · Table; players get Your hero · Log. */
+import { classLine, originLine } from '../game/calling.js';
 import { hh } from './handheld.js';
 import { state, ui, tokById, dreadLevel, shiftTable, whimTable } from '../engine/state.js';
 import { roomById, exitLabel } from '../engine/generator.js';
@@ -120,7 +121,7 @@ function tokensTab(){
   h += `<h3>Characters (${chars.length})</h3><div class="muted">Every sheet your players bring is kept here, in this campaign's save — even after they leave the table. A player who signs in with the same name and secret word gets theirs back on any device. 🔒 = locked to that player's secret word.</div>`;
   for (const c of chars){
     const tok = state.tokens.find(t => t.charId === c.id), st = heroStats(c);
-    h += `<div class="card"><div class="hd"><span class="dot" style="color:${c.color};background:${c.color}"></span><span class="nm">${esc(c.name)} <span class="muted">${esc(c.sp)} ${esc(c.cls)} ${st.L}</span></span>
+    h += `<div class="card"><div class="hd"><span class="dot" style="color:${c.color};background:${c.color}"></span><span class="nm">${esc(c.name)} <span class="muted">${esc(originLine(c))} ${esc(classLine({ ...c, lvl:st.L }))}</span></span>
       <button class="btn small" data-act="dmSheet" data-id="${c.id}">Sheet</button>${tok ? `<button class="btn small" data-act="downtime" data-id="${tok.id}" title="Days off: recuperate, work, train, research, carouse">🌙</button>` : ''}${tok ? '' : `<button class="btn small" data-act="placeChar" data-id="${c.id}">Place</button>`}<button class="btn small danger" data-act="removeChar" data-id="${c.id}">✕</button></div>
       <div class="row"><label class="muted" style="flex:1">🎮 Player <input class="txt" style="width:auto" data-edit="charOwner" data-id="${c.id}" value="${esc(c.owner || '')}" placeholder="their sign-in name"></label>${c.key ? `<span title="Locked to the player's secret word">🔒</span><button class="btn small" data-act="unlockChar" data-id="${c.id}" title="They forgot their word? Clear it.">Unlock</button>` : ''}</div>
       <div class="stat">AC ${st.ac} · HP ${st.hp} · Speed ${st.spd} · PP ${st.passive}${st.dc ? ` · Spell DC ${st.dc}` : ''}${c.goBackFor ? ` · would go back for <i>${esc(c.goBackFor)}</i>` : ''}${c.homeSmell ? ` · home smells of <i>${esc(c.homeSmell)}</i>` : ''}</div>${packHTML(c)}</div>`;
@@ -502,7 +503,7 @@ function heroTab(){
   // the hero they played here last time, first (net/passport.js: only if this is the same table, and still theirs)
   const again = !me && net.join && suggestHero({ expected:expectedTable(net.join.code, net.join.expect), actual:net.tableMeta?.id, owned:others.map(c => c.id) });
   if (again) others.sort((a, b) => (b.id === again) - (a.id === again));
-  const picker = others.length ? `<div class="muted">${me ? 'Your other characters at this table:' : 'Your characters at this table — who are you playing tonight?'}</div><div class="row">${others.map(c => `<button class="btn small${me ? '' : c.id === again || !again ? ' primary' : ''}" data-act="pickChar" data-id="${c.id}">${c.id === again ? '▶ ' : ''}${esc(c.name)} · ${esc(c.cls)} ${c.lvl}${c.id === again ? ' again' : ''}</button>`).join('')}</div>` : '';
+  const picker = others.length ? `<div class="muted">${me ? 'Your other characters at this table:' : 'Your characters at this table — who are you playing tonight?'}</div><div class="row">${others.map(c => `<button class="btn small${me ? '' : c.id === again || !again ? ' primary' : ''}" data-act="pickChar" data-id="${c.id}">${c.id === again ? '▶ ' : ''}${esc(c.name)} · ${esc(classLine(c))}${c.id === again ? ' again' : ''}</button>`).join('')}</div>` : '';
   if (!me) h += `<div class="muted">${net.host?.open ? (others.length ? '' : 'Connected. Waiting for the DM to seat you — or make your character now.') : 'Connecting to the table…'}</div>` + picker + newAtTable();
   else if (me.flags.taken) h += `<div class="card"><div class="fam-seep">☣ The Seep has taken ${esc(me.name)}. Wait for the DM.</div></div>`;
   else {

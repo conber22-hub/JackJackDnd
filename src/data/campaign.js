@@ -61,6 +61,10 @@ export const CAST = [
   { id:'eva', name:'Madam Eva', look:'Cards that have been handled too many winters.',
     want:'The reading to come true in the ugly way.', fear:'A party that refuses to be read.',
     lever:'Ask a question you are afraid of.', line:'She answers the question under the question.', die:'Do not kill her. The sandbox needs a compass.' },
+  { id:'tamsa', name:'Tamsa, who keeps the Dutch Oven', look:'Flour to the elbows and a burn on every knuckle. She has not let the fire go out in nineteen years.',
+    want:'The oven lit, and everyone who comes through the door fed.', fear:'The morning the fire will not catch.',
+    lever:'Carry wood, or flour, or news of the road. She pays in bread and in the one story she tells.',
+    line:'"The bread is always free." She says Dutcher\'s name the way you say the name of someone in the next room.', die:'Do not kill her. If she falls, someone in the village takes up the peel the same night.' },
   { id:'donavich', name:'Father Donavich', look:'A village priest whose holy symbol is worn shiny from being held, not used.',
     want:'One funeral that stays finished.', fear:'That the morning bells are a courtesy the dead no longer need.',
     lever:'Ask him to open the church at night. He will, and he will hate you for the gift.',
@@ -279,6 +283,11 @@ export const SESSIONS = [
       { t:'The village street', delve:{ template:'barovia', floors:2, note:'Floor 1 is the village street and houses, floor 2 the church undercroft.' }, beats:[
         'Zombies at the doors at night are your book\'s; the Flood twist is that one of them coughs.' ],
         enc:{ label:'Night street', group:[['zombie', 3], ['barovian-wolf', 2]], where:'party' } },
+      { t:'The Dutch Oven', beats:[
+        'Across the square from the tavern, the only chimney in the village that smokes all day. Tamsa keeps it: bread, a hot stone to sit on, and no questions. Read the Oven\'s story when they walk in (the app tells it); the bread is free, and always was.',
+        'The legend, as the village tells it: Dutcher walked out of the Mists in a soldier\'s helm from no age anyone knew. He built the oven with his own hands and kept the village fed through the winter the sun never came. When the Seep first came up the road, he held the line at the gate until the last cart was in. Then he was gone, and the oven was still warm.',
+        'The helm still sits on the dome. If one of the Drawn (a hero pulled in from another age) touches it, let them know the make without knowing how: someone from their own side of the Mists stood here first, and fed people.',
+        'Nobody here will say he died. "Dutcher went back out to hold the road," Tamsa says, and puts another loaf in. His cairn is on the rise past the graveyard; folk leave bread on the top stone.' ] },
       { t:'The church and the undercroft', enc:{ label:'The priest\'s son', group:[['night-spawn', 1], ['sporeling', 3]], where:'random' }, beats:[
         'The undercroft is the Bloomed chapel. When it goes on the map, play it loud.',
         'The priest begs them not to kill his son. Let them choose. Every choice here is a bad one; let it be theirs.',
@@ -287,7 +296,7 @@ export const SESSIONS = [
         'The burgomaster must be buried in consecrated ground — and the village\'s ground no longer is. Somebody has to bless it, or carry the coffin to a church that is still clean.',
         'The Count may appear at the edge of the churchyard (Patience full, or just because). He does not stay. He looks at the church, then at the party, and says one sentence about the Bloom.' ] },
     ],
-    npcs:['ismark', 'ireena', 'donavich', 'count'], loot:['Holy water ×2 from the church — burns Bloom like fire', 'The burgomaster\'s letter (your book)'],
+    npcs:['ismark', 'ireena', 'donavich', 'tamsa', 'count'], loot:['Holy water ×2 from the church — burns Bloom like fire', 'The burgomaster\'s letter (your book)', 'A loaf from the Dutch Oven, wrapped in cloth: still warm a day later. Shared on the road, it is a short rest\'s comfort'],
     tick:{ salt:1, bloom:1, patience:1 },
     ending:'Ismark asks them to take his sister to Vallaki, where the walls are high and the church is "still holy." As they agree, the church bell stops. Nobody was ringing it.',
     levelUp:'Stay at 3.' },
@@ -442,6 +451,7 @@ export const SESSIONS = [
       { t:'The Undertow', beats:[
         'Floor 5. Do not roll initiative unless they insist. It is cathedral-sized and it speaks: in the voice of a hero\'s smell-of-home, in the voices of Vallaki\'s missing.',
         'It asks them to "carry it up." It offers a cure for one Seeded person they care about. The price is a cyst in their own chest.',
+        'Listen to the Chorus long enough and there is a gap in it, a place where one more voice ought to be and is not. The Seep has everyone it ever met in there. It never got Dutcher. If a hero carries bread from the Dutch Oven, the singing falters around them, like a room going quiet when someone it remembers walks in.',
         'Raise the Gaze to 9, then 10 as they run. The Shift is constant. Let them get out — barely.' ],
         enc:{ label:'What it sends after them', group:[['stalker', 2], ['seepling', 4]], where:'party' } },
       { t:'Dinner', beats:[
