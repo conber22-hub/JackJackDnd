@@ -4,6 +4,7 @@
    reads it every frame), the keyboard, the handheld skin's touch buttons (ui/handheld.js), or taps on the map.
    The follow camera (below) eases after the hero and turns, cranes and cycles views with the right stick, L / R, [ ] - = V. */
 import { magicWord } from '../game/calling.js';
+import { emblemSvg } from './emblems.js';
 import { classLine, originLine } from '../game/calling.js';
 import { turnBanner } from './turnbanner.js';
 import { provokers } from '../engine/movement.js';
@@ -117,7 +118,7 @@ export function renderHud(){
   const turn = state.combat.active && currentTurn();
   // (💔 the bar first: it's what notices a blow or a heal, and the card jolts or glows with it: ui/hpbar.js)
   put('wdParty', members().map(m => { const hb = bar(m.hp, m.maxHp, m.id, m), mood = barMood(m.id); return `<div class="wd-m${m.id === t?.id ? ' me' : ''}${turn?.id === m.id ? ' turn' : ''}${m.dead || m.hp <= 0 ? ' down' : ''}${mood ? ` ${mood}` : ''}">
-    ${(f => f ? `<img class="wd-face" src="${f}" alt="">` : '')(faceFor(m))}<span class="nm">${esc(m.name)}</span>${hb}<span class="hp">${Math.max(0, m.hp)} / ${m.maxHp}</span></div>`; }).join(''));
+    ${(f => f ? `<img class="wd-face" src="${f}" alt="">` : '')(faceFor(m))}<span class="nm">${m.calling ? `<span class="cr-emb" style="color:${esc(m.callColor || 'currentColor')}">${emblemSvg(m.calling, { size:14 })}</span>` : ''}${esc(m.name)}</span>${hb}<span class="hp">${Math.max(0, m.hp)} / ${m.maxHp}</span></div>`; }).join(''));
   // what Ⓐ does just now
   const here = !rt.talk && !menu.open && (state.combat.active ? fightAction() : hereAction());
   put('wdPrompt', here ? (here.idle ? `<div class="wd-tx">${esc(here.label)}</div>` : `<button class="wd-act" data-act="wdA">${K('a')} ${esc(here.label)}</button>`) : '');
