@@ -6,6 +6,7 @@
      · the Ward (the Vanguard's signature): a shimmer of force that soaks blows before hit points, and comes back
        whole at the start of your turn if nothing got through it, or to you, since your last turn.
    No DOM, no Three.js: game/combat.js and the fight's turn loop apply them. */
+import { SUMMONS } from '../data/summons.js';
 
 const ABIL = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
 const dflt = (n, s) => { let t = 0; for (let i = 0; i < n; i++) t += 1 + Math.floor(Math.random() * s); return t; };
@@ -154,7 +155,7 @@ export function mechUses(uses, ctx = {}){
 }
 const slug = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'feature';
 const INVOKED = m => /^invoked/i.test(String(m.when || ''));
-const ACTIVE = m => m.k === 'heal' || (m.k === 'tempHp' && (m.when || 'bonus') === 'bonus') || INVOKED(m);
+const ACTIVE = m => m.k === 'heal' || m.k === 'summon' || (m.k === 'tempHp' && (m.when || 'bonus') === 'bonus') || INVOKED(m);
 const AUTO = m => m.k === 'holdAtOne' || m.k === 'burst';   // (with uses, but they fire on their own)
 export function mechResources(mechs, ctx = {}){
   const seen = new Set(), out = [];
@@ -163,7 +164,7 @@ export function mechResources(mechs, ctx = {}){
     let id = `m-${slug(m.src)}`; while (seen.has(id)) id += '-2'; seen.add(id);
     const u = mechUses(m.uses || (INVOKED(m) ? 'pb/longRest' : undefined), ctx);
     out.push({ id, n:m.src || (m.k === 'heal' ? 'Mending' : 'Second Breath'), max:u.max, rest:u.rest, use:'mech', mech:m, ...(AUTO(m) ? { auto:true } : {}), ...(INVOKED(m) ? { invoke:true } : {}),
-      text:m.text || (m.k === 'heal' ? `Heal ${m.amount}${m.range ? `, someone within ${m.range} ft.` : ''}` : m.k === 'tempHp' ? `${m.amount} temporary hit points` : '') });
+      text:m.text || (m.k === 'summon' ? `Call a ${SUMMONS[m.what]?.name || m.what} for a minute` : m.k === 'heal' ? `Heal ${m.amount}${m.range ? `, someone within ${m.range} ft.` : ''}` : m.k === 'tempHp' ? `${m.amount} temporary hit points` : '') });
   }
   return out;
 }
@@ -203,4 +204,17 @@ export function mechReaction(mechs, trigger, ctx = {}){
     return { does:m.does, src:m.src || 'Reaction' };
   }
   return null;
+}
+
+/* ⚙ A summon (k:'summon', what, hp, lasts): the ally it calls, as plain token fields (no id or place: game/mechfx.js
+   puts it down). Its hit points from the feature ('5*lvl'), its strike at the caller's proficiency and best ability
+   modifier, its damage that creature's dice plus their proficiency. null for a creature we don't know. */
+export function summonToken(m, ctx = {}, by = {}){
+  const S = SUMMONS[m?.what]; if (!S) return null;
+  const lvl = +ctx.lvl || 1, pb = 2 + Math.floor((lvl - 1) / 4), mods = Object.values(ctx.mods || {}).filter(Number.isFinite);
+  const best = mods.length ? Math.max(0, ...mods) : 2, hp = Math.max(1, amountOf(m.hp || '5*lvl', ctx, () => 0));
+  return { kind:'npc', bid:S.bid, name:`${by.name ? `${by.name}'s ` : ''}${S.name}`, color:by.color || S.color, ac:S.ac + Math.floor(pb / 2), hp, maxHp:hp,
+    speed:S.speed, init:+by.init || best, saveMod:pb, check:pb, passive:10 + pb, size:S.size || 1,
+    attacks:[{ n:S.atk.n, b:pb + best, d:`${S.atk.d}+${pb}`, t:S.atk.t, f:'' }], dead:false, conds:[], moved:0,
+    flags:{ summon:{ by:by.id || null, src:m.src || S.name, what:m.what, lasts:m.lasts || '1min' } }, notes:S.words };
 }

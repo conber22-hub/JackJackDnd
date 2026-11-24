@@ -118,7 +118,7 @@ export function npcLook(kind = 'villager', rng = Math.random){
 // The look for any token: its own recipe, a creature's preset, or an adventurer rolled from its id and colour.
 export function lookFor(t, b){
   if (t.look){ const l = normalizeLook(t.look); if (t.seepMarks > 0) l.rot = Math.min(1, l.rot + t.seepMarks * .08); return l; }   // (each mark of the rot spreads it)
-  if (t.kind === 'monster') return creatureLook(b, t.id);
+  if (t.kind === 'monster' || t.flags?.summon) return creatureLook(b, t.id);   // (a Calling's summon looks the creature it is)
   const r = mulberry32(hashSeed(t.id || t.name));
   const l = npcLook(t.kind === 'npc' ? 'villager' : 'adventurer', r); if (t.color) l.c1 = t.color;
   return normalizeLook(l);

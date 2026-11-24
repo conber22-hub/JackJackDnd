@@ -246,7 +246,7 @@ function artTexture(url){ if (!texCache.has(url)){ const tx = new THREE.TextureL
 
 export function buildFigure(t){
   const g = new THREE.Group(), b = BEST[t.bid];
-  const sideCol = t.kind === 'monster' ? '#7a1f25' : (t.kind === 'npc' ? '#6a58a0' : t.color);
+  const sideCol = t.kind === 'monster' ? '#7a1f25' : (t.kind === 'npc' && !t.flags?.summon ? '#6a58a0' : t.color);
   g.add(at(M(cyl(.43, .46, .07, 28), '#151116'), 0, .035, 0));
   g.add(at(M(new THREE.TorusGeometry(.44, .03, 6, 32), sideCol, sideCol, { ei:.8 }), 0, .07, 0, Math.PI / 2));
   const art = artFor(t), mk = modelKeyFor(t);
@@ -265,7 +265,7 @@ export function buildFigure(t){
     frame.position.set(0, .62, -.005); fig.add(frame);
     fig.userData.billboard = 1;
   } else {
-    fig = t.kind === 'pc' ? SHAPES.pc(t) : t.kind === 'npc' ? SHAPES.npc(t) : (SHAPES[b?.shape] || SHAPES.husk)(b || { color:t.color, eye:'#fff' });
+    fig = t.kind === 'pc' ? SHAPES.pc(t) : t.kind === 'npc' && !(t.flags?.summon && b) ? SHAPES.npc(t) : (SHAPES[b?.shape] || SHAPES.husk)(b || { color:t.color, eye:'#fff' });
   }
   g.add(fig); g.userData.fig = fig;
   if (shadowsOn()) g.traverse(o => { if (o.isMesh) o.castShadow = true; });

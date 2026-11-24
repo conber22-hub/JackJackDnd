@@ -104,3 +104,30 @@ test('an Archivist casts by our names: the Protocol is renamed on the hero, spen
   expect(got.log).toContain(got.n); expect(got.log).not.toContain('Magic Missile');
   await expect(page.locator('#cardLayer .pop', { hasText:got.n }).first()).toBeVisible();
 });
+
+// ⚙ A summoning feature (the Mistwalker's Wolfkin: Answering Howl): a wolf on the party's side, right after its caller in
+// the turn order, drawn as a wolf; one at a time; gone when its minute is up, or when the fight ends
+test('a Wolfkin Mistwalker calls a mist wolf that fights beside them for a minute', async ({ page }) => {
+  test.setTimeout(120_000);
+  await arena(page);
+  const got = await page.evaluate(() => { const D = window.DreadDelve, h = D.newHero('Druid');
+    Object.assign(h, { name:'Vesna', lvl:3, calling:'mistwalker', path:'wolfkin' });
+    const t = D.applyCharacter(h); t.floor = 0;
+    const z = D.placeMonster('zombie', { floor:0, x:t.x + 4, y:t.y });
+    D.rollInitiative({ ids:[t.id, z.id] });
+    const r = t.resources.find(r => r.use === 'mech' && /Howl/.test(r.n));
+    const ok = D.useFeature(t, r.id);
+    const w = D.get().tokens.find(o => o.flags?.summon?.by === t.id), order = D.get().combat.order;
+    // a second call sends the first back
+    t.res[r.id] = 1; D.useFeature(t, r.id);
+    const count = D.get().tokens.filter(o => o.flags?.summon?.by === t.id).length, w2 = D.get().tokens.find(o => o.flags?.summon?.by === t.id);
+    return { ok, name:w?.name, kind:w?.kind, bid:w?.bid, hp:w?.hp, near:w && Math.max(Math.abs(w.x - t.x), Math.abs(w.y - t.y)) <= 2, after:order.indexOf(w2?.id) === order.indexOf(t.id) + 1, count, id:w2?.id, left:t.res[r.id] };
+  });
+  expect(got.ok).not.toBe(false);
+  expect(got).toMatchObject({ kind:'npc', bid:'wolf', hp:15, near:true, after:true, count:1, left:0 });
+  expect(got.name).toContain('Mist wolf');
+  await expect(page.locator('#cardLayer .pop', { hasText:'Mist wolf' }).first()).toBeVisible();
+  // its minute: ten rounds on, it goes at the next turn; and a fight's end sends any summon back
+  const gone = await page.evaluate(id => { const D = window.DreadDelve; D.get().combat.round += 10; D.nextTurn(); return !D.get().tokens.some(o => o.id === id); }, got.id);
+  expect(gone).toBe(true);
+});

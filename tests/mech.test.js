@@ -119,3 +119,17 @@ test('reactions: by what sets them off, when they hold', () => {
   assert.equal(mechReaction(ms, 'hit', {}), null);
   assert.equal(mechReaction(null, 'hit', {}), null);
 });
+
+test('a summon: an ally with the feature\'s hit points, striking at the caller\'s proficiency and best ability, used once a long rest', async () => {
+  const { summonToken, mechResources } = await import('../src/engine/mech.js');
+  const m = { k:'summon', what:'ghostlight', hp:'5*lvl', lasts:'1min', src:'Witness Lamp' };
+  const t = summonToken(m, { lvl:5, mods:{ int:4, dex:1 } }, { id:'h1', name:'Ilse', color:'#abc' });
+  assert.equal(t.kind, 'npc'); assert.equal(t.bid, 'will-o-wisp'); assert.equal(t.name, 'Ilse\'s Ghostlight');
+  assert.equal(t.hp, 25); assert.equal(t.maxHp, 25);
+  assert.equal(t.attacks[0].b, 3 + 4); assert.equal(t.attacks[0].d, '1d8+3');
+  assert.deepEqual(t.flags.summon, { by:'h1', src:'Witness Lamp', what:'ghostlight', lasts:'1min' });
+  assert.equal(summonToken({ k:'summon', what:'dragon' }, {}), null);
+  assert.equal(summonToken(null), null);
+  const [r] = mechResources([m], { lvl:5 });
+  assert.equal(r.use, 'mech'); assert.equal(r.max, 1); assert.equal(r.rest, 'long'); assert.match(r.text || '', /Ghostlight|ghostlight/);
+});

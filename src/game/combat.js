@@ -38,7 +38,7 @@ import { makeNoise } from './noise.js';
 import { nemesisDamage, nemesisHolds, nemesisRegen, nemesisFalls, nemesisSurvives } from './court.js';
 import { toPlayers } from './outbox.js';
 import { wardSoak, wardTurn, mechEdge, mechExtra, mechTempHp, tempSoak, tempGive } from '../engine/mech.js';
-import { mechCtx, firstHitNow, isSeep, mechsFor, anyMechs, reactNow, alliesNear, turnKey, autoLeft, payPrice } from './mechfx.js';
+import { mechCtx, firstHitNow, isSeep, mechsFor, anyMechs, reactNow, alliesNear, turnKey, autoLeft, payPrice, summoner, summonsDue } from './mechfx.js';
 import { amountOf } from '../engine/mech.js';
 import { startDying, deathSave, hurtWhileDown, healWhileDown, isDying, wordsFor } from '../engine/death-saves.js';
 /* 💀 DYING (ChatGPT's engine/death-saves.js): a hero who drops to 0 is down and dying (t.dying = { s, f, stable, dead });
@@ -248,6 +248,7 @@ function turnCard(t, phase){
   if (lines.length) showCard({ kind:'', title:`${phase === 'end' ? 'End' : 'Start'} of ${t.name}'s turn`, lines });
 }
 export function startTurn(){
+  dismissSummons();   // ⚙ a summon's minute (game/mechfx.js)
   const t = currentTurn(); if (!t) return;
   freshTurn(t);
   if (t.dead && isDying(t.dying)) deathSaveTurn(t);   // 💀
@@ -303,7 +304,7 @@ function endOfRound(){
 export function endCombat(){ if (recording()) fightEnds(false, { order:[...state.combat.order] });   // (a fight called off: its record goes)
  for (const t of state.combat.order.map(tokById)) if (t?.nem && !t.dead) nemesisSurvives(t);   // it beat them, or got away
   garrisonCalm(state.combat.floor ?? ui.floor);   // the site settles, warier (game/garrison.js)
-  clearOpportunities(); state.tokens.forEach(freshTurn); state.combat = { active:false, order:[], idx:0, round:1, floor:ui.floor }; log('Combat ends.'); clearReach(); const t = ui.selected && tokById(ui.selected); if (t) showReach(t); changed(); }
+  clearOpportunities(); state.tokens.forEach(freshTurn); state.combat = { active:false, order:[], idx:0, round:1, floor:ui.floor }; log('Combat ends.'); dismissSummons(); clearReach(); const t = ui.selected && tokById(ui.selected); if (t) showReach(t); changed(); }
 
 // A figure's swing, spell or flinch, on every screen (only forged figures move; the rest ignore it).
 function animate(id, kind, target, fx = null){ actOn(id, kind, target, fx); broadcast({ t:'act', id, kind, target, ...(fx ? { fx } : {}) }); }
@@ -829,6 +830,21 @@ export function infest(t, why, as = 'husk'){
   showCard({ kind:his ? '' : 'seep', title:his ? 'The dead are his' : 'The Seep takes the body', flair:why || `Grey-green threads stitch through what used to be ${base}. It stands.` });
   if (state.combat.active && state.combat.floor === t.floor) addToInit(t);
   syncTokens(); riseFrom(t); changed();
+}
+/* ⚙ A Calling's summon (game/mechfx.js runMech): it rises on the open square nearest its caller, and joins the fight
+   just after them; when its minute is up, or the fight it was called in ends, it goes back to what it came from */
+summoner.place = (tok, by) => {
+  const at = nearestOpen(by.floor, by.x, by.y); if (!at) return false;
+  Object.assign(tok, at, { floor:by.floor }); state.tokens.push(tok);
+  if (state.combat.active && by.floor === state.combat.floor && !state.combat.order.includes(tok.id)){
+    const i = state.combat.order.indexOf(by.id); tok.initRoll = by.initRoll ?? 0;
+    if (i >= 0) state.combat.order.splice(i + 1, 0, tok.id); else addToInit(tok); }
+  syncTokens(); riseFrom(tok); log(`${tok.name} answers ${by.name}'s call.`); changed();
+  return true;
+};
+summoner.remove = id => removeToken(id);
+export function dismissSummons(){
+  for (const o of summonsDue()){ burst(o.floor, o.x, o.y, BEST[o.bid]?.fam === 'seep' ? '#9cc23c' : '#cfe3ff'); log(`${o.name} is gone back to what it came from.`); removeToken(o.id); }
 }
 export function removeToken(id){
   const i = state.combat.order.indexOf(id);

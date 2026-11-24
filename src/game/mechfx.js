@@ -4,7 +4,8 @@
    hit points). game/rules.js and game/combat.js call in here; the Calling's data (ChatGPT's data/callings.js) gives
    the mechs (game/heroes.js applyMechs). */
 import { state } from '../engine/state.js';
-import { mechWard, mechResources, amountOf, seepCosts, tempGive, mechReaction } from '../engine/mech.js';
+import { mechWard, mechResources, amountOf, seepCosts, tempGive, mechReaction, summonToken } from '../engine/mech.js';
+import { uid } from '../util/core.js';
 
 const cheb = (a, b) => Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
 const side = t => t?.kind === 'monster' ? 'foe' : 'party';
@@ -84,6 +85,13 @@ export function runMech(t, m, target, heal){
   } else if (m.k === 'tempHp' && !/^invoked/i.test(String(m.when || ''))){
     const n = amountOf(m.amount || '1d6', ctx); t.thp = tempGive(t.thp, n);
     lines.push(`<b>${t.thp} temporary hit points</b>`);
+  } else if (m.k === 'summon'){   // ⚙ an ally for a minute, beside the one who called it (one at a time)
+    const s = summonToken(m, ctx, t); if (!s || !summoner.place) return null;
+    for (const o of (state?.tokens || []).filter(o => o.flags?.summon?.by === t.id)) summoner.remove?.(o.id);
+    const c = state?.combat, tok = { ...s, id:uid(), floor:t.floor, x:t.x, y:t.y };
+    tok.flags.summon.round = c?.active ? c.round || 1 : null; tok.flags.summon.at = Date.now();
+    if (!summoner.place(tok, t)) return null;
+    lines.push(`<b>${tok.name}</b> answers: ${tok.hp} HP, AC ${tok.ac}, ${tok.attacks[0].n} +${tok.attacks[0].b} (${tok.attacks[0].d} ${tok.attacks[0].t}). It stays a minute.`);
   } else if (/^invoked/i.test(String(m.when || ''))){   // invoked: it holds for a minute
     const c = state?.combat; (t.invoked ||= {})[m.src] = { round:c?.active ? c.round || 1 : null, at:Date.now() };
     lines.push(`Invoked for a minute: ${m.text || m.src}`);
@@ -109,6 +117,17 @@ export function autoLeft(t, k, when = null){
 }
 // A long rest gives back what the rot drained
 export function restoreDrain(t){ if (t?.seepDrain > 0){ t.maxHp += t.seepDrain; delete t.seepDrain; } }
+
+/* ⚙ Where a summon goes on the board (game/combat.js fills these in: placing a token there knows the map, the turn
+   order and the screen): place(tok, by) → true when it's down; remove(id) */
+export const summoner = { place:null, remove:null };
+// The summons whose minute is up: ten rounds in a fight, sixty seconds out of one (or the fight it was called in is over)
+export function summonsDue(){
+  const c = state?.combat;
+  return (state?.tokens || []).filter(o => { const s = o.flags?.summon; if (!s) return false;
+    if (c?.active) return s.round != null && (c.round || 1) - s.round >= 10;
+    return s.round != null || Date.now() - (s.at || 0) > 60000; });
+}
 
 /* ⚙ A reaction, once a round (game/combat.js asks at the moment it could fire): → { does, src } or null, marked used */
 export function reactNow(o, trigger, extra = {}){
