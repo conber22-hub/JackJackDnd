@@ -12,6 +12,8 @@
      · talk: a companion's own words and the pitch (a skill check the game rolls), or what one of the valley's folk says
      · travel and rest from the menu; it saves in its own slot (game/session.js), never over the DM's campaign
    The run lives in state.campaign.wander, so it saves and loads with everything else. */
+import { classLine, spellReading, rulesMode } from './calling.js';
+import { callingOf, featuresAt, callingForChassis } from '../engine/callings.js';
 import { paceOf } from '../engine/pace.js';
 import { gfx } from '../render/gfx.js';
 import { state, ui, tokById, tokenAt, makeMonster, makeNPC, log, newState } from '../engine/state.js';
@@ -171,6 +173,8 @@ export const sheetOf = () => state.characters[W().heroId];
 function companionSheet(c){
   const h = newHero(c.cls);
   Object.assign(h, { id:`cmp-${c.id}-${W().seed.slice(0, 6)}`, name:c.name, sp:c.sp, weapons:c.weapons, spells:c.spells, color:c.color, backstory:c.blurb, player:'Companion' });
+  // ⛨ under Dread Delve's own rules a companion stands in the Calling of their class (a Cleric is a Chaplain)
+  if (rulesMode() === 'dread'){ const K = callingForChassis(c.cls); if (K) h.calling = K.id; }
   return autoLevel(h, levelFor(W().xp));   // they come at the party's level
 }
 // Bring one over: a hero token where they stood, on the party's side.
@@ -387,7 +391,7 @@ export function levelUpHero(sheet = null){
   // ✦ the fanfare (Muse's ui/levelup.js): the new level, the hit points climbing, and what it brings
   const gains = levelGains(s, next);
   if (typeof document !== 'undefined') openLevelUp({ name:t.name, face:(() => { try { return faceOf(t); } catch { return null; } })(), from, to:next.lvl, hp:{ before:hpWas, after:t.maxHp }, gains });
-  else showCard({ kind:'', title:`${t.name} is level ${next.lvl}`, sub:t.cls, lines:[`${t.maxHp} HP`] }, false);
+  else showCard({ kind:'', title:`${t.name} is level ${next.lvl}`, sub:classLine(t), lines:[`${t.maxHp} HP`] }, false);
   achieve({ t:'level', n:+next.lvl });
   log(`🗡 ${t.name} reaches level ${next.lvl}.`); syncTokens(); changed(); saveNow(); return true;
 }
@@ -397,8 +401,14 @@ export const nextLevelXp = () => xpForNext(partyLevel());
 export function levelGains(was, now){
   const a = heroStats(was), b = heroStats(now), out = [];
   const strip = f => String(f).replace(/\s*\(\d+\)$/, '');
-  for (const f of b.features || []) if (!(a.features || []).includes(f)) out.push({ kind:'feature', name:strip(f), text:`From level ${String(f).match(/\((\d+)\)$/)?.[1] || now.lvl}.` });
-  const sa = new Set((was.spells || []).map(x => x.n || x)); for (const sp of now.spells || []){ const n = sp.n || sp; if (!sa.has(n)) out.push({ kind:'spell', name:n, text:'A new spell to cast.' }); }
+  const C = callingOf(now);
+  if (C){   // ⛨ a Calling's hero: its own features (and its Path's), as the sheet has them, never the chassis's D&D ones
+    const had = new Set(featuresAt({ calling:C.id, path:was.path, lvl:+was.lvl || 1 }).map(f => f.n));
+    for (const f of featuresAt({ calling:C.id, path:now.path, lvl:+now.lvl || 1 })) if (!had.has(f.n)) out.push({ kind:'feature', name:f.n, text:f.text || `From level ${f.lvl}.` });
+  } else for (const f of b.features || []) if (!(a.features || []).includes(f)) out.push({ kind:'feature', name:strip(f), text:`From level ${String(f).match(/\((\d+)\)$/)?.[1] || now.lvl}.` });
+  const sa = new Set((was.spells || []).map(x => x.n || x));
+  for (const sp of now.spells || []){ const n = sp.n || sp; if (sa.has(n)) continue;
+    const r = spellReading(n, now.calling); out.push({ kind:'spell', name:r?.n || n, text:r?.line || 'A new spell to cast.' }); }
   (b.slots || []).forEach((n, i) => { const o = (a.slots || [])[i] || 0; if (n > o) out.push({ kind:'slot', name:`Level ${i + 1} slot${n - o > 1 ? 's' : ''}`, text:`${n} in all (${n - o > 1 ? `${n - o} more` : 'one more'}).` }); });
   for (const k of Object.keys(b.sc || {})) if ((b.sc[k] || 0) > (a.sc?.[k] || 0)) out.push({ kind:'stat', name:`${k} ${b.sc[k]}`, text:`Up from ${a.sc[k]}.` });
   return out;

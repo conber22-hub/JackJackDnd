@@ -131,3 +131,18 @@ test('a Wolfkin Mistwalker calls a mist wolf that fights beside them for a minut
   const gone = await page.evaluate(id => { const D = window.DreadDelve; D.get().combat.round += 10; D.nextTurn(); return !D.get().tokens.some(o => o.id === id); }, got.id);
   expect(gone).toBe(true);
 });
+
+// ⛨ Levelling up a Calling's hero (game/wander.js levelGains, Muse's level-up screen): what it brings is the Calling's and
+// the Path's own features and spells by our names, never the chassis's D&D features
+test('a Calling\'s hero levelling up gains its own features, not the D&D class\'s', async ({ page }) => {
+  const g = await page.evaluate(() => { const D = window.DreadDelve, h = D.newHero('Fighter');
+    Object.assign(h, { name:'Brannoc', lvl:2, calling:'vanguard', path:'hoplite' });
+    const a = D.wander.levelGains(h, { ...h, lvl:3 }), c = D.wander.levelGains({ ...h, calling:null, path:null }, { ...h, calling:null, path:null, lvl:3 });
+    const w = D.newHero('Wizard'); Object.assign(w, { name:'Ilse', lvl:2, calling:'archivist' });
+    const s = D.wander.levelGains({ ...w, spells:[] }, { ...w, spells:['Magic Missile'] });
+    return { a:a.filter(x => x.kind === 'feature').map(x => x.name), c:c.filter(x => x.kind === 'feature').map(x => x.name), s:s.filter(x => x.kind === 'spell').map(x => x.name) }; });
+  expect(g.a).toContain('Shield Rim');
+  expect(g.a.join(' ')).not.toMatch(/Champion|Martial Archetype|Improved Critical/);
+  expect(g.c.length).toBeGreaterThan(0);                       // a classic hero still gets the class's
+  expect(g.s.length).toBe(1); expect(g.s[0]).not.toBe('Magic Missile');
+});

@@ -90,3 +90,13 @@ test('roadside choices: a skill check rolled for the hero, a 1 always fails, a 2
   for (const m of MOMENTS) for (const o of m.options){ assert.ok(o.ok?.text, `${m.id}/${o.k}`); if (o.check) assert.ok(heroStats(newHero('Rogue')).skills[o.check.skill] !== undefined, o.check.skill); if (o.ok.item) assert.ok(itemInfo(o.ok.item)); }
   const w = upgradeWander({ v:1 }); assert.deepEqual([w.quests, w.approval, w.moments], [[], {}, []]);
 });
+
+test('levelled by the game, a Calling\'s hero takes a Path at level 3, never the Seep-touched one', async () => {
+  const { autoLevel } = await import('../src/engine/wander-life.js');
+  const { newHero } = await import('../src/engine/hero.js');
+  const h = { ...newHero('Fighter'), calling:'vanguard', path:null, lvl:2 };
+  assert.equal(autoLevel(h, 3).path, 'hoplite');
+  assert.equal(autoLevel(h, 2).path, null);
+  assert.equal(autoLevel({ ...h, path:'hollowed' }, 4).path, 'hollowed');   // a chosen Path stays
+  assert.equal(autoLevel({ ...h, calling:null }, 3).path ?? null, null);
+});

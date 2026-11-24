@@ -9,6 +9,7 @@
      · approval: each companion likes some deeds and hates others; enough of it opens their own quest, too little
        and they walk away
      · roadside choices: a scene, two or three things to do (some a skill check the game rolls), and what comes of it */
+import { CALLINGS } from '../data/callings.js';
 import { CLASSES, SPELLS, MAX_LEVEL } from '../data/srd.js';
 import { asiLevels, spellPool, spellLimits, maxSpellLevel, arcanumLevels } from './hero.js';
 import { hoard } from './hoard.js';
@@ -35,6 +36,8 @@ const worth = s => (s.k === 'heal' ? 40 : 0) + (['save', 'auto', 'atk'].includes
 export function autoLevel(sheet, to = (+sheet.lvl || 1) + 1){
   const h = structuredClone(sheet);
   h.lvl = Math.max(+h.lvl || 1, Math.min(MAX_LEVEL, to));
+  // ⛨ a Calling's Path comes at level 3: the game's choice is the first that isn't Seep-touched (the rot is chosen, never given)
+  if (h.calling && !h.path && h.lvl >= 3) h.path = CALLINGS[h.calling]?.paths?.find(p => !p.seep)?.id || null;
   h.asi = { ...(h.asi || {}) };
   const main = mainAbility(h.cls);
   for (const l of asiLevels(h)){
