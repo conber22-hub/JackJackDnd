@@ -10,13 +10,15 @@
 
 const DEG = Math.PI / 180;
 export const CAM = { minPitch:24 * DEG, maxPitch:80 * DEG, minDist:6, maxDist:34 };
-// The views, nearest first. close: how the Wanderer begins (low behind the hero); over: down at the shoulder; high: the
-// whole fight from above.
+// The views, nearest first. behind: how the Wanderer begins, third person (low behind the hero, looking past them the
+// way they face: ui/followcam.js); close: higher, the ground round them; high: the whole fight from above.
 export const VIEWS = [
+  { k:'behind', label:'Behind', pitch:28 * DEG, dist:8 },
   { k:'close', label:'Close', pitch:51 * DEG, dist:13.5 },
-  { k:'over', label:'Over the shoulder', pitch:30 * DEG, dist:8.5 },
   { k:'high', label:'High', pitch:70 * DEG, dist:24 },
 ];
+// Where the Wanderer's camera starts, from what it looks at (behind, the hero facing north): [x, y, z]
+export const startOffset = () => fromOrbit({ yaw:0, pitch:VIEWS[0].pitch, dist:VIEWS[0].dist });
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 // [x, y, z] (the camera's place minus its target) → { yaw, pitch, dist }. yaw 0 looks north (the camera south of

@@ -128,3 +128,4 @@ export { heal, startTurn } from './game/combat.js';   // 💀 (the death saves' 
 export { openCreator } from './ui/creator.js';   // the hero creator (for poking and the specs)
 export { callingLines } from './engine/calling-voices.js';   // 🗣 a Calling's own lines (ChatGPT's data/calling-voices.js)
 export * as rot from './game/rot.js';   // ☣ the rot in play (Codex's engine/rot.js: the stages, the Chorus, the cures)
+export { heroFacing } from './ui/followcam.js';   // 🧭 the way the hero faces (the camera stands behind it)

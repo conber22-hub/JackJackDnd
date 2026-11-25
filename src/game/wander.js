@@ -12,6 +12,7 @@
      · talk: a companion's own words and the pitch (a skill check the game rolls), or what one of the valley's folk says
      · travel and rest from the menu; it saves in its own slot (game/session.js), never over the DM's campaign
    The run lives in state.campaign.wander, so it saves and loads with everything else. */
+import { startOffset } from '../engine/wander-cam.js';
 import { classLine, spellReading, rulesMode } from './calling.js';
 import { deathSaveOpen } from '../ui/deathsave.js';
 import { ovenCure } from './rot.js';
@@ -95,7 +96,7 @@ export function enterView(){
   ensureWays();   // (a place's ways out, with their signposts: game/ways.js)
   goFloor(h.floor, false);
   // low and close behind the hero (after the load's own camera move has finished)
-  const close = () => camTo(new THREE.Vector3(wx(h.x), floorY(h.floor), wz(h.y)), new THREE.Vector3(0, 10.5, 8.5), .8);
+  const close = () => camTo(new THREE.Vector3(wx(h.x), floorY(h.floor), wz(h.y)), new THREE.Vector3(...startOffset()), .8);
   close(); setTimeout(close, 1300);
 }
 export function startWander(sheet){
@@ -604,6 +605,8 @@ export const attacksLeft = () => { const t = hero(); return t && !rt.cast ? Math
 // The foes the hero can aim at, nearest first.
 export const targets = () => { const t = hero(); return t ? foes().filter(m => partySees(m)).sort((a, b) => cheb(a, t) - cheb(b, t)) : []; };
 export function aim(dir = 1){ const n = cycleTarget(targets(), rt.target, dir); rt.target = n?.id || null; return n; }
+// Face one foe in particular (a turn toward it: ui/followcam.js foeAhead)
+export function aimAt(id){ const m = tokById(id); if (m && targets().some(o => o.id === id)) rt.target = id; return target(); }
 export const target = () => { const m = rt.target && tokById(rt.target); return m && !m.dead && m.hp > 0 ? m : (aim(1), rt.target && tokById(rt.target)); };
 // Which of the hero's attacks would reach: the one they picked (Y), else a weapon in reach, else one that shoots that far.
 export function attackFor(t, tg){

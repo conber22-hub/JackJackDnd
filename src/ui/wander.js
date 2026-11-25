@@ -25,7 +25,7 @@ import { currentTurn } from '../game/combat.js';
 import { moveAllowance } from '../game/rules.js';
 import { rangeCheck } from '../engine/targeting.js';
 import { W, rt, hero, members, wandering, startWander, continueWander, leaveWander, stepHero, heroBusy, walkTo, hereAction, talkView, chooseTalk, talkTo,
-  heroAttack, heroDodge, heroShove, heroTurnAct, heroFeatures, heroFeature, endHeroTurn, aim, target, targets, attackFor, nextWeapon, attacksLeft, myTurn, fightTick, memorialSteps, destinations, setOut, travelTo, rest, saveNow,
+  heroAttack, heroDodge, heroShove, heroTurnAct, heroFeatures, heroFeature, endHeroTurn, aim, aimAt, target, targets, attackFor, nextWeapon, attacksLeft, myTurn, fightTick, memorialSteps, destinations, setOut, travelTo, rest, saveNow,
   pack, toggleEquip, usePotion, coinsGp, shopHere, buyPotion, journal, approvalOf, levelReady, partyLevel, nextLevelXp, levelUpHero, sheetOf, spellList, heroCast,
   SLOTS, slotMeta, canSaveSlot, saveToSlot, loadFromSlot, opening, economy, strikeOdds } from '../game/wander.js';
 import { setFightZone, clearFightFx, showMoveSquares, clearMoveSquares, showMarks, showOdds, showAreaSquares, clearAim, showHover, floatText, ringPulse, moveSquaresKey } from '../render/fightzone.js';
@@ -63,7 +63,7 @@ import { beastBook, trophyShelf } from '../game/record.js';
 import { faceOf } from '../game/night.js';
 import { makeMonster } from '../engine/state.js';
 import { gfx } from '../render/gfx.js';
-import { camTurn, camView, camCrane, camYaw, camFrame, miniFocus, lookThrough, closeLook, feelHits, camWide, camBack, camBeat } from './followcam.js';
+import { camTurn, camView, camCrane, camYaw, camFrame, miniFocus, lookThrough, closeLook, feelHits, camWide, camBack, camBeat, foeAhead } from './followcam.js';
 import { tune, coachTick, coachLearn, coachDone, coachHide } from './hhlife.js';
 import { openPocketSheet, pocketPress, pocketOpen, closePocketSheet } from './pocketsheet.js';
 import { toast } from './hud.js';
@@ -87,7 +87,7 @@ export function renderWanderStart(){
       <div class="nm">${esc(h.name || 'Unnamed')}</div><div class="meta">${esc(originLine(h))} ${esc(classLine(h))}</div>
       <div class="acts"><button class="btn small primary" data-act="wdBegin" data-id="${h.id}">Begin</button></div></div>`).join('')}
       <button class="th-hero new" data-act="wdNewHero"><b>+</b><span>Create a character</span></button></div>
-    <p class="muted wd-keys">🎮 A controller works in Chrome and Edge: plug it in and press a button. Or the keys: <b>WASD</b> or the arrows walk, <b>Space</b> does what the screen says (strike, talk, end your turn), <b>Esc</b> goes back, <b>F</b> opens your actions, <b>Tab</b> picks a target, <b>I</b> is your hero, <b>M</b> the menu, <b>[ ]</b> turn the camera. Or tap where to walk.</p>
+    <p class="muted wd-keys">🎮 A controller works in Chrome and Edge: plug it in and press a button. Or the keys: <b>WASD</b> or the arrows walk, <b>Space</b> does what the screen says (strike, talk, end your turn), <b>Esc</b> goes back, <b>F</b> opens your actions, <b>Tab</b> picks a target, <b>I</b> is your hero, <b>M</b> the menu, <b>[ ]</b> turn your hero where they stand (the camera stays behind them). Or tap where to walk.</p>
     <p class="muted wd-keys">🕹 On a phone with no controller, the phone becomes one: it is held like a pocket console, the world on its screen (the menu's Handheld page has the shells and a pixel screen).</p>`;
 }
 
@@ -160,7 +160,7 @@ export function renderHud(){
       <div class="wd-opts">${optList(items, menu.i, k => `data-act="wdPick" data-k="${k}"`)}</div>${optInfo(items[menu.i])}`); 
     keepInView('wdMenuBox'); }
 }
-const KEYS_HELP = 'Each button does one thing. Left stick, D-pad, WASD or the arrows: walk (Q E Z C for the diagonals), or move through a menu. Ⓐ / Space: do what the line on the screen says (talk, climb, look, end your turn), or choose; in a fight it opens the choice of what to strike with, each weapon with its bonus, damage and reach, and Ⓐ again strikes. Ⓑ / Esc: back, or put a card away. Ⓧ / F: Actions (each weapon, spells, Dash, Disengage, Dodge, features like Action Surge, a potion, End turn). Ⓨ / Tab: the next target. LB RB / [ ]: turn the camera; right stick or - = crane it; right stick click / V: the next view. View / I: your hero. ☰ Start / M: this menu. View + Start / K: the save states. Shortcuts: LT / G spells, RT / H a potion, left stick click / J the journal, N end your turn. Or tap where to walk.';
+const KEYS_HELP = 'Each button does one thing. Left stick, D-pad, WASD or the arrows: walk (Q E Z C for the diagonals), or move through a menu. Ⓐ / Space: do what the line on the screen says (talk, climb, look, end your turn), or choose; in a fight it opens the choice of what to strike with, each weapon with its bonus, damage and reach, and Ⓐ again strikes. Ⓑ / Esc: back, or put a card away. Ⓧ / F: Actions (each weapon, spells, Dash, Disengage, Dodge, features like Action Surge, a potion, End turn). Ⓨ / Tab: the next target. LB RB / [ ]: turn your hero where they stand, the camera behind them; right stick or - = crane it; right stick click / V: the next view. View / I: your hero. ☰ Start / M: this menu. View + Start / K: the save states. Shortcuts: LT / G spells, RT / H a potion, left stick click / J the journal, N end your turn. Or tap where to walk.';
 const PAGE_TITLE = { strike:'Strike', states:'Save states', load:'Load this one?', handheld:'Handheld & camera', main:'The valley waits', travel:'Set out for…', keys:'Controls', pack:'The pack', give:'Who drinks it?', journal:'The journal', level:'Level up', spells:'Spells', actions:'Actions' };
 // The words above a page's choices: { sub, html }
 function pageInfo(){
@@ -210,7 +210,7 @@ function menuItems(){
       { label:'Stickers…', sub:'Vinyl stickers on your own console', run:() => { closeMenu(); import('./shells.js').then(m => m.openStickerBook({})); } },
       { label:`Screen: ${hh.lcd ? 'Pixel' : 'Smooth'}`, sub:'Pixel: chunky pixels and lines, like an old handheld', run:() => setHandheld({ lcd:!hh.lcd }) },
       { label:`Full screen: ${hh.full ? 'On' : 'Off'}`, sub:'The first press fills the whole screen, where the phone allows it', run:() => setHandheld({ full:!hh.full }) },
-      { label:'Camera: the next view', sub:'Close · Over the shoulder · High', run:camView },
+      { label:'Camera: the next view', sub:'Behind · Close · High', run:camView },
       { label:`See through walls: ${hh.seeThru ? 'On' : 'Off'}`, sub:'What stands between the camera and your hero thins away', run:() => setHandheld({ seeThru:!hh.seeThru }) },
       { label:`Tips: ${hh.tips === false ? 'Off' : 'On'}`, sub:'A short hint now and then, at the right moment', run:() => setHandheld({ tips:hh.tips === false }) },
       { label:`Chip tunes: ${hh.chip === false ? 'Off' : 'On'}`, sub:'Its little jingles (with the sound effects on)', run:() => setHandheld({ chip:hh.chip === false }) },
@@ -307,7 +307,10 @@ function press(b){
   coachLearn({ a:state.combat.active && menu.page === 'strike' && menu.open ? 'strike' : null, lt:'cast', y:'aim', yprev:'aim', x:'actions', start:'menu', rs:'camera', turnl:'camera', turnr:'camera', lb:'camera', rb:'camera', back:'sheet', endturn:'endTurn' }[b]);
   if (b === 'states' || (b === 'start' && padHeld.back)){ openMenu('states'); return; }
   if (b === 'rs'){ camView(); return; }
-  if (b === 'turnl' || b === 'turnr' || b === 'lb' || b === 'rb'){ camTurn(b === 'turnl' || b === 'lb' ? 1 : -1); return; }   // (L and R: the camera, always)
+  if (b === 'turnl' || b === 'turnr' || b === 'lb' || b === 'rb'){   // (L and R: the hero turns where they stand, the camera behind them)
+    camTurn(b === 'turnl' || b === 'lb' ? 1 : -1);
+    if (state.combat.active){ const f = foeAhead(hero(), targets()); if (f && f.id !== target()?.id) aimAt(f.id); }   // (turned toward a foe: that's whom they face)
+    return; }
   if (b === 'in' || b === 'out'){ camCrane(b === 'in' ? -1 : 1); return; }
   if (menu.open){
     const items = menuItems();
@@ -542,7 +545,7 @@ function hhLegend(){
   return { a:{ label:'OK' }, b:{ label:'Back' }, x:{ b:'x', label:'Actions' }, y:{ b:'y', label:targets().length ? 'Target' : '' },
     select:{ label:'Hero' }, view:{ label:'Camera' }, start:{ label:'Menu' } };
 }
-const HH_HELP = 'Each button does one thing. D-pad: walk (slide your thumb round it for the diagonals), or move through a menu. A: do what the line on the screen says (talk, climb, look, end your turn), or choose; in a fight it opens the choice of what to strike with, and A again strikes. B: back, or put a card away. X: Actions: each weapon, spells, Dash, Disengage, Dodge, features like Action Surge, a potion, End turn. Y: the next target. L and R: turn the camera. Select: your hero. View: the next camera view. Start: this menu. Select and Start together: the save states. Touch works too: drag on the screen to turn the camera, pinch to zoom, tap to walk or pick a foe, tap any line of a menu.';
+const HH_HELP = 'Each button does one thing. D-pad: walk (slide your thumb round it for the diagonals), or move through a menu. A: do what the line on the screen says (talk, climb, look, end your turn), or choose; in a fight it opens the choice of what to strike with, and A again strikes. B: back, or put a card away. X: Actions: each weapon, spells, Dash, Disengage, Dodge, features like Action Surge, a potion, End turn. Y: the next target. L and R: turn your hero where they stand; the camera stays behind them. Select: your hero. View: the next camera view. Start: this menu. Select and Start together: the save states. Touch works too: drag on the screen to look round (the camera eases back behind your hero), pinch to zoom, tap to walk or pick a foe, tap any line of a menu.';
 let pending = null, padMem = {}, hhMem = {}, lastTick = 0, lastFrame = 0, glintAt = 0, musicAt = 0;
 const padHeld = { back:false };   // (Back held while Start goes down: the save states)
 // which way "up on the stick" walks: away from the camera; but in a list or a screen, up is up (the shoulder camera in

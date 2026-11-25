@@ -10,7 +10,7 @@
      · B: back, put a card away, let a foe go
      · X: the Actions menu: each attack, Spells…, Dash, Disengage, Dodge, Stand up, features (Action Surge gives the
        action back), Search, End turn
-     · Y: the next target. L / R: turn the camera. View: the next camera view
+     · Y: the next target. L / R: turn your hero (the camera stays behind them). View: the next camera view
      · Select: the hero's sheet (Muse's pocket sheet); Start: the menu
      · taps on the screen: a foe to aim at (again to strike), the hero for A, the ground to walk there; doors and
        objects as before
@@ -206,7 +206,7 @@ function putCardAway(){ const c = document.querySelector('#cardLayer .pop:last-c
 /* One button, one job (the same on the handheld, a controller and the keys):
      D-pad: walk, or move through a menu        A: do what the screen says (strike, end the turn, the stairs, a door…), or choose
      B: back, put away, let go                  X: the Actions menu (attacks, spells, Dash…, features, Search, End turn)
-     Y: the next target                          L / R: turn the camera
+     Y: the next target                          L / R: turn your hero
      Select: your hero's sheet                   Start: the menu                View: the next camera view */
 function press(b){
   if (!b || skipBoot()) return;
@@ -294,7 +294,7 @@ const openMenu = page => { menu.open = true; menu.page = page; menu.from = page;
 const go = page => () => { menu.page = page; menu.i = 0; };
 const back = { label:'Back', run:() => { if (menu.page === menu.from) menu.open = false; else { menu.page = 'main'; menu.i = 0; } } };
 const TITLE = { strike:'Strike', main:'At the table', spells:'Spells', actions:'Actions', handheld:'Handheld & camera', help:'How to play', allies:'On whom?', slot:'Which slot?' };
-const HELP = 'Each button does one thing. D-pad: walk a step a press (hold it to keep walking; up is away from the camera), or move through a menu. A: do what the line on the screen says (attack your target: the choice of what to strike with, then A again strikes; end your turn, take the stairs, open a door), or choose in a menu. B: back, or put a card away. X: Actions: your attacks, spells, Dash, Disengage, Dodge, features like Action Surge, Search, End turn. Y: the next target. L and R: turn the camera. Select: your hero\'s sheet. View: the next camera view. Start: this menu. Or touch the screen: a foe to aim (again: the choice of blow), the ground to walk, a door or a thing to use it, any line of a menu. The DM still decides everything, as before.';
+const HELP = 'Each button does one thing. D-pad: walk a step a press (hold it to keep walking; up is the way your hero faces), or move through a menu. A: do what the line on the screen says (attack your target: the choice of what to strike with, then A again strikes; end your turn, take the stairs, open a door), or choose in a menu. B: back, or put a card away. X: Actions: your attacks, spells, Dash, Disengage, Dodge, features like Action Surge, Search, End turn. Y: the next target. L and R: turn your hero where they stand; the camera stays behind them. Select: your hero\'s sheet. View: the next camera view. Start: this menu. Or touch the screen: a foe to aim (again: the choice of blow), the ground to walk, a door or a thing to use it, any line of a menu. The DM still decides everything, as before.';
 function menuItems(){
   const t = me(); if (!t) return [back];
   const turnOk = !fight() || myTurn();
@@ -336,7 +336,7 @@ function menuItems(){
       { label:`Screen: ${hh.lcd ? 'Pixel' : 'Smooth'}`, sub:'Pixel: chunky pixels and lines, like an old handheld', run:() => setHandheld({ lcd:!hh.lcd }) },
       { label:`Full screen: ${hh.full ? 'On' : 'Off'}`, sub:'The first press fills the whole screen, where the phone allows it', run:() => setHandheld({ full:!hh.full }) },
       { label:`See through walls: ${hh.seeThru ? 'On' : 'Off'}`, sub:'What stands between the camera and your hero thins away', run:() => setHandheld({ seeThru:!hh.seeThru }) },
-      { label:'Camera: the next view', sub:'Close · Over the shoulder · High', run:camView },
+      { label:'Camera: the next view', sub:'Behind · Close · High', run:camView },
       { label:`Tips: ${hh.tips === false ? 'Off' : 'On'}`, sub:'A short hint now and then, at the right moment', run:() => setHandheld({ tips:hh.tips === false }) },
       { label:`Chip tunes: ${hh.chip === false ? 'Off' : 'On'}`, sub:'Its little jingles (with the sound effects on)', run:() => setHandheld({ chip:hh.chip === false }) },
       { label:'The classic screen', sub:'The map with the panels, as before (the Hero tab has the way back)', run:() => { menu.open = false; setHandheld({ table:false }); toast('🕹 The classic screen. Your hero tab → 🕹 Handheld brings it back.'); } },

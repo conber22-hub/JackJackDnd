@@ -69,9 +69,13 @@ test.describe('on a phone', () => {
     await page.touchscreen.tap(sq.x, sq.y);
     await expect.poll(async () => { const h = await hero(page); return [h.x - h1.x, h.y - h1.y]; }, { timeout:10_000 }).toEqual([way[0] * 3, way[1] * 3]);
     // L turns the camera an eighth
-    const y0 = await yaw(page);
+    const y0 = await yaw(page), f0 = await page.evaluate(() => window.DreadDelve.heroFacing());
     await hold(page, 'l');
     await expect.poll(async () => Math.abs(Math.abs(((await yaw(page)) - y0 + 3 * Math.PI) % (2 * Math.PI) - Math.PI) - Math.PI / 4), { timeout:5000 }).toBeLessThan(.05);
+    // 🧭 L turned the hero an eighth where they stand, and the camera is behind them (third person: ui/followcam.js)
+    const f1 = await page.evaluate(() => window.DreadDelve.heroFacing());
+    expect(Math.abs(Math.abs(f1 - f0) - Math.PI / 4)).toBeLessThan(.01);
+    expect(Math.abs(((await yaw(page)) - (f1 + Math.PI) + 5 * Math.PI) % (2 * Math.PI) - Math.PI)).toBeLessThan(.05);
     // one button, one job: X is always Actions; Y (the next target) only shows with a foe in sight
     await expect(page.locator('.hh-lg.x')).toHaveText('Actions');
     await expect(page.locator('.hh-lg.y')).toHaveText('');

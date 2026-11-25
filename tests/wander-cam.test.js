@@ -1,13 +1,15 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { toOrbit, fromOrbit, clampOrbit, angleTo, snapTurn, crane, nextView, glide, dpadStick, skinWanted, VIEWS, CAM, SHELLS } from '../src/engine/wander-cam.js';
+import { toOrbit, fromOrbit, clampOrbit, angleTo, snapTurn, crane, nextView, glide, dpadStick, skinWanted, VIEWS, CAM, SHELLS, startOffset } from '../src/engine/wander-cam.js';
 import { keyIntent } from '../src/engine/pad.js';
 
 const near = (a, b, e = 1e-6) => assert.ok(Math.abs(a - b) < e, `${a} ≈ ${b}`);
 
-test('an orbit goes to an offset and back; the Wanderer\'s start is the close view', () => {
-  const o = toOrbit([0, 10.5, 8.5]);
-  near(o.yaw, 0); near(o.dist, Math.hypot(10.5, 8.5)); near(o.pitch, Math.atan2(10.5, 8.5));
+test('an orbit goes to an offset and back; the Wanderer\'s start is the view behind the hero', () => {
+  const s = startOffset(), o = toOrbit(s);
+  near(s[0], 0); assert.ok(s[2] > s[1], 'low behind: farther back than up');
+  near(o.yaw, 0); near(o.dist, Math.hypot(...s)); near(o.pitch, Math.atan2(s[1], s[2]));
+  assert.equal(VIEWS[0].k, 'behind');
   near(Math.abs(o.pitch - VIEWS[0].pitch), 0, .01); near(o.dist, VIEWS[0].dist, .01);
   for (const p of [[3, 4, -5], [-7, 2, 1], [0, 9, -9]]){ const back = fromOrbit(toOrbit(p)); p.forEach((v, i) => near(back[i], v)); }
   const c = clampOrbit({ yaw:1, pitch:0, dist:500 });

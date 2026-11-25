@@ -20,6 +20,26 @@ import { toast } from './hud.js';
 import * as THREE from 'three';
 
 const cam = { yaw:null, goal:null };
+/* 🧭 THE HERO'S FACING: the camera always stands behind the hero (third person), so every screen looks the same way.
+   The hero faces one of eight ways; L / R ([ ], a controller's shoulders) turn them an eighth where they stand, and the
+   camera swings round behind; up on the stick or the D-pad is always forward (camYaw). In a fight the shoulder shot
+   looks along it too: a foe they're turned toward is the one framed, and a new target turns them to face it. */
+const EIGHTH = Math.PI / 4, snap8 = a => Math.round(a / EIGHTH) * EIGHTH;
+const face = { id:null, a:null, subj:null, peek:0 };
+const figOf = id => tokenViews.get(id)?.group?.userData?.fig;
+function facingOf(me){
+  if (!me) return null;
+  if (face.id !== me.id || face.a === null){ face.id = me.id; face.subj = null;
+    const fig = figOf(me.id); face.a = snap8(fig?.rotation ? fig.rotation.y : rawYaw() - Math.PI); }
+  return face.a;
+}
+// The hero turned to face a way (radians, the figure's own: atan2(dx, dz)), snapped to an eighth; its figure turns too
+export function faceHero(me, a){ if (!me) return; face.id = me.id; face.a = snap8(a); const f = figOf(me.id); if (f) f.userData.faceTo = face.a; }
+export const heroFacing = () => face.a;
+// Is a token within reach of the way the hero faces (±67°)?
+export function facingToward(me, o){ if (!me || !o || face.a === null) return false; return Math.abs(angleTo(face.a, Math.atan2(o.x - me.x, o.y - me.y))) <= EIGHTH * 1.5; }
+// The nearest of `list` the hero is turned toward (for a turn in a fight to choose whom to face)
+export function foeAhead(me, list){ return (list || []).filter(o => facingToward(me, o)).sort((a, b) => Math.max(Math.abs(a.x - me.x), Math.abs(a.y - me.y)) - Math.max(Math.abs(b.x - me.x), Math.abs(b.y - me.y)))[0] || null; }
 const offset = () => camera.position.clone().sub(controls.target).toArray();
 /* ⚔ Over the shoulder (engine/wander-cam.js shoulderShot): in a fight, unless the player chose to look from above, the
    camera stands low behind the hero, off one shoulder, looking past them at what they face. L / R swap the shoulder;
@@ -35,7 +55,12 @@ function showHero(id){ if (hidden && hidden !== id){ const f = tokenViews.get(hi
 // 🎬 a big moment (a crit, a kill): over the shoulder, the camera pushes in for ms, then eases back (not with calm effects)
 export function camBeat(ms = 900, k = .3){ if (gfx.calm) return; sh.beat = { at:performance.now() + 300, ms, k }; }
 function leaveShoulder(label){ sh.on = false; sh.active = false; sh.eyes = false; showHero(null); const v = VIEWS.find(x => x.k === 'high'); cam.goal = { pitch:v.pitch, dist:v.dist }; toast(`🎥 ${label}`); }
-export function camTurn(dir){ if (sh.active){ sh.side = -sh.side; return; } cam.yaw = snapTurn(cam.yaw ?? toOrbit(offset()).yaw, dir); }
+// L / R: the hero turns an eighth where they stand (+1 to their left), and the camera comes round behind them
+export function camTurn(dir){
+  if (face.a === null){ cam.yaw = snapTurn(cam.yaw ?? toOrbit(offset()).yaw, dir); return; }
+  face.a = snap8(face.a + (dir > 0 ? 1 : -1) * EIGHTH); face.peek = 0;
+  const f = face.id && figOf(face.id); if (f) f.userData.faceTo = face.a;
+}
 export function camView(){
   if (sh.active && !sh.eyes){ sh.eyes = true; toast('🎥 Through their eyes'); return; }
   if (sh.active){ leaveShoulder('Above the fight'); return; }
@@ -53,7 +78,8 @@ export function camWide(radius){ const o = toOrbit(offset()), was = { pitch:cam.
   const w = clampOrbit({ yaw:o.yaw, pitch:Math.max(was.pitch, 52 * Math.PI / 180), dist:Math.max(was.dist * 1.3, radius * 2.2) }); cam.goal = { pitch:w.pitch, dist:w.dist }; }
 export function camBack(){ if (heldView){ cam.goal = heldView; heldView = null; } }
 // the camera's yaw: which way "up on the stick" walks
-export const camYaw = () => { const o = camera.position.clone().sub(controls.target); return Math.atan2(o.x, o.z); };
+const rawYaw = () => { const o = camera.position.clone().sub(controls.target); return Math.atan2(o.x, o.z); };
+export const camYaw = () => face.a !== null ? face.a + Math.PI : rawYaw();   // (behind the hero: "up" is the way they face)
 
 /* One frame. dt in seconds; pad: a controller (readPad) or null; focus: { x, y, z, rate } in the world (where to look);
    me / other: tokens: with another on the same floor within 10 squares, the camera frames the two (rate: how fast). */
@@ -77,8 +103,12 @@ export function camFrame(dt, pad, { focus = null, me = null, other = null, other
   const subj = fight && sh.on && me && fight.subject && fight.subject.floor === me.floor ? fight.subject : null;
   sh.active = !!subj; ui.shoulderOf = subj ? me.id : null; sh.subj = subj || null;
   showHero(subj && sh.eyes ? me.id : null);
+  if (me) facingOf(me);
+  if (subj && subj.id !== face.subj){ face.subj = subj.id; faceHero(me, Math.atan2(subj.x - me.x, subj.y - me.y)); }   // (a new target: turn to it)
+  if (!subj) face.subj = null;
   if (subj){
-    const a = miniFocus(me), b = miniFocus(subj), shot = sh.eyes ? eyesShot({ x:a.x, z:a.z }, { x:b.x, z:b.z })
+    // what's framed: the foe if they're turned toward it, else the ground ahead of them
+    const a = miniFocus(me), b = facingToward(me, subj) ? miniFocus(subj) : { x:a.x + Math.sin(face.a) * 4, y:a.y, z:a.z + Math.cos(face.a) * 4 }, shot = sh.eyes ? eyesShot({ x:a.x, z:a.z }, { x:b.x, z:b.z })
       : shoulderShot({ x:a.x, z:a.z }, { x:b.x, z:b.z }, { side:sh.side, room:roomBehind(me, a.x, a.z, b.x, b.z) });
     if (pad && Math.abs(pad.rx) > .2) sh.peek = Math.max(-1.3, Math.min(1.3, sh.peek - pad.rx * dt * 2.2)); else sh.peek *= 1 - glide(dt, 2.5);
     const k = glide(dt, 4.5), goalYaw = shot.orbit.yaw + sh.peek;
@@ -90,10 +120,14 @@ export function camFrame(dt, pad, { focus = null, me = null, other = null, other
     const t = controls.target, ly = a.y + shot.look.y, kt = glide(dt, 5);
     t.x += (shot.look.x - t.x) * kt; t.y += (ly - t.y) * kt; t.z += (shot.look.z - t.z) * kt;
     cam.yaw = null; cam.goal = null;
+    { const tv = tokenViews.get(me.id), f = tv?.group?.userData?.fig; if (f && !tv.anim && !f.userData.rig?.action && f.userData.faceTo !== face.a) f.userData.faceTo = face.a; }
     const [x, y, z] = fromOrbit(o); camera.position.set(t.x + x, t.y + y, t.z + z);
     return;
   }
-  if (pad && Math.abs(pad.rx) > .2){ o.yaw -= pad.rx * dt * 2.4; cam.yaw = null; }
+  // behind the hero, always (the right stick peeks round and eases back when let go)
+  if (pad && Math.abs(pad.rx) > .2) face.peek = Math.max(-1.6, Math.min(1.6, face.peek - pad.rx * dt * 2.4)); else face.peek *= 1 - glide(dt, 2.5);
+  if (me && facingOf(me) !== null){ cam.yaw = null; o.yaw += angleTo(o.yaw, face.a + Math.PI + face.peek) * glide(dt, 6);
+    const tv = tokenViews.get(me.id), f = tv?.group?.userData?.fig; if (f && !tv.anim && f.userData.faceTo !== face.a) f.userData.faceTo = face.a; }   // (standing: they face their way again)
   if (pad && Math.abs(pad.ry) > .25){ o = crane(o, pad.ry * dt * 3.2); cam.goal = null; }
   if (cam.yaw !== null){ const d = angleTo(o.yaw, cam.yaw); if (Math.abs(d) < .003){ o.yaw = cam.yaw; cam.yaw = null; } else o.yaw += d * glide(dt, 9); }
   if (cam.goal){ const k = glide(dt, 6); o.pitch += (cam.goal.pitch - o.pitch) * k; o.dist += (cam.goal.dist - o.dist) * k;
@@ -102,6 +136,7 @@ export function camFrame(dt, pad, { focus = null, me = null, other = null, other
   let f = focus;
   if (me && other && other.floor === me.floor && !other.flags?.gone && Math.max(Math.abs(other.x - me.x), Math.abs(other.y - me.y)) <= 10)
     f = { x:(wx(me.x) + wx(other.x)) / 2, y:floorY(me.floor), z:(wz(me.y) + wz(other.y)) / 2, rate:otherRate };
+  if (f && f === focus && me && face.a !== null) f = { ...f, x:f.x + Math.sin(face.a) * 1.3, y:f.y + .45, z:f.z + Math.cos(face.a) * 1.3 };   // (third person: a little ahead of them, so the way on shows)
   if (f){ const k = glide(dt, f.rate || 7), t = controls.target; t.x += (f.x - t.x) * k; t.y += (f.y - t.y) * k; t.z += (f.z - t.z) * k; }
   const [x, y, z] = fromOrbit(o); camera.position.set(controls.target.x + x, controls.target.y + y, controls.target.z + z);
 }
