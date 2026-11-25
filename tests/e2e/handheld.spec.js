@@ -64,10 +64,11 @@ test.describe('on a phone', () => {
     // (three open squares straight on, nobody on them: the D-pad may have walked the hero up to a wall)
     const way = await page.evaluate(() => { const D = window.DreadDelve, h = D.wander.hero(), f = D.get().floors[h.floor];
       const free = (x, y) => !D.get().tokens.some(t => t !== h && t.floor === h.floor && t.x === x && t.y === y) && !(f.folk || []).some(p => Math.abs(p.x - x) < 1.5 && Math.abs(p.y - y) < 1.5);
-      return [[0, 1], [0, -1], [1, 0], [-1, 0]].find(([dx, dy]) => [0, 1, 2].every(k => D.canStep(f, h.x + dx * k, h.y + dy * k, dx, dy) && free(h.x + dx * (k + 1), h.y + dy * (k + 1)))) || [0, 1]; });
+      const fa = D.heroFacing(), ahead = [Math.round(Math.sin(fa)) + 0, Math.round(Math.cos(fa)) + 0];   // (ahead first: the camera is behind them, and the ground behind is under it)
+      return [ahead, [ahead[1], -ahead[0]], [-ahead[1], ahead[0]]].find(([dx, dy]) => [0, 1, 2].every(k => D.canStep(f, h.x + dx * k, h.y + dy * k, dx, dy) && free(h.x + dx * (k + 1), h.y + dy * (k + 1)))) || ahead; });
     const h1 = await hero(page), sq = await spot(page, way[0] * 3, way[1] * 3);
     await page.touchscreen.tap(sq.x, sq.y);
-    await expect.poll(async () => { const h = await hero(page); return [h.x - h1.x, h.y - h1.y]; }, { timeout:10_000 }).toEqual([way[0] * 3, way[1] * 3]);
+    await expect.poll(async () => { const h = await hero(page); return [h.x - h1.x, h.y - h1.y]; }, { timeout:10_000 }).toEqual([way[0] * 3 + 0, way[1] * 3 + 0]);
     // L turns the camera an eighth
     const y0 = await yaw(page), f0 = await page.evaluate(() => window.DreadDelve.heroFacing());
     await hold(page, 'l');

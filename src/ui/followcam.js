@@ -30,7 +30,7 @@ const figOf = id => tokenViews.get(id)?.group?.userData?.fig;
 function facingOf(me){
   if (!me) return null;
   if (face.id !== me.id || face.a === null){ face.id = me.id; face.subj = null;
-    const fig = figOf(me.id); face.a = snap8(fig?.rotation ? fig.rotation.y : rawYaw() - Math.PI); }
+    face.a = snap8(rawYaw() - Math.PI); const fig = figOf(me.id); if (fig) fig.userData.faceTo = face.a; }   // (they face away from where the camera is: no swing to begin with)
   return face.a;
 }
 // The hero turned to face a way (radians, the figure's own: atan2(dx, dz)), snapped to an eighth; its figure turns too
