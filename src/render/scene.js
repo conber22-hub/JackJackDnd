@@ -84,16 +84,23 @@ export const fx = { shake:0 };
    Normally the whole window. The Wanderer's handheld skin (ui/handheld.js) draws it into its screen instead, and may ask
    for chunky pixels (px < 1, the look of an old handheld's screen). Everything that sizes itself to the picture (the
    effects in render/post.js, taps in ui/input.js) asks viewSize() rather than the window. */
-export const view = { rect:null, px:1, base:Math.min(devicePixelRatio, 2) };
+export const view = { rect:null, px:1, base:Math.min(devicePixelRatio, 2), lift:0 };
 export const viewSize = () => view.rect ? { ...view.rect } : { x:0, y:0, w:innerWidth, h:innerHeight };
 export function applyView(){
   const v = viewSize(), st = $('#stage');
   camera.aspect = v.w / Math.max(1, v.h); camera.updateProjectionMatrix();
+  if (view.lift) camera.setViewOffset(v.w, v.h, 0, view.lift, v.w, v.h);
   renderer.setPixelRatio(view.base * view.px);
   renderer.setSize(v.w, v.h);
   if (st) Object.assign(st.style, view.rect ? { left:`${v.x}px`, top:`${v.y}px`, width:`${v.w}px`, height:`${v.h}px`, right:'auto', bottom:'auto' } : { left:'', top:'', width:'', height:'', right:'', bottom:'' });
   renderer.domElement.classList.toggle('chunky', view.px < 1);
   dispatchEvent(new Event('dd-view'));
+}
+/* Lift the picture (px, up): when a panel covers the bottom of the view (the Wanderer's fight bar on a phone held on its
+   side), the middle of the picture moves up into the clear part; taps and projections follow it (it's the camera's own) */
+export function setViewLift(px){
+  px = Math.max(0, Math.round(px)); if (px === view.lift) return; view.lift = px;
+  const v = viewSize(); if (px) camera.setViewOffset(v.w, v.h, 0, px, v.w, v.h); else camera.clearViewOffset();
 }
 // rect: { x, y, w, h } in page pixels, or null for the whole window. px: how finely (1 = the device's own).
 export function setViewRect(rect, px = 1){

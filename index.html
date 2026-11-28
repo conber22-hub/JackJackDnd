@@ -842,7 +842,7 @@ body.hh-table.hh-sheet #panel{display:flex !important;position:fixed;inset:max(8
 #wdBanner i{display:block;margin-top:5px;font:italic 13px/1.35 "Cormorant Garamond",Georgia,serif;color:#d9c7a6}
 body.hh-lcd #wdBanner b{font-family:"Pixelify Sans","Cormorant Garamond",monospace}
 /* the coach's tip (ui/hhlife.js), a line on the handheld's screen; the reaction prompt (ui/tablehh.js) */
-#hhTip{position:fixed;z-index:44;left:calc(var(--hh-scr-x, 8px) + 8px);width:calc(var(--hh-scr-w, 100vw) - 16px);top:calc(var(--hh-scr-y, 8px) + 46px);box-sizing:border-box;padding:6px 10px;border-radius:10px;
+#hhTip{position:fixed;z-index:44;left:calc(var(--hh-scr-x, 8px) + 8px);width:calc(var(--hh-scr-w, 100vw) - 150px);top:calc(var(--hh-scr-y, 8px) + 46px);box-sizing:border-box;padding:6px 10px;border-radius:10px;
   background:rgba(14,10,14,.86);border:1px solid var(--gold-line);color:#f0d6a8;font:13px/1.35 "Cormorant Garamond",Georgia,serif;box-shadow:0 6px 18px rgba(0,0,0,.5);animation:hhtip .3s ease-out;cursor:pointer}
 #hhTip.hidden{display:none}
 body:not(.hh) #hhTip{left:0;right:0;margin:0 auto;width:fit-content;max-width:min(560px,calc(100vw - 32px));top:96px;text-align:center}
@@ -865,6 +865,9 @@ body.hh .wd-hp{min-width:44px;height:5px}
 body.hh .wd-prompt{bottom:6px}
 body.hh .wd-act{font-size:12px;padding:5px 11px;gap:5px}
 body.hh .wd-fight{width:calc(100% - 10px);bottom:5px;padding:5px 8px;border-radius:11px;gap:3px}
+body.hh:not(.hh-subon) .wd-fight .os-nm,body.hh:not(.hh-subon) .wd-fight .os-next{display:none}body.hh:not(.hh-subon) .wd-fight .wd-order{margin-bottom:-2px}
+body.hh:not(.hh-subon) .wd-tc{height:32px}body.hh:not(.hh-subon) .wd-tc .tc-card{padding:2px 8px;gap:7px}body.hh:not(.hh-subon) .wd-tc .tc-face{width:26px;height:26px}
+#yourTurn{transition:none}body.hh #yourTurn{left:var(--hh-scr-x,0);right:auto;width:var(--hh-scr-w,100%);top:calc(var(--hh-scr-y,0px) + 18%)}
 body.hh .wd-order{font-size:9px;gap:3px}body.hh .wd-order span{padding:0 6px}
 body.hh .wd-fl{font-size:11px;gap:5px}body.hh .wd-pips{gap:3px}body.hh .wd-pips .pip{font-size:8px;padding:1px 5px 1px 4px;gap:2px}body.hh .wd-pips .pip b{font-size:7px}body.hh .wd-edge{font-size:9px}body.hh .wd-fl .wd-hp{width:60px}
 body.hh .wd-acts{gap:4px}body.hh .wd-acts .wd-act{font-size:10px;padding:3px 8px}

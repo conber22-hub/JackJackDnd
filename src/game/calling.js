@@ -5,12 +5,15 @@
      · classLine(hero or token): what the hero is, for the screens ("Vanguard · Hoplite 3", or "Fighter 3")
      · rulesMode(): 'dread' (the Callings) or 'classic' (the D&D classes), this device's choice in the creator */
 import { callingOf, pathOf, featuresAt, featureView } from '../engine/callings.js';
-import { originView } from '../engine/origins.js';
+import { originView, originList } from '../engine/origins.js';
 import { applyMechs } from './mechfx.js';
 import { riteName, riteLine, tradition } from '../engine/rites.js';
 import { SRD_SPELLS } from '../data/srd-spells.js';
 
 const RKEY = 'dreaddelve.rules.v1';
+// The d20 core's own words a Calling's hero sees in ours (the rule underneath unchanged)
+export const OUR_WORDS = { 'Heroic Inspiration':'A Second Chance' };
+export const ourWords = s => String(s ?? '').replace(/Heroic Inspiration/g, OUR_WORDS['Heroic Inspiration']);
 export function rulesMode(){ try { return localStorage.getItem(RKEY) === 'classic' ? 'classic' : 'dread'; } catch { return 'dread'; } }
 export function setRulesMode(m){ try { localStorage.setItem(RKEY, m === 'classic' ? 'classic' : 'dread'); } catch {} }
 
@@ -27,6 +30,7 @@ export function applyCalling(t, sheet){
   // the chassis's features you use (Second Wind, Rage…) in our words
   for (const r of t.resources || []){
     if (r.use === 'mech' || r.slot) continue;
+    if (r.id === 'heroic' && r.n === 'Heroic Inspiration'){ r.dd = r.n; r.n = OUR_WORDS['Heroic Inspiration']; continue; }   // (the d20's own luck, in our words)
     const v = featureView(C.id, r.dd || r.n);
     if (v?.n && v.n !== (r.dd || r.n)){ r.dd ||= r.n; r.n = v.n; if (v.text) r.text = v.text; }
   }
@@ -45,7 +49,14 @@ export function classLine(x){
   return `${C.name}${P ? ` · ${P.name}` : ''} ${lvlOf(x)}`;
 }
 // "Drawn (far-future)" for an Origin's hero, else the D&D species
-export const originLine = h => (h?.origin && originView(h.origin)?.name) || h?.sp || '';
+// (a Calling's hero with no Origin set, a companion or an older save, is named by the Origin that stands on their species)
+const ERA_ORIGIN = { 'far-future':'drawn-future', ancient:'drawn-ancient', medieval:'drawn-medieval' };
+function originFor(h){
+  const C = callingOf(h); if (!C) return null;
+  const same = originList().filter(o => o.like === h.sp), want = ERA_ORIGIN[C.era];
+  return same.find(o => o.id === want) || (C.era === 'barovian' ? same.find(o => !o.id.startsWith('drawn-')) : null) || same[0] || null;
+}
+export const originLine = h => (h?.origin && originView(h.origin)?.name) || originFor(h)?.name || h?.sp || '';
 
 /* ✦ A spell as a Calling's hero knows it (ChatGPT's engine/rites.js): its own tradition's name and line (an Archivist's
    Protocol, a Chaplain's Rite…), else the tradition of a class that casts it (a Vanguard's borrowed spell is read as

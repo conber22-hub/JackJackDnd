@@ -12,7 +12,7 @@ import { heroLook, sheetLook } from '../engine/look.js';
 import { creatorGear } from '../engine/gear.js';
 import { callingOf, callingForChassis, pathOf, featuresAt } from '../engine/callings.js';
 import { originList, originView, backList, backView, featView, asClassic } from '../engine/origins.js';
-import { rulesMode, setRulesMode, classLine, spellWord, spellReading } from '../game/calling.js';
+import { rulesMode, setRulesMode, classLine, spellWord, spellReading, ourWords } from '../game/calling.js';
 import { tradition } from '../engine/rites.js';
 import { openCallingPicker, closeCallingPicker } from './callingpicker.js';
 import { emblemSvg } from './emblems.js';
@@ -46,8 +46,8 @@ function dreadWords(h, st){
   const feats = featuresAt({ calling:K.id, path:h.path, lvl:st.L });
   return { head:`${o?.name || h.sp} · ${classLine({ ...h, lvl:st.L })}${b ? ` · ${b.name}` : ''}`,
     features:feats.map(f => `${f.n} (${f.lvl})`),
-    note:[...(o?.traits || []).map(t => `${t.n}: ${t.text}`), ft ? `Origin feat: ${ft.name}.` : ''].filter(Boolean).join(' · '),
-    read:[...feats.map(f => [f.n, f.text]), ...(o?.traits || []).map(t => [t.n, t.text]), ...(ft ? [[ft.name, ft.text]] : [])].filter(([, t]) => t) };
+    note:[...(o?.traits || []).map(t => `${t.n}: ${ourWords(t.text)}`), ft ? `Origin feat: ${ft.name}.` : ''].filter(Boolean).join(' · '),
+    read:[...feats.map(f => [f.n, f.text]), ...(o?.traits || []).map(t => [t.n, ourWords(t.text)]), ...(ft ? [[ft.name, ourWords(ft.text)]] : [])].filter(([, t]) => t) };
 }
 export function sheetHTML(h){
   const st = heroStats(h), atks = heroAttacks(h, st), sps = heroSpells(h, st), dw = dreadWords(h, st);
@@ -159,7 +159,7 @@ function render(){
     ${dread ? '' : `<div class="muted">${L >= 3 || st.sub ? `Subclass: <b>${esc(st.sub || C.sub)}</b>` : `Subclass at level 3: ${esc(h.sub && subs?.[h.sub] ? h.sub : C.sub)}`} · d${C.hd} hit die · saves ${C.sv.join(', ')}${C.cast ? ` · casts with ${C.cast}` : ''}</div>`}
     ${dread ? (() => { const o = originView(h.origin), ok = o?.opts ? Object.keys(o.opts)[0] : null;
       return `<div class="grid2"><label>Origin${sel('origin', originList().map(x => [x.id, `${x.group === 'drawn' ? 'The Drawn: ' : x.group === 'barovian' ? 'Barovian: ' : ''}${x.name}`]), h.origin)}</label>${ok ? `<label>${esc(ok)}${sel('originOpt', o.opts[ok], h.originOpt || o.opts[ok][0])}</label>` : '<span></span>'}</div>
-      <div class="muted">${o ? `${esc(o.blurb)} · ${o.traits.map(t => `<b>${esc(t.n)}</b>: ${esc(t.text)}`).join(' · ')}` : ''}</div>`; })() : ''}
+      <div class="muted">${o ? `${esc(o.blurb)} · ${o.traits.map(t => `<b>${esc(t.n)}</b>: ${esc(ourWords(t.text))}`).join(' · ')}` : ''}</div>`; })() : ''}
     ${dread ? '' : `<div class="grid2"><label>Species${selLib('sp', SPECIES, h.sp)}</label>${spOptKey ? `<label>${esc(spOptKey)}${sel('spOpt', spOpts[spOptKey], h.spOpt || spOpts[spOptKey][0])}</label>` : '<span></span>'}</div>
     <div class="muted">${esc([spc.note, spc.subs?.[h.spOpt]?.note].filter(Boolean).join(' · '))}${spc.lib ? ` <i>(${esc(spc.src)})</i>` : ''}</div>`}
     <div class="grid3"><label>Background${dread ? sel('back', backList().map(b => [b.id, b.name]), h.back) : selLib('bg', BACKGROUNDS, h.bg)}</label><label>+2 to${sel('bg2', bg.ab, h.bg2)}</label><label>+1 to${sel('bg1', bg.ab.filter(a => a !== h.bg2), h.bg1)}</label></div>

@@ -38,7 +38,7 @@ import { reach, pathTo } from '../engine/grid.js';
 import { bus, signed } from '../util/core.js';
 import { optList, optInfo, tag } from './optrow.js';
 import { attackBits, spellBits, actBits, featBits } from './actrows.js';
-import { wx, wz, floorY } from '../render/scene.js';
+import { wx, wz, floorY, setViewLift } from '../render/scene.js';
 import { passage, tapTarget } from '../game/ways.js';
 import { veil, banner } from './passage.js';
 import { glintsSeen, pagesFound } from '../game/finds.js';
@@ -507,6 +507,10 @@ function wanderCam(dt, pad){
   // a foe on its turn, or the one aimed at (ui/followcam.js)
   const subject = state.combat.active && !op && h && !h.dead ? (lk || (ct && ct.kind === 'monster' ? ct : target())) : null;
   camFrame(dt, pad, { focus, me:h, other:op ? null : lk || (ct && ct.id !== h?.id ? ct : null), otherRate:lk ? 4 : 3, fight:state.combat.active && !op ? { subject } : null });
+  // the fight bar over the bottom of a phone held on its side: the picture lifts so the hero and their foe stand clear of it
+  { const B = document.body, bar = B.classList.contains('hh') && !B.classList.contains('hh-subon') && state.combat.active ? $('#wdFight') : null;
+    const want = bar && !bar.classList.contains('hidden') ? bar.getBoundingClientRect().height * .5 : 0;
+    liftNow += (want - liftNow) * Math.min(1, dt * 6); if (Math.abs(want - liftNow) < .5) liftNow = want; setViewLift(liftNow); }
 }
 /* 👣 Each step the party takes: what it leaves (a puff, a splash, a print, a rustle: render/stepfx.js) and, for the hero,
    what it sounds like; a bump into a wall is heard too. */
@@ -550,6 +554,7 @@ let pending = null, padMem = {}, hhMem = {}, lastTick = 0, lastFrame = 0, glintA
 const padHeld = { back:false };   // (Back held while Start goes down: the save states)
 // which way "up on the stick" walks: away from the camera; but in a list or a screen, up is up (the shoulder camera in
 // a fight can stand at any angle)
+let liftNow = 0;
 const yaw = () => menu.open || talkView() || pocketOpen() || victoryOpen() || defeatOpen() || levelUpOpen() || bestiaryOpen() || trophiesOpen() ? 0 : camYaw();
 let hudOn = false, xpShown = 0;
 export const xpFloatsShown = () => xpShown;   // (for the tests: the "+N XP" shown over the fallen)
