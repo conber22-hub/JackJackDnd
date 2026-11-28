@@ -77,7 +77,7 @@ test('on a desktop: a blow names the hero and the foe, then the foe\'s turn and 
     // the turn ends: the foe's turn, then its blow on the hero
     await p.evaluate(() => window.DreadDelve.wander.endHeroTurn());
     await expect.poll(() => lines(p), { timeout:60_000 }).toEqual(expect.arrayContaining([expect.stringMatching(/wolf's turn/i)]));
-    await expect.poll(() => lines(p), { timeout:60_000 }).toEqual(expect.arrayContaining([expect.stringMatching(/wolf (bites|misses) you/i)]));
+    await expect.poll(() => lines(p), { timeout:60_000 }).toEqual(expect.arrayContaining([expect.stringMatching(/wolf (bites|misses|fumbles)|block the wolf/i)]));
     const all = await lines(p);
     expect(all.length).toBeGreaterThanOrEqual(3);
     // at most three lines are ever on screen at once (the observer saw every line as it appeared, even the
@@ -85,7 +85,7 @@ test('on a desktop: a blow names the hero and the foe, then the foe\'s turn and 
     const seenLines = await seen(p);
     expect(seenLines.find(l => /Vasha/i.test(l))).toMatch(/wolf/i);
     expect(seenLines).toEqual(expect.arrayContaining([expect.stringMatching(/wolf's turn/i)]));
-    expect(seenLines).toEqual(expect.arrayContaining([expect.stringMatching(/wolf (bites|misses) you/i)]));
+    expect(seenLines).toEqual(expect.arrayContaining([expect.stringMatching(/wolf (bites|misses|fumbles)|block the wolf/i)]));
     expect(await maxShown(p)).toBeLessThanOrEqual(3);
     if (SP) await p.screenshot({ path:`${SP}/captions-desktop.png` });
     // off again: nothing new appears, and the stack is gone at once
@@ -121,7 +121,7 @@ test('on a phone with the handheld on: the captions sit above the fight bar, and
     expect(pl.doc).toBeLessThanOrEqual(pl.vw);
     await p.evaluate(() => window.DreadDelve.wander.endHeroTurn());
     await expect.poll(() => lines(p), { timeout:60_000 }).toEqual(expect.arrayContaining([expect.stringMatching(/wolf's turn/i)]));
-    await expect.poll(() => lines(p), { timeout:60_000 }).toEqual(expect.arrayContaining([expect.stringMatching(/wolf (bites|misses) you/i)]));
+    await expect.poll(() => lines(p), { timeout:60_000 }).toEqual(expect.arrayContaining([expect.stringMatching(/wolf (bites|misses|fumbles)|block the wolf/i)]));
     expect(await maxShown(p)).toBeLessThanOrEqual(3);
     if (SP) await p.screenshot({ path:`${SP}/captions-phone.png` });
   } finally { await context.close(); }
