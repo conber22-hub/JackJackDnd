@@ -2,7 +2,7 @@ export const ACHIEVEMENTS = [
   {
     "id": "first-blood",
     "name": "First Blood",
-    "text": "Defeat 1 foes with party killing blows.",
+    "text": "Defeat a foe with a party killing blow.",
     "icon": "⚔",
     "tier": "bronze",
     "hidden": false,

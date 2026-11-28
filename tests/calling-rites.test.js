@@ -27,3 +27,13 @@ test('a Calling\'s hero knows each spell by its tradition\'s name, and the rules
   riteSpells(t, null);
   assert.deepEqual([t.casts[0].n, t.casts[0].sn, t.attacks[0].n, t.attacks[0].sn, t.attacks[2].n, t.attacks[2].sn], ['Magic Missile', undefined, 'Fire Bolt (×2)', undefined, 'Witch Bolt', 'Witch Bolt']);
 });
+
+test('a Calling\'s hero with no Origin set is named by the one that suits their age; the d20\'s luck in our words', async () => {
+  const { originLine, ourWords, applyCalling } = await import('../src/game/calling.js');
+  assert.equal(originLine({ calling:'seepbound', sp:'Human' }), 'Hearth Child');       // (Barovian-born)
+  assert.equal(originLine({ calling:'vanguard', sp:'Human' }), 'Bronze at Dawn');      // (the first Drawn that stands on Human)
+  assert.equal(originLine({ sp:'Human' }), 'Human');                                  // a classic hero keeps the species
+  assert.equal(ourWords('Finish a long rest with Heroic Inspiration.'), 'Finish a long rest with A Second Chance.');
+  const t = applyCalling({ resources:[{ id:'heroic', n:'Heroic Inspiration', max:1 }], res:{ heroic:1 } }, { calling:'huscarl', cls:'Fighter', lvl:1 });
+  assert.equal(t.resources[0].n, 'A Second Chance'); assert.equal(t.resources[0].dd, 'Heroic Inspiration');
+});
