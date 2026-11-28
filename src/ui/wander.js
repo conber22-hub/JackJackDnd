@@ -264,7 +264,7 @@ function menuItems(){
     ...(levelReady() ? [{ icon:'⬆', label:`Level up to ${partyLevel()}`, sub:'New hit points, and choices', off:fight, run:go('level') }] : []),
     { icon:'🧭', label:'Travel…', sub:road ? 'You are on the road already' : fight ? 'Not in a fight' : 'Take a road out of here', off:road || fight, run:go('travel') },
     { icon:'☾', label:road ? 'Rest an hour' : 'Rest the night', sub:fight ? 'Not in a fight' : road ? 'A short rest by the road (something may find you)' : 'Everyone whole again by morning', off:fight, run:() => { closeMenu(); rest(); } },
-    { icon:'🎒', label:'The pack', sub:`${coinsGp()} gp · ${pack().length} things`, run:go('pack') },
+    { icon:'🎒', label:'The pack', sub:`${coinsGp()} gp · ${pack().length} thing${pack().length === 1 ? "" : "s"}`, run:go('pack') },
     { icon:'📜', label:'The journal', sub:'Quests, and what your companions think', run:go('journal') },
     { icon:'👤', label:'Your hero', sub:'Your sheet, a page at a time (Select)', run:() => { closeMenu(); openHero(); } },
     { icon:'📕', label:'The bestiary', sub:(() => { const b = beastBook(); return `${b.seen} of ${b.of} seen · ${b.mastered} known well`; })(), run:() => { closeMenu(); openBeasts(); } },
