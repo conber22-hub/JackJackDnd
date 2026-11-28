@@ -29,3 +29,16 @@ Change exactly one file, `src/data/callings.js`, plus a short report `docs/chatg
 - Plain data only; the shapes of `mech` stay exactly as `src/engine/mech.js` reads them (its tests and the data's tests must pass: `npm test`).
 - **All original.** Nothing that belongs to the Halo games. Respectful: this is a memorial.
 - Don't edit any other source file.
+
+## Update: the casters have been judged (Codex's round 12, pull request #120)
+
+The balance check now has **spells** (slots, upcasting, concentration, healing) and a **two-hero party fight** (the tested hero beside a level-matched Vanguard Hoplite). Run `node scripts/callings-balance.mjs` again: each level now has a duel-with-spells table and a party table. Codex's reading is in the description of pull request #120. What changes for you:
+
+- **The casters are fine.** With slots the level 5 Archivist goes from 3% to 81.5%. Don't buff the casting Callings; you may now tune them like the rest, from the new tables.
+- **The Outrider is the one genuinely low Calling:** 79–84% party wins at level 10 against a mean near 95%. Start with the Carrier's *Burst Satchel* (necrotic rather than poison, so it works against the undead) and Codex's other suggestions; leave *Ambush* itself.
+- **Pankratiast at level 10:** the hero is still standing at the end of only 6–13% of fights, and **Twisted** has the lowest party win rate. Look at its defensive Breath and *Turn the Wrist* before trimming its offence; a small reaction that blunts a hit on a nearby ally may suit Twisted's *Reaching Tendon*.
+- **Warden's Last Bastion** has the Warden's lowest party damage at level 10: a small ally-protecting reaction on *Shoulder the Door*.
+- **Still too strong:** the Vanguard's Ward (98.5%+ at level 10) and **Rotblood**, which wins every level 10 duel and party fight. Both stand as in the targets above.
+- **Fused's *Split Filament*** still costs about 26 HP for a 2-point gain: as above, a proficiency-based cost and more for it.
+
+The targets above now apply to every Calling, judged on the party table first and the duel second.
